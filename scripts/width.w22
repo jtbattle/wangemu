@@ -1,0 +1,9 @@
+CLEAR
+10 REM this program was adapted from the "@MOVE" program on a
+20 REM VP boot disk.  7601 is a STATUS REQUEST instruction.
+30 REM although only 760r is documented, all the 76xx opcodes
+40 REM run without producing errors.
+50 REM
+60 $GIO/005 (7601,B$)
+70 B$=AND HEX(10):IF STR(B$,,1)=HEX(10) THEN A=80:ELSE A=64
+80 PRINT "The screen width is";A;"characters"

@@ -1,0 +1,32 @@
+CLEAR
+
+10 REM --- Random walk program ---
+11 REM We must home and reposition the cursor for every move
+12 REM because if we use relative cursor positioning the
+13 REM driver spits out CR/LF after every 64 "*"s printed out.
+14 REM
+20 DIM R$64, D$17, M$1
+30 INIT (09) R$: INIT (0D) D$
+40 REM first byte of each is 00 to reduce effect by one
+50 STR(R$,1,1),STR(D$,1,1)=HEX(00)
+60 PRINT HEX(03):REM clear screen
+70 GOSUB'1: REM draw outline
+80 X=32:Y=8:REM Start in the middle
+90 M$="*"
+100 ON INT(RND(1)*4+1) GOTO 110,120,130,140
+110 X=X-1:IF X>1 THEN 150:X=62:GOTO 150
+120 X=X+1:IF X<63 THEN 150:X=2:GOTO 150
+130 Y=Y-1:IF Y>1 THEN 150:Y=14:GOTO 150
+140 Y=Y+1:IF Y<15 THEN 150:Y=1:GOTO 150
+150 PRINT HEX(010D0A); STR(D$,1,Y); STR(R$,1,X); M$; HEX(08);
+160 GOTO 100
+1990 REM
+2000 REM draw a box around the screen
+2010 DEFFN'1
+2020 PRINT HEX(01);
+2030 FOR X=1 TO 63:PRINT "-";:NEXT X:PRINT
+2040 FOR Y=2 TO 15
+2050 PRINT HEX(86);:FOR X=2 TO 62:PRINT " ";:NEXT X:PRINT HEX(86)
+2060 NEXT Y
+2070 FOR X=1 TO 63:PRINT "-";:NEXT X:PRINT HEX(01);
+2080 RETURN

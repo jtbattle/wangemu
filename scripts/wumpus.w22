@@ -1,0 +1,238 @@
+CLEAR
+
+5 REM *** HUNT THE WUMPUS ***
+10 DIM P(5), L(6), M(6)
+15 PRINT "Instructions (y-n)? ";
+20 GOSUB'1("YN")
+25 IF I$="N" THEN 80:GOSUB 375
+80 REM *** set up cave (dodecahedral node list) ***
+85 DIM S(20,3)
+90 MAT READ S
+115 DATA 2,5,8,1,3,10,2,4,12,3,5,14,1,4,6
+120 DATA 5,7,15,6,8,17,1,7,9,8,10,18,2,9,11
+125 DATA 10,12,19,3,11,13,12,14,20,4,13,15,6,14,16
+130 DATA 15,17,20,7,16,18,9,17,19,11,18,20,13,16,19
+135 DEF FNA(X)=INT(20*RND(1))+1
+140 DEF FNB(X)=INT(3*RND(1))+1
+145 DEF FNC(X)=INT(4*RND(1))+1
+
+150 GOSUB 1500:REM generate a scenario
+225 REM *** set no. of arrows ***
+230 A = 5
+235 L = L(1)
+240 REM *** run the game ***
+245 PRINT:PRINT:PRINT "Hunt the Wumpus"
+250 REM *** hazard warning and location ***
+255 GOSUB 585
+260 REM *** move or shoot ***
+265 GOSUB 670
+270 ON O GOTO 280,300
+275 REM *** shoot ***
+280 GOSUB 715
+285 IF F = 0 THEN 255
+290 GOTO 310
+295 REM *** move ***
+300 GOSUB 975
+305 IF F = 0 THEN 255
+310 IF F > 0 THEN 335
+315 REM *** lose ***
+320 PRINT "Ha ha ha - you lose!"
+325 GOTO 340
+330 REM *** win ***
+335 PRINT "Hee hee hee - the wumpus'll get you next time!!"
+340 MAT L=M
+355 PRINT "Same setup (y-n)? ";
+360 GOSUB'1("YN")
+365 IF A$="N" THEN 150
+370 GOTO 230
+
+375 REM *** instructions ***
+380 PRINT HEX(03);"Welcome to 'Hunt the Wumpus'":PRINT
+385 PRINT "  The wumpus lives in a cave of 20 rooms. Each room"
+390 PRINT "has 3 tunnels leading to other rooms. (Look at a"
+395 PRINT "dodecahedron to see how this works-if you don't know"
+400 PRINT "what a dodecahedron is, ask someone)"
+405 PRINT
+410 PRINT "     Hazards:"
+415 PRINT " Bottomless pits - two rooms have bottomless pits in them"
+420 PRINT "     if you go there, you fall into the pit (& lose!)"
+425 PRINT " Super bats - two other rooms have super bats. If you"
+430 PRINT "     go there, a bat grabs you and takes you to some other"
+435 PRINT "     room at random. (which may be troublesome)"
+440 GOSUB 1700
+445 PRINT "     Wumpus:"
+450 PRINT " The wumpus is not bothered by hazards (he has sucker"
+455 PRINT " feet and is too big for a bat to lift).  Usually"
+460 PRINT " he is asleep.  Two things wake him up: you shooting an"
+465 PRINT "arrow or you entering his room."
+470 PRINT "     If the wumpus wakes he moves (p=.75) one room"
+475 PRINT " or stays still (p=.25).  After that, if he is where you"
+480 PRINT " are, he eats you up and you lose!"
+485 GOSUB 1700
+490 PRINT "     You:"
+495 PRINT " Each turn you may move or shoot a crooked arrow"
+500 PRINT "   Moving:  you can move one room (thru one tunnel)"
+505 PRINT "   Arrows:  you have 5 arrows.  You lose when you run out"
+510 PRINT "   each arrow can go from 1 to 5 rooms. You aim by telling"
+515 PRINT "   the computer the room#s you want the arrow to go to."
+520 PRINT "   If the arrow can't go that way (if no tunnel) it moves"
+525 PRINT "   at random to the next room."
+530 PRINT "     If the arrow hits the wumpus, you win."
+535 PRINT "     If the arrow hits you, you lose."
+540 GOSUB 1700
+545 PRINT "    Warnings:"
+550 PRINT "     When you are one room away from a wumpus or hazard,"
+555 PRINT "     the computer says:"
+560 PRINT " Wumpus:  'I smell a wumpus'"
+565 PRINT " Bat   :  'Bats nearby'"
+570 PRINT " Pit   :  'I feel a draft'"
+580 RETURN
+
+585 REM *** print location & hazard warnings ***
+590 PRINT
+595 FOR J = 2 TO 6
+600 FOR K = 1 TO 3
+605 IF S(L(1),K) <> L(J) THEN 640
+610 ON J-1 GOTO 615,625,625,635,635
+615 PRINT "I smell a wumpus!"
+620 GOTO 640
+625 PRINT "I feel a draft"
+630 GOTO 640
+635 PRINT "Bats nearby!"
+640 NEXT K
+645 NEXT J
+650 PRINT "You are in room ";L(1)
+655 PRINT "Tunnels lead to ";S(L,1);" ";S(L,2);" ";S(L,3)
+660 PRINT
+665 RETURN
+
+670 REM *** choose option ***
+675 PRINT "Shoot or Move (S-M)? ";
+680 GOSUB'1("SM")
+685 IF I$<>"S" THEN 700
+690 O = 1
+695 RETURN
+700 O = 2
+710 RETURN
+
+715 REM *** arrow routine ***
+720 F = 0
+725 REM *** path of arrow ***
+735 PRINT "No. of rooms (1-5)? ";
+740 GOSUB'1("12345"):CONVERT I$ TO J9
+755 FOR K = 1 TO J9
+760 INPUT "Room #", P(K)
+770 IF K <= 2 THEN 790
+775 IF P(K) <> P(K-2) THEN 790
+780 PRINT "Arrows aren't that crooked - try another room"
+785 GOTO 760
+790 NEXT K
+795 REM *** shoot arrow ***
+800 L = L(1)
+805 FOR K = 1 TO J9
+810 FOR K1 = 1 TO 3
+815 IF S(L,K1) = P(K) THEN 895
+820 NEXT K1
+825 REM *** no tunnel for arrow ***
+830 L = S(L,FNB(1))
+835 GOTO 900
+840 NEXT K
+845 PRINT "Missed"
+850 L = L(1)
+855 REM *** move wumpus ***
+860 GOSUB 935
+865 REM *** ammo check ***
+870 A = A-1
+875 IF A > 0 THEN 885
+880 F = -1
+885 RETURN
+890 REM *** see if arrow is at L(1) or at L(2)
+895 L = P(K)
+900 IF L <> L(2) THEN 920
+905 PRINT "Aha! You got the wumpus!"
+910 F = 1
+915 RETURN
+920 IF L <> L(1) THEN 840
+925 PRINT "Ouch! Arrow got you!"
+930 GOTO 880
+
+935 REM *** move wumpus routine ***
+940 K = FNC(0)
+945 IF K = 4 THEN 955
+950 L(2) = S(L(2),K)
+955 IF L(2) <> L THEN 970
+960 PRINT "Tsk tsk tsk - wumpus got you!"
+965 F = -1
+970 RETURN
+
+975 REM *** move routine ***
+980 F = 0
+985 INPUT "Where to",L
+995 IF L < 1 THEN 985
+1000 IF L > 20 THEN 985
+1005 FOR K = 1 TO 3
+1010 REM *** check if legal move ***
+1015 IF S(L(1),K) = L THEN 1045
+1020 NEXT K
+1025 IF L = L(1) THEN 1045
+1030 PRINT "Not possible -";
+1035 GOTO 985
+1040 REM *** check for hazards ***
+1045 L(1) = L
+1050 REM *** wumpus ***
+1055 IF L <> L(2) THEN 1090
+1060 PRINT "... oops! bumped a wumpus!"
+1065 REM *** move wumpus ***
+1070 GOSUB 935
+1075 IF F = 0 THEN 1090
+1080 RETURN
+1085 REM *** pit ***
+1090 IF L = L(3) THEN 1100
+1095 IF L <> L(4) THEN 1120
+1100 PRINT "Yyyyiiiieeee . . . fell in pit"
+1105 F = -1
+1110 RETURN
+1115 REM *** bats ***
+1120 IF L = L(5) THEN 1130
+1125 IF L <> L(6) THEN 1145
+1130 PRINT "Zap--super bat snatch! elsewhereville for you!"
+1135 L = FNA(1)
+1140 GOTO 1045
+1145 RETURN
+
+1500 REM generate a scenario
+1501 REM *** locate l array items ***
+1502 REM *** 1-you, 2-wumpus, 3&4-pits, 5&6-bats ***
+1503 REM in Wang BASIC, this should be done in a subroutine
+1504 REM because the final RETURN will clear the stack of
+1505 REM any unterminated FOR loops below.
+1510 FOR J = 1 TO 6
+1520 M(J),L(J) = FNA(0)
+1530 NEXT J
+1540 REM *** check for crossovers (ie L(1)=L(2), etc) ***
+1550 FOR J = 1 TO 6
+1560 FOR K = 1 TO 6
+1570 IF J = K THEN 1590
+1580 IF L(J) = L(K) THEN 1510
+1590 NEXT K
+1600 NEXT J
+1610 RETURN
+
+1700 PRINT:PRINT "(hit any key to continue)";
+1710 KEYIN A$,1720,1720:GOTO 1710
+1720 PRINT HEX(03);
+1730 RETURN
+
+2000 REM get a single valid keystroke (valid keys in V$)
+2010 REM convert to upper case first
+2020 DEFFN'1(V$)
+2030 KEYIN I$,2040,2030:GOTO 2030
+2040 I2$=I$:IF I$<"a" THEN 2060:IF I$>"z" THEN 2060
+2050 BIN(I$)=VAL(I$)-VAL("a")+VAL("A")
+2060 Z=1
+2070 IF STR(V$,Z,1)=I$ THEN 2090
+2080 Z=Z+1:IF Z<=LEN(V$) THEN 2070:GOTO 2030
+2090 PRINT I2$
+2100 RETURN
+
+3000 END

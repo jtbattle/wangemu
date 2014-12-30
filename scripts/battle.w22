@@ -1,0 +1,142 @@
+CLEAR
+
+10 DIM R(10),C(10),H(10),T(10),S(60)
+20 DIM L$16,D$64,K$1
+30 GOSUB 3000:GOTO 100
+
+40 DEFFN'50(R9):PRINT STR(L$,1,R9);:RETURN:REM move to the R9'th row
+50 DEFFN'51(C9):PRINT STR(D$,1,C9);:RETURN:REM move to the C9'th column
+60 DEFFN'52(N9,S9$):GOSUB'50(R(N9)):GOSUB'51(C(N9)):PRINT S9$;:RETURN
+70 REM update score
+75   GOSUB'50(15)
+77   PRINT "**"; T; "shots taken **"; M; "misses **"; H ;"hits **"
+80 RETURN
+
+100 PRINT HEX(03)
+110 PRINT "This is the program for BATTLESHIP, by William Woods"
+115 PRINT "April 26, 1974."
+120 REM reworked to take advantage of "T" BASIC, Jim Battle, 9/29/2003
+125 PRINT TAB(24);"--INSTRUCTIONS--"
+130 PRINT 
+135 PRINT "The computer will place 10 ships on the viewing screen."
+140 PRINT "The computer will pick 3 ships out of the 10 which can be hit."
+145 PRINT "The other 7 ships will be unsinkable will be called misses"
+150 PRINT "by the computer. The object of the game is to get your sub,"
+155 PRINT "represented as *, under the right ship and torpedo it."
+160 PRINT "Press any key to fire a torpedo."
+165 PRINT:PRINT "(press any key)";
+170 S=RND(1):KEYIN K$,200,200:GOTO 170:REM randomize
+
+200 PRINT HEX(03)
+210 FOR W1=1 TO 100:NEXT W1
+220 T,M,H=0:REM torpedoes fired, misses, hits
+230 MAT H=ZER:REM map of which ships have been hit
+240 MAT T=ZER:REM map of which ships are targets
+250 FOR N=1 TO 3
+260    S=INT(RND(1)*10+1):IF T(S)=1 THEN 260:T(S)=1
+270 NEXT N
+
+300 REM generate picture of ships
+310 PRINT HEX(03)
+320 FOR N=1 TO 10
+330    GOSUB'52(N,"***>")
+340 NEXT N
+350 GOSUB 70:REM update score
+
+400 REM sweep the sub across the screen until a key is hit
+410 X=1
+420 GOSUB'50(11):PRINT TAB(63);HEX(0D);" ";:REM erase line
+430 FOR Y=1 TO 5:NEXT Y
+440 KEYIN K$,500,500
+450 PRINT " *";HEX(08);
+460 X=X+1:IF X<61 THEN 430:GOTO 410
+
+500 T=T+1:REM got keypress
+505 GOSUB 70:REM update score
+510 GOSUB'50(11):GOSUB'51(X)
+520 G=9:IF S(X)=0 THEN 530:G=9-R(S(X))+1:REM number of rows to draw torpedo
+530 FOR B=1 TO G
+535    PRINT HEX(0C);":";HEX(08);
+540 NEXT B
+550 FOR A=1 TO 50:NEXT A
+560 GOSUB'50(11):GOSUB'51(X)
+570 FOR B=1 TO G
+575    PRINT HEX(0C);" ";HEX(08);
+580 NEXT B
+
+600 GOSUB'50(11):PRINT TAB(63);" "
+610 IF S(X)=0 THEN 680:IF T(S(X))=0 THEN 680:REM not a target
+620 GOSUB'52(S(X),"BOOM")
+630 IF H(S(X))=1 THEN 1120:H(S(X))=1:H=H+1:GOTO 1170
+
+680 M=M+1:REM miss
+685 GOSUB 70:REM update score
+690 IF S(X)<>0 THEN 740:REM hit non-target
+700 FOR V=1 TO 20
+710    GOSUB'50(13):PRINT TAB(V);"****YOU MISSED****"
+720 NEXT V
+740 GOSUB'50(13):PRINT TAB(63);" "
+750 GOTO 350
+
+1120 M=M+1:REM hit the same target twice
+1125 GOSUB 70:REM update score
+1130 GOSUB'50(12):PRINT "You can not sink the same ship more then once"
+1140 S1$="**RUBBISH**":GOSUB 1420
+1150 GOSUB'50(12):PRINT TAB(63);" "
+1160 GOTO 350
+
+1170 GOSUB 70:REM update score
+1175 S1$="**SUNK**":GOSUB 1420
+1190 IF H<3 THEN 350
+1200 PRINT HEX(03)
+1210 PRINT "Very good! You sunk all of sinkable ships"
+1220 GOTO 1300
+
+1300 PRINT "Do you want to play again (Y/N)?"
+1310 KEYIN K$,1320,1310:GOTO 1310
+1320 IF K$="N" THEN 1390:IF K$="n" THEN 1390
+1330 IF K$="Y" THEN 1340:IF K$<>"y" THEN 1310
+
+1340 PRINT "Do you want the instructions again (Y/N)?"
+1350 KEYIN K$,1360,1350:GOTO 1350
+1360 IF K$="Y" THEN 110:IF K$="y" THEN 110
+1370 IF K$="N" THEN 200:IF K$="n" THEN 200:GOTO 1350
+
+1390 PRINT "GOOD-BYE"
+1400 S1$="**GOOD-BYE**":GOSUB 1420
+1410 END
+
+1419 REM bounce message back and forth across the screen
+1420 GOSUB'50(14)
+1430 FOR I7=1 TO 3
+1440 FOR I8=1 TO 40
+1450    PRINT TAB(I8);S1$;" ";HEX(0D);:NEXT I8
+1460 FOR I8=40 TO 1 STEP -1
+1470 PRINT TAB(I8);S1$;" ";HEX(0D);:NEXT I8
+1480 NEXT I7
+1490 GOSUB'50(14):PRINT TAB(63);" "
+1520 RETURN 
+
+3000 REM initialize things
+
+3010 MAT READ R,C
+3020 DATA  2, 3, 3, 4, 4, 5, 6, 6, 7, 7:REM rows
+3030 DATA 28,19,46,39,55,25, 5,41,12,34:REM columns
+
+3040 REM for a given X, which ship is hit
+3050 MAT S=ZER
+3060 FOR N=1 TO 10
+3070    FOR I=0 TO 3:S(C(N)+I)=N:NEXT I
+3080 NEXT N
+
+3100 REM stuff for positioning the cursor
+3110 INIT(0A)L$:STR(L$,1,1)=HEX(01):REM cursor down
+3120 INIT(09)D$:REM non-destructive space
+3130 SELECT PRINT 005(250):REM prevent line wrap
+3200 RETURN
+
+4000 REM R(ship) indicates which row each ship is on
+4010 REM C(ship) indicates which column each ship is on
+4020 REM T(ship) is a map of which ships are targets
+4030 REM H(ship) is a map of which ships have been hit
+4040 REM S(x)    is a map of which ship will be torpedoed

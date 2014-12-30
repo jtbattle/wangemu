@@ -1,0 +1,16 @@
+CLEAR
+10 REM test if a given number is prime or not, the stupid way
+20 INPUT "Number to test for primality",P1
+25 P=P1:D=2:F=0
+30 Q=P/D:IF Q<>INT(Q) THEN 35:GOSUB 1000:P=Q:GOTO 30
+35 D=1:REM test divisor
+40 L=INT(SQR(P)):REM limit we need to test up to
+50 D=D+2:Q=P/D:IF Q=INT(Q) THEN 100:IF D<=L THEN 50
+60 IF P=P1 THEN 70:D=P:GOSUB 1000:GOTO 200
+70 PRINT P;"is prime";:GOTO 200
+100 GOSUB 1000:P=Q:D=D-2:GOTO 40
+200 PRINT:END
+1000 REM print out next divisor
+1010 IF D>1 THEN 1020:RETURN
+1020 F=F+1:IF F=1 THEN 1030:PRINT ",";D;:RETURN
+1030 PRINT P;"is divisible by";D;:RETURN

@@ -1,0 +1,16 @@
+REM this script demonstrates how to embed keywords and
+REM special function keys in the script file
+
+CLEAR
+10 DIM A$1
+20 KEYIN A$,30,40:PRINT "No more input":END
+30 PRINT "NORMAL:  ";:HEXPRINT A$:GOTO 20
+40 PRINT "SPECIAL: ";:HEXPRINT A$:GOTO 20
+1000 DEFFN'1
+1010 \<PRINT>"This is a test"
+1020 \<RETURN>:\<REM>a comment
+
+\<SF1>
+\<RUN>
+abc
+\<SF1>

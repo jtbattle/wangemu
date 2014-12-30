@@ -1,0 +1,306 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+ "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<title>WangEmu Script Input</title>
+<style type="text/css">
+<!--
+@import url("./emu.css");
+-->
+</style>
+</head>
+
+<body>
+<div id="container">
+
+<div id="content">
+	
+<h1>WangEmu Script Input</h1>
+
+<p>
+A "script" is simply an ASCII text file.  The WangEmu
+script mechanism allows entering text to the emulated computer state by
+redirecting the text file to the specified keyboard device, as if the user
+had prodigious typing ability.  This can be useful for loading programs
+off of the native file system, or for running some test sequence.
+</p>
+
+<p>
+The top level "File" menu normally looks like this:
+</p>
+
+<p><img src="img/menu_file.png"  height="57" width="149" alt="placeholder" /></p>
+
+<p>
+While the script is running, any input from the keyboard is ignored
+until all of the script input has been consumed.  While the script
+is being processed, the user can't request another script since the "Script..."
+menu item will be grayed out:
+</p>
+
+<p><img src="img/menu_file2.png"  height="57" width="149" alt="placeholder" /></p>
+
+<p>
+The script can be a straight ASCII file and each character is processed
+as a separate keystroke.  After the end of each line a carriage return
+is sent.  After the entire contents of the file have been sent, the
+emulator once again looks to the PC keyboard to supply input.
+</p>
+
+<p>
+While most of the time characters will be entered verbatim, there are
+a few different "escape" sequences to allow non-literal processing.
+The escapes always begin with a backslash.  If the sequence you want
+ot enter happens to exactly match an escape sequence but you want to send
+the characters individually and not the escape, just double the backslash.
+</p>
+
+<p>
+The types of escapes are:
+</p>
+
+<ul>
+    <li><a href="#Hex">hex characters</a></li>
+    <li><a href="#Keyword">keywords</a></li>
+    <li><a href="#Special">special function keys</a></li>
+    <li><a href="#Include">include files</a></li>
+</ul>
+
+<h2><a name="Hex">Escaped Hex Character</a></h2>
+
+<p>
+To enter a hex character literally, the sequence must be
+</p>
+
+<p class="code">\&lt;hex_digit&gt;&lt;hex_digit&gt;</p>
+
+<p>
+If the backslash isn't followed by two hex digits, then the sequence, including
+the backslash, is interpreted as a series of literal bytes.
+</p>
+
+<p>
+Example sequences
+</p>
+
+<dl>
+    <dt><tt>\07</tt></dt> <dd>(ASCII bell)</dd>
+    <dt><tt>\0D</tt> or <tt>\&lt;CR&gt;</tt></dt> <dd>(carriage return)</dd>
+    <dt><tt>\0A</tt> or <tt>\&lt;LF&gt;</tt></dt> <dd>(line feed)</dd>
+    <dt><tt>\7F</tt> or <tt>\&lt;DEL&gt;</tt></dt> <dd>(delete character)</dd>
+    <dt><tt>\83</tt></dt> <dd>(non-ASCII)</dd>
+</dl>
+
+<h2><a name="Keyword">Escaped Keyword</a></h2>
+
+<p>
+Wang BASIC stores keywords as a single byte, all of which are between hex
+80 and hex FF.  Keywords can be entered at the keyboard one character
+at a time, or with the appropriate keyboard, keywords can be entered directly
+via keycaps assigned the appropriate keyword token value.
+</p>
+
+<p>
+The WangEmu script allows entering these keywords directly too.
+There probably isn't any great need to do it, but it was easy to implement,
+and so here it is.  Actually, there is one good use.  Any line
+can't be more than about 250 characters long.  If a long statement
+is entered via key-at-a-time ASCII, much less can be fit on one line than
+if keywords are used whenever possible.
+</p>
+
+<p>
+Here is the list of keywords that can be entered via the script mechanism.
+Some of the keywords are specific to BASIC-2.
+</p>
+
+<table>
+<tr>
+<td>
+<pre>
+\&lt;#&gt;
+\&lt;#PI&gt;
+\&lt;$&gt;
+\&lt;%&gt;
+\&lt;ABS(&gt;
+\&lt;ADD&gt;
+\&lt;ALL&gt;
+\&lt;AND&gt;
+\&lt;ARC&gt;
+\&lt;ARCCOS(&gt;
+\&lt;ARCSIN(&gt;
+\&lt;ARCTAN(&gt;
+\&lt;AT(&gt;
+\&lt;ATN(&gt;
+\&lt;BA&gt;
+\&lt;BACKSPACE&gt;
+\&lt;BEG&gt;
+\&lt;BIN(&gt;
+\&lt;BOOL&gt;
+\&lt;BT&gt;
+\&lt;CI&gt;
+\&lt;CLEAR&gt;
+\&lt;CLOSE&gt;
+\&lt;CO&gt;
+\&lt;COM&gt;
+</pre>
+</td>
+
+<td>
+<pre>
+\&lt;CONTINUE&gt;
+\&lt;CONVERT&gt;
+\&lt;COPY&gt;
+\&lt;COS(&gt;
+\&lt;D&gt;
+\&lt;DA&gt;
+\&lt;DAC&gt;
+\&lt;DATA&gt;
+\&lt;DBACKSPACE&gt;
+\&lt;DC&gt;
+\&lt;DEFFN&gt;
+\&lt;DIM&gt;
+\&lt;DISK&gt;
+\&lt;DSC&gt;
+\&lt;DSKIP&gt;
+\&lt;ELSE&gt;
+\&lt;END&gt;
+\&lt;ERR&gt;
+\&lt;ERROR&gt;
+\&lt;EXP(&gt;
+\&lt;FIX(&gt;
+\&lt;FN&gt;
+\&lt;FOR&gt;
+\&lt;G&gt;
+
+</pre>
+</td>
+
+<td>
+<pre>
+\&lt;GOSUB&gt;
+\&lt;GOTO&gt;
+\&lt;HEX(&gt;
+\&lt;HEXOF(&gt;
+\&lt;IF&gt;
+\&lt;INIT&gt;
+\&lt;INPUT&gt;
+\&lt;INT(&gt;
+\&lt;KEYIN&gt;
+\&lt;LEN(&gt;
+\&lt;LET&gt;
+\&lt;LGT(&gt;
+\&lt;LIMITS&gt;
+\&lt;LINPUT&gt;
+\&lt;LIST&gt;
+\&lt;LOAD&gt;
+\&lt;LOG(&gt;
+\&lt;LS=&gt;
+\&lt;MAT&gt;
+\&lt;MAX(&gt;
+\&lt;MIN(&gt;
+\&lt;MOD(&gt;
+\&lt;MOVE&gt;
+\&lt;NEXT&gt;
+
+</pre>
+</td>
+
+<td>
+<pre>
+\&lt;NUM(&gt;
+\&lt;OFF&gt;
+\&lt;ON&gt;
+\&lt;OPEN&gt;
+\&lt;OR&gt;
+\&lt;P&gt;
+\&lt;PACK&gt;
+\&lt;PLOT&gt;
+\&lt;POS(&gt;
+\&lt;PRINT&gt;
+\&lt;PRINTUSING&gt;
+\&lt;R&gt;
+\&lt;RE&gt;
+\&lt;READ&gt;
+\&lt;REM&gt;
+\&lt;RENUMBER&gt;
+\&lt;RESTORE&gt;
+\&lt;RETURN&gt;
+\&lt;REWIND&gt;
+\&lt;RND(&gt;
+\&lt;ROTATE&gt;
+\&lt;ROUND&gt;
+\&lt;RUN&gt;
+\&lt;SAVE&gt;
+
+</pre>
+</td>
+
+<td>
+<pre>
+\&lt;SCRATCH&gt;
+\&lt;SELECT&gt;
+\&lt;SELECTPLOT&gt;
+\&lt;SGN(&gt;
+\&lt;SIN(&gt;
+\&lt;SKIP&gt;
+\&lt;SPACE&gt;
+\&lt;SQR(&gt;
+\&lt;STEP&gt;
+\&lt;STOP&gt;
+\&lt;STR(&gt;
+\&lt;SUB&gt;
+\&lt;TAB(&gt;
+\&lt;TAN(&gt;
+\&lt;TAPE&gt;
+\&lt;TEMP&gt;
+\&lt;THEN&gt;
+\&lt;TO&gt;
+\&lt;TRACE&gt;
+\&lt;UNPACK&gt;
+\&lt;VAL(&gt;
+\&lt;VER(&gt;
+\&lt;VERIFY&gt;
+\&lt;XOR&gt;
+</pre>
+</td>
+</tr>
+</table>
+
+<h2><a name="Special">Special Function Keys</a></h2>
+
+<p>
+Probably more a useful feature than keyword entry is special function key
+entry via a script.  Special function keys 0 through 31 can be entered
+by following this example to enter special function key 13:
+</p>
+
+<p class="code">\&lt;SF13&gt;</p>
+
+<h2><a name="Include">Include Files</a></h2>
+
+<p>
+In a severe case of overkill, script files can include other script files.
+I can't imagine any great use for this, but I had written the script code
+for another purpose and adopted it to WangEmu so this feature comes along
+for free.  The best explanation is this example, which will include
+the contents of the file foo.txt before continuing with the current script:
+</p>
+
+<p class="code">\&lt;include foo.txt&gt;</p>
+
+<p>
+Scripts can be nested up to three deep.
+</p>
+
+</div>
+
+<div id="footer">
+    <p>Last update:December 12, 2008</p>
+</div>
+
+</div>
+</body>
+</html>

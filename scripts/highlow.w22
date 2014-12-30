@@ -1,0 +1,12 @@
+CLEAR
+10 REM classic number guessing game
+20 M=100:REM largest number we're guessing
+30 A=INT(RND(1)*M+1)
+40 PRINT:PRINT "I'm thinking of a number from 1 to";M:PRINT
+50 G=0
+60 G=G+1:PRINT "Guess #";G;:INPUT ".  What is your guess",U
+70 IF U<A THEN 100: IF U>A THEN 200
+80 PRINT "You got it in";G;"guesses."
+90 PRINT:PRINT:PRINT:GOTO 30
+100 PRINT "Your guess was low":PRINT:GOTO 60
+200 PRINT "Your guess was high":PRINT:GOTO 60

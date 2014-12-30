@@ -1,0 +1,30 @@
+CLEAR
+
+10 REM Dave Angel, who wrote some of the Wang BASIC microcode
+20 REM and even more of the BASIC-2 microcode, says that the
+30 REM Wang BASIC RND() wasn't so random.  To prove it, plot
+40 REM random locations with pairs of RND() coordinates.  Some
+50 REM locations never fill in, he says, but they do in BASIC-2.
+60 REM So, here's a test.
+70 REM
+
+100 DIM R$64, D$17, M$1
+110 INIT (09) R$: INIT (0D) D$: M$="*"
+120 REM first byte of D$ is 00 to reduce effect by one
+130 STR(D$,1,1)=HEX(00)
+140 PRINT HEX(03):REM clear screen
+150 GOSUB'1: REM draw outline
+160 X=RND(1)*61+1:Y=RND(1)*14+1
+170 PRINT HEX(010D0A); STR(D$,1,Y); STR(R$,1,X); M$; HEX(08);
+180 GOTO 160
+190 REM
+
+2000 REM draw a box around the screen
+2010 DEFFN'1
+2020 PRINT HEX(01);
+2030 FOR X=1 TO 63:PRINT "-";:NEXT X:PRINT
+2040 FOR Y=2 TO 15
+2050 PRINT HEX(86);:FOR X=2 TO 62:PRINT " ";:NEXT X:PRINT HEX(86)
+2060 NEXT Y
+2070 FOR X=1 TO 63:PRINT "-";:NEXT X:PRINT HEX(01);
+2080 RETURN

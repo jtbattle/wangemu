@@ -1,0 +1,268 @@
+CLEAR
+
+ 2 PRINT HEX(03);TAB(27);"MASTERMIND":PRINT
+ 4 PRINT TAB(12);"Creative Computing  Morristown, New Jersey"
+ 6 PRINT: PRINT: PRINT
+10 DIM Q(10),S(10,2),S$(10),A$(10),G$(10),H$(10)
+20 DIM Q2(10),D(10),D2(10)
+30 REM I$ is a byte array indicating which moves are possibly consistent
+31 REM with the guesses we've made already.  A location containing "+"
+32 REM is valid, and one containing space is not valid.
+33 DIM I$(250)64, D$(1)1, O$(1)2,P$1
+35 I9=250*64:P$="+"
+40 REM
+45 REM     MASTERMIND II
+50 REM     STEVE NORTH
+55 REM     CREATIVE COMPUTING
+60 REM     PO BOX 789-M MORRISTOWN NEW JERSEY 07960
+70 REM
+75 REM
+80 INPUT "Number of colors",C9:IF C9<9 THEN 100
+90 PRINT "No more than 8, please!":GOTO 80
+100 INPUT "Number of positions",P9:IF P9<11 THEN 110
+105 PRINT "No more than 10, please!":GOTO 100
+110 INPUT "Number of rounds",R9
+115 PRINT
+120 P=C9^P9
+130 PRINT "Total possibilities =";P:FOR S=1 TO 600:NEXT S
+135 IF P<=I9 THEN 140
+136 PRINT "Error: Not enough memory; please try again":GOTO 80
+140 H,C=0
+160 L$="BWRGOYPT"
+
+170 PRINT
+180 PRINT
+190 PRINT "COLOR     LETTER"
+200 PRINT "=====     ======"
+210 FOR X=1 TO C9
+220 READ X$
+230 PRINT X$;TAB(13);STR(L$,X,1)
+240 NEXT X
+241 PRINT:PRINT "Enter guess as letters without commas or spaces,"
+242 PRINT "or enter 'BOARD' OR 'QUIT'"
+260 FOR R=1 TO R9
+270 PRINT 
+280 PRINT "Round number";R
+290 PRINT "==============="
+300 PRINT
+310 REM GOTO 1000:REM go right to computer's turn
+320 PRINT "Guess my combination.":PRINT
+330 REM     GET A COMBINATION
+340 A=INT(P*RND(1)+1)
+350 Z=A:GOSUB 3550
+
+370 FOR M=1 TO 10
+380 PRINT "Move # ";M;" Guess ";:INPUT X$
+385 FOR S=1 TO LEN(X$)
+386 IF STR(X$,S,1)<"a" THEN 388:IF STR(X$,S,1)>"z" THEN 388
+387 BIN(STR(X$,S,1)) = VAL(STR(X$,S,1)) - VAL("a") + VAL("A")
+388 NEXT S
+390 IF X$<>"BOARD" THEN 400:GOSUB 2000:GOTO 380
+400 IF X$="QUIT" THEN 2500
+410 IF LEN(X$)=P9 THEN 430:PRINT "Bad number of positions.":GOTO 380
+420 REM     UNPACK X$ INTO G$(1-P9)
+430 FOR X=1 TO P9
+440 FOR Y=1 TO C9
+450 IF STR(X$,X,1)=STR(L$,Y,1) THEN 480
+460 NEXT Y
+470 PRINT "'"; STR(X$,X,1); "' is unrecognized.":GOTO 380
+480 G$(X)=STR(X$,X,1)
+490 NEXT X
+500 REM     NOW WE CONVERT Q(1-P9) INTO A$(1-P9) [ACTUAL GUESS]
+510 GOSUB 4000
+520 REM     AND GET NUMBER OF BLACKS AND WHITES
+530 GOSUB 4500
+540 IF B=P9 THEN 630
+550 REM     TELL HUMAN RESULTS
+560 PRINT "You have ";B;" blacks and ";W;" whites."
+570 REM     SAVE ALL THIS STUFF FOR BOARD PRINTOUT LATER
+580 S$(M)=X$
+590 S(M,1)=B
+600 S(M,2)=W
+610 NEXT M
+620 PRINT "You ran out of moves!  That's all you get!":GOTO 640
+622 GOSUB 4000
+623 PRINT "The actual combination was: ";
+624 FOR X=1 TO P9:PRINT A$(X);:NEXT X:PRINT
+630 PRINT "You guessed it in ";M;" moves!"
+640 H=H+M
+650 GOSUB 5000
+
+1000 REM
+1010 REM     NOW COMPUTER GUESSES
+1020 REM
+1030 INIT(P$) I$()
+1040 PRINT "Now I guess.  Think of a combination."
+1050 INPUT "Hit 'RETURN' when ready:",X$:PRINT
+1060 FOR M=1 TO 10
+1070 REM     FIND A GUESS
+1080 G=INT(P*RND(1)+1)
+
+1090 REM search forward from G to the end for a potential valid permutation
+1100 MAT SEARCH I$()<G,P-G+1>, =P$ TO O$()
+1110 U=256*VAL(STR(O$(1),1,1)) + VAL(STR(O$(1),2,1))
+1120 G=G+U-1:IF U>0 THEN 1200
+
+1130 REM search from 1 to G for a possibly valid permutation
+1140 MAT SEARCH I$()<1,G>, =P$ TO O$()
+1150 G=256*VAL(STR(O$(1),1,1)) + VAL(STR(O$(1),2,1))
+1160 IF G>0 THEN 1200
+
+1170 PRINT "You have given me inconsistent information."
+1180 PRINT "Try again, and this time please be more careful."
+1190 GOTO 1000
+
+1200 REM CONVERT GUESS #G INTO Q2()
+1210 Z=G:GOSUB 3550:MAT Q2=Q:REMEMBER OUR GUESS
+1220 REM build histogram: MAT D2=ZER
+1230 FOR S=1 TO P9:D2(Q2(S))=D2(Q2(S))+1:NEXT S
+1240 GOSUB 6000
+1250 PRINT "My guess is: ";
+1260 FOR X=1 TO P9:PRINT H$(X);:NEXT X
+1270 INPUT "  Blacks, Whites ",B1,W1
+1280 IF B1=P9 THEN 1550
+
+1290 REM go through all possibilities and strike from the list all
+1300 REM of them that are inconsistent with what we just learned
+1310 GOSUB 3000
+1320 FOR X=1 TO P
+
+1330 REM in later rounds, I$() is sparse, so scan quickly.
+1331 REM if O$() was deeper, we could save a lot of overhead,
+1332 REM but it would be a lot more complicated.
+1333 IF M<2 THEN 1340
+1334 MAT SEARCH I$()<X,P-X+1>, =P$ TO O$()
+1335 U=256*VAL(STR(O$(1),1,1)) + VAL(STR(O$(1),2,1))
+1336 X=X+U-1:Z=X:GOSUB 3550:IF U>0 THEN 1360
+1337 X=P:GOTO 1490:REM done with this pass
+
+1340 GOSUB 3500
+1345 MAT COPY I$()<X,1> TO D$()
+1350 IF D$(1)=" " THEN 1490
+
+1360 REM first do fast check if number of blacks are right
+1370 B=0:FOR S=1 TO P9:IF Q(S)<>Q2(S) THEN 1380:B=B+1
+1380 NEXT S:IF B1<>B THEN 1470
+
+1390 REM blacks are OK; now do check on # of whites
+1400 MAT D=ZER:W=0
+1410 FOR S=1 TO P9:D(Q(S))=D(Q(S))+1:NEXT S
+1420 FOR S=1 TO C9
+1430 IF D(S)>D2(S) THEN 1440:W=W+D(S):GOTO 1450
+1440 W=W+D2(S)
+1450 NEXT S
+1460 W=W-B:IF W1=W THEN 1490
+
+1470 D$(1)=" ":MAT COPY D$() TO I$()<X,1>
+1480 PRINT HEX(0D);"left:";P-X;"   ";
+1490 NEXT X
+1500 PRINT HEX(0D);"            ";HEX(0D);:REM erase countdown
+
+1510 NEXT M
+1520 PRINT "I used up all my moves!"
+1530 PRINT "I guess my cpu is just having an off day."
+1540 GOTO 1560
+1550 PRINT "I got it in ";M;" moves!"
+1560 C=C+M
+1570 GOSUB 5000
+1580 NEXT R
+
+1590 PRINT:PRINT HEX(070707);"GAME OVER"
+1600 PRINT "Final score:"
+1610 PRINT "============"
+1620 GOSUB 5040
+1630 END
+
+2000 REM
+2010 REM     BOARD PRINTOUT ROUTINE
+2020 REM
+2025 PRINT
+2030 PRINT "BOARD"
+2035 PRINT "====="
+2040 PRINT "Move     Guess          Black     White"
+2045 PRINT "----     -----          -----     -----"
+2050 FOR Z=1 TO M-1
+2060 PRINT Z;TAB(9);S$(Z);TAB(25);S(Z,1);TAB(35);S(Z,2)
+2070 NEXT Z
+2075 PRINT
+2080 RETURN
+
+2500 REM
+2510 REM     QUIT ROUTINE
+2520 REM
+2530 PRINT "Quitter!  My combination was: ";
+2535 GOSUB 4000
+2540 FOR X=1 TO P9:PRINT A$(X);:NEXT X:PRINT
+2570 PRINT "Good bye"
+2580 END
+
+3000 REM
+3010 REM     INITIALIZE Q(1-P9) TO ZEROS
+3020 REM
+3030 MAT Q=ZER
+3060 RETURN
+
+3500 REM
+3501 REM     INCREMENT Q(1-P9)
+3502 REM
+3505 IF Q(1)>0 THEN 3515
+3510 REM  IF ZERO, THIS IS OUR FIRST INCREMENT; MAKE ALL ONES
+3511 MAT Q=CON
+3512 RETURN
+3515 Q=1
+3520 Q(Q)=Q(Q)+1:IF Q(Q)<=C9 THEN 3525:Q(Q)=1:Q=Q+1:GOTO 3520
+3525 RETURN
+
+3550 REM
+3551 REM     Set Q(1-P9) to possibility #Z directly
+3552 REM
+3560 Z=Z-1:FOR Q=1 TO P9:Q(Q)=Z-C9*INT(Z/C9)+1:Z=INT(Z/C9):NEXT Q
+3570 RETURN
+
+4000 REM
+4010 REM     CONVERT Q(1-P9) TO A$(1-P9)
+4020 REM
+4030 FOR S=1 TO P9:A$(S)=STR(L$,Q(S),1):NEXT S
+4060 RETURN
+
+4500 REM
+4510 REM     GET NUMBER OF BLACKS (B) AND WHITES (W)
+4520 REM     MASHES G$ AND A$ IN THE PROCESS
+4530 REM
+4540 B,W,F=0
+4550 FOR S=1 TO P9
+4560 IF G$(S)<>A$(S) THEN 4620
+4570 B=B+1:BIN(G$(S))=F:BIN(A$(S))=F+1:F=F+2:GOTO 4660
+4620 FOR T=1 TO P9
+4630 IF G$(S)<>A$(T) THEN 4650
+4640 IF G$(T)=A$(T) THEN 4650
+4645 W=W+1:BIN(A$(T))=F:BIN(G$(S))=F+1:F=F+2:GOTO 4660
+4650 NEXT T
+4660 NEXT S
+4670 RETURN
+
+
+5000 REM
+5010 REM     PRINT SCORE
+5020 PRINT
+5030 PRINT "SCORE:"
+5035 PRINT "======"
+5040 PRINT "     Computer ";C
+5050 PRINT "     Human    ";H
+5060 PRINT
+5070 RETURN
+
+5500 REM
+5510 REM     CONVERT Q(1-P9) INTO G$(1-P9)
+5520 REM
+5530 FOR S=1 TO P9:G$(S)=STR(L$,Q(S),1):NEXT S
+5560 RETURN
+
+6000 REM
+6010 REM     CONVERT Q(1-P9) TO H$(1-P9)
+6020 REM
+6030 FOR S=1 TO P9:H$(S)=STR(L$,Q(S),1):NEXT S
+6060 RETURN
+
+8000 REM     PROGRAM DATA FOR COLOR NAMES
+8010 DATA "Black","White","Red","Green","Orange","Yellow","Purple","Tan"

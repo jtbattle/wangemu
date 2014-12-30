@@ -1,0 +1,28 @@
+1 VERSIONINFO
+FILEVERSION    2,1,0,0
+PRODUCTVERSION 2,1,0,0
+FILEOS         VOS_NT | VOS__WINDOWS32
+FILETYPE       VFT_APP
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "040904E4"
+        BEGIN
+            VALUE "CompanyName", "Slash & Burn Software\0"
+            VALUE "FileDescription", "Wang 2200 Emulator\0"
+            VALUE "FileVersion", "2.1.0.0\0"
+            VALUE "InternalName", "wangemu\0"
+            VALUE "LegalCopyright", "Slash & Burn Software (c) 2002-2008\0"
+            VALUE "OriginalFilename", "wangemu.exe\0"
+            VALUE "ProductName", "wangemu\0"
+            VALUE "ProductVersion", "2.1.0.0\0"
+            VALUE "Comments", "Have fun!\0"
+        END
+    END
+
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x0409 0x04E4
+    END
+END 
+

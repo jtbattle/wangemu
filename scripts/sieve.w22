@@ -1,0 +1,28 @@
+CLEAR
+
+10 REM A version of the Sieve of Eratosthenes for benchmarking; it counts
+11 REM the number of prime numbers between 3 and 16384.  It is adapted from
+11 REM a near infinitely long chain of derived programs that originated in
+12 REM the September, 1981 Byte magazine.
+13 REM The correct output is 1899 primes.
+
+20 REM A$() contains flags indicating which numbers have divisors or not
+30 REM Because we skip all even numbers, including 2, the first flag, at
+40 REM array offset 1, corresponds to 3.  the second flag is 5, etc.
+50 DIM A$(128)64:REM prime flags
+60 DIM D$(1)1:REM one byte array
+70 DIM F$(1)1:REM constant "F"
+
+80 INIT ("T") A$():INIT ("F") F$()
+90 C=0:REM number of primes
+
+100 FOR I=1 TO 8192
+110 MAT COPY A$()<I,1> TO D$():IF D$(1)="F" THEN 180
+120 P=I+I+1
+130 IF I+P>8192 THEN 170
+140 FOR K=I+P TO 8192 STEP P
+150 MAT COPY F$() TO A$()<K,1>
+160 NEXT K
+170 C=C+1
+180 NEXT I
+190 PRINT C;"primes"

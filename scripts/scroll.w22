@@ -1,0 +1,57 @@
+CLEAR
+
+10 DIM S$(7)64:REM screen image
+20 DIM L$(26,5)7:REM letters of the alphabet
+30 DIM M$64:REM message string
+40 MAT READ L$
+50 INIT (" ") S$()
+60 PRINT HEX(03);
+70 P=1:REM character of message
+80 M$="ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+
+100 REM a new letter
+110 C=1:REM column of character
+120 L=VAL(STR(M$,P,1))-VAL("A")+1
+
+200 REM update the display
+210 PRINT HEX(01);:MAT PRINT S$
+220 REM Scroll left one character.
+REM line 230 is the obvious way to side scroll
+230 %FOR I=1 TO 7:S$(I)=STR(S$(I),2):NEXT I
+REM line 231 is the much faster way to do it
+231 MAT COPY S$()<2,64*7-1> TO S$()
+240 REM append next column of text to the end of screen
+250 IF C>5 THEN 290:REM insert space, advance to next char
+260 C$=L$(L,C)
+270 FOR I=1 TO 7:STR(S$(I),64,1)=STR(C$,I,1):NEXT I
+280 REM update pointers
+290 C=C+1:IF C<9 THEN 210
+300 P=P+1:IF P<=LEN(M$) THEN 110:P=1:GOTO 110
+
+ 999 REM the format is each data item is one column of a char
+1000 DATA "  AAAAA"," A A   ","A  A   "," A A   ","  AAAAA"
+1010 DATA "BBBBBBB","B  B  B","B  B  B","B  B  B"," BB BB "
+1020 DATA " CCCCC ","C     C","C     C","C     C"," C   C "
+1030 DATA "DDDDDDD","D     D","D     D","D     D"," DDDDD "
+1040 DATA "EEEEEEE","E  E  E","E  E  E","E  E  E","E     E"
+1050 DATA "FFFFFFF","F  F   ","F  F   ","F  F   ","F      "
+1060 DATA " GGGGG ","G     G","G     G","G  G  G"," G GGG "
+1070 DATA "HHHHHHH","   H   ","   H   ","   H   ","HHHHHHH"
+1080 DATA "I     I","I     I","IIIIIII","I     I","I     I"
+1090 DATA "     J ","      J","J     J","JJJJJJ ","J      "
+1100 DATA "KKKKKKK","   K   ","  K K  "," K   K ","K     K"
+1110 DATA "LLLLLLL","      L","      L","      L","      L"
+1120 DATA "MMMMMMM"," M     ","  M    "," M     ","MMMMMMM"
+1130 DATA "NNNNNNN"," N     ","  N    ","   N   ","NNNNNNN"
+1140 DATA " OOOOO ","O     O","O     O","O     O"," OOOOO "
+1150 DATA "PPPPPPP","P  P   ","P  P   ","P  P   "," PP    "
+1160 DATA " QQQQQ ","Q     Q","Q   Q Q","Q    QQ"," QQQQQQ"
+1170 DATA "RRRRRRR","R  R   ","R  R   ","R  RR  "," RR  RR"
+1180 DATA " SS  S ","S  S  S","S  S  S","S  S  S"," S  SS "
+1190 DATA "T      ","T      ","TTTTTTT","T      ","T      "
+1200 DATA "UUUUUU ","      U","      U","      U","UUUUUU "
+1210 DATA "VVVV   ","    VV ","      V","    VV ","VVVV   "
+1220 DATA "WWWWWW ","     WW","    W  ","     WW","WWWWWW "
+1230 DATA "XX   XX","  X X  ","   X   ","  X X  ","XX   XX"
+1240 DATA "YY     ","  Y    ","   YYYY","  Y    ","YY     "
+1250 DATA "Z    ZZ","Z   Z Z","Z  Z  Z","Z Z   Z","ZZ    Z"

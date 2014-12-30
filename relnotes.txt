@@ -1,0 +1,186 @@
+============================================================================
+                   Wang 2200 emulator release notes, v2.1
+                             December 12, 2008
+============================================================================
+
+
+---- What is It? ----
+
+This emulates a Wang 2200 system with a choice of three CPU architectures:
+
+    * 2200B CPU  (first generation 2200, with a somewhat limited command set)
+    * 2200T CPU  (the highest end of the first generation 2200's)
+    * 2200VP CPU (2nd generation 2200 CPU architecture)
+
+and a number of periperhals:
+
+    * 6312 (64x16) and 7011 (80x24) CRT controllers
+    * 6367 keyboard controller
+    * either dumb or intelligent disk controller, capable of modeling any
+      2270 floppy disk, 2260 hard disk, and 2280 large hard disk subsystems
+    * configurable printer controller
+
+The emulator is primarily written under Windows XP, but it should also run
+on Vista as well.  Version 2.1 no longer runs on Windows 9x; this is not due
+to the emulator code, nor the wxWidgets library.  Rather it is because the
+code was compiled with Microsoft Visual Studio Express 2008, which refuses
+to create a binary that can run on Windows 9x.  If the code is compiled with
+a different compiler, the emulator will work under Windows 9x.
+
+Due to the contribution of Paul Heller, the emulator now runs natively on Mac
+OS X (10.4.2 at least) as well.  Starting with version 2.1, the OSX version
+is distributed as a universal binary.
+
+The emulator very well might run on Linux via Wine, but it hasn't been tested.
+
+
+---- User-visible Changes ----
+
+*) Added support for large, multiplatter disks and intelligent disk controller
+   logic.  Thanks to Paul Sudzik for supplying the disk controller protocol
+   document and answering my questions as I implemented it.
+
+*) Added ability to configure for 2200B CPU operation.  Thanks to Eilert
+   Brinkmeyer for supplying the ROM images.
+
+*) The printer can now optionally print to real parallel port (Windows only).
+   Thanks to Paul Heller for implementing this feature.
+
+*) Each pair of drives on the status bar is preceded by a unit address label.
+
+*) In the system configuration dialog, there is now a button that appears
+   after any card that has more detailed configuration options.  Currently,
+   only the disk controller needs this button.  It can be used to change the
+   number of drives associated with a disk controller, whether the controller
+   is dumb or intelligent, and whether to warn about certain situations.
+
+*) The system configuration dialog now gives an indication if the
+   configuration is legal even before the OK button is pressed.  Also,
+   if it is legal, it indicates if the change requires a virtual reboot.
+
+*) The CRT window no longer flickers while it is being resized.
+
+*) The disk icon tooltip for an occupied state is now multiline.
+
+*) Right clicking on a disk icon on the status bar brings up a context menu.
+
+*) The default font is now 2:1 dot matrix, instead of system 12 pt font.
+
+*) Revamped the "About" box, inspired by the stock wxAboutBox dialog.
+
+*) script.cpp and tokens.h were updated to include keyword escapes for
+   BASIC-2.
+
+*) Menu items that don't make a lot of sense for non-primary CRTs were
+   removed.
+
+*) Added a bit of margin around the text in the error code pop-up dialog so
+   the text wasn't flush with the window borders.
+
+*) Moved the "show statistics" checkbox off the "Configure Screen" menu and
+   made it an item directly under the Configure menu.
+
+*) The distribution now includes an updated version of the wang virtual disk
+   utility program, wvdutil.py.  As the name suggests, this is a python
+   program, and to use it your system must have python installed.  This
+   program was developed with python 2.5, but no exotic features were used,
+   so it is probably compatible with earlier versions of python, at least
+   back to 2.2 or so.
+
+
+---- Bugs Fixed in this Release ----
+
+*) Made some printer tweaks, including scaling issues  (Paul Heller)
+
+*) Fixed a bug where the user could request to open a file that didn't exist,
+   and it would cause a crash.  wangemu now complains about it.
+
+*) Under OS X, using the print preview feature caused some of the the printer
+   window's menus to get disabled after the preview is closed.  It appears to
+   have been a wx library bug, as it works fine with wx 2.8.9.
+
+*) Removed an assertion in the microcode engine that sometimes fired, yet it
+   wasn't preventing a real error.  This would happen, for example, when
+   running the MEMORY and CPU tests together off the diagnostic disk.  For
+   some reason the POS test would case a BCD add instruction with a "B"
+   operand that wasn't 0-9.  It will still fire when the emulator is built
+   in Debug mode.
+
+*) Fixed the error description table; "I95" was "195", for example.
+
+*) Fixed a couple small one time memory leaks when the emulator is configured
+   with multiple emulated display cards.
+
+*) Each time a disk controller card was selected or deselected, as often as
+   twice per sector operation, the emulator was reading the metadata from the
+   virtual disk file.  this could pentuple the number of file accesses over
+   the minimum.  That metadata is now accessed from a cache.
+
+
+---- Minor Tweaks and Implementation Changes ----
+
+*) added build.txt to outline how to build the emulator from sources
+
+*) added code.txt to outline the code structure of the emulator
+
+*) Updated to wxWidgets 2.8.9 library
+
+*) After 10 years, gave up MSVC++ 6 and switched to the free Microsoft
+   Visual Studio C++ 2008 Express Edition.  Added a .vcproj file.
+
+*) Converted the core emulator to use a class-encapsulated structure.
+   The new classes are Cpu2200t, Cpu2200vp, Host, Scheduler, ScriptFile,
+   System2200, SysCfgState, and Wvd.
+
+*) Now using c++ libs instead of c libs;
+   got rid of lingering malloc/free code;
+   most uses of char* and wxString converted to std::string.
+
+*) There was a large effort to rename files, classes, member functions and
+   variables in a consistent fashion.
+
+*) Converted tabs to spaces in source files.
+
+*) Added an application version resource file so that, under windows, viewing
+   the application's properties provides meaningful information.
+
+*) Generalized the card addressing mechanisms to allow a single card to map
+   to more than one i/o address, which may be useful for disk controllers,
+   and in the future, multifunction cards.
+
+*) Improved modeling of the track-to-track seek times of hard disks.
+
+*) Obtained accurate sector interleave data for a few drive types, and fixed
+   the logical->physical mapping computation
+
+*) Changed timeslicing to be driven from TheApp:OnIdle(), instead of the
+   previous clumsy way of hanging it off the primary CrtFrame.
+
+*) Changed the emu to target 30 fps screen refresh rate instead of 60 fps.
+   This saves cycles without being noticeable.
+
+*) Found that the screen drawing code got dramatically slower starting with
+   with wxWidgets 2.6.3.  Code was added to try and generate the display image
+   via the rawbmp.h interface, but it wasn't faster.  It was tracked down to
+   a code regression in the wx libraries.  After reporting it, vz fixed it
+   for future wx releases.  Meanwhile, this code implemented a work-around
+   for the stock 2.8.9 release.
+
+*) Help/Website now links to www.wang2200.org instead of my personal page.
+
+*) Reworked the fontmap generation code to be cleaner.
+
+*) Now using wxStandardPaths to obtain dir and file configuration.
+
+*) Changed screen refresh control when there are more than one emulated CRT.
+
+*) Got rid of never-used code to read ucode from an external file.
+   Microcode will only ever be compiled in.
+
+
+---- Known Bugs ----
+
+*) In the 2200T CPU mode, the real 2200T has a dummy microinstruction
+   cycle that performs refresh.  This isn't modelled in the emulator,
+   so the emulator is about 3% faster than realtime.
+

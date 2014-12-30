@@ -1,0 +1,44 @@
+REM page 4-33 of the 2200 Maintenence manual says this
+REM about device types:
+REM    0 = parallel ASCII with CR/LF
+REM    1 = serial 2200 cassette
+REM    2 = parallel ASCII with CR but no LF
+REM    3 = disk
+REM    4 = parallel ASCII with no CR generated at end of line
+
+CLEAR
+5 SELECT PRINT 405:REM 4xx turns off auto linefeed
+6 REM Type 4xx is normally associated with the plotter
+10 REM --- Random walk program ---
+11 REM We must home and reposition the cursor for every move
+12 REM because if we use relative cursor positioning the
+13 REM driver spits out CR/LF after every 64 "*"s printed out.
+14 REM
+20 DIM R$64, D$17
+30 INIT (09) R$: INIT (0D) D$
+40 REM first byte of each is 00 to reduce effect by one
+50 STR(R$,1,1),STR(D$,1,1)=HEX(00)
+60 PRINT HEX(03):REM clear screen
+70 GOSUB'1: REM draw outline
+90 X=32:Y=8:GOTO 150:REM Start in the middle
+100 ON INT(RND(1)*4+1) GOTO 110,120,130,140
+110 X=X-1:IF X>1 THEN 115:X=62:PRINT HEX(080808);
+115 PRINT HEX(08);"*";HEX(08);:GOTO 100
+120 X=X+1:IF X<63 THEN 125:X=2:PRINT HEX(0D);
+125 PRINT HEX(09);"*";HEX(08);:GOTO 100
+130 Y=Y-1:IF Y>1 THEN 135:Y=14:PRINT HEX(0C0C0C);
+135 PRINT HEX(0C);"*";HEX(08);:GOTO 100
+140 Y=Y+1:IF Y<15 THEN 145:Y=1:GOTO 150
+145 PRINT HEX(0A);"*";HEX(08);:GOTO 100
+150 PRINT HEX(010D0A); STR(D$,1,Y); STR(R$,1,X); "*"; HEX(08);
+160 GOTO 100
+1990 REM
+2000 REM draw a box around the screen
+2010 DEFFN'1
+2020 PRINT HEX(01);
+2030 FOR X=1 TO 63:PRINT "-";:NEXT X:PRINT HEX(0D0A);
+2040 FOR Y=2 TO 15
+2050 PRINT HEX(86);:FOR X=2 TO 62:PRINT " ";:NEXT X:PRINT HEX(860D0A)
+2060 NEXT Y
+2070 FOR X=1 TO 63:PRINT "-";:NEXT X:PRINT HEX(010A09);
+2080 RETURN

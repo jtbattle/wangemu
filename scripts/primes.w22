@@ -1,0 +1,7 @@
+CLEAR
+10 REM generate list of successive prime numbers, the hard way
+20 N=1:T=1:PRINTUSING 100,N,2
+30 T=T+2:L=INT(SQR(T)):D=3
+40 Q=T/D:IF Q=INT(Q) THEN 30:D=D+2:IF D<=L THEN 40
+50 N=N+1:PRINTUSING 100,N,T:GOTO 30
+100 %Prime ###### is #######

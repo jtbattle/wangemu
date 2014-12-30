@@ -1,0 +1,1330 @@
+// This file contains the logic of the disk controller for IoCardDisk.
+// It is broken out into a separate file simply for clarity.
+
+#include "DiskCtrlCfgState.h"
+#include "IoCardDisk.h"
+#include "Ui.h"         // for UI_Alert()
+#include "Cpu2200.h"
+#include "Scheduler.h"
+#include "System2200.h"
+#include "SysCfgState.h"
+#include "Wvd.h"
+
+#ifdef _DEBUG
+    extern int iodisk_noisy;
+    #define NOISY  (iodisk_noisy) // turn on some alert messages
+    extern int iodisk_dbg;
+    #define DBG    (iodisk_dbg)   // turn on some debug logging
+#else
+    #define NOISY  (0)          // turn on some alert messages
+    #define DBG    (0)          // turn on some debug logging
+#endif
+#ifdef _MSC_VER
+    #pragma warning( disable: 4127 )  // conditional expression is constant
+#endif
+
+
+// after the card selection phase (ABS), the address bus, AB, can contain
+// an arbitrary 8b value without affecting selection.  most cards don't use
+// AB after the ABS strobe, but the disk controllers use it as a sideband.
+// To initiate a new command, the CPU drives AB to 0xA0 and sends a "wakeup"
+// byte to the disk controller, identifying the type of CPU making the
+// connection: 00=2200T, 01=VP, 02=MVP.  the disk controller sends back a
+// status byte indicating if it is ready, and what its capabilities are.
+//
+// the cpu then sets AB to 0x40, indicating entry into the command phase.
+// AB will stay at this value for the rest of the command, unless something
+// goes wrong.  for instance, all command bytes sent by the 2200 are echoed
+// back by the disk controller.  if the 2200 receives one of the echo bytes
+// and it has an unexpected value, the 2200 must abort the command.  it does
+// so by changing the address bus to 0xA0 and retrying the command from the
+// start.
+//
+bool
+IoCardDisk::cax_init()
+{
+    // return true if AB indicates this is command initiation
+    return (m_cpu.getAB() & 0xA0) == 0xA0;
+}
+
+char*
+IoCardDisk::statename(int state)
+{
+    switch (state) {
+        case CTRL_WAKEUP:               return "CTRL_WAKEUP";
+        case CTRL_STATUS1:              return "CTRL_STATUS1";
+        case CTRL_GET_BYTES:            return "CTRL_GET_BYTES";
+        case CTRL_GET_BYTES2:           return "CTRL_GET_BYTES2";
+        case CTRL_SEND_BYTES:           return "CTRL_SEND_BYTES";
+        case CTRL_COMMAND:              return "CTRL_COMMAND";
+        case CTRL_COMMAND_ECHO:         return "CTRL_COMMAND_ECHO";
+        case CTRL_COMMAND_STATUS:       return "CTRL_COMMAND_STATUS";
+        case CTRL_READ1:                return "CTRL_READ1";
+        case CTRL_READ2:                return "CTRL_READ2";
+        case CTRL_READ3:                return "CTRL_READ3";
+        case CTRL_WRITE1:               return "CTRL_WRITE1";
+        case CTRL_WRITE2:               return "CTRL_WRITE2";
+        case CTRL_VERIFY1:              return "CTRL_VERIFY1";
+        case CTRL_VERIFY2:              return "CTRL_VERIFY2";
+        case CTRL_COPY1:                return "CTRL_COPY1";
+        case CTRL_COPY2:                return "CTRL_COPY2";
+        case CTRL_COPY3:                return "CTRL_COPY3";
+        case CTRL_COPY4:                return "CTRL_COPY4";
+        case CTRL_COPY5:                return "CTRL_COPY5";
+        case CTRL_COPY6:                return "CTRL_COPY6";
+        case CTRL_COPY7:                return "CTRL_COPY7";
+        case CTRL_FORMAT1:              return "CTRL_FORMAT1";
+        case CTRL_FORMAT2:              return "CTRL_FORMAT2";
+        case CTRL_FORMAT3:              return "CTRL_FORMAT3";
+        case CTRL_MSECT_WR_START:       return "CTRL_MSECT_WR_START";
+        case CTRL_MSECT_WR_END1:        return "CTRL_MSECT_WR_END1";
+        case CTRL_MSECT_WR_END2:        return "CTRL_MSECT_WR_END2";
+        case CTRL_VERIFY_RANGE1:        return "CTRL_VERIFY_RANGE1";
+        case CTRL_VERIFY_RANGE2:        return "CTRL_VERIFY_RANGE2";
+        case CTRL_VERIFY_RANGE3:        return "CTRL_VERIFY_RANGE3";
+        case CTRL_VERIFY_RANGE4:        return "CTRL_VERIFY_RANGE4";
+        case CTRL_VERIFY_RANGE5:        return "CTRL_VERIFY_RANGE5";
+        case CTRL_HANG:                 return "CTRL_HANG";
+        case CTRL_STATUS:               return "CTRL_STATUS";
+        default: /*ASSERT(0);*/         return "CTRL_???";
+    }
+}
+
+
+// indicate if the controller state machine is idle or busy
+bool
+IoCardDisk::inIdleState()
+{
+    if (m_state == CTRL_WAKEUP)
+        return true;
+    if ((m_state == CTRL_COMMAND) && (m_state_cnt==0))
+        return true;
+    return false;
+}
+
+
+// report if a given drive is occupied and has media that is suitable
+// for the intelligent disk protocol, namely disks with > 32K sectors,
+// or multiplatter disks.  these aren't necessarily opposite, as a
+// drive might be empty.
+bool
+IoCardDisk::driveIsSmart(int drive)
+{
+    return (drive >= numDrives())                   ||
+           (m_d[drive].state == DRIVE_EMPTY)        ||
+           (m_d[drive].wvd->getNumPlatters() > 1)   ||
+           (m_d[drive].wvd->getNumSectors() > 32768);
+}
+
+bool
+IoCardDisk::driveIsDumb(int drive)
+{
+    return (drive >= numDrives())                    ||
+           (m_d[drive].state == DRIVE_EMPTY)         ||
+           (m_d[drive].wvd->getNumPlatters() == 1)   ||
+           (m_d[drive].wvd->getNumSectors() <= 32768);
+}
+
+
+// helper routine to set the conditions to receive and echo bytes from the host
+void
+IoCardDisk::getBytes(int count, disk_sm_t return_state)
+{
+    m_calling_state = m_state;
+    m_return_state  = return_state;
+    m_byte_count    = count;
+    m_get_bytes_ptr = 0;
+    m_state         = CTRL_GET_BYTES;
+}
+
+
+// helper routine to set the conditions to send bytes to the host
+void
+IoCardDisk::sendBytes(int count, disk_sm_t return_state)
+{
+    m_calling_state  = m_state;
+    m_return_state   = return_state;
+    m_byte_count     = count;
+    m_send_bytes_ptr = 0;
+    m_state          = CTRL_SEND_BYTES;
+}
+
+
+// this is a centralized place to update emulation state of the disk controller.
+// this is event driven.  the events that advance state are:
+//    reset                        (event == EVENT_RESET)
+//    cpu sent a byte              (event == EVENT_OBS)
+//    cpu ready to receive a byte  (event == EVENT_IBS)
+//
+bool
+IoCardDisk::advanceState(disk_event_t event, const int val)
+{
+    bool poll_before = (!m_cpb && !m_card_busy);
+    bool rv = advanceStateInt(event, val);
+    bool poll_after  = (!m_cpb && !m_card_busy);
+
+    if (!poll_before && poll_after)
+        checkDiskReady();  // causes reentrancy to this function
+
+    return rv;
+}
+
+bool
+IoCardDisk::advanceStateInt(disk_event_t event, const int val)
+{
+    bool rv = false;  // return value for EVENT_IBS_POLL
+
+    if (DBG > 1) {
+        string msg;
+        switch (event) {
+            case EVENT_RESET:     msg = "EVENT_RESET";     break;
+            case EVENT_OBS:       msg = "EVENT_OBS";       break;
+            case EVENT_IBS_POLL:  msg = "EVENT_IBS_POLL";  break;
+            case EVENT_DISK:      msg = "EVENT_DISK";      break;
+            default:              msg = "???";             break;
+        }
+        dbglog("State %s, received %s\n", statename(m_state), msg.c_str());
+    }
+
+    // init things on reset
+    if (event == EVENT_RESET) {
+        if (DBG > 2) dbglog("Reset\n");
+        m_state = CTRL_WAKEUP;
+        m_selected = false;
+        setBusyState(false);
+        return rv;
+    }
+
+    // the 2200 sets the address bus to 0xA0 to initiate the command
+    // sequence.  this happens in normal conditions, but it can also
+    // happen if the 2200 detects a problem in the handshake in order
+    // to abort whatever command is going on.
+    if (event == EVENT_OBS && cax_init()) {
+        if (!inIdleState()) {
+            // we are aborting something in progress
+                if (DBG > 0)
+                    dbglog("Warning: CAX aborted command state %s, cnt=%d\n", statename(m_state), m_bufptr);
+        }
+        m_state = CTRL_WAKEUP;
+        setBusyState(false);
+    }
+
+    // this is for diagnostic purposes only
+    // if a state which isn't expecting an OBS gets one, report it
+    bool expecting_obs;
+    switch (m_state) {
+        case CTRL_WAKEUP:
+        case CTRL_GET_BYTES:
+        case CTRL_COMMAND:
+        case CTRL_READ1:
+        case CTRL_WRITE1:
+        case CTRL_VERIFY1:
+        case CTRL_COPY4:
+        case CTRL_FORMAT1:
+        case CTRL_MSECT_WR_START:
+        case CTRL_MSECT_WR_END1:
+        case CTRL_VERIFY_RANGE3:
+            expecting_obs = true;
+            break;
+        default:
+            expecting_obs = false;
+            break;
+    }
+    if (!expecting_obs && (event == EVENT_OBS)) {
+        if (NOISY > 0)
+            UI_Info("Unexpected OBS in state %s", statename(m_state));
+    }
+
+    switch (m_state) {
+
+    // ---------------------------- WAKEUP ----------------------------
+
+    // in this state we waiting for the start of a command sequence.
+    // for us to receive an OBS strobe implies we've already been selected.
+    // We expect the CAX condition (namely, AB=0xA0, although at least some
+    // of the early disk controllers only ensure A8=A6=1).  If CAX isn't
+    // true, something is wrong.
+    // The data sent along with the CAX && OBS condition is:
+    //
+    //    0x00: Model 'T' hardware or PROM mode on other 2200 system.
+    //          Data transmission should be in slow mode.
+    //
+    //    0x01: 2200 VP machine.  Use fast data transmission mode.
+    //
+    //    0x02: 2200 MVP machine.  Use fast data transmission mode.
+    //
+    case CTRL_WAKEUP:
+        ASSERT(m_card_busy == false);
+        if (event == EVENT_OBS) {
+            if (cax_init()) {
+                // we must be selected if we got the OBS
+                setBusyState(false);
+                m_host_type = val;
+                // we act dumb if configured that way, or if host is 2200T
+                switch (m_host_type) {
+                    default:
+                        ASSERT(0);
+                    case 0x00: // 2200 T
+                        m_acting_intelligent = false;
+                        break;
+                    case 0x01: // 2200 VP
+                    case 0x02: // 2200 MVP
+                        switch (intelligence()) {
+                            default:
+                                ASSERT(0);
+                                // fall through
+                            case DiskCtrlCfgState::DISK_CTRL_DUMB:
+                                m_acting_intelligent = false;
+                                break;
+                            case DiskCtrlCfgState::DISK_CTRL_INTELLIGENT:
+                                m_acting_intelligent = true;
+                                break;
+                            case DiskCtrlCfgState::DISK_CTRL_AUTO:
+                                // if we know that all occupied drives are
+                                // dumb, or all are smart, there is a clear
+                                // answer to give.  if there is a mix of disks,
+                                // we don't know the right choice until after
+                                // we've received the command (and remember
+                                // that COPY addresses two different drives,
+                                // which might be a mix of dumb and smart),
+                                // but that comes after this WAKEUP phase.
+                                if (driveIsDumb(0) && driveIsDumb(1) &&
+                                    driveIsDumb(2) && driveIsDumb(3) ) {
+                                    m_acting_intelligent = false;
+                                } else if (driveIsSmart(0) && driveIsSmart(1) &&
+                                           driveIsSmart(2) && driveIsSmart(3) ) {
+                                    m_acting_intelligent = true;
+                                } else {
+                                    // who knows what will happen?
+                                    // hope for the best...
+                                    m_acting_intelligent = true;
+                                }
+                                break;
+                        }
+                        break;
+                }
+                if ((NOISY > 0) && (m_host_type > 0x02))
+                    UI_Warn("CTRL_WAKEUP got bad host type of 0x%02x", val);
+                m_state = CTRL_STATUS1;
+            } else {
+                if (NOISY > 0)
+                    UI_Warn("Unexpected cax condition in WAKEUP state");
+            }
+        }
+        break;
+
+    // the controller is expected to tell the 2200 whether it is operational,
+    // and whether it is a dumb or intelligent controller.
+    //    0x01 == drive error (eg, it failed self-diagnostics)
+    //            this results in an I90 error code.
+    //    0xC0 == dumb controller
+    //    0xD0 == smart controller
+    case CTRL_STATUS1:
+        ASSERT(m_card_busy == false);
+        if (event == EVENT_IBS_POLL) {
+            // indeed, we have data
+            m_byte_to_send = (m_acting_intelligent) ? 0xD0 : 0xC0;
+            rv = true;
+            m_state_cnt = 0;    // accumulate command header bytes
+            m_state = CTRL_COMMAND;
+        }
+        break;
+
+    // --------------------------- GET_BYTES ---------------------------
+    // This subroutine waits for m_byte_count bytes to arrive, and echoes
+    // each one back to the host.  the bytes are saved in m_data_get[].
+    // When all the bytes have been received, it returns to m_return_state.
+
+    case CTRL_GET_BYTES:
+        ASSERT(m_card_busy == false);
+        if (event == EVENT_OBS) {
+            m_get_bytes[m_get_bytes_ptr] = (uint8)val;
+            m_state = CTRL_GET_BYTES2;
+        }
+        break;
+
+    case CTRL_GET_BYTES2:
+        if (event == EVENT_IBS_POLL) {
+            rv = true;  // we have data to return
+            m_byte_to_send = m_get_bytes[m_get_bytes_ptr++];
+            m_state = (m_get_bytes_ptr < m_byte_count) ? CTRL_GET_BYTES
+                                                       : m_return_state;
+        }
+        break;
+
+    // --------------------------- SEND_BYTES ---------------------------
+    // This subroutine sends m_byte_count bytes to the host.
+    // The bytes come from m_data_send[].
+    // When all the bytes have been received, it returns to m_return_state.
+
+    case CTRL_SEND_BYTES:
+        ASSERT(m_card_busy == false);
+        if (event == EVENT_IBS_POLL) {
+            rv = true;
+            m_byte_to_send = m_send_bytes[m_send_bytes_ptr++];
+            if (m_send_bytes_ptr >= m_byte_count)
+                m_state = m_return_state;
+        }
+        break;
+
+    // ---------------------------- COMMAND ----------------------------
+
+    // The address bus will be 0x40 (instead of 0xA0) now.
+    // We are receiving a sequence of header bytes, each of which is echoed
+    // back to the 2200 as an integrity check.  For normal commands, the
+    // bytes are:
+    //
+    //     byte 0: command byte
+    //     byte 1: 1st sector byte  (most significant)
+    //     byte 2: 2nd sector byte
+    //     byte 3: 3rd sector byte  (only for intelligent disk controllers)
+    //
+    // Byte 0, the command byte, has these packed fields:
+    //
+    //     C C C R   H H H H
+    //
+    //     CCC = 000: read command
+    //         = 010: write command
+    //         = 100: read after write
+    //         = 001: special command (intelligent controllers only)
+    //
+    //     R = 0: fixed drive
+    //       = 1: removable drive
+    //
+    //     HHHH = head (platter) for drives with addressable platters
+    //
+    // If this is a special command, byte 1 contains the special command
+    // encoding.  The number of meaning of the bytes after that depend
+    // on which special command is being processed.
+    //
+    case CTRL_COMMAND:
+        ASSERT(m_card_busy == false);
+        if (event == EVENT_OBS) {
+            m_header[m_state_cnt] = (uint8)val;
+            m_state = CTRL_COMMAND_ECHO;
+            if (m_state_cnt == 0) {
+                m_command =  (val >> 5) & 7;
+                m_drive   = ((val >> 4) & 1) + ((m_primary) ? 0 : 2);
+                m_platter =  (val >> 0) & 15;
+                m_xfer_length =
+                    (m_acting_intelligent) ? 4  // cmd, 3 secaddr bytes
+                                           : 3; // cmd, 2 secaddr bytes
+#if 0
+                // check that the disk in the indicated drive is compatible
+                // with the intelligence level we are operating at
+                if (m_acting_intelligent && driveIsDumb(m_drive)) {
+this is a good point to complain, but we don't want to complain on every
+disk operation
+                } else if (!m_acting_intelligent && driveIsSmart(m_drive)) {
+this is a good point to complain, but we don't want to complain on every
+disk operation
+                }
+#endif
+            } else if (m_state_cnt == 1 && m_command == CMD_SPECIAL) {
+                // CMD_SPECIAL has variable length headers
+                m_special_command = m_header[1];
+                switch (m_special_command) {
+                case SPECIAL_COPY:
+                case SPECIAL_VERIFY_SECTOR_RANGE:
+                        // command, subcommand, 3 secaddr bytes (start sector)
+                        m_xfer_length = 5;
+                        break;
+                case SPECIAL_FORMAT:
+                case SPECIAL_MULTI_SECTOR_WRITE_START:
+                case SPECIAL_MULTI_SECTOR_WRITE_END:
+                        // command, subcommand
+                        m_xfer_length = 2;
+                        break;
+                case SPECIAL_READ_SECTOR_AND_HANG:
+                        // unknown format
+                        m_xfer_length = 2;
+                        break;
+                case SPECIAL_STATUS_AND_PROM_REV:
+                        // unknown format
+                        m_xfer_length = 2;
+                        break;
+                default:
+                    UI_Warn("ERROR: disk controller received unknown special command 0x%02x",
+                             m_special_command);
+                    m_state_cnt = 0;
+                    m_state = CTRL_COMMAND;
+                    break;
+                }
+            }
+        }
+        break;
+
+    // every command byte we receive is echo back for integrity checks
+    case CTRL_COMMAND_ECHO:
+        if (event == EVENT_IBS_POLL) {
+            rv = true;  // we have data to return
+            m_byte_to_send = m_header[m_state_cnt++];
+            m_state = CTRL_COMMAND;  // may be overridden next
+            if (m_state_cnt == m_xfer_length) {
+                m_state_cnt = 0;        // prepare it for the next command
+
+                // header is complete -- decode it, presuming READ, WRITE, VERIFY
+                if (m_acting_intelligent)
+                    m_secaddr = (m_header[1] << 16) |
+                                (m_header[2] <<  8) |
+                                 m_header[3];
+                else
+                    m_secaddr = (m_header[1] << 8) | m_header[2];
+
+                if (m_command == CMD_SPECIAL) {
+
+                    m_secaddr = (m_header[2] << 16) |
+                                (m_header[3] <<  8) |
+                                 m_header[4];
+
+                    // a COPY is supposed to always be followed by READ
+                    if (m_copy_pending != false) {
+                        UI_Warn("Disk controller got unexpected command following COPY\n"
+                                 "Ignoring the COPY command");
+                        m_copy_pending = false;
+                    }
+
+                    switch (m_special_command) {
+                    case SPECIAL_COPY:
+                            m_state = CTRL_COPY1;
+                            break;
+                    case SPECIAL_FORMAT:
+                            m_state = CTRL_FORMAT1;
+                            break;
+                    case SPECIAL_MULTI_SECTOR_WRITE_START:
+                            m_state = CTRL_MSECT_WR_START;
+                            break;
+                    case SPECIAL_MULTI_SECTOR_WRITE_END:
+                            m_state = CTRL_MSECT_WR_END1;
+                            break;
+                    case SPECIAL_VERIFY_SECTOR_RANGE:
+                            m_range_platter = m_platter;
+                            m_range_drive   = m_drive;
+                            m_range_start   = m_secaddr;
+                            m_state = CTRL_VERIFY_RANGE1;
+                            break;
+                    case SPECIAL_READ_SECTOR_AND_HANG:
+                            m_state = CTRL_HANG;
+                            break;
+                    case SPECIAL_STATUS_AND_PROM_REV:
+                            m_state = CTRL_STATUS;
+                            break;
+                    default:
+                        ASSERT(0);
+                        m_state = CTRL_COMMAND;
+                        break;
+                    }
+
+                } else if (m_command == CMD_READ && m_copy_pending) {
+                    // a COPY command should be followed by a READ command.
+                    // the READ is really a means of providing more parameters.
+                    m_dest_drive   = m_drive;
+                    m_dest_platter = m_platter;
+                    m_dest_start   = m_secaddr;
+                    m_copy_pending = false;
+                    m_command      = CMD_SPECIAL;  // tcbTrack cares about this
+                    m_state = CTRL_COPY3;
+
+                } else {
+                    // (m_command != CMD_SPECIAL) -- READ, WRITE, or VERIFY
+                    ASSERT(m_copy_pending == false);
+
+                    m_state = CTRL_COMMAND_STATUS;
+
+                    // spin up the drive (if req'd); step to the target track
+                    if ((m_drive >= numDrives()) ||  // non-existant
+                        (m_secaddr >= m_d[m_drive].wvd->getNumSectors())) {
+                        setBusyState(false);  // empirically, returns immediately
+                    } else {
+                        // even if empty, we wait for motor to spin up
+                        setBusyState(true);
+                        wvdStepToTrack();
+                        wvdTickleMotorOffTimer();
+                    }
+                } // not CMD_SPECIAL
+            }
+        }
+        break;
+
+    // return status byte, indicating if the disk controller is ready to
+    // carry out the requested command
+    case CTRL_COMMAND_STATUS:
+
+        if (event == EVENT_DISK) {
+            ASSERT(m_card_busy == true);
+            // provoke IBS
+            setBusyState(false);
+        } else if (event == EVENT_IBS_POLL) {
+            if ((m_drive >= numDrives()) ||
+                (m_platter >= m_d[m_drive].wvd->getNumPlatters())) {
+                // sudzik doc states:
+                //    0x02 -> I91, if drive is not in ready state,
+                //                 or if the head selection isn't legal
+                m_byte_to_send = 0x02;
+            } else if (m_secaddr >= m_d[m_drive].wvd->getNumSectors()) {
+                // 0x01 -> ERR 64 (2200T) or I98 (VP) : sector not on disk
+                m_byte_to_send = 0x01;
+            } else if (m_d[m_drive].state == DRIVE_EMPTY) {
+                m_byte_to_send = 0x01;      // sector not on disk
+            } else {
+                m_byte_to_send = 0x00;  // OK
+                // other values tested out on 2200T emulator:
+                //    0x02 -> ERR 65 (disk hardware malfunction)
+                //    0x04 -> ERR 66 (format key engaged)
+            }
+            rv = true;
+
+            m_bufptr = 0;  // we'll be reading or writing it shortly
+            if (m_byte_to_send != 0x00) {
+                // we've bailed out
+                m_state = CTRL_COMMAND;
+            } else  {
+                // let the UI know that selection might have changed
+                for(int d=0; d<numDrives(); d++)
+                    UI_diskEvent(m_slot, d);
+
+                switch (m_command) {
+                case CMD_READ:
+                    if (DBG > 1) dbglog("CMD: CMD_READ, drive=%d, head=%d, sector=%d\n",
+                                        m_drive, m_platter, m_drive, m_secaddr);
+                    m_state = CTRL_READ1;
+                    break;
+                case CMD_WRITE:
+                    if (DBG > 1) dbglog("CMD: CMD_WRITE, drive=%d, head=%d, sector=%d\n",
+                                        m_drive, m_platter, m_secaddr);
+                    m_state = CTRL_WRITE1;
+                    break;
+                case CMD_VERIFY:
+                    if (DBG > 1) dbglog("CMD: CMD_VERIFY, drive=%d, head=%d, sector=%d\n",
+                                        m_drive, m_platter, m_secaddr);
+                    m_compare_err = false;
+                    m_state = CTRL_READ1;  // yes, READ1 -- it shares logic
+                    break;
+                default:
+                    ASSERT(0);
+                    m_state = CTRL_COMMAND;
+                    break;
+                }
+            }
+        }
+        break;
+
+    // ---------------------------- READ ----------------------------
+
+    // after the 2nd status byte, the 2200 sends a byte with unknown purpose.
+    // perhaps it is simply a chance for the 2200 to cancel the command,
+    // as a fair amount of time may have passed due to motor spin-up and such.
+    case CTRL_READ1:
+        if (event == EVENT_OBS) {
+            if ((NOISY > 0) && (val != 0x00))
+                UI_Warn("CTRL_READ1 received mystery byte of 0x%02x", val);
+            m_state = CTRL_READ2;
+            bool ok = iwvdReadSector();  // really read the data
+            m_byte_to_send = (ok) ? 0x00 : 0x01;
+            // 0x00 = status OK
+            // 0x01 -> ERR 71/I95  (cannot find sector/protected platter)
+            // 0x02 -> ERR 67/I93  (disk format error)
+            // 0x04 -> ERR 72/I96  (cyclic read error)
+            setBusyState(false);
+        }
+        break;
+
+    // by now the sector that was requested has been read off the disk,
+    // and we return a status code indicating if it was successful
+    case CTRL_READ2:
+        if (event == EVENT_IBS_POLL) {
+            // send status byte after having read the data
+            rv = true;
+            m_bufptr = 0;   // next byte to send
+            // up to now, compare has shared read's path
+            m_state = (m_command == CMD_READ) ? CTRL_READ3
+                                              : CTRL_VERIFY1;
+        }
+        break;
+
+    // return all the bytes that were read, including the final LRC byte
+    case CTRL_READ3:
+        rv = true;
+        m_byte_to_send = m_buffer[m_bufptr++];   // next byte
+        m_state = (m_bufptr < 257) ? CTRL_READ3 : CTRL_COMMAND;
+        break;
+
+    // ---------------------------- WRITE ----------------------------
+
+    // expect to receive 256 data bytes plus one LRC byte
+    case CTRL_WRITE1:
+        if (event == EVENT_OBS) {
+            m_buffer[m_bufptr++] = (uint8)val;
+            if (m_bufptr == 257) {
+                int cksum = 0;
+                for(int i=0; i<256; i++)
+                    cksum += m_buffer[i];
+                cksum = cksum & 0xFF;
+                if (cksum != val) {
+                    m_byte_to_send = 0x04;  // error status
+                    // 0x00 -> OK
+                    // 0x01 -> ERR 71  (cannot find sector/protected platter)
+                    // 0x02 -> ERR 67  (disk format error)
+                    // 0x04 -> ERR 72  (cyclic read error)
+                } else if (m_d[m_drive].wvd->getWriteProtect()) {
+                    // 0x01 -> ERR 71  (cannot find sector/protected platter)
+                    m_byte_to_send = 0x01;  // error status
+                } else {
+                    // actually update the virtual disk
+                    bool ok = iwvdWriteSector();
+                    m_byte_to_send = (ok) ? 0x00 : 0x02;
+                }
+                // finished receiving data and LRC, send status byte
+                // after the sector has been reached
+                m_state = CTRL_WRITE2;
+                if (realtime_disk()) {
+                    setBusyState(true);
+                    wvdSeekSector();    // we are already on the right track
+                } else {
+                    setBusyState(false);
+                }
+            } // if (last byte of transfer)
+        } // OBS
+        break;
+
+    case CTRL_WRITE2:
+        if (event == EVENT_DISK) {
+            m_state = CTRL_WRITE2;
+            setBusyState(false);
+        } else if (event == EVENT_IBS_POLL) {
+            rv = true;  // value to return was set in WRITE1
+            m_state = CTRL_COMMAND;
+        }
+        break;
+
+    // ---------------------------- VERIFY ----------------------------
+
+    case CTRL_VERIFY1:
+        if (event == EVENT_OBS) {
+            // check incoming data against the sector data we read;
+            // the 257th byte is an LRC on the host data
+            if ((m_bufptr < 256) &&         // check just the data
+                (m_buffer[m_bufptr] != val))
+                m_compare_err = true;       // mismatch
+            m_bufptr++;
+            if (m_bufptr == 257) {
+                // finished receiving data and LRC, now send status byte
+                m_byte_to_send = (m_compare_err) ? 0x01 : 0x00;
+                // 0x00 -> OK
+                // 0x01,0x02,0x03,0x04,0x08,0x10 -> ERR 85 (read after write failure)
+                // 0x20,0x40,0x80 -> like 0x00
+            #if 1
+                // this is the right thing to do, although the disk controller
+                // microcode in the Module Repair Guide #2 ignores the LRC byte
+                int cksum = 0;
+                for(int i=0; i<256; i++)
+                    cksum = (cksum + m_buffer[i]) & 0xFF;
+                if (cksum != val)
+                    m_byte_to_send = 0x04;
+            #endif
+                m_state = CTRL_VERIFY2;
+            }
+        }
+        break;
+
+    case CTRL_VERIFY2:
+        if (event == EVENT_IBS_POLL) {
+            rv = true;  // return m_byte_to_send from previous state
+        }
+        m_state = CTRL_COMMAND;
+        break;
+
+    // ------------------------------- COPY -------------------------------
+    // the copy command copies a range of sectors from one platter to
+    // another location on the same platter, or to a different platter.
+    // these copies are done within the controller, without shuffling
+    // the data through the 2200 processor.
+    //
+    // the command sequence is somewhat complicated.  first, the source
+    // start and end sectors are communicated:
+    //
+    //     receive
+    //        byte 0: <special command, source drive, head>
+    //        byte 1: <special command "copy" token>
+    //        byte 2-4: source start sector
+    //     send status
+    //        00=ok, 01=bad sector address, 02=not ready or bad head selection
+    //     receive
+    //        byte 5-7: source end sector
+    //     send status
+    //        00=ok, 01=bad sector address, 02=not ready or bad head selection
+    //
+    // next, the controller is re-addressed, and a read command sequence
+    // is issued, but with the following interpretation:
+    //     receive:
+    //        byte 0: <normal read command, dest drive, head>
+    //        byte 1-3: source start sector
+    //     send status:
+    //        00=ok, 01=bad sector range, 02=not ready or bad head selection
+    //     receive:
+    //        00 byte
+    //     drop ready, complete the copy
+    //     raise ready, send status:
+    //        00=ok, 01=dest is write protected, 02=an error occurred
+    //
+    // As we are modelling an intelligent disk controller, assume there is
+    // a source track buffer and a dest track buffer to minimize on the
+    // amount of head shuttling.  For the 2280, that would be two 16KB
+    // buffers, not unreasonable for the 1979 date that it was introduced.
+    //
+    // The copy algorithm approximates what a real disk controller would do,
+    // and doesn't attempt to do a sector-by-sector modeling.
+    //
+    // 1) select source disk
+    //    set a timer to seek to the next source track, plus one revolution
+    // 2) select dest disk
+    //    set a timer to seek to the next dest track, plus one revolution
+    // 3) read all of the sectors in the source track, copy them to their
+    //    destination for real.  increment source track counter,
+    //    and return to step #1 or drop busy and quit
+
+    // send status after the source start
+    case CTRL_COPY1:
+        m_range_drive   = m_drive;
+        m_range_platter = m_platter;
+        m_range_start   = m_secaddr;
+        if (event == EVENT_IBS_POLL) {
+            rv = true;
+            if (m_drive >= numDrives()) {
+                m_byte_to_send = 0x01;
+            } else {
+                int num_platters = m_d[m_drive].wvd->getNumPlatters();
+                int num_sectors  = m_d[m_drive].wvd->getNumSectors();
+                m_byte_to_send = (m_d[m_drive].state == DRIVE_EMPTY) ? 0x01
+                               : (m_range_start   >= num_sectors)    ? 0x01
+                               : (m_range_platter >= num_platters)   ? 0x02
+                                                                     : 0x00;
+            }
+            if (m_byte_to_send == 0x00) {
+                getBytes(3, CTRL_COPY2);
+            } else {
+                m_state = CTRL_COMMAND;
+            }
+        }
+        break;
+
+    // look at the source end sector and return status
+    case CTRL_COPY2:
+        m_range_end = (m_get_bytes[0] << 16) |
+                      (m_get_bytes[1] <<  8) |
+                       m_get_bytes[2];
+        if (event == EVENT_IBS_POLL) {
+            rv = true;
+            int num_sectors = m_d[m_drive].wvd->getNumSectors();
+            m_byte_to_send = (m_d[m_drive].state == DRIVE_EMPTY) ? 0x01
+                           : (m_range_end >= num_sectors)        ? 0x01
+                                                                 : 0x00;
+            m_copy_pending = (m_byte_to_send == 0x00);
+        }
+        // we now return to normal command interpretation.
+        // if the next command is a read and m_copy_pending is true,
+        // the story continues at CTRL_COPY3.
+        m_state = CTRL_COMMAND;
+        break;
+
+    // the header of the READ command contains the destination of the copy.
+    // we must ensure the command is legal, and return status indicating this.
+    case CTRL_COPY3:
+        if (event == EVENT_IBS_POLL) {
+            int sector_count = m_range_end - m_range_start + 1;
+            int final_dst = m_secaddr + sector_count - 1;
+            rv = true;
+            if (m_drive >= numDrives()) {
+                m_byte_to_send = 0x01;
+            } else {
+                int num_platters = m_d[m_drive].wvd->getNumPlatters();
+                int num_sectors  = m_d[m_drive].wvd->getNumSectors();
+                m_byte_to_send = (m_d[m_drive].state == DRIVE_EMPTY) ? 0x01
+                               : (final_dst >= num_sectors)          ? 0x01
+                               : (m_platter >= num_platters)         ? 0x02
+                                                                     : 0x00;
+            }
+            m_state = CTRL_COPY4;
+        }
+        break;
+
+    // we expect to receive a 0x00 byte here from the 2200.
+    // the copy doesn't start until we get this token.
+    case CTRL_COPY4:
+        if (event == EVENT_OBS) {
+            if ((NOISY > 0) && (val != 0x00))
+                UI_Warn("CTRL_COPY4 received mystery byte of 0x%02x", val);
+            if (m_d[m_drive].wvd->getWriteProtect()) {
+                m_byte_to_send = 0x01;  // signal write protect
+                m_state = CTRL_COPY7;
+            } else {
+                setBusyState(true);
+                for(int d=0; d<numDrives(); d++)
+                    UI_diskEvent(m_slot, d);
+                m_drive = m_range_drive;
+                m_state = CTRL_COPY5;
+                // seek the first track
+                m_drive   = m_range_drive;
+                m_secaddr = m_range_start;
+                wvdStepToTrack();
+            }
+        }
+        break;
+
+    // the source head has reached the target track.
+    // model the delay of one revolution for reading the source track,
+    // plus the seek time for the destination track.
+    // this is OK if src and dst are on the same disk pack, but if they are
+    // separate drives, a truly intellgent controller would overlap the seek.
+    // on the other hand, if they are on separate drives, the seek times are
+    // minimal after the first one (always to adjacent track).
+    case CTRL_COPY5:
+        {
+            // model the delay of one revolution for reading the source track,
+            // plus the delay of stepping to the destination track.
+            // this isn't right if the src and dst platters have a different
+            // number of sectors/track.
+            int src_ticks_per_trk = m_d[m_range_drive].ticks_per_sector
+                                  * m_d[m_range_drive].sectors_per_track;
+            int dst_cur_track = m_dest_start
+                              / m_d[m_dest_drive].sectors_per_track;
+
+            // wvdGetTicksToTrack() and wvdSeekTrack() need m_drive set
+            m_drive = m_dest_drive;
+            for(int d=0; d<numDrives(); d++)
+                UI_diskEvent(m_slot, d);
+
+            int delay = src_ticks_per_trk  // time reading source track
+                      + wvdGetTicksToTrack(dst_cur_track);  // seeking dst track
+            m_d[m_dest_drive].track = dst_cur_track;
+
+            m_state = CTRL_COPY6;
+            wvdTickleMotorOffTimer();  // make sure motor keeps going
+            wvdSeekTrack(delay);
+        }
+        break;
+
+    // we get called when the destination track has been reached.
+    // in this state we actually carry out the copy of all the sectors from
+    // the source track to the dest disk.  to keep things simple, we ignore
+    // what happens if the src and dst disks don't have the same sectors/track.
+    case CTRL_COPY6:
+        {
+            int src_sec_per_trk    = m_d[m_range_drive].sectors_per_track;
+            int src_cur_track      = m_range_start / src_sec_per_trk;
+            int first_sec_of_track = src_cur_track * src_sec_per_trk;
+            int last_sec_of_track  = first_sec_of_track + src_sec_per_trk - 1;
+            int dst_ticks_per_trk  = m_d[m_dest_drive].ticks_per_sector
+                                   * m_d[m_dest_drive].sectors_per_track;
+            int first = std::max(m_range_start, first_sec_of_track);
+            int last  = std::min(m_range_end,    last_sec_of_track);
+            int count = last - first + 1;
+
+            // copy the source track to the destination track(s)
+            bool ok = true;
+            m_byte_to_send = 0x00;
+            uint8 data[256];
+
+            for(int n=0; ok && (n < count); n++) {
+                ok = m_d[m_range_drive].wvd->readSector
+                                    (m_range_platter, m_range_start+n, data);
+                if (!ok) {
+                    m_byte_to_send = 0x02;  // generic error
+                } else if (m_d[m_drive].wvd->getWriteProtect()) {
+                    m_byte_to_send = 0x01;  // write protect
+                } else {
+                    ok = m_d[m_dest_drive].wvd->writeSector
+                                    (m_dest_platter, m_dest_start+n, data);
+                    if (!ok)
+                        m_byte_to_send = 0x02;  // generic error
+                }
+            }
+
+            // update sector pointers with number of sectors copied
+            m_range_start += count;
+            m_dest_start  += count;
+
+            // model the delay of one revolution for writing the dest track,
+            // plus whatever delays are incurred for stepping to the next
+            // source track
+            if (ok && (m_range_start <= m_range_end)) {
+                m_state = CTRL_COPY5;
+                // account for one rotation of disk, plus step time
+                for(int d=0; d<numDrives(); d++)
+                    UI_diskEvent(m_slot, d);
+                m_drive = m_range_drive;
+                int delay = dst_ticks_per_trk
+                          + wvdGetTicksToTrack(src_cur_track+1);
+                m_d[m_drive].track = src_cur_track+1;
+                wvdTickleMotorOffTimer();  // make sure motor keeps going
+                wvdSeekTrack(delay);
+            } else {
+                // either success or failure
+                m_state = CTRL_COPY7;
+                setBusyState(false);
+            }
+        }
+        break;
+
+    // everything is done; we must return final status
+    // 00=ok, 01=write protect, 02=format (or other) error
+    // (set in previous state)
+    case CTRL_COPY7:
+        if (event == EVENT_IBS_POLL)
+            rv = true;
+        m_state = CTRL_COMMAND;
+        break;
+
+    // ------------------------------ FORMAT ------------------------------
+    // the dumb disk controllers don't have a software-controlled mechanism
+    // for formatting a drive.  in some ways, this is good, since there is
+    // no way for an errant program to format a drive.  in such systems a
+    // front panel key was used to format a disk in the drive.
+    //
+    // in the smart disk controllers, the formatting process also detected
+    // bad sectors and remapped them to spare sectors on the drive.  in this
+    // emulation, there is no such thing as a bad sector, so there is no
+    // such mapping.
+    //
+    // the command stream looks like this:
+    //     receive
+    //        byte 0: <special command, source drive, head>
+    //        byte 1: <special command "format" token>
+    //        byte 2: unused 00 byte  (not echoed!)
+    //     drop ready, perform operation
+    //     raise ready, send status
+    //        00=ok, 01=bad sector address, 02=not ready or bad head selection
+    //
+    // We model the format operation's timing a track at a time for simplicity.
+    //
+    // 1) select disk.
+    //    set a timer to seek to the next track, plus one disk revolution
+    // 2) erase all sectors of the track.
+    //    increment track counter, and return to step 1 or drop busy and quit
+
+    // we have received CMD_SPECIAL and the SPECIAL_FORMAT bytes, and are
+    // expecting the 0x00 byte. the 0x00 bytes it isn't echoed.
+    case CTRL_FORMAT1:
+        if (event == EVENT_OBS) {
+            if ((NOISY > 0) && (val != 0x00))
+                UI_Warn("FORMAT1 was expecting a 0x00 padding byte, but got 0x%02x",val);
+            if (m_drive >= numDrives()) {
+                // bad drive selection
+                m_byte_to_send = 0x01;
+                m_state = CTRL_FORMAT3;
+            } else {
+                setBusyState(true);
+                m_state = CTRL_FORMAT2;
+                // seek track 0
+                m_secaddr = 0;  // spoof it
+                wvdStepToTrack();
+            }
+        }
+        break;
+
+    // write to all the sectors of the current track
+    case CTRL_FORMAT2:
+        if (event == EVENT_DISK) {
+            const int tracks        = m_d[m_drive].tracks_per_platter;
+            const int sec_per_trk   = m_d[m_drive].sectors_per_track;
+            const int ticks_per_trk = m_d[m_drive].ticks_per_sector
+                                    * sec_per_trk;
+            bool ok = true;
+            m_byte_to_send = 0x00;
+
+            if (m_d[m_drive].wvd->getWriteProtect()) {
+                // return with a write protect error
+                m_state = CTRL_FORMAT3;
+                m_byte_to_send = 0x01;
+                ok = false;
+            } else {
+                // fill all sectors with 0x00
+                uint8 data[256];
+                memset(data, (uint8)0x00, 256);
+                for(int n=0; ok && n<sec_per_trk; n++)
+                    ok = m_d[m_drive].wvd->writeSector(m_platter, n, data);
+                if (!ok)
+                    m_byte_to_send = 0x02;
+            }
+
+            int next_track = m_d[m_drive].track + 1;
+            if (ok && (next_track < tracks)) {
+                m_state = CTRL_FORMAT2; // stay
+                // account for one rotation of disk, plus step time
+                int delay = ticks_per_trk + wvdGetTicksToTrack(next_track);
+                m_d[m_drive].track = next_track;
+                wvdTickleMotorOffTimer();  // make sure motor keeps going
+                wvdSeekTrack(delay);
+            } else {
+                // either failure or complete
+                m_state = CTRL_FORMAT3;
+                setBusyState(false);
+            }
+        }
+        break;
+
+    // everything is done; we must return final status
+    // 00=ok, 01=write protect, 02=formatting error
+    case CTRL_FORMAT3:
+        if (event == EVENT_IBS_POLL)
+            rv = true;
+        m_state = CTRL_COMMAND;
+        break;
+
+    // --------------------- MULTI-SECTOR WRITE START ---------------------
+    // this is a performance hint, indicating the controller should expect
+    // a number of consecutive writes to the same platter.  the controller
+    // doesn't have to honor this request.  the intent is that all these
+    // writes will be buffered, and then either at an opportune time, or
+    // when forced, all will get written efficiently.  for instance, if
+    // N writes in a row all map to the same cylinder, they could all be
+    // buffered until it was time to move the head, at which point they
+    // could be streamed out in an optimal order.
+    //
+    // there are complications: the idea of "optimal" is heuristic, and
+    // depends on future behavior.  Although the OS intends to use this
+    // hint wisely, $GIO commands can specify this hint yet do things 
+    // in an arbitrary order.  in that case, if an error occurs writing
+    // the cached sectors, it may end up associated with the interloping
+    // command, instead of the original write.  the user may eject a drive
+    // (at least on the emulator) at an arbitrary time.
+    //
+    // therefore, this emulator will simply parse the command but ignore it.
+    //
+    // the command stream looks like this:
+    //     receive
+    //        byte 0: <special command, source drive, head>
+    //        byte 1: <special command "start multisector write mode" token>
+    //        byte 2: unused 00 byte  (not echoed!)
+
+    case CTRL_MSECT_WR_START:
+        if (event == EVENT_OBS) {
+            if ((NOISY > 0) && (val != 0x00))
+                UI_Warn("MULTI-SECTOR-START was expecting a 0x00 padding byte, but got 0x%02x",val);
+            // m_multisector_mode = true;
+        }
+        m_state = CTRL_COMMAND;
+        break;
+
+    // ---------------------- MULTI-SECTOR WRITE END ----------------------
+    // see the explanation for MULTI-SECTOR WRITE START first.  this command
+    // termintes the mode, commanding the controller to flush any deferred
+    // sector writes.
+    //
+    // the command stream looks like this:
+    //     receive
+    //        byte 0: <special command, source drive, head>
+    //        byte 1: <special command "end multisector write mode" token>
+    //        byte 2: unused 00 byte  (not echoed!)
+    //     drop ready, perform operation
+    //     raise ready, send status
+    //        00=ok, 01=bad sector address, 02=not ready or bad head selection
+
+    case CTRL_MSECT_WR_END1:
+        if (event == EVENT_OBS) {
+            if ((NOISY > 0) && (val != 0x00))
+                UI_Warn("MULTI-SECTOR-END was expecting a 0x00 padding byte, but got 0x%02x",val);
+            // m_multisector_mode = false;
+            // setBusyState(true);
+            // ... flush write sector cache ...
+            // setBusyState(false);
+            m_state = CTRL_MSECT_WR_END2;
+        }
+        break;
+
+    // everything is done; we must return final status
+    // 00=ok, 01=write protect, 02=any other error
+    case CTRL_MSECT_WR_END2:
+        if (event == EVENT_IBS_POLL) {
+            rv = true;
+            // do we need to worry about m_drive not being the right one?
+            m_byte_to_send = (m_d[m_drive].wvd->getWriteProtect()) ? 0x01 : 0x00;
+        }
+        m_state = CTRL_COMMAND;
+        break;
+
+    // --------------------------- VERIFY RANGE ---------------------------
+    // this command reads a range of sectors and reports back any sectors
+    // that are not readable.
+    //
+    // the command stream looks like this:
+    //
+    //     receive
+    //        byte 0: <special command, drive, head>
+    //        byte 1: <special command "verify range" token>
+    //        byte 2-4: start sector
+    //     send status
+    //        00=ok, 01=bad sector address, 02=not ready or bad head selection
+    //     receive
+    //        byte 5-7: source end sector
+    //     send status
+    //        00=ok, 01=bad sector address, 02=not ready or bad head selection
+    //     receive
+    //        00 byte  -- but don't echo
+    //     drop ready, read indicated sectors
+    //     raise ready, send status:
+    //        bytes 0-1: number of sector in error, ms byte first
+    //        byte  2:   reason: 01=seek error, 02=defective header, 04=ecc/crc
+    //
+    // after a sector is reported, ready is dropped again, and more sectors
+    // are scanned, reporting all found in error.  when no more are found,
+    // or if none were found at all, a final status sequence of
+    // 0x00, 0x00, 0x00 is sent.
+    //
+    // We model verify's timing a track at a time for simplicity.
+    //
+    // 1) select disk.
+    //    set a timer to seek to the next track, plus one disk revolution
+    // 2) read all sectors of the track.
+    //    increment track counter, and return to step 1 or drop busy and quit
+
+    // send status after the start
+    case CTRL_VERIFY_RANGE1:
+        if (event == EVENT_IBS_POLL) {
+            rv = true;
+            if (m_drive >= numDrives()) {
+                m_byte_to_send = 0x01;  // non-existent drive
+            } else {
+                int num_platters = m_d[m_drive].wvd->getNumPlatters();
+                int num_sectors  = m_d[m_drive].wvd->getNumSectors();
+                m_byte_to_send = (m_d[m_drive].state == DRIVE_EMPTY) ? 0x01
+                               : (m_range_start   >= num_sectors)    ? 0x01
+                               : (m_range_platter >= num_platters)   ? 0x02
+                                                                     : 0x00;
+            }
+            if (m_byte_to_send == 0x00) {
+                getBytes(3, CTRL_VERIFY_RANGE2);
+            } else {
+                m_state = CTRL_COMMAND;
+            }
+        }
+        break;
+
+    // look at the source end sector and return status
+    case CTRL_VERIFY_RANGE2:
+        m_range_end = (m_get_bytes[0] << 16) |
+                      (m_get_bytes[1] <<  8) |
+                       m_get_bytes[2];
+        if (event == EVENT_IBS_POLL) {
+            rv = true;
+            m_byte_to_send = (m_d[m_drive].state == DRIVE_EMPTY)       ? 0x01
+                           : (m_range_end >= m_d[m_drive].wvd->getNumSectors()) ? 0x02
+                                                                       : 0x00;
+        }
+        m_state = (m_byte_to_send == 0x00) ? CTRL_VERIFY_RANGE3
+                                           : CTRL_COMMAND;
+        break;
+
+    // wait for the 0x00 byte
+    case CTRL_VERIFY_RANGE3:
+        if (event == EVENT_OBS) {
+            if ((NOISY > 0) && (val != 0x00))
+                UI_Warn("VERIFY_RANGE3 was expecting a 0x00 padding byte, but got 0x%02x",val);
+            setBusyState(true);
+            m_state = CTRL_VERIFY_RANGE4;
+            // seek the first track
+            m_drive   = m_range_drive;
+            m_secaddr = m_range_start;
+            wvdStepToTrack();
+        }
+        break;
+
+    // read all the sectors on the current track that fall in range
+    case CTRL_VERIFY_RANGE4:
+        {
+            int cur_track     = m_d[m_drive].track;
+            int sec_per_trk   = m_d[m_drive].sectors_per_track;
+            int ticks_per_trk = m_d[m_drive].ticks_per_sector * sec_per_trk;
+            int last_track    = m_range_end / sec_per_trk;
+            int first_sec_of_track = cur_track * sec_per_trk;
+            int last_sec_of_track  = first_sec_of_track + sec_per_trk - 1;
+            int first = std::max(m_range_start, first_sec_of_track);
+            int last  = std::min(m_range_end,    last_sec_of_track);
+
+            bool ok = true;
+            m_byte_to_send = 0x00;
+            uint8 data[256];
+
+            for(m_secaddr = first; ok && (m_secaddr <= last); m_secaddr++)
+                ok = m_d[m_drive].wvd->readSector(m_range_platter, m_secaddr, data);
+            if (!ok)
+                m_byte_to_send = 0x01;  // seek error
+
+            int next_track = m_d[m_drive].track + 1;
+            if (ok && (next_track <= last_track)) {
+                m_state = CTRL_VERIFY_RANGE4; // stay
+                // account for one rotation of disk, plus step time
+                int delay = ticks_per_trk + wvdGetTicksToTrack(next_track);
+                m_d[m_drive].track = next_track;
+                wvdTickleMotorOffTimer();  // make sure motor keeps going
+                wvdSeekTrack(delay);
+            } else {
+                // either success or failure
+                m_state = CTRL_VERIFY_RANGE5;
+                setBusyState(false);
+            }
+        }
+        break;
+
+    // return status
+    case CTRL_VERIFY_RANGE5:
+        if (event == EVENT_IBS_POLL) {
+            rv = true;
+            if (m_byte_to_send == 0x00) {
+                // no errors
+                m_send_bytes[0] = m_send_bytes[1] = m_send_bytes[2] = 0x00;
+            } else {
+                // 0x01 = seek error, 0x02=bad sector header, 0x04=bad ecc/crc
+                m_send_bytes[0] = (m_secaddr >> 8) & 0xff;  // sector msb
+                m_send_bytes[1] = (m_secaddr >> 0) & 0xff;  // sector lsb
+                m_send_bytes[2] = m_byte_to_send;           // error code
+            }
+            sendBytes(3, CTRL_COMMAND);
+        }
+        break;
+
+    // ----------------------- READ SECTOR AND HANG -----------------------
+
+    case CTRL_HANG:
+        {
+            static bool reported = false;
+            if (!reported) {
+                reported = true;
+                UI_Warn("Unimplemented special command: READ SECTOR AND HANG");
+            }
+        }
+        m_state = CTRL_COMMAND;
+        break;
+
+    // -------------- GET CONTROLLER STATUS AND PROM REVISION --------------
+
+    case CTRL_STATUS:
+        {
+            static bool reported = false;
+            if (!reported) {
+                reported = true;
+                UI_Warn("Unimplemented special command: STATUS AND PROM REVISION");
+            }
+        }
+        m_state = CTRL_COMMAND;
+        break;
+
+    // -------------------------- UNKNOWN COMMAND --------------------------
+    // should have been filtered out already
+
+    default:
+        ASSERT(0);
+        break;
+    }
+
+    if (DBG > 2) {
+        static int prev_state = CTRL_WAKEUP;
+        if (prev_state != m_state) {
+            dbglog("%s  -->  %s\n", statename(prev_state), statename(m_state));
+            prev_state = m_state;
+        }
+        dbglog("---------------------\n");
+    }
+
+    return rv;
+}
