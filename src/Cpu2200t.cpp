@@ -29,7 +29,7 @@ enum { ST1_MASK_CARRY=1, ST1_MASK_CPB=2, ST1_MASK_SF=4, ST1_MASK_ROM=8};
 //    0: ALU carry bit
 //
 //    1: "CPB" (cpu busy).  this bit is set to 1 while the cpu is thinking
-//       and doesn't wish to be disturbed.  the the CPU is ready to accept
+//       and doesn't wish to be disturbed.  if the CPU is ready to accept
 //       input from the currently selected I/O device, CPB goes inactive.
 //       The microcode is still running, mind you.  When the selected
 //       device has something to send, it drives IBS along with the 9b

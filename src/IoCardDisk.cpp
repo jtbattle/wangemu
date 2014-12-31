@@ -108,7 +108,7 @@
 
 #include "DiskCtrlCfgState.h"
 #include "IoCardDisk.h"
-#include "Ui.h"         // for UI_Alert()
+#include "Ui.h"         // for UI_Warn()
 #include "Cpu2200.h"
 #include "Scheduler.h"
 #include "System2200.h"

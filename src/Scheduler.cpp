@@ -40,7 +40,7 @@
 // about 57 minutes into the future.  This is more than enough range.
 
 #include "Scheduler.h"
-#include "Ui.h"         // needed for UI_Alert()
+#include "Ui.h"         // needed for UI_Error()
 
 
 // ======================================================================
@@ -355,5 +355,7 @@ void Scheduler::TimerTick(int n)
 // ======================================================================
 
 // kill off this timer
-void Timer::Kill() { s->TimerKill(idx); }
-
+void Timer::Kill()
+{
+    s->TimerKill(idx);
+}
