@@ -41,7 +41,7 @@
 class wxWindow;
 class wxRect;
 class wxFileConfig;
-class wxDateTime;
+class wxStopWatch;
 
 class Host
 {
@@ -140,10 +140,6 @@ private:
     // initialize class members
     static void initMembers();
 
-    // return what time the app started, as all other real time
-    // calculations are relative to this.
-    static const wxDateTime &getTimeZero() { return *m_timezero; }
-
     // get/save information about default dirs for file categories
     static void  getConfigFileLocations();
     static void saveConfigFileLocations();
@@ -153,7 +149,7 @@ private:
 
     static string        m_app_home;    // path to application home directory
     static wxFileConfig *m_config;      // configuration file object
-    static wxDateTime   *m_timezero;    // time program started
+    static wxStopWatch  *m_stopwatch;   // real time since simulation started
 
     // remember where certain files are located
     static string m_FileDir[FILEREQ_NUM];         // dir where files come from

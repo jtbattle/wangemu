@@ -24,7 +24,7 @@ bool Host::m_initialized = false;
 
 string        Host::m_app_home;         // path to application home directory
 wxFileConfig *Host::m_config = NULL;    // configuration file object
-wxDateTime   *Host::m_timezero = NULL;  // time program started
+wxStopWatch  *Host::m_stopwatch = NULL; // time program started
 
 // remember where certain files are located
 string Host::m_FileDir[FILEREQ_NUM];         // dir where files come from
@@ -110,7 +110,8 @@ Host::initMembers()
 #endif
 
     // needed so we can compute a time difference to get ms later
-    m_timezero = new wxDateTime(wxDateTime::UNow());
+    m_stopwatch = new wxStopWatch();
+    m_stopwatch->Start(0);
 
     // default file locations
     m_FileDir[FILEREQ_SCRIPT]       = ".";
@@ -155,8 +156,8 @@ Host::terminate()
         saveConfigFileLocations();
         delete m_config;
         m_config = NULL;
-        delete m_timezero;
-        m_timezero = NULL;
+        delete m_stopwatch;
+        m_stopwatch = NULL;
     }
 
     m_initialized = false;
@@ -471,14 +472,12 @@ Host::saveConfigFileLocations()
 int64 
 Host::getTimeMs(void)
 {
-    wxDateTime start(getTimeZero());
-    wxDateTime now(wxDateTime::UNow());
-    wxTimeSpan diff(now - start);
-    wxLongLong delta = diff.GetMilliseconds();
-    uint32 low       = delta.GetLo();
-    uint32 high      = delta.GetHi();
-    int64 time_ms    = ((int64)high << 32) | low;
-    return time_ms;
+    // newer api should provide more accurate measurement of time
+    wxLongLong x_time_us = m_stopwatch->TimeInMicro();
+    uint32 x_low  = x_time_us.GetLo();
+     int32 x_high = x_time_us.GetHi();
+     int64 x_time_ms = (((int64)x_high << 32) | x_low) / 1000;
+    return x_time_ms;
 }
 
 
