@@ -14,7 +14,7 @@
 #include "UiPrinter.h"          // this module's defines
 #include "UiPrinterFrame.h"     // parent's defines
 #include "Host.h"               // for Config* functions
-
+#include <algorithm>            // for std::max
 #include <fstream>
 using std::ofstream;
 
