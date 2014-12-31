@@ -411,7 +411,7 @@ Cpu2200vp::write_ucode(uint16 addr, uint32 uop)
                 break;
 
             default: // impossible
-                ASSERT(0);
+                assert(0);
                 break;
         }
 
@@ -468,7 +468,7 @@ Cpu2200vp::set_sl(uint8 value)
         m_cpu.bank_offset = (((value >> 6) & 3) << 16)  // bits [7:6]
                           | (((value >> 5) & 1) << 18); // bit [5]
     } else {
-        ASSERT(0);
+        assert(0);
         m_cpu.bank_offset = 0;
     }
 }
@@ -502,10 +502,10 @@ Cpu2200vp::decimal_add8(int a_op, int b_op, int ci)
     int co;
 
 #if 0   // MVP diagnostics actually hit "illegal" cases
-    ASSERT(a_op_low < 10);
-    ASSERT(b_op_low < 10);
-    ASSERT(a_op_high < 10);
-    ASSERT(b_op_high < 10);
+    assert(a_op_low < 10);
+    assert(b_op_low < 10);
+    assert(a_op_high < 10);
+    assert(b_op_high < 10);
 #endif
 
     sum_low = a_op_low + b_op_low + ci; // ranges from binary 0 to 19
@@ -537,10 +537,10 @@ Cpu2200vp::decimal_sub8(int a_op, int b_op, int ci)
     int borrow;
 
 #if 0   // MVP diagnostics actually hit "illegal" cases
-    ASSERT(a_op_low < 10);
-    ASSERT(b_op_low < 10);
-    ASSERT(a_op_high < 10);
-    ASSERT(b_op_high < 10);
+    assert(a_op_low < 10);
+    assert(b_op_low < 10);
+    assert(a_op_high < 10);
+    assert(b_op_high < 10);
 #endif
 
     b_op_low  = 9 - b_op_low;
@@ -618,7 +618,7 @@ Cpu2200vp::decimal_sub8(int a_op, int b_op, int ci)
     mem_read8(int addr)
     {
         int rv;
-        ASSERT(addr >= 0);
+        assert(addr >= 0);
         rv = inlined_mem_read8(addr);
         //dbglog("READ RAM[0x%04X] = 0x%02X\n", addr, rv);
         return (uint8)rv;
@@ -670,7 +670,7 @@ Cpu2200vp::get_HbHa(int HbHa, int a_op, int b_op)
                  | ((a_op >> 4) & 0x0F);
             break;
         default:
-            ASSERT(0);
+            assert(0);
             rslt = 0;   // keep lint happy
             break;
     }
@@ -760,7 +760,7 @@ Cpu2200vp::exec_one_op()
             case 3: m_cpu.sh |=  SH_MASK_CARRY; break;    // set
             case 0:     // no change, but this shouldn't be called then
             default:
-                ASSERT(0);
+                assert(0);
                 break;
         }
     }
@@ -783,7 +783,7 @@ Cpu2200vp::exec_one_op()
             case 14: b_op = m_cpu.k; break;
             case 15: b_op = 0x00; break; // dummy
             default:
-                ASSERT(0);
+                assert(0);
                 b_op = 0x00;
                 break;
         }
@@ -806,7 +806,7 @@ Cpu2200vp::exec_one_op()
                     a_op = 0;
                     break;
                 default:
-                    ASSERT(0);
+                    assert(0);
                     a_op = 0;
                     break;
             }
@@ -859,7 +859,7 @@ Cpu2200vp::exec_one_op()
                 b_op2 = m_cpu.reg[0];
                 break;
             default:
-                ASSERT(0);
+                assert(0);
                 b_op = b_op2 = 0;
                 break;
         }
@@ -899,7 +899,7 @@ Cpu2200vp::exec_one_op()
                 a_op2 = m_cpu.reg[0];
                 break;
             default:
-                ASSERT(0);
+                assert(0);
                 a_op = a_op2 = 0;
                 break;
         }
@@ -1383,7 +1383,7 @@ Cpu2200vp::exec_one_op()
         break;
 
     default:
-        ASSERT(0);
+        assert(0);
         break;
 
     } // op
@@ -1410,12 +1410,12 @@ Cpu2200vp::Cpu2200vp(System2200 &sys, Scheduler &scheduler,
     m_memsize_KB(ramsize),
     m_dbg(false)
 {
-    ASSERT(cpu_subtype == CPUTYPE_2200VP);
+    assert(cpu_subtype == CPUTYPE_2200VP);
     cpu_subtype = cpu_subtype;  // suppress 'unused' warning
 
-    ASSERT(ramsize ==  32 || ramsize == 64 || ramsize == 128 ||
+    assert(ramsize ==  32 || ramsize == 64 || ramsize == 128 ||
            ramsize == 256 || ramsize == 512 );
-    ASSERT((ramsize&0xF) == 0);         // multiple of 15
+    assert((ramsize&0xF) == 0);         // multiple of 15
 
     // init microcode
     for(int i=0; i<MAX_RAM; i++)
@@ -1536,7 +1536,7 @@ void
 Cpu2200vp::IoCardCbIbs(int data)
 {
     // we shouldn't receive an IBS while the cpu is busy
-    ASSERT( (m_cpu.sh & SH_MASK_CPB) == 0 );
+    assert( (m_cpu.sh & SH_MASK_CPB) == 0 );
     m_cpu.k = (uint8)(data & 0xFF);
     m_cpu.sh |= SH_MASK_CPB;            // CPU busy; inhibit IBS
     m_sys.cpu_CPB( true );              // we are busy now

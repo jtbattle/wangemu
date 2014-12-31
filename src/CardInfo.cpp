@@ -23,7 +23,7 @@ CardInfo::getCardTypeFromName(const string &name)
 string
 CardInfo::getCardName(IoCard::card_type_e cardtype)
 {
-    ASSERT((cardtype >= 0) && (cardtype < (int)IoCard::NUM_CARDTYPES));
+    assert((cardtype >= 0) && (cardtype < (int)IoCard::NUM_CARDTYPES));
     IoCard *tmpcard = IoCard::makeTmpCard(cardtype);
     string name = tmpcard->getName();
     delete tmpcard;
@@ -35,7 +35,7 @@ CardInfo::getCardName(IoCard::card_type_e cardtype)
 string
 CardInfo::getCardDesc(IoCard::card_type_e cardtype)
 {
-    ASSERT((cardtype >= 0) && (cardtype < (int)IoCard::NUM_CARDTYPES));
+    assert((cardtype >= 0) && (cardtype < (int)IoCard::NUM_CARDTYPES));
     IoCard *tmpcard = IoCard::makeTmpCard(cardtype);
     string desc = tmpcard->getDescription();
     delete tmpcard;
@@ -47,7 +47,7 @@ CardInfo::getCardDesc(IoCard::card_type_e cardtype)
 vector<int>
 CardInfo::getCardBaseAddresses(IoCard::card_type_e cardtype)
 {
-    ASSERT((cardtype >= 0) && (cardtype < (int)IoCard::NUM_CARDTYPES));
+    assert((cardtype >= 0) && (cardtype < (int)IoCard::NUM_CARDTYPES));
     IoCard *tmpcard = IoCard::makeTmpCard(cardtype);
 
     vector<int> addresses( tmpcard->getBaseAddresses() );
@@ -60,7 +60,7 @@ CardInfo::getCardBaseAddresses(IoCard::card_type_e cardtype)
 bool
 CardInfo::isCardConfigurable(IoCard::card_type_e cardtype)
 {
-    ASSERT((cardtype >= 0) && (cardtype < (int)IoCard::NUM_CARDTYPES));
+    assert((cardtype >= 0) && (cardtype < (int)IoCard::NUM_CARDTYPES));
     IoCard *tmpcard = IoCard::makeTmpCard(cardtype);
     bool rv = tmpcard->isConfigurable();
     delete tmpcard;
@@ -72,7 +72,7 @@ CardInfo::isCardConfigurable(IoCard::card_type_e cardtype)
 CardCfgState*
 CardInfo::getCardCfgState(IoCard::card_type_e cardtype)
 {
-    ASSERT((cardtype >= 0) && (cardtype < (int)IoCard::NUM_CARDTYPES));
+    assert((cardtype >= 0) && (cardtype < (int)IoCard::NUM_CARDTYPES));
     IoCard *tmpcard = IoCard::makeTmpCard(cardtype);
     CardCfgState *rv = tmpcard->getCfgState();
     delete tmpcard;

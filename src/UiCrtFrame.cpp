@@ -273,9 +273,9 @@ CrtFrame::CrtFrame( const wxString& title,
 
     // only the primary has a status bar
     m_RefreshTimer = new wxTimer(this, Timer_Frame);
-    ASSERT(m_RefreshTimer != NULL);
+    assert(m_RefreshTimer != NULL);
     m_OneSecTimer = new wxTimer(this, Timer_Sec);
-    ASSERT(m_OneSecTimer != NULL);
+    assert(m_OneSecTimer != NULL);
 
     // it is hard to predict what the optimal refresh period
     // for a given system
@@ -1177,11 +1177,11 @@ void
 CrtFrame::OnConfigureKbTie(wxCommandEvent& event)
 {
     int id = event.GetId();
-    ASSERT( (id >= Configure_KB_Tie0) && (id <= Configure_KB_TieN) );
+    assert( (id >= Configure_KB_Tie0) && (id <= Configure_KB_TieN) );
 
     int idx = id - Configure_KB_Tie0;
     int new_addr = System2200().getKbIoAddr(idx);
-    ASSERT(new_addr >= 0);
+    assert(new_addr >= 0);
 
     m_assoc_kb_addr = new_addr;
 }
@@ -1191,7 +1191,7 @@ void
 CrtFrame::OnPrinter(wxCommandEvent& event)
 {
     int id = event.GetId();
-    ASSERT( (id >= Printer_0) && (id <= Printer_N) );
+    assert( (id >= Printer_0) && (id <= Printer_N) );
 
     // map chosen device to an I/O address
     System2200 sys;

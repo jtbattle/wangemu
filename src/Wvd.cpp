@@ -68,7 +68,7 @@ Wvd::~Wvd()
 void
 Wvd::create(int disk_type, int platters, int sectors_per_platter)
 {
-    ASSERT(m_file == NULL);
+    assert(m_file == NULL);
     setDiskType(disk_type);
     setNumPlatters(platters);
     setNumSectors(sectors_per_platter);
@@ -81,9 +81,9 @@ Wvd::create(int disk_type, int platters, int sectors_per_platter)
 bool
 Wvd::open(const string &filename)
 {
-    ASSERT(m_file == NULL);
-    ASSERT(!m_hasPath);
-    ASSERT(!filename.empty());
+    assert(m_file == NULL);
+    assert(!m_hasPath);
+    assert(!filename.empty());
 
     // set up a file handle
     m_file = new fstream(filename.c_str(), 
@@ -256,9 +256,9 @@ Wvd::readSector(int platter, int sector, uint8 *buffer)
 {
     refreshMetadata();
 
-    ASSERT(platter >= 0 && platter < m_numPlatters);
-    ASSERT(sector  >= 0 && sector  < m_numPlatterSectors);
-    ASSERT(m_file != NULL);
+    assert(platter >= 0 && platter < m_numPlatters);
+    assert(sector  >= 0 && sector  < m_numPlatterSectors);
+    assert(m_file != NULL);
 
     int abs_sector = m_numPlatterSectors*platter + sector + 1;
     return rawReadSector(abs_sector, buffer);
@@ -272,9 +272,9 @@ Wvd::writeSector(int platter, int sector, uint8 *buffer)
 {
     refreshMetadata();
 
-    ASSERT(platter >= 0 && platter < m_numPlatters);
-    ASSERT(sector  >= 0 && sector  < m_numPlatterSectors);
-    ASSERT(m_file != NULL);
+    assert(platter >= 0 && platter < m_numPlatters);
+    assert(sector  >= 0 && sector  < m_numPlatterSectors);
+    assert(m_file != NULL);
 
     int abs_sector = m_numPlatterSectors*platter + sector + 1;
     return rawWriteSector(abs_sector, buffer);
@@ -304,8 +304,8 @@ Wvd::flush()
 void
 Wvd::save()
 {
-    ASSERT(m_hasPath);
-    ASSERT(!m_path.empty());
+    assert(m_hasPath);
+    assert(!m_path.empty());
 
     if (isModified()) {
         if (writeHeader())
@@ -320,8 +320,8 @@ Wvd::save()
 void
 Wvd::save(const string &filename)
 {
-    ASSERT(!filename.empty());
-    ASSERT(!m_hasPath);
+    assert(!filename.empty());
+    assert(!m_hasPath);
 
     if (createFile(filename))
         setModified(false);
@@ -340,10 +340,10 @@ Wvd::save(const string &filename)
 bool
 Wvd::rawWriteSector(const int sector, const uint8 *data)
 {
-    ASSERT(m_hasPath);
-    ASSERT(sector >= 0 && sector < m_numPlatters*m_numPlatterSectors+1);
-    ASSERT(data != NULL);
-    ASSERT(m_file->is_open());
+    assert(m_hasPath);
+    assert(sector >= 0 && sector < m_numPlatters*m_numPlatterSectors+1);
+    assert(data != NULL);
+    assert(m_file->is_open());
 
     if (DBG > 0) {
         dbglog("========== writing absolute sector %d ==========\n", sector);
@@ -386,10 +386,10 @@ Wvd::rawWriteSector(const int sector, const uint8 *data)
 bool
 Wvd::rawReadSector(const int sector, const uint8 *data)
 {
-    ASSERT(m_hasPath);
-    ASSERT(sector >= 0 && sector < m_numPlatters*m_numPlatterSectors+1);
-    ASSERT(data != NULL);
-    ASSERT(m_file->is_open());
+    assert(m_hasPath);
+    assert(sector >= 0 && sector < m_numPlatters*m_numPlatterSectors+1);
+    assert(data != NULL);
+    assert(m_file->is_open());
 
     // go to the start of the Nth sector
     m_file->seekg( 256*sector);
@@ -438,8 +438,8 @@ Wvd::rawReadSector(const int sector, const uint8 *data)
 bool
 Wvd::writeHeader()
 {
-    ASSERT(m_numPlatters > 0 && m_numPlatters <= 15);
-    ASSERT(m_numPlatterSectors > 0 && m_numPlatterSectors <= WVD_MAX_SECTORS);
+    assert(m_numPlatters > 0 && m_numPlatters <= 15);
+    assert(m_numPlatterSectors > 0 && m_numPlatterSectors <= WVD_MAX_SECTORS);
 
     // header block -- zap it to zeros
     uint8 data[256];
@@ -485,10 +485,10 @@ Wvd::writeHeader()
 void
 Wvd::reopen()
 {
-    ASSERT(m_file != NULL);
+    assert(m_file != NULL);
 
     if (m_metadataStale) {
-        ASSERT(!m_file->is_open()); // make sure we cached it properly
+        assert(!m_file->is_open()); // make sure we cached it properly
         // set up a file handle
         m_file->open(m_path.c_str(), fstream::in | fstream::out | fstream::binary);
         if (!m_file->good()) {
@@ -515,7 +515,7 @@ Wvd::reopen()
 bool
 Wvd::readHeader()
 {
-    ASSERT(m_file != NULL);
+    assert(m_file != NULL);
 
     // set it so rawReadSector() knows what to operate on
     m_numPlatters = 1;
@@ -586,7 +586,7 @@ Wvd::readHeader()
 bool
 Wvd::format(const int platter)
 {
-    ASSERT(platter >= 0 && platter < m_numPlatters);
+    assert(platter >= 0 && platter < m_numPlatters);
 
     // fill all non-header sectors with 0x00
     uint8 data[256];
@@ -606,9 +606,9 @@ Wvd::format(const int platter)
 bool
 Wvd::createFile(const string &filename)
 {
-    ASSERT(m_file == NULL);
-    ASSERT(!m_hasPath);
-    ASSERT(!filename.empty());
+    assert(m_file == NULL);
+    assert(!m_hasPath);
+    assert(!filename.empty());
 
     m_hasPath = true;
     m_path = filename;

@@ -65,7 +65,7 @@ IoCard::makeCardImpl(Scheduler& scheduler, Cpu2200& cpu, card_type_e type,
             crd = new IoCardDisk( scheduler, cpu, baseaddr, cardslot, cfg );
             break;
         default:
-            ASSERT(0);
+            assert(0);
             break;
     }
 

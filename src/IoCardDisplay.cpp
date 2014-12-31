@@ -113,7 +113,7 @@ IoCardDisplay::IoCardDisplay(Scheduler &scheduler, Cpu2200 &cpu,
 
     int io_addr;
     bool ok = System2200().getSlotInfo(cardslot, 0, &io_addr);
-    ASSERT(ok); ok=ok;
+    assert(ok); ok=ok;
     m_wndhnd = UI_initCrt(m_size, io_addr);
 
     reset(true);
@@ -204,7 +204,7 @@ IoCardDisplay::deselect()
 void
 IoCardDisplay::OBS(int val)
 {
-    ASSERT(m_busy_state == BUSY_NOT);
+    assert(m_busy_state == BUSY_NOT);
 
     val &= 0xFF;
 
@@ -327,7 +327,7 @@ IoCardDisplay::tcbHsync(int arg)
             break;
 
         default:
-            ASSERT(0);
+            assert(0);
             break;
     }
 }

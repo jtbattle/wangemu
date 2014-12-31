@@ -153,9 +153,9 @@ IoCardDisk::IoCardDisk(Scheduler &scheduler, Cpu2200 &cpu,
 {
     // only init if not doing a property probe
     if (m_slot >= 0) {
-        ASSERT(cfg != NULL);
+        assert(cfg != NULL);
         const DiskCtrlCfgState *cp = dynamic_cast<const DiskCtrlCfgState*>(cfg);
-        ASSERT(cp != NULL);
+        assert(cp != NULL);
         m_cfg = *cp;
         createDiskController();
     }
@@ -238,7 +238,7 @@ void
 IoCardDisk::editConfiguration(CardCfgState *cfg)
 {
     DiskCtrlCfgState* pcfg( dynamic_cast<DiskCtrlCfgState*>(cfg) );
-    ASSERT( pcfg != 0 );
+    assert( pcfg != 0 );
 
     UI_ConfigureCard(pcfg);
 };
@@ -356,7 +356,7 @@ IoCardDisk::CPB(bool val)
 void
 IoCardDisk::stopMotor(int drive)
 {
-    ASSERT(drive >= 0 && drive < 4);
+    assert(drive >= 0 && drive < 4);
 
     if (m_d[drive].state != DRIVE_EMPTY)
         m_d[drive].state = DRIVE_IDLE;
@@ -447,7 +447,7 @@ IoCardDisk::realtime_disk()
 void
 IoCardDisk::wvdTickleMotorOffTimer()
 {
-    ASSERT(m_drive >= 0 && m_drive < numDrives());
+    assert(m_drive >= 0 && m_drive < numDrives());
 
     int disktype = m_d[m_drive].wvd->getDiskType();
     if ((disktype == Wvd::DISKTYPE_FD5) || (disktype == Wvd::DISKTYPE_FD8)) {
@@ -463,7 +463,7 @@ IoCardDisk::wvdTickleMotorOffTimer()
 long
 IoCardDisk::wvdGetTicksToTrack(int track)
 {
-    ASSERT(m_drive >= 0 && m_drive < numDrives());
+    assert(m_drive >= 0 && m_drive < numDrives());
 
     const int track_diff = ABS(track - (m_d[m_drive].track));
 
@@ -490,7 +490,7 @@ IoCardDisk::wvdGetTicksToTrack(int track)
             break;
 
         default:
-            ASSERT(0);
+            assert(0);
             break;
     }
 
@@ -503,12 +503,12 @@ IoCardDisk::wvdGetTicksToTrack(int track)
 void
 IoCardDisk::wvdStepToTrack()
 {
-    ASSERT(m_drive >= 0 && m_drive < numDrives());
+    assert(m_drive >= 0 && m_drive < numDrives());
 
     const bool empty = (m_d[m_drive].state == DRIVE_EMPTY);
 
-    ASSERT(m_secaddr < WVD_MAX_SECTORS);
-    ASSERT(empty || (m_secaddr < m_d[m_drive].wvd->getNumSectors()));
+    assert(m_secaddr < WVD_MAX_SECTORS);
+    assert(empty || (m_secaddr < m_d[m_drive].wvd->getNumSectors()));
 
     const int sec_per_trk = m_d[m_drive].sectors_per_track;
     const int to_track = m_secaddr / sec_per_trk;
@@ -536,13 +536,13 @@ IoCardDisk::wvdStepToTrack()
 void
 IoCardDisk::wvdSeekTrack(int nominal_ticks)
 {
-    ASSERT(m_drive >= 0 && m_drive < numDrives());
+    assert(m_drive >= 0 && m_drive < numDrives());
 
     const int other_drive = m_drive^1;  // the drive not being accessed
     const bool empty = (m_d[m_drive].state == DRIVE_EMPTY);
 
     // this shouldn't already be in use
-    ASSERT(m_d[m_drive].tmr_track == 0);
+    assert(m_d[m_drive].tmr_track == 0);
 
     // the disk controller counts how many times a command has been
     // issued without accessing a given drive.  if that count exceeds 32,
@@ -569,13 +569,13 @@ IoCardDisk::wvdSeekTrack(int nominal_ticks)
         switch (m_d[m_drive].state) {
             case DRIVE_EMPTY:
             case DRIVE_IDLE:
-                ASSERT(m_d[m_drive].tmr_sector == 0);
+                assert(m_d[m_drive].tmr_sector == 0);
                 ticks += TICK_ONE_SEC;
                 break;
             case DRIVE_SPINNING:
                 break;
             default:
-                ASSERT(0);
+                assert(0);
         }
     }
 
@@ -602,7 +602,7 @@ IoCardDisk::wvdSeekTrack(int nominal_ticks)
 void
 IoCardDisk::wvdSeekSector()
 {
-    ASSERT(m_drive >= 0 && m_drive < numDrives());
+    assert(m_drive >= 0 && m_drive < numDrives());
 
     const int sec_per_trk = m_d[m_drive].sectors_per_track;
     const int interleave  = m_d[m_drive].interleave;
@@ -616,13 +616,13 @@ IoCardDisk::wvdSeekSector()
     // if the interleave isn't an integral factor of the number of sectors
     // per track, that is, the sector count and interleave factor are
     // relatively prime, then a different logical->physical equation applies.
-    ASSERT(groups * interleave == sec_per_trk);
+    assert(groups * interleave == sec_per_trk);
 
     const int phys_sec = (logical_sec / groups)
                        + (logical_sec % groups) * interleave;
 
     // make sure this was already taken care of before we got called
-    ASSERT(track == m_d[m_drive].track);
+    assert(track == m_d[m_drive].track);
     int foo = track; foo=foo; // keep lint happy
 
     m_d[m_drive].secwait = phys_sec;
@@ -638,8 +638,8 @@ void
 IoCardDisk::tcbTrack(int arg)
 {
     int drive = arg;
-    ASSERT(drive >= 0 && drive < numDrives());
-    ASSERT(m_card_busy);
+    assert(drive >= 0 && drive < numDrives());
+    assert(m_card_busy);
 
     const bool empty = (m_d[m_drive].state == DRIVE_EMPTY);
 
@@ -677,7 +677,7 @@ IoCardDisk::tcbTrack(int arg)
 void
 IoCardDisk::tcbMotorOff(int arg)
 {
-    ASSERT(m_tmr_motor_off != 0);
+    assert(m_tmr_motor_off != 0);
     m_tmr_motor_off = 0;
 
     if (DBG > 1)
@@ -698,8 +698,8 @@ IoCardDisk::tcbSector(int arg)
     int drive = arg;
     int prev_sec;
 
-    ASSERT(drive >= 0 && drive < numDrives());
-    ASSERT(m_d[drive].tmr_sector != 0);
+    assert(drive >= 0 && drive < numDrives());
+    assert(m_d[drive].tmr_sector != 0);
 
     if (0 && (NOISY > 2))
         dbglog("Drive %d SECTOR timer fired: sector %d\n", drive, m_d[drive].sector);
@@ -747,8 +747,8 @@ IoCardDisk::wvdGetWriteProtect(const string &filename, bool *write_protect)
 bool
 IoCardDisk::wvdGetDiskType(const int slot, const int drive, int *disktype)
 {
-    ASSERT(slot  >= 0 && slot  <= NUM_IOSLOTS);
-    ASSERT(drive >= 0 && drive <= 3);
+    assert(slot  >= 0 && slot  <= NUM_IOSLOTS);
+    assert(drive >= 0 && drive <= 3);
 
     IoCardDisk *tthis = reinterpret_cast<IoCardDisk*>
                                 (System2200().getInstFromSlot(slot));
@@ -767,8 +767,8 @@ IoCardDisk::wvdGetFilename(const int slot,
                            const int drive,
                            string *filename)
 {
-    ASSERT(slot  >= 0 && slot  <= NUM_IOSLOTS);
-    ASSERT(drive >= 0 && drive <= 3);
+    assert(slot  >= 0 && slot  <= NUM_IOSLOTS);
+    assert(drive >= 0 && drive <= 3);
 
     IoCardDisk *tthis = reinterpret_cast<IoCardDisk*>
                                 (System2200().getInstFromSlot(slot));
@@ -785,8 +785,8 @@ IoCardDisk::wvdGetFilename(const int slot,
 int
 IoCardDisk::wvdDriveStatus(int slot, int drive)
 {
-    ASSERT(slot >=0 && slot < NUM_IOSLOTS);
-    ASSERT(drive >=0 && drive < 4);
+    assert(slot >=0 && slot < NUM_IOSLOTS);
+    assert(drive >=0 && drive < 4);
 
     IoCardDisk *tthis = reinterpret_cast<IoCardDisk*>
                                 (System2200().getInstFromSlot(slot));
@@ -823,12 +823,12 @@ IoCardDisk::wvdInsertDisk(int slot,
                           int drive,
                           const string &filename)
 {
-    ASSERT(slot >= 0 && slot <= NUM_IOSLOTS);
-    ASSERT(drive >= 0 || drive < 4);
+    assert(slot >= 0 && slot <= NUM_IOSLOTS);
+    assert(drive >= 0 || drive < 4);
 
     IoCardDisk *tthis = reinterpret_cast<IoCardDisk*>
                                 (System2200().getInstFromSlot(slot));
-    ASSERT(tthis != NULL);
+    assert(tthis != NULL);
 
     bool ok = tthis->iwvdInsertDisk(drive, filename);
     UI_diskEvent(slot, drive);
@@ -841,12 +841,12 @@ IoCardDisk::wvdInsertDisk(int slot,
 bool
 IoCardDisk::wvdRemoveDisk(int slot, int drive)
 {
-    ASSERT(slot >= 0 && slot <= NUM_IOSLOTS);
-    ASSERT(drive >= 0 || drive < 4);
+    assert(slot >= 0 && slot <= NUM_IOSLOTS);
+    assert(drive >= 0 || drive < 4);
 
     IoCardDisk *tthis = reinterpret_cast<IoCardDisk*>
                                 (System2200().getInstFromSlot(slot));
-    ASSERT(tthis != NULL);
+    assert(tthis != NULL);
 
     bool ok = tthis->iwvdRemoveDisk(drive);
     UI_diskEvent(slot, drive);
@@ -858,12 +858,12 @@ IoCardDisk::wvdRemoveDisk(int slot, int drive)
 void
 IoCardDisk::wvdFlush(int slot, int drive)
 {
-    ASSERT(slot >= 0 && slot <= NUM_IOSLOTS);
-    ASSERT(drive >= 0 || drive < 4);
+    assert(slot >= 0 && slot <= NUM_IOSLOTS);
+    assert(drive >= 0 || drive < 4);
 
     IoCardDisk *tthis = reinterpret_cast<IoCardDisk*>
                                 (System2200().getInstFromSlot(slot));
-    ASSERT(tthis != NULL);
+    assert(tthis != NULL);
 
     tthis->m_d[drive].wvd->flush();
 }
@@ -897,8 +897,8 @@ IoCardDisk::wvdFormatFile(const string &filename)
 bool
 IoCardDisk::iwvdIsDiskIdle(int drive)
 {
-    ASSERT(drive >= 0 && drive < numDrives());
-    ASSERT(m_d[drive].state != DRIVE_EMPTY);
+    assert(drive >= 0 && drive < numDrives());
+    assert(m_d[drive].state != DRIVE_EMPTY);
 
     if (!m_selected || (m_drive != drive) || inIdleState())
         return true;
@@ -913,8 +913,8 @@ bool
 IoCardDisk::iwvdInsertDisk(int drive,
                            const string &filename)
 {
-    ASSERT(drive >= 0 && drive < numDrives());
-    ASSERT(m_d[drive].state == DRIVE_EMPTY);
+    assert(drive >= 0 && drive < numDrives());
+    assert(m_d[drive].state == DRIVE_EMPTY);
 
     char disk_loc[10];
     sprintf(disk_loc, "%c/3%02X", ((drive & 1) ? 'R' : 'F'),
@@ -1010,8 +1010,8 @@ IoCardDisk::iwvdInsertDisk(int drive,
 bool
 IoCardDisk::iwvdRemoveDisk(int drive)
 {
-    ASSERT(drive >= 0 && drive < numDrives());
-    ASSERT(m_d[drive].state != DRIVE_EMPTY);
+    assert(drive >= 0 && drive < numDrives());
+    assert(m_d[drive].state != DRIVE_EMPTY);
 
     if (iwvdIsDiskIdle(drive)) {
         m_d[drive].wvd->close();
@@ -1031,9 +1031,9 @@ IoCardDisk::iwvdRemoveDisk(int drive)
 bool
 IoCardDisk::iwvdWriteSector()
 {
-    ASSERT(m_drive >= 0 && m_drive < numDrives());
-    ASSERT(m_platter < m_d[m_drive].wvd->getNumPlatters());
-    ASSERT(m_secaddr < m_d[m_drive].wvd->getNumSectors());
+    assert(m_drive >= 0 && m_drive < numDrives());
+    assert(m_platter < m_d[m_drive].wvd->getNumPlatters());
+    assert(m_secaddr < m_d[m_drive].wvd->getNumSectors());
 
     if (DBG > 0)
         dbglog(">> writing virtual sector %d, platter %d, drive %d <<\n", m_secaddr, m_platter, m_drive);
@@ -1046,9 +1046,9 @@ IoCardDisk::iwvdWriteSector()
 bool
 IoCardDisk::iwvdReadSector()
 {
-    ASSERT(m_drive >= 0 && m_drive < numDrives());
-    ASSERT(m_platter < m_d[m_drive].wvd->getNumPlatters());
-    ASSERT(m_secaddr < m_d[m_drive].wvd->getNumSectors());
+    assert(m_drive >= 0 && m_drive < numDrives());
+    assert(m_platter < m_d[m_drive].wvd->getNumPlatters());
+    assert(m_secaddr < m_d[m_drive].wvd->getNumSectors());
 
     if (DBG > 0)
         dbglog(">> reading virtual sector %d, platter %d, drive %d <<\n", m_secaddr, m_platter, m_drive);
@@ -1079,7 +1079,7 @@ IoCardDisk::getDiskGeometry(int disktype,
     switch (disktype) {
 
         default:
-            ASSERT(0);
+            assert(0);
             // fall through in release mode ...
         case Wvd::DISKTYPE_FD5:
             sectors_per_track = 10;

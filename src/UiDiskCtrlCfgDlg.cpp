@@ -300,7 +300,7 @@ DiskCtrlCfgDlg::updateDlg()
         case DiskCtrlCfgState::DISK_CTRL_AUTO:
                 m_rbIntelligence->SetSelection(2); break;
 #endif
-        default: ASSERT(0);
+        default: assert(0);
     }
     m_warnMismatch->SetValue( m_cfg.getWarnMismatch() );
 }
@@ -314,7 +314,7 @@ DiskCtrlCfgDlg::OnNumDrives( wxCommandEvent& WXUNUSED(event) )
         case 1: m_cfg.setNumDrives(2); break;
         case 2: m_cfg.setNumDrives(3); break;
         case 3: m_cfg.setNumDrives(4); break;
-        default: ASSERT(0); break;
+        default: assert(0); break;
     }
     m_btnRevert->Enable( m_cfg != m_oldcfg );
 }
@@ -329,7 +329,7 @@ DiskCtrlCfgDlg::OnIntelligence( wxCommandEvent& WXUNUSED(event) )
 #if SUPPORT_AUTO_INTELLIGENCE
         case 2: m_cfg.setIntelligence(DiskCtrlCfgState::DISK_CTRL_AUTO); break;
 #endif
-        default: ASSERT(0); break;
+        default: assert(0); break;
     }
     m_btnRevert->Enable( m_cfg != m_oldcfg );
 }

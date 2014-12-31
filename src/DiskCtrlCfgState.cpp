@@ -27,7 +27,7 @@ DiskCtrlCfgState&
 DiskCtrlCfgState::operator=(const DiskCtrlCfgState &rhs)
 {
     // don't copy something that hasn't been initialized
-    ASSERT(rhs.m_initialized);
+    assert(rhs.m_initialized);
 
     // check for self-assignment
     if (this != &rhs) {
@@ -44,7 +44,7 @@ DiskCtrlCfgState::operator=(const DiskCtrlCfgState &rhs)
 DiskCtrlCfgState::DiskCtrlCfgState(const DiskCtrlCfgState &obj)
     : CardCfgState()  // good hygiene, although base class is empty
 {
-    ASSERT(obj.m_initialized);
+    assert(obj.m_initialized);
 
     setNumDrives( obj.getNumDrives() );
     setIntelligence( obj.getIntelligence() );
@@ -58,8 +58,8 @@ DiskCtrlCfgState::operator==(const CardCfgState &rhs) const
 {
     const DiskCtrlCfgState rrhs( dynamic_cast<const DiskCtrlCfgState&>(rhs) );
 
-    ASSERT(     m_initialized);
-    ASSERT(rrhs.m_initialized);
+    assert(     m_initialized);
+    assert(rrhs.m_initialized);
 
     return (getNumDrives()    == rrhs.getNumDrives())    &&
            (getIntelligence() == rrhs.getIntelligence()) &&
@@ -117,7 +117,7 @@ DiskCtrlCfgState::loadIni(const char *subgroup)
 void
 DiskCtrlCfgState::saveIni(const char *subgroup) const
 {
-    ASSERT(m_initialized);
+    assert(m_initialized);
 
     Host hst;
     hst.ConfigWriteInt(subgroup, "numDrives", getNumDrives());
@@ -127,7 +127,7 @@ DiskCtrlCfgState::saveIni(const char *subgroup) const
         case DISK_CTRL_DUMB:        foo = "dumb";  break;
         case DISK_CTRL_INTELLIGENT: foo = "smart"; break;
         case DISK_CTRL_AUTO:        foo = "auto";  break;
-        default: ASSERT(0);         foo = "smart";  break;
+        default: assert(0);         foo = "smart";  break;
     }
     hst.ConfigWriteStr(subgroup, "intelligence", foo);
 
@@ -138,7 +138,7 @@ DiskCtrlCfgState::saveIni(const char *subgroup) const
 void
 DiskCtrlCfgState::setNumDrives(int count)
 {
-    ASSERT(count >= 1 && count <= 4);
+    assert(count >= 1 && count <= 4);
     m_num_drives = count;
     m_initialized = true;
 }
@@ -146,7 +146,7 @@ DiskCtrlCfgState::setNumDrives(int count)
 void
 DiskCtrlCfgState::setIntelligence(disk_ctrl_intelligence_t intelligence)
 {
-    ASSERT( intelligence == DISK_CTRL_DUMB        ||
+    assert( intelligence == DISK_CTRL_DUMB        ||
             intelligence == DISK_CTRL_INTELLIGENT ||
             intelligence == DISK_CTRL_AUTO        );
 
@@ -187,7 +187,7 @@ DiskCtrlCfgState::clone() const
 bool
 DiskCtrlCfgState::configOk(bool warn) const
 {
-    ASSERT(m_initialized);
+    assert(m_initialized);
     if (!m_initialized)
         return false;
 

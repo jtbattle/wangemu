@@ -200,7 +200,7 @@ Cpu2200t::write_ucode(int addr, uint32 uop)
     int illegal = 0;    // innocent until proven guilty
     int8 pcinc;
 
-    ASSERT(addr >=0 && addr < MAX_UCODE);
+    assert(addr >=0 && addr < MAX_UCODE);
 
     uop &= 0x000FFFFF;  // only 20b are meaningful
 
@@ -497,7 +497,7 @@ Cpu2200t::mem_read(uint16 addr)
         // addressed by complementing addr bit 4.
 
         int RAMaddr = (addr >> 1);
-        ASSERT(RAMaddr < (m_memsize_KB<<10));
+        assert(RAMaddr < (m_memsize_KB<<10));
 
         if (m_cpu.st3 & ST3_MASK_HORZ) {
             // horizontal addressing
@@ -537,7 +537,7 @@ Cpu2200t::mem_write(uint16 addr, uint4 wr_value, int write2)
 {
     if (m_cpu.st1 & ST1_MASK_ROM) {
         // ROM address space
-        ASSERT(0);      // ucode shouldn't ever write to ROM
+        assert(0);      // ucode shouldn't ever write to ROM
     } else {
         // RAM address space
         int RAMaddr;
@@ -548,7 +548,7 @@ Cpu2200t::mem_write(uint16 addr, uint4 wr_value, int write2)
         }
 
         RAMaddr = (addr >> 1);
-        ASSERT(RAMaddr < (m_memsize_KB<<10));
+        assert(RAMaddr < (m_memsize_KB<<10));
 
         if (addr & 1) {
             m_RAM[RAMaddr] = (uint8)((m_RAM[RAMaddr]&0x0F) | (wr_value<<4));
@@ -681,8 +681,8 @@ Cpu2200t::decimal_add(uint4 a_op, uint4 b_op, int ci)
     #ifdef _DEBUG
     // these are known to fire (eg, running diags), yet something
     // detects the problem and doesn't use the result.
-    ASSERT(a_op < 10);
-    ASSERT(b_op < 10);   // "tomlake.w22" triggers this one, as does diagnostics disk
+    assert(a_op < 10);
+    assert(b_op < 10);   // "tomlake.w22" triggers this one, as does diagnostics disk
     #endif
 
     sum = a_op + b_op + ci; // ranges from binary 0 to 19
@@ -709,8 +709,8 @@ Cpu2200t::decimal_sub(uint4 a_op, uint4 b_op, int ci)
     #ifdef _DEBUG
     // these are known to fire (eg, running diags), yet something
     // detects the problem and doesn't use the result.
-    ASSERT(a_op < 10);
-    ASSERT(b_op < 10);
+    assert(a_op < 10);
+    assert(b_op < 10);
     #endif
 
     ninecomp = 9-b_op;  // form 9's complement
@@ -766,7 +766,7 @@ Cpu2200t::exec_one_op()
         case 15: pcinc = +1; a_op = (uint4)(0x0);                       break;  // dummy
 
         default:
-            ASSERT(0);
+            assert(0);
             pcinc = 0;
             a_op  = (uint4)0x0;
             break;
@@ -812,7 +812,7 @@ Cpu2200t::exec_one_op()
         case 31: b_op = (uint4)(0x0);                    break;  // dummy
 
         default:
-            ASSERT(0);
+            assert(0);
             b_op = (uint4)0x0;
             break;
         }
@@ -1158,7 +1158,7 @@ Cpu2200t::exec_one_op()
         break;
 
     default:
-        ASSERT(0);
+        assert(0);
         return EXEC_ERR;
     }
 
@@ -1188,8 +1188,8 @@ Cpu2200t::Cpu2200t(System2200 &sys, Scheduler &scheduler,
     m_memsize_KB(ramsize),
     m_dbg(false)
 {
-    ASSERT(ramsize >= 4 && ramsize <= 32);
-    ASSERT((ramsize&3) == 0);           // multiple of 4
+    assert(ramsize >= 4 && ramsize <= 32);
+    assert((ramsize&3) == 0);           // multiple of 4
 
     // initialize ucode store from built-in image
     switch (m_cpuType) {
@@ -1209,7 +1209,7 @@ Cpu2200t::Cpu2200t(System2200 &sys, Scheduler &scheduler,
                 m_kROM[i] = kROM_2200T[i];
             break;
         default:
-            ASSERT(0);
+            assert(0);
     }
 
 #if 0
@@ -1329,7 +1329,7 @@ void
 Cpu2200t::IoCardCbIbs(int data)
 {
     // we shouldn't receive an IBS while the cpu is busy
-    ASSERT( (m_cpu.st1 & ST1_MASK_CPB) == 0 );
+    assert( (m_cpu.st1 & ST1_MASK_CPB) == 0 );
     m_cpu.k = (uint8)(data & 0xFF);
     m_cpu.st1 |= ST1_MASK_CPB;          // CPU busy; inhibit IBS
     m_sys.cpu_CPB( true );              // we are busy now

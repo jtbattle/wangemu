@@ -64,7 +64,7 @@ static ofstream dbg_ofs;
 void
 dbglog_open(const string &filename)
 {
-    ASSERT(!dbg_ofs.is_open());     // only one log at a time
+    assert(!dbg_ofs.is_open());     // only one log at a time
     dbg_ofs.open( filename.c_str(), ofstream::out | ofstream::trunc );
     if (!dbg_ofs.good()) {
         UI_Error("Error opening '%s' for logging.\n", filename.c_str());
@@ -156,7 +156,7 @@ System2200::initialize()
     setTerminationState(RUNNING);
 
     m_scheduler = new Scheduler();
-    ASSERT(m_scheduler != 0);
+    assert(m_scheduler != 0);
 
     // attempt to load configuration from saved state
     SysCfgState ini_cfg;
@@ -217,7 +217,7 @@ System2200::setConfig(const SysCfgState &newcfg)
         }
 
         // the change was major, so delete existing resources
-        ASSERT(m_cpu != 0);
+        assert(m_cpu != 0);
         delete m_cpu;
         m_cpu = 0;
 
@@ -236,7 +236,7 @@ System2200::setConfig(const SysCfgState &newcfg)
         case Cpu2200::CPUTYPE_2200B:
             m_cpu = new Cpu2200t( *this, scheduler(), ramsize, Cpu2200::CPUTYPE_2200B );
             break;
-        default: ASSERT(0);
+        default: assert(0);
         case Cpu2200::CPUTYPE_2200T:
             m_cpu = new Cpu2200t( *this, scheduler(), ramsize, Cpu2200::CPUTYPE_2200T );
             break;
@@ -244,7 +244,7 @@ System2200::setConfig(const SysCfgState &newcfg)
             m_cpu = new Cpu2200vp( *this, scheduler(), ramsize, Cpu2200::CPUTYPE_2200VP );
             break;
     }
-    ASSERT(m_cpu != 0);
+    assert(m_cpu != 0);
 
     // build cards that go into each slot.
     // a hack -- when a display card is made, the crtframe status bar queries
@@ -364,7 +364,7 @@ System2200::onIdle()
             // do nothing -- we already requested a cleanup
             break;
         default:
-            ASSERT(0);
+            assert(0);
             break;
     }
 
@@ -620,7 +620,7 @@ System2200::cpu_poll_IB5()
 bool
 System2200::getSlotInfo(int slot, int *cardtype_idx, int *addr)
 {
-    ASSERT(0 <= slot && slot < NUM_IOSLOTS);
+    assert(0 <= slot && slot < NUM_IOSLOTS);
     if (!config().isSlotOccupied(slot))
         return false;
 
@@ -676,7 +676,7 @@ System2200::getPrinterIoAddr(int n)
 IoCard*
 System2200::getInstFromIoAddr(int io_addr)
 {
-    ASSERT( (io_addr >= 0) && (io_addr <= 0xFFF) );
+    assert( (io_addr >= 0) && (io_addr <= 0xFFF) );
     return m_IoMap[io_addr & 0xFF].inst;
 }
 
@@ -685,7 +685,7 @@ System2200::getInstFromIoAddr(int io_addr)
 IoCard*
 System2200::getInstFromSlot(int slot)
 {
-    ASSERT(slot >=0 && slot < NUM_IOSLOTS);
+    assert(slot >=0 && slot < NUM_IOSLOTS);
 
     int io_addr = config().getSlotCardAddr(slot);
     if (io_addr < 0)
@@ -699,7 +699,7 @@ System2200::getInstFromSlot(int slot)
 bool
 System2200::isDiskController(int slot)
 {
-    ASSERT(slot >= 0 && slot < NUM_IOSLOTS);
+    assert(slot >= 0 && slot < NUM_IOSLOTS);
 
     int cardtype_idx;
     bool ok = System2200().getSlotInfo(slot, &cardtype_idx, 0);
@@ -716,7 +716,7 @@ System2200::findDiskController(const int n, int *slot)
     int num_ioslots = NUM_IOSLOTS;
     int numfound = 0;
 
-    ASSERT(n >= 0);
+    assert(n >= 0);
 
     for(int probe=0; probe<num_ioslots; probe++) {
         if (isDiskController(probe)) {
@@ -745,14 +745,14 @@ System2200::findDisk(const string &filename,
 
         const CardCfgState *cfg = config().getCardConfig(slt);
         const DiskCtrlCfgState *dcfg = dynamic_cast<const DiskCtrlCfgState*>(cfg);
-        ASSERT(dcfg != 0);
+        assert(dcfg != 0);
         int num_drives = dcfg->getNumDrives();
         for(int d=0; d<num_drives; d++) {
             int stat = IoCardDisk::wvdDriveStatus(slt, d);
             if (stat & IoCardDisk::WVD_STAT_DRIVE_OCCUPIED) {
                 string fname;
                 bool ok = IoCardDisk::wvdGetFilename(slt, d, &fname);
-                ASSERT(ok); ok=ok;
+                assert(ok); ok=ok;
                 if (filename == fname) {
                     if (slot != NULL)
                         *slot = slt;
@@ -760,7 +760,7 @@ System2200::findDisk(const string &filename,
                         *drive = d;
                     if (io_addr != NULL) {
                         ok = System2200().getSlotInfo(slt, 0, io_addr);
-                        ASSERT(ok); ok = ok;
+                        assert(ok); ok = ok;
                     }
                     return true;
                 }
@@ -792,7 +792,7 @@ System2200::saveDiskMounts(void)
             string val;
             const CardCfgState *cfg = config().getCardConfig(slot);
             const DiskCtrlCfgState *dcfg = dynamic_cast<const DiskCtrlCfgState*>(cfg);
-            ASSERT(dcfg != 0);
+            assert(dcfg != 0);
             int num_drives = dcfg->getNumDrives();
             for(int drive=0; drive<num_drives; drive++) {
                 ostringstream item;
@@ -802,7 +802,7 @@ System2200::saveDiskMounts(void)
                     int stat = IoCardDisk::wvdDriveStatus(slot, drive);
                     if (stat & IoCardDisk::WVD_STAT_DRIVE_OCCUPIED) {
                         bool ok = IoCardDisk::wvdGetFilename(slot, drive, &filename);
-                        ASSERT(ok); ok=ok;
+                        assert(ok); ok=ok;
                     }
                 }
                 hst.ConfigWriteStr(subgroup.str(), item.str(), filename);
@@ -822,7 +822,7 @@ System2200::restoreDiskMounts(void)
         if (isDiskController(slot)) {
             const CardCfgState *cfg = config().getCardConfig(slot);
             const DiskCtrlCfgState *dcfg = dynamic_cast<const DiskCtrlCfgState*>(cfg);
-            ASSERT(dcfg != 0);
+            assert(dcfg != 0);
             int num_drives = dcfg->getNumDrives();
             for(int drive=0; drive<num_drives; drive++) {
                 ostringstream subgroup;

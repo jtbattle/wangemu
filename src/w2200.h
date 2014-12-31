@@ -40,10 +40,6 @@ using std::vector;
 #endif
 
 
-// assert wrapper, in case we want to hijack it later
-#define ASSERT(x) assert(x)
-
-
 // Put this at the end of a class declaration to make the class
 // uncopyable and unassignable
 

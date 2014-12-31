@@ -86,7 +86,7 @@ IoCardDisk::statename(int state)
         case CTRL_VERIFY_RANGE5:        return "CTRL_VERIFY_RANGE5";
         case CTRL_HANG:                 return "CTRL_HANG";
         case CTRL_STATUS:               return "CTRL_STATUS";
-        default: /*ASSERT(0);*/         return "CTRL_???";
+        default: /*assert(0);*/         return "CTRL_???";
     }
 }
 
@@ -254,7 +254,7 @@ IoCardDisk::advanceStateInt(disk_event_t event, const int val)
     //    0x02: 2200 MVP machine.  Use fast data transmission mode.
     //
     case CTRL_WAKEUP:
-        ASSERT(m_card_busy == false);
+        assert(m_card_busy == false);
         if (event == EVENT_OBS) {
             if (cax_init()) {
                 // we must be selected if we got the OBS
@@ -270,7 +270,7 @@ IoCardDisk::advanceStateInt(disk_event_t event, const int val)
                     default: // GIO can send anything; assume non-zero is intelligent
                         switch (intelligence()) {
                             default:
-                                ASSERT(0);
+                                assert(0);
                                 // fall through
                             case DiskCtrlCfgState::DISK_CTRL_DUMB:
                                 m_acting_intelligent = false;
@@ -319,7 +319,7 @@ IoCardDisk::advanceStateInt(disk_event_t event, const int val)
     //    0xC0 == dumb controller
     //    0xD0 == smart controller
     case CTRL_STATUS1:
-        ASSERT(m_card_busy == false);
+        assert(m_card_busy == false);
         if (event == EVENT_IBS_POLL) {
             // indeed, we have data
             m_byte_to_send = (m_acting_intelligent) ? 0xD0 : 0xC0;
@@ -335,7 +335,7 @@ IoCardDisk::advanceStateInt(disk_event_t event, const int val)
     // When all the bytes have been received, it returns to m_return_state.
 
     case CTRL_GET_BYTES:
-        ASSERT(m_card_busy == false);
+        assert(m_card_busy == false);
         if (event == EVENT_OBS) {
             m_get_bytes[m_get_bytes_ptr] = (uint8)val;
             m_state = CTRL_GET_BYTES2;
@@ -357,7 +357,7 @@ IoCardDisk::advanceStateInt(disk_event_t event, const int val)
     // When all the bytes have been received, it returns to m_return_state.
 
     case CTRL_SEND_BYTES:
-        ASSERT(m_card_busy == false);
+        assert(m_card_busy == false);
         if (event == EVENT_IBS_POLL) {
             rv = true;
             m_byte_to_send = m_send_bytes[m_send_bytes_ptr++];
@@ -397,7 +397,7 @@ IoCardDisk::advanceStateInt(disk_event_t event, const int val)
     // on which special command is being processed.
     //
     case CTRL_COMMAND:
-        ASSERT(m_card_busy == false);
+        assert(m_card_busy == false);
         if (event == EVENT_OBS) {
             m_header[m_state_cnt] = (uint8)val;
             m_state = CTRL_COMMAND_ECHO;
@@ -509,7 +509,7 @@ disk operation
                             m_state = CTRL_STATUS;
                             break;
                     default:
-                        ASSERT(0);
+                        assert(0);
                         m_state = CTRL_COMMAND;
                         break;
                     }
@@ -526,7 +526,7 @@ disk operation
 
                 } else {
                     // (m_command != CMD_SPECIAL) -- READ, WRITE, or VERIFY
-                    ASSERT(m_copy_pending == false);
+                    assert(m_copy_pending == false);
 
                     m_state = CTRL_COMMAND_STATUS;
 
@@ -550,7 +550,7 @@ disk operation
     case CTRL_COMMAND_STATUS:
 
         if (event == EVENT_DISK) {
-            ASSERT(m_card_busy == true);
+            assert(m_card_busy == true);
             // provoke IBS
             setBusyState(false);
         } else if (event == EVENT_IBS_POLL) {
@@ -600,7 +600,7 @@ disk operation
                     m_state = CTRL_READ1;  // yes, READ1 -- it shares logic
                     break;
                 default:
-                    ASSERT(0);
+                    assert(0);
                     m_state = CTRL_COMMAND;
                     break;
                 }
@@ -1312,7 +1312,7 @@ disk operation
     // should have been filtered out already
 
     default:
-        ASSERT(0);
+        assert(0);
         break;
     }
 

@@ -749,7 +749,7 @@ dasm_op_vp(char *buf, uint32 ic, uint32 uop)
 
     } else if (shft_op) {
 
-        ASSERT( (uop & 0x010000) == 0x000000);
+        assert( (uop & 0x010000) == 0x000000);
         len = dasm_typeSHFT(buf, "SH", &illegal, uop);
 
     } else { // neither lpi nor mini_op
@@ -895,7 +895,7 @@ dasm_op_vp(char *buf, uint32 ic, uint32 uop)
                 break;
 
             default: // impossible
-                ASSERT(0);
+                assert(0);
                 break;
         }
     }

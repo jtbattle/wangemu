@@ -157,12 +157,12 @@ IoCardKeyboard::CPB(bool busy)
 void
 IoCardKeyboard::receiveKeystroke(int io_addr, int keycode)
 {
-    ASSERT( (io_addr >= 0) && (io_addr <= 255) );
-    ASSERT( (keycode >= 0) );
+    assert( (io_addr >= 0) && (io_addr <= 255) );
+    assert( (keycode >= 0) );
 
     IoCardKeyboard *tthis = reinterpret_cast<IoCardKeyboard*>
                                 (System2200().getInstFromIoAddr(io_addr));
-    ASSERT(tthis != NULL);
+    assert(tthis != NULL);
 
     // halt apparently acts independently of addressing
     if (keycode & KEYCODE_HALT) {
@@ -192,7 +192,7 @@ IoCardKeyboard::receiveKeystroke(int io_addr, int keycode)
 bool
 IoCardKeyboard::script_mode(int io_addr)
 {
-    ASSERT( (io_addr >= 0) && (io_addr <= 255) );
+    assert( (io_addr >= 0) && (io_addr <= 255) );
 
     IoCardKeyboard *tthis = reinterpret_cast<IoCardKeyboard*>
                                 (System2200().getInstFromIoAddr(io_addr));
@@ -208,12 +208,12 @@ IoCardKeyboard::script_mode(int io_addr)
 bool
 IoCardKeyboard::invoke_script(const int io_addr, const string &filename)
 {
-    ASSERT( (io_addr >= 0) && (io_addr <= 255) );
+    assert( (io_addr >= 0) && (io_addr <= 255) );
 
     IoCardKeyboard *tthis = reinterpret_cast<IoCardKeyboard*>
                                 (System2200().getInstFromIoAddr(io_addr));
-    ASSERT(tthis != NULL);
-    ASSERT(tthis->m_script_handle == 0);  // can't have two scripts to one kb
+    assert(tthis != NULL);
+    assert(tthis->m_script_handle == 0);  // can't have two scripts to one kb
 
     int flags = ScriptFile::SCRIPT_META_INC |
                 ScriptFile::SCRIPT_META_HEX |
@@ -239,7 +239,7 @@ void
 IoCardKeyboard::tcbScript(int arg)
 {
     if (m_selected) {
-        ASSERT(!m_cpb);
+        assert(!m_cpb);
         if (m_key_ready) {
             m_cpu.IoCardCbIbs(m_key_code);
             m_key_ready = false;

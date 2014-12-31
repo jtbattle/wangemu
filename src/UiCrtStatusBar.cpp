@@ -177,7 +177,7 @@ CrtStatusBar::CrtStatusBar(CrtFrame *parent, bool shown) :
         (void)sys.findDiskController(ctrl, &slot); // where is it plugged in?
         int io;
         bool ok = sys.getSlotInfo(slot, 0, &io);   // address it is mapped to
-        ASSERT(ok); ok = ok;
+        assert(ok); ok = ok;
 
         // figure out how many drives are attached to this controller
         m_num_drives[ctrl] = 0;

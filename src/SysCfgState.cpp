@@ -48,7 +48,7 @@ SysCfgState&
 SysCfgState::operator=(const SysCfgState &rhs)
 {
     // don't copy something that hasn't been initialized
-    ASSERT(rhs.m_initialized);
+    assert(rhs.m_initialized);
 
     // check for self-assignment
     if (this == &rhs)
@@ -101,8 +101,8 @@ SysCfgState::SysCfgState(const SysCfgState &obj)
 bool
 SysCfgState::operator==(const SysCfgState &rhs) const
 {
-    ASSERT(    m_initialized);
-    ASSERT(rhs.m_initialized);
+    assert(    m_initialized);
+    assert(rhs.m_initialized);
 
     for(int slot=0; slot<NUM_IOSLOTS; slot++) {
         if ( (m_slot[slot].type    != rhs.m_slot[slot].type) ||
@@ -199,7 +199,7 @@ SysCfgState::loadIni()
                         setRamKB( ival );
                     break;
                 default:
-                    ASSERT(0);
+                    assert(0);
             }
         }
 
@@ -275,7 +275,7 @@ SysCfgState::loadIni()
 void
 SysCfgState::saveIni() const
 {
-    ASSERT(m_initialized);
+    assert(m_initialized);
 
     Host hst;
 
@@ -354,7 +354,7 @@ SysCfgState::setRamKB(int kb)
         case 12:
         case 16:
         case 24:
-            ASSERT(m_cputype != Cpu2200::CPUTYPE_2200VP);
+            assert(m_cputype != Cpu2200::CPUTYPE_2200VP);
             m_ramsize = kb;
             break;
 
@@ -368,13 +368,13 @@ SysCfgState::setRamKB(int kb)
         case 128:
         case 256:
         case 512:
-            ASSERT(m_cputype == Cpu2200::CPUTYPE_2200VP);
+            assert(m_cputype == Cpu2200::CPUTYPE_2200VP);
             m_ramsize = kb;
             break;
 
     // should never happen
         default:
-            ASSERT(0);
+            assert(0);
             m_ramsize = 32;
             break;
     }
@@ -459,7 +459,7 @@ SysCfgState::getSlotCardAddr(int slot) const
 const CardCfgState *
 SysCfgState::getCardConfig(int slot) const
 {
-    ASSERT(isSlotOccupied(slot));
+    assert(isSlotOccupied(slot));
     return m_slot[slot].cardCfg;
 }
 
@@ -468,7 +468,7 @@ SysCfgState::getCardConfig(int slot) const
 void
 SysCfgState::editCardConfig(int slot)
 {
-    ASSERT(isSlotOccupied(slot));
+    assert(isSlotOccupied(slot));
 
     CardCfgState *cardCfg = m_slot[slot].cardCfg;
     if (cardCfg != NULL) {

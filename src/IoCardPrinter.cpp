@@ -23,7 +23,7 @@ IoCardPrinter::IoCardPrinter(Cpu2200 &cpu, int baseaddr, int cardslot) :
     if (m_slot >= 0) {
         int io_addr;
         bool ok = System2200().getSlotInfo(cardslot, 0, &io_addr);
-        ASSERT(ok); ok=ok;
+        assert(ok); ok=ok;
         m_wndhnd = reinterpret_cast<UI_gui_handle_t>(UI_initPrinter(io_addr));
         reset();
     }

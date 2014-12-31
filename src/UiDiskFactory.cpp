@@ -168,7 +168,7 @@ DiskFactory::DiskFactory(wxFrame *parent, const string& filename) :
     } else {
         // existing disk
         bool ok = m_diskdata->open(filename);
-        ASSERT(ok); ok=ok;
+        assert(ok); ok=ok;
     }
 
     // the frame contains a panel containing a single notebook
@@ -503,7 +503,7 @@ PropPanel::refresh()
         case Wvd::DISKTYPE_FD8:  type = "2270(A) 8\" floppy"; break;
         case Wvd::DISKTYPE_HD60: type = "2260 hard disk";     break;
         case Wvd::DISKTYPE_HD80: type = "2280 hard disk";     break;
-        default: ASSERT(0);
+        default: assert(0);
     }
     m_st_type->SetLabel(type);
 

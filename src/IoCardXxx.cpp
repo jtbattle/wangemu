@@ -144,7 +144,7 @@ IoCardXxx::GetIB5() const
 void
 IoCardXxx::CPB(bool busy)
 {
-    ASSERT(val == 0 || val == 1);
+    assert(val == 0 || val == 1);
 
     // it appears that except for reset, ucode only ever clears it,
     // and of course the IBS sets it back.

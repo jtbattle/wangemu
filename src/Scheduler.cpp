@@ -167,8 +167,8 @@ Scheduler::~Scheduler()
 Timer* Scheduler::TimerCreateImpl(int ticks, CallbackBase *fcn)
 {
     // funny things happen if we try to time intervals that are too big
-    ASSERT(ticks <= MAX_TICKS);
-    ASSERT(ticks >= 1);
+    assert(ticks <= MAX_TICKS);
+    assert(ticks >= 1);
 
     // find an available slot
     if (m_numFree == 0) {
@@ -316,7 +316,7 @@ void Scheduler::TimerCredit(void)
         }
 
         // move it to the free list
-        ASSERT(m_numFree < NUM_TIMERS);
+        assert(m_numFree < NUM_TIMERS);
         m_freeIdx[m_numFree++] = idx;
     }
 
@@ -337,7 +337,7 @@ void Scheduler::TimerTick(int n)
             printf("inc %d, time=%d\n", n, g_testtime);
     }
 #endif
-    ASSERT(!m_updating);
+    assert(!m_updating);
 
     m_countdown -= n;
     if (m_countdown <= 0) {
