@@ -704,7 +704,7 @@ errtable_t errtable[] = {
     /*cause*/               "The user is attempting to rename or write over an existing scratched file, but\nis not using the proper syntax. The scratched file name must be referenced.",
     /*action*/              "Use the proper form of the statement.",
     /*example*/             "SAVE DC F \"SAM 1\"\n                 ^ERR 73",
-    /*correction*/          "SAVE SCF (\"SAM1\") \"SAM1\"",
+    /*correction*/          "SAVE DCF (\"SAM1\") \"SAM1\"",
     },
 
 // -------------------------------------------------------------------------

@@ -1,0 +1,261 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{D2B25D33-CBC3-4057-8B24-5C08E0D56C78}</ProjectGuid>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <PlatformToolset>v120</PlatformToolset>
+    <UseOfMfc>false</UseOfMfc>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <PlatformToolset>v120_xp</PlatformToolset>
+    <UseOfMfc>false</UseOfMfc>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="$(VCTargetsPath)Microsoft.CPP.UpgradeFromVC60.props" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="$(VCTargetsPath)Microsoft.CPP.UpgradeFromVC60.props" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <_ProjectFileVersion>12.0.30501.0</_ProjectFileVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <OutDir>.\Release\</OutDir>
+    <IntDir>.\Release\</IntDir>
+    <LinkIncremental>false</LinkIncremental>
+    <EmbedManifest>true</EmbedManifest>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <OutDir>.\Debug\</OutDir>
+    <IntDir>.\Debug\</IntDir>
+    <LinkIncremental>true</LinkIncremental>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Midl>
+      <TypeLibraryName>.\Release/wangemu.tlb</TypeLibraryName>
+      <HeaderFileName />
+    </Midl>
+    <ClCompile>
+      <AdditionalOptions>/EHsc  %(AdditionalOptions)</AdditionalOptions>
+      <Optimization>MaxSpeed</Optimization>
+      <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
+      <AdditionalIncludeDirectories>$(WXWIN)\include;$(WXWIN)\lib\vc_lib\mswu;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;__WXMSW__;_WINDOWS;_CRT_SECURE_NO_WARNINGS=1;_BIND_TO_CURRENT_CRT_VERSION=1;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <StringPooling>true</StringPooling>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <RuntimeTypeInfo>true</RuntimeTypeInfo>
+      <PrecompiledHeaderOutputFile>.\Release/wangemu.pch</PrecompiledHeaderOutputFile>
+      <AssemblerListingLocation>.\Release/</AssemblerListingLocation>
+      <ObjectFileName>.\Release/</ObjectFileName>
+      <ProgramDataBaseFileName>Release\wangemu.pdb</ProgramDataBaseFileName>
+      <WarningLevel>Level4</WarningLevel>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>__WXMSW__;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <Culture>0x0409</Culture>
+      <AdditionalIncludeDirectories>$(WXWIN)\include;$(WXWIN)\lib\vc_lib\mswu;.;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ResourceCompile>
+    <Link>
+      <AdditionalDependencies>wxmsw30u_core.lib;wxbase30u.lib;wxmsw30u_adv.lib;wxpng.lib;wxzlib.lib;winmm.lib;comctl32.lib;rpcrt4.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <OutputFile>Release\wangemu.exe</OutputFile>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <AdditionalLibraryDirectories>$(WXWIN)\lib\vc_lib;$(WXWIN)\include;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <ManifestFile>$(IntDir)$(TargetFileName).manifest</ManifestFile>
+      <ProgramDatabaseFile>.\Release/wangemu.pdb</ProgramDatabaseFile>
+      <SubSystem>Windows</SubSystem>
+      <RandomizedBaseAddress>false</RandomizedBaseAddress>
+      <DataExecutionPrevention />
+      <TargetMachine>MachineX86</TargetMachine>
+    </Link>
+    <Bscmake>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <OutputFile>.\Release/wangemu.bsc</OutputFile>
+    </Bscmake>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Midl>
+      <TypeLibraryName>.\Debug/wangemu.tlb</TypeLibraryName>
+      <HeaderFileName />
+    </Midl>
+    <ClCompile>
+      <AdditionalOptions>/EHsc  %(AdditionalOptions)</AdditionalOptions>
+      <Optimization>Disabled</Optimization>
+      <AdditionalIncludeDirectories>$(WXWIN)\include;$(WXWIN)\lib\vc_lib\mswud;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;_DEBUG;__WXMSW__;__WXDEBUG__;_WINDOWS;_CRT_SECURE_NO_WARNINGS=1;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <MinimalRebuild>true</MinimalRebuild>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <RuntimeTypeInfo>true</RuntimeTypeInfo>
+      <PrecompiledHeaderOutputFile>.\Debug/wangemu.pch</PrecompiledHeaderOutputFile>
+      <AssemblerListingLocation>.\Debug/</AssemblerListingLocation>
+      <ObjectFileName>.\Debug/</ObjectFileName>
+      <ProgramDataBaseFileName>Debug\wangemu.pdb</ProgramDataBaseFileName>
+      <WarningLevel>Level4</WarningLevel>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>_DEBUG;__WXMSW__;__WXDEBUG__;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <Culture>0x0409</Culture>
+      <AdditionalIncludeDirectories>$(WXWIN)\include;$(WXWIN)\lib\vc_lib\mswd;.;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ResourceCompile>
+    <Link>
+      <AdditionalDependencies>wxmsw30ud_core.lib;wxbase30ud.lib;wxmsw30ud_adv.lib;wxpngd.lib;wxzlibd.lib;winmm.lib;comctl32.lib;rpcrt4.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <OutputFile>Debug\wangemu.exe</OutputFile>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <AdditionalLibraryDirectories>$(WXWIN)\lib\vc_lib;$(WXWIN)\include;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <ProgramDatabaseFile>.\Debug/wangemu.pdb</ProgramDatabaseFile>
+      <SubSystem>Windows</SubSystem>
+      <RandomizedBaseAddress>false</RandomizedBaseAddress>
+      <DataExecutionPrevention />
+      <TargetMachine>MachineX86</TargetMachine>
+    </Link>
+    <Manifest>
+      <UpdateFileHashesSearchPath />
+    </Manifest>
+    <Bscmake>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <OutputFile>.\Debug/wangemu.bsc</OutputFile>
+    </Bscmake>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="src\CardInfo.cpp" />
+    <ClCompile Include="src\Cpu2200t.cpp" />
+    <ClCompile Include="src\Cpu2200vp.cpp" />
+    <ClCompile Include="src\dasm.cpp" />
+    <ClCompile Include="src\dasm_vp.cpp" />
+    <ClCompile Include="src\DiskCtrlCfgState.cpp" />
+    <ClCompile Include="src\errtable.cpp" />
+    <ClCompile Include="src\Host.cpp" />
+    <ClCompile Include="src\IoCard.cpp" />
+    <ClCompile Include="src\IoCardDisk.cpp" />
+    <ClCompile Include="src\IoCardDisk_Controller.cpp" />
+    <ClCompile Include="src\IoCardDisplay.cpp" />
+    <ClCompile Include="src\IoCardKeyboard.cpp" />
+    <ClCompile Include="src\IoCardPrinter.cpp" />
+    <ClCompile Include="src\Scheduler.cpp" />
+    <ClCompile Include="src\ScriptFile.cpp" />
+    <ClCompile Include="src\SysCfgState.cpp" />
+    <ClCompile Include="src\System2200.cpp" />
+    <ClCompile Include="src\ucode_2200B.cpp" />
+    <ClCompile Include="src\ucode_2200T.cpp" />
+    <ClCompile Include="src\ucode_boot_vp.cpp" />
+    <ClCompile Include="src\UiCrt.cpp" />
+    <ClCompile Include="src\UiCrtConfigDlg.cpp" />
+    <ClCompile Include="src\UiCrtErrorDlg.cpp" />
+    <ClCompile Include="src\UiCrtFrame.cpp" />
+    <ClCompile Include="src\UiCrtStatusBar.cpp" />
+    <ClCompile Include="src\UiCrt_Charset.cpp" />
+    <ClCompile Include="src\UiCrt_Keyboard.cpp" />
+    <ClCompile Include="src\UiDiskCtrlCfgDlg.cpp" />
+    <ClCompile Include="src\UiDiskFactory.cpp" />
+    <ClCompile Include="src\UiMyAboutDlg.cpp" />
+    <ClCompile Include="src\UiMyStaticText.cpp" />
+    <ClCompile Include="src\UiPrinter.cpp" />
+    <ClCompile Include="src\UiPrinterConfigDlg.cpp" />
+    <ClCompile Include="src\UiPrinterFrame.cpp" />
+    <ClCompile Include="src\UiSystem.cpp" />
+    <ClCompile Include="src\UiSystemConfigDlg.cpp" />
+    <ClCompile Include="src\Wvd.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="src\wangemu.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="src\Callback.h" />
+    <ClInclude Include="src\CardCfgState.h" />
+    <ClInclude Include="src\CardInfo.h" />
+    <ClInclude Include="src\compile_options.h" />
+    <ClInclude Include="src\Cpu2200.h" />
+    <ClInclude Include="src\DiskCtrlCfgState.h" />
+    <ClInclude Include="src\errtable.h" />
+    <ClInclude Include="src\Host.h" />
+    <ClInclude Include="src\IoCard.h" />
+    <ClInclude Include="src\IoCardDisk.h" />
+    <ClInclude Include="src\IoCardDisplay.h" />
+    <ClInclude Include="src\IoCardKeyboard.h" />
+    <ClInclude Include="src\IoCardPrinter.h" />
+    <ClInclude Include="src\Scheduler.h" />
+    <ClInclude Include="src\ScriptFile.h" />
+    <ClInclude Include="src\SysCfgState.h" />
+    <ClInclude Include="src\System2200.h" />
+    <ClInclude Include="src\tokens.h" />
+    <ClInclude Include="src\ucode_2200B.h" />
+    <ClInclude Include="src\ucode_2200T.h" />
+    <ClInclude Include="src\ucode_2200vp.h" />
+    <ClInclude Include="src\Ui.h" />
+    <ClInclude Include="src\UiCrt.h" />
+    <ClInclude Include="src\UiCrtConfigDlg.h" />
+    <ClInclude Include="src\UiCrtErrorDlg.h" />
+    <ClInclude Include="src\UiCrtFrame.h" />
+    <ClInclude Include="src\UiCrtStatusBar.h" />
+    <ClInclude Include="src\UiCrt_Charset.h" />
+    <ClInclude Include="src\UiDiskCtrlCfgDlg.h" />
+    <ClInclude Include="src\UiDiskFactory.h" />
+    <ClInclude Include="src\UiMyAboutDlg.h" />
+    <ClInclude Include="src\UiMyStaticText.h" />
+    <ClInclude Include="src\UiPrinter.h" />
+    <ClInclude Include="src\UiPrinterConfigDlg.h" />
+    <ClInclude Include="src\UiPrinterFrame.h" />
+    <ClInclude Include="src\UiSystem.h" />
+    <ClInclude Include="src\UiSystemConfigDlg.h" />
+    <ClInclude Include="src\w2200.h" />
+    <ClInclude Include="src\Wvd.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="src\wx\msw\blank.cur" />
+    <None Include="src\wx\msw\bullseye.cur" />
+    <None Include="src\wx\msw\cross.cur" />
+    <None Include="src\wx\msw\hand.cur" />
+    <None Include="src\wx\msw\magnif1.cur" />
+    <None Include="src\wx\msw\noentry.cur" />
+    <None Include="src\wx\msw\pbrush.cur" />
+    <None Include="src\wx\msw\pencil.cur" />
+    <None Include="src\wx\msw\pntleft.cur" />
+    <None Include="src\wx\msw\pntright.cur" />
+    <None Include="src\wx\msw\query.cur" />
+    <None Include="src\wx\msw\rightarr.cur" />
+    <None Include="src\wx\msw\roller.cur" />
+    <None Include="src\wx\msw\size.cur" />
+    <None Include="src\wx\msw\watch1.cur" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="src\icons.bmp" />
+    <Image Include="src\wang.ico" />
+    <Image Include="src\wx\msw\cdrom.ico" />
+    <Image Include="src\wx\msw\computer.ico" />
+    <Image Include="src\wx\msw\drive.ico" />
+    <Image Include="src\wx\msw\file1.ico" />
+    <Image Include="src\wx\msw\floppy.ico" />
+    <Image Include="src\wx\msw\folder1.ico" />
+    <Image Include="src\wx\msw\folder2.ico" />
+    <Image Include="src\wx\msw\removble.ico" />
+    <Image Include="src\wx\msw\std.ico" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

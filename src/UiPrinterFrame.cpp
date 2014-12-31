@@ -348,7 +348,7 @@ PrinterFrame::saveDefaults()
     hst.ConfigWriteBool(subgroup, "printasgo",        m_printer->getPrintasgo() );
     hst.ConfigWriteBool(subgroup, "portdirect",       m_printer->getPortdirect() );
     hst.ConfigWriteStr(subgroup,  "portstring",       m_printer->getPortstring() );
-    hst.ConfigWriteInt(subgroup,  "orientation",      m_printer->getOrientation() );
+    hst.ConfigWriteInt(subgroup,  "orientation",      static_cast<int>(m_printer->getOrientation()) );
     hst.ConfigWriteStr(subgroup,  "papername",        m_printer->getPaperName() );
     hst.ConfigWriteInt(subgroup,  "paperid",          m_printer->getPaperId() );
     hst.ConfigWriteInt(subgroup,  "paperbin",         m_printer->getBin() );
@@ -424,7 +424,7 @@ PrinterFrame::getDefaults()
     // pick up orientation
     int orientation;
     (void)hst.ConfigReadInt(subgroup, "orientation", &orientation, wxPORTRAIT);
-    m_printer->setOrientation(orientation);
+    m_printer->setOrientation(static_cast<wxPrintOrientation>(orientation));
  
     // pick up paper id
     // we don't actually use the paperid that was saved to the config file but

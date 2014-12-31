@@ -279,7 +279,6 @@ Crt::generateFontmap()
         case FONT_NATIVE24:
                 m_font = wxFont(getFontSize(), wxMODERN, wxNORMAL, wxNORMAL);
                 wxASSERT(m_font != wxNullFont);
-                m_font.SetNoAntiAliasing();
                 dc.SetFont( m_font );
                 m_charcell_w = dc.GetCharWidth();
                 m_charcell_h = dc.GetCharHeight()

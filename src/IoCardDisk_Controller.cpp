@@ -262,13 +262,12 @@ IoCardDisk::advanceStateInt(disk_event_t event, const int val)
                 m_host_type = val;
                 // we act dumb if configured that way, or if host is 2200T
                 switch (m_host_type) {
-                    default:
-                        ASSERT(0);
                     case 0x00: // 2200 T
                         m_acting_intelligent = false;
                         break;
                     case 0x01: // 2200 VP
                     case 0x02: // 2200 MVP
+                    default: // GIO can send anything; assume non-zero is intelligent
                         switch (intelligence()) {
                             default:
                                 ASSERT(0);

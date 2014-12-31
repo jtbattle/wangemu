@@ -50,12 +50,12 @@ static struct disk_choice_t {
 
 // these are real products described in the document "CS-2200 Ramblings.pdf", page 21:
 //  { "DS-20 10 MB * 2 platter disk",   Wvd::DISKTYPE_HD80,  2,  640*64  },  // = 40960
-//  { "DS-32 16 MB * 2 platter disk",   Wvd::DISKTYPE_HD80,  2, 1024*64  },  // = 65536
-//  { "DS-64 16 MB * 4 platter disk",   Wvd::DISKTYPE_HD80,  4, 1024*64  },  // = 65536
-    { "DS-112 16 MB * 7 platter disk",  Wvd::DISKTYPE_HD80,  7, 1024*64  },  // = 65536
+//  { "DS-32 16 MB * 2 platter disk",   Wvd::DISKTYPE_HD80,  2, 1023*64  },  // = 65472 (65536 is too big)
+//  { "DS-64 16 MB * 4 platter disk",   Wvd::DISKTYPE_HD80,  4, 1023*64  },  // = 65472
+    { "DS-112 16 MB * 7 platter disk",  Wvd::DISKTYPE_HD80,  7, 1023*64  },  // = 65472
     { "DS-140 10 MB * 14 platter disk", Wvd::DISKTYPE_HD80, 14,  640*64  },  // = 40960
 // this is one I just made up -- it is the largest possible disk:
-    { "DS-224 16 MB * 14 platter disk", Wvd::DISKTYPE_HD80, 14, 1024*64  },  // = 65536
+    { "DS-224 16 MB * 14 platter disk", Wvd::DISKTYPE_HD80, 14, 1023*64  },  // = 65472
 
 };
 static const int num_disk_types = sizeof(disk_choices) / sizeof(disk_choice_t);

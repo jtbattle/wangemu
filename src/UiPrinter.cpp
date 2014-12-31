@@ -98,7 +98,6 @@ Printer::setFontSize(const int size)
     wxClientDC dc(this);
 
     m_font = wxFont(size, wxMODERN, wxNORMAL, wxNORMAL, false);
-    m_font.SetNoAntiAliasing();
     dc.SetFont( m_font );
 
     m_fontsize   = size;
@@ -147,12 +146,12 @@ Printer::getMargins(int& left, int& right, int& top, int& bottom)
 }
 
 void
-Printer::setOrientation(int orientation)
+Printer::setOrientation(wxPrintOrientation orientation)
 {
     m_orientation = orientation;
 }
 
-int
+wxPrintOrientation
 Printer::getOrientation()
 {
     return m_orientation;

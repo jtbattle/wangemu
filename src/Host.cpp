@@ -147,6 +147,7 @@ Host::initMembers()
 }
 
 
+// FIXME: does anything call this?
 void
 Host::terminate()
 {
@@ -362,8 +363,10 @@ Host::ConfigWriteStr(const string &subgroup,
                      const string &key,
                      const string &val)
 {
+    wxString wxKey(key);
+    wxString wxVal(val);
     m_config->SetPath( "/wangemu/config-0/" + subgroup);
-    bool b = m_config->Write(key, val);
+    bool b = m_config->Write(wxKey, wxVal);
     wxASSERT(b);
     b = b;      // keep lint happy
 }

@@ -208,7 +208,7 @@ SystemConfigDlg::SystemConfigDlg(wxFrame *parent) :
     LRsizer->Add(rightgrid, 1, wxALL, 10 );     // horizontally stretchable
 #endif
 
-    // put two buttons side by side
+    // put three buttons side by side
     m_btnRevert = new wxButton(this, ID_BTN_REVERT, "Revert");
     m_btnOk     = new wxButton(this, wxID_OK,       "OK");
     m_btnCancel = new wxButton(this, wxID_CANCEL,   "Cancel");
@@ -255,10 +255,11 @@ SystemConfigDlg::setMemsizeStrings()
             m_memSize->Append("32 KB", (void*)32);
             break;
         case Cpu2200::CPUTYPE_2200VP:
-            m_memSize->Append("16 KB", (void*)16);
             m_memSize->Append("32 KB", (void*)32);
-            m_memSize->Append("48 KB", (void*)48);
             m_memSize->Append("64 KB", (void*)64);
+            m_memSize->Append("128 KB", (void*)128);
+            m_memSize->Append("256 KB", (void*)256);
+            m_memSize->Append("512 KB", (void*)512);
             break;
         default:
             wxASSERT(0);

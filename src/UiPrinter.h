@@ -23,8 +23,8 @@ public:
     void setMargins(int left, int right, int top, int bottom);
     void getMargins(int& left, int& right, int& top, int& bottom);
     
-    void setOrientation(int orientation);
-    int  getOrientation();
+    void               setOrientation(wxPrintOrientation orientation);
+    wxPrintOrientation getOrientation();
 
     void        setPaperId(wxPaperSize paperid);
     wxPaperSize getPaperId();
@@ -152,7 +152,7 @@ private:
     int         m_marginbottom;
 
     string      m_realprintername;      // name of the real printer
-    int         m_orientation;          // page orientation (wxPORTRAIT or wxLANDSCAPE)
+    wxPrintOrientation m_orientation;   // page orientation (wxPORTRAIT or wxLANDSCAPE)
     wxPaperSize m_paperid;              // paper id (wxPAPER_LETTER, etc.)
     string      m_papername;            // the name of the paperid
     wxPrintBin  m_paperbin;             // paper bin (wxPRINTBIN_DEFAULT, etc.)

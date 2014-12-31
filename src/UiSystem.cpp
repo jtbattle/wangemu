@@ -117,7 +117,8 @@ TheApp::OnCmdLineParsed(wxCmdLineParser& parser)
         wxString filename;
         if (parser.Found("s", &filename)) {
             const int io_addr = 0x01;   // default keyboard device
-            bool success = core_invokeScript(io_addr, filename.c_str());
+            std::string fn(filename.c_str());
+            bool success = core_invokeScript(io_addr, fn);
             if (!success)
                 UI_Warn("Failed to open script '%s'", filename.c_str());
         }

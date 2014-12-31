@@ -20,9 +20,8 @@
 
 // control which functions get inlined
 #define INLINE_STORE_C 1
-#define INLINE_MEM_RD  1
-#define INLINE_MEM_WR  1
-#define INLINE_DD_OP   1
+#define INLINE_MEM_RD  1  // FIXME: this doesn't work, due to static declaration
+#define INLINE_DD_OP   1  // FIXME: this doesn't work, due to static declaration
 #define INLINE_GET_Hb  1
 
 bool g_dbg_trace = false;
@@ -452,6 +451,29 @@ Cpu2200vp::write_ucode(uint16 addr, uint32 uop)
         if (--m_cpu.icsp < 0) m_cpu.icsp = STACKSIZE-1; \
         } while (0)
 
+// setting SL can have more complicated side effects.
+// we keep shadow state of the memory bank addressing bits.
+void
+Cpu2200vp::set_sl(uint8 value)
+{
+    m_cpu.sl = (value & 0xFF);
+  
+    if (m_memsize_KB <= 64) {
+        m_cpu.bank_offset = 0;
+    } else if (m_memsize_KB <= 128) {
+        m_cpu.bank_offset = ((value >> 6) & 1) << 16; // bit [6]
+    } else if (m_memsize_KB <= 256) {
+        m_cpu.bank_offset = ((value >> 6) & 3) << 16; // bits [7:6]
+    } else if (m_memsize_KB <= 512) {
+        m_cpu.bank_offset = (((value >> 6) & 3) << 16)  // bits [7:6]
+                          | (((value >> 5) & 1) << 18); // bit [5]
+    } else {
+        ASSERT(0);
+        m_cpu.bank_offset = 0;
+    }
+}
+
+
 // setting SH can have more complicated side effects.
 // also, microcode can't affect certain bits.
 void
@@ -561,8 +583,8 @@ Cpu2200vp::decimal_sub8(int a_op, int b_op, int ci)
             case  9: m_cpu.pc = (uint16)((m_cpu.pc & 0x00FF) | (v<<8)); break; /* PH */ \
             case 10: break;     /* CL; illegal */                       \
             case 11: break;     /* CH; illegal */                       \
-            case 12: m_cpu.sl = (uint8)v;  break;                       \
-            case 13: set_sh(  (uint8)v); break;                         \
+            case 12: set_sl((uint8)v); break;                           \
+            case 13: set_sh((uint8)v); break;                           \
             case 14: m_cpu.k  = (uint8)v;  break;                       \
             case 15: break;     /* dummy (don't save results) */        \
         }                                                               \
@@ -577,9 +599,17 @@ Cpu2200vp::decimal_sub8(int a_op, int b_op, int ci)
 #endif
 
 
+// addresses < 8KB always refer to bank 0.
+// otherwise, add the bank offset, and force the addr to zero if it is too big
+#define inline_map_address(addr)   \
+    (   ((addr) < 8192) ? (addr)     \
+      : ((addr) + m_cpu.bank_offset < (m_memsize_KB<<10)) ? (m_cpu.bank_offset+(addr)) \
+      : (0) \
+    )
+
+
 // read from the specified address
-#define inlined_mem_read8(addr) \
-        ((uint8) (((addr) < (m_memsize_KB<<10)) ? m_RAM[(addr)] : 0))
+#define inlined_mem_read8(addr) m_RAM[inline_map_address(addr)]
 
 #if INLINE_MEM_RD
     #define mem_read8(addr) inlined_mem_read8(addr)
@@ -597,30 +627,23 @@ Cpu2200vp::decimal_sub8(int a_op, int b_op, int ci)
 
 
 // write to the specified address.
+// addresses < 8 KB always map to bank 0,
+// otherwise we add the bank offset.
 // there are two modes: write 1 and write 2
 // write1 means write to the specified address.
 // write2 means write to (address ^ 1).
 #define inlined_mem_write(addr,wr_value,write2) \
-        int la = addr;                          \
-        if (la < (m_memsize_KB<<10)) {          \
+    do {                                        \
+        int la = (addr);                        \
+        if (la < 8192) {                        \
             la ^= write2;                       \
             m_RAM[la] = (uint8)wr_value;        \
-        }
-
-#if INLINE_MEM_WR
-    #define mem_write(addr, wr_value, write2)           \
-        do {                                            \
-            inlined_mem_write(addr, wr_value, write2)   \
-        } while (0)
-#else
-    static void
-    mem_write(int addr, int wr_value, int write2)
-    {
-        inlined_mem_write(addr, wr_value, write2);
-        //dbglog("WRITE %d, RAM[0x%04X] = 0x%02X\n", write2+1, addr, wr_value);
-    }
-#endif
-
+        } else if (la + m_cpu.bank_offset < (m_memsize_KB<<10)) { \
+            la += m_cpu.bank_offset;            \
+            la ^= write2;                       \
+            m_RAM[la] = (uint8)wr_value;        \
+        }                                       \
+    } while (0)
 
 // return the chosen bits of B and A, returns with the bits
 // of b in [7:4] and the bits of A in [3:0]
@@ -683,7 +706,7 @@ Cpu2200vp::get_HbHa(int HbHa, int a_op, int b_op)
                 m_cpu.cl = mem_read8(m_cpu.orig_pc ^ 1);        \
                 break;                                          \
             default:                                            \
-                mem_write(m_cpu.orig_pc, wr_val, d_field==3);   \
+                inlined_mem_write(m_cpu.orig_pc, wr_val, d_field==3); \
                 break;                                          \
         }                                                       \
     }
@@ -969,11 +992,12 @@ Cpu2200vp::exec_one_op()
         // SR,WCM (write control memory and subroutine return)
         INC_ICSP;
         tmp16 = m_cpu.icstack[m_cpu.icsp];
-        // we can't make this assertion since the size is
-        // probed via testing
-        //ASSERT(tmp16 < 0x8000);
-        if (tmp16 < 0x8000)
+        // BASIC-3/COBOL required larger control memories, but
+        // the boot rom is still stuck in the middle
+        if ( (tmp16 < MAX_UCODE) &&
+             !((tmp16 >= 0x8000) && (tmp16 < 0x9000)) ) {
             write_ucode(tmp16, ((~m_cpu.k & 0xFF) << 16) | m_cpu.pc);
+        }
         // perform subroutine return
         INC_ICSP;
         m_cpu.ic = m_cpu.icstack[m_cpu.icsp];
@@ -1389,11 +1413,12 @@ Cpu2200vp::Cpu2200vp(System2200 &sys, Scheduler &scheduler,
     ASSERT(cpu_subtype == CPUTYPE_2200VP);
     cpu_subtype = cpu_subtype;  // suppress 'unused' warning
 
-    ASSERT(ramsize >= 32 && ramsize <= 64);
+    ASSERT(ramsize ==  32 || ramsize == 64 || ramsize == 128 ||
+           ramsize == 256 || ramsize == 512 );
     ASSERT((ramsize&0xF) == 0);         // multiple of 15
 
     // init microcode
-    for(int i=0; i<0x8000; i++)
+    for(int i=0; i<MAX_RAM; i++)
         write_ucode((uint16)i, 0);
     for(int i=0; i<1024; i++)
         write_ucode((uint16)(0x8000+i), ucode_2200vp[i]);
@@ -1462,8 +1487,8 @@ Cpu2200vp::reset(bool hard_reset)
         m_cpu.k = 0;
         m_cpu.ab = 0;
         m_cpu.ab_sel = 0;
-        m_cpu.sl = 0;
 #endif
+        set_sl(0);  // make sure bank select is 0
         m_cpu.sh &= ~0x80;        // only SH7 one bit is affected
 
         // actually, the one-shot isn't reset, but let's be safe

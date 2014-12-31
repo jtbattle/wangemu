@@ -1,6 +1,6 @@
 ============================================================================
-                    Wang 2200 emulator build notes, v2.1
-                             December 12, 2008
+                    Wang 2200 emulator build notes, v2.2
+                             December 27, 2014
 ============================================================================
 
 The typical user of wangmu has no need to know any of this.  However, if you
@@ -15,73 +15,42 @@ an explicit mouse-click-by-mouse-click cookbook.
 
 1) Set up a modern C++ compiler
 
-   Install Microsoft Visual Studio Express 2008.  It is free, it works well,
+   Install Microsoft Visual Studio Express 2010.  It is free, it works well,
    it has a great debugger.  I will completely ignore the steps of downloading
    it and getting it installed.  Google is your friend.
 
-   Previous versions of WangEmu were built with MSVC++ 6.  It is now more than
-   ten years old and it doesn't understand some features of modern C++,
-   such as defining constant static integers inside a class.  Other compilers
-   may work just fine, but Visual Studio Express 2008 is what I use, and I
-   know it works for this project.
+   Other compilers may work just fine, but Visual Studio Express 2010 is
+   what I use, and I know it works for this project.
 
 2) Get the wxWidgets library source code
 
-   Version 2.1 of WangEmu was build using wx version 2.8.9.  If you download
+   Version 2.2 of WangEmu was build using wx version 3.0.2.  If you download
    a later version of wxWidgets, there are likely to be issues, as the wx
    developers do tend to make a few backward-incompatible changes each
-   release.  Release 3.0 will, no doubt, have even greater compatibility
-   issues.
+   release.
 
    Go to http://www.wxwidgets.org/downloads/ and grab the wxMSW installer.
 
 3) Unpack the wxWidgets source code
 
    Personally, I override the default install location and instead unpack
-   it into C:\wx289 (for release 2.8.9).  This isn't strictly necessary,
-   but future examples in this document assumes things were installed into
-   C:\wx289 .  Adjust future comments if you install somewhere else.
+   it into C:\libs\wx-3.0.2 (for release 3.0.2).  This isn't strictly
+   necessary, but future examples in this document assumes things were
+   installed into C:\libs\wx-3.0.2.  Adjust future comments if you install
+   somewhere else.
 
 4) Tweak setup.h (strictly optional)
 
-   I recommend you skip right to step 5.  I include it here simply because
-   I want to report exactly what my setup is like.
+   I recommend you skip right to step 5, but if you want to tweak some of
+   the wx build features, like additional malloc debugging, now is the time
+   to do it.
 
-   wxWidgets has a master option configuration file called setup.h.
-   The default configuration will work fine for building the emulator.
-   Here are a few small changes I made to my setup.h.
+   cd C:\libs\wx-3.0.2\include\wx\msw
 
-   cd C:\wx289\include\wx\msw
+   Edit the file "setup.h" to tweak whatever options you need.  Only do
+   this if you know your way around wxWidgets.  The stock setup.h will
+   work fine.
 
-   Bring up the file "setup.h" in your favorite editor.
-
-   This first change is because I don't care if my lib is backwards
-   compatible with version 2.6 of wxWidgets.  Such features tend to be
-   removed in the next release of wxWidgets, and I want to be forward
-   looking as possible.  Change this line:
-
-        #define WXWIN_COMPATIBILITY_2_6 1
-
-   to become:
-
-        #define WXWIN_COMPATIBILITY_2_6 0
-
-   The other changes, to the wxUSE_* settings, allow for more informative
-   debug messages when memory leaks are detected at exit.  Again, none of
-   these must be changed; I did to make debugging memory leaks a bit easier.
-   There are better solutions available, but this was sufficient for my needs.
-   Change these lines:
-
-        #define wxUSE_DEBUG_CONTEXT 0
-        #define wxUSE_MEMORY_TRACING 0
-        #define wxUSE_GLOBAL_MEMORY_OPERATORS 0
-
-   to become:
-
-        #define wxUSE_DEBUG_CONTEXT 1
-        #define wxUSE_MEMORY_TRACING 1
-        #define wxUSE_GLOBAL_MEMORY_OPERATORS 1
-   
 5) Build the wxWidgets library
 
    The wxWidgets library may be built many different ways.  I'll describe
@@ -90,30 +59,28 @@ an explicit mouse-click-by-mouse-click cookbook.
    5a) Fire up the compiler
    5b) File -> Open -> Project/Solution ...
    5c) You are facing a file dialog box.  Navigate over to where you
-       installed the wxWidgets code; in my case, this is C:\wx289.
-       Then drill down into build/msw.  Select the file "wx.dsw".
-       This will allow building a static wxWidgets library.
-       It will likely tell you that this this project must be converted
-       for use with Visual C++ 2008 project format -- tell it OK to all.
-   5d) From the top level menu, select Build -> Batch Build ...
-       This allows building many libs at once.
-   5e) "Deselect All" and manually set checks to build all the "Debug" and
-       "Release" versions of the libraries.  Doing so means you can later
-       build and run any of the demo or sample applications.  However,
-       WangEmu uses only these three libraries: adv, base, core.
-       There is a single function in the emulator that requires the adv
-       library: UiMyAboutDlg.cpp makes use of wxHyperlinkCtrl.  You can
-       cut the dependency down to just the base and core wx libs if the
-       USE_HYPERLINK define in that file is changed from 1 to 0.
-   5f) Hit "Build".  The thing should grind for a while and build without
-       errors.
-   5g) Bonus points if you want to build and run any of the demo or sample
+       installed the wxWidgets code; in my case, this is C:\libs\wx-3.0.2.
+       Then drill down into build/msw.  Select the file "wx_vc10.sln".
+       If you are using a different version of visual studio, pick the
+       .sln file with a name matching the compiler version you are using.
+       This step will allow building a static wxWidgets library.
+   5d) In the Solution Explorer pane, right click on the top level of the
+       heirarchy, "Solution 'wx_vc10' (23 projects)" in my case.
+       This displays a dialog of which sub-libraries should be built.
+       It only costs a bit of time and some disk space to build everything
+       (the default), but if you want to skimp, the Wang 2200 emulator
+       uses only the following sub-libraries: adv, base, core.  Select
+       both debug and release versions of each of the libraries.  Hit OK
+       to dismiss the dialog.
+   5e) Hit <F7> to build, or use the menu Debug/Build instead.  The compiler
+       should grind for a while and build without errors.
+   5f) Bonus points if you want to build and run any of the demo or sample
        applications.  Note that most specify linking against a wide range
        of wx libs, although not all are necessarily needed for a given
        application.  This is worth the effort to gain confidence that the
        wx libs were built successfully.  samples/minimal is the canonical
        app to try, but demos/bombs is a lot more fun.
-   5h) Quit the compiler.
+   5g) Quit the compiler.
 
    If you have difficulties doing this, try visiting the wxWidgets wiki.
    As of November 2008, the right URL to start is this one:

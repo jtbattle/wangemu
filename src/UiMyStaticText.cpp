@@ -23,7 +23,7 @@ MyStaticText::MyStaticText(wxWindow* parent, wxWindowID id,
 // redirect mouse clicks to parent dialog
 void MyStaticText::OnMouseClick(wxMouseEvent& event)
 {
-    GetParent()->AddPendingEvent(event);
+    GetParent()->GetEventHandler()->AddPendingEvent(event);
 }
 
 
@@ -35,7 +35,7 @@ void MyStaticText::OnKeyDown(wxKeyEvent &event)
         // fabricate a left click and send it to the dialog
         // this will cause it to shut down
         wxMouseEvent evt(wxEVT_LEFT_DOWN);
-        GetParent()->AddPendingEvent(evt);
+        GetParent()->GetEventHandler()->AddPendingEvent(evt);
     } else {
         event.Skip();
     }

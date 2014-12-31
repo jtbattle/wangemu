@@ -5,7 +5,11 @@
 #ifndef _INCLUDE_UI_PRINTER_FRAME_H_
 #define _INCLUDE_UI_PRINTER_FRAME_H_
 
+#include <wx/cmndata.h>
+
 class Printer;
+
+enum wxPrintBin;
 
 class PrinterFrame : public wxFrame
 {

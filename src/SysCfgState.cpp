@@ -193,7 +193,9 @@ SysCfgState::loadIni()
                         setRamKB( ival );
                     break;
                 case Cpu2200::CPUTYPE_2200VP:
-                    if (ival == 32 || ival == 64)
+                    if (ival ==  32 || ival ==  64 ||
+                        ival == 128 || ival == 256 ||
+                        ival == 512 )
                         setRamKB( ival );
                     break;
                 default:
@@ -350,26 +352,31 @@ SysCfgState::setRamKB(int kb)
         case  4:
         case  8:
         case 12:
+        case 16:
         case 24:
             ASSERT(m_cputype != Cpu2200::CPUTYPE_2200VP);
             m_ramsize = kb;
             break;
 
     // OK for either CPU type
-        default:
-            ASSERT(0);
-        case 16:
         case 32:
             m_ramsize = kb;
             break;
 
     // OK only for VP
-        case 48:
         case 64:
+        case 128:
+        case 256:
+        case 512:
             ASSERT(m_cputype == Cpu2200::CPUTYPE_2200VP);
             m_ramsize = kb;
             break;
 
+    // should never happen
+        default:
+            ASSERT(0);
+            m_ramsize = 32;
+            break;
     }
 
     m_initialized = true;
