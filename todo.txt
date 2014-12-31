@@ -1,0 +1,559 @@
+============================================================================
+Emulator TODO list
+============================================================================
+
+*) disk controller is missing a few Phoenix commands (see below)
+        - format sector      (0x03) -- in DISKCM1 program
+        - read sector header (0x04) -- in DISKCM1 program
+        - clear error count  (0x05) -- in DISKCM1 program
+        - read error count   (0x06) -- in DISKCM1 program
+        - read bad sector    (0x07) -- in DISKCM1 program
+        - field service cmd  (0x08) -- in DISKCM1 program
+        - read sector and hang     (0x15) (see SDS internal doc)
+        - read status and prom rev (0x16) (see LvpDiskCommandSequences)
+
+*) Wang's documentation on the "Phoenix" (LVP) disk channel protocol
+    wang2200.org/docs/language/LvpDiskCommandSequences.pdf
+    + missing from emulation:
+        format track (extended command 0x18)
+        read status (extended command 0x16; there but stubbed out)
+            format described on page 11 of the above document
+        turn off retry and ignore address check (extended command 0x17)
+    + page 3 says that if the extended opcode isn't recognized, the
+      last byte is echod with inverted bits to signal the error
+    + verify-sectors ends by sending three bytes: two sector-in-error
+      address bytes, plus a status code.  this came from paul szudzik's
+      document, but the wang lvp document says there are four bytes:
+      three sector bytes plus a status byte. This makes a lot more sense.
+      try running the verify command as-is and see what happens, then
+      add the extra status byte and see what happens.
+
+*) the SDS docs and the program DISKCM1 on the boot-2.3.wvd disk reference
+   disk command sequences that the emulator doesn't support. Were all of
+   these real commands, and should they be emulated?
+
+   in addition to the SDS-specific commands, they claimed these Wang
+   commands existed:
+        20 15 - "read sector and hang"
+        20 16 - read status and prom revisions
+
+   According the SDS disk handshake sequences doc,
+   addressing byte: 0 D X X   0 0 0 0
+        primary drive:    00xx 0000 : 00, 10, 20, 30
+        secondary drive:  01xx 0000 : 40, 50, 60, 70
+   but address 00, and 40, are not allowed.
+
+   It also says that sending a CBS strobe with the ls data bit set causes
+   a hardware reset of the disk controller.  This happens when, say, reset
+   is hit.
+
+   The 6375 disk controller doesn't look at CBS, and does a full decode
+   on all 8b of the address during ABS.  Address bits 6,7,8 are sent on
+   the disk interface connector as pins 28,29,30, respectively.
+
+   The 6541 disk controller skips address bit 7 (the "D" bit above), and
+   instead it is latched at the time of !ABS falling to produce !DN3
+   (pin 12 of the disk interface connector).  Bit 29 of the connector is
+   driven with 0, and address bus bits 6 and 8 are driven on bit 28 and 30.
+   It doesn't look at CBS at all.
+
+   These are the sequences from DISKCM1:
+
+    SF'2 (format platter)
+    STR(G$,1,1) = HEX(20) if device is 3xx, else = HEX(30)
+    (the following is neutered by the program with "GOTO 60")
+    $GIO FORMAT SECTOR #1(0600 0700 70A0 68C0 7040 6A10 6802 4270 8B67,G$)
+
+    0600: r6=#00
+    0700: r7=#00
+    70A0: 70xx isn't listed in the $GIO manual
+          my guess is that it sets the address bus (AB) to the immediate value
+          give by the 2nd byte, but doesn't fire ABS.  The disk controller, and
+          maybe other controllers, use this as a sideband means of sending status.
+          If bits 8 and 6 (that is 0xA0) are sent at certain points of the
+          handshake to the disk controller, it means abort the handshake.
+    68C0: wait ready; OBS 0xC0; wait 5us; set CPB to ready; wait for IBS, verify, SET CC if unequal
+    7040: like 70A0?  presumably turning off CAX status
+    6A10: wait ready; OBS r1; wait 5us; set CPB to ready; wait for IBS; set CC if echoed char != r1
+          the first command byte is usually 00 or 10 (read sector), 40 or 50
+          (write sector), 80 or 90 (verify sector).  This is the start of an
+          extended command, 20 02 (or 30 02).
+    6802: single character output of 0x02 with expected echo & verify (see 68C0)
+            second byte of extended command sequence
+    4270: wait ready; OBS r7
+            sending out 00.  perhaps format takes some other directive here,
+            such as platter number, but the test program doesn't make use of it.
+            it still doesn't explain what r6 is for.
+    8B67: wait ready; set CPB to ready; wait for IBS; save into r7; verify against r6; set CC if unequal
+
+    [ interestingly, docs/internal/WangDs150MbCassetteProjectStatus.pdf,
+      page 4 decodes a $GIO sequence which begins just like this one, and
+      has the ucode disassembly on the right.  70A0 and 7040 have no comment ]
+
+    SF'3 (format sector)
+    the subroutine at 500 has been doctored.  rather than asking which
+    sector, it does something else, namely picks sector 1, then increments
+    it on each subsequent invocation.  it then sets STR(S$,1,1) to the ms
+    byte of the three byte sector address, STR(S$,2,1) to the middle byte,
+    and STR(S$,3,1) to the ls byte.  This gets moved into G$(2,3,4) later.
+    it then sets K$=HEX(84) forcibly, rather than asking for it via keyin.
+    0x84 is TOKEN_CONTINUE.
+    $GIO FORMAT SECTOR #1(0600 0700 70A0 68C0 7040 6A10 6803 6A20 6A30 6240
+                          8705 1704 1156 1576 4270 8B67,G$)
+    (similar above, but with extended command
+
+    SF'4 (read sector header)
+    $GIO READ HEADER #1(0600 0700 70A0 68C0 7040 6A10 6804 6A20 6A30 6240
+                        8705 1704 1156 1576 4000 8701 8602,G$)
+
+    SF'5 (clear error count)
+    $GIO CLEAR ERROR COUNT #1(0600 0700 70A0 68C0 7040 6A10 6808 4000 8700,G$)
+
+    SF'6 (read error count)
+    $GIO READ ERROR COUNT #1(0600 0700 70A0 68C0 7040 6A10 6809 4000
+                             8701 8602 8603,G$)
+
+    SF'7 (read bad sector)
+    $GIO READ BAD SECTOR #1(0600 0700 70A0 68C0 7040 6A10 6A30 6240 8705 1704
+                            1156 1576 4270 8367 C640 8605,G$)G$()
+    STR(G$,1,1) = HEX(20) if device is 3xx, else = HEX(30)
+    STR(G$,2,3) = sector address
+    0600: r6=#00
+    0700: r7=#00
+    70A0: cax
+    68C0: wait ready; OBS 0xC0; wait 5us; set CPB to ready; wait for IBS, verify, SET CC if unequal
+    7040: !cax
+    6A10: wait ready; OBS r1; wait 5us; set CPB to ready; wait for IBS; set CC if echoed char != r1
+    wait, what about the 2nd extended command byte?
+    6A30: wait ready; OBS r3; wait 5us; set CPB to ready; wait for IBS; set CC if echoed char != r3
+    6240: wait ready; OBS r4; wait 5us; set CPB to ready; wait for IBS; set status if echoed char != r4
+    8705: wait ready; set CPB to ready; wait for IBS; save byte to r5
+    1704: set CC if ((r8 & 0x04) != 0)
+    1156: r6=r5
+    1576: set CC if (r6 != r7)
+    4270: wait ready; OBS r7
+    8367: wait ready; set CPB to ready; wait for IBS; save character to r6; set status if echoed char != r7
+    C640: (set CPB to ready; wait for ibs; check T1; save data; check T2), calc LRC and save
+    8605: set CPB ready; wait for IBS, save response byte into r5
+
+    SF'8 (field service command)
+    you are prompted to enter A through F
+    a byte is calculated such that A maps to 10, and F maps to 15
+    This is plugged into STR(G$,2,1)
+    STR(G$,1,1) is HEX(20) if disk drive is 3xx, otherwise it is HEX(30)
+    $GIO FS COMMAND #1(0600 0700 70A0 68C0 7040 6A10 6A20 4000 8700,G$)G$()
+    0600: r6=#00
+    0700: r7=#00
+    70A0: cax
+    68C0: wait ready; OBS 0xC0; wait 5us; set CPB to ready; wait for IBS, verify, SET CC if unequal
+    7040: !cax
+    6A10: wait ready; OBS r1; wait 5us; set CPB to ready; wait for IBS; set CC if echoed char != r1
+    6A20: wait ready; OBS r2; wait 5us; set CPB to ready; wait for IBS; set CC if echoed char != r2
+    4000: wait ready; OBS #00
+    8700: wait ready; set CPB to ready; wait for IBS (ignore return data)
+
+*) toolbox.wvd contains the program TBO.XDAD, which contains this code:
+    0490 DIM G$(15)1
+    0500 $GIOGETDISKTYPE#2(0200 030F 1222 0600 0700 70A0 4000 870B,G$())
+    0510 T$=G$(11)
+       : PRINT "Disk type ";HEXOF(T$);" ...    ";
+   note it has the 70A0 (70xx) instruction too, like the above program
+   it also has
+    1010 G$=HEX(30)
+       : STR(G$,2,7)=ALL(00)
+       : $GIOSTATUSREQUEST#2(0E14 0F00 12E2 0600 0700 70A0 4002 88D0 7040 6A10 6816 4000 8705 1A00 C340,G$)G$;STR(E$,,VAL(STR(G$,5,1)))
+
+*) dave angel on linked in
+    https://www.linkedin.com/in/davea
+
+*) add terminal mux emulation and smart terminal emulation so I can run
+        MVP, Szudzik BASIC mods, BASIC-3 / COBOL
+
+   + OptionC.pdf in the jim/wang2200/docs/system/2200MVP_MaintenanceManual
+     directory describes the upgrade to give 64KB of control ram and
+     512KB of RAM.  0x8000 to 0x8FFF is a hole where the bootstram PROM lives.
+   - incorporate an open source z80 emulator
+        http://fms.komkon.org/EMUL8/ (Marat's code)
+        put in subdirectory, say src/z80,  or maybe src/chips/Z80
+        IoCard_MuxE would then make use of it
+        There may be multiple MuxE cards, or maybe multiple devices each
+          with a Z80 (say I add 2227/8 support).  z80.c allows for creating
+          different sets of register state, but what about providing different
+          sets of memory & I/O hooks for a given instance?
+            Yes: simstate.foo_func hooks (foo=RdZ80, WrZ80, InZ80, OutZ80)
+                 or maybe this is my hackery for solace.  Yes, this is
+                 just for solace.
+     model memory, rom, timer, serial ports
+        mgr-no-3.pdf describes the 2236 MXC debug and has some tech info
+        mux also used two Z80 DARTs (Z8470)
+        mux also used two Z80 CTCs  (Z8430)
+            http://nyangau.org/memu/emulation.htm#ctc
+            http://www.seasip.info/Unix/QDAE/
+            mame has one
+     figure out how to time share instruction interpretation loop
+   ? section 8 of 2200MVP_MaintenanceManual.729-0584-A.1-84.pdf lists
+     what is involved to upgrade a VP to an MVP.  part of it requires
+     changing the boot ROM ucode to deal with the larger program memory.
+     do I have these boot ROMs?
+        double check boards/other boards/6789 and see if those ROMs match
+        what the emulator uses
+   - model a serial terminal
+        - should the terminal be embedded in the program,
+          or connected via a socket or something like that?
+          socket-based opens up the chance of connecting remotely.
+        - it would be best to to handle the protocol directly instead
+          of emulating the term as Z80+ROM+RAM+serial chip.
+          someome some time ago sent me a mock up of the term handling
+          see if they are willing to share or just do it
+        - if connecting virtually, maybe make the terminal a javascript
+          browser based app -- multiple terminals would just be multiple tabs
+
+*) add 22C32 or 2236MUXE plus 2[245]36 terminal emulation support so
+   we can run MVP BASIC-2.  one approach is to add a z80 core to emulate
+   the mux controller cycle-by-cycle.  the MUXE requires it as the microcode
+   is downloaded and is changed in different OS releases.  the 22C32, though,
+   is just a set of EPROMs and a small RAM (1.25KB).  This could be
+   functionally emulated.  but emulating the intelligent terminals have the
+   same considerations: functional emulation or cpu-level emulation?
+
+   note, the BASIC-2 Multiuser OS Release 2.4.pdf document says some
+   interesting things.  2.4 was "primarily" introduced to support the MUXE.
+   No VP OS is compatible with the MUXE card.  2.4 introduces DATE, TIME,
+   $DISCONNECT, and INPUT SCREEN.  DATE and TIME work with "the current
+   version of the Model 22C32".  $DISCONNECT is not supported by the 22C32,
+   and neither is INPUT SCREEN.
+
+   Note: I have no schematics for 22C32, nor 2236MUXE
+
+   Note:
+      f:\users\jim\wang2200\docs\system\module repair guides\mrg-no-3.pdf
+      Wang Module Repair Guide No. 3 concerns debugging 2236 systems,
+      both terminal and mux.  This note is for earlier versions of
+      terminal and mux, but presumably some of the information is
+      still valid, such as the I/O map on page 7.
+
+*) when I run diags, say control mem tests, the test will often hang if
+   I run the emulator in realtime mode, but runs OK if I am unregulated.
+   what gives?  break during the apparent hang and see what the execution
+   loop is doing.  enable trace dumping, I guess.
+   A: it turns out it is polling (SH & 2), which is the "CRB" status bit,
+      which indicates if the selected device is busy.  Hitting the keyboard
+      a few times gets it past that log jam.  I'm not sure why that is
+      required and why it only happens in speed regulated mode.
+
+*) update the website (and build notes) with directions on how to make
+   the thing such that it doesn't have DLL dependencies.  What a mess.
+      1) declare "_BIND_TO_CURRENT_CRT_VERSION=1" in the wx libs that
+         the applications uses, for the release versions of adv, base, core
+      2) declare "_BIND_TO_CURRENT_CRT_VERSION=1" in the wangemu properties
+      3) copy Microsoft.VC.CRT from
+            /Program Files/Microsoft Visual Studio 9.0/VC/redist/x86
+         to the top level emulator directory
+   see
+    http://www.microsoft.com/communities/newsgroups/en-us/default.aspx?dg=microsoft.public.vstudio.general&tid=2d0b8055-3fe2-482b-9fb2-731eb51859ee&cat=&lang=en&cr=US&sloc=&p=1
+
+*) recover tapes
+    - wang backup tapes are probably QIC-02
+        http://www.lintech.org/comp-per/11MAGTAP.pdf
+        http://www.qic.org/html/qicstan.html#02
+      but wang had a wang-proprietary format mode
+      DataStorageCabinetMaintenanceManual.741-1806.9-87.pdf, page 10-2, says
+        storage capacity of 45 MB with 45-ft tape, which is compatible with
+        the idea that a 600' tape would store up to 600 MB.
+        the parts list, page 12-4, says the drive is 725-1481, vendor MT-2ST
+        page 12-5 has hand written notes
+            high density tape (45 60M)  725-1482-1/725-4055-1
+            150M xtra density tape      725-7548 (teac mdl# CT600-N)
+            teac 150M PROM (on drive w/wang id) 730-1774
+      DS_DataStorageCabinetUsersManual.715-0740.5-87.pdf
+        chapters 6 & 7 are useful
+        chapter 7 has GIO sequences for each tape operation command
+            decode them and see if they use wang proprietary format or not
+            or perhaps these are communicating to the tape controller,
+            and the tape controller them maps these to teac-native SCSI
+            commands, in which case maybe I can't tell
+        A-2 specifications:
+            8000 bpi, 90 ips, 9 physical tracks
+            elsehwere: 8 tracks for data, 9th track for directory
+      jan van de veen has two DS cabinets
+      http://mcbx.netne.net/computers/media/teac/index.htm says:
+        This unit is communicating with a proprietary interface similar to
+        SCSI, but incompatible with SCSI and requires a special interface
+        card.
+        This page also has a couple interesting links.
+        There are some MT-2ST drives which are SCSI, some where are SCSI SE,
+        some which are QIC-02.  Perhaps his statement is true for the model
+        which he has.
+    - adaptec AHA-2930LP scsi interface cards apparently work with win/7
+        and are $15 on ebay
+
++) convert catweasel code to kryoflux
+    http://info-coach.fr/atari/software/projects/_kryoflux/kfstream/html/index.html
+    cpp lib to decode .raw stream files to something easier to deal with.
+    this is probably easier to use this and recycle the existing cpp code
+    than to rewrite everything in python.
+
+    wang ss 5.25" disk
+        dtc -fwang/disk1 -p -g2 -z2 -v300 -i0   (stream format)
+        dtc -fwang/disk1 -p -g2 -z2 -v300 -i3   (fm)
+    doesn't decode.  trying to decode one of these raw tracks, say 10,
+    side 0:
+        dtc -m1 -fwang/disk1 -i0 -g0 -z2 -v300 -s10 -e10 -i3 -fwang/foo
+
+    break out whichever old 8" floppy works with hard sector images,
+        disinfect it, and port over the code
+
+*) Document how to work around this problem in the README.
+
+   the printer config allows picking either LPT1 or LPT2 as the real printer
+   to stream to.  This doesn't work if the computer has a USB printer.
+   using "net use LPT1: \\JIM-860\HP-920 /PERSISTENT:YES" does map LPT1 to the
+   named network printer, but at least in my case, the printer doesn't model a
+   simple ASCII printer.  It apparently is expecting some HP protocol or
+   something.
+
+   This guy wrote a lib to allow querying which printers are available,
+   and returning properties about a given printer.
+      http://hdrlab.org.nz/projects/wxwidgets-projects/custom-print-dialog-toolkit/
+   It doesn't address the above point, it seems.
+
+    + Go to "Devices and Printers" control panel.
+    + select the "Add a printer" menu at the top.
+    + specify "Add a local printer"
+    + under "Use an existing port:", select the one corresponding to your USB printer
+      ("USB001" in my case); press "Next"
+    + it now asks to install the printer driver.  Under Manufacturer, pick "Generic".
+      Under Printers, pick "Generic / Text Only"; press "Next"
+    + select "use the driver that is currently installed" (at least, that is what I did);
+      press "Next"
+    + time to create a printer name.  I made mine "USB-ASCII"; press "Next"
+    + from a dos prompt, type
+        NET USE LPT2: \\<machine_name>\USB-ASCII /PERSISTENT:YES
+      it should reply "The command completed successfully"
+    + from the Wang 2200 emulator printer windows, select LPT2 as the real printer to
+      direct output to
+    + in my case, I had to do "SELECT LIST 015" to get the wang to put out a
+      line feed after each carriage return.  The 215 device just ends each line
+      with a CR and no LF.
+    + if the program ends without filling the last page, you may need to send a
+      HEX(0C) (page feed) to the printer to flush out the partial page.
+
+*) the read and write routines go to great lengths to inline things,
+   but they both have the expression (m_memsize_KB<<10).  That should
+   be precomputed as m_memsize.  or should I just get rid of m_memsize_KB?
+
+*) get more C++-ish.  exceptions instead of error flags?
+    When changing configurations, currently I:
+        - destroy current config
+        - rebuild world
+    It would be cleaner to
+        - build new world
+        - on success, swap to new world, then destroy old world
+        - on failure, report problem, and old world is still usable
+
+*) finally got a wang PC keyboard.  there are some extra keys, but the guess
+   I made how they'd be expressed was wrong (see UiCrt_Keyboard.cpp).
+   This is what the wx sample app "keyboard" sees:
+
+                  no shift   shift    control   alt
+    F11:          F11        S-F11    C-F11     A-F11
+    F13:          ALT-F3     C-S-F3   C-A-F3    A-F3
+    F14:          ALT-F4     C-S-F4   C-A-F4    A-F4
+    F15:          ALT-F5     C-S-F5   C-A-F5    A-F5
+    F16:          ALT-F6     C-S-F6   C-A-F6    A-F6
+    CANCEL:       ALT-F7     C-S-F7   C-A-F7    A-F7
+    HELP:         ALT-F8     C-S-F8   C-A-F8    A-F8
+    GL:           ALT-F9     C-S-F9   C-A-F9    A-F9
+    Erase/DecTab: ALT-F10    C-S-F10  C-A-F10   A-F10
+    EXEC/END:     END        S-END    C-END     A-END
+
+    maybe tie it in with the next bullet item.
+
+*) make keyboard mapping configurable
+    - requested by Mark Musen, who runs it on a mac under virtual PC.
+      there is no pause/break (->HALT/STEP) key on that setup.
+
+*) allow pasting text to the emulator from the clipboard.  should be easy.
+   copying text from the screen is significantly more work, as I'd have
+   to track start & end selection, account for scrolling, have some visual
+   indication.
+
+*) check out these tips on using wxWidgets under visual studio:
+    http://www.litwindow.com/Knowhow/wxHowto/wxhowto.html
+
+*) emulate "CPU running" light on keyboard
+
+*) better BELL emulation.  and make it optional.
+
+*) add a debugger/monitor
+
+*) the VP disassembler doesn't match the assembler syntax as specified
+   in the 2600 sw development manual.
+    (2200MVP_ComputerArchitecture.11-79.pdf, pdf page 81 or so)
+
+*) the MVP service manual section 8.2 (page 8-2) says
+        2200 VP/MVP Bootstrap Release 2.2 has been incorporated by ECN
+        #9772.  For a system to operate with an expanded memory, this ECN
+        must be performed.  The old PROMS on the 210-6789 must be replaced
+        with the following:
+
+        378-2045R1 = L27
+        378-2046R1 = L28
+        378-2047R1 = L29
+
+    the 6789 board that I got the 2nd set of bootstrap PROMs from
+    are windowed eproms without official Wang revision numbers.
+    handwritten on the chips are the following:
+        L29 says "2047"
+        L28 says "2046R5"
+        L27 says "2045R5"
+    It is possible that the contents were R5, but the EPROMs were
+    later erased and overwritten, making the handwritten note
+    meaningless.
+
+*) emulate plotter?  no point really without an interesting program.
+   plotter commands:
+        80 | p = start of plot command
+
+        80 | t = step +x,+y
+        80 | r = step +x,-y
+        80 | s = step -x,+y
+        80 | q = step -x,-y
+
+        80 | v = step  0,-y
+        80 | w = step  0,+y
+
+        80 | x = step -x,0
+        80 | y = step +x,0
+
+        80 | z = move to zero position (user defined manually)
+        80 | u = end of plot command
+
+   The BASIC-2 manual mentions SELECT PLOT and says that the C driver
+   type sends plotter commands in binary, speeding things up.  The manual
+   doesn't describe PLOT!  But the 2200 type PLOT commands work.  I wonder
+   if they have been augmented.  It would be nice to have a Plotter manual.
+
+   the 2232 was a flatbed plotter.  in the docs/schematics/peripherals dir
+   is 6337 -- which is the "pen control & command decoder" for this plotter.
+
+*) emulate cassette tape?
+   some information about it:
+      http://www.wang2200.org/docs/internal/2200_TapeDriveSpecifications.2-73.pdf
+      http://www.wang2200.org/docs/internal/2200_IO_Specifications.6-72.pdf
+
+============================================================================
+Misc
+============================================================================
+
+*) holy crap, read the message from Richard L Lockley, 8/20/2003 in the
+   wang folder.  I never replied, until just now (10/8/08).  He claimed
+   to have every wang document up to 1985.  Maybe he has 3300 docs.
+    As of 2/2013:
+        (314) 921-4109 (home #)
+        7314 Elm Grove Ct
+        Hazelwood, MO 63042-2008
+
+*) notes about why MAT PRINT causes a hang on the 2200B ROMs.
+   it turns out that the real hardware does too, according to Georg.
+
+       6310.pdf (ALU): conn3, pin 10 has !ERG.  This goes to
+            When is ERG active?
+            It is a function of A[3:1], B[3:1], R[19:0]
+            ERG = ((A==11xx) || (A==x11x) || (B==11xx) || (B==1x1x)) & "D0"
+            D0 = R16 & !(!DSC &&  (!R17 ||  R19))
+               = R16 &  (!DSC || !(!R17 ||  R19))
+               = R16 &  (!DSC ||  ( R17 && !R19))
+                 (I think D0=1 means decimal mode)
+            So it seems that if one does a BCD op with operands that are
+            out of range, it would have set ST3-1.  The schematic is wrong,
+            either that or this is really weird, since the second A term
+            fires on 6, 7, 14, 15 and lets 10 and 11 pass.  The B term seems
+            correct.
+       6311.pdf (I/O), conn3, pin 9.
+            When ERG is active (low), it sets bit D2 (0010) of the ST3 latch,
+            however the schematic shows this flop as not driving anything,
+            and the mux that would have logically accepted ST3-1 instead
+            is fed from L24A/!QD, which is latching !IB5 -- which is used
+            to sense 80 char wide terminals vs 64 wide (other peripherals
+            might use it too, but not that I know of).
+        On the 6710 (2200T CPU), this signal is driven with a meaningless value.
+
+        OK, so this isn't causing the mismatch.
+
+        ====
+
+        Dumping instructions after 10 MAT PRINT A<CR>,
+            2200Tdbg.txt vs 2200Bdbg.txt
+        cycle 2 of the first lines up with cycle 13 of the second.
+        at cycle 40/51, 00AC is read and 05/04 is returned (why the difference?)
+        instructions are in until cycle 665/676 where there is a ucode difference:
+            B 01F8 / SB 006D
+        Things sync up again a while later (search on corresponding /RAM.ROM),
+        and stay in sync for the most part until cycle 4685/4683, which is
+            MV CL,PC2 ; MV CH,PC1 ; MV F5,PC4; MV F4,PC3
+        in the 2200T case, PC=4A0B, for 2200B, it becomes 26FD.
+        Then at cycle 4698/4696, "TPI" (transfer PC to IC) causes major divergence:
+            2200T goes to 4A0B (MAT handler), while
+            2200B goes to 26FD:
+                26FD: MVI 4,PC1
+                26FE: B   7E0C  (inside patch routines)
+                7E0C: B   3400
+                3400: BNE 0F,0,34FF  (opcode=FFFFF; really meaningless)
+                34FF: BNE 0F,0,34FF  (opcode=FFFFF; really meaningless)
+        Looking at the constant rom tables, the entry for MAT is
+            2200T: 4A 0B   03  4D 41 54  A8
+                   handler len M  A  T   token
+            2200B: 26 FD   03  4D 41 54  A8
+                   handler len M  A  T   token
+        So it looks like the emulator is doing exactly the right thing;
+        the question is why does the constant ROM have an entry for MAT,
+        or at least why does it jump to a patch routine which then jumps to
+        non-existant code vs an error handler.
+
+        A: the real hardware does the same thing.  The atom table points
+           to a non-populated ROM location, and death ensues.
+
+*) DATAMATH  CALCULATOR  MUSEUM (www.datamath.org) has a tiny accuracy
+   benchmark that they run on all the calculators they come across.
+   In Wang BASIC it is expressed as:
+
+    10 SELECT D
+    20 PRINT ARCSIN(ARCCOS(ARCTAN(TAN(COS(SIN(9))))))
+
+   Here are the results:
+    Wang 2200T:  9.00000222872
+    Wang 2200VP: 9.000000590471
+
+*) this doesn't have to go onto the web site, but since I collected the
+   data, I don't want to just delete it.
+
+   After running some experiments, it would appear that the CS/386 interpreter
+   is a different implementation altogether, not a microcode binary translator.
+      + PRINT ARCSIN(ARCCOS(ARCTAN(TAN(COS(SIN(9))))))
+          VP BASIC 2.3:
+              9.000000590471
+          MULTI-USER BASIC-2 3.5:
+              9.000000590471
+          MULTI-USER BASIC-2/386 1.3.00:
+              9.000000586479
+      + PRINT RND(0), RND(1)
+          VP BASIC 2.3:
+              .1584625767084  .361319611557
+          MULTI-USER BASIC-2 3.5:
+              .1584625767084  .361319611557
+          MULTI-USER BASIC-2/386 1.3.00:
+              .1584625767084  .5930297180313
+      + Enter
+            10 DATA 1,2,3,    4,5,6
+        On the VP-based CPUs, the extra spaces are preserved;
+        on the CS/386, the extra spaces are lost.
+
+============================================================================
+Suggestions for wx improvements
+============================================================================
+
+*) wxMAC issues  (as of 2.6.1)
+    + DrawText() on a 1bpp wxMemoryDC doesn't work
+    + wxStatusBar::SetMinHeight() doesn't seem to work
+    Both are fixed if the font has propery SetNoAntiAliasing().

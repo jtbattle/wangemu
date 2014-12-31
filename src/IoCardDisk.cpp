@@ -199,13 +199,24 @@ IoCardDisk::getBaseAddresses() const
     return v;
 }
 
-// return the list of addresses that this specific card responds to
+// return the list of addresses that this specific card responds to.
+// Disk controllers (at least some of them) ignore bits A8 and A7
+// for purposes of address decoding, and use those two bits to signify
+// something else:
+//    A8=1: hog the controller         (eg, /390)
+//    A8=0: controller isn't hogged    (eg, /310)
+//    A7=1: address secondary drive    (eg, /350)
+//    A7=0: address primary drive      (eg, /310)
+// These two bits are orthogonal and may be asserted, or not, in any
+// combination.
 vector<int>
 IoCardDisk::getAddresses() const
 {
     vector<int> v;
     v.push_back( m_baseaddr + 0x00 );   // primary drive
     v.push_back( m_baseaddr + 0x40 );   // secondary drive
+    v.push_back( m_baseaddr + 0x80 );   // hogged primary drive
+    v.push_back( m_baseaddr + 0xC0 );   // hogged secondary drive
     return v;
 }
 
@@ -321,12 +332,26 @@ IoCardDisk::CBS(int val)
     if (NOISY > 0)
         UI_Warn("unexpected disk CBS: Output of byte 0x%02x", val);
 
+#if 0
+    // later disk controllers allowed controlling disk hog mode via
+    // sending a CBS with data bit OB8 set.  For example see the 6543
+    // schematic, which has logic for both the A8 addressing bit hog
+    // selection and the CBS hog selection method.  The controller is
+    // hogged if either mode is hogged (ie, they are OR'd together).
+    //
+    // the emulator just ignores this mode as it has no effect as there
+    // is no other system competing for the disk.
+    hogged = !!(val & 0x80);
+#endif
+
+#if 0
     // according to Paul Szudzik, CBS with the ls data bit high is
     // hardwired to cause a hard reset of the disk controller.
     // I don't see that hardware in the early floppy disk controller
     // design, but they could have added it later.
     if (val & 1)
         reset(true);
+#endif
 }
 
 int
