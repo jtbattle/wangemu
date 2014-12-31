@@ -1,7 +1,15 @@
 # Program: wvdutil.py
 # Purpose: read a .wvd (wang virtual disk file) and report what's in it
-# Version: 1.2, 2008/08/18
 # Author:  Jim Battle
+# Version: 1.2, 2008/08/18, JTB
+# Version: 1.3, 2011/08/13, JTB
+#     added program prettyprinting, zip file reading
+# Version: 1.4, 2011/10/08, JTB
+#     'cat' output sort is sorted, with optional flags
+#     'list' now has 'list <start> <end>' form
+#     'scan' command has been added
+#     'compare' now takes a '-v' verbose flag
+#     ask if user really wants to exit if there are unsaved changes.
 
 ########################################################################
 # there are any number of operations that could be provided by this
@@ -11,9 +19,11 @@
 # FIXME:
 #    before any command that performs state change,
 #        warn if the disk is write protected (and suggest 'wp' command)
-#    before quitting or changing disk, complain if the disk state is dirty
-#    do some testing with disks that don't have a catalog at all and at
-#       least make sure there are no asserts
+#    MVP OS 2.6 and later have files with names like "@PM010V1" which are
+#       printer control files.  they all start with 0x6911.
+#       add logic to allow check, scan, and perhaps list them.
+#       Basic2Release_2.6_SoftwareBullitin.715-0097A.5-85.pdf
+#       has some description of the generalized printer driver.
 #    newsletter_no_5.pdf, page 5, describes via a program "TC" file format.
 #       what is this?  should I add disassembly of such files?
 #
@@ -26,6 +36,7 @@
 import sys
 import os.path
 import re
+import urllib
 #import pdb                      # for debugging
 
 from wvdlib import *
@@ -37,26 +48,6 @@ from wvfilelist import *
 # the value the user sees has an origin of 1, but the internal code uses
 # an origin of 0.
 default_platter = 0
-
-############################ reportMetadata ############################
-# make sure that the name passed by the user is a real file, or if
-# it is a pattern, ensure that it resolves to a single file.
-
-def getOneFilename(wvd, p, name):
-    cat = wvd.catalog[p]
-    if not cat.hasCatalog():
-        print "This disk doesn't appear to have a catalog"
-        return
-
-    outlist = cat.expandWildcards( [name] )
-    if len(outlist) == 0:
-        return None
-    elif len(outlist) > 1:
-        print "This command accepts a single filename, and more than one matched:"
-        print [x.rstrip() for x in outlist]
-        return None
-    else:
-        return outlist[0]
 
 ############################ reportMetadata ############################
 # report information about the disk
@@ -82,7 +73,7 @@ def reportMetadata(wvd):
 #    "*" means any number of characters
 #    "?" means any one character
 
-def catalog(wvd, p, wcList = ['*']):
+def catalog(wvd, p, flags, wcList):
 
     cat = wvd.catalog[p]
     if not cat.hasCatalog():
@@ -90,6 +81,16 @@ def catalog(wvd, p, wcList = ['*']):
         return
 
     filelist = cat.expandWildcards(wcList)
+
+    if flags['s']:  # sort by start address
+        filelist.sort(key=lambda name : wvd.catalog[p].getFile(name).getStart())
+    elif flags['u']:  # sort by number of used sectors (size)
+        filelist.sort(key=lambda name : wvd.catalog[p].getFile(name).getUsed())
+    else: # sort by name:
+        filelist.sort()
+
+    if flags['r']:  # reverse order
+        filelist.reverse()
 
     # print header and disk information
     index_mark = " '&"[cat.getIndexType()]
@@ -115,29 +116,26 @@ def catalog(wvd, p, wcList = ['*']):
             if len(status): extra = "   [%s]" % (', '.join(status))
 
             # report it
-            fname   = curFile.getFilename()
-            fstatus = curFile.getStatus()
-            start   = curFile.getStart()
-            end     = curFile.getEnd()
-            used    = curFile.getUsed()
-            free    = curFile.getFree()
-            print "%8s  %s   %05d  %05d  %05d  %05d%s" % \
-                (fname, fstatus, start, end, used, free, extra)
-
-########################### convert file to text ###########################
-# given a program file name, convert that to a program listing, returned
-# as a list of strings.
-
-def listProgram(wvd, p, filename):
-    theFile = wvd.catalog[p].getFile(filename)
-    assert theFile != None
-    return listProgramFromBlocks(theFile.getSectors())
-
-# list structured (that is, produced by DATASAVE) data file
-def listData(wvd, p, filename):
-    theFile = wvd.catalog[p].getFile(filename)
-    assert theFile != None
-    return listDataFromBlocks(theFile.getSectors())
+            fname    = curFile.getFilename()
+            fstatus  = curFile.getStatus()
+            start    = curFile.getStart()
+            end      = curFile.getEnd()
+            if curFile.fileExtentIsPlausible():
+                used = curFile.getUsed()
+                free = curFile.getFree()
+            else:
+                (used,free) = (0,0)
+            if (generate_html):
+                linkname = "vmedia.html?diskname=" \
+                         + urllib.quote_plus(wvd.getFilename()) \
+                         + "&filename=" \
+                         + urllib.quote_plus(fname) \
+                         + "&prettyprint=1"
+                print "<a href=\"%s\">%8s</a>  %s   %05d  %05d  %05d  %05d%s" % \
+                    (linkname, fname, fstatus, start, end, used, free, extra)
+            else:
+                print "%8s  %s   %05d  %05d  %05d  %05d%s" % \
+                    (fname, fstatus, start, end, used, free, extra)
 
 ############################ (un)protect files ############################
 # given a program filename (or wildcard list), change the protection
@@ -178,7 +176,7 @@ def setProtection(wvd, p, protect, wcList = [ '*' ]):
 #    2) compare two platters of one disk: "compare:1 :2"
 #    3) compare two platters of two disks: "compare:1 udisk2.wvd:2"
 
-def compareFiles(wvd, disk1_p, wvd2, disk2_p, args):
+def compareFiles(wvd, disk1_p, wvd2, disk2_p, verbose, args):
     if len(args) > 0:
         wildcardlist = args
     else:
@@ -268,8 +266,8 @@ def compareFiles(wvd, disk1_p, wvd2, disk2_p, args):
     for f in (fileset1):
 
         file1 = wvd.catalog[disk1_p].getFile(f)
-        file1Data = file1.getSectors()
         assert file1 != None
+        file1Data = file1.getSectors()
 
         if f in fileset2:
 
@@ -277,8 +275,37 @@ def compareFiles(wvd, disk1_p, wvd2, disk2_p, args):
             assert file2 != None
             file2Data = file2.getSectors()
 
+            matching = False
             if file1Data == file2Data:
-                wvdMatching.append(f)
+                matching = True
+            elif (file1.getType() == 'P' and \
+                  file2.getType() == 'P' and \
+                  file1.programSaveMode() in ['normal','protected'] and \
+                  file1.programSaveMode() == file2.programSaveMode()):
+                # there are bytes which don't matter after the EOB/EOD byte
+                # of each sector which can create a false mismatch via an
+                # exact binary match. here we crete a listing if we can and
+                # compare those.
+                listing1 = listProgramFromBlocks(file1Data, False, 0)
+                listing2 = listProgramFromBlocks(file2Data, False, 0)
+                # the first line of the listing contains the secotr number,
+                # so we need to ignore that
+                #listing1 = listing1[1:]
+                #listing2 = listing1[2:]
+                matching = listing1 == listing2
+                if not matching and verbose:
+                    if len(listing1) != len(listing2):
+                        print "%s mismatch: left has %d lines, right has %d lines" \
+                             % (f, len(listing1), len(listing2))
+                    for n in range(0, min(len(listing1),len(listing2))):
+                        if listing1[n] != listing2[n]:
+                            print "%s has first mismatch at line %d" % (f, n+1)
+                            print " left>",listing1[n]
+                            print "right>",listing2[n]
+                            break
+
+            if matching:
+                wvdMatching.append(f)  # exact binary match
             else:
                 wvdMismatching.append(f)
 
@@ -295,31 +322,11 @@ def compareFiles(wvd, disk1_p, wvd2, disk2_p, args):
 # dump all sectors of a file or a specified range of sectors in hex and ascii
 
 def dumpFile(wvd, p, args):
-    if (len(args) == 1) and wvd.catalog[p].hasCatalog() and \
-            (padName(args[0]) in wvd.catalog[p].allFilenames()):
-        filename = args[0]
-        theFile = wvd.catalog[p].getFile(filename)
-        if theFile == None:
-            print "File not found"
-            return
-        start = theFile.getStart()
-        end   = theFile.getEnd()
-    elif (len(args) == 1) and (args[0].isdigit()):
-        start = int(args[0], 0)
-        end = start
-    elif (len(args) == 2) and (args[0].isdigit()) and (args[1].isdigit()):
-        start = int(args[0], 0)
-        end   = int(args[1], 0)
-    else:
-        print "Expecting filename, sector number, or pair of sector numbers"
-        return
-    if (start < 0) or (end < 0) or \
-        (start > wvd.numSectors()) or (end > wvd.numSectors()):
-        print "sector start or end is not a valid sector number for this disk"
-        print "Valid range: sector 0 to %d" % (wvd.numSectors()-1)
-        return
-    if start > end:
-        (start, end) = (end, start)  # swap
+
+    (theFile, start, end) = filenameOrSectorRange(wvd, p, args)
+    if (start == None):
+        return []  # invalid arguments
+
     for s in xrange(start, end+1):
         print "### Disk Sector", s, "###"
         dumpSector(wvd.getRawSector(p, s))
@@ -342,36 +349,47 @@ def dumpSector(data):
 
 ######################## list program or data file ########################
 # given a file name, return a list containing one text line per item
+# LIST <FILENAME>
+# LIST <WILDCARD>  (but it must match just one file)
+# LIST 100         (list sector 100)
+# LIST 100 200     (list sectors 100 to 200, inclusively)
 
-def listFile(wvd, p, filename):
+def listFile(wvd, p, args, listd):
 
-    fname = getOneFilename(wvd, p, filename)
-    if fname == None:
-        return []
+    (theFile, start, end) = filenameOrSectorRange(wvd, p, args)
+    if (start == None):
+        return []  # invalid arguments
 
-    # make sure the file is real
-    theFile = wvd.catalog[p].getFile(fname)
-    if theFile == None:
-        print 'No file named "' + fname + '" on disk'
-        return []
+    if (theFile != None):
+        # make sure it is a program or data file
+        fileType = theFile.getType()
+        if fileType == "D":
+            return listDataFromBlocks(theFile.getSectors())
+        if fileType != "P":
+            print "Not a program file"
+            return []
+        if not theFile.fileExtentIsPlausible():
+            print "The file extent is not sensible; no listing generated"
+            return []
+        if not theFile.fileControlRecordIsPlausible():
+            print "The file control record is not sensible; no listing generated"
+            return []
+        # make sure program isn't scrambled
+        mode = theFile.programSaveMode()
+        if mode == 'scrambled':
+            print "Program is scrambled (SAVE !) and can't be listed"
+            return []
+        blocks = theFile.getSectors()
+        listing = listProgramFromBlocks(blocks, listd, start)
+    else:
+        # start,end range given
+        blocks = []
+        for n in xrange(start, end+1):
+            blocks.append( wvd.getRawSector(p,n) )
+        #listing = listProgramFromBlocks(blocks, listd, start)
+        listing = listArbitraryBlocks(blocks, listd, start)
 
-    # make sure it is a program
-    fileType = theFile.getType()
-    if fileType == "D":
-        return listData(wvd, p, fname)
-
-    if fileType != "P":
-        print "Not a program file"
-        return []
-
-    # make sure program isn't scrambled
-    mode = theFile.programSaveMode()
-    if mode == 'scrambled':
-        print "Program is scrambled (SAVE !) and can't be listed"
-        return []
-
-    # list it
-    return listProgram(wvd, p, fname)
+    return listing
 
 ############################# command parser #############################
 
@@ -631,21 +649,39 @@ class cmdCatalog(cmdTemplate):
         return "display all or selected files on the disk"
     def longHelp(self):
         return \
-"""cat [<wildcard list>]
+"""cat [-s|-u] [-r] [<wildcard list>]
     List files on disk, or those matching any supplied wildcard.
-    Wildcards use "?" to match one char, "*" to match no or many"""
+    Wildcards use "?" to match one char, "*" to match no or many.
+    Use flag "-s" to sort by starting address instead of name.
+    Use flag "-u" to sort by used sector count intead of name.
+    Use flag "-r" to reverse the sorting order."""
     def needsCatalog(self):
         return True
 
     def doCommand(self, wvd, platters, args):
+        flags = { 's': False, 'u' : False, 'r' : False }
+        while len(args) > 0:
+            if args[0] == '-s':
+                flags['s'] = True
+                flags['u'] = False
+                args = args[1:]
+            elif args[0] == '-u':
+                flags['s'] = False
+                flags['u'] = True
+                args = args[1:]
+            elif args[0] == '-r':
+                flags['r'] = True
+                args = args[1:]
+            else:
+                break
         for p in platters:
             if len(platters) > 1:
                 if p != platters[0]: print
                 print '-'*20, "Platter #%d" % (p+1), '-'*20
             if len(args) == 0:
-                catalog( wvd, p )         # list all
+                catalog( wvd, p, flags, ['*'] )  # list all
             else:
-                catalog( wvd, p, args )   # wildcard version
+                catalog( wvd, p, flags, args )   # wildcard version
         return
 
 registerCmd( cmdCatalog() )
@@ -684,6 +720,84 @@ registerCmd( cmdCheck() )
 
 # ----------------------------------------------------------------------
 
+class cmdScan(cmdTemplate):
+
+    def name(self):
+        return "scan"
+    def shortHelp(self):
+        return "scan the disk and identify whole or partial program files"
+    def longHelp(self):
+        return \
+"""scan
+scan -all
+scan -bad
+    This scans the disk, ignoring the catalog, and attempts to identify program
+    files based on sector contents, not the catalog.  If -all is specified,
+    it will also report program fragments -- things which look like parts of
+    programs, but which aren't fully valid.  Once identified, such fragments
+    can be displayed using the 'list <start> <end>' command.  Finally, -bad
+    specifies that only incomplete program fragments should be listed."""
+    def needsCatalog(self):
+        return False
+
+    def doCommand(self, wvd, platters, args):
+        flag_good = True
+        flag_bad = False
+        if (len(args) > 0) and (args[0] == '-all'):
+            flag_good = True
+            flag_bad = True
+            args = args[1:]
+        if (len(args) > 0) and (args[0] == '-bad'):
+            flag_good = False
+            flag_bad = True
+            args = args[1:]
+        if len(args) > 0:
+            cmdUsage('scan')
+            return
+        for p in platters:
+            if len(platters) > 1:
+                print "======== platter %d ========" % p
+            blocks = []
+            for n in xrange(0, wvd.numSectors()):
+                blocks.append( wvd.getRawSector(p,n) )
+            files = guessFiles(blocks, 0)
+            if len(files) == 0:
+                print "Didn't identify any program files"
+            else:
+                for fileinfo in files:
+                    if flag_good and (fileinfo['file_type'] == 'program'):
+                        print "Sector %5d to %5d: name='%s' [ program ]" \
+                            % ( fileinfo['first_record'],
+                                fileinfo['last_record'],
+                                fileinfo['filename'] )
+                    if flag_bad and (fileinfo['file_type'] == 'program_headless'):
+                        print "Sector %5d to %5d: [ no header record ]" \
+                            % ( fileinfo['first_record'],
+                                fileinfo['last_record'] )
+                    if flag_bad and (fileinfo['file_type'] == 'program_tailless'):
+                        print "Sector %5d to %5d: [ no trailer record ]" \
+                            % ( fileinfo['first_record'],
+                                fileinfo['last_record'] )
+                    if flag_bad and (fileinfo['file_type'] == 'program_fragment'):
+                        print "Sector %5d to %5d: [ no header nor trailer records ]" \
+                            % ( fileinfo['first_record'],
+                                fileinfo['last_record'] )
+                    if flag_good and (fileinfo['file_type'] == 'data'):
+                        print "Sector %5d to %5d: name='%s' [ data ]" \
+                            % ( fileinfo['first_record'],
+                                fileinfo['last_record'],
+                                fileinfo['filename'] )
+                    if flag_bad and (fileinfo['file_type'] == 'data_fragment'):
+                        print "Sector %5d to %5d: name='%s' [ data fragment ]" \
+                            % ( fileinfo['first_record'],
+                                fileinfo['last_record'],
+                                fileinfo['filename'] )
+        return
+
+registerCmd( cmdScan() )
+
+# ----------------------------------------------------------------------
+
 class cmdCompare(cmdTemplate):
 
     def name(self):
@@ -692,8 +806,8 @@ class cmdCompare(cmdTemplate):
         return "Compare two disks or selected files on two disks"
     def longHelp(self):
         return \
-"""compare[/<platter>] /<platter> [<wildcard list>]
-compare[/<platter>] disk2.wvd[/<platter>] [<wildcard list>]
+"""compare[/<platter>] /<platter> [-v|-verbose] [<wildcard list>]
+compare[/<platter>] disk2.wvd[/<platter>] [-v|-verbose] [<wildcard list>]
 
     In the first form, the files of two different platters of the same disk
     are compared.  For this to make any sense, the disk must be multiplatter.
@@ -705,7 +819,10 @@ compare[/<platter>] disk2.wvd[/<platter>] [<wildcard list>]
     In the second form, the files from two platters on two different disks
     are compared, again with an optional file wildcard list.  The second
     /<platter> specifier is optional, and defaults to platter 1.  For either
-    disk, the /<platter> specifier is not meaningful for single platter disks."""
+    disk, the /<platter> specifier is not meaningful for single platter disks.
+
+    The -v or -verbose flag will indicate the first line where files
+    mismatch, if they are program files and are not scrambled."""
 
     def needsCatalog(self):
         return True
@@ -715,6 +832,16 @@ compare[/<platter>] disk2.wvd[/<platter>] [<wildcard list>]
         if (len(args) < 1) or (len(platters) > 1):
             cmdUsage('compare')
             return
+
+        # look for flags
+        verbose = False
+        argsout = []
+        for n in range(0,len(args)):
+            if (args[n] == '-v') or (args[n] == '-verbose'):
+                verbose = True
+            else:
+                argsout.append(args[n])
+        args = argsout
 
         disk1_p = platters[0]  # disk1 partition
         if not wvd.catalog[disk1_p].hasCatalog():
@@ -753,7 +880,7 @@ compare[/<platter>] disk2.wvd[/<platter>] [<wildcard list>]
             print "Please specify two different platters of this disk"
             return
 
-        compareFiles(wvd, disk1_p, wvd2, disk2_p, args[1:])
+        compareFiles(wvd, disk1_p, wvd2, disk2_p, verbose, args[1:])
         return
 
 registerCmd( cmdCompare() )
@@ -883,25 +1010,53 @@ class cmdList(cmdTemplate):
         return "show program or data file as text"
     def longHelp(self):
         return \
-"""list <filename>
-    Produce listing of the named file; it works only for programs
-    and for data files written via DATASAVE commands."""
+"""list {<filename> | <secnumber> | <secnumber> <secnumber>}
+    Produce listing of the named file or for a range of sectors.
+    It can list the contents of data files only if they were created
+    conventionally, via DATASAVE commands."""
     def needsCatalog(self):
-        return True
+        return False   # "LIST 100 200" style doesn't require a catalog
+    def prettyprinted(self):
+        return False
 
     def doCommand(self, wvd, platters, args):
-        if len(args) != 1:
-            print "This command expects a single filename as an argument"
-            return
         if len(platters) > 1:
             print "This command can only operate on a single platter"
             return
-        listing = listFile(wvd, platters[0], args[0])
+        if len(args) < 1 or len(args) > 2:
+            print "This command expects a single filename as an argument, or two sector addresses"
+            cmdUsage('list')
+            return
+        listing = listFile(wvd, platters[0], args, self.prettyprinted())
         for txt in listing:
+            if generate_html:
+                # must escape special characters
+                txt = re.sub('&', '&amp;', txt)
+                txt = re.sub('<', '&lt;', txt)
+                txt = re.sub('>', '&gt;', txt)
             print txt
         return
 
 registerCmd( cmdList() )
+
+# display the specified program file in ascii
+# note: inherits from cmdList
+class cmdListD(cmdList):
+
+    def name(self):
+        return "listd"
+    def shortHelp(self):
+        return "show pretty-printed program or data file as text"
+    def longHelp(self):
+        return \
+"""listd {<filename> | <secnumber> | <secnumber> <secnumber>}
+    Produce listing of the named file or for a range of sectors.
+    The output is "decompressed" (prettyprinted), ala the BASIC-2
+    LISTD (list decompressed) command."""
+    def prettyprinted(self):
+        return True
+
+registerCmd( cmdListD() )
 
 # ----------------------------------------------------------------------
 
@@ -1085,6 +1240,145 @@ class cmdPlatter(cmdTemplate):
 
 registerCmd( cmdPlatter() )
 
+########################################################################
+# given a set of arbitrary sectors, which may or may not contain
+# coherent program and data listings, attempt to list its contents
+# sensibly.
+
+def listArbitraryBlocks(blocks, listd, abs_sector):
+
+    listing = []
+    relsector = -1  # sector number, relative to first block
+
+    for secData in (blocks):
+
+        relsector = relsector + 1
+        secnum = relsector + abs_sector
+
+        listing.append( "============== sector %d ==============" % secnum )
+
+        # break out the SOB flag bits
+        data_file      = ord(secData[0]) & 0x80
+        header_record  = ord(secData[0]) & 0x40
+        trailer_record = ord(secData[0]) & 0x20
+        #protected_file = ord(secData[0]) & 0x10
+        #last_phys_record = ord(secData[0]) & 0x02
+        #intermediate_phys_record = ord(secData[0]) & 0x01
+
+        if not data_file and header_record and \
+            not checkProgramHeaderRecord("", "", secnum, secData, False):
+            listing.extend(listProgramFromBlocks([secData], listd, secnum))
+            continue
+        if not data_file and not trailer_record and \
+           not checkProgramBodyRecord("", secnum, secData, 0xFD, False):
+            listing.extend(listProgramFromBlocks([secData], listd, secnum))
+            continue
+        if not data_file and trailer_record and \
+           not checkProgramBodyRecord("", secnum, secData, 0xFE, False):
+            listing.extend(listProgramFromBlocks([secData], listd, secnum))
+            continue
+        if data_file and not trailer_record:
+            listing.extend( listDataFromOneRecord(secData) )
+            continue
+        if data_file and trailer_record:
+            listing.append("Data file trailer record")
+            continue
+
+        # don't know what it is -- just dump it
+        # FIXME: this is lifted from wvdutil.ph's dumpSector() routine
+        #        these should be factored into a common routine
+        for line in xrange(16):
+            txt = "%02x:" % (line*16)
+            for off in xrange(16):
+                x = 16*line + off
+                txt += " %02x" % ord(secData[x]);
+            txt += "  "
+            for off in xrange(16):
+                x = 16*line + off
+                if (secData[x] >= ' ') and (secData[x] < chr(128)):
+                    txt += secData[x]
+                else:
+                    txt += "."
+            listing.append(txt)
+
+    return listing
+
+
+############################ main program ############################
+# dumpFile() and listFile() have common parameter options:
+#    <filename>
+#    <wildcard resolving to one file>
+#    <sector number>
+#    <first sector> <last sector>
+#
+# if the argument is a number and there happens to be a file name which
+# matches the number, we assume the user intends the file and not the
+# sector number.
+#
+# returns (fileobject, starting_sector_number, ending_sector_number)
+# each position may be None if it isn't valid.
+
+def filenameOrSectorRange(wvd, p, args):
+
+    badReturn = (None, None, None)
+
+    (start,end) = (-1,-1)
+
+    if (len(args) == 1) and wvd.catalog[p].hasCatalog():
+        # it might be a name or a wildcard
+        filename = getOneFilename(wvd, p, args[0])
+        if filename != None:
+            theFile = wvd.catalog[p].getFile(filename)
+            assert theFile != None
+            if not theFile.fileExtentIsPlausible():
+		print "The file extent doesn't make sense"
+		return badReturn
+            start = theFile.getStart()  # all allocated sectors
+            used  = theFile.getUsed()
+            end   = start+used-1        # all meaningful sectors
+            return (theFile, start, end)
+
+    if (len(args) == 1) and (args[0].isdigit()):
+        start = int(args[0])
+        end = start
+    elif (len(args) == 2) and (args[0].isdigit()) and (args[1].isdigit()):
+        start = int(args[0])
+        end   = int(args[1])
+    else:
+        print "Expecting a filename, a sector number, or pair of sector numbers"
+        return badReturn
+
+    if (start < 0) or (end < 0) or \
+        (start > wvd.numSectors()) or (end > wvd.numSectors()):
+        print "sector start or end is not a valid sector number for this disk"
+        print "Valid range: sector 0 to %d" % (wvd.numSectors()-1)
+        return badReturn
+
+    if start > end:
+        (start, end) = (end, start)  # swap
+
+    return (None, start, end)
+
+############################ getOneFilename ############################
+# make sure that the name passed by the user is a real file, or if
+# it is a pattern, ensure that it resolves to a single file.
+
+def getOneFilename(wvd, p, name):
+    cat = wvd.catalog[p]
+    if not cat.hasCatalog():
+        print "This disk doesn't appear to have a catalog"
+        return None
+
+    outlist = cat.expandWildcards( [name] )
+    if len(outlist) == 0:
+        return None
+    elif len(outlist) > 1:
+        print "This command accepts a single filename, and more than one matched:"
+        print [x.rstrip() for x in outlist]
+        return None
+    else:
+        return outlist[0]
+
 ############################ main program ############################
 
 if __name__ == "__main__":
@@ -1095,11 +1389,22 @@ if __name__ == "__main__":
     # if no arguments, print help message and quit
     if len(sys.argv) < 2: usage(1)
 
+    # check for optional "-html" flag
+    global generate_html
+    generate_html = '-html' in sys.argv
+    if generate_html:
+        sys.argv.remove('-html')
+
     # first argument is always a .wvd filename
     filename = sys.argv[1]
+    if generate_html:
+        filename = urllib.unquote_plus(filename)
+    if (not os.path.exists(filename)):
+        print "File not found:",filename
+        sys.exit()
     wvd = WangVirtualDisk()
     try:
-        wvd.read(filename)
+        wvd.read(sys.argv[1])
     except:
         print "Couldn't open",filename,"as a Wang virtual disk image"
         sys.exit()
@@ -1118,11 +1423,17 @@ if __name__ == "__main__":
 
     if len(sys.argv) > 2:
         # just perform command on command line and quit
-        cmdStr = " ".join(sys.argv[2:])
+        # strings containing spaces were indistinguishible from two words,
+        # eg: list "TBO DIAG" was showing up to command as "list TBO DIAG"
+        # cmdStr = " ".join(sys.argv[2:])
+        # just quote everything
+        cmdStr = ""
+        for w in sys.argv[2:]:
+            cmdStr = cmdStr + '"' + w + '"' + ' '
         command(wvd, cmdStr)
         sys.exit()
 
-    print basename + ', version 1.2, 2008/10/18'
+    print basename + ', version 1.4, 2011/10/08'
     print 'Type "help" to see all commands'
 
     # accept command lines from user interactively
@@ -1141,7 +1452,24 @@ if __name__ == "__main__":
         # perform command
         try:
             command(wvd, cmdStr)
+        except SystemExit:   # cmdExit() raises this
+            if wvd.isDirty():
+                print "Warning: the disk image has been modified without being saved."
+                try:
+                    inp = ''
+                    while not inp in ('y','yes','n','no'):
+                        inp = raw_input("Do you really want to exit (y/n)? ").strip().lower()
+                    if inp in ('y','yes'):
+                        break
+                    print "Use the 'save' command to save changes"
+		    continue  # back to while 1
+                except KeyboardInterrupt:
+                    print ; print "<<<command interrupted>>>"
+		    continue  # back to while 1
+            break
         except KeyboardInterrupt:
             print "<<<command interrupted>>>"
+        except:
+            print "<<<internal error>>> sorry about that"
 
     sys.exit()

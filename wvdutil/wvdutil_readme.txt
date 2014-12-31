@@ -1,32 +1,38 @@
 Jim Battle
-October 2008
+October, 2011
 
-Version 1.2 of wvdutil was developed using python 2.5 under Windows XP.
-It should run on other platforms, but it hasn't been tested. wvdutil_1.2.zip
+Version 1.4 of wvdutil was developed using python 2.7 under Windows 7.
+It should run on other platforms, but it hasn't been tested. wvdutil_1.4.zip
 contains the main program, wvdutil.py, and some library routines in wvdlib.py
 and wvfilelist.py.
 
-New features in version 1.2:
+New features in version 1.4:
 
-    - can operate on large disks that are compatible with intelligent
-      disk controllers, namely disks with >32K sectors per platter,
-      and disks with multiple addressible platters.
+    - new "scan" command to scan the list and determine where files
+      and file fragments are, irrespective of the catalog, or if the
+      disk has no catalog.
 
-    - in the wvdutil shell, the output of commands can be piped to "more", eg:
-           dump 0 1023 | more
+    - the "cat" command now sorts the output by filename by default,
+      and takes optional flags to allow sorting by disk location,
+      file size, and to reverse the order of any of these.
 
-    - redirection operators (">", ">>", and "|") no longer need to be
-      surrounded by whitespace to be recognized.  For example, the following
-      example now works as expected:
-           cat>x
+    - "list <filename>" now also allows "list <start> <end>" to list
+      the contents of sectors, one sector at a time, irrespective of
+      any file boundaries.
 
-    - some commands now have convenience aliases:
-          exit      -> quit
-          cat       -> catalog, dir, ls
-          protect   -> prot
-          unprotect -> unprot
+    - the "compare" command now takes an optional -v (-verbose) flag,
+      which will show the first mismatching line of a BASIC program.
+      the command used to only check for binary exact equality, which
+      is fast and simple, but which isn't foolproof, as most sectors
+      of the program have don't-care bytes after the EOB/EOD byte.
 
-    - bugs eradication
+    - "check" command much more thorough about finding problems
+
+    - more robust operation when inspecting corrupted disks and disks
+      which have no catalog
+
+    - if you modify the disk and then exit, the program will prompt to
+      ask if you want to save the image before exiting.
 
 To operate on "disk.wvd", launch it like this:
 
@@ -62,10 +68,12 @@ Type "help <command>" to get more detailed help on a particular command.
    help      - print list of commands more details of one command
    index     - display or change the catalog index type
    list      - show program or data file as text
+   listd     - show pretty-printed program or data file as text
    meta      - report virtual disk metadata
    platter   - supply the default if a platter number isn't specified
    protect   - set program file to be saved in protected mode
    save      - write the in-memory disk image back to disk
+   scan      - scan the disk and identify whole or partial program files
    unprotect - set program file to be saved in normal mode
    wp        - set or clear the write protect status of the virtual disk
 
