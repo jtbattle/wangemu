@@ -2,9 +2,6 @@
 Emulator TODO list
 ============================================================================
 
-*) dave angel on linked in
-    https://www.linkedin.com/in/davea
-
 *) add terminal mux emulation and smart terminal emulation so I can run
         MVP, Szudzik BASIC mods, BASIC-3 / COBOL
 
