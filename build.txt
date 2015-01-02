@@ -1,6 +1,6 @@
 ============================================================================
                     Wang 2200 emulator build notes, v2.2
-                             December 27, 2014
+                             December 30, 2014
 ============================================================================
 
 The typical user of wangmu has no need to know any of this.  However, if you
@@ -54,38 +54,35 @@ an explicit mouse-click-by-mouse-click cookbook.
 5) Build the wxWidgets library
 
    The wxWidgets library may be built many different ways.  I'll describe
-   only the way I do it.
+   only the way I do it.  This worked for MSVC 2013 Community Edition:
 
    5a) Fire up the compiler
-   5b) File -> Open -> Project/Solution ...
-   5c) You are facing a file dialog box.  Navigate over to where you
-       installed the wxWidgets code; in my case, this is C:\libs\wx-3.0.2.
-       Then drill down into build/msw.  Select the file "wx_vc10.sln".
-       If you are using a different version of visual studio, pick the
-       .sln file with a name matching the compiler version you are using.
-       This step will allow building a static wxWidgets library.
-   5d) In the Solution Explorer pane, right click on the top level of the
-       heirarchy, "Solution 'wx_vc10' (23 projects)" in my case.
-       This displays a dialog of which sub-libraries should be built.
-       It only costs a bit of time and some disk space to build everything
-       (the default), but if you want to skimp, the Wang 2200 emulator
-       uses only the following sub-libraries: adv, base, core.  Select
-       both debug and release versions of each of the libraries.  Hit OK
-       to dismiss the dialog.
-   5e) Hit <F7> to build, or use the menu Debug/Build instead.  The compiler
-       should grind for a while and build without errors.
-   5f) Bonus points if you want to build and run any of the demo or sample
+   5b) Launch a command line shell from MSVC compiler
+       (Tools/Visual Studio Command Prompt ...)
+   5c) type "set WXWIN=c:\libs\wx-2.0.3"  (change to your appropriate path)
+   5d) type "cd %WXWIN\build\msw"
+   5e) type "nmake -f makefile.vc"
+       and wait 10 minutes
+   5f) type "nmake -f makefile.vc BUILD=release"
+       and wait 10 minutes
+...
+
+   5g) Bonus points if you want to build and run any of the demo or sample
        applications.  Note that most specify linking against a wide range
        of wx libs, although not all are necessarily needed for a given
        application.  This is worth the effort to gain confidence that the
        wx libs were built successfully.  samples/minimal is the canonical
-       app to try, but demos/bombs is a lot more fun.
-   5g) Quit the compiler.
+       app to try, but demos/bombs is a lot more fun.  To build one, cd into
+       the sample or demo directory, and issue the same command as before, eg
+            nmake -f makefile.vc BUILD=release
+       then cd into the vc_mswu/ (or whatever) subdirecotyr and run the .exe
+       located there.
+   5h) Quit the compiler.
 
    If you have difficulties doing this, try visiting the wxWidgets wiki.
-   As of November 2008, the right URL to start is this one:
+   As of December 2014, the right URL to start is this one:
 
-        http://wiki.wxwidgets.org/Guides_%26_Tutorials
+        https://wiki.wxwidgets.org/Install
 
 6) Set up the build tree
 
@@ -111,23 +108,27 @@ an explicit mouse-click-by-mouse-click cookbook.
 
 7) Configure the compiler for the project
 
-   7a) Fire up the compiler
-   7b) Select File -> Open -> Project/Solution ...
-   7c) You are facing a file dialog box.  Navigate over to emu.sln, and
+   7a) set the shell environment variable WXWIN to point to wherever you
+       installed the wxwindows library.  This should be the path up to the
+       root of that tree.  In my case, it is
+            set WXWIN="C:\libs\wx-3.0.2"
+   7b) Fire up the compiler
+   7c) Select File -> Open -> Project/Solution ...
+   7d) You are facing a file dialog box.  Navigate over to emu.sln, and
        select it.
-   7d) Select Project -> Properties  (which is also ALT+F7)
+   7e) Select Project -> Properties  (which is also ALT+F7)
 
    Now is the time to point the compiler to the location where you
    built the wxWidgets libs.
 
-   7e) Under Configuration Properties, expand the "C/C++" control.
+   7f) Under Configuration Properties, expand the "C/C++" control.
        Select the "General" category.  Here is what I have for the
        first line item, "Additional Include Directories":
 
         debug build:
-            \wx289\include;\wx289\lib\vc_lib\mswd
+            $(WXWIN)\include;$(WXWIN)\lib\vc_lib\mswd
         release build:
-            \wx289\include;\wx289\lib\vc_lib\msw
+            $(WXWIN)\include;$(WXWIN)\lib\vc_lib\msw
 
    7f) Still under the C/C++ control, select the "Preprocessor" group.
        The first line item is "Preprocessor Definitions".  Here is what
@@ -153,14 +154,14 @@ an explicit mouse-click-by-mouse-click cookbook.
        "Additional Library Directories".  Here is what I have (same for both
        debug and release builds):
 
-            \wx289\lib\vc_lib;\wx289\include
+            $(WXWIN)\lib\vc_lib;$(WXWIN)\include
 
    7i) Switch to the "Resources" tree control item.  The third line item is:
 
         debug build:
-            \wx289\include;\wx289\lib\vc_lib\mswd;.
+            $(WXWIN)\include;$(WXWIN)\lib\vc_lib\mswd;.
         release build:
-            \wx289\include;\wx289\lib\vc_lib\msw;.
+            $(WXWIN)\include;$(WXWIN)\lib\vc_lib\msw;.
 
    OK, that should be it for configuration.
 

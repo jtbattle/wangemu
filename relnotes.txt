@@ -1,6 +1,6 @@
 ============================================================================
                    Wang 2200 emulator release notes, v2.2-pre
-				 August 4, 2012
+				January 1, 2015
 ============================================================================
 
 
@@ -43,6 +43,30 @@ The emulator very well might run on Linux via Wine, but it hasn't been tested.
 
 ---- Bugs Fixed in this Release ----
 
+*) Wang disk controllers supported "hog mode", where a given CPU could
+   lock a disk drive for exclusive use, mostly to ensure atomic r/w
+   behavior.  Wangemu doesn't emulate multiple systems, so there is no
+   need to emulate a disk mux, but there is one facet which was missing.
+   One method of triggering hog mode was to address the drive with the
+   high bit of the address set, eg /310 would become /390.  So now the
+   emulator ignores the most significant I/O address bit when doing
+   address decode, but no other aspect of hog mode is emulated.
+
+*) Some disk controllers supported more advanced commands than just the
+   basic read sector, write sector, verify sector.  In fact, a few of
+   them were implemented for "intelligent" disk controller mode.  Recently
+   unearthed internal Wang documentation showed that the VERIFY_SECTORS
+   command response contained a three byte sector address, not two bytes,
+   as was previously emulated.  However, I've had a hard time triggering
+   BASIC to actually use this feature, so it is really not yet tested.
+
+*) If the disk controller receives a channel command which is either not
+   implemented or is unknown, a warning dialog will appear stating as much,
+   but a given bad command byte will only trigger the warning once, to
+   keep from becoming intrusive.  Also, in accordance with the Wang internal
+   documentation, a bad command byte is echoed back with all bits inverted
+   so that the microcode can detect it and abort the command.
+
 *) The disk controller would assert if it received an unexpected value for
    the first byte of the command sequence.  Because GIO programs can send
    anything at all, the assert was removed and the other values get mapped
@@ -59,7 +83,7 @@ The emulator very well might run on Linux via Wine, but it hasn't been tested.
 
 ---- Minor Tweaks and Implementation Changes ----
 
-*) compiled with the latest wxWidgets library release, 2.9.4
+*) compiled with the latest wxWidgets library release, 3.0.2
 
 *) fixed a typo in errtable.cpp for error 73;
    it should read "SAVE DCF" instead of "SAVE SCF"

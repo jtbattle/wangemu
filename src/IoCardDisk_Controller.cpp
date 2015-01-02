@@ -1,5 +1,32 @@
 // This file contains the logic of the disk controller for IoCardDisk.
 // It is broken out into a separate file simply for clarity.
+//
+// The information was derived from these sources, in chronological order that
+// I obtained them, and thus in order of its impact on writing this code:
+//      
+// * Wang 7180 disk controller internal document containing microcode for
+//   the floppy disk controller:
+//      http://www.wang2200.org/2200tech/mrg-no-2.pdf
+//   This, plus many hours of reverse engineering of the microcode and some
+//   trial and error modeling in the emulator, was good enough to get the
+//   first generation (dumb) disk controller protocol working.
+//
+// * Paul Szudzik OCR'd a section of the SDS internal documentation on their
+//   understanding of the Wang disk channel protocol (not online)
+//      disk_protocol/Disk Handshake Sequences.rtf
+//   This allowed adding the smart disk protocol to the emulator.
+//
+// * Wang's internal LVP disk controller document:
+//      http://www.wang2200.org/docs/internal/LvpDiskCommandSequences.5-81.pdf
+//   This exposed a missing command and described the "read status" extended
+//   command format.
+//
+// This code doesn't emulate any specific controller that Wang made.
+// In fact, it even allows things which no Wang controller supported,
+// such as arbitrarily mixing floppy and hard disk images on a drive
+// by drive basis.  This causes a few corner case issues (should the
+// controller claim to be smart or dumb?) but it saves some configuration
+// difficulties for the user.
 
 #include "DiskCtrlCfgState.h"
 #include "IoCardDisk.h"
@@ -59,6 +86,7 @@ IoCardDisk::statename(int state)
         case CTRL_SEND_BYTES:           return "CTRL_SEND_BYTES";
         case CTRL_COMMAND:              return "CTRL_COMMAND";
         case CTRL_COMMAND_ECHO:         return "CTRL_COMMAND_ECHO";
+        case CTRL_COMMAND_ECHO_BAD:     return "CTRL_COMMAND_ECHO_BAD";
         case CTRL_COMMAND_STATUS:       return "CTRL_COMMAND_STATUS";
         case CTRL_READ1:                return "CTRL_READ1";
         case CTRL_READ2:                return "CTRL_READ2";
@@ -85,8 +113,6 @@ IoCardDisk::statename(int state)
         case CTRL_VERIFY_RANGE3:        return "CTRL_VERIFY_RANGE3";
         case CTRL_VERIFY_RANGE4:        return "CTRL_VERIFY_RANGE4";
         case CTRL_VERIFY_RANGE5:        return "CTRL_VERIFY_RANGE5";
-        case CTRL_HANG:                 return "CTRL_HANG";
-        case CTRL_STATUS:               return "CTRL_STATUS";
         default: /*assert(0);*/         return "CTRL_???";
     }
 }
@@ -170,6 +196,34 @@ IoCardDisk::advanceState(disk_event_t event, const int val)
     return rv;
 }
 
+// return a pointer to a string describing a known extended command
+// which the emulator doesn't support.  return NULL if it is either
+// supported or is unknown.
+const char *
+IoCardDisk::unsupportedExtendedCommandName(int cmd)
+{
+    switch (cmd) {
+        // known but unsupported
+        case SPECIAL_FORMAT_SECTOR:        return "FORMAT_SECTOR";
+        case SPECIAL_READ_SECTOR_HEADER:   return "READ_SECTOR_HEADER";
+        case SPECIAL_CLEAR_ERROR_COUNT:    return "CLEAR_ERROR_COUNT";
+        case SPECIAL_READ_ERROR_COUNT:     return "READ_ERROR_COUNT";
+        case SPECIAL_READ_SECTOR_AND_HANG: return "READ_SECTOR_AND_HANG";
+        case SPECIAL_READ_STATUS:          return "READ_STATUS";
+        case SPECIAL_FORMAT_TRACK:         return "FORMAT_TRACK";
+        // supported
+        case SPECIAL_FORMAT:
+        case SPECIAL_COPY:
+        case SPECIAL_MULTI_SECTOR_WRITE_START:
+        case SPECIAL_MULTI_SECTOR_WRITE_END:
+        case SPECIAL_VERIFY_SECTOR_RANGE:
+            return NULL;
+        // unknown
+        default:
+            return NULL;
+    }
+}
+
 bool
 IoCardDisk::advanceStateInt(disk_event_t event, const int val)
 {
@@ -184,7 +238,11 @@ IoCardDisk::advanceStateInt(disk_event_t event, const int val)
             case EVENT_DISK:      msg = "EVENT_DISK";      break;
             default:              msg = "???";             break;
         }
-        dbglog("State %s, received %s\n", statename(m_state), msg.c_str());
+        if (event == EVENT_OBS) {
+            dbglog("State %s, received OBS(0x%02x)\n", statename(m_state), val);
+        } else {
+            dbglog("State %s, received %s\n", statename(m_state), msg.c_str());
+        }
     }
 
     // init things on reset
@@ -203,8 +261,10 @@ IoCardDisk::advanceStateInt(disk_event_t event, const int val)
     if (event == EVENT_OBS && cax_init()) {
         if (!inIdleState()) {
             // we are aborting something in progress
-                if (DBG > 0)
-                    dbglog("Warning: CAX aborted command state %s, cnt=%d\n", statename(m_state), m_bufptr);
+            if (DBG > 0) {
+                dbglog("Warning: CAX aborted command state %s, cnt=%d\n",
+                       statename(m_state), m_bufptr);
+            }
         }
         m_state = CTRL_WAKEUP;
         setBusyState(false);
@@ -406,6 +466,8 @@ IoCardDisk::advanceStateInt(disk_event_t event, const int val)
                 m_command =  (val >> 5) & 7;
                 m_drive   = ((val >> 4) & 1) + ((m_primary) ? 0 : 2);
                 m_platter =  (val >> 0) & 15;
+                // how many subsequent command bytes to accumulate.
+                // this may be overidden later.
                 m_xfer_length =
                     (m_acting_intelligent) ? 4  // cmd, 3 secaddr bytes
                                            : 3; // cmd, 2 secaddr bytes
@@ -426,6 +488,7 @@ disk operation
                 switch (m_special_command) {
                 case SPECIAL_COPY:
                 case SPECIAL_VERIFY_SECTOR_RANGE:
+                case SPECIAL_FORMAT_TRACK:
                         // command, subcommand, 3 secaddr bytes (start sector)
                         m_xfer_length = 5;
                         break;
@@ -435,19 +498,27 @@ disk operation
                         // command, subcommand
                         m_xfer_length = 2;
                         break;
-                case SPECIAL_READ_SECTOR_AND_HANG:
-                        // unknown format
+#if 0
+                case SPECIAL_READ_STATUS:
                         m_xfer_length = 2;
                         break;
-                case SPECIAL_STATUS_AND_PROM_REV:
-                        // unknown format
-                        m_xfer_length = 2;
-                        break;
-                default:
-                    UI_Warn("ERROR: disk controller received unknown special command 0x%02x",
-                             m_special_command);
-                    m_state_cnt = 0;
-                    m_state = CTRL_COMMAND;
+#endif
+                default: {
+                    static bool reported[256] = { false };
+                    if (!reported[m_special_command]) {
+                        const char *msg = unsupportedExtendedCommandName(m_special_command);
+                        if (msg != NULL) {
+                            UI_Warn("ERROR: disk controller received unimplemented special command 0x%02x (%s)\n"
+                                    "Please notify the program developer if you want this feature added",
+                                     m_special_command, msg);
+                        } else {
+                            UI_Warn("ERROR: disk controller received unknown special command 0x%02x",
+                                     m_special_command);
+                        }
+                        reported[m_special_command] = true;
+                    }
+                    m_state = CTRL_COMMAND_ECHO_BAD;
+                    }
                     break;
                 }
             }
@@ -455,12 +526,19 @@ disk operation
         break;
 
     // every command byte we receive is echo back for integrity checks
+    case CTRL_COMMAND_ECHO_BAD:  // special case; fall through
     case CTRL_COMMAND_ECHO:
         if (event == EVENT_IBS_POLL) {
+            bool bad_spcl_cmd = (m_state == CTRL_COMMAND_ECHO_BAD);
             rv = true;  // we have data to return
+            m_state = CTRL_COMMAND;  // may be overridden
             m_byte_to_send = m_header[m_state_cnt++];
-            m_state = CTRL_COMMAND;  // may be overridden next
-            if (m_state_cnt == m_xfer_length) {
+            if (bad_spcl_cmd) {
+                // page 3 of LvpDiskCommandSequences.5-81.pdf says if the
+                // command isn't recognized, the DPU echoes the command byte
+                // bit inverted.  The host should abort the command.
+                m_byte_to_send ^= 0xFF;
+            } else if (m_state_cnt == m_xfer_length) {
                 m_state_cnt = 0;        // prepare it for the next command
 
                 // header is complete -- decode it, presuming READ, WRITE, VERIFY
@@ -473,6 +551,7 @@ disk operation
 
                 if (m_command == CMD_SPECIAL) {
 
+                    // some, but not all commands, expect sector data here
                     m_secaddr = (m_header[2] << 16) |
                                 (m_header[3] <<  8) |
                                  m_header[4];
@@ -502,12 +581,6 @@ disk operation
                             m_range_drive   = m_drive;
                             m_range_start   = m_secaddr;
                             m_state = CTRL_VERIFY_RANGE1;
-                            break;
-                    case SPECIAL_READ_SECTOR_AND_HANG:
-                            m_state = CTRL_HANG;
-                            break;
-                    case SPECIAL_STATUS_AND_PROM_REV:
-                            m_state = CTRL_STATUS;
                             break;
                     default:
                         assert(0);
@@ -614,6 +687,14 @@ disk operation
     // after the 2nd status byte, the 2200 sends a byte with unknown purpose.
     // perhaps it is simply a chance for the 2200 to cancel the command,
     // as a fair amount of time may have passed due to motor spin-up and such.
+    //
+    // LvpDiskCommandSequences.5-81.pdf comments that the purpose of this byte
+    // is "signal disk to check IOBs to insure not restarting disk sequence."
+    //
+    // NB: LvpDiskCommandSequences mentions on page 4 that even if an error
+    //     code is returned at this point, the controller should proceed to
+    //     deliver the questionable data if the host CPU requests it.  It is
+    //     up to the CPU to decide whether to abort the sequence or not.
     case CTRL_READ1:
         if (event == EVENT_OBS) {
             if ((NOISY > 0) && (val != 0x00))
@@ -659,13 +740,18 @@ disk operation
                 int cksum = 0;
                 for(int i=0; i<256; i++)
                     cksum += m_buffer[i];
-                cksum = cksum & 0xFF;
+                cksum &= 0xFF;  // LRC
                 if (cksum != val) {
                     m_byte_to_send = 0x04;  // error status
                     // 0x00 -> OK
                     // 0x01 -> ERR 71  (cannot find sector/protected platter)
                     // 0x02 -> ERR 67  (disk format error)
                     // 0x04 -> ERR 72  (cyclic read error)
+                    // or
+                    // 00 if OK
+                    // 01 if seek error   (ERR I95)
+                    // 02 if format error (ERR I93)
+                    // 04 if LRC error    (ERR I96)
                 } else if (m_d[m_drive].wvd->getWriteProtect()) {
                     // 0x01 -> ERR 71  (cannot find sector/protected platter)
                     m_byte_to_send = 0x01;  // error status
@@ -718,7 +804,8 @@ disk operation
                 // microcode in the Module Repair Guide #2 ignores the LRC byte
                 int cksum = 0;
                 for(int i=0; i<256; i++)
-                    cksum = (cksum + m_buffer[i]) & 0xFF;
+                    cksum += m_buffer[i];
+                cksum &= 0xFF;
                 if (cksum != val)
                     m_byte_to_send = 0x04;
             #endif
@@ -765,7 +852,10 @@ disk operation
     //        00 byte
     //     drop ready, complete the copy
     //     raise ready, send status:
-    //        00=ok, 01=dest is write protected, 02=an error occurred
+    //        00=ok
+    //        01=dest is write protected or seek error (ERR I95)
+    //        02=format error (ERR I93)
+    //        04=CRC error    (ERR I96)
     //
     // As we are modelling an intelligent disk controller, assume there is
     // a source track buffer and a dest track buffer to minimize on the
@@ -992,8 +1082,11 @@ disk operation
     //        byte 1: <special command "format" token>
     //        byte 2: unused 00 byte  (not echoed!)
     //     drop ready, perform operation
-    //     raise ready, send status
-    //        00=ok, 01=bad sector address, 02=not ready or bad head selection
+    //     raise ready, send status:
+    //        00=ok
+    //        01=seek error   (ERR I95)
+    //        02=format error (ERR I93)
+    //        04=CRC error    (ERR I96)
     //
     // We model the format operation's timing a track at a time for simplicity.
     //
@@ -1118,7 +1211,10 @@ disk operation
     //        byte 2: unused 00 byte  (not echoed!)
     //     drop ready, perform operation
     //     raise ready, send status
-    //        00=ok, 01=bad sector address, 02=not ready or bad head selection
+    //        00=ok
+    //        01=bad sector address/seek error (ERR I95)
+    //        02=not ready or bad head selection, format error (ERR I93)
+    //        04=CRC error (ERR I96)
 
     case CTRL_MSECT_WR_END1:
         if (event == EVENT_OBS) {
@@ -1147,6 +1243,12 @@ disk operation
     // this command reads a range of sectors and reports back any sectors
     // that are not readable.
     //
+    // Note that the Paul Szudzik SDS document claims the response consists
+    // of three bytes: two sector bytes and a one byte status code, but the
+    // LvpDiskCommandSequences document says the response is four bytes:
+    // a three byte sector value and a one byte status code.  The latter makes
+    // more sense, so the emulation follows that pattern.
+    //
     // the command stream looks like this:
     //
     //     receive
@@ -1163,8 +1265,11 @@ disk operation
     //        00 byte  -- but don't echo
     //     drop ready, read indicated sectors
     //     raise ready, send status:
-    //        bytes 0-1: number of sector in error, ms byte first
-    //        byte  2:   reason: 01=seek error, 02=defective header, 04=ecc/crc
+    //        bytes 0-2: number of sector in error, ms byte first
+    //        byte  3:   reason: 00=OK
+    //                           01=seek error
+    //                           02=defective header
+    //                           04=ecc/crc
     //
     // after a sector is reported, ready is dropped again, and more sectors
     // are scanned, reporting all found in error.  when no more are found,
@@ -1207,9 +1312,9 @@ disk operation
                        m_get_bytes[2];
         if (event == EVENT_IBS_POLL) {
             rv = true;
-            m_byte_to_send = (m_d[m_drive].state == DRIVE_EMPTY)       ? 0x01
+            m_byte_to_send = (m_d[m_drive].state == DRIVE_EMPTY)                ? 0x01
                            : (m_range_end >= m_d[m_drive].wvd->getNumSectors()) ? 0x02
-                                                                       : 0x00;
+                                                                                : 0x00;
         }
         m_state = (m_byte_to_send == 0x00) ? CTRL_VERIFY_RANGE3
                                            : CTRL_COMMAND;
@@ -1273,41 +1378,77 @@ disk operation
             if (m_byte_to_send == 0x00) {
                 // no errors
                 m_send_bytes[0] = m_send_bytes[1] = m_send_bytes[2] = 0x00;
+                m_send_bytes[3] = 0x00;
             } else {
-                // 0x01 = seek error, 0x02=bad sector header, 0x04=bad ecc/crc
-                m_send_bytes[0] = (m_secaddr >> 8) & 0xff;  // sector msb
-                m_send_bytes[1] = (m_secaddr >> 0) & 0xff;  // sector lsb
-                m_send_bytes[2] = m_byte_to_send;           // error code
+                // 0x01=seek error (ERR I95)
+                // 0x02=bad sector header, format error (ERR I93)
+                // 0x04=bad ecc/crc (ERR I96)
+                // 0x09=beyond limits error (ERR I98)
+                m_send_bytes[0] = (m_secaddr >> 16) & 0xff;  // sector msb
+                m_send_bytes[1] = (m_secaddr >>  8) & 0xff;  // sector mid
+                m_send_bytes[2] = (m_secaddr >>  0) & 0xff;  // sector lsb
+                m_send_bytes[3] = m_byte_to_send;            // error code
             }
-            sendBytes(3, CTRL_COMMAND);
+            sendBytes(4, CTRL_COMMAND);
         }
         break;
 
-    // ----------------------- READ SECTOR AND HANG -----------------------
-
-    case CTRL_HANG:
-        {
-            static bool reported = false;
-            if (!reported) {
-                reported = true;
-                UI_Warn("Unimplemented special command: READ SECTOR AND HANG");
-            }
-        }
-        m_state = CTRL_COMMAND;
-        break;
-
+#if 0
     // -------------- GET CONTROLLER STATUS AND PROM REVISION --------------
-
-    case CTRL_STATUS:
+    // this command is documented (mostly) in LvpDiskCommandSequences, p.11
+    // the implementation here is just a placeholder, as what the DPU type,
+    // protocol level, and microprogram release fields should be is unknown.
+    case CTRL_READ_STATUS:
         {
             static bool reported = false;
             if (!reported) {
                 reported = true;
-                UI_Warn("Unimplemented special command: STATUS AND PROM REVISION");
+                UI_Warn("Unimplemented special command: READ STATUS");
             }
         }
-        m_state = CTRL_COMMAND;
+        // at this point we expect to see a 0x00 dummy byte from the CPU
+        if (event == EVENT_OBS) {
+            int num_sectors = 0;
+            if ((NOISY > 0) && (val != 0x00))
+                UI_Warn("READ_STATUS was expecting a 0x00 padding byte, but got 0x%02x",val);
+            if (m_drive < numDrives())
+                num_sectors = m_d[m_drive].wvd->getNumSectors();
+            m_send_bytes[0] = 0x0F;     // count of bytes in message (not including this one)
+            m_send_bytes[1] = 0x41;     // DPU type (1st ascii digit) = 'A'
+            m_send_bytes[2] = 0x42;     // DPU type (2nd ascii digit) = 'B'
+            m_send_bytes[3] = 0x31;     // protocol level (1 ASCII digit) = '1'
+            m_send_bytes[4] = 0x30;     // microprogram release (1st ascii digit) = '0'
+            m_send_bytes[5] = 0x31;     // microprogram release (2nd ascii digit) = '1'
+            m_send_bytes[6] = (num_sectors >> 16) & 0xFF;
+            m_send_bytes[7] = (num_sectors >>  8) & 0xFF;
+            m_send_bytes[8] = (num_sectors >>  0) & 0xFF;
+            m_send_bytes[9] = 0x00;     // future expansion
+            m_send_bytes[10] = 0x00;    // future expansion
+            m_send_bytes[11] = 0x00;    // future expansion
+            m_send_bytes[12] = 0x00;    // future expansion
+            m_send_bytes[13] = 0x00;    // future expansion
+            m_send_bytes[14] = 0x00;    // future expansion
+            m_send_bytes[15] = 0x00;    // future expansion
+        }
+        sendBytes(16, CTRL_COMMAND);
         break;
+#endif
+
+#if 0
+    // ------------------- TURN OFF RETRY AND ADDRESS CHECK -------------------
+    // this is documented in LvpDiskCommandSequences, p11
+    // NB: the checks are re-enabled via reset.
+    // NB: LvpDiskCommandSequences, p15, says that $GIO command 4501
+    //     (which is a CBS/IMM=01) clears this condition.
+    // case CTRL_NO_ERROR_CHECKS:
+        {
+            static bool reported = false;
+            if (!reported) {
+                reported = true;
+                UI_Warn("Unimplemented special command: NO_ERROR_CHECKS");
+            }
+        }
+#endif
 
     // -------------------------- UNKNOWN COMMAND --------------------------
     // should have been filtered out already
@@ -1326,5 +1467,8 @@ disk operation
         dbglog("---------------------\n");
     }
 
+    if (DBG > 2 && rv) {
+        dbglog("   IBS return value will be 0x%02x\n", m_byte_to_send);
+    }
     return rv;
 }

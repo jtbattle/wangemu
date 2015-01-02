@@ -2,167 +2,6 @@
 Emulator TODO list
 ============================================================================
 
-*) disk controller is missing a few Phoenix commands (see below)
-        - format sector      (0x03) -- in DISKCM1 program
-        - read sector header (0x04) -- in DISKCM1 program
-        - clear error count  (0x05) -- in DISKCM1 program
-        - read error count   (0x06) -- in DISKCM1 program
-        - read bad sector    (0x07) -- in DISKCM1 program
-        - field service cmd  (0x08) -- in DISKCM1 program
-        - read sector and hang     (0x15) (see SDS internal doc)
-        - read status and prom rev (0x16) (see LvpDiskCommandSequences)
-
-*) Wang's documentation on the "Phoenix" (LVP) disk channel protocol
-    wang2200.org/docs/language/LvpDiskCommandSequences.pdf
-    + missing from emulation:
-        format track (extended command 0x18)
-        read status (extended command 0x16; there but stubbed out)
-            format described on page 11 of the above document
-        turn off retry and ignore address check (extended command 0x17)
-    + page 3 says that if the extended opcode isn't recognized, the
-      last byte is echod with inverted bits to signal the error
-    + verify-sectors ends by sending three bytes: two sector-in-error
-      address bytes, plus a status code.  this came from paul szudzik's
-      document, but the wang lvp document says there are four bytes:
-      three sector bytes plus a status byte. This makes a lot more sense.
-      try running the verify command as-is and see what happens, then
-      add the extra status byte and see what happens.
-
-*) the SDS docs and the program DISKCM1 on the boot-2.3.wvd disk reference
-   disk command sequences that the emulator doesn't support. Were all of
-   these real commands, and should they be emulated?
-
-   in addition to the SDS-specific commands, they claimed these Wang
-   commands existed:
-        20 15 - "read sector and hang"
-        20 16 - read status and prom revisions
-
-   According the SDS disk handshake sequences doc,
-   addressing byte: 0 D X X   0 0 0 0
-        primary drive:    00xx 0000 : 00, 10, 20, 30
-        secondary drive:  01xx 0000 : 40, 50, 60, 70
-   but address 00, and 40, are not allowed.
-
-   It also says that sending a CBS strobe with the ls data bit set causes
-   a hardware reset of the disk controller.  This happens when, say, reset
-   is hit.
-
-   The 6375 disk controller doesn't look at CBS, and does a full decode
-   on all 8b of the address during ABS.  Address bits 6,7,8 are sent on
-   the disk interface connector as pins 28,29,30, respectively.
-
-   The 6541 disk controller skips address bit 7 (the "D" bit above), and
-   instead it is latched at the time of !ABS falling to produce !DN3
-   (pin 12 of the disk interface connector).  Bit 29 of the connector is
-   driven with 0, and address bus bits 6 and 8 are driven on bit 28 and 30.
-   It doesn't look at CBS at all.
-
-   These are the sequences from DISKCM1:
-
-    SF'2 (format platter)
-    STR(G$,1,1) = HEX(20) if device is 3xx, else = HEX(30)
-    (the following is neutered by the program with "GOTO 60")
-    $GIO FORMAT SECTOR #1(0600 0700 70A0 68C0 7040 6A10 6802 4270 8B67,G$)
-
-    0600: r6=#00
-    0700: r7=#00
-    70A0: 70xx isn't listed in the $GIO manual
-          my guess is that it sets the address bus (AB) to the immediate value
-          give by the 2nd byte, but doesn't fire ABS.  The disk controller, and
-          maybe other controllers, use this as a sideband means of sending status.
-          If bits 8 and 6 (that is 0xA0) are sent at certain points of the
-          handshake to the disk controller, it means abort the handshake.
-    68C0: wait ready; OBS 0xC0; wait 5us; set CPB to ready; wait for IBS, verify, SET CC if unequal
-    7040: like 70A0?  presumably turning off CAX status
-    6A10: wait ready; OBS r1; wait 5us; set CPB to ready; wait for IBS; set CC if echoed char != r1
-          the first command byte is usually 00 or 10 (read sector), 40 or 50
-          (write sector), 80 or 90 (verify sector).  This is the start of an
-          extended command, 20 02 (or 30 02).
-    6802: single character output of 0x02 with expected echo & verify (see 68C0)
-            second byte of extended command sequence
-    4270: wait ready; OBS r7
-            sending out 00.  perhaps format takes some other directive here,
-            such as platter number, but the test program doesn't make use of it.
-            it still doesn't explain what r6 is for.
-    8B67: wait ready; set CPB to ready; wait for IBS; save into r7; verify against r6; set CC if unequal
-
-    [ interestingly, docs/internal/WangDs150MbCassetteProjectStatus.pdf,
-      page 4 decodes a $GIO sequence which begins just like this one, and
-      has the ucode disassembly on the right.  70A0 and 7040 have no comment ]
-
-    SF'3 (format sector)
-    the subroutine at 500 has been doctored.  rather than asking which
-    sector, it does something else, namely picks sector 1, then increments
-    it on each subsequent invocation.  it then sets STR(S$,1,1) to the ms
-    byte of the three byte sector address, STR(S$,2,1) to the middle byte,
-    and STR(S$,3,1) to the ls byte.  This gets moved into G$(2,3,4) later.
-    it then sets K$=HEX(84) forcibly, rather than asking for it via keyin.
-    0x84 is TOKEN_CONTINUE.
-    $GIO FORMAT SECTOR #1(0600 0700 70A0 68C0 7040 6A10 6803 6A20 6A30 6240
-                          8705 1704 1156 1576 4270 8B67,G$)
-    (similar above, but with extended command
-
-    SF'4 (read sector header)
-    $GIO READ HEADER #1(0600 0700 70A0 68C0 7040 6A10 6804 6A20 6A30 6240
-                        8705 1704 1156 1576 4000 8701 8602,G$)
-
-    SF'5 (clear error count)
-    $GIO CLEAR ERROR COUNT #1(0600 0700 70A0 68C0 7040 6A10 6808 4000 8700,G$)
-
-    SF'6 (read error count)
-    $GIO READ ERROR COUNT #1(0600 0700 70A0 68C0 7040 6A10 6809 4000
-                             8701 8602 8603,G$)
-
-    SF'7 (read bad sector)
-    $GIO READ BAD SECTOR #1(0600 0700 70A0 68C0 7040 6A10 6A30 6240 8705 1704
-                            1156 1576 4270 8367 C640 8605,G$)G$()
-    STR(G$,1,1) = HEX(20) if device is 3xx, else = HEX(30)
-    STR(G$,2,3) = sector address
-    0600: r6=#00
-    0700: r7=#00
-    70A0: cax
-    68C0: wait ready; OBS 0xC0; wait 5us; set CPB to ready; wait for IBS, verify, SET CC if unequal
-    7040: !cax
-    6A10: wait ready; OBS r1; wait 5us; set CPB to ready; wait for IBS; set CC if echoed char != r1
-    wait, what about the 2nd extended command byte?
-    6A30: wait ready; OBS r3; wait 5us; set CPB to ready; wait for IBS; set CC if echoed char != r3
-    6240: wait ready; OBS r4; wait 5us; set CPB to ready; wait for IBS; set status if echoed char != r4
-    8705: wait ready; set CPB to ready; wait for IBS; save byte to r5
-    1704: set CC if ((r8 & 0x04) != 0)
-    1156: r6=r5
-    1576: set CC if (r6 != r7)
-    4270: wait ready; OBS r7
-    8367: wait ready; set CPB to ready; wait for IBS; save character to r6; set status if echoed char != r7
-    C640: (set CPB to ready; wait for ibs; check T1; save data; check T2), calc LRC and save
-    8605: set CPB ready; wait for IBS, save response byte into r5
-
-    SF'8 (field service command)
-    you are prompted to enter A through F
-    a byte is calculated such that A maps to 10, and F maps to 15
-    This is plugged into STR(G$,2,1)
-    STR(G$,1,1) is HEX(20) if disk drive is 3xx, otherwise it is HEX(30)
-    $GIO FS COMMAND #1(0600 0700 70A0 68C0 7040 6A10 6A20 4000 8700,G$)G$()
-    0600: r6=#00
-    0700: r7=#00
-    70A0: cax
-    68C0: wait ready; OBS 0xC0; wait 5us; set CPB to ready; wait for IBS, verify, SET CC if unequal
-    7040: !cax
-    6A10: wait ready; OBS r1; wait 5us; set CPB to ready; wait for IBS; set CC if echoed char != r1
-    6A20: wait ready; OBS r2; wait 5us; set CPB to ready; wait for IBS; set CC if echoed char != r2
-    4000: wait ready; OBS #00
-    8700: wait ready; set CPB to ready; wait for IBS (ignore return data)
-
-*) toolbox.wvd contains the program TBO.XDAD, which contains this code:
-    0490 DIM G$(15)1
-    0500 $GIOGETDISKTYPE#2(0200 030F 1222 0600 0700 70A0 4000 870B,G$())
-    0510 T$=G$(11)
-       : PRINT "Disk type ";HEXOF(T$);" ...    ";
-   note it has the 70A0 (70xx) instruction too, like the above program
-   it also has
-    1010 G$=HEX(30)
-       : STR(G$,2,7)=ALL(00)
-       : $GIOSTATUSREQUEST#2(0E14 0F00 12E2 0600 0700 70A0 4002 88D0 7040 6A10 6816 4000 8705 1A00 C340,G$)G$;STR(E$,,VAL(STR(G$,5,1)))
-
 *) dave angel on linked in
     https://www.linkedin.com/in/davea
 
@@ -232,6 +71,9 @@ Emulator TODO list
       terminal and mux, but presumably some of the information is
       still valid, such as the I/O map on page 7.
 
+*) notes on disk protocol and unimplemented commands:
+    f:/jim/documents/wang2200/disk_protocol/notes.txt
+
 *) when I run diags, say control mem tests, the test will often hang if
    I run the emulator in realtime mode, but runs OK if I am unregulated.
    what gives?  break during the apparent hang and see what the execution
@@ -287,22 +129,6 @@ Emulator TODO list
     - adaptec AHA-2930LP scsi interface cards apparently work with win/7
         and are $15 on ebay
 
-+) convert catweasel code to kryoflux
-    http://info-coach.fr/atari/software/projects/_kryoflux/kfstream/html/index.html
-    cpp lib to decode .raw stream files to something easier to deal with.
-    this is probably easier to use this and recycle the existing cpp code
-    than to rewrite everything in python.
-
-    wang ss 5.25" disk
-        dtc -fwang/disk1 -p -g2 -z2 -v300 -i0   (stream format)
-        dtc -fwang/disk1 -p -g2 -z2 -v300 -i3   (fm)
-    doesn't decode.  trying to decode one of these raw tracks, say 10,
-    side 0:
-        dtc -m1 -fwang/disk1 -i0 -g0 -z2 -v300 -s10 -e10 -i3 -fwang/foo
-
-    break out whichever old 8" floppy works with hard sector images,
-        disinfect it, and port over the code
-
 *) Document how to work around this problem in the README.
 
    the printer config allows picking either LPT1 or LPT2 as the real printer
@@ -342,11 +168,10 @@ Emulator TODO list
    but they both have the expression (m_memsize_KB<<10).  That should
    be precomputed as m_memsize.  or should I just get rid of m_memsize_KB?
 
-*) get more C++-ish.  exceptions instead of error flags?
-    When changing configurations, currently I:
+*) When changing configurations, currently I:
         - destroy current config
         - rebuild world
-    It would be cleaner to
+   Would it be cleaner to do the following?
         - build new world
         - on success, swap to new world, then destroy old world
         - on failure, report problem, and old world is still usable
@@ -386,10 +211,9 @@ Emulator TODO list
 *) better BELL emulation.  and make it optional.
 
 *) add a debugger/monitor
-
-*) the VP disassembler doesn't match the assembler syntax as specified
-   in the 2600 sw development manual.
-    (2200MVP_ComputerArchitecture.11-79.pdf, pdf page 81 or so)
+    - the VP disassembler doesn't match the assembler syntax as specified
+      in the 2600 sw development manual.
+      (2200MVP_ComputerArchitecture.11-79.pdf, pdf page 81 or so)
 
 *) the MVP service manual section 8.2 (page 8-2) says
         2200 VP/MVP Bootstrap Release 2.2 has been incorporated by ECN

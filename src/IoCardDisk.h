@@ -211,6 +211,7 @@ private:
 
         CTRL_COMMAND,           // receiving command and sector bytes
         CTRL_COMMAND_ECHO,      // echoing command and sector bytes
+        CTRL_COMMAND_ECHO_BAD,  // echoing bad command byte
         CTRL_COMMAND_STATUS,    // replying whether command is valid
 
         CTRL_READ1,             // swallowing byte from host - unknown purpose
@@ -242,8 +243,6 @@ private:
         CTRL_VERIFY_RANGE3,
         CTRL_VERIFY_RANGE4,
         CTRL_VERIFY_RANGE5,
-        CTRL_HANG,
-        CTRL_STATUS,
     };
 
     // disk channel commands
@@ -252,16 +251,38 @@ private:
         CMD_SPECIAL=1   // intelligent disk controllers only
     };
 
-    // special commands, used only by intelligent disk controllers
+    // special commands, used only by intelligent disk controllers.
+    // not all of these extended commands are supported by every controller,
+    // and in fact not all of them are even understood!
+    // *1 means it is described in the LvpDiskCommandSequences document
+    // *2 means it is described in the Paul Szudzik SDS excerpt
+    // *3 means it is appears in a $GIO statement in the program
+    //    "DISKCM1" on the boot-2.3.wvd virtual disk image.
+    //    Note that DISKCM1 was written 5/29/78, so it is relatively old,
+    //    and subsequent controllers probably had different commands.
+    //
+    // I've attempted to trigger the VERIFY_SECTOR_RANGE command,
+    // both with "SAVE ... $ ..." and the "VERIFY F/310,(0,1024)"
+    // command bit it doesn't issue the command.
     enum disk_cmd_special_t {
-        SPECIAL_COPY                     = 0x01,
-        SPECIAL_FORMAT                   = 0x02,
-        SPECIAL_MULTI_SECTOR_WRITE_START = 0x10,
-        SPECIAL_MULTI_SECTOR_WRITE_END   = 0x11,
-        SPECIAL_VERIFY_SECTOR_RANGE      = 0x12,
-        SPECIAL_READ_SECTOR_AND_HANG     = 0x15,
-        SPECIAL_STATUS_AND_PROM_REV      = 0x16
+        SPECIAL_COPY                     = 0x01,   // *1, *2, *3
+        SPECIAL_FORMAT                   = 0x02,   // *1, *2, *3
+        SPECIAL_FORMAT_SECTOR            = 0x03,   //         *3
+        SPECIAL_READ_SECTOR_HEADER       = 0x04,   //         *3
+        SPECIAL_CLEAR_ERROR_COUNT        = 0x08,   //         *3
+        SPECIAL_READ_ERROR_COUNT         = 0x09,   //         *3
+	// commands 0x0A through 0x0F              //         *3
+	// via the "field service command" menu item.
+	// it is not at all document what these do.
+        SPECIAL_MULTI_SECTOR_WRITE_START = 0x10,   // *1, *2
+        SPECIAL_MULTI_SECTOR_WRITE_END   = 0x11,   // *1, *2
+        SPECIAL_VERIFY_SECTOR_RANGE      = 0x12,   // *1, *2
+        SPECIAL_READ_SECTOR_AND_HANG     = 0x15,   //     *2
+        SPECIAL_READ_STATUS              = 0x16,   // *1, *2
+        SPECIAL_FORMAT_TRACK             = 0x18    // *1,     *3
     };
+
+    const char *unsupportedExtendedCommandName(int cmd);
 
     // indicates reason why advanceState() is being called
     enum disk_event_t {
