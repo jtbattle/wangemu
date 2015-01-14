@@ -42,12 +42,12 @@ PrinterConfigDlg::PrinterConfigDlg( wxWindow *parent, const wxString& title,
     // Pointers to the first text control is saved 
     // so that we can use them elsewhere to set focus
     flexgridsizer->Add(new wxStaticText(this, wxID_ANY, "Page Length"));
-    text = new wxTextCtrl(this, VALIDATE_TEXT_PAGELENGTH, wxT(""),
+    text = new wxTextCtrl(this, VALIDATE_TEXT_PAGELENGTH, "",
     wxPoint(10, 10), wxSize(120, -1), 0,
     wxTextValidator(wxFILTER_NUMERIC, &data->m_string_pagelength));
     flexgridsizer->Add(text);
     flexgridsizer->Add(new wxStaticText(this, wxID_ANY, "Line Length"));
-    flexgridsizer->Add(new wxTextCtrl(this, VALIDATE_TEXT_LINELENGTH, wxT(""),
+    flexgridsizer->Add(new wxTextCtrl(this, VALIDATE_TEXT_LINELENGTH, "",
     wxPoint(10, 10), wxSize(120, -1), 0,
     wxTextValidator(wxFILTER_NUMERIC, &data->m_string_linelength)));
 
@@ -55,17 +55,17 @@ PrinterConfigDlg::PrinterConfigDlg( wxWindow *parent, const wxString& title,
 
     wxBoxSizer *checksizer = new wxBoxSizer(wxVERTICAL);
 
-    checksizer->Add(new wxCheckBox(this, VALIDATE_CHECK_AUTOSHOW, wxT("Auto show printer view"),
+    checksizer->Add(new wxCheckBox(this, VALIDATE_CHECK_AUTOSHOW, "Auto show printer view",
         wxDefaultPosition, wxDefaultSize, 0,
         wxGenericValidator(&data->m_checkbox_autoshow)), 0, wxALL, 5);
 
-    checksizer->Add(new wxCheckBox(this, VALIDATE_CHECK_PRINTASGO, wxT("Auto print full pages"),
+    checksizer->Add(new wxCheckBox(this, VALIDATE_CHECK_PRINTASGO, "Auto print full pages",
         wxDefaultPosition, wxDefaultSize, 0,
         wxGenericValidator(&data->m_checkbox_printasgo)), 0, wxALL, 5);
 
 #if !defined(__WXMAC__)
     wxBoxSizer *portsizer = new wxBoxSizer(wxHORIZONTAL);
-    portsizer->Add(new wxCheckBox(this, VALIDATE_CHECK_PORTDIRECT, wxT("Print directly to port"),
+    portsizer->Add(new wxCheckBox(this, VALIDATE_CHECK_PORTDIRECT, "Print directly to port",
         wxDefaultPosition, wxDefaultSize, 0,
         wxGenericValidator(&data->m_checkbox_portdirect)), 0, wxLEFT | wxTOP | wxRIGHT, 5);
 
@@ -84,10 +84,10 @@ PrinterConfigDlg::PrinterConfigDlg( wxWindow *parent, const wxString& title,
 
     wxGridSizer *gridsizer = new wxGridSizer(2, 2, 5, 5);
 
-    wxButton *ok_button = new wxButton(this, wxID_OK, wxT("OK"), wxPoint(250, 70), wxSize(80, 30));
+    wxButton *ok_button = new wxButton(this, wxID_OK, "OK", wxPoint(250, 70), wxSize(80, 30));
     ok_button->SetDefault();
     gridsizer->Add(ok_button);
-    gridsizer->Add(new wxButton(this, wxID_CANCEL, wxT("Cancel"), wxPoint(250, 100), wxSize(80, 30)));
+    gridsizer->Add(new wxButton(this, wxID_CANCEL, "Cancel", wxPoint(250, 100), wxSize(80, 30)));
 
     mainsizer->Add(gridsizer, 0, wxGROW | wxALL, 10);
 

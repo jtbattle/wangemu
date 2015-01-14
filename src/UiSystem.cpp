@@ -55,7 +55,7 @@ TheApp::OnInit()
 #if 0
     // read wxToolBar notes to see why this is done
     if (wxTheApp->GetComCtl32Version() >= 600 && ::wxDisplayDepth() >= 32)
-        wxSystemOptions::SetOption(wxT("msw.remap"), 2);
+        wxSystemOptions::SetOption("msw.remap", 2);
 #endif
 
     System2200 sys;     // invoke it to build the world
@@ -175,8 +175,10 @@ TheApp::OnHelp_Launcher(wxCommandEvent& event)
     }
 
     wxString sep(wxFileName::GetPathSeparator());
-    if (helpfile.EndsWith(".html"))
+    if (helpfile.EndsWith(".html")) {
+	// look in html/ subdirectory
         helpfile = "html" + sep + helpfile;
+    }
 
     string target_file = (absolute) ? helpfile
                                     : ( "file:" + sep + sep +

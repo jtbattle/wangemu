@@ -183,7 +183,7 @@ SystemConfigDlg::SystemConfigDlg(wxFrame *parent) :
 
         // each row of the right grid has: label, description, ioaddr, config
         wxString label;
-        label.Printf( wxT("Slot #%d"), slot );
+        label.Printf( "Slot #%d", slot );
         rightgrid->Add(new wxStaticText(this, -1, label), 0,
             wxALIGN_RIGHT | wxALIGN_CENTER_VERTICAL | wxRIGHT, h_text_margin);
         rightgrid->Add(m_cardDesc[slot], 2, wxGROW | wxALIGN_CENTER_VERTICAL);
@@ -539,7 +539,7 @@ SystemConfigDlg::setValidIoChoices(int slot, int cardtype_idx)
         for(unsigned int j=0; j<base_addresses.size(); j++) {
             int io_addr = base_addresses[j];
             wxString str;
-            str.Printf( wxT("0x%03X"), io_addr);
+            str.Printf( "0x%03X", io_addr);
             hAddrCtl->Append(str);
             if ((io_addr & 0xFF) == (m_cfg.getSlotCardAddr(slot) & 0xFF))
                 addr_mtch_idx = j;
