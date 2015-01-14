@@ -117,7 +117,7 @@ TheApp::OnCmdLineParsed(wxCmdLineParser& parser)
         wxString filename;
         if (parser.Found("s", &filename)) {
             const int io_addr = 0x01;   // default keyboard device
-            std::string fn(filename.c_str());
+            string fn(filename.c_str());
             bool success = core_invokeScript(io_addr, fn);
             if (!success)
                 UI_Warn("Failed to open script '%s'", filename.c_str());
@@ -178,10 +178,10 @@ TheApp::OnHelp_Launcher(wxCommandEvent& event)
     if (helpfile.EndsWith(".html"))
         helpfile = "html" + sep + helpfile;
 
-    wxString target_file = (absolute) ? helpfile
-                                      : ( "file:" + sep + sep +
-                                          Host().getAppHome() +
-                                          sep + helpfile );
+    string target_file = (absolute) ? helpfile
+                                    : ( "file:" + sep + sep +
+                                        Host().getAppHome() +
+                                        sep + helpfile );
     ::wxLaunchDefaultBrowser(target_file);
 }
 
@@ -200,12 +200,12 @@ TheApp::OnHelp_About(wxCommandEvent& WXUNUSED(event))
 
 // shared code
 static bool
-UI_AlertMsg(long style, wxString title, const char *fmt, va_list &args)
+UI_AlertMsg(long style, string title, const char *fmt, va_list &args)
 {
     char buff[1000];
     vsnprintf(buff, sizeof(buff), fmt, args);
 
-    wxString info(buff);
+    string info(buff);
     wxMessageDialog dialog(NULL, info, title, style);
     int rv = dialog.ShowModal();
     return (rv == wxID_YES);

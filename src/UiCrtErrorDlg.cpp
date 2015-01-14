@@ -72,7 +72,7 @@ CrtErrorDlg::CrtErrorDlg( wxWindow *parent,
         grid->Add(new MyStaticText(this, -1, "Error"),    0, L_style);
         grid->Add(new MyStaticText(this, -1, pet->error), 0, R_style);
     } else {
-        wxString msg("Unknown error code");
+        string msg("Unknown error code");
         grid->Add(new MyStaticText(this, -1, "Error"),    0, L_style);
         grid->Add(new MyStaticText(this, -1, msg),        0, R_style);
     }
@@ -83,7 +83,7 @@ CrtErrorDlg::CrtErrorDlg( wxWindow *parent,
     }
 
     if (pet->action != NULL) {
-        wxString txt = (vp_mode) ? "Recovery" : "Action";
+        string txt = (vp_mode) ? "Recovery" : "Action";
         grid->Add(new MyStaticText(this, -1, txt),         0, L_style);
         grid->Add(new MyStaticText(this, -1, pet->action), 0, R_style);
     }

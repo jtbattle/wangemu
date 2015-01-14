@@ -32,7 +32,7 @@ public:
     MyStaticBitmap( wxWindow *parent, wxWindowID id, const wxBitmap &label,
                     const wxPoint &pos = wxDefaultPosition,
                     const wxSize &size = wxDefaultSize,
-                    long style = 0, const wxString &name = "staticBitmap" );
+                    long style = 0, const string &name = "staticBitmap" );
 private:
     void OnMouseBtnDown(wxMouseEvent &event);
 #if HANDLE_MSB_PAINT
@@ -55,7 +55,7 @@ public:
     CrtStatusBar(CrtFrame *parent, bool shown);
     ~CrtStatusBar();
 
-    void SetStatusMessage(const wxString& text);
+    void SetStatusMessage(const string &text);
 
     // keyword control
     void setKeywordMode(bool state = true);

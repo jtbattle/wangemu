@@ -13,7 +13,7 @@ END_EVENT_TABLE()
 
 
 MyStaticText::MyStaticText(wxWindow* parent, wxWindowID id,
-                                        const wxString& label)
+                                        const wxString &label)
     : wxStaticText(parent, id, label)
 {
     // nothing to do!

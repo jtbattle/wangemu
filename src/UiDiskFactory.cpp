@@ -31,10 +31,10 @@ enum
 
 
 static struct disk_choice_t {
-    char *description;
-    int   disk_type;
-    int   platters;
-    int   sectors_per_platter;
+    string description;
+    int    disk_type;
+    int    platters;
+    int    sectors_per_platter;
 } disk_choices[] = {
                                                          // tracks*sectors
     { "PCS 5.25\" floppy disk (88 KB)", Wvd::DISKTYPE_FD5,   1,   35*10  },  // =   350
@@ -56,8 +56,8 @@ static struct disk_choice_t {
     { "DS-140 10 MB * 14 platter disk", Wvd::DISKTYPE_HD80, 14,  640*64  },  // = 40960
 // this is one I just made up -- it is the largest possible disk:
     { "DS-224 16 MB * 14 platter disk", Wvd::DISKTYPE_HD80, 14, 1023*64  },  // = 65472
-
 };
+// FIXME: I don't see how to get rid of this
 static const int num_disk_types = sizeof(disk_choices) / sizeof(disk_choice_t);
 
 // ------------------------------------------------------------------------
@@ -111,7 +111,7 @@ public:
 
     void refresh();
 
-    wxString LabelPanel::getLabelString();
+    string LabelPanel::getLabelString();
 
 private:
 
@@ -258,11 +258,8 @@ DiskFactory::OnButton_Save(wxCommandEvent& WXUNUSED(event))
     string name( m_diskdata->getPath() );
     assert(!name.empty());
 
-    string lab( m_tab2->getLabelString() );
-    m_diskdata->setLabel(lab);
-
+    m_diskdata->setLabel(m_tab2->getLabelString());
     m_diskdata->save();
-
     Close();
 }
 
@@ -286,9 +283,7 @@ DiskFactory::OnButton_SaveAs(wxCommandEvent& WXUNUSED(event))
         return;
     }
 
-    string lab( m_tab2->getLabelString() );
-    m_diskdata->setLabel(lab);
-
+    m_diskdata->setLabel(m_tab2->getLabelString());
     m_diskdata->save(name);
 
     Close();
@@ -466,8 +461,7 @@ PropPanel::refresh()
 
     // update path to disk
     if (!new_disk) {
-        wxString label;
-        label.Printf("Path: %s", (m_diskdata->getPath()).c_str());
+        string label = "Path: " + m_diskdata->getPath();
         m_path->SetLabel(label);
     }
 
@@ -497,7 +491,7 @@ PropPanel::refresh()
         m_disktype->SetSelection(radio_sel);
     }
 
-    wxString label, type;
+    string type;
     switch (disk_type) {
         case Wvd::DISKTYPE_FD5:  type = "PCS 5.25\" floppy";  break;
         case Wvd::DISKTYPE_FD8:  type = "2270(A) 8\" floppy"; break;
@@ -507,6 +501,7 @@ PropPanel::refresh()
     }
     m_st_type->SetLabel(type);
 
+    wxString label;
     label.Printf("%d platter%s", num_platters, (num_platters>1) ? "s" : "");
     m_st_plats->SetLabel(label);
     const char *per_platter = (num_platters > 1) ? "/platter" : "";
@@ -618,10 +613,10 @@ LabelPanel::refresh()
 }
 
 
-wxString
+string
 LabelPanel::getLabelString()
 {
-    return m_text->GetValue();
+    return string(m_text->GetValue());
 }
 
 

@@ -174,7 +174,7 @@ SystemConfigDlg::SystemConfigDlg(wxFrame *parent) :
             IoCard::card_type_e ct = (IoCard::card_type_e)ctype;
             string cardname = CardInfo::getCardName(ct);
             string carddesc = CardInfo::getCardDesc(ct);
-            wxString str( cardname + " (" + carddesc + ")" );
+            string str( cardname + " (" + carddesc + ")" );
             m_cardDesc[slot]->Append(str, (void*)ctype);
         }
 
@@ -313,7 +313,7 @@ SystemConfigDlg::updateButtons()
     // we could disable it, but then the user couldn't hit OK and be told
     // why it is disabled.  It would also be possible to add a tooltip to
     // serve this purpose.
-    wxString label;
+    string label;
     if (!configStateOk(false /*don't warn*/))
         label = "not OK";
     else if (m_oldcfg.needsReboot(m_cfg))

@@ -62,7 +62,7 @@ END_EVENT_TABLE()
 MyStaticBitmap::MyStaticBitmap(
                     wxWindow *parent, wxWindowID id, const wxBitmap &label,
                     const wxPoint &pos, const wxSize &size,
-                    long style, const wxString &name ) :
+                    long style, const string &name ) :
         wxStaticBitmap (parent, id, label, pos, size, style, name),
         m_myid(id)
 {
@@ -552,7 +552,7 @@ CrtStatusBar::OnDiskPopup(wxCommandEvent &event)
 
 
 void
-CrtStatusBar::SetStatusMessage(const wxString& text)
+CrtStatusBar::SetStatusMessage(const string &text)
 {
     wxStatusBar::SetStatusText(text, 1);        // let superclass handle it
 }

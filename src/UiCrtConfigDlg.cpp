@@ -51,14 +51,14 @@ CrtConfigDlg::CrtConfigDlg(wxFrame *parent, wxString title) :
     m_FontChoice = new wxChoice(this, ID_FONT_CHOICE);
     // FIXME: the encodings should come from the enum
     for(int i=0; i<pp->getNumFonts(); i++) {
-        int      size  = pp->getFontNumber(i);
-        wxString label = pp->getFontName(i);
+        int    size  = pp->getFontNumber(i);
+        string label = pp->getFontName(i);
         m_FontChoice->Append(label, (void*)size);
     }
 
     m_ColorChoice = new wxChoice(this, ID_COLOR_CHOICE);
     for(int j=0; j<pp->getNumColorSchemes(); j++) {
-        wxString label = pp->getColorSchemeName(j);
+        string label = pp->getColorSchemeName(j);
         m_ColorChoice->Append(label, (void*)j);
     }
 

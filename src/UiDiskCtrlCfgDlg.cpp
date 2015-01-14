@@ -29,7 +29,7 @@ DiskCtrlCfgHelpDlg::DiskCtrlCfgHelpDlg(wxWindow *parent)
                    wxDefaultPosition, wxDefaultSize,
                    wxDEFAULT_DIALOG_STYLE | wxRESIZE_BORDER)
 {
-    wxTextCtrl *txt = new wxTextCtrl(this, wxID_ANY, _T(""),
+    wxTextCtrl *txt = new wxTextCtrl(this, wxID_ANY, "",
                                wxDefaultPosition, wxSize(480,400),
                                wxTE_RICH2 | wxTE_MULTILINE | wxTE_READONLY |
                                wxBORDER_NONE);
@@ -63,86 +63,86 @@ DiskCtrlCfgHelpDlg::DiskCtrlCfgHelpDlg(wxWindow *parent)
 
     // create the message
     txt->SetDefaultStyle(section_attr);
-    txt->AppendText(_T("Number of Drives\n"));
+    txt->AppendText("Number of Drives\n");
 
     txt->SetDefaultStyle(body_attr);
     txt->AppendText(
-        _T("\n")
-        _T("Each disk controller supports from one to four drives.  ")
-        _T("The first two drives are the primary drives, while the ")
-        _T("second two are the secondary drives.  The primary drives ")
-        _T("are addressed using the base address of the card, eg /310, ")
-        _T("while the secondary drives are addressed by adding hex 40, ")
-        _T("e.g., /350.  The first of each pair is historically called ")
-        _T("the fixed, or F, drive, and the second of each pair is the ")
-        _T("removable, or R, drive.")
-        _T("\n\n")
-        _T("Thus, if the base address of the controller is at hex 10, ")
-        _T("the four drives can be referenced as F/310, R/310, F/350, R/350.  ")
-        _T("Read the BASIC-2 disk reference manual for more details and ")
-        _T("options.")
-        _T("\n\n") );
+        "\n"
+        "Each disk controller supports from one to four drives.  "
+        "The first two drives are the primary drives, while the "
+        "second two are the secondary drives.  The primary drives "
+        "are addressed using the base address of the card, eg /310, "
+        "while the secondary drives are addressed by adding hex 40, "
+        "e.g., /350.  The first of each pair is historically called "
+        "the fixed, or F, drive, and the second of each pair is the "
+        "removable, or R, drive."
+        "\n\n"
+        "Thus, if the base address of the controller is at hex 10, "
+        "the four drives can be referenced as F/310, R/310, F/350, R/350.  "
+        "Read the BASIC-2 disk reference manual for more details and "
+        "options."
+        "\n\n" );
 
     txt->SetDefaultStyle(section_attr);
-    txt->AppendText(_T("Controller Intelligence\n"));
+    txt->AppendText("Controller Intelligence\n");
 
     txt->SetDefaultStyle(body_attr);
     txt->AppendText(
-        _T("\n")
-        _T("In general, it is best to use the intelligent disk controller ")
-        _T("mode.  The first generation CPUs, namely either 2220B or 2200T, ")
-        _T("don't support the intelligent protocol, so intelligent disk ")
-        _T("controllers pretend to be dumb anyway, making the choice moot.")
-        _T("\n\n")
-        _T("The protocol used by dumb disk controllers only allows for up ")
-        _T("to 32K sectors per platter, and only a single platter can be ")
-        _T("addressed per drive.  This is sufficient for floppy drives as ")
-        _T("well as 2260-style drives.")
-        _T("\n\n")
-        _T("The protocol used by intelligent disk controllers allows for 64K ")
-        _T("sectors per platter, and up to fourteen platters per drive.")
-        _T("The protocol also allows for software-controlled disk formatting ")
-        _T("and higher speed copying of sectors on a single platter or between ")
-        _T("any two platters connected to the same disk controller.")
-        _T("\n\n")
-        _T("At first blush it seems like there is no drawback to simply always ")
-        _T("using the intelligent disk controller, but there is a fly in ")
-        _T("the ointment.  For unknown reasons, Wang BASIC used in the first ")
-        _T("generation of machines would set the high bit of the 16 bit ")
-        _T("sector address on files stored in the disk catalog if the file ")
-        _T("was in the 'R' drive.")
-        _T("\n\n")
-        _T("Wang BASIC reads sector addresses from the disk, it ignores this ")
-        _T("16th bit so no harm is done.  BASIC-2 also ignores this bit when ")
-        _T("it is communicating with a dumb disk controller.  However, if one ")
-        _T("uses a disk that was created on a dumb controller and inserts it ")
-        _T("into the drive of an intelligent controller, that 16th bit is not ")
-        _T("ignored, and confusion reigns.")
-        _T("\n\n")
-        _T("If a disk with this 16th bit problem is inserted into a drive in ")
-        _T("intelligent mode, a warning will be generated and optinoally these ")
-        _T("extraneous bits can be cleaned from the virtual disk image.")
+        "\n"
+        "In general, it is best to use the intelligent disk controller "
+        "mode.  The first generation CPUs, namely either 2220B or 2200T, "
+        "don't support the intelligent protocol, so intelligent disk "
+        "controllers pretend to be dumb anyway, making the choice moot."
+        "\n\n"
+        "The protocol used by dumb disk controllers only allows for up "
+        "to 32K sectors per platter, and only a single platter can be "
+        "addressed per drive.  This is sufficient for floppy drives as "
+        "well as 2260-style drives."
+        "\n\n"
+        "The protocol used by intelligent disk controllers allows for 64K "
+        "sectors per platter, and up to fourteen platters per drive."
+        "The protocol also allows for software-controlled disk formatting "
+        "and higher speed copying of sectors on a single platter or between "
+        "any two platters connected to the same disk controller."
+        "\n\n"
+        "At first blush it seems like there is no drawback to simply always "
+        "using the intelligent disk controller, but there is a fly in "
+        "the ointment.  For unknown reasons, Wang BASIC used in the first "
+        "generation of machines would set the high bit of the 16 bit "
+        "sector address on files stored in the disk catalog if the file "
+        "was in the 'R' drive."
+        "\n\n"
+        "Wang BASIC reads sector addresses from the disk, it ignores this "
+        "16th bit so no harm is done.  BASIC-2 also ignores this bit when "
+        "it is communicating with a dumb disk controller.  However, if one "
+        "uses a disk that was created on a dumb controller and inserts it "
+        "into the drive of an intelligent controller, that 16th bit is not "
+        "ignored, and confusion reigns."
+        "\n\n"
+        "If a disk with this 16th bit problem is inserted into a drive in "
+        "intelligent mode, a warning will be generated and optinoally these "
+        "extraneous bits can be cleaned from the virtual disk image."
 #if SUPPORT_AUTO_INTELLIGENCE
-        _T("\n\n"));
-        _T("Selecting the AUTO mode will cause the emulator to heursitically ")
-        _T("pick dumb or intelligent mode based on the types of disk images ")
-        _T("associated with a controller.  This precludes having to clear ")
-        _T("the 16th bits from problem disks, but the heuristic isn't perfect.")
+        "\n\n"
+        "Selecting the AUTO mode will cause the emulator to heursitically "
+        "pick dumb or intelligent mode based on the types of disk images "
+        "associated with a controller.  This precludes having to clear "
+        "the 16th bits from problem disks, but the heuristic isn't perfect."
 #endif
-        _T("\n\n"));
+        "\n\n");
 
     txt->SetDefaultStyle(section_attr);
-    txt->AppendText(_T("Warn when the media doesn't match the controller intelligence\n"));
+    txt->AppendText("Warn when the media doesn't match the controller intelligence\n");
 
     txt->SetDefaultStyle(body_attr);
     txt->AppendText(
-        _T("\n")
-        _T("Checking this box will cause the emulator to warn the user if ")
-        _T("a large disk is put into a dumb controller, or a small disk ")
-        _T("that has the 16th bit problem is inserted into an intelligent ")
-        _T("controller.  In the latter case, the user has the option of ")
-        _T("automatically clearing these extraneous bits.")
-        _T("\n\n"));
+        "\n"
+        "Checking this box will cause the emulator to warn the user if "
+        "a large disk is put into a dumb controller, or a small disk "
+        "that has the 16th bit problem is inserted into an intelligent "
+        "controller.  In the latter case, the user has the option of "
+        "automatically clearing these extraneous bits."
+        "\n\n");
 
     // make sure the start of text is at the top
     txt->SetInsertionPoint(0);
@@ -204,7 +204,7 @@ DiskCtrlCfgDlg::DiskCtrlCfgDlg(wxFrame *parent, DiskCtrlCfgState &cfg) :
         m_oldcfg( cfg ),  // the existing configuration
         m_cfg   ( cfg )   // we edit this, and it is the exact one passed to us
 {
-    wxString choicesNumDrives[] = { _T("1"), _T("2"), _T("3"), _T("4") };
+    wxString choicesNumDrives[] = { "1", "2", "3", "4" };
     m_rbNumDrives = new wxRadioBox(this, ID_RB_NUM_DRIVES,
                                    "Number of drives",
                                    wxDefaultPosition, wxDefaultSize,
@@ -216,10 +216,10 @@ DiskCtrlCfgDlg::DiskCtrlCfgDlg(wxFrame *parent, DiskCtrlCfgState &cfg) :
     m_rbNumDrives->SetItemToolTip(3, "Secondary R drive");
 
     wxString choicesIntelligence[] = {
-          _T("Dumb")
-        , _T("Intelligent")
+          "Dumb"
+        , "Intelligent"
 #if SUPPORT_AUTO_INTELLIGENCE
-        , _T("Automatic")
+        , "Automatic"
 #endif
     };
     const int numIntelligenceChoices = (SUPPORT_AUTO_INTELLIGENCE) ? 3 : 2;

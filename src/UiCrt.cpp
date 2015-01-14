@@ -917,7 +917,7 @@ Crt::OnLeftDClick(wxMouseEvent& event)
             continue;
         char *pp = p + 5;
 
-        wxString errcode("");
+        string errcode;
 
         // check for optional initial letter or '='
         if ((*pp >= 'A' && *pp <= 'Z') || (*pp == '='))
@@ -929,12 +929,12 @@ Crt::OnLeftDClick(wxMouseEvent& event)
 
         // grab the number
         while ((pp < e) && isdigit(*pp))
-            errcode = errcode + *pp++;
+            errcode += *pp++;
 
     #if 0
         // launch an HTML browser and look up the error code
-        wxString helpfile = "errors.html#Code-" + errcode;
-        TheApp::HTML_Launcher(helpfile, false);
+        string helpfile = "errors.html#Code-" + errcode;
+	::wxLaunchDefaultBrowser(helpfile);
     #else
         // pop open a dialog with the relevent information
         // this is a *lot* faster than launching a browser.
@@ -999,7 +999,7 @@ Crt::OnLeftDClick(wxMouseEvent& event)
 
 // do the dialog part of the error message decoder
 void
-Crt::explainError(const wxString &errcode, const wxPoint &orig)
+Crt::explainError(const string &errcode, const wxPoint &orig)
 {
     // launch it as a popup
     CrtErrorDlg dlg(this, errcode, wxPoint(orig.x, orig.y));

@@ -10,7 +10,7 @@
 class MyStaticText : public wxStaticText
 {
 public:
-     MyStaticText(wxWindow* parent, wxWindowID id, const wxString& label);
+     MyStaticText(wxWindow* parent, wxWindowID id, const wxString &label);
 private:
     void OnKeyDown(wxKeyEvent& event);
     void OnMouseClick(wxMouseEvent& event);

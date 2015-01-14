@@ -1,6 +1,6 @@
 ============================================================================
                    Wang 2200 emulator release notes, v2.2-pre
-				January 1, 2015
+				January 14, 2015
 ============================================================================
 
 
@@ -84,6 +84,12 @@ The emulator very well might run on Linux via Wine, but it hasn't been tested.
 ---- Minor Tweaks and Implementation Changes ----
 
 *) compiled with the latest wxWidgets library release, 3.0.2
+
+*) abandon unnecessary wx-isms
+    wxASSERT(), wxFAIL(): now just assert()
+    wxT(), _T()
+    UiPrinterFrame.cpp uses wxThePrintPaperDatabase, but perhaps that
+        is obsolete ... google doesn't find it
 
 *) fixed a typo in errtable.cpp for error 73;
    it should read "SAVE DCF" instead of "SAVE SCF"

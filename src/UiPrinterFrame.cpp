@@ -101,7 +101,7 @@ enum
 // not all are implemented. See exPaperSize in defs.h for a complete list/
 struct papersizemap_t {
     wxPaperSize papersizeval;
-    char *papersizename;
+    string papersizename;
 } papersizemap[] = {
     {wxPAPER_NONE,       "NONE" },         /*  Use specific dimensions */
     {wxPAPER_LETTER,     "LETTER" },       /*  Letter, 8 1/2 by 11 inches */
@@ -118,7 +118,7 @@ const int PSMAX = sizeof(papersizemap)/sizeof(papersizemap_t);
 // map of enums for some of the paper bins (wxPrintBin). Used for load/save to config file
 struct paperbinmap_t {
     wxPrintBin paperbinval;
-    char *paperbinname;
+    string paperbinname;
 } paperbinmap[] = {
     {wxPRINTBIN_DEFAULT,        "DEFAULT" },
     {wxPRINTBIN_ONLYONE,        "ONLYONE" },
@@ -458,14 +458,12 @@ PrinterFrame::getDefaults()
 
 // translate a character pagesize to the appropriate enum value for wxPaperSize
 wxPaperSize 
-PrinterFrame::PaperSize(wxString pagesizename)
+PrinterFrame::PaperSize(string pagesizename)
 {
     // translate char to wxPaperSize
-    
 #if USEMYPAPER
-
     for (int i=0; i< PSMAX; i++) {
-        if (strcmp(papersizemap[i].papersizename, pagesizename) == 0) {
+        if (papersizemap[i].papersizename == pagesizename) {
             return papersizemap[i].papersizeval;
         }
     }
@@ -477,7 +475,7 @@ PrinterFrame::PaperSize(wxString pagesizename)
 }
 
 // translate an enum pagesize to the appropriate string name
-wxString 
+string 
 PrinterFrame::PaperSize(wxPaperSize papersizeval)
 {
     // translate char to wxPaperSize
@@ -490,18 +488,17 @@ PrinterFrame::PaperSize(wxPaperSize papersizeval)
 
     return "LETTER"; // default
 #else
-    return wxThePrintPaperDatabase->ConvertIdToName(papersizeval);
+    return string(wxThePrintPaperDatabase->ConvertIdToName(papersizeval));
 #endif
 }
 
 // translate a character pagesize to the appropriate enum value for wxPaperSize
 wxPrintBin 
-PrinterFrame::PaperBin(wxString paperbinname)
+PrinterFrame::PaperBin(string paperbinname)
 {
     // translate char to wxPrintBin
-    
     for (int i=0; i< PBMAX; i++) {
-        if (strcmp(paperbinmap[i].paperbinname, paperbinname) == 0) {
+        if (paperbinmap[i].paperbinname == paperbinname) {
             return paperbinmap[i].paperbinval;
         }
     }
@@ -510,11 +507,10 @@ PrinterFrame::PaperBin(wxString paperbinname)
 }
 
 // translate an enum pagesize to the appropriate string name
-wxString 
+string 
 PrinterFrame::PaperBin(wxPrintBin paperbinval)
 {
     // translate char to wxPaperSize
-    
     for (int i=0; i< PBMAX; i++) {
         if (paperbinmap[i].paperbinval == paperbinval) {
             return paperbinmap[i].paperbinname;
@@ -588,7 +584,7 @@ PrinterFrame::OnPrintPreview(wxCommandEvent& WXUNUSED(event))
         return;
     }
 
-    wxString preview_title("Print Preview");
+    string preview_title("Print Preview");
     wxPreviewFrame *frame = new wxPreviewFrame(preview, this, preview_title,
                                     wxPoint(100, 100),  // default position
                                     wxSize(600, 650));  // default size
@@ -753,14 +749,10 @@ PrinterFrame::OnConfigureDialog(wxCommandEvent& WXUNUSED(event))
 
     //set data values here
     int linelength, pagelength;
-
     m_printer->getPageAttributes(linelength, pagelength);
-    wxString strllen, strplen;
-    strllen.Printf("%d", linelength);
-    strplen.Printf("%d", pagelength);
 
-    data->m_string_linelength = strllen;
-    data->m_string_pagelength = strplen;
+    data->m_string_linelength = std::to_string(linelength);
+    data->m_string_pagelength = std::to_string(pagelength);
     data->m_checkbox_autoshow = m_printer->getAutoshow();
     data->m_checkbox_printasgo = m_printer->getPrintasgo();
     data->m_checkbox_portdirect = m_printer->getPortdirect();
@@ -774,14 +766,8 @@ PrinterFrame::OnConfigureDialog(wxCommandEvent& WXUNUSED(event))
         // 'OK' was pressed, so controls that have validators are
         // automatically transferred to the variables we specified
         // when we created the validators.
-        strllen = data->m_string_linelength;
-        strplen = data->m_string_pagelength;
-
-        long longllength;
-        long longplength;
-
-        strllen.ToLong(&longllength);
-        strplen.ToLong(&longplength);
+        long longllength = std::stol(string(data->m_string_linelength));
+        long longplength = std::stol(string(data->m_string_pagelength));
 
         m_printer->setPageAttributes(longllength, longplength);
         m_printer->setAutoshow(data->m_checkbox_autoshow);

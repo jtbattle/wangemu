@@ -74,8 +74,8 @@ PrinterConfigDlg::PrinterConfigDlg( wxWindow *parent, const wxString& title,
                                         wxDefaultPosition, wxDefaultSize,
                                         0, NULL, 0,
                                 wxGenericValidator(&data->m_choice_portstring));
-    portstring->Append("LPT1", new wxStringClientData(wxString("LPT1")));
-    portstring->Append("LPT2", new wxStringClientData(wxString("LPT2")));
+    portstring->Append("LPT1", new wxStringClientData("LPT1"));
+    portstring->Append("LPT2", new wxStringClientData("LPT2"));
 
     portsizer->Add(portstring, 1, wxGROW | wxALL);
     checksizer->Add(portsizer, 1, wxGROW | wxALL);

@@ -427,12 +427,11 @@ Printer::saveToFile()
     if (r == Host::FILEREQ_OK) {
 
         // save the file
-        const char *filename = fullpath.c_str();
-        ofstream ofs(filename, ofstream::out   |  // we're writing
+        ofstream ofs(fullpath, ofstream::out   |  // we're writing
                                ofstream::trunc |  // discard any existing file
                                ofstream::binary); // just write what I ask
         if (!ofs.is_open()) {
-            UI_Error("Couldn't write to file '%s'", filename);
+            UI_Error("Couldn't write to file '%s'", fullpath.c_str());
             return;
         }
 
@@ -440,14 +439,14 @@ Printer::saveToFile()
 
         for(int n = 0; n < maxn; n++) {
 #ifdef __WXMSW__
-            wxString tmpline(m_printstream[n] + "\r\n");
+            string tmpline(m_printstream[n] + "\r\n");
 #else
-            wxString tmpline(m_printstream[n] + "\n");
+            string tmpline(m_printstream[n] + "\n");
 #endif
-            int len = tmpline.Length();
+            int len = tmpline.length();
             ofs.write( tmpline.c_str(), len );
             if (!ofs.good()) {
-                UI_Error("Error writing to line %d of '%s'", n+1, filename);
+                UI_Error("Error writing to line %d of '%s'", n+1, fullpath.c_str());
                 ofs.close();
                 return;
             }
@@ -499,7 +498,7 @@ Printer::generatePrintPage(wxDC *dc, int pagenum, float vertAdjust)
         if (size_t(startRow + row) < m_printstream.GetCount() ) {
             // the line exists
             line = m_printstream[startRow + row];
-                line = line.Mid(startCol, m_linelength - startCol);
+            line = line.Mid(startCol, m_linelength - startCol);
         } else {
             // use empty line
             line = "";
@@ -798,8 +797,6 @@ void
 Printer::formFeed()
 {
     int linesToAdd = m_pagelength - (m_printstream.GetCount() % m_pagelength);
-    wxString buffer = "";
-
     for(int i = 0; i < linesToAdd; i++) {
         // call emit line to that current line buffer is flushed
         // and to make sure page oriented functions such as "print as you go" are invoked

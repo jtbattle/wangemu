@@ -25,12 +25,12 @@ public:
     static void getGlobalDefaults();
 
     // translation of papersize (wxPaperSize) enum
-    wxPaperSize PaperSize(wxString papersizename);
-    wxString PaperSize(wxPaperSize papersizeval);
+    wxPaperSize PaperSize(string papersizename);
+    string PaperSize(wxPaperSize papersizeval);
 
     // translation of paperbin (wxPrintBin) enum
-    wxPrintBin PaperBin(wxString paperbinname);
-    wxString PaperBin(wxPrintBin paperbinval);
+    wxPrintBin PaperBin(string paperbinname);
+    string PaperBin(wxPrintBin paperbinval);
 
     // emit a character to the display
     void printChar(uint8 byte);

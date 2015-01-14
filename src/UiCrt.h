@@ -107,7 +107,7 @@ private:
     void adjustCursorY(int delta);      // advance the cursor in y
     void adjustCursorX(int delta);      // move cursor left or right
     void updateCursor();                // redraw the cursor at current loc
-    void explainError(const wxString &errcode,
+    void explainError(const string &errcode,
                       const wxPoint  &orig); // pop up error description
 
     CrtFrame * const m_parent;  // who owns us

@@ -101,8 +101,8 @@ enum
 // ========== Crt font styles ==========
 
 static const struct font_table_t {
-    int   size;         // encoding for font as it appears in .ini file
-    char *name;         // descriptive string
+    int    size;        // encoding for font as it appears in .ini file
+    string name;        // descriptive string
 } font_table[] = {
     {  1, "Dot-matrix Font 1:1" },
     {  2, "Dot-matrix Font 1:2" },
@@ -122,7 +122,7 @@ const int num_fonts = (sizeof(font_table) / sizeof(font_table_t));
 static const struct colorscheme_t {
     unsigned char fg_r, fg_g, fg_b;     // foreground color
     unsigned char bg_r, bg_g, bg_b;     // background color
-    char *menuHelp;                     // string as it appears on statusbar
+    string menuHelp;                    // string as it appears on statusbar
 } colorscheme[] = {
     {
 #ifdef __WXMAC__
@@ -864,7 +864,7 @@ CrtFrame::setSimSeconds(int secs, float relative_speed)
     str.Printf( format, secs, relative_speed );
 #endif
     if (pf->getShowStatistics())
-        pf->m_statBar->SetStatusMessage(str);
+        pf->m_statBar->SetStatusMessage(string(str));
     else
         pf->m_statBar->SetStatusMessage("");
 }
@@ -1280,11 +1280,11 @@ CrtFrame::getFontNumber(int idx)
 }
 
 // as idx ranges from 0 to n, return the font name string.
-wxString
+string
 CrtFrame::getFontName(int idx)
 {
     assert(idx >= 0 && idx < num_fonts);
-    return font_table[idx].name;
+    return string(font_table[idx].name);
 }
 
 // -------- allow discovery of possible color schemes --------
@@ -1296,7 +1296,7 @@ CrtFrame::getNumColorSchemes()
 }
 
 // as idx ranges from 0 to n, return the font name string.
-wxString
+string
 CrtFrame::getColorSchemeName(int idx)
 {
     assert(idx >= 0 && idx < num_colorschemes);

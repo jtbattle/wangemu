@@ -52,19 +52,19 @@ public:
     static void setSimSeconds(int secs, float relative_speed);
 
     // set CRT font style and size
-    static int      getNumFonts();
-    static int      getFontNumber(int idx);
-    static wxString getFontName(int idx);
+    static int    getNumFonts();
+    static int    getFontNumber(int idx);
+    static string getFontName(int idx);
 
     // set/get CRT font size
     void            setFontSize(int size);
     int             getFontSize() const;
 
     // pick one of N color schemes
-    static int      getNumColorSchemes();
-    static wxString getColorSchemeName(int idx);
-    void            setDisplayColorScheme(int n);
-    int             getDisplayColorScheme() const;
+    static int    getNumColorSchemes();
+    static string getColorSchemeName(int idx);
+    void          setDisplayColorScheme(int n);
+    int           getDisplayColorScheme() const;
 
     // values range from 0 to 100
     void setDisplayContrast(int n);
