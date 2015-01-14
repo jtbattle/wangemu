@@ -170,7 +170,7 @@ TheApp::OnHelp_Launcher(wxCommandEvent& event)
         case Help_Relnotes:     helpfile = "relnotes.txt";         break;
         case Help_Website:      helpfile = "http://www.wang2200.org/"; absolute = true; break;
         default:
-            wxFAIL;
+            assert(0);
             return;
     }
 
@@ -276,7 +276,7 @@ UI_initCrt(int screen_size, int io_addr)
                                                                "2200VP";
     char *dispstr;
     switch (screen_size) {
-        default: wxFAIL;
+        default: assert(0);
         case UI_SCREEN_64x16: dispstr = "64x16"; break;
         case UI_SCREEN_80x24: dispstr = "80x24"; break;
     }

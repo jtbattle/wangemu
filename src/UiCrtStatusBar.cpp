@@ -294,7 +294,7 @@ CrtStatusBar::SetDiskIcon(const int slot, const int drive)
     System2200 sys;
     int io_addr;        // address of this slot
     bool ok = sys.getSlotInfo(slot, 0, &io_addr);
-    wxASSERT(ok); ok=ok;
+    assert(ok); ok=ok;
 
     // figure out if disk is empty, idle, or running
     int stat = IoCardDisk::wvdDriveStatus(slot, drive);
@@ -307,7 +307,7 @@ CrtStatusBar::SetDiskIcon(const int slot, const int drive)
     for(controller=0; ; controller++) {
         int thisslot;
         ok = sys.findDiskController(controller, &thisslot);
-        wxASSERT(ok); ok = ok;
+        assert(ok); ok = ok;
         if (thisslot == slot)
             break;
     }
@@ -319,12 +319,12 @@ CrtStatusBar::SetDiskIcon(const int slot, const int drive)
     if (!empty) {
         int disktype;
         ok = IoCardDisk::wvdGetDiskType(slot, drive, &disktype);
-        wxASSERT(ok);
+        assert(ok);
         harddisk = (disktype == Wvd::DISKTYPE_HD60) ||
                    (disktype == Wvd::DISKTYPE_HD80);
         string filename;
         ok = IoCardDisk::wvdGetFilename(slot, drive, &filename);
-        wxASSERT(ok);
+        assert(ok);
         // assign a tooltip
         tip.Printf("Click to eject drive %c/%03X:\n%s",
                     (drive & 1) ? 'R':'F', mod_addr, filename.c_str());
@@ -446,7 +446,7 @@ CrtStatusBar::OnDiskButton(wxMouseEvent &event)
 
     int controller = diff >> 2;
     int drive      = diff & 3;
-    wxASSERT((controller >= 0) && (controller < (MAX_DISK_DRIVES/2)));
+    assert((controller >= 0) && (controller < (MAX_DISK_DRIVES/2)));
 
     bool left_click  = event.LeftDown();
     bool right_click = event.RightDown();
@@ -455,7 +455,7 @@ CrtStatusBar::OnDiskButton(wxMouseEvent &event)
     System2200 sys;
     int slot;
     bool ok = sys.findDiskController(controller, &slot);
-    wxASSERT(ok); ok=ok;
+    assert(ok); ok=ok;
     int stat = IoCardDisk::wvdDriveStatus(slot, drive);
     bool drive_occupied = !!(stat & IoCardDisk::WVD_STAT_DRIVE_OCCUPIED);
 
@@ -478,7 +478,7 @@ CrtStatusBar::OnDiskButton(wxMouseEvent &event)
         menu.Append(Disk_Popup_Format,  "&Format",  "reformat the disk");
         (void)PopupMenu(&menu);
     } else {
-        wxFAIL;
+        assert(0);
         return;
     }
 
@@ -506,7 +506,7 @@ CrtStatusBar::OnDiskButton(wxMouseEvent &event)
         case inspect_disk: {
             string filename;
             ok = IoCardDisk::wvdGetFilename(slot, drive, &filename);
-            wxASSERT(ok); ok=ok;
+            assert(ok); ok=ok;
             m_parent->doInspect(filename);
             }
             break;
@@ -514,7 +514,7 @@ CrtStatusBar::OnDiskButton(wxMouseEvent &event)
         case format_disk: {
             string filename;
             ok = IoCardDisk::wvdGetFilename(slot, drive, &filename);
-            wxASSERT(ok); ok=ok;
+            assert(ok); ok=ok;
             m_parent->doFormat(filename);
             }
             break;
@@ -523,7 +523,7 @@ CrtStatusBar::OnDiskButton(wxMouseEvent &event)
             return;
 
         default:
-            wxFAIL;
+            assert(0);
             return;
     }
 
@@ -544,7 +544,7 @@ CrtStatusBar::OnDiskPopup(wxCommandEvent &event)
         case Disk_Popup_Inspect: m_popup_action = inspect_disk; break;
         case Disk_Popup_Format:  m_popup_action = format_disk;  break;
         default:
-            wxFAIL;
+            assert(0);
             m_popup_action = unknown;
             break;
     }

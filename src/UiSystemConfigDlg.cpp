@@ -262,7 +262,7 @@ SystemConfigDlg::setMemsizeStrings()
             m_memSize->Append("512 KB", (void*)512);
             break;
         default:
-            wxASSERT(0);
+            assert(0);
             break;
     }
 }
@@ -397,7 +397,7 @@ void
 SystemConfigDlg::OnCardChoice( wxCommandEvent &event )
 {
     int id = event.GetId();
-    wxASSERT(id >= ID_SLOT0_CARD_CHOICE && id <= ID_SLOTN_CARD_CHOICE);
+    assert(id >= ID_SLOT0_CARD_CHOICE && id <= ID_SLOTN_CARD_CHOICE);
     int slot = id - ID_SLOT0_CARD_CHOICE;
     wxChoice *hCtl = m_cardDesc[slot];
     int selection = hCtl->GetSelection();
@@ -419,12 +419,12 @@ void
 SystemConfigDlg::OnAddrChoice( wxCommandEvent &event )
 {
     int id = event.GetId();
-    wxASSERT(id >= ID_SLOT0_ADDR_CHOICE && id <= ID_SLOTN_ADDR_CHOICE);
+    assert(id >= ID_SLOT0_ADDR_CHOICE && id <= ID_SLOTN_ADDR_CHOICE);
     int slot = id - ID_SLOT0_ADDR_CHOICE;
     int cardsel      =       m_cardDesc[slot]->GetSelection();
     int cardtype_idx = (int)(m_cardDesc[slot]->GetClientData(cardsel));
     int addrsel      =       m_cardAddr[slot]->GetSelection();
-    wxASSERT(cardtype_idx >= 0);
+    assert(cardtype_idx >= 0);
 
     vector<int> base_addresses = CardInfo::getCardBaseAddresses((IoCard::card_type_e)cardtype_idx);
     m_cfg.setSlotCardAddr( slot, base_addresses[addrsel] );
@@ -544,7 +544,7 @@ SystemConfigDlg::setValidIoChoices(int slot, int cardtype_idx)
             if ((io_addr & 0xFF) == (m_cfg.getSlotCardAddr(slot) & 0xFF))
                 addr_mtch_idx = j;
         }
-        //wxASSERT(addr_mtch_idx > -1);
+        //assert(addr_mtch_idx > -1);
         // if the card changes and the old io address isn't valid for the
         // new card, we left -1 ride and it causes the choice to be blanked.
         hAddrCtl->SetSelection(addr_mtch_idx);

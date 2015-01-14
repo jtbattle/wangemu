@@ -170,7 +170,7 @@ Crt::setColor(wxColor FG, wxColor BG)
 wxColor
 Crt::intensityToColor(float f)
 {
-    wxASSERT(f >= 0.0f && f <= 1.0f);
+    assert(f >= 0.0f && f <= 1.0f);
 
     const float contrast   = getDisplayContrast()   * 0.01f;
     const float brightness = getDisplayBrightness() * 0.01f;
@@ -278,7 +278,7 @@ Crt::generateFontmap()
         case FONT_NATIVE18:
         case FONT_NATIVE24:
                 m_font = wxFont(getFontSize(), wxMODERN, wxNORMAL, wxNORMAL);
-                wxASSERT(m_font != wxNullFont);
+                assert(m_font != wxNullFont);
                 dc.SetFont( m_font );
                 m_charcell_w = dc.GetCharWidth();
                 m_charcell_h = dc.GetCharHeight()
@@ -337,7 +337,7 @@ Crt::generateFontmap()
         };
 
         switch (filter) {
-            default: wxASSERT(0);
+            default: assert(0);
             case 0: filter_w = w_noop;           break;
             case 1: filter_w = w_semi_gaussian;  break;
             case 2: filter_w = w_gaussian;       break;
@@ -593,11 +593,11 @@ void
 Crt::generateScreenByText(wxMemoryDC &memDC, wxColor fg, wxColor bg)
 {
     // draw each row a a single string using the native system font
-    wxASSERT(m_chars_w < 81);
+    assert(m_chars_w < 81);
     char linebuff[81];
     linebuff[m_chars_w] = '\0';     // put in string terminator
 
-    wxASSERT(m_font != wxNullFont);
+    assert(m_font != wxNullFont);
     memDC.SetFont(m_font);
     memDC.SetBackgroundMode(wxSOLID);
     memDC.SetTextBackground(bg);
@@ -1018,7 +1018,7 @@ Crt::recalcBorders()
     int orig_x = (width  < m_scrpix_w) ? (m_scrpix_w-width)/2  : 0;
     int orig_y = (height < m_scrpix_h) ? (m_scrpix_h-height)/2 : 0;
 
-    wxASSERT(width >= 0 && width < 4096 && height >= 0 && height < 4096);
+    assert(width >= 0 && width < 4096 && height >= 0 && height < 4096);
 
     m_RCscreen.SetX(orig_x);
     m_RCscreen.SetY(orig_y);

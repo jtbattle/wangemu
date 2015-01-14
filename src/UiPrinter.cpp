@@ -388,7 +388,7 @@ Printer::lptChar(uint8 byte)
 {
     if (m_fp_port == NULL) {
         // port is closed.  open it and set timer to close if port goes idle.
-        wxASSERT(m_portstring != "");
+        assert(m_portstring != "");
         // UI_Info("opening %s", m_portstring.c_str());
         m_fp_port = fopen(m_portstring.c_str(), "wb");
         m_portTimer.Start();  // period was set in the constructor
@@ -653,7 +653,7 @@ Printer::generateScreen(int startCol, int startRow)
 
     // this code assumes that if the viewport is wider than the page,
     // there won't be any startCol offset
-    wxASSERT( (startCol == 0) || (left_edge < 0) );
+    assert( (startCol == 0) || (left_edge < 0) );
 
     wxMemoryDC imgDC(m_scrbits);
 

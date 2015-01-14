@@ -449,7 +449,7 @@ CrtFrame::setMenuChecks(const wxMenu *menu)
             if (!System2200().findDiskController(controller, &slot))
                 break;
             bool ok = sys.getSlotInfo(slot, 0, &io_addr);
-            wxASSERT(ok); ok=ok;
+            assert(ok); ok=ok;
             for(int d=0; d<2; d++) {
                 int stat = IoCardDisk::wvdDriveStatus(slot, d);
                 if (stat & IoCardDisk::WVD_STAT_DRIVE_OCCUPIED) {
@@ -532,7 +532,7 @@ CrtFrame::initToolBar(wxToolBar *tb)
 #endif
 
     wxFont key_font(font_size, wxDEFAULT, wxNORMAL, wxNORMAL);
-    wxASSERT(key_font != wxNullFont);
+    assert(key_font != wxNullFont);
     //key_font.SetNoAntiAliasing();
 
     wxMemoryDC memDC;
@@ -934,7 +934,7 @@ CrtFrame::OnReset(wxCommandEvent &event)
 
     switch (event.GetId()) {
         default:
-            wxFAIL;
+            assert(0);
         case CPU_HardReset:
             sys.reset(true);      // hard reset
             break;
@@ -1082,7 +1082,7 @@ CrtFrame::OnDisk(wxCommandEvent& event)
 
         default:
             ok = false;
-            wxFAIL;
+            assert(0);
             break;
     }
 
@@ -1198,7 +1198,7 @@ CrtFrame::OnPrinter(wxCommandEvent& event)
     int idx = id - Printer_0;
     int io_addr = sys.getPrinterIoAddr(idx);
     IoCard *inst = sys.getInstFromIoAddr(io_addr);
-    wxASSERT(inst != 0);
+    assert(inst != 0);
 
     // get the printer controller card handle
     IoCardPrinter *card = reinterpret_cast<IoCardPrinter*>(inst);
@@ -1228,7 +1228,7 @@ CrtFrame::OnPrintAndClear(wxCommandEvent& WXUNUSED(event))
 
             // map device I/O address to card handle
             IoCard *inst = sys.getInstFromIoAddr(io_addr);
-            wxASSERT(inst != 0);
+            assert(inst != 0);
             IoCardPrinter *card = reinterpret_cast<IoCardPrinter*>(inst);
 
             // fetch associated gui window pointer and use it
@@ -1275,7 +1275,7 @@ CrtFrame::getNumFonts()
 int
 CrtFrame::getFontNumber(int idx)
 {
-    wxASSERT(idx >= 0 && idx < num_fonts);
+    assert(idx >= 0 && idx < num_fonts);
     return font_table[idx].size;
 }
 
@@ -1283,7 +1283,7 @@ CrtFrame::getFontNumber(int idx)
 wxString
 CrtFrame::getFontName(int idx)
 {
-    wxASSERT(idx >= 0 && idx < num_fonts);
+    assert(idx >= 0 && idx < num_fonts);
     return font_table[idx].name;
 }
 
@@ -1299,7 +1299,7 @@ CrtFrame::getNumColorSchemes()
 wxString
 CrtFrame::getColorSchemeName(int idx)
 {
-    wxASSERT(idx >= 0 && idx < num_colorschemes);
+    assert(idx >= 0 && idx < num_colorschemes);
     return colorscheme[idx].menuHelp;
 }
 
@@ -1323,8 +1323,8 @@ CrtFrame::getFontSize() const
 void
 CrtFrame::setDisplayColorScheme(int n)
 {
-    wxASSERT( n >= 0 );
-    wxASSERT( n <  num_colorschemes );
+    assert( n >= 0 );
+    assert( n <  num_colorschemes );
 
     wxColor FG = wxColor(colorscheme[n].fg_r, colorscheme[n].fg_g, colorscheme[n].fg_b);
     wxColor BG = wxColor(colorscheme[n].bg_r, colorscheme[n].bg_g, colorscheme[n].bg_b);
@@ -1428,7 +1428,7 @@ CrtFrame::destroyWindow()
     // find ourselves in the list of crts
     vector<CrtFrame*>::iterator it =
                         find(m_crtlist.begin(), m_crtlist.end(), this);
-    wxASSERT( it != m_crtlist.end() );
+    assert( it != m_crtlist.end() );
 
     // close this window  (system may defer it for a while)
     (*it)->Destroy();

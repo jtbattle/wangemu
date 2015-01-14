@@ -749,7 +749,7 @@ PrinterFrame::OnConfigureDialog(wxCommandEvent& WXUNUSED(event))
     sys.freezeEmu(true);    // halt emulation
 
     PrinterDialogDataTransfer *data = new PrinterDialogDataTransfer();
-    wxASSERT(data != NULL);
+    assert(data != NULL);
 
     //set data values here
     int linelength, pagelength;
@@ -856,7 +856,7 @@ PrinterFrame::printAndClear()
                         "Perhaps your current printer is not set correctly?",
                         "Printing", wxOK);
         else
-            wxASSERT(false);    // this should never happen
+            assert(false);    // this should never happen
     } else {
         //printing was ok. now clear the stream.
         m_printer->printClear();

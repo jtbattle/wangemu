@@ -174,7 +174,7 @@ Host::fileReq(int requestor, string title, int readonly, string *fullpath)
 {
     int style;
 
-    wxASSERT(requestor >= 0 && requestor < FILEREQ_NUM);
+    assert(requestor >= 0 && requestor < FILEREQ_NUM);
 
     style = (readonly) ? (wxFD_OPEN | wxFD_FILE_MUST_EXIST)
                        : (wxFD_SAVE | wxFD_OVERWRITE_PROMPT);
@@ -368,7 +368,7 @@ Host::ConfigWriteStr(const string &subgroup,
     wxString wxVal(val);
     m_config->SetPath( "/wangemu/config-0/" + subgroup);
     bool b = m_config->Write(wxKey, wxVal);
-    wxASSERT(b);
+    assert(b);
     b = b;      // keep lint happy
 }
 
@@ -402,7 +402,7 @@ Host::ConfigWriteWinGeom(wxWindow *wxwin,
                          const string &subgroup,
                          bool client_size)
 {
-    wxASSERT(wxwin != NULL);
+    assert(wxwin != NULL);
 
     int x, y, w, h;
     wxwin->GetPosition(&x, &y);
@@ -473,6 +473,8 @@ int64
 Host::getTimeMs(void)
 {
     // newer api should provide more accurate measurement of time
+    // NB: wxLongLong can't be mapped directly to "long long" type,
+    //     thus the following gyrations
     wxLongLong x_time_us = m_stopwatch->TimeInMicro();
     uint32 x_low  = x_time_us.GetLo();
      int32 x_high = x_time_us.GetHi();

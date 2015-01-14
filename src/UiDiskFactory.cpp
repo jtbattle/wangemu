@@ -256,7 +256,7 @@ void
 DiskFactory::OnButton_Save(wxCommandEvent& WXUNUSED(event))
 {
     string name( m_diskdata->getPath() );
-    wxASSERT(!name.empty());
+    assert(!name.empty());
 
     string lab( m_tab2->getLabelString() );
     m_diskdata->setLabel(lab);
@@ -274,7 +274,7 @@ DiskFactory::OnButton_SaveAs(wxCommandEvent& WXUNUSED(event))
     if (Host().fileReq(Host::FILEREQ_DISK, "Virtual Disk Name", 0, &name) !=
                        Host::FILEREQ_OK)
         return;
-    wxASSERT(!name.empty());
+    assert(!name.empty());
 
     // check if this disk is in a drive already
     int drive, io_addr;
@@ -459,7 +459,7 @@ PropPanel::PropPanel(DiskFactory *df, wxWindow *parent, Wvd *diskdata) :
 void
 PropPanel::refresh()
 {
-    wxASSERT(m_diskdata != NULL);
+    assert(m_diskdata != NULL);
 
     bool new_disk = (m_diskdata->getPath()).empty();
     bool modified = m_diskdata->isModified();
@@ -493,7 +493,7 @@ PropPanel::refresh()
             }
         }
 
-        wxASSERT(radio_sel >= 0);
+        assert(radio_sel >= 0);
         m_disktype->SetSelection(radio_sel);
     }
 
@@ -543,7 +543,7 @@ void
 PropPanel::OnDiskTypeButton(wxCommandEvent& WXUNUSED(event))
 {
     int choice = m_disktype->GetSelection();
-    wxASSERT(choice < num_disk_types);
+    assert(choice < num_disk_types);
 
     m_diskdata->setDiskType   (disk_choices[choice].disk_type);
     m_diskdata->setNumPlatters(disk_choices[choice].platters);
@@ -637,7 +637,7 @@ LabelPanel::OnLabelEdit(wxCommandEvent& event)
             break;
 
         default:
-            wxASSERT(0);
+            assert(0);
             break;
     }
 }
