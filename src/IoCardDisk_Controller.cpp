@@ -197,7 +197,7 @@ IoCardDisk::advanceState(disk_event_t event, const int val)
 }
 
 // return a pointer to a string describing a known extended command
-// which the emulator doesn't support.  return NULL if it is either
+// which the emulator doesn't support.  return nullptr if it is either
 // supported or is unknown.
 string
 IoCardDisk::unsupportedExtendedCommandName(int cmd)

@@ -92,7 +92,7 @@ public:
     // with is of the window or the client.
     static void ConfigReadWinGeom(  wxWindow     *wxwin,
                                     const string &subgroup,
-                                    wxRect       *default_geom = NULL,
+                                    wxRect       *default_geom = nullptr,
                                     bool          client_size = true );
 
     static void ConfigWriteWinGeom( wxWindow     *wxwin,

@@ -22,9 +22,9 @@
 
 bool Host::m_initialized = false;
 
-string        Host::m_app_home;         // path to application home directory
-wxFileConfig *Host::m_config = NULL;    // configuration file object
-wxStopWatch  *Host::m_stopwatch = NULL; // time program started
+string        Host::m_app_home;            // path to application home directory
+wxFileConfig *Host::m_config = nullptr;    // configuration file object
+wxStopWatch  *Host::m_stopwatch = nullptr; // time program started
 
 // remember where certain files are located
 string Host::m_FileDir[FILEREQ_NUM];         // dir where files come from
@@ -155,9 +155,9 @@ Host::terminate()
     if (m_config) {
         saveConfigFileLocations();
         delete m_config;
-        m_config = NULL;
+        m_config = nullptr;
         delete m_stopwatch;
-        m_stopwatch = NULL;
+        m_stopwatch = nullptr;
     }
 
     m_initialized = false;
@@ -242,7 +242,7 @@ Host::ConfigReadStr(const string &subgroup,
     wxString wxval;
     m_config->SetPath( "/wangemu/config-0/" + subgroup);
     bool b = m_config->Read(key, &wxval);
-    if (!b && (defaultval != NULL))
+    if (!b && (defaultval != nullptr))
         *val = *defaultval;
     else
         *val = wxval;
@@ -323,7 +323,7 @@ Host::ConfigReadWinGeom(wxWindow *wxwin,
 
     if (!b) {
         // the specified geometry was bad; use the supplied default
-        if (default_geom == NULL)
+        if (default_geom == nullptr)
             return;     // nothing we can do
         x = default_geom->GetX();
         y = default_geom->GetY();
@@ -402,7 +402,7 @@ Host::ConfigWriteWinGeom(wxWindow *wxwin,
                          const string &subgroup,
                          bool client_size)
 {
-    assert(wxwin != NULL);
+    assert(wxwin != nullptr);
 
     int x, y, w, h;
     wxwin->GetPosition(&x, &y);

@@ -18,7 +18,7 @@ IoCardPrinter::IoCardPrinter(Cpu2200 &cpu, int baseaddr, int cardslot) :
     m_slot(cardslot),
     m_selected(false),
     m_cpb(true),
-    m_wndhnd(NULL)
+    m_wndhnd(nullptr)
 {
     if (m_slot >= 0) {
         int io_addr;

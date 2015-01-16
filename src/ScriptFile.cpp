@@ -34,7 +34,7 @@ ScriptFile::ScriptFile(const string &filename,
         m_cur_depth(cur_nesting_depth),
         m_max_depth(max_nesting_depth),
         m_cur_line(0),
-        m_subscript(NULL),
+        m_subscript(nullptr),
         m_cur_char(0)
 {
     // put in canonical format

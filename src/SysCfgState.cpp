@@ -28,16 +28,16 @@ SysCfgState::SysCfgState() :
     m_warn_io(true)
 {
     for(int slot=0; slot<NUM_IOSLOTS; slot++)
-        m_slot[slot].cardCfg = NULL;
+        m_slot[slot].cardCfg = nullptr;
 }
 
 
 SysCfgState::~SysCfgState()
 {
     for(int slot=0; slot<NUM_IOSLOTS; slot++) {
-        if (m_slot[slot].cardCfg != NULL) {
+        if (m_slot[slot].cardCfg != nullptr) {
             delete m_slot[slot].cardCfg;
-            m_slot[slot].cardCfg = NULL;
+            m_slot[slot].cardCfg = nullptr;
         }
     }
 }
@@ -58,11 +58,11 @@ SysCfgState::operator=(const SysCfgState &rhs)
         m_slot[slot].type = rhs.m_slot[slot].type;
         m_slot[slot].addr = rhs.m_slot[slot].addr;
         // here we must do a deep copy:
-        if (m_slot[slot].cardCfg != NULL) {
+        if (m_slot[slot].cardCfg != nullptr) {
             delete m_slot[slot].cardCfg;
-            m_slot[slot].cardCfg = NULL;
+            m_slot[slot].cardCfg = nullptr;
         }
-        if (rhs.m_slot[slot].cardCfg != NULL)
+        if (rhs.m_slot[slot].cardCfg != nullptr)
             m_slot[slot].cardCfg = rhs.m_slot[slot].cardCfg->clone();
     }
 
@@ -83,10 +83,10 @@ SysCfgState::SysCfgState(const SysCfgState &obj)
         m_slot[slot].type = obj.m_slot[slot].type;
         m_slot[slot].addr = obj.m_slot[slot].addr;
         // here we must do a deep copy:
-        if (obj.m_slot[slot].cardCfg != NULL)
+        if (obj.m_slot[slot].cardCfg != nullptr)
             m_slot[slot].cardCfg = obj.m_slot[slot].cardCfg->clone();
         else
-            m_slot[slot].cardCfg = NULL;
+            m_slot[slot].cardCfg = nullptr;
     }
 
     setCpuType( obj.getCpuType() );
@@ -107,12 +107,12 @@ SysCfgState::operator==(const SysCfgState &rhs) const
     for(int slot=0; slot<NUM_IOSLOTS; slot++) {
         if ( (m_slot[slot].type    != rhs.m_slot[slot].type) ||
              (m_slot[slot].addr    != rhs.m_slot[slot].addr) ||
-             ( (    m_slot[slot].cardCfg == NULL) !=
-               (rhs.m_slot[slot].cardCfg == NULL) ) )
+             ( (    m_slot[slot].cardCfg == nullptr) !=
+               (rhs.m_slot[slot].cardCfg == nullptr) ) )
             return false;
 
-        if ( (    m_slot[slot].cardCfg != NULL) &&
-             (rhs.m_slot[slot].cardCfg != NULL) &&
+        if ( (    m_slot[slot].cardCfg != nullptr) &&
+             (rhs.m_slot[slot].cardCfg != nullptr) &&
              (*m_slot[slot].cardCfg != *rhs.m_slot[slot].cardCfg) )
             return false;
     }
@@ -240,9 +240,9 @@ SysCfgState::loadIni()
             if (CardInfo::isCardConfigurable(cardtype)) {
 		string cardsubgroup("io/slot-" + std::to_string(slot) + "/cardcfg");
                 // dump any attached cardCfg state
-                if (m_slot[slot].cardCfg != NULL) {
+                if (m_slot[slot].cardCfg != nullptr) {
                     delete m_slot[slot].cardCfg;
-                    m_slot[slot].cardCfg = NULL;
+                    m_slot[slot].cardCfg = nullptr;
                 }
                 m_slot[slot].cardCfg = CardInfo::getCardCfgState(cardtype);
                 m_slot[slot].cardCfg->loadIni(cardsubgroup);
@@ -294,7 +294,7 @@ SysCfgState::saveIni() const
             hst.ConfigWriteStr(subgroup, "addr", "");
         }
 
-        if (m_slot[slot].cardCfg != NULL) {
+        if (m_slot[slot].cardCfg != nullptr) {
             string cardsubgroup("io/slot-" + std::to_string(slot) + "/cardcfg");
             m_slot[slot].cardCfg->saveIni(cardsubgroup);
         }
@@ -402,9 +402,9 @@ SysCfgState::setSlotCardType(int slot, IoCard::card_type_e type)
 
     // create a config state object if the card type needs one
     if ((type != IoCard::card_none) && (CardInfo::isCardConfigurable(type))) {
-        if (m_slot[slot].cardCfg != NULL) {
+        if (m_slot[slot].cardCfg != nullptr) {
             delete m_slot[slot].cardCfg;
-            m_slot[slot].cardCfg = NULL;
+            m_slot[slot].cardCfg = nullptr;
         }
         m_slot[slot].cardCfg = CardInfo::getCardCfgState(type);
         m_slot[slot].cardCfg->setDefaults();
@@ -468,9 +468,9 @@ SysCfgState::editCardConfig(int slot)
     assert(isSlotOccupied(slot));
 
     CardCfgState *cardCfg = m_slot[slot].cardCfg;
-    if (cardCfg != NULL) {
+    if (cardCfg != nullptr) {
         IoCard *inst = System2200().getInstFromSlot(slot);
-        if (inst == NULL) {
+        if (inst == nullptr) {
             // this must be a newly created slot that hasn't been put into
             // the IoMap yet.  create a temp object so we can edit the cardCfg.
             inst = IoCard::makeTmpCard(m_slot[slot].type);
@@ -569,7 +569,7 @@ SysCfgState::needsReboot(const SysCfgState &other) const
              (m_slot[slot].addr & 0xFF) != (other.m_slot[slot].addr & 0xFF) )
             return true;
 
-        if ( (m_slot[slot].cardCfg != NULL) &&
+        if ( (m_slot[slot].cardCfg != nullptr) &&
               m_slot[slot].cardCfg->needsReboot(*other.m_slot[slot].cardCfg))
             return true;
     }

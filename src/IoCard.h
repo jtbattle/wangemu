@@ -141,7 +141,7 @@ protected:  // these are used by the CardInfo class
     virtual bool isConfigurable() const { return false; }
 
     // subclass returns its own type of configuration object
-    virtual CardCfgState* getCfgState() { return NULL; }
+    virtual CardCfgState* getCfgState() { return nullptr; }
 
 private:
     // shared implementation the other make*Card function use.

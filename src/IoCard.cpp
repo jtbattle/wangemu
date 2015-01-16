@@ -44,7 +44,7 @@ IoCard::makeCardImpl(Scheduler& scheduler, Cpu2200& cpu, card_type_e type,
                      int baseaddr, int cardslot,
                      const CardCfgState *cfg)
 {
-    IoCard* crd = NULL;
+    IoCard* crd = nullptr;
 
     switch (type) {
         case card_keyboard:

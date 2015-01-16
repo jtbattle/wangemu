@@ -99,7 +99,7 @@ private:
         IoCard::card_type_e
                       type;   // what is plugged into the slot
         int           addr;   // where it will be located (only 8 lsb matter on match)
-        CardCfgState *cardCfg; // per-card configuration state, or NULL
+        CardCfgState *cardCfg; // per-card configuration state, or nullptr
     } m_slot[NUM_IOSLOTS];
 
     // -------------- misc information --------------

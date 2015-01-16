@@ -191,7 +191,7 @@ TheApp::OnHelp_Launcher(wxCommandEvent& event)
 void
 TheApp::OnHelp_About(wxCommandEvent& WXUNUSED(event))
 {
-    MyAboutDlg dlg(NULL);
+    MyAboutDlg dlg(nullptr);
     dlg.ShowModal();
 }
 
@@ -208,7 +208,7 @@ UI_AlertMsg(long style, string title, const char *fmt, va_list &args)
     vsnprintf(buff, sizeof(buff), fmt, args);
 
     string info(buff);
-    wxMessageDialog dialog(NULL, info, title, style);
+    wxMessageDialog dialog(nullptr, info, title, style);
     int rv = dialog.ShowModal();
     return (rv == wxID_YES);
 }
@@ -365,7 +365,7 @@ UI_printChar(UI_gui_handle_t inst, uint8 byte)
 void
 UI_SystemConfigDlg()
 {
-    SystemConfigDlg(NULL).ShowModal();
+    SystemConfigDlg(nullptr).ShowModal();
 }
 
 
@@ -373,5 +373,5 @@ UI_SystemConfigDlg()
 void
 UI_ConfigureCard(DiskCtrlCfgState *cfg)
 {
-    DiskCtrlCfgDlg(NULL, *cfg).ShowModal();
+    DiskCtrlCfgDlg(nullptr, *cfg).ShowModal();
 }

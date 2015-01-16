@@ -42,7 +42,7 @@ Printer::Printer(PrinterFrame *parent) :
         wxScrolledWindow(parent, -1, wxDefaultPosition, wxDefaultSize),
         m_parent(parent),
         m_printing_flag(false),
-        m_fp_port(NULL),
+        m_fp_port(nullptr),
         m_scrpix_w(0),
         m_scrpix_h(0),
         m_chars_w(0),
@@ -386,7 +386,7 @@ to the next tab stop.
 void
 Printer::lptChar(uint8 byte)
 {
-    if (m_fp_port == NULL) {
+    if (m_fp_port == nullptr) {
         // port is closed.  open it and set timer to close if port goes idle.
         assert(m_portstring != "");
         // UI_Info("opening %s", m_portstring.c_str());
@@ -409,9 +409,9 @@ Printer::closePort()
 {
     m_portTimer.Stop();
 
-    if (m_fp_port != NULL) {
+    if (m_fp_port != nullptr) {
         fclose(m_fp_port);
-        m_fp_port = NULL;
+        m_fp_port = nullptr;
     }
 }
 

@@ -72,7 +72,7 @@ PrinterConfigDlg::PrinterConfigDlg( wxWindow *parent, const wxString& title,
     // leaf controls for leftgrid
     wxChoice *portstring = new wxChoice(this, VALIDATE_PORTSTRING_CHOICE,
                                         wxDefaultPosition, wxDefaultSize,
-                                        0, NULL, 0,
+                                        0, nullptr, 0,
                                 wxGenericValidator(&data->m_choice_portstring));
     portstring->Append("LPT1", new wxStringClientData("LPT1"));
     portstring->Append("LPT2", new wxStringClientData("LPT2"));

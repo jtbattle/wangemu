@@ -82,14 +82,14 @@ SystemConfigDlg::SystemConfigDlg(wxFrame *parent) :
         wxDialog(parent, -1, "System Configuration",
                  wxDefaultPosition, wxDefaultSize,
                  wxDEFAULT_DIALOG_STYLE | wxRESIZE_BORDER) ,
-        m_cpuType(NULL),
-        m_memSize(NULL),
-        m_kbType(NULL),
-        m_diskRealtime(NULL),
-        m_warnIo(NULL),
-        m_btnRevert(NULL),
-        m_btnOk(NULL),
-        m_btnCancel(NULL),
+        m_cpuType(nullptr),
+        m_memSize(nullptr),
+        m_kbType(nullptr),
+        m_diskRealtime(nullptr),
+        m_warnIo(nullptr),
+        m_btnRevert(nullptr),
+        m_btnOk(nullptr),
+        m_btnCancel(nullptr),
         m_oldcfg( System2200().config() ),  // the existing configuration
         m_cfg   ( System2200().config() )   // the one we will be editing
 {

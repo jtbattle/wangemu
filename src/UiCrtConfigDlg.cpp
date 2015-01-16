@@ -38,10 +38,10 @@ CrtConfigDlg::CrtConfigDlg(wxFrame *parent, wxString title) :
         wxDialog(parent, -1, title,
                  wxDefaultPosition, wxDefaultSize,
                  wxDEFAULT_DIALOG_STYLE | wxRESIZE_BORDER),
-        m_FontChoice(NULL),
-        m_ColorChoice(NULL),
-        m_ContrastSlider(NULL),
-        m_BrightnessSlider(NULL)
+        m_FontChoice(nullptr),
+        m_ColorChoice(nullptr),
+        m_ContrastSlider(nullptr),
+        m_BrightnessSlider(nullptr)
 {
     const int h_text_margin = 8;
     CrtFrame *pp = wxStaticCast(GetParent(), CrtFrame);

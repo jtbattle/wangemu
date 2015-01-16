@@ -147,15 +147,15 @@ IoCardDisk::IoCardDisk(Scheduler &scheduler, Cpu2200 &cpu,
     m_cpb(true),
     m_card_busy(false),
     m_compare_err(false),
-    m_tmr_motor_off(NULL),
+    m_tmr_motor_off(nullptr),
     m_acting_intelligent(false),
     m_copy_pending(false)
 {
     // only init if not doing a property probe
     if (m_slot >= 0) {
-        assert(cfg != NULL);
+        assert(cfg != nullptr);
         const DiskCtrlCfgState *cp = dynamic_cast<const DiskCtrlCfgState*>(cfg);
-        assert(cp != NULL);
+        assert(cp != nullptr);
         m_cfg = *cp;
         createDiskController();
     }
@@ -169,7 +169,7 @@ IoCardDisk::~IoCardDisk()
         reset();
         for(int drive=0; drive<numDrives(); drive++) {
             delete m_d[drive].wvd;
-            m_d[drive].wvd = NULL;
+            m_d[drive].wvd = nullptr;
         }
     }
 }
@@ -752,7 +752,7 @@ IoCardDisk::tcbSector(int arg)
 // ==========================================================
 
 // return properties of the named disk.
-// parameters that are NULL won't be returned.
+// parameters that are nullptr won't be returned.
 // returns true if nothing went wrong.
 bool
 IoCardDisk::wvdGetWriteProtect(const string &filename, bool *write_protect)
@@ -815,7 +815,7 @@ IoCardDisk::wvdDriveStatus(int slot, int drive)
 
     IoCardDisk *tthis = reinterpret_cast<IoCardDisk*>
                                 (System2200().getInstFromSlot(slot));
-    if (tthis == NULL) {
+    if (tthis == nullptr) {
         // can happen at init time -- this routine is called when the
         // CRT is init'd before the disk controllers
         return 0;       // !EXISTENT, !OCCUPIED, !RUNNING, !SELECTED
@@ -853,7 +853,7 @@ IoCardDisk::wvdInsertDisk(int slot,
 
     IoCardDisk *tthis = reinterpret_cast<IoCardDisk*>
                                 (System2200().getInstFromSlot(slot));
-    assert(tthis != NULL);
+    assert(tthis != nullptr);
 
     bool ok = tthis->iwvdInsertDisk(drive, filename);
     UI_diskEvent(slot, drive);
@@ -871,7 +871,7 @@ IoCardDisk::wvdRemoveDisk(int slot, int drive)
 
     IoCardDisk *tthis = reinterpret_cast<IoCardDisk*>
                                 (System2200().getInstFromSlot(slot));
-    assert(tthis != NULL);
+    assert(tthis != nullptr);
 
     bool ok = tthis->iwvdRemoveDisk(drive);
     UI_diskEvent(slot, drive);
@@ -888,7 +888,7 @@ IoCardDisk::wvdFlush(int slot, int drive)
 
     IoCardDisk *tthis = reinterpret_cast<IoCardDisk*>
                                 (System2200().getInstFromSlot(slot));
-    assert(tthis != NULL);
+    assert(tthis != nullptr);
 
     tthis->m_d[drive].wvd->flush();
 }
@@ -1090,7 +1090,7 @@ IoCardDisk::iwvdReadSector()
 
 
 // get disk drive geometry from the disk type
-// return params are allowed to be NULL
+// return params are allowed to be nullptr
 void
 IoCardDisk::getDiskGeometry(int disktype,
                             int *sectorsPerTrack,
@@ -1150,13 +1150,13 @@ IoCardDisk::getDiskGeometry(int disktype,
     }
 
     // return what the caller asked for
-    if (sectorsPerTrack != NULL)
+    if (sectorsPerTrack != nullptr)
         *sectorsPerTrack = sectors_per_track;
-    if (trackSeekMs != NULL)
+    if (trackSeekMs != nullptr)
         *trackSeekMs = track_seek_ms;
-    if (diskRpm != NULL)
+    if (diskRpm != nullptr)
         *diskRpm = disk_rpm;
-    if (interleave != NULL)
+    if (interleave != nullptr)
         *interleave = inter;
 }
 

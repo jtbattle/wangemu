@@ -136,11 +136,11 @@ System2200::initialize()
 {
     // set up IO management
     for(int i=0; i<256; i++) {
-        m_IoMap[i].inst   = NULL;
+        m_IoMap[i].inst   = nullptr;
         m_IoMap[i].ignore = false;
     }
     for(int i=0; i<NUM_IOSLOTS; i++)
-        m_cardInSlot[i] = NULL;
+        m_cardInSlot[i] = nullptr;
     m_IoCurSelected = -1;
 
     // CPU speed regulation
@@ -181,7 +181,7 @@ System2200::breakdown_cards(void)
     }
     for(int i=0; i<NUM_IOSLOTS; i++) {
         delete m_cardInSlot[i];
-        m_cardInSlot[i] = NULL;
+        m_cardInSlot[i] = nullptr;
     }
 
     if (cpuExists())
@@ -524,7 +524,7 @@ System2200::cpu_ABS(uint8 byte)
     if (byte == m_IoCurSelected)
         return;
 
-    if ((m_IoCurSelected > 0) && (m_IoMap[m_IoCurSelected].inst != NULL)) {
+    if ((m_IoCurSelected > 0) && (m_IoMap[m_IoCurSelected].inst != nullptr)) {
         (m_IoMap[m_IoCurSelected].inst)->deselect();
         m_IoCurSelected = -1;
     }
@@ -532,7 +532,7 @@ System2200::cpu_ABS(uint8 byte)
     cpu().setDevRdy(true); // nobody is driving, so it floats to 1
 
     m_IoCurSelected = byte;
-    if (m_IoMap[m_IoCurSelected].inst == NULL) {
+    if (m_IoMap[m_IoCurSelected].inst == nullptr) {
         // ignore 0x00, which is used as a "deselect everything" address
         if ( (m_IoCurSelected != 0x00) &&
              !m_IoMap[m_IoCurSelected].ignore ) {
@@ -564,7 +564,7 @@ System2200::cpu_OBS(uint8 byte)
 // being used will generate a Busy indicator after the I/O Bus (!OB1 - !OB8)
 // has been strobed by !OBS, the CPU output strobe.
     if (m_IoCurSelected > 0) {
-        if (m_IoMap[m_IoCurSelected].inst != NULL) {
+        if (m_IoMap[m_IoCurSelected].inst != nullptr) {
             (m_IoMap[m_IoCurSelected].inst)->OBS(byte);
         }
     }
@@ -580,7 +580,7 @@ System2200::cpu_CBS()
     //   * some use it like another OBS strobe to capture some type
     //     of command word
     //   * some cards use it to trigger an IBS strobe
-    if ((m_IoCurSelected > 0) && (m_IoMap[m_IoCurSelected].inst != NULL))
+    if ((m_IoCurSelected > 0) && (m_IoMap[m_IoCurSelected].inst != nullptr))
         (m_IoMap[m_IoCurSelected].inst)->CBS(0);
 }
 
@@ -589,7 +589,7 @@ System2200::cpu_CBS()
 void
 System2200::cpu_CPB(bool busy)
 {
-    if  ((m_IoCurSelected > 0) && (m_IoMap[m_IoCurSelected].inst != NULL))
+    if  ((m_IoCurSelected > 0) && (m_IoMap[m_IoCurSelected].inst != nullptr))
         // signal that we want to get something
         (m_IoMap[m_IoCurSelected].inst)->CPB(busy);
 }
@@ -603,7 +603,7 @@ System2200::cpu_CPB(bool busy)
 int
 System2200::cpu_poll_IB5()
 {
-    if  ((m_IoCurSelected > 0) && (m_IoMap[m_IoCurSelected].inst != NULL)) {
+    if  ((m_IoCurSelected > 0) && (m_IoMap[m_IoCurSelected].inst != nullptr)) {
         // signal that we want to get something
         return (int)(m_IoMap[m_IoCurSelected].inst)->getIB5();
     }
@@ -754,11 +754,11 @@ System2200::findDisk(const string &filename,
                 bool ok = IoCardDisk::wvdGetFilename(slt, d, &fname);
                 assert(ok); ok=ok;
                 if (filename == fname) {
-                    if (slot != NULL)
+                    if (slot != nullptr)
                         *slot = slt;
-                    if (drive != NULL)
+                    if (drive != nullptr)
                         *drive = d;
-                    if (io_addr != NULL) {
+                    if (io_addr != nullptr) {
                         ok = System2200().getSlotInfo(slt, 0, io_addr);
                         assert(ok); ok = ok;
                     }

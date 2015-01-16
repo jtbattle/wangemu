@@ -131,7 +131,7 @@ Scheduler::Scheduler() :
 
     // callback list
     for(int j=0; j<NUM_TIMERS; j++)
-        m_timer[j].callback = NULL;
+        m_timer[j].callback = nullptr;
 
     // prefab timer handles
     for(int k=0; k<NUM_TIMERS; k++)
@@ -149,9 +149,9 @@ Scheduler::~Scheduler()
 {
     // kill any active timers
     for(int i=0; i < NUM_TIMERS; i++) {
-        if (m_timer[i].callback != NULL)
+        if (m_timer[i].callback != nullptr)
             delete m_timer[i].callback;
-        m_timer[i].callback = NULL;
+        m_timer[i].callback = nullptr;
     }
 
     // delete dynamic storage
@@ -221,9 +221,9 @@ Timer* Scheduler::TimerCreateImpl(int ticks, CallbackBase *fcn)
 void Scheduler::TimerKill(int n)
 {
     // free the callback thunk we allocated
-    if (m_timer[n].callback != NULL) {
+    if (m_timer[n].callback != nullptr) {
         delete m_timer[n].callback;    // pointer to the copy we created
-        m_timer[n].callback = NULL;
+        m_timer[n].callback = nullptr;
     }
 
     // the fact that we have to do this lookup doesn't matter since
@@ -301,7 +301,7 @@ void Scheduler::TimerCredit(void)
     for(i=0; i<m_numRetired; i++) {
         int idx = m_retiredIdx[i];
 
-        if (m_timer[idx].callback == NULL) {
+        if (m_timer[idx].callback == nullptr) {
 #ifdef TMR_DEBUG
             UI_Error("Error: killing non-existent simulated timer");
 #endif
@@ -312,7 +312,7 @@ void Scheduler::TimerCredit(void)
             (*m_timer[idx].callback)();
 
             delete m_timer[idx].callback;
-            m_timer[idx].callback = NULL;
+            m_timer[idx].callback = nullptr;
         }
 
         // move it to the free list

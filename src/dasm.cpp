@@ -95,7 +95,7 @@ addr(char *buf, int *off, int cur_pc, int new_pc)
 
 
 // disassemble the A input bus field
-// *adj is set to 1 if the PC value is modified (if adj != NULL)
+// *adj is set to 1 if the PC value is modified (if adj != nullptr)
 // return the number of bytes printed out
 static int
 dasm_a_field(char *buf, uint32 uop, int *adj)
@@ -122,7 +122,7 @@ dasm_a_field(char *buf, uint32 uop, int *adj)
     }
 
     // indicate if the PC would get adjusted
-    if (adj != NULL)
+    if (adj != nullptr)
         *adj |= pc;
 
     return sprintf(buf, str);
@@ -164,7 +164,7 @@ dasm_b_field(char *buf, uint32 uop)
             case 13: str = "CH";  break;
             case 14: str = "CL";  break;
             case 15: str = "0";   break;
-            default: str = NULL; assert(0); break;
+            default: str = nullptr; assert(0); break;
         }
     } else {
         switch (field) {
@@ -176,7 +176,7 @@ dasm_b_field(char *buf, uint32 uop)
             case 13: str = "CH";  break;
             case 14: str = "CL";  break;
             case 15: str = "0";   break;
-            default: str = NULL; assert(0); break;
+            default: str = nullptr; assert(0); break;
         }
     }
 
@@ -200,31 +200,31 @@ dasm_c_field(char *buf, int *illegal, uint32 uop)
 
     if (xbit) {
         switch (field) {
-            case  8: str = "ST3"; break;
-            case  9: str = "ST4"; break;
-            case 10: str = "PC2"; break;
-            case 11: str = "PC3"; break;
-            case 12: str = "PC4"; break;
-            case 13: str = NULL;  break;
-            case 14: str = NULL;  break;
-            case 15: str = "";    break;        // dummy destination
-            default: str = NULL; assert(0); break;
+            case  8: str = "ST3";   break;
+            case  9: str = "ST4";   break;
+            case 10: str = "PC2";   break;
+            case 11: str = "PC3";   break;
+            case 12: str = "PC4";   break;
+            case 13: str = nullptr; break;
+            case 14: str = nullptr; break;
+            case 15: str = "";      break;        // dummy destination
+            default: str = nullptr; assert(0); break;
         }
     } else {
         switch (field) {
-            case  8: str = "KH";  break;
-            case  9: str = "KL";  break;
-            case 10: str = "ST1"; break;
-            case 11: str = "ST2"; break;
-            case 12: str = "PC1"; break;
-            case 13: str = NULL;  break;
-            case 14: str = NULL;  break;
-            case 15: str = "";    break;        // dummy destination
-            default: str = NULL; assert(0); break;
+            case  8: str = "KH";    break;
+            case  9: str = "KL";    break;
+            case 10: str = "ST1";   break;
+            case 11: str = "ST2";   break;
+            case 12: str = "PC1";   break;
+            case 13: str = nullptr; break;
+            case 14: str = nullptr; break;
+            case 15: str = "";      break;        // dummy destination
+            default: str = nullptr; assert(0); break;
         }
     }
 
-    if (str == NULL) {
+    if (str == nullptr) {
         *illegal = 1;
         return sprintf(buf, "???");
     } else {
@@ -333,7 +333,7 @@ dasm_type1(char *buf, char *mnemonic, int *illegal, uint32 uop)
     len += dasm_m_field(&buf[len], uop);
     pad_spaces(buf, &len, PARAM_COL);
 
-    len += dasm_a_field(&buf[len], uop, NULL);
+    len += dasm_a_field(&buf[len], uop, nullptr);
     if (!mov) {
         len += sprintf(&buf[len], ",");
         len += dasm_b_field(&buf[len], uop);

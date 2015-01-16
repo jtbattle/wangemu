@@ -162,7 +162,7 @@ IoCardKeyboard::receiveKeystroke(int io_addr, int keycode)
 
     IoCardKeyboard *tthis = reinterpret_cast<IoCardKeyboard*>
                                 (System2200().getInstFromIoAddr(io_addr));
-    assert(tthis != NULL);
+    assert(tthis != nullptr);
 
     // halt apparently acts independently of addressing
     if (keycode & KEYCODE_HALT) {
@@ -196,7 +196,7 @@ IoCardKeyboard::script_mode(int io_addr)
 
     IoCardKeyboard *tthis = reinterpret_cast<IoCardKeyboard*>
                                 (System2200().getInstFromIoAddr(io_addr));
-    if (tthis == NULL) {
+    if (tthis == nullptr) {
         // this can happen during initialization when there are two keyboards
         return 0;
     }
@@ -212,7 +212,7 @@ IoCardKeyboard::invoke_script(const int io_addr, const string &filename)
 
     IoCardKeyboard *tthis = reinterpret_cast<IoCardKeyboard*>
                                 (System2200().getInstFromIoAddr(io_addr));
-    assert(tthis != NULL);
+    assert(tthis != nullptr);
     assert(tthis->m_script_handle == 0);  // can't have two scripts to one kb
 
     int flags = ScriptFile::SCRIPT_META_INC |

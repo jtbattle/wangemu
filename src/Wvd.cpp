@@ -28,7 +28,7 @@
 // making a valid Wvd is a two step process.  create a container with the
 // default constructor, then call either open() or create() to fill it.
 Wvd::Wvd() :
-    m_file(NULL),
+    m_file(nullptr),
     m_metadataStale(true),
     m_metaModified(false),
     m_hasPath(false),
@@ -68,7 +68,7 @@ Wvd::~Wvd()
 void
 Wvd::create(int disk_type, int platters, int sectors_per_platter)
 {
-    assert(m_file == NULL);
+    assert(m_file == nullptr);
     setDiskType(disk_type);
     setNumPlatters(platters);
     setNumSectors(sectors_per_platter);
@@ -81,7 +81,7 @@ Wvd::create(int disk_type, int platters, int sectors_per_platter)
 bool
 Wvd::open(const string &filename)
 {
-    assert(m_file == NULL);
+    assert(m_file == nullptr);
     assert(!m_hasPath);
     assert(!filename.empty());
 
@@ -94,7 +94,7 @@ Wvd::open(const string &filename)
     if (!m_file->good()) {
         UI_Error("Couldn't open file '%s'", m_path.c_str());
         delete m_file;
-        m_file = NULL;
+        m_file = nullptr;
         return false;
     }
 
@@ -115,11 +115,11 @@ Wvd::open(const string &filename)
 void
 Wvd::close()
 {
-    if (m_file != NULL) {
+    if (m_file != nullptr) {
         if (m_file->is_open())
             m_file->close();
         delete m_file;
-        m_file = NULL;
+        m_file = nullptr;
     }
     initMembers();
 }
@@ -258,7 +258,7 @@ Wvd::readSector(int platter, int sector, uint8 *buffer)
 
     assert(platter >= 0 && platter < m_numPlatters);
     assert(sector  >= 0 && sector  < m_numPlatterSectors);
-    assert(m_file != NULL);
+    assert(m_file != nullptr);
 
     int abs_sector = m_numPlatterSectors*platter + sector + 1;
     return rawReadSector(abs_sector, buffer);
@@ -274,7 +274,7 @@ Wvd::writeSector(int platter, int sector, uint8 *buffer)
 
     assert(platter >= 0 && platter < m_numPlatters);
     assert(sector  >= 0 && sector  < m_numPlatterSectors);
-    assert(m_file != NULL);
+    assert(m_file != nullptr);
 
     int abs_sector = m_numPlatterSectors*platter + sector + 1;
     return rawWriteSector(abs_sector, buffer);
@@ -290,7 +290,7 @@ Wvd::writeSector(int platter, int sector, uint8 *buffer)
 void
 Wvd::flush()
 {
-    if (m_file != NULL) {
+    if (m_file != nullptr) {
         if (m_file->is_open())
             m_file->flush();
         m_file->close();
@@ -342,7 +342,7 @@ Wvd::rawWriteSector(const int sector, const uint8 *data)
 {
     assert(m_hasPath);
     assert(sector >= 0 && sector < m_numPlatters*m_numPlatterSectors+1);
-    assert(data != NULL);
+    assert(data != nullptr);
     assert(m_file->is_open());
 
     if (DBG > 0) {
@@ -388,7 +388,7 @@ Wvd::rawReadSector(const int sector, const uint8 *data)
 {
     assert(m_hasPath);
     assert(sector >= 0 && sector < m_numPlatters*m_numPlatterSectors+1);
-    assert(data != NULL);
+    assert(data != nullptr);
     assert(m_file->is_open());
 
     // go to the start of the Nth sector
@@ -485,7 +485,7 @@ Wvd::writeHeader()
 void
 Wvd::reopen()
 {
-    assert(m_file != NULL);
+    assert(m_file != nullptr);
 
     if (m_metadataStale) {
         assert(!m_file->is_open()); // make sure we cached it properly
@@ -494,13 +494,13 @@ Wvd::reopen()
         if (!m_file->good()) {
             UI_Error("Couldn't open file '%s'", m_path.c_str());
             delete m_file;
-            m_file = NULL;
+            m_file = nullptr;
             return;
         }
         bool ok = readHeader();
         if (!ok) {
             delete m_file;
-            m_file = NULL;
+            m_file = nullptr;
             return;
         }
     }
@@ -515,7 +515,7 @@ Wvd::reopen()
 bool
 Wvd::readHeader()
 {
-    assert(m_file != NULL);
+    assert(m_file != nullptr);
 
     // set it so rawReadSector() knows what to operate on
     m_numPlatters = 1;
@@ -606,7 +606,7 @@ Wvd::format(const int platter)
 bool
 Wvd::createFile(const string &filename)
 {
-    assert(m_file == NULL);
+    assert(m_file == nullptr);
     assert(!m_hasPath);
     assert(!filename.empty());
 
@@ -622,7 +622,7 @@ Wvd::createFile(const string &filename)
     if (!m_file->good()) {
         UI_Error("Couldn't create file '%s'", m_path.c_str());
         delete m_file;
-        m_file = NULL;
+        m_file = nullptr;
         return false;
     }
 

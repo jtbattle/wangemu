@@ -12,9 +12,9 @@ vector<errtable_t> errtable = {
     /*err code*/            "01",
     /*err msg*/             "Text Overflow",
     /*cause*/               "All available space for BASIC statements and system commands has been used. \nShorten and/or chain program by using COM statements, and continue.  The\ncompiler automatically removes the current and highest-numbered statement. ",
-    /*action*/              (char*)0,
+    /*action*/              nullptr,
     /*example*/             ":10 FOR I = 1 TO 10\n:20 LET X = SIN(I)\n:30 NEXT I\n    ....\n    ....\n    ....\n:820 IF Z = A-B THEN 900\n^ERR 01\n(the number of characters in the program exceeded\nthe available space in memory for program text\nwhen line 820 was entered).  User must shorten or\nsegment program.",
-    /*correction*/          (char*)0,
+    /*correction*/          nullptr,
     },
 
 // -------------------------------------------------------------------------
@@ -24,7 +24,7 @@ vector<errtable_t> errtable = {
     /*cause*/               "All available space for the program, internal tables and variables has been\nfilled (see \"Internal Storage,\" Section I). When ERR02 occurs, all non-common\nvariables are cleared.",
     /*action*/              "Examine program for:\n1) excessive DIM, COM statements.\n2) subroutines not terminated by RETURN or RETURN CLEAR,\n    improper exits from FOR/NEXT loops. \nSuggestion: Insert an END statement as the first line in the program and\nexecute the routine. If END = value appears, the error is probably case 2);\notherwise, case 1). ",
     /*example*/             ":10 DIM A(19), B(10,10), C(10,10)\nRUN\n^ERR 02\n(the space available for variable tables was\nexceeded) user must reduce program and variable\nstorage requirements or change program logic.",
-    /*correction*/          (char*)0,
+    /*correction*/          nullptr,
     },
 
 // -------------------------------------------------------------------------
@@ -34,7 +34,7 @@ vector<errtable_t> errtable = {
     /*cause*/               "1.  EXPONENT OVERFLOW. The exponent of the calculated value was < -99 or > 99.\n     (+, - *, /, ^, TAN, EXP).\n2.  DIVISION BY ZERO.\n3.  NEGATIVE OR ZERO LOG FUNCTION ARGUMENT.\n4.  NEGATIVE SQR FUNCTION ARGUMENT.\n5.  INVALID EXPONENTIATION. An exponentiation, (X^Y) was attempted where\n     X was negative and Y was not an integer, producing an imaginary result,\n     or X and Y were both zero.\n6.  ILLEGAL SIN, COS, OR TAN ARGUMENT. The function argument exceeds\n     2*pi x 10^11 radians.",
     /*action*/              "Correct the program or program data.",
     /*example*/             "PRINT (2E+64) / (2E-41) \n          ^ERR 03\n(exponent overflow)",
-    /*correction*/          (char*)0,
+    /*correction*/          nullptr,
     },
 
 // -------------------------------------------------------------------------
@@ -234,7 +234,7 @@ vector<errtable_t> errtable = {
     /*cause*/               "A RUN command was entered but there are no program statements.",
     /*action*/              "Enter program statements.",
     /*example*/             ":RUN \n^ERR 23",
-    /*correction*/          (char*)0,
+    /*correction*/          nullptr,
     },
 
 // -------------------------------------------------------------------------
@@ -244,7 +244,7 @@ vector<errtable_t> errtable = {
     /*cause*/               "An illegal verb or transfer in an Immediate Mode statement was encountered.",
     /*action*/              "Re-enter a corrected Immediate Mode statement.",
     /*example*/             "IF A = I THEN 100\n              ^ERR 24",
-    /*correction*/          (char*)0,
+    /*correction*/          nullptr,
     },
 
 // -------------------------------------------------------------------------
@@ -314,7 +314,7 @@ vector<errtable_t> errtable = {
     /*cause*/               "The 'statement number' key was pressed producing a'line number greater than\n9999; or in renumbering a program with the RENUMBER command a line number was\ngenerated which was greater than 9999.",
     /*action*/              "Correct the program.",
     /*example*/             ":9995 PRINT X,Y\n:[STMT NUMBER Key]\n^ERR 31",
-    /*correction*/          (char*)0,
+    /*correction*/          nullptr,
     },
 
 // -------------------------------------------------------------------------
@@ -332,9 +332,9 @@ vector<errtable_t> errtable = {
     /*err code*/            "34",
     /*err msg*/             "Tape Read Error",
     /*cause*/               "The system was unable to read the next record on the tape; the tape is\npositioned after the bad record after attempting to read the bad record ten\ntimes.",
-    /*action*/              (char*)0,
-    /*example*/             (char*)0,
-    /*correction*/          (char*)0,
+    /*action*/              nullptr,
+    /*example*/             nullptr,
+    /*correction*/          nullptr,
     },
 
 // -------------------------------------------------------------------------
@@ -402,7 +402,7 @@ vector<errtable_t> errtable = {
     /*err code*/            "41",
     /*err msg*/             "Illegal STR( Arguments",
     /*cause*/               "The STR( function arguments exceed the maximum length of the alpha variable.",
-    /*action*/              (char*)0,
+    /*action*/              nullptr,
     /*example*/             ":10 B$ = STR(A$, 10, 8) \n                      ^ERR 41",
     /*correction*/          ":10 B$ = STR(A$, 10, 6)",
     },
@@ -433,8 +433,8 @@ vector<errtable_t> errtable = {
     /*err msg*/             "Program Protected",
     /*cause*/               "A program loaded was protected and, hence, cannot be SAVED or LISTED.",
     /*action*/              "Execute a CLEAR command to remove protect mode; any program in memory is\ncleared.",
-    /*example*/             (char*)0,
-    /*correction*/          (char*)0,
+    /*example*/             nullptr,
+    /*correction*/          nullptr,
     },
 
 // -------------------------------------------------------------------------
@@ -443,8 +443,8 @@ vector<errtable_t> errtable = {
     /*err msg*/             "Program Line Too Long",
     /*cause*/               "A statement line may not exceed 192 keystrokes.",
     /*action*/              "Shorten the line being entered.",
-    /*example*/             (char*)0,
-    /*correction*/          (char*)0,
+    /*example*/             nullptr,
+    /*correction*/          nullptr,
     },
 
 // -------------------------------------------------------------------------
@@ -474,7 +474,7 @@ vector<errtable_t> errtable = {
     /*cause*/               "There is no DEFFN' in a user's program corresponding to the Special Function\nkey pressed.",
     /*action*/              "Correct the program.",
     /*example*/             ": [Special Function Key #2]\n^ERR 48",
-    /*correction*/          (char*)0,
+    /*correction*/          nullptr,
     },
 
 // -------------------------------------------------------------------------
@@ -484,7 +484,7 @@ vector<errtable_t> errtable = {
     /*cause*/               "The end of tape was encountered during a tape operation.",
     /*action*/              "Correct the program, make sure the tape is correctly positioned or, if loading\na program or datafile by name, be sure you have mounted the correct tape.",
     /*example*/             "100 DATALOAD X, Y, Z\n             ^ERR 49",
-    /*correction*/          (char*)0,
+    /*correction*/          nullptr,
     },
 
 // -------------------------------------------------------------------------
@@ -494,7 +494,7 @@ vector<errtable_t> errtable = {
     /*cause*/               "A tape operation is attempting to write on a tape cassette that has been\nprotected (by opening tab on bottom of cassette).",
     /*action*/              "Mount another cassette or \"unprotect\" the tape cassette by covering the hole on\nthe bottom of the cassette with the tab or tape.",
     /*example*/             "SAVE/103 \n       ^ERR 50 ",
-    /*correction*/          (char*)0,
+    /*correction*/          nullptr,
     },
 
 // -------------------------------------------------------------------------
@@ -503,8 +503,8 @@ vector<errtable_t> errtable = {
     /*err msg*/             "Illegal Statement",
     /*cause*/               "The statement input is not a legal BASIC statement.",
     /*action*/              "Do not use this statement.",
-    /*example*/             (char*)0,
-    /*correction*/          (char*)0,
+    /*example*/             nullptr,
+    /*correction*/          nullptr,
     },
 
 // -------------------------------------------------------------------------
@@ -513,8 +513,8 @@ vector<errtable_t> errtable = {
     /*err msg*/             "Expected Data (Nonheader) Record",
     /*cause*/               "A DATALOAD operation was attempted but the device was not positioned at a data\nrecord.",
     /*action*/              "Make sure the correct device is positioned correctly.",
-    /*example*/             (char*)0,
-    /*correction*/          (char*)0,
+    /*example*/             nullptr,
+    /*correction*/          nullptr,
     },
 
 // -------------------------------------------------------------------------
@@ -574,7 +574,7 @@ vector<errtable_t> errtable = {
     /*cause*/               "A program record or header record was read when a data record was expected.",
     /*action*/              "Correct the program.",
     /*example*/             "100 DATALOAD DAF(0,X) A,B,C\n                      ^ERR 58",
-    /*correction*/          (char*)0,
+    /*correction*/          nullptr,
     },
 
 // -------------------------------------------------------------------------
@@ -604,7 +604,7 @@ vector<errtable_t> errtable = {
     /*cause*/               "The disk did not recognize or properly respond back to the System 2200 during\nread or write operation in the proper amount of time.",
     /*action*/              "Run program again. If error persists, re-initialize the disk; if error still\npersists contact Wang service personnel. ",
     /*example*/             "100 DATASAVE DCF X,Y,Z \n                 ^ERR 61",
-    /*correction*/          (char*)0,
+    /*correction*/          nullptr,
     },
 
 // -------------------------------------------------------------------------
@@ -614,7 +614,7 @@ vector<errtable_t> errtable = {
     /*cause*/               "The disk sector being addressed is not located within the catalogued specified\nfile. When writing, the file is full; for other operations, a SKIP or BACKSPACE\nhas set the sector address beyond the limits of the file.",
     /*action*/              "Correct the program.",
     /*example*/             "100 DATASAVE DCT#2, A$(), B$(), C$( )\n                              ^ERR 62",
-    /*correction*/          (char*)0,
+    /*correction*/          nullptr,
     },
 
 // -------------------------------------------------------------------------
@@ -644,7 +644,7 @@ vector<errtable_t> errtable = {
     /*cause*/               "A disk hardware error occurred: i.e., the disk is not in file-ready position.\nThis could occur, for example, if the disk is in LOAD mode or power is not\nturned on.",
     /*action*/              "Insure disk is turned on and properly setup for operation. Set the disk into\nLOAD mode and then back into RUN mode, with the RUN/LOAD selection switch. The\ncheck light should then go out. If error persists call your Wang Service\npersonnel. (Note, the disk must never be left in LOAD mode when running.) ",
     /*example*/             "100 DATALOAD DCF A$,B$\n                ^ERR 65",
-    /*correction*/          (char*)0,
+    /*correction*/          nullptr,
     },
 
 // -------------------------------------------------------------------------
@@ -654,7 +654,7 @@ vector<errtable_t> errtable = {
     /*cause*/               "The disk format key is engaged. (The key should be engaged only when formatting\na disk.)",
     /*action*/              "Turn off the format key.",
     /*example*/             "100 DATASAVE DCF X,Y,Z\n                ^ERR 66",
-    /*correction*/          (char*)0,
+    /*correction*/          nullptr,
     },
 
 // -------------------------------------------------------------------------
@@ -664,7 +664,7 @@ vector<errtable_t> errtable = {
     /*cause*/               "A disk format error was detected on disk read or write. The disk is not\nproperly formatted. The error can be either in the medium or the hardware.",
     /*action*/              "Format the disk again; if error persists, call for Wang service.",
     /*example*/             "100 DATALOAD DCF X,Y,Z\n                ^ERR 67",
-    /*correction*/          (char*)0,
+    /*correction*/          nullptr,
     },
 
 // -------------------------------------------------------------------------
@@ -674,7 +674,7 @@ vector<errtable_t> errtable = {
     /*cause*/               "A disk longitudinal redundancy check error occurred when reading a sector. The\ndata may have been written incorrectly, or the System 2200/Disk Controller\ncould be malfunctioning.",
     /*action*/              "Run program again. If error persists, re-write the bad sector. If error still\npersists, call Wang Service personnel.",
     /*example*/             "100 DATALOAD DCF A$( )\n                ^ERR 68",
-    /*correction*/          (char*)0,
+    /*correction*/          nullptr,
     },
 
 // -------------------------------------------------------------------------
@@ -684,7 +684,7 @@ vector<errtable_t> errtable = {
     /*cause*/               "A disk-seek error occurred; the specified sector could not be found on the\ndisk.",
     /*action*/              "Run program again. If error persists, re-initialize (reformat) the disk. If\nerror still occurs call Wang Service personnel.",
     /*example*/             "100 DATALOAD DCF A$( )\n                ^ERR 71",
-    /*correction*/          (char*)0,
+    /*correction*/          nullptr,
     },
 
 // -------------------------------------------------------------------------
@@ -694,7 +694,7 @@ vector<errtable_t> errtable = {
     /*cause*/               "A cyclic redundancy check disk read error occurred; the sector being addressed\nhas never been written to or was incorrectly written. This usually means the\ndisk was never initially formatted.",
     /*action*/              "Format the disk. If the disk was formatted, re-write the bad sector, or\nreformat the disk. If error persists call Wang Service personnel.",
     /*example*/             "100 MOVEEND F = 8000\n                    ^ERR 72",
-    /*correction*/          (char*)0,
+    /*correction*/          nullptr,
     },
 
 // -------------------------------------------------------------------------
@@ -712,7 +712,7 @@ vector<errtable_t> errtable = {
     /*err code*/            "74",
     /*err msg*/             "Catalog End Error",
     /*cause*/               "The end of catalog area falls within the library index area or has been changed\nby MOVEEND to fall within the area already used by the catalog; or there is no\nroom left in the catalog area to store more information.",
-    /*action*/              (char*)0,
+    /*action*/              nullptr,
     /*example*/             "SCRATCH DISK F LS=100, END=50\n                             ^ERR 74",
     /*correction*/          "SCRATCH DISK F LS=100, END=500",
     },
@@ -724,7 +724,7 @@ vector<errtable_t> errtable = {
     /*cause*/               "A command is being used within a BASIC program; Commands are not programmable.",
     /*action*/              "Do not use commands as program statements.",
     /*example*/             "10 LIST\n        ^ERR 75",
-    /*correction*/          (char*)0,
+    /*correction*/          nullptr,
     },
 
 // -------------------------------------------------------------------------
@@ -794,7 +794,7 @@ vector<errtable_t> errtable = {
     /*cause*/               "No end of file record was recorded on file and therefore could not be found in\na SKIP END operation.",
     /*action*/              "Correct the file.",
     /*example*/             "100 DSKIP END\n             ^ERR 82",
-    /*correction*/          (char*)0,
+    /*correction*/          nullptr,
     },
 
 // -------------------------------------------------------------------------
@@ -804,7 +804,7 @@ vector<errtable_t> errtable = {
     /*cause*/               "A disk address was not properly transferred from the CPU to the disk when\nexecuting MOVE or COPY.",
     /*action*/              "Run program again. If error persists, call Wang Field Service Personnel.",
     /*example*/             "COPY FR (100,500)\n                ^ERR 83",
-    /*correction*/          (char*)0,
+    /*correction*/          nullptr,
     },
 
 // -------------------------------------------------------------------------
@@ -814,7 +814,7 @@ vector<errtable_t> errtable = {
     /*cause*/               "A 1K buffer is required in memory for MOVE or COPY operation. (i.e., 1000 bytes\nshould be available and not occupied by program and variables).",
     /*action*/              "Clear out all or part of program or program variables before MOVE or COPY.",
     /*example*/             "COPY FR(0, 9000)\n                ^ERR 84",
-    /*correction*/          (char*)0,
+    /*correction*/          nullptr,
     },
 
 // -------------------------------------------------------------------------
@@ -824,7 +824,7 @@ vector<errtable_t> errtable = {
     /*cause*/               "The comparison of read after write to a disk sector failed. The information was\nnot written properly. This is usually an error in the medium.",
     /*action*/              "Write the information again. If error persists, call Wang Field Service\npersonnel.",
     /*example*/             "100 DATASAVE DCF$ X, Y, Z\n                 ^ERR 85",
-    /*correction*/          (char*)0,
+    /*correction*/          nullptr,
     },
 
 // -------------------------------------------------------------------------
@@ -854,7 +854,7 @@ vector<errtable_t> errtable = {
     /*cause*/               "There is no more room in the index for a new name.",
     /*action*/              "Scratch any unwanted files and compress the catalog using a MOVE statement\nor mount a new disk platter.",
     /*example*/             "SAVE DCF \"PRGM\"\n               ^ERR 88",
-    /*correction*/          (char*)0,
+    /*correction*/          nullptr,
     },
 
 // -------------------------------------------------------------------------
@@ -904,7 +904,7 @@ vector<errtable_t> errtable = {
     /*cause*/               "The operand in a MAT inversion statement is singular and cannot be inverted.",
     /*action*/              "Correct the program.",
     /*example*/             ":10 MAT A=ZER(3,3)\n:20 MAT B=INV(A)\n:RUN\n20 MAT B=INV(A)\n              ^ERR 93",
-    /*correction*/          (char*)0,
+    /*correction*/          nullptr,
     },
 
 // -------------------------------------------------------------------------
@@ -952,7 +952,7 @@ vector<errtable_t> errtable = {
     /*err code*/            "98",
     /*err msg*/             "Illegal Array Delimiters",
     /*cause*/               "The number of bytes specified by the delimiters exceeds the number of bytes in\nthe array.",
-    /*action*/              (char*)0,
+    /*action*/              nullptr,
     /*example*/             ":10 DIM A$(3) 10, B$(4) 64\n:20 $TRAN (A$()<10,23> ,B$() )\n:RUN\n:20 $TRAN (A$()<10,23> ,B$() )\n                          ^ERR 98",
     /*correction*/          ":20 $TRAN (A$()<10,13> ,B$() )",
     },
@@ -1002,8 +1002,8 @@ vector<errtable_t> errtable_vp = {
     /*err msg*/             "MEMORY OVERFLOW",
     /*cause*/               "There is not enough memory free space remaining to enter the program line\nor accommodate the defined variable. System commands (e.g., SAVE) and some\nImmediate Mode statements still can be executed. (See Chapter 2, section 2.5\nfor a more detailed explanation of this error.)",
     /*recovery*/            "Make more space available by entering a CLEAR P, N, or V command to shorten\nthe program or reduce the number of variables defined.",
-    /*dummy*/               (char*)0,
-    /*dummy*/               (char*)0,
+    /*dummy*/               nullptr,
+    /*dummy*/               nullptr,
     },
 
 // -------------------------------------------------------------------------
@@ -1012,8 +1012,8 @@ vector<errtable_t> errtable_vp = {
     /*err msg*/             "MEMORY OVERFLOW",
     /*cause*/               "There is not enough memory free space remaining to execute the program or\nImmediate Mode line. Commands (e.g., SAVE) and some Immediate Mode statements\nstill can be executed. (See Chapter 2, section 2.5 for a more detailed\nexplanation of this error.)",
     /*recovery*/            "Make more space available by shortening the program or reducing the amount\nof variable space used by executing a CLEAR P, N, or V command.",
-    /*dummy*/               (char*)0,
-    /*dummy*/               (char*)0,
+    /*dummy*/               nullptr,
+    /*dummy*/               nullptr,
     },
 
 // -------------------------------------------------------------------------
@@ -1022,8 +1022,8 @@ vector<errtable_t> errtable_vp = {
     /*err msg*/             "MEMORY OVERFLOW",
     /*cause*/               "There is insufficient free space in memory to execute the LIST DC, MOVE, or\nCOPY statement (approximately 1K bytes of free space are required for MOVE\nand COPY and 100 bytes for LIST DC).",
     /*recovery*/            "Make more space available by executing a CLEAR P, N, or V command.",
-    /*dummy*/               (char*)0,
-    /*dummy*/               (char*)0,
+    /*dummy*/               nullptr,
+    /*dummy*/               nullptr,
     },
 
 // -------------------------------------------------------------------------
@@ -1032,8 +1032,8 @@ vector<errtable_t> errtable_vp = {
     /*err msg*/             "STACK OVERFLOW",
     /*cause*/               "A fixed-length system stack (the Operator Stack) has overflowed. A maximum\ntotal of 64 levels of nesting for subroutines, FOR/NEXT loops, and\nexpression evaluation is permitted. Often this error occurs because the\nprogram repeatedly branches out of subroutines or loops without executing\na terminating RETURN or NEXT statement.",
     /*recovery*/            "Correct the program text, possibly by using a RETURN CLEAR statement to\nclear subroutine or loop information from the stacks.",
-    /*dummy*/               (char*)0,
-    /*dummy*/               (char*)0,
+    /*dummy*/               nullptr,
+    /*dummy*/               nullptr,
     },
 
 // -------------------------------------------------------------------------
@@ -1042,8 +1042,8 @@ vector<errtable_t> errtable_vp = {
     /*err msg*/             "PROGRAM LINE TOO LONG",
     /*cause*/               "The program line being entered can not be saved in one disk sector because\nits length exceeds 253 bytes. The line can be executed, but cannot be\nsaved on disk.",
     /*recovery*/            "Shorten the line by breaking it up into two or more smaller lines.",
-    /*dummy*/               (char*)0,
-    /*dummy*/               (char*)0,
+    /*dummy*/               nullptr,
+    /*dummy*/               nullptr,
     },
 
 // -------------------------------------------------------------------------
@@ -1052,8 +1052,8 @@ vector<errtable_t> errtable_vp = {
     /*err msg*/             "PROGRAM PROTECTED",
     /*cause*/               "A program or program overlay loaded into memory was protected; therefore,\nno program text in memory can be SAVEd, LISTed, or modified (except by LOAD\nor CLEAR).",
     /*recovery*/            "Protect Mode must be deactivated with a CLEAR command. (However, executing\na CLEAR command also clears all memory.)",
-    /*dummy*/               (char*)0,
-    /*dummy*/               (char*)0,
+    /*dummy*/               nullptr,
+    /*dummy*/               nullptr,
     },
 
 // -------------------------------------------------------------------------
@@ -1062,8 +1062,8 @@ vector<errtable_t> errtable_vp = {
     /*err msg*/             "ILLEGAL IMMEDIATE MODE STATEMENT",
     /*cause*/               "An attempt was made to execute an illegal statement in Immediate Mode.",
     /*recovery*/            "Delete the illegal statement and reexecute the line.",
-    /*dummy*/               (char*)0,
-    /*dummy*/               (char*)0,
+    /*dummy*/               nullptr,
+    /*dummy*/               nullptr,
     },
 
 // -------------------------------------------------------------------------
@@ -1072,8 +1072,8 @@ vector<errtable_t> errtable_vp = {
     /*err msg*/             "STATEMENT NOT LEGAL HERE",
     /*cause*/               "The statement cannot be used in this context.",
     /*recovery*/            "Correct the program line.",
-    /*dummy*/               (char*)0,
-    /*dummy*/               (char*)0,
+    /*dummy*/               nullptr,
+    /*dummy*/               nullptr,
     },
 
 // -------------------------------------------------------------------------
@@ -1082,8 +1082,8 @@ vector<errtable_t> errtable_vp = {
     /*err msg*/             "PROGRAM NOT RESOLVED",
     /*cause*/               "An attempt was made to execute an unresolved program.",
     /*recovery*/            "Resolve the program by running it with RUN.",
-    /*dummy*/               (char*)0,
-    /*dummy*/               (char*)0,
+    /*dummy*/               nullptr,
+    /*dummy*/               nullptr,
     },
 
 // -------------------------------------------------------------------------
@@ -1092,8 +1092,8 @@ vector<errtable_t> errtable_vp = {
     /*err msg*/             "MISSING LEFT PARENTHESIS",
     /*cause*/               "A left parenthesis [ ( ] was expected.",
     /*recovery*/            "Correct the statement text.",
-    /*dummy*/               (char*)0,
-    /*dummy*/               (char*)0,
+    /*dummy*/               nullptr,
+    /*dummy*/               nullptr,
     },
 
 // -------------------------------------------------------------------------
@@ -1102,8 +1102,8 @@ vector<errtable_t> errtable_vp = {
     /*err msg*/             "MISSING RIGHT PARENTHESIS",
     /*cause*/               "A right parenthesis [ ) ] was expected.",
     /*recovery*/            "Correct the statement text.",
-    /*dummy*/               (char*)0,
-    /*dummy*/               (char*)0,
+    /*dummy*/               nullptr,
+    /*dummy*/               nullptr,
     },
 
 // -------------------------------------------------------------------------
@@ -1112,8 +1112,8 @@ vector<errtable_t> errtable_vp = {
     /*err msg*/             "MISSING EQUAL SIGN",
     /*cause*/               "An equal sign (=) was expected.",
     /*recovery*/            "Correct the statement text.",
-    /*dummy*/               (char*)0,
-    /*dummy*/               (char*)0,
+    /*dummy*/               nullptr,
+    /*dummy*/               nullptr,
     },
 
 // -------------------------------------------------------------------------
@@ -1122,8 +1122,8 @@ vector<errtable_t> errtable_vp = {
     /*err msg*/             "MISSING COMMA",
     /*cause*/               "A comma (,) was expected.",
     /*recovery*/            "Correct the statement text.",
-    /*dummy*/               (char*)0,
-    /*dummy*/               (char*)0,
+    /*dummy*/               nullptr,
+    /*dummy*/               nullptr,
     },
 
 // -------------------------------------------------------------------------
@@ -1132,8 +1132,8 @@ vector<errtable_t> errtable_vp = {
     /*err msg*/             "MISSING ASTERISK",
     /*cause*/               "An asterisk (*) was expected.",
     /*recovery*/            "Correct the statement text.",
-    /*dummy*/               (char*)0,
-    /*dummy*/               (char*)0,
+    /*dummy*/               nullptr,
+    /*dummy*/               nullptr,
     },
 
 // -------------------------------------------------------------------------
@@ -1142,8 +1142,8 @@ vector<errtable_t> errtable_vp = {
     /*err msg*/             "MISSING \">\" CHARACTER",
     /*cause*/               "The required \">\" character is missing from the program statement.",
     /*recovery*/            "Correct the program statement syntax.",
-    /*dummy*/               (char*)0,
-    /*dummy*/               (char*)0,
+    /*dummy*/               nullptr,
+    /*dummy*/               nullptr,
     },
 
 // -------------------------------------------------------------------------
@@ -1152,8 +1152,8 @@ vector<errtable_t> errtable_vp = {
     /*err msg*/             "MISSING LETTER",
     /*cause*/               "A letter was expected.",
     /*recovery*/            "Correct the statement text.",
-    /*dummy*/               (char*)0,
-    /*dummy*/               (char*)0,
+    /*dummy*/               nullptr,
+    /*dummy*/               nullptr,
     },
 
 // -------------------------------------------------------------------------
@@ -1162,8 +1162,8 @@ vector<errtable_t> errtable_vp = {
     /*err msg*/             "MISSING HEX DIGIT",
     /*cause*/               "A digit or a letter from A to F was expected.",
     /*recovery*/            "Correct the program text.",
-    /*dummy*/               (char*)0,
-    /*dummy*/               (char*)0,
+    /*dummy*/               nullptr,
+    /*dummy*/               nullptr,
     },
 
 // -------------------------------------------------------------------------
@@ -1172,8 +1172,8 @@ vector<errtable_t> errtable_vp = {
     /*err msg*/             "MISSING RELATIONAL OPERATOR",
     /*cause*/               "A relational operator ( <,=,>,<=,>=,<> ) was expected.",
     /*recovery*/            "Correct the statement text.",
-    /*dummy*/               (char*)0,
-    /*dummy*/               (char*)0,
+    /*dummy*/               nullptr,
+    /*dummy*/               nullptr,
     },
 
 // -------------------------------------------------------------------------
@@ -1182,8 +1182,8 @@ vector<errtable_t> errtable_vp = {
     /*err msg*/             "MISSING REQUIRED WORD",
     /*cause*/               "A required BASIC word is missing (e.g., THEN or STEP).",
     /*recovery*/            "Correct the statement text.",
-    /*dummy*/               (char*)0,
-    /*dummy*/               (char*)0,
+    /*dummy*/               nullptr,
+    /*dummy*/               nullptr,
     },
 
 // -------------------------------------------------------------------------
@@ -1192,8 +1192,8 @@ vector<errtable_t> errtable_vp = {
     /*err msg*/             "EXPECTED END OF STATEMENT",
     /*cause*/               "The end of the statement was expected. The statement syntax is correct up\nto the point of the error message, but one or more following characters\nmake the statement illegal.",
     /*recovery*/            "Complete the statement text.",
-    /*dummy*/               (char*)0,
-    /*dummy*/               (char*)0,
+    /*dummy*/               nullptr,
+    /*dummy*/               nullptr,
     },
 
 // -------------------------------------------------------------------------
@@ -1202,8 +1202,8 @@ vector<errtable_t> errtable_vp = {
     /*err msg*/             "MISSING LINE-NUMBER",
     /*cause*/               "A line-number in the program statement is missing.",
     /*recovery*/            "Correct the statement syntax.",
-    /*dummy*/               (char*)0,
-    /*dummy*/               (char*)0,
+    /*dummy*/               nullptr,
+    /*dummy*/               nullptr,
     },
 
 // -------------------------------------------------------------------------
@@ -1212,8 +1212,8 @@ vector<errtable_t> errtable_vp = {
     /*err msg*/             "ILLEGAL PLOT ARGUMENT",
     /*cause*/               "An argument in the PLOT statement is illegal.",
     /*recovery*/            "Correct the PLOT statement.",
-    /*dummy*/               (char*)0,
-    /*dummy*/               (char*)0,
+    /*dummy*/               nullptr,
+    /*dummy*/               nullptr,
     },
 
 // -------------------------------------------------------------------------
@@ -1222,8 +1222,8 @@ vector<errtable_t> errtable_vp = {
     /*err msg*/             "INVALID LITERAL STRING",
     /*cause*/               "A literal string was expected.  The length of the literal string must\nbe >= 1 and <= 255.",
     /*recovery*/            "Correct the invalid literal string.",
-    /*dummy*/               (char*)0,
-    /*dummy*/               (char*)0,
+    /*dummy*/               nullptr,
+    /*dummy*/               nullptr,
     },
 
 // -------------------------------------------------------------------------
@@ -1232,8 +1232,8 @@ vector<errtable_t> errtable_vp = {
     /*err msg*/             "ILLEGAL EXPRESSION OR MISSING VARIABLE",
     /*cause*/               "The expression syntax is illegal or a variable is missing.",
     /*recovery*/            "Correct the syntax, or insert the missing variable.",
-    /*dummy*/               (char*)0,
-    /*dummy*/               (char*)0,
+    /*dummy*/               nullptr,
+    /*dummy*/               nullptr,
     },
 
 // -------------------------------------------------------------------------
@@ -1242,8 +1242,8 @@ vector<errtable_t> errtable_vp = {
     /*err msg*/             "MISSING NUMERIC-SCALAR-VARIABLE",
     /*cause*/               "A numeric-scalar-variable was expected.",
     /*recovery*/            "Correct the statement text.",
-    /*dummy*/               (char*)0,
-    /*dummy*/               (char*)0,
+    /*dummy*/               nullptr,
+    /*dummy*/               nullptr,
     },
 
 // -------------------------------------------------------------------------
@@ -1252,8 +1252,8 @@ vector<errtable_t> errtable_vp = {
     /*err msg*/             "MISSING ARRAY-VARIABLE",
     /*cause*/               "An array-variable was expected.",
     /*recovery*/            "Correct the statement text.",
-    /*dummy*/               (char*)0,
-    /*dummy*/               (char*)0,
+    /*dummy*/               nullptr,
+    /*dummy*/               nullptr,
     },
 
 // -------------------------------------------------------------------------
@@ -1262,8 +1262,8 @@ vector<errtable_t> errtable_vp = {
     /*err msg*/             "MISSING NUMERIC-ARRAY",
     /*cause*/               "A numeric-array is required in the specified program statement syntax.",
     /*recovery*/            "Correct the program statement.",
-    /*dummy*/               (char*)0,
-    /*dummy*/               (char*)0,
+    /*dummy*/               nullptr,
+    /*dummy*/               nullptr,
     },
 
 // -------------------------------------------------------------------------
@@ -1272,8 +1272,8 @@ vector<errtable_t> errtable_vp = {
     /*err msg*/             "MISSING ALPHA-ARRAY",
     /*cause*/               "An alpha-array is required in the specified program statement syntax.",
     /*recovery*/            "Correct the program statement.",
-    /*dummy*/               (char*)0,
-    /*dummy*/               (char*)0,
+    /*dummy*/               nullptr,
+    /*dummy*/               nullptr,
     },
 
 // -------------------------------------------------------------------------
@@ -1282,8 +1282,8 @@ vector<errtable_t> errtable_vp = {
     /*err msg*/             "MISSING ALPHANUMERIC-VARIABLE",
     /*cause*/               "An alphanumeric-variable was expected.",
     /*recovery*/            "Correct the statement text.",
-    /*dummy*/               (char*)0,
-    /*dummy*/               (char*)0,
+    /*dummy*/               nullptr,
+    /*dummy*/               nullptr,
     },
 
 // -------------------------------------------------------------------------
@@ -1292,8 +1292,8 @@ vector<errtable_t> errtable_vp = {
     /*err msg*/             "START > END",
     /*cause*/               "The starting value is greater than the ending value.",
     /*recovery*/            "Correct the statement in error.",
-    /*dummy*/               (char*)0,
-    /*dummy*/               (char*)0,
+    /*dummy*/               nullptr,
+    /*dummy*/               nullptr,
     },
 
 // -------------------------------------------------------------------------
@@ -1302,8 +1302,8 @@ vector<errtable_t> errtable_vp = {
     /*err msg*/             "LINE-NUMBER CONFLICT",
     /*cause*/               "The RENUMBER command cannot be executed. The renumbered program text must\nfit between existing (nonrenumbered) program lines.",
     /*recovery*/            "Correct the RENUMBER command.",
-    /*dummy*/               (char*)0,
-    /*dummy*/               (char*)0,
+    /*dummy*/               nullptr,
+    /*dummy*/               nullptr,
     },
 
 // -------------------------------------------------------------------------
@@ -1312,8 +1312,8 @@ vector<errtable_t> errtable_vp = {
     /*err msg*/             "ILLEGAL VALUE",
     /*cause*/               "The value exceeds the allowed limit.",
     /*recovery*/            "Correct the program or data.",
-    /*dummy*/               (char*)0,
-    /*dummy*/               (char*)0,
+    /*dummy*/               nullptr,
+    /*dummy*/               nullptr,
     },
 
 // -------------------------------------------------------------------------
@@ -1322,8 +1322,8 @@ vector<errtable_t> errtable_vp = {
     /*err msg*/             "NO PROGRAM IN MEMORY",
     /*cause*/               "A RUN command was entered but there are no program statements in memory.",
     /*recovery*/            "Enter the program statements or load a program.",
-    /*dummy*/               (char*)0,
-    /*dummy*/               (char*)0,
+    /*dummy*/               nullptr,
+    /*dummy*/               nullptr,
     },
 
 // -------------------------------------------------------------------------
@@ -1332,8 +1332,8 @@ vector<errtable_t> errtable_vp = {
     /*err msg*/             "UNDEFINED LINE-NUMBER OR ILLEGAL CONTINUE COMMAND",
     /*cause*/               "A referenced line-number is undefined, or the user is attempting to\nCONTINUE program execution after one of the following conditions has occurred:\nA Stack or Memory Overflow error, entry of a new variable or a CLEAR\ncommand, modification of the user program text, or depressing the RESET Key.",
     /*recovery*/            "Correct the statement text, or rerun the program with RUN.",
-    /*dummy*/               (char*)0,
-    /*dummy*/               (char*)0,
+    /*dummy*/               nullptr,
+    /*dummy*/               nullptr,
     },
 
 // -------------------------------------------------------------------------
@@ -1342,8 +1342,8 @@ vector<errtable_t> errtable_vp = {
     /*err msg*/             "UNDEFINED MARKED SUBROUTINE",
     /*cause*/               "There is no DEFFN' statement in the program corresponding to the GOSUB'\nstatement that was to be executed.",
     /*recovery*/            "Correct the program.",
-    /*dummy*/               (char*)0,
-    /*dummy*/               (char*)0,
+    /*dummy*/               nullptr,
+    /*dummy*/               nullptr,
     },
 
 // -------------------------------------------------------------------------
@@ -1352,8 +1352,8 @@ vector<errtable_t> errtable_vp = {
     /*err msg*/             "UNDEFINED FN FUNCTION",
     /*cause*/               "An undefined FN function was referenced.",
     /*recovery*/            "Correct the program by defining the function or referencing it correctly.",
-    /*dummy*/               (char*)0,
-    /*dummy*/               (char*)0,
+    /*dummy*/               nullptr,
+    /*dummy*/               nullptr,
     },
 
 // -------------------------------------------------------------------------
@@ -1362,8 +1362,8 @@ vector<errtable_t> errtable_vp = {
     /*err msg*/             "FN'S NESTED TOO DEEP",
     /*cause*/               "More than five levels of nesting were encountered when evaluating an\nFN function.",
     /*recovery*/            "Reduce the number of nested functions.",
-    /*dummy*/               (char*)0,
-    /*dummy*/               (char*)0,
+    /*dummy*/               nullptr,
+    /*dummy*/               nullptr,
     },
 
 // -------------------------------------------------------------------------
@@ -1372,8 +1372,8 @@ vector<errtable_t> errtable_vp = {
     /*err msg*/             "NO CORRESPONDING \"FOR\" FOR \"NEXT\" STATEMENT",
     /*cause*/               "There is no companion FOR statement for a NEXT statement, or a branch was\nmade into the middle of a FOR/NEXT Loop.",
     /*recovery*/            "Correct the program.",
-    /*dummy*/               (char*)0,
-    /*dummy*/               (char*)0,
+    /*dummy*/               nullptr,
+    /*dummy*/               nullptr,
     },
 
 // -------------------------------------------------------------------------
@@ -1382,8 +1382,8 @@ vector<errtable_t> errtable_vp = {
     /*err msg*/             "RETURN WITHOUT GOSUB",
     /*cause*/               "A RETURN statement was executed without first executing a GOSUB or GOSUB'\nstatement (e.g., a branch was made into the middle of a subroutine).",
     /*recovery*/            "Correct the program.",
-    /*dummy*/               (char*)0,
-    /*dummy*/               (char*)0,
+    /*dummy*/               nullptr,
+    /*dummy*/               nullptr,
     },
 
 // -------------------------------------------------------------------------
@@ -1392,8 +1392,8 @@ vector<errtable_t> errtable_vp = {
     /*err msg*/             "ILLEGAL IMAGE",
     /*cause*/               "The image is not legal in this context. For example, the image referenced\nby PRINTUSING does not contain a format-specification.",
     /*recovery*/            "Correct the program.",
-    /*dummy*/               (char*)0,
-    /*dummy*/               (char*)0,
+    /*dummy*/               nullptr,
+    /*dummy*/               nullptr,
     },
 
 // -------------------------------------------------------------------------
@@ -1402,8 +1402,8 @@ vector<errtable_t> errtable_vp = {
     /*err msg*/             "ILLEGAL MATRIX OPERAND",
     /*cause*/               "The same array-name appears on both sides of the equation in a MAT\nmultiplication or MAT transposition statement.",
     /*recovery*/            "Correct the statement.",
-    /*dummy*/               (char*)0,
-    /*dummy*/               (char*)0,
+    /*dummy*/               nullptr,
+    /*dummy*/               nullptr,
     },
 
 // -------------------------------------------------------------------------
@@ -1412,8 +1412,8 @@ vector<errtable_t> errtable_vp = {
     /*err msg*/             "MATRIX NOT SQUARE",
     /*cause*/               "The dimensions of the operand in a MAT inversion or identity are not equal.",
     /*recovery*/            "Correct the array dimensions.",
-    /*dummy*/               (char*)0,
-    /*dummy*/               (char*)0,
+    /*dummy*/               nullptr,
+    /*dummy*/               nullptr,
     },
 
 // -------------------------------------------------------------------------
@@ -1422,8 +1422,8 @@ vector<errtable_t> errtable_vp = {
     /*err msg*/             "OPERAND DIMENSIONS NOT COMPATIBLE",
     /*cause*/               "The dimensions of the operands in a MAT statement are not compatible;\nthe operation cannot be performed.",
     /*recovery*/            "Correct the dimensions of the arrays.",
-    /*dummy*/               (char*)0,
-    /*dummy*/               (char*)0,
+    /*dummy*/               nullptr,
+    /*dummy*/               nullptr,
     },
 
 // -------------------------------------------------------------------------
@@ -1432,8 +1432,8 @@ vector<errtable_t> errtable_vp = {
     /*err msg*/             "ILLEGAL MICROCOMMAND",
     /*cause*/               "A microcommand in the specified $GIO sequence is illegal or undefined.",
     /*recovery*/            "Use only legal or defined microcommands.",
-    /*dummy*/               (char*)0,
-    /*dummy*/               (char*)0,
+    /*dummy*/               nullptr,
+    /*dummy*/               nullptr,
     },
 
 // -------------------------------------------------------------------------
@@ -1442,8 +1442,8 @@ vector<errtable_t> errtable_vp = {
     /*err msg*/             "MISSING BUFFER VARIABLE",
     /*cause*/               "A buffer (Arg-3) in the $GIO statement was omitted for a data input,\ndata output, or data verify microcommand.",
     /*recovery*/            "Define the buffer if it was omitted.",
-    /*dummy*/               (char*)0,
-    /*dummy*/               (char*)0,
+    /*dummy*/               nullptr,
+    /*dummy*/               nullptr,
     },
 
 // -------------------------------------------------------------------------
@@ -1452,8 +1452,8 @@ vector<errtable_t> errtable_vp = {
     /*err msg*/             "ILLEGAL DEVICE SPECIFICATION",
     /*cause*/               "The #n file-number in a program statement is undefined, or the device-address\nis illegal. On the MVP, the selected device is not contained in the Master\nDevice Table; the error is signalled when communication is attempted and\nnot when the SELECT statement is executed.",
     /*recovery*/            "Define the specified file-number in a SELECT statement, or correct the\ndevice-address. (recoverable error)",
-    /*dummy*/               (char*)0,
-    /*dummy*/               (char*)0,
+    /*dummy*/               nullptr,
+    /*dummy*/               nullptr,
     },
 
 // -------------------------------------------------------------------------
@@ -1462,8 +1462,8 @@ vector<errtable_t> errtable_vp = {
     /*err msg*/             "INTERRUPT TABLE FULL",
     /*cause*/               "Interrupts were defined for more than eight devices.  The maximum number\nof devices allowed is eight.",
     /*recovery*/            "Reduce the number of interrupts.",
-    /*dummy*/               (char*)0,
-    /*dummy*/               (char*)0,
+    /*dummy*/               nullptr,
+    /*dummy*/               nullptr,
     },
 
 // -------------------------------------------------------------------------
@@ -1475,8 +1475,8 @@ vector<errtable_t> errtable_vp = {
                             "    two-dimensional array: 1 <= dimension < 256\n"
                             "    alpha-variable length: 1 <= length < 125",
     /*recovery*/            "Correct the dimension or variable length.",
-    /*dummy*/               (char*)0,
-    /*dummy*/               (char*)0,
+    /*dummy*/               nullptr,
+    /*dummy*/               nullptr,
     },
 
 // -------------------------------------------------------------------------
@@ -1485,8 +1485,8 @@ vector<errtable_t> errtable_vp = {
     /*err msg*/             "VARIABLE OR VALUE TOO SHORT",
     /*cause*/               "The length of the variable or value is too small for the specified operation.",
     /*recovery*/            "Correct the program.",
-    /*dummy*/               (char*)0,
-    /*dummy*/               (char*)0,
+    /*dummy*/               nullptr,
+    /*dummy*/               nullptr,
     },
 
 // -------------------------------------------------------------------------
@@ -1495,8 +1495,8 @@ vector<errtable_t> errtable_vp = {
     /*err msg*/             "VARIABLE OR VALUE TOO LONG",
     /*cause*/               "The length of the variable or value is too long for the specified operation.",
     /*recovery*/            "Correct the statement or command.",
-    /*dummy*/               (char*)0,
-    /*dummy*/               (char*)0,
+    /*dummy*/               nullptr,
+    /*dummy*/               nullptr,
     },
 
 // -------------------------------------------------------------------------
@@ -1505,8 +1505,8 @@ vector<errtable_t> errtable_vp = {
     /*err msg*/             "NONCOMMON VARIABLES ALREADY DEFINED",
     /*cause*/               "A COM statement was preceded by a noncommon variable definition.",
     /*recovery*/            "Correct the program by making all COM statements the first-numbered lines,\nor clear the noncommon variables with a CLEAR N command.",
-    /*dummy*/               (char*)0,
-    /*dummy*/               (char*)0,
+    /*dummy*/               nullptr,
+    /*dummy*/               nullptr,
     },
 
 // -------------------------------------------------------------------------
@@ -1515,8 +1515,8 @@ vector<errtable_t> errtable_vp = {
     /*err msg*/             "COMMON VARIABLE REQUIRED",
     /*cause*/               "The variable in the LOAD DA statement (used to receive the sector address\nof the next available sector after the load) or the variable containing\nthe program name(s) in a multiple-file LOAD command is not a common variable.",
     /*recovery*/            "Redefine the variable to be common.",
-    /*dummy*/               (char*)0,
-    /*dummy*/               (char*)0,
+    /*dummy*/               nullptr,
+    /*dummy*/               nullptr,
     },
 
 // -------------------------------------------------------------------------
@@ -1525,8 +1525,8 @@ vector<errtable_t> errtable_vp = {
     /*err msg*/             "UNDEFINED VARIABLE (PROGRAM NOT RESOLVED)",
     /*cause*/               "An array which was not defined properly in a DIM or COM statement is\nreferenced in the program, or a variable has been encountered which was not\ndefined because the program was not resolved (e.g., a Special Function Key\nwas used to initiate program execution, but the program was never RUN).",
     /*recovery*/            "Correct the text or RUN the program.",
-    /*dummy*/               (char*)0,
-    /*dummy*/               (char*)0,
+    /*dummy*/               nullptr,
+    /*dummy*/               nullptr,
     },
 
 // -------------------------------------------------------------------------
@@ -1535,8 +1535,8 @@ vector<errtable_t> errtable_vp = {
     /*err msg*/             "ILLEGAL SUBSCRIPTS",
     /*cause*/               "The variable subscripts exceed the defined array dimensions or the\ndimensions of the variable, which were defined in a DIM or COM statement,\ndo not agree with the array definition.",
     /*recovery*/            "Change the variable subscripts or the variable definition in a\nDIM or COM statement.",
-    /*dummy*/               (char*)0,
-    /*dummy*/               (char*)0,
+    /*dummy*/               nullptr,
+    /*dummy*/               nullptr,
     },
 
 // -------------------------------------------------------------------------
@@ -1545,8 +1545,8 @@ vector<errtable_t> errtable_vp = {
     /*err msg*/             "ILLEGAL STR ARGUMENTS",
     /*cause*/               "The STR function arguments exceed the maximum defined length of the\nalpha-variable.",
     /*recovery*/            "Correct the STR arguments, or redefine the alpha-variable.",
-    /*dummy*/               (char*)0,
-    /*dummy*/               (char*)0,
+    /*dummy*/               nullptr,
+    /*dummy*/               nullptr,
     },
 
 // -------------------------------------------------------------------------
@@ -1555,8 +1555,8 @@ vector<errtable_t> errtable_vp = {
     /*err msg*/             "ILLEGAL FIELD/DELIMITER SPECIFICATION",
     /*cause*/               "The field or delimiter specification in a $PACK or $UNPACK statement\nis illegal.",
     /*recovery*/            "Correct the illegal field or delimiter specification.",
-    /*dummy*/               (char*)0,
-    /*dummy*/               (char*)0,
+    /*dummy*/               nullptr,
+    /*dummy*/               nullptr,
     },
 
 // -------------------------------------------------------------------------
@@ -1565,8 +1565,8 @@ vector<errtable_t> errtable_vp = {
     /*err msg*/             "ILLEGAL REDIMENSION",
     /*cause*/               "The space required to redimension the array is greater than the space\ninitially reserved for the array.",
     /*recovery*/            "Reserve more space for the array in the initial DIM or COM statement,\nor redimension the array to fit in the available space.",
-    /*dummy*/               (char*)0,
-    /*dummy*/               (char*)0,
+    /*dummy*/               nullptr,
+    /*dummy*/               nullptr,
     },
 
 // -------------------------------------------------------------------------
@@ -1575,8 +1575,8 @@ vector<errtable_t> errtable_vp = {
     /*err msg*/             "UNDERFLOW",
     /*cause*/               "The absolute value of the calculated result was less than 1E-99 but\ngreater than zero.",
     /*recovery*/            "Correct the program or the data. Underflow errors can be suppressed by\nexecuting SELECT ERROR > 60; a default value of zero will be used.",
-    /*dummy*/               (char*)0,
-    /*dummy*/               (char*)0,
+    /*dummy*/               nullptr,
+    /*dummy*/               nullptr,
     },
 
 // -------------------------------------------------------------------------
@@ -1585,8 +1585,8 @@ vector<errtable_t> errtable_vp = {
     /*err msg*/             "OVERFLOW",
     /*cause*/               "The absolute value of the calculated result was greater than 9.999999999999E+99.",
     /*recovery*/            "Correct the program or the data. Overflow errors can be suppressed by\nexecuting SELECT ERROR > 61; a default value of ±9.999999999999E+99 will be used.",
-    /*dummy*/               (char*)0,
-    /*dummy*/               (char*)0,
+    /*dummy*/               nullptr,
+    /*dummy*/               nullptr,
     },
 
 // -------------------------------------------------------------------------
@@ -1595,8 +1595,8 @@ vector<errtable_t> errtable_vp = {
     /*err msg*/             "DIVISION BY ZERO",
     /*cause*/               "Division by a value of zero is a mathematically undefined operation.",
     /*recovery*/            "Correct the program or the data. A division-by-zero error can be\nsuppressed by executing SELECT ERROR > 62; a default value of\n±9.999999999999E+99 will be used.",
-    /*dummy*/               (char*)0,
-    /*dummy*/               (char*)0,
+    /*dummy*/               nullptr,
+    /*dummy*/               nullptr,
     },
 
 // -------------------------------------------------------------------------
@@ -1605,8 +1605,8 @@ vector<errtable_t> errtable_vp = {
     /*err msg*/             "ZERO DIVIDED BY ZERO OR ZERO ^ ZERO",
     /*cause*/               "A mathematically indeterminate operation (0/0 or 0^0) was attempted.",
     /*recovery*/            "Correct the program or the data. Errors of this type can be suppressed by\nexecuting SELECT ERROR > 63; a default value of 0 will be used.",
-    /*dummy*/               (char*)0,
-    /*dummy*/               (char*)0,
+    /*dummy*/               nullptr,
+    /*dummy*/               nullptr,
     },
 
 // -------------------------------------------------------------------------
@@ -1615,8 +1615,8 @@ vector<errtable_t> errtable_vp = {
     /*err msg*/             "ZERO RAISED TO NEGATIVE POWER",
     /*cause*/               "Zero raised to a negative power is a mathematically undefined operation.",
     /*recovery*/            "Correct the program or the data. This error can be suppressed by executing\nSELECT ERROR > 64; a default value of 9.999999999999E+99 will be used.",
-    /*dummy*/               (char*)0,
-    /*dummy*/               (char*)0,
+    /*dummy*/               nullptr,
+    /*dummy*/               nullptr,
     },
 
 // -------------------------------------------------------------------------
@@ -1625,8 +1625,8 @@ vector<errtable_t> errtable_vp = {
     /*err msg*/             "NEGATIVE NUMBER RAISED TO NONINTEGER POWER",
     /*cause*/               "This is a mathematically undefined operation.",
     /*recovery*/            "Correct the program or the data. This error can be suppressed by executing\nSELECT ERROR > 65; a default value of the absolute value of the negative\nnumber raised to the noninteger power will be used.",
-    /*dummy*/               (char*)0,
-    /*dummy*/               (char*)0,
+    /*dummy*/               nullptr,
+    /*dummy*/               nullptr,
     },
 
 // -------------------------------------------------------------------------
@@ -1635,8 +1635,8 @@ vector<errtable_t> errtable_vp = {
     /*err msg*/             "SQUARE ROOT OF NEGATIVE VALUE",
     /*cause*/               "This is a mathematically undefined operation.",
     /*recovery*/            "Correct the program or the data. This error can be suppressed by executing\nSELECT ERROR > 66; a default value of SQR(ABS(X)), where X is the negative\nvalue, will be used.",
-    /*dummy*/               (char*)0,
-    /*dummy*/               (char*)0,
+    /*dummy*/               nullptr,
+    /*dummy*/               nullptr,
     },
 
 // -------------------------------------------------------------------------
@@ -1645,8 +1645,8 @@ vector<errtable_t> errtable_vp = {
     /*err msg*/             "LOG OF ZERO",
     /*cause*/               "This is a mathematically undefined operation.",
     /*recovery*/            "Correct the program or the data. This error can be suppressed by executing\nSELECT ERROR > 67; a default value of -9.999999999999E±99 will be used.",
-    /*dummy*/               (char*)0,
-    /*dummy*/               (char*)0,
+    /*dummy*/               nullptr,
+    /*dummy*/               nullptr,
     },
 
 // -------------------------------------------------------------------------
@@ -1655,8 +1655,8 @@ vector<errtable_t> errtable_vp = {
     /*err msg*/             "LOG OF NEGATIVE VALUE",
     /*cause*/               "This is a mathematically undefined operation.",
     /*recovery*/            "Correct the program or the data.  This error can be suppressed by executing\nSELECT ERROR > 68; a default value of the LOG of the absolute value of the\nnumber will be used.",
-    /*dummy*/               (char*)0,
-    /*dummy*/               (char*)0,
+    /*dummy*/               nullptr,
+    /*dummy*/               nullptr,
     },
 
 // -------------------------------------------------------------------------
@@ -1665,8 +1665,8 @@ vector<errtable_t> errtable_vp = {
     /*err msg*/             "ARGUMENT TOO LARGE",
     /*cause*/               "The absolute value of the SIN, COS, or TAN function is >= 1E+10; the\nsystem cannot evaluate the function meaningfully. Or, the absolute value of\nthe ARCSIN, ARCCOS, or ARCTAN argument is > 1.0; the value of the function\nis mathematically undefined.",
     /*recovery*/            "Correct the program or the data. This error can be suppressed by executing\nSELECT ERROR > 69; a default value of zero will be used.",
-    /*dummy*/               (char*)0,
-    /*dummy*/               (char*)0,
+    /*dummy*/               nullptr,
+    /*dummy*/               nullptr,
     },
 
 // -------------------------------------------------------------------------
@@ -1675,8 +1675,8 @@ vector<errtable_t> errtable_vp = {
     /*err msg*/             "INSUFFICIENT DATA",
     /*cause*/               "There are not enough DATA values to satisfy READ or RESTORE statement\nrequirements.",
     /*recovery*/            "Correct the program to supply additional DATA, or modify the READ or\nRESTORE statement.",
-    /*dummy*/               (char*)0,
-    /*dummy*/               (char*)0,
+    /*dummy*/               nullptr,
+    /*dummy*/               nullptr,
     },
 
 // -------------------------------------------------------------------------
@@ -1685,8 +1685,8 @@ vector<errtable_t> errtable_vp = {
     /*err msg*/             "VALUE EXCEEDS FORMAT",
     /*cause*/               "The number of integer digits in the PACK or CONVERT image specification is\ninsufficient to express the value of the number being packed or converted.",
     /*recovery*/            "Change the image specification.",
-    /*dummy*/               (char*)0,
-    /*dummy*/               (char*)0,
+    /*dummy*/               nullptr,
+    /*dummy*/               nullptr,
     },
 
 // -------------------------------------------------------------------------
@@ -1695,8 +1695,8 @@ vector<errtable_t> errtable_vp = {
     /*err msg*/             "SINGULAR MATRIX",
     /*cause*/               "The operand in a MAT inversion statement is singular and cannot be inverted.",
     /*recovery*/            "Correct the program or the data. Inclusion of a normalized determinant\nparameter in the MAT INV statement will eliminate this error; however, the\ndeterminant must be checked by the application program following the\ninversion.",
-    /*dummy*/               (char*)0,
-    /*dummy*/               (char*)0,
+    /*dummy*/               nullptr,
+    /*dummy*/               nullptr,
     },
 
 // -------------------------------------------------------------------------
@@ -1705,8 +1705,8 @@ vector<errtable_t> errtable_vp = {
     /*err msg*/             "ILLEGAL INPUT DATA",
     /*cause*/               "The value entered as requested by an INPUT statement is expressed in an\nillegal format.",
     /*recovery*/            "Reenter the data in the correct format starting with the erroneous number,\nor terminate run with RESET and RUN again. Alternatively, LINPUT can be\nused to enter the data, and the data can be verified within he application\nprogram.",
-    /*dummy*/               (char*)0,
-    /*dummy*/               (char*)0,
+    /*dummy*/               nullptr,
+    /*dummy*/               nullptr,
     },
 
 // -------------------------------------------------------------------------
@@ -1715,8 +1715,8 @@ vector<errtable_t> errtable_vp = {
     /*err msg*/             "WRONG VARIABLE TYPE",
     /*cause*/               "The variable type (alpha or numeric) does not agree with the data type.\nFor example, during a DATALOAD DC operation a numeric value was expected,\nbut an alphanumeric value was read.",
     /*recovery*/            "Correct the program or the data, or verify that the proper file is being\naccessed.",
-    /*dummy*/               (char*)0,
-    /*dummy*/               (char*)0,
+    /*dummy*/               nullptr,
+    /*dummy*/               nullptr,
     },
 
 // -------------------------------------------------------------------------
@@ -1725,8 +1725,8 @@ vector<errtable_t> errtable_vp = {
     /*err msg*/             "ILLEGAL NUMBER",
     /*cause*/               "The format of a number is illegal.",
     /*recovery*/            "Correct the number.",
-    /*dummy*/               (char*)0,
-    /*dummy*/               (char*)0,
+    /*dummy*/               nullptr,
+    /*dummy*/               nullptr,
     },
 
 // -------------------------------------------------------------------------
@@ -1735,8 +1735,8 @@ vector<errtable_t> errtable_vp = {
     /*err msg*/             "BUFFER EXCEEDED",
     /*cause*/               "The buffer variable is too small or too large for the specified operation.",
     /*recovery*/            "Change the size of the buffer variable.",
-    /*dummy*/               (char*)0,
-    /*dummy*/               (char*)0,
+    /*dummy*/               nullptr,
+    /*dummy*/               nullptr,
     },
 
 // -------------------------------------------------------------------------
@@ -1745,8 +1745,8 @@ vector<errtable_t> errtable_vp = {
     /*err msg*/             "INVALID PARTITION REFERENCE",
     /*cause*/               "The partition referenced by SELECT @PART or $RELEASE TERMINAL is not\ndefined, or the name specified by DEFFN @PART has already been used.",
     /*recovery*/            "Use the proper partition name; wait for the global partition to be defined.",
-    /*dummy*/               (char*)0,
-    /*dummy*/               (char*)0,
+    /*dummy*/               nullptr,
+    /*dummy*/               nullptr,
     },
 
 // -------------------------------------------------------------------------
@@ -1755,8 +1755,8 @@ vector<errtable_t> errtable_vp = {
     /*err msg*/             "FILE NOT OPEN",
     /*cause*/               "The file was not opened.",
     /*recovery*/            "Open the file before attempting to read from it or write to it.",
-    /*dummy*/               (char*)0,
-    /*dummy*/               (char*)0,
+    /*dummy*/               nullptr,
+    /*dummy*/               nullptr,
     },
 
 // -------------------------------------------------------------------------
@@ -1765,8 +1765,8 @@ vector<errtable_t> errtable_vp = {
     /*err msg*/             "FILE FULL",
     /*cause*/               "The file is full; no more information may be written into the file.",
     /*recovery*/            "Correct the program, or use MOVE to move the file to another platter and\nreserve additional space for it.",
-    /*dummy*/               (char*)0,
-    /*dummy*/               (char*)0,
+    /*dummy*/               nullptr,
+    /*dummy*/               nullptr,
     },
 
 // -------------------------------------------------------------------------
@@ -1775,8 +1775,8 @@ vector<errtable_t> errtable_vp = {
     /*err msg*/             "FILE NOT IN CATALOG",
     /*cause*/               "A nonexistent file name was specified, or an attempt was made to load a\ndata file as a program file or a program file as a data file.",
     /*recovery*/            "Make sure the correct file name is being used, the proper disk platter is\nmounted, and the proper disk drive is being accessed.",
-    /*dummy*/               (char*)0,
-    /*dummy*/               (char*)0,
+    /*dummy*/               nullptr,
+    /*dummy*/               nullptr,
     },
 
 // -------------------------------------------------------------------------
@@ -1785,8 +1785,8 @@ vector<errtable_t> errtable_vp = {
     /*err msg*/             "FILE ALREADY CATALOGED",
     /*cause*/               "An attempt was made to catalog a file with a name that already exists in\nthe Catalog Index.",
     /*recovery*/            "Use a different name, or catalog the file on a different platter.",
-    /*dummy*/               (char*)0,
-    /*dummy*/               (char*)0,
+    /*dummy*/               nullptr,
+    /*dummy*/               nullptr,
     },
 
 // -------------------------------------------------------------------------
@@ -1795,8 +1795,8 @@ vector<errtable_t> errtable_vp = {
     /*err msg*/             "FILE NOT SCRATCHED",
     /*cause*/               "An attempt was made to rename or write over a file that has not been\nscratched.",
     /*recovery*/            "Scratch the file before renaming it.",
-    /*dummy*/               (char*)0,
-    /*dummy*/               (char*)0,
+    /*dummy*/               nullptr,
+    /*dummy*/               nullptr,
     },
 
 // -------------------------------------------------------------------------
@@ -1805,8 +1805,8 @@ vector<errtable_t> errtable_vp = {
     /*err msg*/             "CATALOG INDEX FULL",
     /*cause*/               "There is no more room in the Catalog Index for a new name.",
     /*recovery*/            "Scratch any unwanted files and compress the catalog using a MOVE statement,\nor mount a new disk platter and create a new catalog.",
-    /*dummy*/               (char*)0,
-    /*dummy*/               (char*)0,
+    /*dummy*/               nullptr,
+    /*dummy*/               nullptr,
     },
 
 // -------------------------------------------------------------------------
@@ -1815,8 +1815,8 @@ vector<errtable_t> errtable_vp = {
     /*err msg*/             "CATALOG END ERROR",
     /*cause*/               "The end of the Catalog Area is defined to fall within the Catalog Index,\nor an attempt has been made to move the end of the Catalog Area to fall\nwithin the area already occupied by cataloged files (with MOVE END),\nor there is no room left in the Catalog Area to store more information.",
     /*recovery*/            "Either correct the SCRATCH DISK or MOVE END statement, increase the size\nof the Catalog Area with MOVE END, scratch unwanted files and compress the\ncatalog with MOVE, or open a new catalog on a separate platter.",
-    /*dummy*/               (char*)0,
-    /*dummy*/               (char*)0,
+    /*dummy*/               nullptr,
+    /*dummy*/               nullptr,
     },
 
 // -------------------------------------------------------------------------
@@ -1825,8 +1825,8 @@ vector<errtable_t> errtable_vp = {
     /*err msg*/             "NO END-OF-FILE",
     /*cause*/               "No end-of-file record was recorded in the file by using either a\nDATASAVE DC END or a DATASAVE DA END statement and, therefore, none could\nbe found by the DSKIP END statement.",
     /*recovery*/            "Correct the file by writing an end-of-file trailer after the last data record.",
-    /*dummy*/               (char*)0,
-    /*dummy*/               (char*)0,
+    /*dummy*/               nullptr,
+    /*dummy*/               nullptr,
     },
 
 // -------------------------------------------------------------------------
@@ -1835,8 +1835,8 @@ vector<errtable_t> errtable_vp = {
     /*err msg*/             "WRONG RECORD TYPE",
     /*cause*/               "A program record was encountered when a data record was expected, or a\ndata record was encountered when a program record was expected.",
     /*recovery*/            "Correct the program. Be sure the proper platter is mounted and be sure the\nproper drive is being accessed.",
-    /*dummy*/               (char*)0,
-    /*dummy*/               (char*)0,
+    /*dummy*/               nullptr,
+    /*dummy*/               nullptr,
     },
 
 // -------------------------------------------------------------------------
@@ -1845,8 +1845,8 @@ vector<errtable_t> errtable_vp = {
     /*err msg*/             "SECTOR ADDRESS BEYOND END-OF-FILE",
     /*cause*/               "The sector address being accessed by the DATALOAD DC or DATASAVE DC\noperation is beyond the end-of-file. This error can be caused by a bad\ndisk platter.",
     /*recovery*/            "Run the program again. If the error persists, use a different platter or\nreformat the platter. If the error still exists, contact your Wang Service\nRepresentative.",
-    /*dummy*/               (char*)0,
-    /*dummy*/               (char*)0,
+    /*dummy*/               nullptr,
+    /*dummy*/               nullptr,
     },
 
 // -------------------------------------------------------------------------
@@ -1855,8 +1855,8 @@ vector<errtable_t> errtable_vp = {
     /*err msg*/             "DISK HARDWARE ERROR",
     /*cause*/               "The disk did not respond properly to the system at the beginning of a read\nor write operation; the read or write has not been performed.",
     /*recovery*/            "Key RESET and run the program again. If the error persists, ensure that\nthe disk unit is powered on and that all cables are properly connected.\nIf the error still occurs, contact your Wang Service Representative.",
-    /*dummy*/               (char*)0,
-    /*dummy*/               (char*)0,
+    /*dummy*/               nullptr,
+    /*dummy*/               nullptr,
     },
 
 // -------------------------------------------------------------------------
@@ -1867,8 +1867,8 @@ vector<errtable_t> errtable_vp = {
     /*recovery*/            "Key RESET and run the program again. If the error recurs, check to ensure\nthat the program is addressing the correct disk platter. Be sure the disk\nis turned on, properly set up for operation, and that all cables are\nproperly connected. Set the disk into LOAD mode and then back into RUN mode\nby using the RUN/LOAD selection switch. If the error persists, call your\nWang Service Representative.\n"
                             "\n"
                             "NOTE: The disk must never be left in LOAD mode for an extended period\nof time when the power is on.",
-    /*dummy*/               (char*)0,
-    /*dummy*/               (char*)0,
+    /*dummy*/               nullptr,
+    /*dummy*/               nullptr,
     },
 
 // -------------------------------------------------------------------------
@@ -1877,8 +1877,8 @@ vector<errtable_t> errtable_vp = {
     /*err msg*/             "TIMEOUT ERROR",
     /*cause*/               "The device did not respond to the system in the proper amount of time\n(time-out). In the case of the disk, the read or write operation has not\nbeen performed.",
     /*recovery*/            "Key RESET and run the program again. If the error persists, be sure that\nthe disk platter has been formatted. If the error still occurs, contact\nyour Wang Service Representative.",
-    /*dummy*/               (char*)0,
-    /*dummy*/               (char*)0,
+    /*dummy*/               nullptr,
+    /*dummy*/               nullptr,
     },
 
 // -------------------------------------------------------------------------
@@ -1887,8 +1887,8 @@ vector<errtable_t> errtable_vp = {
     /*err msg*/             "FORMAT ERROR",
     /*cause*/               "A format error was detected during a disk operation. This error indicates\nthat certain sector-control information is invalid. If this error occurs\nduring a read or write operation, the platter may need to be reformatted.\nIf this error occurs during formatting, there may be a flaw on the\nplatter's surface.",
     /*recovery*/            "Format the disk platter again. If the error persists, replace the media.\nIf the error con tinues, call your Wang Service Representative.",
-    /*dummy*/               (char*)0,
-    /*dummy*/               (char*)0,
+    /*dummy*/               nullptr,
+    /*dummy*/               nullptr,
     },
 
 // -------------------------------------------------------------------------
@@ -1897,8 +1897,8 @@ vector<errtable_t> errtable_vp = {
     /*err msg*/             "FORMAT KEY ENGAGED",
     /*cause*/               "The disk format key is engaged. The key should be engaged only when\nformatting a disk.",
     /*recovery*/            "Turn off the format key.",
-    /*dummy*/               (char*)0,
-    /*dummy*/               (char*)0,
+    /*dummy*/               nullptr,
+    /*dummy*/               nullptr,
     },
 
 // -------------------------------------------------------------------------
@@ -1907,8 +1907,8 @@ vector<errtable_t> errtable_vp = {
     /*err msg*/             "DEVICE ERROR",
     /*cause*/               "A device fault occurred indicating that the disk could not perform the\nrequested operation. This error may result from an attempt to write to a\nwrite-protected platter.",
     /*recovery*/            "If writing, make sure the platter is not write-protected. Repeat the\noperation. If the error persists, power the disk off and then on, and then\nrepeat the operation. If the error still occurs, call your Wang Service\nRepresentative.",
-    /*dummy*/               (char*)0,
-    /*dummy*/               (char*)0,
+    /*dummy*/               nullptr,
+    /*dummy*/               nullptr,
     },
 
 // -------------------------------------------------------------------------
@@ -1917,8 +1917,8 @@ vector<errtable_t> errtable_vp = {
     /*err msg*/             "DATA ERROR",
     /*cause*/               "For read operations, the checksum calculations (CRC or ECC) indicate that\nthe data read is incorrect. The sector read may have been written incorrectly.\nFor disk drives that perform error correction (EC C), the error correction\nattempt was unsuccessful For write operations, the LRC calculation indicates\nthat the data sent to the disk was incorrect. The data has not been written.",
     /*recovery*/            "For read errors, rewrite the data. If read errors persist, the disk\nplatter should be reformatted. For write errors, the write operation should\nbe repeated. If write errors persist, ensure that all cable connections are\nproperly made and are tight. If either error persists, contact your Wang\nService Representative.",
-    /*dummy*/               (char*)0,
-    /*dummy*/               (char*)0,
+    /*dummy*/               nullptr,
+    /*dummy*/               nullptr,
     },
 
 // -------------------------------------------------------------------------
@@ -1927,8 +1927,8 @@ vector<errtable_t> errtable_vp = {
     /*err msg*/             "LONGITUDINAL REDUNDANCY CHECK ERROR",
     /*cause*/               "A longitudinal redundancy check error occurred when reading or writing a\nsector. Usually, this error indicates a transmission error between the disk\nand the CPU. However, the sector being accessed may have been previously\nwritten incorrectly.",
     /*recovery*/            "Run the program again. If the error persists, rewrite the flawed sector.\nIf the error still persists, call your Wang Service Representative.",
-    /*dummy*/               (char*)0,
-    /*dummy*/               (char*)0,
+    /*dummy*/               nullptr,
+    /*dummy*/               nullptr,
     },
 
 // -------------------------------------------------------------------------
@@ -1937,8 +1937,8 @@ vector<errtable_t> errtable_vp = {
     /*err msg*/             "ILLEGAL SECTOR ADDRESS OR PLATTER NOT MOUNTED",
     /*cause*/               "The disk sector being addressed is not on the disk, or the disk platter is\nnot mounted.  (The maximum legal sector address depends upon the disk model\nused.)",
     /*recovery*/            "Correct the program statement in error, or mount a platter in the specified\ndrive.",
-    /*dummy*/               (char*)0,
-    /*dummy*/               (char*)0,
+    /*dummy*/               nullptr,
+    /*dummy*/               nullptr,
     },
 
 // -------------------------------------------------------------------------
@@ -1947,8 +1947,8 @@ vector<errtable_t> errtable_vp = {
     /*err msg*/             "READ-AFTER-WRITE ERROR",
     /*cause*/               "The comparison of read-after-write to a disk sector failed, indicating that\nthe information was not written properly. This error usually indicates that\nthe disk platter is defective.",
     /*recovery*/            "Write the information again. If the error persists, try a new platter;\nif the error still per sists, call your Wang Service Representative.",
-    /*dummy*/               (char*)0,
-    /*dummy*/               (char*)0,
+    /*dummy*/               nullptr,
+    /*dummy*/               nullptr,
     }
 
 };

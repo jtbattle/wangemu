@@ -129,8 +129,8 @@ END_EVENT_TABLE()
 CrtStatusBar::CrtStatusBar(CrtFrame *parent, bool shown) :
         wxStatusBar(parent, -1),
         m_parent(parent),
-        m_keyword_ctl(NULL),
-        m_icon_set(NULL),
+        m_keyword_ctl(nullptr),
+        m_icon_set(nullptr),
         m_num_disk_controllers(0),
         m_shown(shown),
         m_popup_action(unknown)
@@ -218,7 +218,7 @@ CrtStatusBar::CrtStatusBar(CrtFrame *parent, bool shown) :
 
             if (drive >= m_num_drives[ctrl]) {
                 // not needed
-                m_diskicon[idx] = NULL;
+                m_diskicon[idx] = nullptr;
                 continue;
             }
 
@@ -357,16 +357,16 @@ CrtStatusBar::SetDiskIcon(const int slot, const int drive)
 CrtStatusBar::~CrtStatusBar()
 {
     delete m_keyword_ctl;
-    m_keyword_ctl = NULL;
+    m_keyword_ctl = nullptr;
 
     for(int ctrl=0; ctrl<m_num_disk_controllers; ctrl++) {
         delete m_disklabel[2*ctrl+0];
         delete m_disklabel[2*ctrl+1];
-        m_disklabel[2*ctrl+0] = NULL;
-        m_disklabel[2*ctrl+1] = NULL;
+        m_disklabel[2*ctrl+0] = nullptr;
+        m_disklabel[2*ctrl+1] = nullptr;
         for(int drive=0; drive<m_num_drives[ctrl]; drive++) {
             delete m_diskicon[4*ctrl+drive];
-            m_diskicon[4*ctrl+drive] = NULL;
+            m_diskicon[4*ctrl+drive] = nullptr;
         }
     }
 
@@ -490,7 +490,7 @@ CrtStatusBar::OnDiskButton(wxMouseEvent &event)
             if (Host().fileReq(Host::FILEREQ_DISK, "Disk to load", 1, &fullpath) ==
                                Host::FILEREQ_OK) {
                 int drive2, io_addr;
-                bool b = sys.findDisk(fullpath, NULL, &drive2, &io_addr);
+                bool b = sys.findDisk(fullpath, nullptr, &drive2, &io_addr);
                 if (b) {
                     UI_Warn("Disk already in drive %c /%03x", "FR"[drive2], io_addr);
                     return;

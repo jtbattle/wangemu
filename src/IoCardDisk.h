@@ -49,7 +49,7 @@ public:
          };
 
     // return properties of the named disk.
-    // parameters that are NULL won't be returned.
+    // parameters that are nullptr won't be returned.
     // returns true if nothing went wrong.
     static bool wvdGetWriteProtect(const string &filename,
                                    bool *write_protect);
@@ -86,7 +86,7 @@ public:
     static bool wvdFormatFile(const string &filename);
 
     // get disk drive geometry from the disk type
-    // return params are allowed to be NULL
+    // return params are allowed to be nullptr
     static void getDiskGeometry(int disktype,
                                 int *sectorsPerTrack,
                                 int *trackSeekMs,

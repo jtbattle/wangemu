@@ -174,16 +174,16 @@ END_EVENT_TABLE()
 
 // constructor
 PrinterFrame::PrinterFrame(const wxString& title, const int io_addr) :
-        wxFrame((wxFrame *)NULL, -1, title, wxDefaultPosition, wxDefaultSize,
+        wxFrame((wxFrame *)nullptr, -1, title, wxDefaultPosition, wxDefaultSize,
                 wxDEFAULT_FRAME_STYLE | wxNO_FULL_REPAINT_ON_RESIZE),
-        m_menuBar(NULL),
-        m_statusBar(NULL),
-        m_printer(NULL),
+        m_menuBar(nullptr),
+        m_statusBar(nullptr),
+        m_printer(nullptr),
         m_fontsize(12),
         m_printer_addr(-1),
         m_previewzoom(25),
-        m_printData(NULL),
-        m_pageSetupData(NULL)
+        m_printData(nullptr),
+        m_pageSetupData(nullptr)
 {
 #ifndef __WXMAC__
     // set the frame icon
@@ -214,9 +214,9 @@ PrinterFrame::~PrinterFrame()
 {
     if (m_printer->getPrintasgo())
         printAndClear();        // print anything left in the printer
-    delete m_printer;           m_printer = NULL;
-    delete m_pageSetupData;     m_pageSetupData = NULL;
-    delete m_printData;         m_printData = NULL;
+    delete m_printer;           m_printer = nullptr;
+    delete m_pageSetupData;     m_pageSetupData = nullptr;
+    delete m_printData;         m_printData = nullptr;
 }
 
 
@@ -745,7 +745,7 @@ PrinterFrame::OnConfigureDialog(wxCommandEvent& WXUNUSED(event))
     sys.freezeEmu(true);    // halt emulation
 
     PrinterDialogDataTransfer *data = new PrinterDialogDataTransfer();
-    assert(data != NULL);
+    assert(data != nullptr);
 
     //set data values here
     int linelength, pagelength;
@@ -850,7 +850,7 @@ PrinterFrame::printAndClear()
 
     // restore the focus
     winHasFocus->SetFocus();
-    winHasFocus = NULL;
+    winHasFocus = nullptr;
 
     sys.freezeEmu(false);
 }

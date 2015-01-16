@@ -215,19 +215,19 @@ END_EVENT_TABLE()
 CrtFrame::CrtFrame( const wxString& title,
                     const int screen_size,
                     const int io_addr) :
-       wxFrame((wxFrame *)NULL, -1, title, wxDefaultPosition, wxDefaultSize,
+       wxFrame((wxFrame *)nullptr, -1, title, wxDefaultPosition, wxDefaultSize,
                wxDEFAULT_FRAME_STYLE | wxNO_FULL_REPAINT_ON_RESIZE),
-    m_menuBar(NULL),
-    m_statBar(NULL),
-    m_toolBar(NULL),
-    m_crt(NULL),
+    m_menuBar(nullptr),
+    m_statBar(nullptr),
+    m_toolBar(nullptr),
+    m_crt(nullptr),
     m_fullscreen(false),
     m_showstats(false),
     m_colorsel(0),
     m_crt_addr(io_addr),
     m_assoc_kb_addr(-1),
-    m_RefreshTimer(NULL),
-    m_OneSecTimer(NULL),
+    m_RefreshTimer(nullptr),
+    m_OneSecTimer(nullptr),
     m_fps(0)
 {
 
@@ -273,9 +273,9 @@ CrtFrame::CrtFrame( const wxString& title,
 
     // only the primary has a status bar
     m_RefreshTimer = new wxTimer(this, Timer_Frame);
-    assert(m_RefreshTimer != NULL);
+    assert(m_RefreshTimer != nullptr);
     m_OneSecTimer = new wxTimer(this, Timer_Sec);
-    assert(m_OneSecTimer != NULL);
+    assert(m_OneSecTimer != nullptr);
 
     // it is hard to predict what the optimal refresh period
     // for a given system
@@ -326,7 +326,7 @@ CrtFrame::makeMenubar(int primary_crt)
 #endif
     menuFile->Append(File_Quit,     "E&xit\t" ALT "+X", "Quit the program");
 
-    wxMenu *menuCPU = NULL;
+    wxMenu *menuCPU = nullptr;
     if (primary_crt) {
         menuCPU = new wxMenu;
         menuCPU->Append(CPU_HardReset, "Hard &Reset CPU\t" ALT2 "+R", "Perform a power-up reset");
@@ -336,14 +336,14 @@ CrtFrame::makeMenubar(int primary_crt)
         menuCPU->Append(CPU_UnregulatedSpeed, "&Unregulated Speed", "Run emulation at maximum speed", wxITEM_CHECK);
     }
 
-    wxMenu *menuDisk = NULL;
+    wxMenu *menuDisk = nullptr;
     if (primary_crt) {
         // nothing to do except add top -- it is added dynamically later
         menuDisk = new wxMenu;
     }
 
     // printer view
-    wxMenu *menuPrinter = NULL;
+    wxMenu *menuPrinter = nullptr;
     if (primary_crt && (sys.getPrinterIoAddr(0) >= 0)) {
         // there is at least one printer
         menuPrinter = new wxMenu;
@@ -391,11 +391,11 @@ CrtFrame::makeMenubar(int primary_crt)
     m_menuBar = new wxMenuBar;
 
     m_menuBar->Append(menuFile, "&File");
-    if (menuCPU != NULL)
+    if (menuCPU != nullptr)
         m_menuBar->Append(menuCPU, "C&PU");
-    if(menuDisk != NULL)
+    if(menuDisk != nullptr)
         m_menuBar->Append(menuDisk, "&Disk");
-    if (menuPrinter != NULL)
+    if (menuPrinter != nullptr)
         m_menuBar->Append(menuPrinter, "&Printer");
     m_menuBar->Append(menuConfig, "&Configure");
     m_menuBar->Append(menuHelp, "&Help");
@@ -847,7 +847,7 @@ void
 CrtFrame::setSimSeconds(int secs, float relative_speed)
 {
     CrtFrame *pf = getPrimaryFrame();
-    if (pf == NULL)
+    if (pf == nullptr)
         return;
 
     wxString str;
@@ -978,7 +978,7 @@ CrtFrame::doInspect(const string &filename)
     sys.freezeEmu(true);    // halt emulation
 
     int slot, drive;
-    bool in_use = sys.findDisk(filename, &slot, &drive, NULL);
+    bool in_use = sys.findDisk(filename, &slot, &drive, nullptr);
     if (in_use) {
         // close filehandles to the specified drive
         IoCardDisk::wvdFlush(slot, drive);
@@ -1060,7 +1060,7 @@ CrtFrame::OnDisk(wxCommandEvent& event)
             if (Host().fileReq(Host::FILEREQ_DISK, "Disk to load", 1, &fullpath) ==
                                Host::FILEREQ_OK) {
                 int drive2, io_addr2;
-                bool b = System2200().findDisk(fullpath, NULL, &drive2, &io_addr2);
+                bool b = System2200().findDisk(fullpath, nullptr, &drive2, &io_addr2);
                 if (b) {
                     UI_Warn("Disk already in drive %c /%03x", "FC"[drive2], io_addr2);
                     return;
@@ -1371,7 +1371,7 @@ CrtFrame::setShowStatistics(bool show)
 {
     m_showstats = show;
     CrtFrame *pf = getPrimaryFrame();
-    if ((pf != NULL) && isPrimaryCrt()) {
+    if ((pf != nullptr) && isPrimaryCrt()) {
         if (getShowStatistics())
             pf->m_statBar->SetStatusMessage("(Performance statistics will appear here)");
         else
@@ -1488,6 +1488,6 @@ void
 CrtFrame::diskEvent(int controller, int drive)
 {
     CrtFrame *pf = getPrimaryFrame();
-    if (pf != NULL)
+    if (pf != nullptr)
         pf->m_statBar->diskEvent(controller, drive);
 }

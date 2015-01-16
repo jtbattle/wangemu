@@ -80,25 +80,25 @@ CrtErrorDlg::CrtErrorDlg( wxWindow *parent,
         grid->Add(new MyStaticText(this, -1, "Error"),    0, L_style);
         grid->Add(new MyStaticText(this, -1, err->error), 0, R_style);
 
-        if (err->cause != NULL) {
+        if (err->cause != nullptr) {
             grid->Add(new MyStaticText(this, -1, "Cause"),    0, L_style);
             grid->Add(new MyStaticText(this, -1, err->cause), 0, R_style);
         }
 
-        if (err->action != NULL) {
+        if (err->action != nullptr) {
             string txt = (vp_mode) ? "Recovery" : "Action";
             grid->Add(new MyStaticText(this, -1, txt),         0, L_style);
             grid->Add(new MyStaticText(this, -1, err->action), 0, R_style);
         }
 
-        if (err->example != NULL) {
+        if (err->example != nullptr) {
             grid->Add(new MyStaticText(this, -1, "Example"), 0, L_style);
             MyStaticText *X_text = new MyStaticText(this, -1, err->example);
             X_text->SetFont(fixedfont);
             grid->Add(X_text, 0, R_style);
         }
 
-        if (err->fix != NULL) {
+        if (err->fix != nullptr) {
             grid->Add(new MyStaticText(this, -1, "Possible\nCorrection"), 0, L_style);
             MyStaticText *PC_text = new MyStaticText(this, -1, err->fix);
             PC_text->SetFont(fixedfont);

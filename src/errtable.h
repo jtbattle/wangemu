@@ -8,7 +8,7 @@
 #include "w2200.h"
 
 // error description table.
-// invalid entries are NULL.
+// invalid entries are nullptr.
 
 typedef struct {
     const char *errcode;    // eg "01", "02", .. "98", "=1", "=2", "=3"

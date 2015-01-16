@@ -147,16 +147,16 @@ DiskFactory::DiskFactory(wxFrame *parent, const string& filename) :
         wxDialog(parent, -1, "Disk Factory",
                  wxDefaultPosition, wxDefaultSize,
                  wxDEFAULT_DIALOG_STYLE | wxRESIZE_BORDER),
-        m_menuBar(NULL),
-        m_tab1(NULL),
-        m_tab2(NULL),
-        m_diskdata(NULL),
-        m_butCancel(NULL),
-        m_butSave(NULL)
+        m_menuBar(nullptr),
+        m_tab1(nullptr),
+        m_tab2(nullptr),
+        m_diskdata(nullptr),
+        m_butCancel(nullptr),
+        m_butSave(nullptr)
 {
     bool new_disk = filename.empty();
-    m_butCancel = NULL;
-    m_butSave   = NULL;
+    m_butCancel = nullptr;
+    m_butSave   = nullptr;
 
     m_diskdata = new Wvd;
     if (new_disk) {
@@ -222,7 +222,7 @@ DiskFactory::~DiskFactory()
     Host().ConfigWriteWinGeom(this, subgroup);
 
     delete m_diskdata;
-    m_diskdata = NULL;
+    m_diskdata = nullptr;
 }
 
 
@@ -274,7 +274,7 @@ DiskFactory::OnButton_SaveAs(wxCommandEvent& WXUNUSED(event))
 
     // check if this disk is in a drive already
     int drive, io_addr;
-    bool in_use = System2200().findDisk(name, NULL, &drive, &io_addr);
+    bool in_use = System2200().findDisk(name, nullptr, &drive, &io_addr);
     if (in_use) {
         UI_Warn("This disk is in use at /%03X, drive %d.\n\n"
                 "Either save to a new name or eject the disk first.",
@@ -353,16 +353,16 @@ END_EVENT_TABLE()
 PropPanel::PropPanel(DiskFactory *df, wxWindow *parent, Wvd *diskdata) :
         wxPanel(parent, -1),
         m_parent(df),
-        m_path(NULL),
-        m_disktype(NULL),
-        m_st_type(NULL),
-        m_st_plats(NULL),
-        m_st_tracks(NULL),
-        m_st_secttrk(NULL),
-        m_st_sect(NULL),
-        m_st_steptime(NULL),
-        m_st_rpm(NULL),
-        m_write_prot(NULL),
+        m_path(nullptr),
+        m_disktype(nullptr),
+        m_st_type(nullptr),
+        m_st_plats(nullptr),
+        m_st_tracks(nullptr),
+        m_st_secttrk(nullptr),
+        m_st_sect(nullptr),
+        m_st_steptime(nullptr),
+        m_st_rpm(nullptr),
+        m_write_prot(nullptr),
         m_diskdata(diskdata)
 {
     const int margin_pixels = 6;
@@ -454,7 +454,7 @@ PropPanel::PropPanel(DiskFactory *df, wxWindow *parent, Wvd *diskdata) :
 void
 PropPanel::refresh()
 {
-    assert(m_diskdata != NULL);
+    assert(m_diskdata != nullptr);
 
     bool new_disk = (m_diskdata->getPath()).empty();
     bool modified = m_diskdata->isModified();
@@ -472,7 +472,7 @@ PropPanel::refresh()
     int disk_type    = m_diskdata->getDiskType();
 
     int spt, step, rpm;
-    IoCardDisk::getDiskGeometry(disk_type, &spt, &step, &rpm, NULL);
+    IoCardDisk::getDiskGeometry(disk_type, &spt, &step, &rpm, nullptr);
 
     // scan the disk_choices[] table to find a match
     radio_sel = -1;
@@ -573,7 +573,7 @@ END_EVENT_TABLE()
 LabelPanel::LabelPanel(DiskFactory *df, wxWindow *parent, Wvd *diskdata) :
         wxPanel(parent, -1),
         m_parent(df),
-        m_text(NULL),
+        m_text(nullptr),
         m_diskdata(diskdata)
 {
     const int style = wxTE_MULTILINE;
