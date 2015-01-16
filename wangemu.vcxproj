@@ -226,6 +226,7 @@
     <ClInclude Include="src\Wvd.h" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="ClassDiagram.cd" />
     <None Include="src\wx\msw\blank.cur" />
     <None Include="src\wx\msw\bullseye.cur" />
     <None Include="src\wx\msw\cross.cur" />
