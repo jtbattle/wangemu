@@ -43,12 +43,16 @@ CrtErrorDlg::CrtErrorDlg( wxWindow *parent,
 
     // determine which entry matches
     bool vp_mode = (System2200().config().getCpuType() == Cpu2200::CPUTYPE_2200VP);
-    errtable_t *pet = (vp_mode) ? errtable_vp : errtable;
+    vector<errtable_t> &pet = (vp_mode) ? errtable_vp : errtable;
 
-    while (pet->errcode != NULL) {
-        if (strcmp(pet->errcode, errcode) == 0)
+    bool found = false;
+    auto err = pet.begin();
+    while (err != pet.end()) {
+        if (strcmp(err->errcode, errcode) == 0) {
+            found = true;
             break;
-        pet++;
+        }
+        err++;
     }
 
     // this is the font used for the example and correction code text
@@ -68,38 +72,38 @@ CrtErrorDlg::CrtErrorDlg( wxWindow *parent,
 
     wxFlexGridSizer *grid = new wxFlexGridSizer(0, 2, v_margin, h_margin);
 
-    if (pet->error != NULL) {
-        grid->Add(new MyStaticText(this, -1, "Error"),    0, L_style);
-        grid->Add(new MyStaticText(this, -1, pet->error), 0, R_style);
-    } else {
+    if (!found) {
         string msg("Unknown error code");
         grid->Add(new MyStaticText(this, -1, "Error"),    0, L_style);
         grid->Add(new MyStaticText(this, -1, msg),        0, R_style);
-    }
+    } else {
+        grid->Add(new MyStaticText(this, -1, "Error"),    0, L_style);
+        grid->Add(new MyStaticText(this, -1, err->error), 0, R_style);
 
-    if (pet->cause != NULL) {
-        grid->Add(new MyStaticText(this, -1, "Cause"),    0, L_style);
-        grid->Add(new MyStaticText(this, -1, pet->cause), 0, R_style);
-    }
+        if (err->cause != NULL) {
+            grid->Add(new MyStaticText(this, -1, "Cause"),    0, L_style);
+            grid->Add(new MyStaticText(this, -1, err->cause), 0, R_style);
+        }
 
-    if (pet->action != NULL) {
-        string txt = (vp_mode) ? "Recovery" : "Action";
-        grid->Add(new MyStaticText(this, -1, txt),         0, L_style);
-        grid->Add(new MyStaticText(this, -1, pet->action), 0, R_style);
-    }
+        if (err->action != NULL) {
+            string txt = (vp_mode) ? "Recovery" : "Action";
+            grid->Add(new MyStaticText(this, -1, txt),         0, L_style);
+            grid->Add(new MyStaticText(this, -1, err->action), 0, R_style);
+        }
 
-    if (pet->example != NULL) {
-        grid->Add(new MyStaticText(this, -1, "Example"), 0, L_style);
-        MyStaticText *X_text = new MyStaticText(this, -1, pet->example);
-        X_text->SetFont(fixedfont);
-        grid->Add(X_text, 0, R_style);
-    }
+        if (err->example != NULL) {
+            grid->Add(new MyStaticText(this, -1, "Example"), 0, L_style);
+            MyStaticText *X_text = new MyStaticText(this, -1, err->example);
+            X_text->SetFont(fixedfont);
+            grid->Add(X_text, 0, R_style);
+        }
 
-    if (pet->fix != NULL) {
-        grid->Add(new MyStaticText(this, -1, "Possible\nCorrection"), 0, L_style);
-        MyStaticText *PC_text = new MyStaticText(this, -1, pet->fix);
-        PC_text->SetFont(fixedfont);
-        grid->Add(PC_text, 0, R_style);
+        if (err->fix != NULL) {
+            grid->Add(new MyStaticText(this, -1, "Possible\nCorrection"), 0, L_style);
+            MyStaticText *PC_text = new MyStaticText(this, -1, err->fix);
+            PC_text->SetFont(fixedfont);
+            grid->Add(PC_text, 0, R_style);
+        }
     }
 
     // need to wrap it all in a sizer to make the dlg stretchable

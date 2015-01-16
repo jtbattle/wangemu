@@ -5,7 +5,7 @@
 // ##                          Wang BASIC Errors                          ##
 // #########################################################################
 
-errtable_t errtable[] = {
+vector<errtable_t> errtable = {
 
 // -------------------------------------------------------------------------
     {
@@ -985,16 +985,6 @@ errtable_t errtable[] = {
     /*action*/              "Dimension the array properly.",
     /*example*/             "10 DIM A$(63), B$(63)1, W$(63)2\n100 MAT SORT A$() TO W$(), B$()\n                              ^ERR =3",
     /*correction*/          "10 DIM A$(63), B$(63)2, W$(63)2",
-    },
-
-// -------------------------------------------------------------------------
-    {
-    /*err code*/            (char*)0,
-    /*err msg*/             (char*)0,
-    /*cause*/               (char*)0,
-    /*action*/              (char*)0,
-    /*example*/             (char*)0,
-    /*correction*/          (char*)0,
     }
 
 };
@@ -1004,7 +994,7 @@ errtable_t errtable[] = {
 // ##                            BASIC-2 Errors                           ##
 // #########################################################################
 
-errtable_t errtable_vp[] = {
+vector<errtable_t> errtable_vp = {
 
     {
     // -------------------------------------------------------------------------
@@ -1957,16 +1947,6 @@ errtable_t errtable_vp[] = {
     /*err msg*/             "READ-AFTER-WRITE ERROR",
     /*cause*/               "The comparison of read-after-write to a disk sector failed, indicating that\nthe information was not written properly. This error usually indicates that\nthe disk platter is defective.",
     /*recovery*/            "Write the information again. If the error persists, try a new platter;\nif the error still per sists, call your Wang Service Representative.",
-    /*dummy*/               (char*)0,
-    /*dummy*/               (char*)0,
-    },
-
-// -------------------------------------------------------------------------
-    {
-    /*err code*/            (char*)0,
-    /*err msg*/             (char*)0,
-    /*cause*/               (char*)0,
-    /*recovery*/            (char*)0,
     /*dummy*/               (char*)0,
     /*dummy*/               (char*)0,
     }
