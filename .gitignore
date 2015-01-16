@@ -231,3 +231,4 @@ $RECYCLE.BIN/
 *.ini
 tags
 src/make_tags.bat
+*.exe

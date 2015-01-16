@@ -21,8 +21,8 @@ public:
     // See CardCfgState.h for the use of these functions.
 
     void setDefaults();
-    void loadIni(const char *subgroup);
-    void saveIni(const char *subgroup) const;
+    void loadIni(const string &subgroup);
+    void saveIni(const string &subgroup) const;
     bool operator==(const CardCfgState &rhs) const;
     bool operator!=(const CardCfgState &rhs) const;
     DiskCtrlCfgState* clone() const;

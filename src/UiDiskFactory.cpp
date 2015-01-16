@@ -57,7 +57,6 @@ static struct disk_choice_t {
 // this is one I just made up -- it is the largest possible disk:
     { "DS-224 16 MB * 14 platter disk", Wvd::DISKTYPE_HD80, 14, 1023*64  },  // = 65472
 };
-// FIXME: I don't see how to get rid of this
 static const int num_disk_types = sizeof(disk_choices) / sizeof(disk_choice_t);
 
 // ------------------------------------------------------------------------
@@ -383,8 +382,9 @@ PropPanel::PropPanel(DiskFactory *df, wxWindow *parent, Wvd *diskdata) :
 
     if (new_disk) {
         wxString type_choices[num_disk_types];
-        for(int i=0; i<num_disk_types; i++)
+        for(int i=0; i<num_disk_types; i++) {
             type_choices[i] = disk_choices[i].description;
+	}
         m_disktype = new wxRadioBox( this, -1, "Disk Type",
                                      wxDefaultPosition, wxDefaultSize,
                                      num_disk_types,
@@ -501,25 +501,25 @@ PropPanel::refresh()
     }
     m_st_type->SetLabel(type);
 
-    wxString label;
-    label.Printf("%d platter%s", num_platters, (num_platters>1) ? "s" : "");
+    string label;
+    label = std::to_string(num_platters) + " platter" + ((num_platters>1) ? "s" : "");
     m_st_plats->SetLabel(label);
-    const char *per_platter = (num_platters > 1) ? "/platter" : "";
 
     int num_tracks = int( num_sectors / spt );
-    label.Printf("%d tracks%s", num_tracks, per_platter);
+    const string per_platter = (num_platters > 1) ? "/platter" : "";
+    label = std::to_string(num_tracks) + " tracks" + per_platter;
     m_st_tracks->SetLabel(label);
 
-    label.Printf("%d sectors/track", spt);
+    label = std::to_string(spt) + " sectors/track";
     m_st_secttrk->SetLabel(label);
 
-    label.Printf("%d sectors%s", num_sectors, per_platter);
+    label = std::to_string(num_sectors) + " sectors" + per_platter;
     m_st_sect->SetLabel(label);
 
-    label.Printf("%d ms step time", step);
+    label = std::to_string(step) + " ms step time";
     m_st_steptime->SetLabel(label);
 
-    label.Printf("%d RPM", rpm);
+    label = std::to_string(rpm) + " RPM";
     m_st_rpm->SetLabel(label);
 
     m_write_prot->SetValue(m_diskdata->getWriteProtect());

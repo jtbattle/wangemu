@@ -16,6 +16,8 @@
 #ifndef _INCLUDE_CARD_CFG_STATE_H_
 #define _INCLUDE_CARD_CFG_STATE_H_
 
+#include "w2200.h"
+
 class CardCfgState
 {
 public:
@@ -25,8 +27,8 @@ public:
     virtual void setDefaults() = 0;
 
     // load/save a configuration from/to the .ini file
-    virtual void loadIni(const char *subgroup) = 0;
-    virtual void saveIni(const char *subgroup) const = 0;
+    virtual void loadIni(const string &subgroup) = 0;
+    virtual void saveIni(const string &subgroup) const = 0;
 
     // compare to configurations for equality
     virtual bool operator==(const CardCfgState &rhs) const = 0;

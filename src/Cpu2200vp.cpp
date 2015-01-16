@@ -1504,7 +1504,7 @@ Cpu2200vp::reset(bool hard_reset)
 void
 Cpu2200vp::run(int ticks)
 {
-    int op_ticks;
+    int op_ticks = 0;
 
     do {
 #ifdef _DEBUG

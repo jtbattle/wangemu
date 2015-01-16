@@ -542,7 +542,7 @@ CrtFrame::initToolBar(wxToolBar *tb)
     wxCoord textH, textW;
     memDC.GetTextExtent("SF15", &textW, &textH); // widest string in use
 #if BIG_BUTTONS
-    static const char *sf_labels[17] = {
+    static const string sf_labels[17] = {
         "", "", "", "", // SF0-3
         "", "", "", "", // SF4-7
 #ifdef __WXMAC__

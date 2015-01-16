@@ -238,8 +238,7 @@ SysCfgState::loadIni()
             // if cardtype isCardConfigurable(), make a new config object,
             // and try to load it from the ini
             if (CardInfo::isCardConfigurable(cardtype)) {
-                char cardsubgroup[30];
-                sprintf(cardsubgroup, "io/slot-%d/cardcfg", slot);
+		string cardsubgroup("io/slot-" + std::to_string(slot) + "/cardcfg");
                 // dump any attached cardCfg state
                 if (m_slot[slot].cardCfg != NULL) {
                     delete m_slot[slot].cardCfg;
@@ -281,8 +280,7 @@ SysCfgState::saveIni() const
 
     // save IO information
     for(int slot=0; slot<NUM_IOSLOTS; slot++) {
-        char subgroup[20];
-        sprintf(subgroup, "io/slot-%d", slot);
+        string subgroup("io/slot-" + std::to_string(slot));
 
         IoCard::card_type_e cardtype = m_slot[slot].type;
         if (cardtype != IoCard::card_none) {
@@ -297,8 +295,7 @@ SysCfgState::saveIni() const
         }
 
         if (m_slot[slot].cardCfg != NULL) {
-            char cardsubgroup[30];
-            sprintf(cardsubgroup, "io/slot-%d/cardcfg", slot);
+            string cardsubgroup("io/slot-" + std::to_string(slot) + "/cardcfg");
             m_slot[slot].cardCfg->saveIni(cardsubgroup);
         }
 

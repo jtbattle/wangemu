@@ -282,7 +282,7 @@ private:
         SPECIAL_FORMAT_TRACK             = 0x18    // *1,     *3
     };
 
-    const char *unsupportedExtendedCommandName(int cmd);
+    string unsupportedExtendedCommandName(int cmd);
 
     // indicates reason why advanceState() is being called
     enum disk_event_t {
@@ -316,7 +316,7 @@ private:
     void sendBytes(int count, disk_sm_t return_state);
 
     // for debugging
-    char* statename(int state);
+    string statename(int state);
 
     // centralized function to handle updating sequencing state
     bool advanceState(disk_event_t event, const int val=0);

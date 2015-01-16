@@ -66,7 +66,7 @@ Host::initMembers()
     // live, so if we detect we are running from there, we raise the directory
     // one notch.
     int dircount = exe_path.GetDirCount();
-    wxArrayString dirnames = exe_path.GetDirs();
+    const wxArrayString dirnames = exe_path.GetDirs();
     if (dirnames[dircount-1].Lower() == "debug" ||
         dirnames[dircount-1].Lower() == "release") {
         exe_path.AppendDir("..");

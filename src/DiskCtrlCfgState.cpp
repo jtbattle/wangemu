@@ -85,7 +85,7 @@ DiskCtrlCfgState::setDefaults()
 
 // read from configuration file
 void
-DiskCtrlCfgState::loadIni(const char *subgroup)
+DiskCtrlCfgState::loadIni(const string &subgroup)
 {
     Host hst;
     int ival;
@@ -115,14 +115,14 @@ DiskCtrlCfgState::loadIni(const char *subgroup)
 
 // save to configuration file
 void
-DiskCtrlCfgState::saveIni(const char *subgroup) const
+DiskCtrlCfgState::saveIni(const string &subgroup) const
 {
     assert(m_initialized);
 
     Host hst;
     hst.ConfigWriteInt(subgroup, "numDrives", getNumDrives());
 
-    char *foo;
+    string foo;
     switch (m_intelligence) {
         case DISK_CTRL_DUMB:        foo = "dumb";  break;
         case DISK_CTRL_INTELLIGENT: foo = "smart"; break;

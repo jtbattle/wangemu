@@ -75,7 +75,7 @@ IoCardDisk::cax_init()
     return (m_cpu.getAB() & 0xA0) == 0xA0;
 }
 
-char*
+string
 IoCardDisk::statename(int state)
 {
     switch (state) {
@@ -199,7 +199,7 @@ IoCardDisk::advanceState(disk_event_t event, const int val)
 // return a pointer to a string describing a known extended command
 // which the emulator doesn't support.  return NULL if it is either
 // supported or is unknown.
-const char *
+string
 IoCardDisk::unsupportedExtendedCommandName(int cmd)
 {
     switch (cmd) {
@@ -217,10 +217,10 @@ IoCardDisk::unsupportedExtendedCommandName(int cmd)
         case SPECIAL_MULTI_SECTOR_WRITE_START:
         case SPECIAL_MULTI_SECTOR_WRITE_END:
         case SPECIAL_VERIFY_SECTOR_RANGE:
-            return NULL;
+            return "";
         // unknown
         default:
-            return NULL;
+            return "";
     }
 }
 
@@ -230,18 +230,18 @@ IoCardDisk::advanceStateInt(disk_event_t event, const int val)
     bool rv = false;  // return value for EVENT_IBS_POLL
 
     if (DBG > 1) {
-        string msg;
-        switch (event) {
-            case EVENT_RESET:     msg = "EVENT_RESET";     break;
-            case EVENT_OBS:       msg = "EVENT_OBS";       break;
-            case EVENT_IBS_POLL:  msg = "EVENT_IBS_POLL";  break;
-            case EVENT_DISK:      msg = "EVENT_DISK";      break;
-            default:              msg = "???";             break;
-        }
         if (event == EVENT_OBS) {
-            dbglog("State %s, received OBS(0x%02x)\n", statename(m_state), val);
+            dbglog("State %s, received OBS(0x%02x)\n", statename(m_state).c_str(), val);
         } else {
-            dbglog("State %s, received %s\n", statename(m_state), msg.c_str());
+	    string msg;
+	    switch (event) {
+		case EVENT_RESET:     msg = "EVENT_RESET";     break;
+		case EVENT_OBS:       msg = "EVENT_OBS";       break;
+		case EVENT_IBS_POLL:  msg = "EVENT_IBS_POLL";  break;
+		case EVENT_DISK:      msg = "EVENT_DISK";      break;
+		default:              msg = "???";             break;
+	    }
+            dbglog("State %s, received %s\n", statename(m_state).c_str(), msg.c_str());
         }
     }
 
@@ -263,7 +263,7 @@ IoCardDisk::advanceStateInt(disk_event_t event, const int val)
             // we are aborting something in progress
             if (DBG > 0) {
                 dbglog("Warning: CAX aborted command state %s, cnt=%d\n",
-                       statename(m_state), m_bufptr);
+                       statename(m_state).c_str(), m_bufptr);
             }
         }
         m_state = CTRL_WAKEUP;
@@ -293,7 +293,7 @@ IoCardDisk::advanceStateInt(disk_event_t event, const int val)
     }
     if (!expecting_obs && (event == EVENT_OBS)) {
         if (NOISY > 0)
-            UI_Info("Unexpected OBS in state %s", statename(m_state));
+            UI_Info("Unexpected OBS in state %s", statename(m_state).c_str());
     }
 
     switch (m_state) {
@@ -506,11 +506,11 @@ disk operation
                 default: {
                     static bool reported[256] = { false };
                     if (!reported[m_special_command]) {
-                        const char *msg = unsupportedExtendedCommandName(m_special_command);
-                        if (msg != NULL) {
+                        string msg = unsupportedExtendedCommandName(m_special_command);
+                        if (msg != "") {
                             UI_Warn("ERROR: disk controller received unimplemented special command 0x%02x (%s)\n"
                                     "Please notify the program developer if you want this feature added",
-                                     m_special_command, msg);
+                                     m_special_command, msg.c_str());
                         } else {
                             UI_Warn("ERROR: disk controller received unknown special command 0x%02x",
                                      m_special_command);
@@ -1461,7 +1461,7 @@ disk operation
     if (DBG > 2) {
         static int prev_state = CTRL_WAKEUP;
         if (prev_state != m_state) {
-            dbglog("%s  -->  %s\n", statename(prev_state), statename(m_state));
+            dbglog("%s  -->  %s\n", statename(prev_state).c_str(), statename(m_state).c_str());
             prev_state = m_state;
         }
         dbglog("---------------------\n");
