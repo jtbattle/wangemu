@@ -238,7 +238,7 @@ SysCfgState::loadIni()
             // if cardtype isCardConfigurable(), make a new config object,
             // and try to load it from the ini
             if (CardInfo::isCardConfigurable(cardtype)) {
-		string cardsubgroup("io/slot-" + std::to_string(slot) + "/cardcfg");
+                string cardsubgroup("io/slot-" + std::to_string(slot) + "/cardcfg");
                 // dump any attached cardCfg state
                 if (m_slot[slot].cardCfg != nullptr) {
                     delete m_slot[slot].cardCfg;

@@ -384,7 +384,7 @@ PropPanel::PropPanel(DiskFactory *df, wxWindow *parent, Wvd *diskdata) :
         wxString type_choices[num_disk_types];
         for(int i=0; i<num_disk_types; i++) {
             type_choices[i] = disk_choices[i].description;
-	}
+        }
         m_disktype = new wxRadioBox( this, -1, "Disk Type",
                                      wxDefaultPosition, wxDefaultSize,
                                      num_disk_types,

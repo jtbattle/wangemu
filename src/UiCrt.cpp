@@ -934,7 +934,7 @@ Crt::OnLeftDClick(wxMouseEvent& event)
     #if 0
         // launch an HTML browser and look up the error code
         string helpfile = "errors.html#Code-" + errcode;
-	::wxLaunchDefaultBrowser(helpfile);
+        ::wxLaunchDefaultBrowser(helpfile);
     #else
         // pop open a dialog with the relevent information
         // this is a *lot* faster than launching a browser.

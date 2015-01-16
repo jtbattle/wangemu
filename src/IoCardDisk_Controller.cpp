@@ -233,14 +233,14 @@ IoCardDisk::advanceStateInt(disk_event_t event, const int val)
         if (event == EVENT_OBS) {
             dbglog("State %s, received OBS(0x%02x)\n", statename(m_state).c_str(), val);
         } else {
-	    string msg;
-	    switch (event) {
-		case EVENT_RESET:     msg = "EVENT_RESET";     break;
-		case EVENT_OBS:       msg = "EVENT_OBS";       break;
-		case EVENT_IBS_POLL:  msg = "EVENT_IBS_POLL";  break;
-		case EVENT_DISK:      msg = "EVENT_DISK";      break;
-		default:              msg = "???";             break;
-	    }
+            string msg;
+            switch (event) {
+                case EVENT_RESET:     msg = "EVENT_RESET";     break;
+                case EVENT_OBS:       msg = "EVENT_OBS";       break;
+                case EVENT_IBS_POLL:  msg = "EVENT_IBS_POLL";  break;
+                case EVENT_DISK:      msg = "EVENT_DISK";      break;
+                default:              msg = "???";             break;
+            }
             dbglog("State %s, received %s\n", statename(m_state).c_str(), msg.c_str());
         }
     }

@@ -176,7 +176,7 @@ TheApp::OnHelp_Launcher(wxCommandEvent& event)
 
     wxString sep(wxFileName::GetPathSeparator());
     if (helpfile.EndsWith(".html")) {
-	// look in html/ subdirectory
+        // look in html/ subdirectory
         helpfile = "html" + sep + helpfile;
     }
 

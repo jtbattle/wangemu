@@ -271,9 +271,9 @@ private:
         SPECIAL_READ_SECTOR_HEADER       = 0x04,   //         *3
         SPECIAL_CLEAR_ERROR_COUNT        = 0x08,   //         *3
         SPECIAL_READ_ERROR_COUNT         = 0x09,   //         *3
-	// commands 0x0A through 0x0F              //         *3
-	// via the "field service command" menu item.
-	// it is not at all document what these do.
+        // commands 0x0A through 0x0F              //         *3
+        // via the "field service command" menu item.
+        // it is not at all document what these do.
         SPECIAL_MULTI_SECTOR_WRITE_START = 0x10,   // *1, *2
         SPECIAL_MULTI_SECTOR_WRITE_END   = 0x11,   // *1, *2
         SPECIAL_VERIFY_SECTOR_RANGE      = 0x12,   // *1, *2
