@@ -173,8 +173,8 @@ private:
     int         m_linebuf_len;          // number of characters in buffer
     char        m_linebuf[m_linebuf_maxlen+1];  // accumulates line to print
 
-    wxArrayString m_printstream;        // represents the entire print stream
-    wxArrayString m_printstream_copy;   // this is a copy that is used for printing purposes
+    vector<string> m_printstream;       // represents the entire print stream
+    vector<string> m_printstream_copy;  // this is a copy that is used for printing purposes
 
     CANT_ASSIGN_OR_COPY_CLASS(Printer);
     DECLARE_EVENT_TABLE()

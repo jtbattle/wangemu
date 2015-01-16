@@ -86,7 +86,7 @@ Printer::~Printer()
     // if port is open, close it
     closePort();
 
-    m_printstream.Clear();
+    m_printstream.clear();
 }
 
 // ---- public methods ----
@@ -169,7 +169,7 @@ Printer::getPaperId()
     return m_paperid;
 }
 
-void 
+void
 Printer::setPaperName(const string &papername)
 {
     m_papername = papername;
@@ -435,7 +435,7 @@ Printer::saveToFile()
             return;
         }
 
-        int maxn = m_printstream.GetCount();
+        const int maxn = m_printstream.size();
 
         for(int n = 0; n < maxn; n++) {
 #ifdef __WXMSW__
@@ -461,7 +461,7 @@ void
 Printer::printClear()
 {
     m_linebuf_len = 0;          // partially accumulated line
-    m_printstream.Clear();      // log of all complete lines
+    m_printstream.clear();      // log of all complete lines
     scrollbarSet(0, 0, false);
     invalidateAll();
 }
@@ -470,14 +470,14 @@ Printer::printClear()
 bool
 Printer::isEmpty()
 {
-    return (m_printstream.GetCount() == 0);
+    return m_printstream.empty();
 }
 
 // return the number of pages in the current copy of the printstream
 int
 Printer::numberOfPages()
 {
-    int num_rows = m_printstream.GetCount();
+    const int num_rows = m_printstream.size();
     return ((num_rows + m_pagelength-1) / m_pagelength);  // round up
 }
 
@@ -488,24 +488,24 @@ Printer::generatePrintPage(wxDC *dc, int pagenum, float vertAdjust)
     size_t length = m_linelength;
     int startRow = ((pagenum - 1) * m_pagelength);
     int startCol = 0;
-    wxString line;
+    string line;
 
     dc->SetFont( m_font );
 
     // draw each row of the text
     for(int row = 0; row < m_pagelength; row++) {
 
-        if (size_t(startRow + row) < m_printstream.GetCount() ) {
+        if (size_t(startRow + row) < m_printstream.size() ) {
             // the line exists
             line = m_printstream[startRow + row];
-            line = line.Mid(startCol, m_linelength - startCol);
+            line = line.substr(startCol, m_linelength - startCol);
         } else {
             // use empty line
             line = "";
         }
 
-        line = line.Left(length);
-        dc->DrawText(line, 0 ,row*m_charcell_h*vertAdjust); 
+        line = line.erase(length);
+        dc->DrawText(line, 0 ,row*m_charcell_h*vertAdjust);
     }
 }
 
@@ -516,7 +516,7 @@ Printer::scrollbarSet(int xpos, int ypos, bool redraw)
     SetScrollbars(  m_charcell_w,               // pixels per scroll unit x
                     m_charcell_h,               // pixels per scroll unit y
                     m_linelength + 2*hmargin,   // number of units x
-                    m_printstream.GetCount(),   // number of units y,
+                    m_printstream.size(),       // number of units y,
                     xpos,                       // x position in scroll units
                     ypos,                       // y position in scroll units
                     !redraw);                   // redraw the screen
@@ -533,7 +533,7 @@ Printer::createStreamCopy()
 void
 Printer::destroyStreamCopy()
 {
-    m_printstream_copy.Clear();
+    m_printstream_copy.clear();
 }
 
 
@@ -557,7 +557,7 @@ Printer::OnPaint(wxPaintEvent &WXUNUSED(event))
     firstCol  = std::max(firstCol,  0);
 
     // scroll-wheeling up can produce large offset
-    int num_rows = m_printstream.GetCount();    // # rows in log
+    const int num_rows = m_printstream.size();    // # rows in log
     if (num_rows < m_chars_h)
         firstLine = 0;
 
@@ -746,8 +746,8 @@ Printer::generateScreen(int startCol, int startRow)
         imgDC.SetTextForeground(*wxBLACK);      // always
         imgDC.SetFont(m_font);
 
-        int num_rows = m_printstream.GetCount();
-        wxString line;
+        const int num_rows = m_printstream.size();
+        string line;
 
         for(int row = 0; row < m_chars_h + 1; row++) {
 
@@ -755,10 +755,10 @@ Printer::generateScreen(int startCol, int startRow)
                 // the line exists
                 line = m_printstream[startRow + row];
                 size_t nchars = (m_linelength+hmargin) - skip_chars;
-                if ((skip_chars > 0) || (nchars < line.Len())) {
+                if ((skip_chars > 0) || (nchars < line.length())) {
                     // chop off any chars to the left of the display or
                     // to the right of the right edge of the virtual paper
-                    line = line.Mid(skip_chars, nchars);
+                    line = line.substr(skip_chars, nchars);
                 }
                 int x_off = left_bg_w + m_charcell_w * std::max(hmargin - startCol, 0);
                 int y_off = m_charcell_h * row;
@@ -776,8 +776,7 @@ void
 Printer::emitLine()
 {
     m_linebuf[m_linebuf_len] = (char)0x00;
-    wxString whole_line(m_linebuf);
-    m_printstream.Add(whole_line);
+    m_printstream.push_back(string(m_linebuf));
     m_linebuf_len = 0;
 
     if (m_autoshow)
@@ -786,7 +785,7 @@ Printer::emitLine()
     updateView();
 
     if (m_printasgo) {
-        if ((m_printstream.GetCount() % m_pagelength) == 0)
+        if ((m_printstream.size() % m_pagelength) == 0)
             // we just added the last line on a page. orint it.
             m_parent->printAndClear();
     }
@@ -796,7 +795,7 @@ Printer::emitLine()
 void
 Printer::formFeed()
 {
-    int linesToAdd = m_pagelength - (m_printstream.GetCount() % m_pagelength);
+    int linesToAdd = m_pagelength - (m_printstream.size() % m_pagelength);
     for(int i = 0; i < linesToAdd; i++) {
         // call emit line to that current line buffer is flushed
         // and to make sure page oriented functions such as "print as you go" are invoked
@@ -816,7 +815,7 @@ Printer::updateView()
     int first_visible_row, first_visible_char;
     GetViewStart(&first_visible_char, &first_visible_row);
     const int endrow = first_visible_row + m_chars_h;   // last row on screen
-    const int num_rows = m_printstream.GetCount();      // # rows in log
+    const int num_rows = m_printstream.size();          // # rows in log
 
     if (num_rows <= m_chars_h) {
         // the entire print state fits on screen
@@ -847,7 +846,7 @@ Printer::updateStatusbar()
 #endif
     int first_visible_row, first_visible_char;
     GetViewStart(&first_visible_char, &first_visible_row);
-    const int num_rows = m_printstream.GetCount();      // # rows in log
+    const int num_rows = m_printstream.size();      // # rows in log
 
     // update statusbar text
     // the current line/page reported are based on the last visible
@@ -856,9 +855,10 @@ Printer::updateStatusbar()
     const int num_pages = numberOfPages();
     const int last_line = std::min(first_visible_row + m_chars_h+1, num_rows);
     const int cur_page = (last_line + m_pagelength-1) / m_pagelength;
-    wxString msg;
-    msg.Printf("Page %d of %d (line %d of %d)",
-                cur_page, num_pages, last_line, num_rows);
+    string msg("Page " + std::to_string(cur_page) +
+               " of " + std::to_string(num_pages) +
+               " (line " + std::to_string(last_line) +
+               " of " + std::to_string(num_rows) + ")");
     m_parent->SetStatusText(msg);
 }
 
@@ -930,7 +930,7 @@ Printout::OnPrintPage(int page)
         //set the scale and origin
         float vertAdjust;
 #if 0
-        dc->SetUserScale(actualScale, actualScale);  
+        dc->SetUserScale(actualScale, actualScale);
         vertAdjust = 1.0;
 #else
         // we want to set things up so that the width is correct, and then
