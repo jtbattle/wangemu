@@ -82,7 +82,7 @@ CrtConfigDlg::CrtConfigDlg(wxFrame *parent, wxString title) :
 
     int label_flags = wxALIGN_RIGHT | wxLEFT | wxRIGHT; // right aligned text with left and right margin
     int ctl_flags   = wxALIGN_LEFT  | wxRIGHT;          // left aligned control with right margin
-    
+
     hGrid->AddSpacer(5); hGrid->AddSpacer(5);
 
     hGrid->Add(new wxStaticText(this, -1, "CRT Font"), 0, label_flags, h_text_margin);

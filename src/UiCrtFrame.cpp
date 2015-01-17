@@ -83,7 +83,7 @@ enum
     // ...
     Printer_N = Printer_0 + NUM_IOSLOTS-1,
 
-    Print_PrintAndClear,        
+    Print_PrintAndClear,
 
     // other IDs
     TB_TOOLBAR,
@@ -193,7 +193,7 @@ BEGIN_EVENT_TABLE(CrtFrame, wxFrame)
     // printer window support
     EVT_COMMAND_RANGE(Printer_0, Printer_N,
                 wxEVT_COMMAND_MENU_SELECTED, CrtFrame::OnPrinter)
-                
+
     EVT_MENU      (Print_PrintAndClear,      CrtFrame::OnPrintAndClear)
 
     // toolbar event handler
@@ -628,7 +628,7 @@ CrtFrame::initToolBar(wxToolBar *tb)
         memDC.DrawText(label, btnOrigX, textH);
         memDC.GetTextExtent(sf_labels[i], &textW, &textH);
         btnOrigX = (buttonW - textW) >> 1;
-    
+
     #if GRAPHIC_ARROWS
         int shaft_ticks;        // number of separators
         int arrow_dir;          // arrow direction
@@ -1246,7 +1246,7 @@ CrtFrame::OnToolBarButton(wxCommandEvent &event)
 {
     int id = event.GetId();
     bool shift = ::wxGetKeyState(WXK_SHIFT);
-    
+
     const int sf = IoCardKeyboard::KEYCODE_SF;
     int keycode = (id == TB_EDIT) ? (sf | IoCardKeyboard::KEYCODE_EDIT)
                 : (shift)         ? (sf | (id - TB_SF0 + 16))

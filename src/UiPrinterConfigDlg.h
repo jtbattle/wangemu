@@ -1,5 +1,5 @@
 // This class is used for configuring printer settings.
-// The validator class handles the data transfer to/from members  
+// The validator class handles the data transfer to/from members
 // of an instance of the PrinterDialogDataTransfer class.
 //
 // It uses the wxValidator class and default dialog capabilities.
@@ -18,7 +18,7 @@ class PrinterDialogDataTransfer
 public:
 //    MyData();
     // These data members are designed for transfer to and from
-    // controls, via validators. 
+    // controls, via validators.
     wxString m_string_pagelength;
     wxString m_string_linelength;
     bool     m_checkbox_autoshow;

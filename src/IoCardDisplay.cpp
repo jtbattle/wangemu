@@ -85,7 +85,7 @@ static const int num_scanlines = 256;
 //
 // (3) as the character received by OBS is analyzed, some control codes
 //     are acted upon and clear the busy state.  otherwise, the character's
-//     effect is handled immediately and a small state machine is set up to 
+//     effect is handled immediately and a small state machine is set up to
 //     determine when to clear the busy state.  this state is advanced by
 //     the m_thnd_hsync timer event.
 

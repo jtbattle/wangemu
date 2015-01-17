@@ -110,7 +110,7 @@ struct papersizemap_t {
     {wxPAPER_A3,         "A3" },           /*  A3 sheet, 297 by 420 millimeters */
     {wxPAPER_10X14,      "10X14" },        /*  10-by-14-inch sheet */
     {wxPAPER_11X17,      "11x17" },        /*  11-by-17-inch sheet */
-    {wxPAPER_FANFOLD_US, "US Std Fanfold"} /*  US Std Fanfold, 14 7/8 by 11 inches */   
+    {wxPAPER_FANFOLD_US, "US Std Fanfold"} /*  US Std Fanfold, 14 7/8 by 11 inches */
 };
 const int PSMAX = sizeof(papersizemap)/sizeof(papersizemap_t);
 #endif
@@ -241,7 +241,7 @@ PrinterFrame::makeMenubar()
     menuDisplay->Append(Display_FontSize18, "Font Size 18", "Set display font to 18 point", wxITEM_CHECK);
     menuDisplay->AppendSeparator();
     menuDisplay->Append(Display_Greenbar,   "&Greenbar", "Make greenbar virtual paper", wxITEM_CHECK);
- 
+
     wxMenu *menuConfig = new wxMenu;
     menuConfig->Append(Configure_Dialog, "&Emulated printer setup...", "Change settings of emulated Wang printer");
     menuConfig->Append(File_PageSetup,   "&Real printer setup...",     "Change settings of real printer");
@@ -425,7 +425,7 @@ PrinterFrame::getDefaults()
     int orientation;
     (void)hst.ConfigReadInt(subgroup, "orientation", &orientation, wxPORTRAIT);
     m_printer->setOrientation(static_cast<wxPrintOrientation>(orientation));
- 
+
     // pick up paper id
     // we don't actually use the paperid that was saved to the config file but
     // instead we recalc the paperid from the papername. The papername is what
@@ -457,7 +457,7 @@ PrinterFrame::getDefaults()
 }
 
 // translate a character pagesize to the appropriate enum value for wxPaperSize
-wxPaperSize 
+wxPaperSize
 PrinterFrame::PaperSize(string pagesizename)
 {
     // translate char to wxPaperSize
@@ -475,7 +475,7 @@ PrinterFrame::PaperSize(string pagesizename)
 }
 
 // translate an enum pagesize to the appropriate string name
-string 
+string
 PrinterFrame::PaperSize(wxPaperSize papersizeval) const
 {
     // translate char to wxPaperSize
@@ -493,7 +493,7 @@ PrinterFrame::PaperSize(wxPaperSize papersizeval) const
 }
 
 // translate a character pagesize to the appropriate enum value for wxPaperSize
-wxPrintBin 
+wxPrintBin
 PrinterFrame::PaperBin(string paperbinname) const
 {
     // translate char to wxPrintBin
@@ -507,7 +507,7 @@ PrinterFrame::PaperBin(string paperbinname) const
 }
 
 // translate an enum pagesize to the appropriate string name
-string 
+string
 PrinterFrame::PaperBin(wxPrintBin paperbinval) const
 {
     // translate char to wxPaperSize
@@ -822,7 +822,7 @@ PrinterFrame::destroyWindow()
 void
 PrinterFrame::printAndClear()
 {
-    if (m_printer->isEmpty()) 
+    if (m_printer->isEmpty())
         return;
 
     System2200 sys;
@@ -836,7 +836,7 @@ PrinterFrame::printAndClear()
     wxPrinter printer(& printDialogData);
 
     Printout printout(_T(""), m_printer);
-    if (!printer.Print(this, &printout, false)) {  
+    if (!printer.Print(this, &printout, false)) {
         if (wxPrinter::GetLastError() == wxPRINTER_ERROR)
             wxMessageBox("There was a problem printing.\n"
                         "Perhaps your current printer is not set correctly?",

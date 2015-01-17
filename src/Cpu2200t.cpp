@@ -174,7 +174,7 @@ enum {
 #define FULL_TARGET(u) \
     ((uint16)(((u) & 0xF00F) | (((u)<<4) & 0x0F00) | (((u)>>4) & 0x00F0)))
 
-// branch target within 8b page 
+// branch target within 8b page
 #define BRANCH_TARGET(ic,uop) \
         (uint16)(((ic) & 0xFF00) | (((uop) >> 4) & 0xF0) | ((uop) & 0x0F))
 
@@ -688,7 +688,7 @@ Cpu2200t::decimal_add(uint4 a_op, uint4 b_op, int ci) const
 
     if (co)
         sum -= 10;
-    
+
     return (uint8)((co << 4) + sum);
 }
 

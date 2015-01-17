@@ -216,7 +216,7 @@ Crt::intensityToColor(float f) const
 
 // regenerate a cache of the font map (required for dot matrix font;
 // optional for native font)
-// 
+//
 // Wang character cell layout (10x11 character cell)
 //   x = 8x8 active pixel area
 //   u = underline

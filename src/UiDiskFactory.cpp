@@ -480,7 +480,7 @@ PropPanel::refresh()
         for(int i=0; i < num_disk_types; i++) {
             if ( (disk_type    == disk_choices[i].disk_type) &&
                  (num_platters == disk_choices[i].platters)  &&
-                 (num_sectors  == disk_choices[i].sectors_per_platter) 
+                 (num_sectors  == disk_choices[i].sectors_per_platter)
                ) {
                 radio_sel = i;
                 break;

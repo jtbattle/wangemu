@@ -3,7 +3,7 @@
 //
 // The information was derived from these sources, in chronological order that
 // I obtained them, and thus in order of its impact on writing this code:
-//      
+//
 // * Wang 7180 disk controller internal document containing microcode for
 //   the floppy disk controller:
 //      http://www.wang2200.org/2200tech/mrg-no-2.pdf
@@ -1176,7 +1176,7 @@ disk operation
     //
     // there are complications: the idea of "optimal" is heuristic, and
     // depends on future behavior.  Although the OS intends to use this
-    // hint wisely, $GIO commands can specify this hint yet do things 
+    // hint wisely, $GIO commands can specify this hint yet do things
     // in an arbitrary order.  in that case, if an error occurs writing
     // the cached sectors, it may end up associated with the interloping
     // command, instead of the original write.  the user may eject a drive

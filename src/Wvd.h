@@ -27,7 +27,7 @@
 //          to access virtual disk images.  the disk type and geometry
 //          can't be changed, but the write protect status and the label
 //          can be modified with the setter functions.
-// 
+//
 //          individual sectors can be read and written, and the disk can be
 //          formatted.  to make these file operations efficient, a hidden
 //          file handle is kept open on the file, rather than reopening the

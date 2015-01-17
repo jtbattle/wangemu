@@ -4,7 +4,7 @@
 // instead the OnIdle gets reflected into the core System2200 class.
 //
 // The rest of it is just a pachinko machine of events to redraw the screen
-// and handle user interaction.  
+// and handle user interaction.
 //
 // Although not the most natural place, this class also provides the means
 // for any window to add an About/Help set of menu items.

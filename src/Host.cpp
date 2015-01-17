@@ -469,7 +469,7 @@ Host::saveConfigFileLocations()
 // ============================================================================
 
 // return the time in milliseconds as a 64b signed integer
-int64 
+int64
 Host::getTimeMs(void)
 {
     // newer api should provide more accurate measurement of time

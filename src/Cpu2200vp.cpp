@@ -49,7 +49,7 @@ enum { SH_MASK_CARRY  = 0x01,   // CARRY (H/M)
                                 //        device (i.e., CPU is ready)
        SH_MASK_SF     = 0x04,   // KFN (H/M)
                                 //    set to 1 when input received from KBD
-                                //    is special function code.  it is a 
+                                //    is special function code.  it is a
                                 //    9th data bit for input.
        SH_MASK_DEVRDY = 0x08,   // RB (H)
                                 //    0 = device not enabled or busy
@@ -207,7 +207,7 @@ Cpu2200vp::write_ucode(uint16 addr, uint32 uop)
         if (d_field == 1)
             m_ucode[addr].ucode |= FETCH_B;
         m_ucode[addr].op  = OP_LPI;
-        m_ucode[addr].p16 = 
+        m_ucode[addr].p16 =
                   (uint16)(   ((uop >> 3) & 0xC000)     // [18:17] -> [15:14]
                             | ((uop >> 2) & 0x3000)     // [15:14] -> [13:12]
                             | ((uop >> 0) & 0x0FFF) );  // [11: 0] -> [11: 0]
@@ -457,7 +457,7 @@ void
 Cpu2200vp::set_sl(uint8 value)
 {
     m_cpu.sl = (value & 0xFF);
-  
+
     if (m_memsize_KB <= 64) {
         m_cpu.bank_offset = 0;
     } else if (m_memsize_KB <= 128) {
@@ -512,12 +512,12 @@ Cpu2200vp::decimal_add8(int a_op, int b_op, int ci) const
     co      = (sum_low > 9);
     if (co)
         sum_low -= 10;
-    
+
     sum_high = a_op_high + b_op_high + co; // ranges from binary 0 to 19
     co       = (sum_high > 9);
     if (co)
         sum_high -= 10;
-    
+
     return (uint16)((co << 8) + (sum_high << 4) + sum_low);
 }
 
@@ -564,7 +564,7 @@ Cpu2200vp::decimal_sub8(int a_op, int b_op, int ci) const
     } else {
         borrow = 1;
     }
-    
+
     return (uint16)((borrow << 8) + (sum_high << 4) + sum_low);
 }
 

@@ -2,7 +2,7 @@
 // Beside being able to call back into a member function, it also binds the
 // argument to the callback function.
 //
-// No doubt this could be done more tersely with various std::tr1 && boost 
+// No doubt this could be done more tersely with various std::tr1 && boost
 // bind and functor capabilities, but I didn't want to depend on those libs.
 //
 // Adapted for the wang 2200 emulator, 2008

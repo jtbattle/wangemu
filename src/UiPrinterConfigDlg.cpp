@@ -39,7 +39,7 @@ PrinterConfigDlg::PrinterConfigDlg( wxWindow *parent, const wxString& title,
     // currently no easy way to substitute a different validator or a
     // different transfer variable after a control has been constructed.
 
-    // Pointers to the first text control is saved 
+    // Pointers to the first text control is saved
     // so that we can use them elsewhere to set focus
     flexgridsizer->Add(new wxStaticText(this, wxID_ANY, "Page Length"));
     text = new wxTextCtrl(this, VALIDATE_TEXT_PAGELENGTH, "",
@@ -80,7 +80,7 @@ PrinterConfigDlg::PrinterConfigDlg( wxWindow *parent, const wxString& title,
     portsizer->Add(portstring, 1, wxGROW | wxALL);
     checksizer->Add(portsizer, 1, wxGROW | wxALL);
 #endif
-    mainsizer->Add(checksizer, 1, wxGROW | wxALL);  
+    mainsizer->Add(checksizer, 1, wxGROW | wxALL);
 
     wxGridSizer *gridsizer = new wxGridSizer(2, 2, 5, 5);
 

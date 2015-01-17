@@ -86,7 +86,7 @@ Wvd::open(const string &filename)
     assert(!filename.empty());
 
     // set up a file handle
-    m_file = new fstream(filename.c_str(), 
+    m_file = new fstream(filename.c_str(),
                          fstream::in | fstream::out | fstream::binary );
     if (!m_file)
         return false;
@@ -614,7 +614,7 @@ Wvd::createFile(const string &filename)
     m_path = filename;
 
     // create the file if it doesn't exist; erase if it does
-    m_file = new fstream(filename.c_str(), 
+    m_file = new fstream(filename.c_str(),
                  fstream::in | fstream::out | fstream::trunc | fstream::binary);
     if (!m_file)
         return false;
