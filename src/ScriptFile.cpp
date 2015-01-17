@@ -158,7 +158,7 @@ ScriptFile::m_prepare_next_line()
 // helper functions
 
 bool
-ScriptFile::ishexdigit(char ch)
+ScriptFile::ishexdigit(char ch) const
 {
     return (ch >= '0' && ch <= '9') ||
            (ch >= 'A' && ch <= 'F') ||
@@ -167,7 +167,7 @@ ScriptFile::ishexdigit(char ch)
 
 
 int
-ScriptFile::hexval(char ch)
+ScriptFile::hexval(char ch) const
 {
     if (ch >= '0' && ch <= '9')
         return ch - '0';

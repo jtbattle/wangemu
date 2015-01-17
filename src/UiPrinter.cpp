@@ -137,7 +137,7 @@ Printer::setMargins(int left, int right, int top, int bottom)
 }
 
 void
-Printer::getMargins(int& left, int& right, int& top, int& bottom)
+Printer::getMargins(int &left, int &right, int &top, int &bottom) const
 {
     left = m_marginleft;
     right = m_marginright;
@@ -152,7 +152,7 @@ Printer::setOrientation(wxPrintOrientation orientation)
 }
 
 wxPrintOrientation
-Printer::getOrientation()
+Printer::getOrientation() const
 {
     return m_orientation;
 }
@@ -164,7 +164,7 @@ Printer::setPaperId(wxPaperSize paperid)
 }
 
 wxPaperSize
-Printer::getPaperId()
+Printer::getPaperId() const
 {
     return m_paperid;
 }
@@ -176,7 +176,7 @@ Printer::setPaperName(const string &papername)
 }
 
 string
-Printer::getPaperName()
+Printer::getPaperName() const
 {
     return m_papername;
 }
@@ -188,7 +188,7 @@ Printer::setBin(wxPrintBin paperbin)
 }
 
 wxPrintBin
-Printer::getBin()
+Printer::getBin() const
 {
     return m_paperbin;
 }
@@ -200,7 +200,7 @@ Printer::setRealPrinterName(const string &name)
 }
 
 string
-Printer::getRealPrinterName()
+Printer::getRealPrinterName() const
 {
     return m_realprintername;
 }
@@ -215,14 +215,14 @@ Printer::setPageAttributes(int linelength, int pagelength)
 
 
 void
-Printer::getPageAttributes(int &linelength, int &pagelength)
+Printer::getPageAttributes(int &linelength, int &pagelength) const
 {
     linelength = m_linelength;
     pagelength = m_pagelength;
 }
 
 void
-Printer::getCellAttributes(int *cell_w, int *cell_h)
+Printer::getCellAttributes(int *cell_w, int *cell_h) const
 {
     *cell_w = m_charcell_w;
     *cell_h = m_charcell_h;
@@ -238,7 +238,7 @@ Printer::setAutoshow(bool b)
 
 // get autoshow attribute
 bool
-Printer::getAutoshow()
+Printer::getAutoshow() const
 {
     return m_autoshow;
 }
@@ -253,7 +253,7 @@ Printer::setPrintasgo(bool b)
 
 // get printasgo attribute
 bool
-Printer::getPrintasgo()
+Printer::getPrintasgo() const
 {
     return m_printasgo;
 }
@@ -267,7 +267,7 @@ Printer::setPortdirect(bool b)
 
 //get portdirect attribute
 bool
-Printer::getPortdirect()
+Printer::getPortdirect() const
 {
     return m_portdirect;
 }
@@ -280,7 +280,7 @@ Printer::setPortstring(const string &name)
 }
 
 string
-Printer::getPortstring()
+Printer::getPortstring() const
 {
     return m_portstring;
 }
@@ -468,14 +468,14 @@ Printer::printClear()
 
 // return true of the print stream is empty
 bool
-Printer::isEmpty()
+Printer::isEmpty() const
 {
     return m_printstream.empty();
 }
 
 // return the number of pages in the current copy of the printstream
 int
-Printer::numberOfPages()
+Printer::numberOfPages() const
 {
     const int num_rows = m_printstream.size();
     return ((num_rows + m_pagelength-1) / m_pagelength);  // round up

@@ -32,21 +32,21 @@ public:
     // values range from 0 to 100
     void setDisplayContrast(int n);
     void setDisplayBrightness(int n);
-    int  getDisplayContrast()   { return m_display_contrast; }
-    int  getDisplayBrightness() { return m_display_brightness; }
+    int  getDisplayContrast()   const { return m_display_contrast; }
+    int  getDisplayBrightness() const { return m_display_brightness; }
 
     // tracks whether screen might have changed
     void setDirty(bool dirty = true)
         { m_dirty = dirty; };
-    bool isDirty()
+    bool isDirty() const
         { return m_dirty; };
 
     // tracks whether cached fontmap is out of date
     void setFontDirty(bool dirty = true);
     bool isFontDirty() const;
 
-    void setFrameCount(int n) { m_frame_count = n; }
-    int  getFrameCount()      { return m_frame_count; }
+    void setFrameCount(int n)  { m_frame_count = n; }
+    int  getFrameCount() const { return m_frame_count; }
 
     // redraw the CRT display as necessary
     void refreshWindow(void);
@@ -88,7 +88,7 @@ private:
     void generateScreenByText(wxMemoryDC &memDC, wxColor fg, wxColor bg);
 
     // map an intensity to a display color
-    wxColor intensityToColor(float f);
+    wxColor intensityToColor(float f) const;
 
     // clear the display; home the cursor
     void scr_clear();

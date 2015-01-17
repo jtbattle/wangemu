@@ -34,7 +34,7 @@ public:
 
     // indicates if cpu is running or halted
     enum { CPU_RUNNING=0, CPU_HALTED=1 };
-    int status() { return m_status; }
+    int status() const { return m_status; }
 
     // the disk controller is odd in that it uses the AB bus to signal some
     // information after the card has been selected.  this lets it peek into
@@ -97,14 +97,14 @@ private:
     void dump_16n(int addr);
 
     // read from the specified address
-    uint8 mem_read(uint16 addr);
+    uint8 mem_read(uint16 addr) const;
 
     // write to the specified address.
     void mem_write(uint16 addr, uint4 wr_value, int write2);
 
     // reading ST3 is a subroutine because it must return state that wasn't
     // what was written
-    uint4 read_st3();
+    uint4 read_st3() const;
 
     // setting ST1.1 can have more complicated side effects
     void set_st1(uint4 value);
@@ -114,10 +114,10 @@ private:
     int store_C_operand(uint32 uop, uint4 value);
 
     // add two BCD nibbles
-    uint8 decimal_add(uint4 a_op, uint4 b_op, int ci);
+    uint8 decimal_add(uint4 a_op, uint4 b_op, int ci) const;
 
     // subtract two BCD nibbles
-    uint8 decimal_sub(uint4 a_op, uint4 b_op, int ci);
+    uint8 decimal_sub(uint4 a_op, uint4 b_op, int ci) const;
 
     // simulate one instruction
     int exec_one_op();
@@ -220,17 +220,17 @@ private:
     void set_sl(uint8 value);
 
     // 9b result: carry out and 8b result
-    uint16 decimal_add8(int a_op, int b_op, int ci);
+    uint16 decimal_add8(int a_op, int b_op, int ci) const;
 
     // 9b result: carry out and 8b result
     // if ci is 0, it means compute a-b.
     // if ci is 1, it means compute a-b-1.
     // msb of result is new carry bit: 1=borrow, 0=no borrow
-    uint16 decimal_sub8(int a_op, int b_op, int ci);
+    uint16 decimal_sub8(int a_op, int b_op, int ci) const;
 
     // return the chosen bits of B and A, returns with the bits
     // of b in [7:4] and the bits of A in [3:0]
-    uint8 get_HbHa(int HbHa, int a_op, int b_op);
+    uint8 get_HbHa(int HbHa, int a_op, int b_op) const;
 
     // simulate one instruction
     int exec_one_op();

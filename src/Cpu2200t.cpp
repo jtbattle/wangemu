@@ -24,7 +24,7 @@
 //
 // status 1 bits: input device inhibit, special function key sense,
 //                input bus strobe (p4-16)
-enum { ST1_MASK_CARRY=1, ST1_MASK_CPB=2, ST1_MASK_SF=4, ST1_MASK_ROM=8};
+enum { ST1_MASK_CARRY=1, ST1_MASK_CPB=2, ST1_MASK_SF=4, ST1_MASK_ROM=8 };
 //
 //    0: ALU carry bit
 //
@@ -65,7 +65,7 @@ enum { ST1_MASK_CARRY=1, ST1_MASK_CPB=2, ST1_MASK_SF=4, ST1_MASK_ROM=8};
 
 // status 3 bits: senses halt/step, senses I/O device busy, and other I/O
 // operations
-enum { ST3_MASK_DEVRDY=1, ST3_MASK_INBIT0=2, ST3_MASK_HALT=4, ST3_MASK_HORZ=8};
+enum { ST3_MASK_DEVRDY=1, ST3_MASK_INBIT0=2, ST3_MASK_HALT=4, ST3_MASK_HORZ=8 };
 //
 //    0: this is a ready bit (1=ready, 0=busy).  busy means that the
 //       currently selected I/O device either isn't ready to accept
@@ -90,8 +90,7 @@ enum { ST3_MASK_DEVRDY=1, ST3_MASK_INBIT0=2, ST3_MASK_HALT=4, ST3_MASK_HORZ=8};
 //  pre-decode instructions for faster interpretation
 // ------------------------------------------------------------------------
 
-typedef enum {
-
+enum {
     // misc
     OP_ILLEGAL,         // illegal instruction
 
@@ -135,8 +134,7 @@ typedef enum {
     OP_TP,
     OP_TA,
     OP_XP
-
-} op_t;
+};
 
 enum {
     FETCH_B   = 0x80000000,     // load b_op  according to uop[24:20]
@@ -459,7 +457,7 @@ Cpu2200t::dump_16n(int addr)
 // there are two memory spaces: ROM and RAM
 // for RAM, there are two modes: "horizontal" and "vertical".
 uint8
-Cpu2200t::mem_read(uint16 addr)
+Cpu2200t::mem_read(uint16 addr) const
 {
     int rv;
 
@@ -579,7 +577,7 @@ Cpu2200t::mem_write(uint16 addr, uint4 wr_value, int write2)
 //        support this, there needs to be a different mechanism
 //        in the emulator, or a very specific hack must be used.
 uint4
-Cpu2200t::read_st3()
+Cpu2200t::read_st3() const
 {
     int ib5 = m_sys.cpu_poll_IB5();
     return (uint4)(  (m_cpu.st3 & 0x8)  // 1=horizontal RAM addressing
@@ -673,7 +671,7 @@ Cpu2200t::store_C_operand(uint32 uop, uint4 value)
     } while (0)
 
 uint8
-Cpu2200t::decimal_add(uint4 a_op, uint4 b_op, int ci)
+Cpu2200t::decimal_add(uint4 a_op, uint4 b_op, int ci) const
 {
     int sum;
     int co;
@@ -702,7 +700,7 @@ Cpu2200t::decimal_add(uint4 a_op, uint4 b_op, int ci)
 //  active low).
 // cy=1 effectively means no borrow; cy=0 means borrow
 uint8
-Cpu2200t::decimal_sub(uint4 a_op, uint4 b_op, int ci)
+Cpu2200t::decimal_sub(uint4 a_op, uint4 b_op, int ci) const
 {
     int ninecomp;
 

@@ -492,7 +492,7 @@ Cpu2200vp::set_sh(uint8 value)
 
 // 9b result: carry out and 8b result
 uint16
-Cpu2200vp::decimal_add8(int a_op, int b_op, int ci)
+Cpu2200vp::decimal_add8(int a_op, int b_op, int ci) const
 {
     int a_op_low  = (a_op >> 0) & 0xF;
     int b_op_low  = (b_op >> 0) & 0xF;
@@ -527,7 +527,7 @@ Cpu2200vp::decimal_add8(int a_op, int b_op, int ci)
 // if ci is 1, it means compute a-b-1.
 // msb of result is new carry bit: 1=borrow, 0=no borrow
 uint16
-Cpu2200vp::decimal_sub8(int a_op, int b_op, int ci)
+Cpu2200vp::decimal_sub8(int a_op, int b_op, int ci) const
 {
     int a_op_low  = (a_op >> 0) & 0xF;
     int b_op_low  = (b_op >> 0) & 0xF;
@@ -648,7 +648,7 @@ Cpu2200vp::decimal_sub8(int a_op, int b_op, int ci)
 // return the chosen bits of B and A, returns with the bits
 // of b in [7:4] and the bits of A in [3:0]
 uint8
-Cpu2200vp::get_HbHa(int HbHa, int a_op, int b_op)
+Cpu2200vp::get_HbHa(int HbHa, int a_op, int b_op) const
 {
     int rslt;
 

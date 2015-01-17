@@ -26,11 +26,11 @@ public:
 
     // translation of papersize (wxPaperSize) enum
     wxPaperSize PaperSize(string papersizename);
-    string PaperSize(wxPaperSize papersizeval);
+    string PaperSize(wxPaperSize papersizeval) const;
 
     // translation of paperbin (wxPrintBin) enum
-    wxPrintBin PaperBin(string paperbinname);
-    string PaperBin(wxPrintBin paperbinval);
+    wxPrintBin PaperBin(string paperbinname) const;
+    string PaperBin(wxPrintBin paperbinval) const;
 
     // emit a character to the display
     void printChar(uint8 byte);

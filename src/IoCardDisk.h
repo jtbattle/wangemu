@@ -108,7 +108,7 @@ private:
     // return true if the selected disk is idle.
     // if the disk is busy, ask the user to confirm the action,
     // and return true if OK, or false if cancel.
-    bool iwvdIsDiskIdle(int drive);
+    bool iwvdIsDiskIdle(int drive) const;
 
     // returns false if something went wrong, true otherwise
     bool iwvdInsertDisk(int drive,
@@ -158,7 +158,7 @@ private:
     // ---- internal state ----
 
     // number of attached drives (1-4)
-    int numDrives()    { return m_cfg.getNumDrives(); }
+    int numDrives() const { return m_cfg.getNumDrives(); }
     // intelligence: dumb, intelligent, auto
     DiskCtrlCfgState::disk_ctrl_intelligence_t
         intelligence() { return m_cfg.getIntelligence(); }
@@ -300,14 +300,14 @@ private:
     bool cax_init();
 
     // indicate if the controller state machine is idle or busy
-    bool inIdleState();
+    bool inIdleState() const;
 
     // report if a given drive is occupied and has media that is suitable
     // for the intelligent disk protocol, namely disks with > 32K sectors,
     // or multiplatter disks.  these aren't necessarily opposite, as a
     // drive might be empty.
-    bool driveIsSmart(int drive);
-    bool driveIsDumb(int drive);
+    bool driveIsSmart(int drive) const;
+    bool driveIsDumb(int drive) const;
 
     // helper routine to set the conditions to receive and echo bytes from the host
     void getBytes(int count, disk_sm_t return_state);
@@ -316,7 +316,7 @@ private:
     void sendBytes(int count, disk_sm_t return_state);
 
     // for debugging
-    string statename(int state);
+    string statename(int state) const;
 
     // centralized function to handle updating sequencing state
     bool advanceState(disk_event_t event, const int val=0);

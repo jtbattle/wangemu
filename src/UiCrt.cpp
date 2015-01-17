@@ -168,7 +168,7 @@ Crt::setColor(wxColor FG, wxColor BG)
 // The function isn't all that fast so if the generated value is expected
 // to be used frequently, it should be cached by the caller.
 wxColor
-Crt::intensityToColor(float f)
+Crt::intensityToColor(float f) const
 {
     assert(f >= 0.0f && f <= 1.0f);
 

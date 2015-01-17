@@ -76,7 +76,7 @@ IoCardDisk::cax_init()
 }
 
 string
-IoCardDisk::statename(int state)
+IoCardDisk::statename(int state) const
 {
     switch (state) {
         case CTRL_WAKEUP:               return "CTRL_WAKEUP";
@@ -120,7 +120,7 @@ IoCardDisk::statename(int state)
 
 // indicate if the controller state machine is idle or busy
 bool
-IoCardDisk::inIdleState()
+IoCardDisk::inIdleState() const
 {
     if (m_state == CTRL_WAKEUP)
         return true;
@@ -135,7 +135,7 @@ IoCardDisk::inIdleState()
 // or multiplatter disks.  these aren't necessarily opposite, as a
 // drive might be empty.
 bool
-IoCardDisk::driveIsSmart(int drive)
+IoCardDisk::driveIsSmart(int drive) const
 {
     return (drive >= numDrives())                   ||
            (m_d[drive].state == DRIVE_EMPTY)        ||
@@ -144,7 +144,7 @@ IoCardDisk::driveIsSmart(int drive)
 }
 
 bool
-IoCardDisk::driveIsDumb(int drive)
+IoCardDisk::driveIsDumb(int drive) const
 {
     return (drive >= numDrives())                    ||
            (m_d[drive].state == DRIVE_EMPTY)         ||

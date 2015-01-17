@@ -920,7 +920,7 @@ IoCardDisk::wvdFormatFile(const string &filename)
 // if the disk is busy, ask the user to confirm the action,
 // and return true if OK, or false if cancel.
 bool
-IoCardDisk::iwvdIsDiskIdle(int drive)
+IoCardDisk::iwvdIsDiskIdle(int drive) const
 {
     assert(drive >= 0 && drive < numDrives());
     assert(m_d[drive].state != DRIVE_EMPTY);

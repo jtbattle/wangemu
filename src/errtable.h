@@ -29,7 +29,7 @@ typedef struct {
 //    const char *dummy;      // unused
 //} errtable_t;
 
-extern vector<errtable_t> errtable;
-extern vector<errtable_t> errtable_vp;
+extern const vector<errtable_t> errtable;
+extern const vector<errtable_t> errtable_vp;
 
 #endif _INCLUDE_ERRTABLE_H_

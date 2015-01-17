@@ -601,7 +601,7 @@ System2200::cpu_CPB(bool busy)
 //        than bit 5, but generalize this anyway for the day that
 //        I run into such a card.
 int
-System2200::cpu_poll_IB5()
+System2200::cpu_poll_IB5() const
 {
     if  ((m_IoCurSelected > 0) && (m_IoMap[m_IoCurSelected].inst != nullptr)) {
         // signal that we want to get something
@@ -674,7 +674,7 @@ System2200::getPrinterIoAddr(int n)
 
 // return the instance handle of the device at the specified IO address
 IoCard*
-System2200::getInstFromIoAddr(int io_addr)
+System2200::getInstFromIoAddr(int io_addr) const
 {
     assert( (io_addr >= 0) && (io_addr <= 0xFFF) );
     return m_IoMap[io_addr & 0xFF].inst;
@@ -697,7 +697,7 @@ System2200::getInstFromSlot(int slot)
 
 // returns true if the slot contains a disk controller, 0 otherwise
 bool
-System2200::isDiskController(int slot)
+System2200::isDiskController(int slot) const
 {
     assert(slot >= 0 && slot < NUM_IOSLOTS);
 
@@ -711,7 +711,7 @@ System2200::isDiskController(int slot)
 // find slot number of disk controller #n.
 // returns true if successful.
 bool
-System2200::findDiskController(const int n, int *slot)
+System2200::findDiskController(const int n, int *slot) const
 {
     int num_ioslots = NUM_IOSLOTS;
     int numfound = 0;

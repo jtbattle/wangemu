@@ -72,7 +72,7 @@ public:
     void cpu_OBS(uint8 byte);   // output byte strobe
     void cpu_CBS();             // handles CBS strobes
     void cpu_CPB(bool busy);    // notify selected card when CPB changes
-    int  cpu_poll_IB5();        // the CPU can poll IB5 without any other strobe
+    int  cpu_poll_IB5() const;  // the CPU can poll IB5 without any other strobe
 
     // ---- slot manager ----
 
@@ -90,14 +90,14 @@ public:
 
     // return the instance handle of the device at the specified IO address
     // used by IoCardKeyboard.c
-    IoCard* getInstFromIoAddr(int io_addr);
+    IoCard* getInstFromIoAddr(int io_addr) const;
 
     // given a slot, return the "this" element
     IoCard* getInstFromSlot(int slot);
 
     // find slot number of disk controller #n (starting with 0).
     // returns true if successful.
-    bool findDiskController(const int n, int *slot);
+    bool findDiskController(const int n, int *slot) const;
 
     // find slot,drive of any disk controller with disk matching name.
     // returns true if successful.
@@ -105,7 +105,7 @@ public:
 
 private:
     // returns true if the slot contains a disk controller, 0 otherwise
-    bool isDiskController(int slot);
+    bool isDiskController(int slot) const;
 
     // save/restore mounted disks to/from ini file
     void saveDiskMounts(void);

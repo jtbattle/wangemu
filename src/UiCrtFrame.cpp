@@ -1426,8 +1426,7 @@ CrtFrame::destroyWindow()
     saveDefaults();     // save config options
 
     // find ourselves in the list of crts
-    vector<CrtFrame*>::iterator it =
-                        find(m_crtlist.begin(), m_crtlist.end(), this);
+    auto it = find(m_crtlist.begin(), m_crtlist.end(), this);
     assert( it != m_crtlist.end() );
 
     // close this window  (system may defer it for a while)
@@ -1442,18 +1441,18 @@ CrtFrame::destroyWindow()
 CrtFrame *
 CrtFrame::getPrimaryFrame()
 {
-    for( vector<CrtFrame*>::iterator it = m_crtlist.begin();
-                                     it < m_crtlist.end();
-                                     ++it) {
-        if ((*it)->isPrimaryCrt()) {
-            if (it != m_crtlist.begin()) {
-                // optimize placement so future searches find it right off
-                CrtFrame *tmp = *m_crtlist.begin();
-                m_crtlist[0] = *it;
-                *it = tmp;
+    bool first = true;
+    for(auto &crt : m_crtlist) {
+        if (crt->isPrimaryCrt()) {
+            if (!first) {
+                // optimize placement so future searches find it immediately
+                CrtFrame *tmp = m_crtlist[0];
+                m_crtlist[0] = crt;
+                crt = tmp;
             }
             return m_crtlist[0];
         }
+        first = false;
     }
 
     return 0;  // not found

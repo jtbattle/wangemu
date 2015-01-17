@@ -66,8 +66,8 @@ private:
     int         m_cur_char;     // which character to return next
 
     // helpers
-    bool ishexdigit(char ch);
-    int  hexval(char ch);
+    bool ishexdigit(char ch) const;
+    int  hexval(char ch) const;
 
     CANT_ASSIGN_OR_COPY_CLASS(ScriptFile);
 };

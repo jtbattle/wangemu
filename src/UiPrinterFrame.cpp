@@ -476,7 +476,7 @@ PrinterFrame::PaperSize(string pagesizename)
 
 // translate an enum pagesize to the appropriate string name
 string 
-PrinterFrame::PaperSize(wxPaperSize papersizeval)
+PrinterFrame::PaperSize(wxPaperSize papersizeval) const
 {
     // translate char to wxPaperSize
 #if USEMYPAPER
@@ -494,7 +494,7 @@ PrinterFrame::PaperSize(wxPaperSize papersizeval)
 
 // translate a character pagesize to the appropriate enum value for wxPaperSize
 wxPrintBin 
-PrinterFrame::PaperBin(string paperbinname)
+PrinterFrame::PaperBin(string paperbinname) const
 {
     // translate char to wxPrintBin
     for (int i=0; i< PBMAX; i++) {
@@ -508,7 +508,7 @@ PrinterFrame::PaperBin(string paperbinname)
 
 // translate an enum pagesize to the appropriate string name
 string 
-PrinterFrame::PaperBin(wxPrintBin paperbinval)
+PrinterFrame::PaperBin(wxPrintBin paperbinval) const
 {
     // translate char to wxPaperSize
     for (int i=0; i< PBMAX; i++) {

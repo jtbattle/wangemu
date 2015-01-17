@@ -21,39 +21,39 @@ public:
     bool getGreenbar() const;
 
     void setMargins(int left, int right, int top, int bottom);
-    void getMargins(int& left, int& right, int& top, int& bottom);
+    void getMargins(int &left, int &right, int &top, int &bottom) const;
     
     void               setOrientation(wxPrintOrientation orientation);
-    wxPrintOrientation getOrientation();
+    wxPrintOrientation getOrientation() const;
 
     void        setPaperId(wxPaperSize paperid);
-    wxPaperSize getPaperId();
+    wxPaperSize getPaperId() const;
 
     void   setPaperName(const string &papername);
-    string getPaperName();
+    string getPaperName() const;
 
     void       setBin(wxPrintBin paperbin);
-    wxPrintBin getBin();
+    wxPrintBin getBin() const;
 
     void   setRealPrinterName(const string &name);
-    string getRealPrinterName();
+    string getRealPrinterName() const;
     
     void setPageAttributes( int linelength, int pagelength);
-    void getPageAttributes(int& linelength, int& pagelength);
+    void getPageAttributes(int& linelength, int& pagelength) const;
 
-    void getCellAttributes(int *cell_w, int *cell_h);
+    void getCellAttributes(int *cell_w, int *cell_h) const;
 
     void setAutoshow(bool b);
-    bool getAutoshow();
+    bool getAutoshow() const;
 
     void setPrintasgo(bool b);
-    bool getPrintasgo();
+    bool getPrintasgo() const;
 
     void setPortdirect(bool b);
-    bool getPortdirect();
+    bool getPortdirect() const;
 
     void   setPortstring(const string &name);
-    string getPortstring();
+    string getPortstring() const;
 
     // ---- other functions ----
     // redraw entire screen
@@ -72,10 +72,10 @@ public:
     void printClear();
 
     // return true if the print stream is empty
-    bool isEmpty();
+    bool isEmpty() const;
 
     // return the number of pages in the current copy of the printstream
-    int numberOfPages();
+    int numberOfPages() const;
 
     // create a print page image
     void generatePrintPage(wxDC *dc, int pagenum, float vertAdjust);

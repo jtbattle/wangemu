@@ -43,11 +43,11 @@ CrtErrorDlg::CrtErrorDlg( wxWindow *parent,
 
     // determine which entry matches
     bool vp_mode = (System2200().config().getCpuType() == Cpu2200::CPUTYPE_2200VP);
-    vector<errtable_t> &pet = (vp_mode) ? errtable_vp : errtable;
+    const vector<errtable_t> &pet = (vp_mode) ? errtable_vp : errtable;
 
     bool found = false;
-    auto err = pet.begin();
-    while (err != pet.end()) {
+    auto err = pet.cbegin();
+    while (err != pet.cend()) {
         if (strcmp(err->errcode, errcode) == 0) {
             found = true;
             break;
