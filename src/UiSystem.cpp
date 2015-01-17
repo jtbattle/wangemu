@@ -180,10 +180,17 @@ TheApp::OnHelp_Launcher(wxCommandEvent& event)
         helpfile = "html" + sep + helpfile;
     }
 
-    string target_file = (absolute) ? helpfile
-                                    : ( "file:" + sep + sep +
-                                        Host().getAppHome() +
-                                        sep + helpfile );
+    wxString target_file = (absolute) ? helpfile
+                                      : ( "file:" + sep + sep +
+                                          Host().getAppHome() +
+                                          sep + helpfile );
+#ifdef __WXMSW__
+    // wxLaunchDefaultBrowser()'s argument used to use windows-style paths,
+    // ie, backslash as a path separator.  however, at some point between
+    // 2008 and 2014, that changed; now it takes canonical URL paths.
+    target_file.Replace(wxT("\\"), wxT("/"));
+#endif
+
     ::wxLaunchDefaultBrowser(target_file);
 }
 
