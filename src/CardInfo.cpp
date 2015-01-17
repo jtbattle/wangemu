@@ -8,6 +8,7 @@ CardInfo::getCardTypeFromName(const string &name)
     for(int i=0; i<(int)IoCard::NUM_CARDTYPES; i++) {
         IoCard::card_type_e ii = static_cast<IoCard::card_type_e>(i);
         IoCard *tmpcard = IoCard::makeTmpCard(ii);
+        assert(tmpcard != nullptr);
         string thisname = tmpcard->getName();
         if (name == thisname) {
             delete tmpcard;
