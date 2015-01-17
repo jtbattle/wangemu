@@ -16,28 +16,16 @@ using std::vector;
 
 // types used globally in the wang emulator
 
-#ifdef __GNUC__
-    #include <stdint.h>
-    typedef unsigned long long uint64;
-    typedef   signed long long  int64;
-    typedef uint32_t  uint32;
-    typedef  int32_t   int32;
-    typedef uint16_t  uint16;
-    typedef  int16_t   int16;
-    typedef  uint8_t   uint8;
-    typedef   int8_t    int8;
-    typedef  uint8_t   uint4;  // for clarity; not really 4b
-#else
-    typedef unsigned __int64 uint64;
-    typedef   signed __int64  int64;
-    typedef unsigned __int32 uint32;
-    typedef   signed __int32  int32;
-    typedef unsigned __int16 uint16;
-    typedef   signed __int16  int16;
-    typedef unsigned __int8   uint8;
-    typedef   signed __int8    int8;
-    typedef unsigned __int8   uint4;  // for clarity; not really 4b
-#endif
+#include <cstdint>
+typedef uint64_t  uint64;
+typedef  int64_t   int64;
+typedef uint32_t  uint32;
+typedef  int32_t   int32;
+typedef uint16_t  uint16;
+typedef  int16_t   int16;
+typedef  uint8_t   uint8;
+typedef   int8_t    int8;
+typedef  uint8_t   uint4;  // for clarity; not really 4b
 
 
 // Put this at the end of a class declaration to make the class
