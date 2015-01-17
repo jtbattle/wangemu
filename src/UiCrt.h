@@ -63,12 +63,12 @@ public:
 
 private:
     // ---- event handlers ----
-    void OnEraseBackground(wxEraseEvent& event);
+    void OnEraseBackground(wxEraseEvent &event);
     void OnPaint(wxPaintEvent &event);
-    void OnKeyDown(wxKeyEvent& event);
-    void OnChar(wxKeyEvent& event);
-    void OnSize(wxSizeEvent& event);
-    void OnLeftDClick(wxMouseEvent& event);
+    void OnKeyDown(wxKeyEvent &event);
+    void OnChar(wxKeyEvent &event);
+    void OnSize(wxSizeEvent &event);
+    void OnLeftDClick(wxMouseEvent &event);
 
     // ---- utility functions ----
 
@@ -108,7 +108,7 @@ private:
     void adjustCursorX(int delta);      // move cursor left or right
     void updateCursor();                // redraw the cursor at current loc
     void explainError(const string &errcode,
-                      const wxPoint  &orig); // pop up error description
+                      const wxPoint &orig); // pop up error description
 
     CrtFrame * const m_parent;  // who owns us
     const int   m_chars_w;      // screen dimension, in characters

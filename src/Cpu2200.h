@@ -162,22 +162,22 @@ private:
 
     // this contains the CPU state
     struct cpu2200_t {
-        bool        wolf_trap;      // coldstart flag
-        uint16      pc;             // working address ("pc register")
-        uint16      aux[16];        // PC scratchpad
-        uint8       reg[8];         // eight 4b file registers
-        uint16      ic;             // microcode instruction counter
-        uint16      icstack[ICSTACK_SIZE];  // microcode subroutine stack
-        int         icsp;           // icstack pointer
-        uint8       c;              // data memory read register
-        uint8       k;              // i/o data register
-        uint8       ab;             // i/o address bus latch
-        uint8       ab_sel;         // ab at time of last ABS
-        uint8       st1;            // status reg 1 state
-        uint8       st2;            // status reg 2 state
-        uint8       st3;            // status reg 3 state
-        uint8       st4;            // status reg 4 state
-        bool        prev_sr;        // previous instruction was SR
+        bool    wolf_trap;      // coldstart flag
+        uint16  pc;             // working address ("pc register")
+        uint16  aux[16];        // PC scratchpad
+        uint8   reg[8];         // eight 4b file registers
+        uint16  ic;             // microcode instruction counter
+        uint16  icstack[ICSTACK_SIZE];  // microcode subroutine stack
+        int     icsp;           // icstack pointer
+        uint8   c;              // data memory read register
+        uint8   k;              // i/o data register
+        uint8   ab;             // i/o address bus latch
+        uint8   ab_sel;         // ab at time of last ABS
+        uint8   st1;            // status reg 1 state
+        uint8   st2;            // status reg 2 state
+        uint8   st3;            // status reg 3 state
+        uint8   st4;            // status reg 4 state
+        bool    prev_sr;        // previous instruction was SR
     } m_cpu;
 
     // debugging feature
@@ -267,21 +267,21 @@ private:
 
     // this contains the CPU state
     struct cpu2200vp_t {
-        uint16      pc;             // working address ("pc register")
-        uint16      orig_pc;        // copy of pc at start of instruction (not always valid)
-        uint16      aux[32];        // PC scratchpad
-        uint8       reg[8];         // eight 8b file registers
-        uint16      ic;             // microcode instruction counter
-        uint16      icstack[STACKSIZE]; // microcode subroutine stack
-        int         icsp;           // icstack pointer
-        uint8       ch;             // high data memory read register
-        uint8       cl;             // low data memory read register
-        uint8       k;              // i/o data register
-        uint8       ab;             // i/o address bus latch
-        uint8       ab_sel;         // ab at time of last ABS
-        uint8       sh;             // high status reg
-        uint8       sl;             // low  status reg
-        int         bank_offset;    // predecoded from sl
+        uint16  pc;             // working address ("pc register")
+        uint16  orig_pc;        // copy of pc at start of instruction (not always valid)
+        uint16  aux[32];        // PC scratchpad
+        uint8   reg[8];         // eight 8b file registers
+        uint16  ic;             // microcode instruction counter
+        uint16  icstack[STACKSIZE]; // microcode subroutine stack
+        int     icsp;           // icstack pointer
+        uint8   ch;             // high data memory read register
+        uint8   cl;             // low data memory read register
+        uint8   k;              // i/o data register
+        uint8   ab;             // i/o address bus latch
+        uint8   ab_sel;         // ab at time of last ABS
+        uint8   sh;             // high status reg
+        uint8   sl;             // low  status reg
+        int     bank_offset;    // predecoded from sl
     } m_cpu;
 
     // debugging feature

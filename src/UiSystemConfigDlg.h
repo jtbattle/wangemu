@@ -23,7 +23,7 @@ private:
     void OnMemsizeChoice( wxCommandEvent& WXUNUSED(event) );
     void OnCardChoice( wxCommandEvent &event );
     void OnAddrChoice( wxCommandEvent &event );
-    void OnButton(wxCommandEvent& event);
+    void OnButton(wxCommandEvent &event);
     void OnDiskRealtime( wxCommandEvent& WXUNUSED(event) );
     void OnWarnIo( wxCommandEvent& WXUNUSED(event) );
 

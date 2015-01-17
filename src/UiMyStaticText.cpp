@@ -21,7 +21,7 @@ MyStaticText::MyStaticText(wxWindow* parent, wxWindowID id,
 
 
 // redirect mouse clicks to parent dialog
-void MyStaticText::OnMouseClick(wxMouseEvent& event)
+void MyStaticText::OnMouseClick(wxMouseEvent &event)
 {
     GetParent()->GetEventHandler()->AddPendingEvent(event);
 }

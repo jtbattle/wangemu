@@ -59,8 +59,8 @@ public:
             Help_Relnotes,
             Help_About = wxID_ABOUT,
         };
-    void OnHelp_Launcher(wxCommandEvent& event);
-    void OnHelp_About(wxCommandEvent& event);
+    void OnHelp_Launcher(wxCommandEvent &event);
+    void OnHelp_About(wxCommandEvent &event);
 
     // create a help menu, used for all frames that care
     static wxMenu* makeHelpMenu();

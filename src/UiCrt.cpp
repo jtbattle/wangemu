@@ -851,7 +851,7 @@ Crt::OnPaint(wxPaintEvent &WXUNUSED(event))
 
 
 void
-Crt::OnSize(wxSizeEvent& event)
+Crt::OnSize(wxSizeEvent &event)
 {
     int width, height;
     GetClientSize(&width, &height);
@@ -878,7 +878,7 @@ Crt::OnEraseBackground(wxEraseEvent &WXUNUSED(event))
 // see if the line contains a Wang BASIC error code, and if so
 // pop open a help message describing the error in more detail.
 void
-Crt::OnLeftDClick(wxMouseEvent& event)
+Crt::OnLeftDClick(wxMouseEvent &event)
 {
     wxPoint pos     = event.GetPosition();      // client window coordinates
     wxPoint abs_pos = ClientToScreen(pos);      // absolute screen coordinates

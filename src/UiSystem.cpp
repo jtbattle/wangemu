@@ -154,7 +154,7 @@ TheApp::makeHelpMenu()
 
 
 void
-TheApp::OnHelp_Launcher(wxCommandEvent& event)
+TheApp::OnHelp_Launcher(wxCommandEvent &event)
 {
     wxString helpfile;
     bool absolute = false;

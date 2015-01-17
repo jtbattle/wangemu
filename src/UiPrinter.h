@@ -20,7 +20,7 @@ public:
     void setGreenbar(bool greenbar=true);
     bool getGreenbar() const;
 
-    void setMargins(int left, int right, int top, int bottom);
+    void setMargins(int  left, int  right, int  top, int  bottom);
     void getMargins(int &left, int &right, int &top, int &bottom) const;
     
     void               setOrientation(wxPrintOrientation orientation);
@@ -38,8 +38,8 @@ public:
     void   setRealPrinterName(const string &name);
     string getRealPrinterName() const;
     
-    void setPageAttributes( int linelength, int pagelength);
-    void getPageAttributes(int& linelength, int& pagelength) const;
+    void setPageAttributes(int  linelength, int  pagelength);
+    void getPageAttributes(int &linelength, int &pagelength) const;
 
     void getCellAttributes(int *cell_w, int *cell_h) const;
 

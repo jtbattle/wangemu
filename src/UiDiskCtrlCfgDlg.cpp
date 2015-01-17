@@ -346,7 +346,7 @@ DiskCtrlCfgDlg::OnWarnMismatch( wxCommandEvent& WXUNUSED(event) )
 
 // used for all dialog button presses
 void
-DiskCtrlCfgDlg::OnButton(wxCommandEvent& event)
+DiskCtrlCfgDlg::OnButton(wxCommandEvent &event)
 {
     switch (event.GetId()) {
 

@@ -457,7 +457,7 @@ SystemConfigDlg::configStateOk(bool warn)
 
 // used for all dialog button presses
 void
-SystemConfigDlg::OnButton(wxCommandEvent& event)
+SystemConfigDlg::OnButton(wxCommandEvent &event)
 {
     switch (event.GetId()) {
 

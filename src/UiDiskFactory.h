@@ -11,7 +11,7 @@ class Wvd;
 class DiskFactory : public wxDialog
 {
 public:
-     DiskFactory(wxFrame *parent, const string& filename);
+     DiskFactory(wxFrame *parent, const string &filename);
     ~DiskFactory();
 
     void updateButtons();  // so ugly -- only needed by subordinate notebook pages
@@ -21,7 +21,7 @@ private:
     void OnButton_Save(wxCommandEvent& WXUNUSED(event));
     void OnButton_SaveAs(wxCommandEvent& WXUNUSED(event));
     void OnButton_Cancel(wxCommandEvent& WXUNUSED(event));
-    void OnSize(wxSizeEvent& event);
+    void OnSize(wxSizeEvent &event);
     void OnClose(wxCloseEvent& WXUNUSED(event));
 
     // helper routines

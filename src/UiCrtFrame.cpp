@@ -946,14 +946,14 @@ CrtFrame::OnReset(wxCommandEvent &event)
 
 
 void
-CrtFrame::OnCpuSpeed(wxCommandEvent& event)
+CrtFrame::OnCpuSpeed(wxCommandEvent &event)
 {
     System2200().regulateCpuSpeed( (event.GetId() == CPU_ActualSpeed) );
 }
 
 
 void
-CrtFrame::OnDiskFactory(wxCommandEvent& event)
+CrtFrame::OnDiskFactory(wxCommandEvent &event)
 {
     string filename("");
     if (event.GetId() == Disk_Inspect) {
@@ -1005,7 +1005,7 @@ CrtFrame::OnDiskFormat(wxCommandEvent& WXUNUSED(event))
 
 
 void
-CrtFrame::doFormat(string filename)
+CrtFrame::doFormat(const string &filename)
 {
     System2200 sys;
     sys.freezeEmu(true);    // halt emulation
@@ -1043,7 +1043,7 @@ CrtFrame::doFormat(string filename)
 
 
 void
-CrtFrame::OnDisk(wxCommandEvent& event)
+CrtFrame::OnDisk(wxCommandEvent &event)
 {
     // each controller manages two drives, each has three possible actions
     const int menu_id = event.GetId();
@@ -1174,7 +1174,7 @@ CrtFrame::OnConfigureStats(wxCommandEvent& WXUNUSED(event))
 
 
 void
-CrtFrame::OnConfigureKbTie(wxCommandEvent& event)
+CrtFrame::OnConfigureKbTie(wxCommandEvent &event)
 {
     int id = event.GetId();
     assert( (id >= Configure_KB_Tie0) && (id <= Configure_KB_TieN) );
@@ -1188,7 +1188,7 @@ CrtFrame::OnConfigureKbTie(wxCommandEvent& event)
 
 
 void
-CrtFrame::OnPrinter(wxCommandEvent& event)
+CrtFrame::OnPrinter(wxCommandEvent &event)
 {
     int id = event.GetId();
     assert( (id >= Printer_0) && (id <= Printer_N) );

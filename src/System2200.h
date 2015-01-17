@@ -123,17 +123,18 @@ private:
     static bool           m_do_reconfig;    // deferred request to reconfigure
 
     // help ensure an orderly shutdown
-    static enum term_state_t { RUNNING, TERMINATING, TERMINATED } m_term_state;
+    static enum term_state_t
+        { RUNNING, TERMINATING, TERMINATED } m_term_state;
     static void setTerminationState(term_state_t newstate)
-                                { m_term_state = newstate; }
+        { m_term_state = newstate; }
     static term_state_t getTerminationState()
-                                { return m_term_state; }
+        { return m_term_state; }
 
     // -------------- I/O dispatch --------------
     struct iomap_t {
-        IoCard *inst;               // pointer to card instance
-        bool    ignore;             // if false, access generates a warning message
-                                    // if there is no device at that address
+        IoCard *inst;       // pointer to card instance
+        bool    ignore;     // if false, access generates a warning message
+                            // if there is no device at that address
     };
     static struct iomap_t m_IoMap[256];         // poitner to card responding to given address
     static IoCard* m_cardInSlot[NUM_IOSLOTS];   // pointer to card in a given slot

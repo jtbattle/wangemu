@@ -210,7 +210,7 @@ string Host::getAppHome()
 // classifies the supplied filename as being either relative (false)
 // or absolute (returns true).
 bool
-Host::isAbsolutePath(const string name)
+Host::isAbsolutePath(const string &name)
 {
     wxFileName filename(name);
     return filename.IsAbsolute();
@@ -219,7 +219,7 @@ Host::isAbsolutePath(const string name)
 
 // make sure the name is put in normalized format
 string
-Host::asAbsolutePath(const string name)
+Host::asAbsolutePath(const string &name)
 {
     wxFileName fn(name);
     (void)fn.MakeAbsolute();

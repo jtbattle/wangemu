@@ -111,10 +111,10 @@ public:
 
     // classifies the supplied filename as being either relative (false)
     // or absolute (returns true).
-    static bool isAbsolutePath(const string name);
+    static bool isAbsolutePath(const string &name);
 
     // make sure the name is put in normalized format
-    static string asAbsolutePath(const string name);
+    static string asAbsolutePath(const string &name);
 
     // return the absolute path to the dir containing the app
     static string getAppHome();

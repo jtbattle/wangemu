@@ -377,7 +377,7 @@ CrtStatusBar::~CrtStatusBar()
 
 // called when the window size changes
 void
-CrtStatusBar::OnSize(wxSizeEvent& event)
+CrtStatusBar::OnSize(wxSizeEvent &event)
 {
     if (!m_keyword_ctl)
         return;         // not initialized yet
@@ -425,7 +425,7 @@ CrtStatusBar::OnSize(wxSizeEvent& event)
 
 // called when the keyword checkbox in the status bar is pressed
 void
-CrtStatusBar::OnKeywordCtl(wxCommandEvent& event)
+CrtStatusBar::OnKeywordCtl(wxCommandEvent &event)
 {
     if (event.GetId() == ID_Keyword_Mode) {
         // return focus to frame, otherwise the control will eat keyed input

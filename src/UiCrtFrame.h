@@ -16,7 +16,7 @@ class CrtFrame : public wxFrame
 {
 public:
     // constructor
-    CrtFrame(   const wxString& title,
+    CrtFrame(   const wxString &title,
                 const int screen_size,
                 const int io_addr
             );
@@ -74,7 +74,7 @@ public:
 
     // mechanics of carrying out format for a given filename
     // must be public so statusbar can use it
-    void doFormat(string filename);
+    void doFormat(const string &filename);
 
     // inspect the named disk.  if it is mounted in a drive, disconnect the
     // filehandle before performing the operation so that when the emulator
@@ -85,46 +85,46 @@ public:
 private:
     // ---- event handlers ----
 
-    void OnScript(wxCommandEvent& event);
-    void OnSnapshot(wxCommandEvent& event);
-    void OnDump(wxCommandEvent& event);
-    void OnQuit(wxCommandEvent& event);
-    void OnMenuOpen(wxMenuEvent& event);
+    void OnScript(wxCommandEvent &event);
+    void OnSnapshot(wxCommandEvent &event);
+    void OnDump(wxCommandEvent &event);
+    void OnQuit(wxCommandEvent &event);
+    void OnMenuOpen(wxMenuEvent &event);
 
-    void OnReset(wxCommandEvent& event);
-    void OnCpuSpeed(wxCommandEvent& event);
+    void OnReset(wxCommandEvent &event);
+    void OnCpuSpeed(wxCommandEvent &event);
 
     // menu handler for disk drives
-    void OnDiskFactory(wxCommandEvent& event);
+    void OnDiskFactory(wxCommandEvent &event);
     void OnDiskFormat(wxCommandEvent& WXUNUSED(event));
-    void OnDisk(wxCommandEvent& event);
+    void OnDisk(wxCommandEvent &event);
 
     // toggle fullscreen or not
-    void OnDisplayFullscreen(wxCommandEvent& event);
+    void OnDisplayFullscreen(wxCommandEvent &event);
 
     // bring up configuration dialog
-    void OnConfigureDialog(wxCommandEvent& event);
+    void OnConfigureDialog(wxCommandEvent &event);
 
     // bring up screen configuration dialog
-    void OnConfigureScreenDialog(wxCommandEvent& event);
+    void OnConfigureScreenDialog(wxCommandEvent &event);
 
     // toggle the keyword entry mode
-    void OnConfigureKeywordMode(wxCommandEvent& event);
+    void OnConfigureKeywordMode(wxCommandEvent &event);
 
     // toggle the special function key toolbar
-    void OnConfigureSfToolbar(wxCommandEvent& event);
+    void OnConfigureSfToolbar(wxCommandEvent &event);
 
     // toggle the "display statistics on status bar" control
-    void OnConfigureStats(wxCommandEvent& event);
+    void OnConfigureStats(wxCommandEvent &event);
 
     // associate keyboard input on a CRT with a specific io address
-    void OnConfigureKbTie(wxCommandEvent& event);
+    void OnConfigureKbTie(wxCommandEvent &event);
 
     // open view for a particular printer
-    void OnPrinter(wxCommandEvent& event);
+    void OnPrinter(wxCommandEvent &event);
 
     // print and clear all printers
-    void OnPrintAndClear(wxCommandEvent& event);
+    void OnPrintAndClear(wxCommandEvent &event);
 
     // called when a toolbar button is clicked
     void OnToolBarButton(wxCommandEvent &event);
@@ -133,7 +133,7 @@ private:
     void OnButton(wxCommandEvent &event);
 
     // called when the window changes size
-    void OnSize(wxSizeEvent& event);
+    void OnSize(wxSizeEvent &event);
 
     // called when the window is manually closed ("X" button, or sys menu)
     void OnClose(wxCloseEvent& WXUNUSED(event));

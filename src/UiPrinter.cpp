@@ -567,7 +567,7 @@ Printer::OnPaint(wxPaintEvent &WXUNUSED(event))
 }
 
 void
-Printer::OnSize(wxSizeEvent& event)
+Printer::OnSize(wxSizeEvent &event)
 {
     int width, height;
     GetClientSize(&width, &height);

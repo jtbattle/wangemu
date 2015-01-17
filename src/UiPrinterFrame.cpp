@@ -698,7 +698,7 @@ PrinterFrame::OnPageSetup(wxCommandEvent& WXUNUSED(event))
 
 
 void
-PrinterFrame::OnFontSize(wxCommandEvent& event)
+PrinterFrame::OnFontSize(wxCommandEvent &event)
 {
     int size;
     switch (event.GetId()) {

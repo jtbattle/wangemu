@@ -115,7 +115,7 @@ public:
 private:
 
     // event handlers
-    void OnLabelEdit(wxCommandEvent& event);
+    void OnLabelEdit(wxCommandEvent &event);
 
     // controls
     DiskFactory * const m_parent;      // owning dialog
@@ -143,7 +143,7 @@ BEGIN_EVENT_TABLE(DiskFactory, wxDialog)
 END_EVENT_TABLE()
 
 
-DiskFactory::DiskFactory(wxFrame *parent, const string& filename) :
+DiskFactory::DiskFactory(wxFrame *parent, const string &filename) :
         wxDialog(parent, -1, "Disk Factory",
                  wxDefaultPosition, wxDefaultSize,
                  wxDEFAULT_DIALOG_STYLE | wxRESIZE_BORDER),
@@ -298,7 +298,7 @@ DiskFactory::OnButton_Cancel(wxCommandEvent& WXUNUSED(event))
 
 // called when the window size changes
 void
-DiskFactory::OnSize(wxSizeEvent& event)
+DiskFactory::OnSize(wxSizeEvent &event)
 {
     updateDlg();
     event.Skip();       // let the rest of the processing happen
@@ -622,7 +622,7 @@ LabelPanel::getLabelString()
 
 // used for all dialog button presses
 void
-LabelPanel::OnLabelEdit(wxCommandEvent& event)
+LabelPanel::OnLabelEdit(wxCommandEvent &event)
 {
     switch (event.GetId()) {
 

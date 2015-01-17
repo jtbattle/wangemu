@@ -12,8 +12,8 @@ class MyStaticText : public wxStaticText
 public:
      MyStaticText(wxWindow* parent, wxWindowID id, const wxString &label);
 private:
-    void OnKeyDown(wxKeyEvent& event);
-    void OnMouseClick(wxMouseEvent& event);
+    void OnKeyDown(wxKeyEvent &event);
+    void OnMouseClick(wxMouseEvent &event);
 
     CANT_ASSIGN_OR_COPY_CLASS(MyStaticText);
     DECLARE_EVENT_TABLE()

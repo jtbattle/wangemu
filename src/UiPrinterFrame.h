@@ -15,7 +15,7 @@ class PrinterFrame : public wxFrame
 {
 public:
     // constructor
-    PrinterFrame(const wxString& title, const int io_addr);
+    PrinterFrame(const wxString &title, const int io_addr);
 
     // destructor
     ~PrinterFrame();
@@ -47,36 +47,36 @@ public:
 private:
     // ---- event handlers ----
 
-    void OnFileClose(wxCommandEvent& event);
-    void OnFileSaveAs(wxCommandEvent& event);
-    void OnMenuOpen(wxMenuEvent& event);
+    void OnFileClose(wxCommandEvent &event);
+    void OnFileSaveAs(wxCommandEvent &event);
+    void OnMenuOpen(wxMenuEvent &event);
 
     // select screen font size
-    void OnFontSize(wxCommandEvent& event);
+    void OnFontSize(wxCommandEvent &event);
 
     // toggle greenbar or not
-    void OnDisplayGreenbar(wxCommandEvent& event);
+    void OnDisplayGreenbar(wxCommandEvent &event);
 
     // bring up configuration dialog
-    void OnConfigureDialog(wxCommandEvent& event);
+    void OnConfigureDialog(wxCommandEvent &event);
 
     // clear the printer contents
-    void OnPrintClear(wxCommandEvent& event);
+    void OnPrintClear(wxCommandEvent &event);
 
     // print preview
-    void OnPrintPreview(wxCommandEvent& event);
+    void OnPrintPreview(wxCommandEvent &event);
 
     // print
-    void OnPrint(wxCommandEvent& event);
+    void OnPrint(wxCommandEvent &event);
 
     // print setup
-    void OnPrintSetup(wxCommandEvent& event);
+    void OnPrintSetup(wxCommandEvent &event);
 
     // page setup
-    void OnPageSetup(wxCommandEvent& event);
+    void OnPageSetup(wxCommandEvent &event);
 
     // called when the window changes size
-    void OnSize(wxSizeEvent& event);
+    void OnSize(wxSizeEvent &event);
 
     // called when the window is manually closed ("X" button, or sys menu)
     void OnClose(wxCloseEvent& WXUNUSED(event));
