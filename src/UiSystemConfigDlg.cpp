@@ -402,7 +402,7 @@ SystemConfigDlg::OnCardChoice( wxCommandEvent &event )
     wxChoice *hCtl = m_cardDesc[slot];
     int selection = hCtl->GetSelection();
     int idx = (int)(hCtl->GetClientData(selection));
-    if (idx < 0) idx = -1;  // hack due to -2 hack earlire
+    if (idx < 0) idx = -1;  // hack due to -2 hack earlier
     IoCard::card_type_e cardtype = (IoCard::card_type_e)idx;
 
     m_cfg.setSlotCardType( slot, cardtype );

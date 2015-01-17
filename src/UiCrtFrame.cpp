@@ -160,7 +160,7 @@ const int num_colorschemes = sizeof(colorscheme) / sizeof(colorscheme_t);
 // CrtFrame static members
 vector<CrtFrame*> CrtFrame::m_crtlist;     // list of crt's in the system
 
-// connect the wxWindows events with the functions which process them
+// connect the wxWidgets events with the functions which process them
 BEGIN_EVENT_TABLE(CrtFrame, wxFrame)
 
     EVT_MENU      (File_Script,           CrtFrame::OnScript)
@@ -960,7 +960,7 @@ CrtFrame::OnDiskFactory(wxCommandEvent &event)
         Host hst;
         if (hst.fileReq(Host::FILEREQ_DISK, "Virtual Disk Name", 1, &filename) !=
                         Host::FILEREQ_OK)
-            return;     // cancelled
+            return;     // canceled
     }
 
     doInspect(filename);

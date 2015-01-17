@@ -96,8 +96,8 @@ pad_spaces(char *buf, int *off, int limit)
 
 
 // stuff in a hex value at the buffer location offset "off",
-// updating off in the process, 'digits' long.  if the numer
-// starts with A-F, preceed it with a bonus 0.
+// updating off in the process, 'digits' long.  if the number
+// starts with A-F, precede it with a bonus 0.
 static void
 hex(char *buf, int *off, int value, int digits)
 {
@@ -704,7 +704,7 @@ dasm_op_vp(char *buf, uint32 ic, uint32 uop)
                     // SR,WCM (write control memory and subroutine return)
                     len = dasm_type7(buf, "SR,WCM", uop);
                 } else if ((uop & 0x7F8C00) == 0x078000) {
-                    // SR (suroutine return)
+                    // SR (subroutine return)
                     len = dasm_type7(buf, "SR", uop);
                 } else {
                     len = sprintf(buf, "bad SR");

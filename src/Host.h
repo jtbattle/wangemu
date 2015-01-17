@@ -10,7 +10,7 @@
 // or
 //    m_simtime = Host().getTimeMs();
 //
-// The configuration is kept in an .ini file, and data is stored hiearchically.
+// The configuration is kept in an .ini file, with data stored hierarchically.
 // Viewed like a scoping problem, there are a few global ini values that
 // describe the ini file format revision.  Then there are N sets of emulator
 // configuration state; presently things are hardwired to have just a single

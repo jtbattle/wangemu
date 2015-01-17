@@ -74,7 +74,7 @@ public:
                               const string &filename);
 
     // remove the disk from the specified drive
-    // returns true if removed, or false if cancelled.
+    // returns true if removed, or false if canceled.
     static bool wvdRemoveDisk(int slot,
                               int drive);
 
@@ -103,7 +103,7 @@ private:
     CardCfgState *getCfgState();
 
     // ---- disk access functions, tied to an object ----
-    // "iwvd" == interal wang virtual disk function
+    // "iwvd" == internal wang virtual disk function
 
     // return true if the selected disk is idle.
     // if the disk is busy, ask the user to confirm the action,

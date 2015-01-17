@@ -1291,7 +1291,7 @@ uint8 chargen[] = {
 
 #if defined(__WXMSW__)
 // this table translates the wang character set to the closest representation
-// in the courier font that is used by wxwindows under windows.  I think it
+// in the courier font that is used by wxWidgets under windows.  I think it
 // is a latin-1 encoding. of course the core ascii characters are unchanged,
 // but some of the symbols have different encodings or are just not available.
 uint8 xlat_char[128] = {
@@ -1360,7 +1360,7 @@ uint8 xlat_char[128] = {
 };
 #elif defined(__WXMAC__)
 // this table translates the wang character set to the closest representation
-// in the courier font that is used by wxwindows on the mac.  I think it is
+// in the courier font that is used by wxWidgets on the mac.  I think it is
 // a latin-1 encoding. of course the core ascii characters are unchanged,
 // but some of the symbols have different encodings or are just not available.
 uint8 xlat_char[128] = {

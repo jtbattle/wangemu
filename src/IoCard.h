@@ -1,5 +1,5 @@
 // IoCard class is abstract, with actual card types inheriting from it.
-// It does provide a real serice, though, through the static makeCard()
+// It does provide a real service, though, through the static makeCard()
 // and makeTmpCard() factory functions.
 //
 // There is an aspect to the class design that dovetails with the friend class,

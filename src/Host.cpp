@@ -49,7 +49,7 @@ Host::Host()
 Host::~Host()
 {
     // this doesn't free anything; terminate() should be called at
-    // the end of the world to really free resouces
+    // the end of the world to really free resources
 }
 
 

@@ -320,9 +320,9 @@ Prints a line up to 66 characters as expanded
 DELETE HEX (7F)
 Clears buffer of characters sent before the '7F'
 
-Some of the Wang printers were modified selectrics and had a different
+Some of the Wang printers were modified Selectrics and had a different
 set of control codes. For instance, you could set and clear tabstops
-just like a real selectric so that printing CTRL-I (tab) would advance
+just like a real Selectric so that printing CTRL-I (tab) would advance
 to the next tab stop.
 */
 
@@ -382,7 +382,7 @@ to the next tab stop.
 }
 
 
-// send a byte directly to the parellel port (windows only)
+// send a byte directly to the parallel port (windows only)
 void
 Printer::lptChar(uint8 byte)
 {

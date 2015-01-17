@@ -52,8 +52,8 @@ pad_spaces(char *buf, int *off, int limit)
 
 
 // stuff in a hex value at the buffer location offset "off",
-// updating off in the process, 'digits' long.  if the numer
-// starts with A-F, preceed it with a bonus 0.
+// updating off in the process, 'digits' long.  if the number
+// starts with A-F, precede it with a bonus 0.
 static void
 hex(char *buf, int *off, int value, int digits)
 {

@@ -562,7 +562,7 @@ Cpu2200t::mem_write(uint16 addr, uint4 wr_value, int write2)
 // what was written.  (ST3&2) reflects the instantaneous state of IB5
 // (counting from IB1).  What is it used for?
 //
-// ANSWER: the 7011 80x24 CRT controller drives IB5 active whenver
+// ANSWER: the 7011 80x24 CRT controller drives IB5 active whenever
 //         it is selected, while the 64x16 CRT controller doesn't
 //         drive it at all, letting it get pulled inactive.
 //         the initialization routine at 0x4BFD selects device 005

@@ -1,6 +1,6 @@
 // This is an abstract base class that contains per-card configuration state
 // that the SysCfgState class doesn't hold itself.  Cards which need some
-// extra configuration, like the disk controller, are derived from ths class.
+// extra configuration, like the disk controller, are derived from this class.
 // SysCfgState holds a CardCfgState* for each I/O card slot in the computer.
 //
 // This class allows the caller to:

@@ -102,8 +102,8 @@
 //      average track-to-track time:                30    ms
 //      maximum track-to-track time:                55    ms
 //      average rotational latency:                  8.33 ms
-//      average equential read  time, per sector:    4.6  ms
-//      average equential write time, per sector:    3.6  ms
+//      average sequential read  time, per sector:   4.6  ms
+//      average sequential write time, per sector:   3.6  ms
 //      average random read/write time, per sector: 42.0  ms
 
 #include "DiskCtrlCfgState.h"
@@ -187,7 +187,7 @@ IoCardDisk::getName() const
 }
 
 // return a list of the various base addresses a card can map to.
-// list of common I/O adddresses for this device taken from p. 2-5 of
+// list of common I/O addresses for this device taken from p. 2-5 of
 // 2200 service manual.  the default comes first.
 vector<int>
 IoCardDisk::getBaseAddresses() const
@@ -862,7 +862,7 @@ IoCardDisk::wvdInsertDisk(int slot,
 
 
 // remove the disk from the specified drive
-// returns true if removed, or false if cancelled.
+// returns true if removed, or false if canceled.
 bool
 IoCardDisk::wvdRemoveDisk(int slot, int drive)
 {

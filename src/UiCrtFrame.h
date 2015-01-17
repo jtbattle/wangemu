@@ -138,7 +138,7 @@ private:
     // called when the window is manually closed ("X" button, or sys menu)
     void OnClose(wxCloseEvent& WXUNUSED(event));
 
-    // handle timed display refersh
+    // handle timed display refresh
     void OnTimer(wxTimerEvent &event);
 
     // ---- utility functions ----

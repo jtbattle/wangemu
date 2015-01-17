@@ -146,7 +146,7 @@ TheApp::makeHelpMenu()
     menuHelp->Append(Help_DiskCheat,   "&Disk Cheatsheet", "Information about cataloging disks, loading and saving files");
     menuHelp->Append(Help_Website,     "&Website",         "Open a browser to the emulator's web site");
     menuHelp->AppendSeparator();
-    menuHelp->Append(Help_Relnotes,    "&Release notes...", "Detailed notes about this releasae");
+    menuHelp->Append(Help_Relnotes,    "&Release notes...", "Detailed notes about this release");
     menuHelp->Append(Help_About,       "&About...",         "Information about the program");
 
     return menuHelp;

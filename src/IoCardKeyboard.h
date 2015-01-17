@@ -67,7 +67,7 @@ private:
     const int   m_baseaddr;       // the address the card is mapped to
     const int   m_slot;           // which slot the card is plugged into
     bool        m_selected;       // this card is being addressed
-    bool        m_cpb;            // 1=CPU busy (not acccepting IBS input)
+    bool        m_cpb;            // 1=CPU busy (not accepting IBS input)
     bool        m_key_ready;      // key_code is valid
     int         m_key_code;       // keycode of most recently received keystroke
     ScriptFile *m_script_handle;  // ID of which script stream we're processing

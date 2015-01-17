@@ -102,7 +102,7 @@ private:
     // and fill the new row with blanks.
     void scr_scroll();
 
-    void setCursorX(int x);             // set horzontal position
+    void setCursorX(int x);             // set horizontal position
     void setCursorY(int y);             // set vertical position
     void adjustCursorY(int delta);      // advance the cursor in y
     void adjustCursorX(int delta);      // move cursor left or right

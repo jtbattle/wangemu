@@ -467,7 +467,7 @@ IoCardDisk::advanceStateInt(disk_event_t event, const int val)
                 m_drive   = ((val >> 4) & 1) + ((m_primary) ? 0 : 2);
                 m_platter =  (val >> 0) & 15;
                 // how many subsequent command bytes to accumulate.
-                // this may be overidden later.
+                // this may be overridden later.
                 m_xfer_length =
                     (m_acting_intelligent) ? 4  // cmd, 3 secaddr bytes
                                            : 3; // cmd, 2 secaddr bytes
@@ -605,7 +605,7 @@ disk operation
                     m_state = CTRL_COMMAND_STATUS;
 
                     // spin up the drive (if req'd); step to the target track
-                    if ((m_drive >= numDrives()) ||  // non-existant
+                    if ((m_drive >= numDrives()) ||  // non-existent
                         (m_secaddr >= m_d[m_drive].wvd->getNumSectors())) {
                         setBusyState(false);  // empirically, returns immediately
                     } else {
@@ -857,7 +857,7 @@ disk operation
     //        02=format error (ERR I93)
     //        04=CRC error    (ERR I96)
     //
-    // As we are modelling an intelligent disk controller, assume there is
+    // As we are modeling an intelligent disk controller, assume there is
     // a source track buffer and a dest track buffer to minimize on the
     // amount of head shuttling.  For the 2280, that would be two 16KB
     // buffers, not unreasonable for the 1979 date that it was introduced.
@@ -965,7 +965,7 @@ disk operation
     // model the delay of one revolution for reading the source track,
     // plus the seek time for the destination track.
     // this is OK if src and dst are on the same disk pack, but if they are
-    // separate drives, a truly intellgent controller would overlap the seek.
+    // separate drives, a truly intelligent controller would overlap the seek.
     // on the other hand, if they are on separate drives, the seek times are
     // minimal after the first one (always to adjacent track).
     case CTRL_COPY5:
@@ -1201,7 +1201,7 @@ disk operation
 
     // ---------------------- MULTI-SECTOR WRITE END ----------------------
     // see the explanation for MULTI-SECTOR WRITE START first.  this command
-    // termintes the mode, commanding the controller to flush any deferred
+    // terminates the mode, commanding the controller to flush any deferred
     // sector writes.
     //
     // the command stream looks like this:

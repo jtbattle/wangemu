@@ -103,7 +103,7 @@ public:
 
     // this saves modified state when open() was used to get it to begin with:
     void save();
-    // ths creates a new disk when create() was the original call:
+    // create a new disk when create() was the original call:
     void save(const string &filename);
 
     // logical sector data access.

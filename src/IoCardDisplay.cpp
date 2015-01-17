@@ -143,7 +143,7 @@ IoCardDisplay::getName() const
 }
 
 // return a list of the various base addresses a card can map to
-// list of common I/O adddresses for this device taken from p. 2-5 of
+// list of common I/O addresses for this device taken from p. 2-5 of
 // the default comes first.
 vector<int>
 IoCardDisplay::getBaseAddresses() const

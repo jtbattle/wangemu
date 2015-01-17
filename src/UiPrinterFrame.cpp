@@ -27,7 +27,7 @@
 //    is there any need to duplicate that here?
 // -- double-wide character mode isn't supported.
 //    I suppose we'd just keep the control characters in the strings and
-//    as each line is generted, we'd check for those control characters
+//    as each line is generated, we'd check for those control characters
 //    and break the text up into runs of normal and wide characters.
 //    normal runs would go as currently they do (although hard tabs would
 //    have to take into account that wide chars count double).  then for
@@ -626,7 +626,7 @@ PrinterFrame::OnPrint(wxCommandEvent& WXUNUSED(event))
                          "Perhaps your current printer is not set correctly?",
                          "Printing", wxOK);
         else
-            wxMessageBox("Printing cancelled", "Printing", wxOK);
+            wxMessageBox("Printing canceled", "Printing", wxOK);
     } else {
         (*m_printData) = printer.GetPrintDialogData().GetPrintData();
     }

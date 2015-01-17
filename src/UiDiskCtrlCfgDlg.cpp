@@ -120,11 +120,11 @@ DiskCtrlCfgHelpDlg::DiskCtrlCfgHelpDlg(wxWindow *parent)
         "ignored, and confusion reigns."
         "\n\n"
         "If a disk with this 16th bit problem is inserted into a drive in "
-        "intelligent mode, a warning will be generated and optinoally these "
+        "intelligent mode, a warning will be generated and optionally these "
         "extraneous bits can be cleaned from the virtual disk image."
 #if SUPPORT_AUTO_INTELLIGENCE
         "\n\n"
-        "Selecting the AUTO mode will cause the emulator to heursitically "
+        "Selecting the AUTO mode will cause the emulator to heuristically "
         "pick dumb or intelligent mode based on the types of disk images "
         "associated with a controller.  This precludes having to clear "
         "the 16th bits from problem disks, but the heuristic isn't perfect."

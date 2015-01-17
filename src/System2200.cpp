@@ -286,7 +286,7 @@ System2200::setConfig(const SysCfgState &newcfg)
 
 
 // because everything is static, the destructor does nothing, so we
-// need this function to know when the real armageddon has arrived.
+// need this function to know when the real Armageddon has arrived.
 void
 System2200::cleanup()
 {
@@ -354,7 +354,7 @@ System2200::onIdle()
                 emulateTimeslice(slice_duration);
             return true;        // want more idle events
         case TERMINATING:
-            // we've been signalled to shut down the universe.
+            // we've been signaled to shut down the universe.
             // change the flag to know we've already cleaned up, in case
             // we receive another onIdle call.
             setTerminationState(TERMINATED);
@@ -409,7 +409,7 @@ System2200::emulateTimeslice(int ts_ms)
     if ((offset > 0) && isCpuSpeedRegulated()) {
 
         // we are running ahead of schedule; kill some time.
-        // we don't kill the full amount becuase the sleep function is
+        // we don't kill the full amount because the sleep function is
         // allowed to, and very well might, sleep longer than we asked.
         unsigned int ioffset = (unsigned int)(offset & (int64)0xFFF);  // bottom 4 sec or so
         hst.sleep(ioffset/2);
@@ -560,7 +560,7 @@ System2200::cpu_OBS(uint8 byte)
 // Decoder will indicate Ready (active low) to the CPU only if the peripheral
 // device is not doing an operation.  The Ready indicator will stay active
 // until the peripheral device being used generates a Busy indicator,
-// allowing the CPU to do another I/O operaiton.  Normally, the device
+// allowing the CPU to do another I/O operation.  Normally, the device
 // being used will generate a Busy indicator after the I/O Bus (!OB1 - !OB8)
 // has been strobed by !OBS, the CPU output strobe.
     if (m_IoCurSelected > 0) {

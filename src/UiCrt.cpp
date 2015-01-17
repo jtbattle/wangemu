@@ -182,7 +182,7 @@ Crt::intensityToColor(float f) const
     int r, g, b;
 
     if (black_bg) {
-        // We are modelling a monochromatic CRT.
+        // We are modeling a monochromatic CRT.
         // Twiddle the intensity and then apply it uniformly.
         float v = brightness + f*contrast;
         v = (v < 0.0f) ? 0.0f
@@ -240,7 +240,7 @@ Crt::intensityToColor(float f) const
 // the resulting display is painful to read.  the "uuuuuuuuuu" row does
 // creep into this margin, but since there is a gap, not filtering it
 // exactly right makes adjacent underlined characters have a subtly
-// different gap that is hardly noticable.
+// different gap that is hardly noticeable.
 
 void
 Crt::generateFontmap()
@@ -257,7 +257,7 @@ Crt::generateFontmap()
                 sx = 1; sy = 1; dy = 2;
                 m_charcell_w = 10*sx;
                 m_charcell_h = 11*sy*dy;
-                filter = 1; // semi gaussian
+                filter = 1; // semi Gaussian
                 break;
         case FONT_MATRIX11:
                 sx = 1; sy = 1; dy = 1;
@@ -269,7 +269,7 @@ Crt::generateFontmap()
                 sx = 2; sy = 2; dy = 2;
                 m_charcell_w = 10*sx;
                 m_charcell_h = 11*sy*dy;
-                filter = 2; // guassian
+                filter = 2; // Gaussian
                 break;
         case FONT_NATIVE8:
         case FONT_NATIVE10:
@@ -302,9 +302,9 @@ Crt::generateFontmap()
             0.0000,  0.0000,  0.0000,
         };
         static const float w_semi_gaussian[9] = {
-            // kind of like a guassian, but modified to reflect that the
+            // kind of like a Gaussian, but modified to reflect that the
             // smearing of the ideal dot comes about from two sources.
-            // first, the dot isn't perfectly focussed, so it spreads out
+            // first, the dot isn't perfectly focused, so it spreads out
             // radially.  second, the modulation of the beam occurs during
             // the horizontal sweep and this signal has finite bandwidth.
             // thus there should be more horizontal weighting than vertical.
@@ -313,7 +313,7 @@ Crt::generateFontmap()
             0.07f,  0.21f,  0.07f,
         };
         static const float w_gaussian[9] = {
-            // 2D gaussian
+            // 2D Gaussian
             0.1250f,  0.2500f,  0.1250f,
             0.2500f,  0.5000f,  0.2500f,
             0.1250f,  0.2500f,  0.1250f,
@@ -366,7 +366,7 @@ Crt::generateFontmap()
     // it has a one pixel border all around so we can do 3x3 convolution
     // easily and not worry about the edge cases.
     // char_bitmap is used to receive a real font character.
-    // char_iamge is used to construct a filtered bitmap image.
+    // char_image is used to construct a filtered bitmap image.
     const int offset = 1;
     const int img_w = m_charcell_w + 2*offset;
     const int img_h = m_charcell_h + 2*offset;
@@ -706,7 +706,7 @@ Crt::generateScreenByRawBmp(wxColor fg, wxColor bg)
     wxAlphaPixelData::Iterator sp(raw_screen);  // screen pointer
     for(int row=0; row<m_chars_h; ++row) {
 
-        // the uppper left corner of the leftmost char of row
+        // the upper left corner of the leftmost char of row
         wxAlphaPixelData::Iterator rowUL = sp;
 
         for(int col=0; col<m_chars_w; ++col) {
@@ -936,7 +936,7 @@ Crt::OnLeftDClick(wxMouseEvent &event)
         string helpfile = "errors.html#Code-" + errcode;
         ::wxLaunchDefaultBrowser(helpfile);
     #else
-        // pop open a dialog with the relevent information
+        // pop open a dialog with the relevant information
         // this is a *lot* faster than launching a browser.
         abs_pos.y += m_charcell_h;      // move it down a row to not obscure the err
         explainError(errcode, abs_pos);

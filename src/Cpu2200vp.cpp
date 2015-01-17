@@ -754,7 +754,7 @@ Cpu2200vp::exec_one_op()
 
     if (uop & FETCH_CY) {
         // set or clear carry
-        // we must do this before FETCH_A/B becuase it can affect SH state
+        // we must do this before FETCH_A/B because it can affect SH state
         switch ((uop >> 14) & 3) {
             case 2: m_cpu.sh &= ~SH_MASK_CARRY; break;    // clear
             case 3: m_cpu.sh |=  SH_MASK_CARRY; break;    // set
@@ -1020,7 +1020,7 @@ Cpu2200vp::exec_one_op()
         if ((uop & 0xC) == 0xC) {
             // this is not documented in the arch manual, but it appears
             // in the MVP CPU schematic.  if bits 3:2 are both one, the
-            // 30 ms one shot gets retriggerd.
+            // 30 ms one shot gets retriggered.
             m_cpu.sh |= SH_MASK_30MS;     // one shot output rises
             ENSURE_TIMER_DEAD(m_tmr_30ms);
             m_tmr_30ms = m_scheduler.TimerCreate(
@@ -1057,7 +1057,7 @@ Cpu2200vp::exec_one_op()
                 //UI_Info("CPU:CBS when AB=%02X\n, AB_SEL=%02X", m_cpu.ab, m_cpu.ab_sel);
                 m_sys.cpu_CBS();    // control bus strobe
                 break;
-            case 0x08: // emperical behavior
+            case 0x08: // empirical behavior
                 // the VP BASIC issues this operation in three places.
                 //     978080 : CIO       ??? (ILLEGAL)
                 // this corresponds to a mask of 0x08.  it would appear

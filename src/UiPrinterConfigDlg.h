@@ -12,7 +12,7 @@
 #include "wx/dialog.h"
 #include "wx/string.h"
 
-// create a class for transfering data to and from the dialog
+// create a class for transferring data to and from the dialog
 class PrinterDialogDataTransfer
 {
 public:
@@ -28,7 +28,7 @@ public:
 };
 
 
-// this is the acttual dialog for configuring specific printer settings
+// this is the actual dialog for configuring specific printer settings
 class PrinterConfigDlg : public wxDialog
 {
 public:

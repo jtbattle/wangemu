@@ -1,5 +1,5 @@
 // this boot rom image came from the 6789 CPU I bought off of ebay.
-// the three eproms were unlabelled and were in fact three different
+// the three eproms were unlabeled and were in fact three different
 // brands, making me think that perhaps this wasn't an official Wang set
 // of eproms.  I'm not actually sure if these are for VP or MVP operation,
 // but it works for both.

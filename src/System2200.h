@@ -33,7 +33,7 @@ public:
     // because everything is static, we have to be told when
     // the sim is really starting and ending.
     void initialize();  // T-0
-    void cleanup();     // armageddon
+    void cleanup();     // Armageddon
 
     // give access to components
     bool          cpuExists() { return  m_cpu != 0; }
@@ -136,7 +136,7 @@ private:
         bool    ignore;     // if false, access generates a warning message
                             // if there is no device at that address
     };
-    static struct iomap_t m_IoMap[256];         // poitner to card responding to given address
+    static struct iomap_t m_IoMap[256];         // pointer to card responding to given address
     static IoCard* m_cardInSlot[NUM_IOSLOTS];   // pointer to card in a given slot
     static int     m_IoCurSelected;             // address of most recent ABS
 

@@ -8,7 +8,7 @@
 // 'ticks' clock cycles.  The event is then removed from the active list.
 // That is, timers are one-shots, not oscillators.
 //
-// A timer can be cancelled early like this:
+// A timer can be canceled early like this:
 //
 //     tmr->Kill();
 
