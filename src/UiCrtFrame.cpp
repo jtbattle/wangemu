@@ -273,9 +273,7 @@ CrtFrame::CrtFrame( const wxString& title,
 
     // only the primary has a status bar
     m_RefreshTimer = new wxTimer(this, Timer_Frame);
-    assert(m_RefreshTimer != nullptr);
     m_OneSecTimer = new wxTimer(this, Timer_Sec);
-    assert(m_OneSecTimer != nullptr);
 
     // it is hard to predict what the optimal refresh period
     // for a given system
@@ -1198,7 +1196,7 @@ CrtFrame::OnPrinter(wxCommandEvent &event)
     int idx = id - Printer_0;
     int io_addr = sys.getPrinterIoAddr(idx);
     IoCard *inst = sys.getInstFromIoAddr(io_addr);
-    assert(inst != 0);
+    assert(inst != nullptr);
 
     // get the printer controller card handle
     IoCardPrinter *card = reinterpret_cast<IoCardPrinter*>(inst);
@@ -1228,7 +1226,7 @@ CrtFrame::OnPrintAndClear(wxCommandEvent& WXUNUSED(event))
 
             // map device I/O address to card handle
             IoCard *inst = sys.getInstFromIoAddr(io_addr);
-            assert(inst != 0);
+            assert(inst != nullptr);
             IoCardPrinter *card = reinterpret_cast<IoCardPrinter*>(inst);
 
             // fetch associated gui window pointer and use it

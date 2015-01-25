@@ -371,7 +371,7 @@ CrtStatusBar::~CrtStatusBar()
     }
 
     delete m_icon_set;
-    m_icon_set = 0;
+    m_icon_set = nullptr;
 }
 
 

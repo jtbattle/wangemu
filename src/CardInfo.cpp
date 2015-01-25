@@ -10,11 +10,10 @@ CardInfo::getCardTypeFromName(const string &name)
         IoCard *tmpcard = IoCard::makeTmpCard(ii);
         assert(tmpcard != nullptr);
         string thisname = tmpcard->getName();
+        delete tmpcard;
         if (name == thisname) {
-            delete tmpcard;
             return ii;
         }
-        delete tmpcard;
     }
     return IoCard::card_none;
 }

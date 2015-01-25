@@ -46,7 +46,7 @@ ScriptFile::ScriptFile(const string &filename,
 
     if (m_ifs && m_ifs->fail()) {
         delete m_ifs;
-        m_ifs = 0;
+        m_ifs = nullptr;
     }
 
     if (!m_ifs) {
@@ -66,12 +66,12 @@ ScriptFile::~ScriptFile()
 {
     if (m_subscript) {
         delete m_subscript;
-        m_subscript = 0;
+        m_subscript = nullptr;
     }
 
     if (m_ifs) {
         delete m_ifs;
-        m_ifs = 0;
+        m_ifs = nullptr;
     }
 }
 
@@ -392,7 +392,7 @@ ScriptFile::getNextByte(int *byte)
         if (m_subscript) {
             if (m_subscript->isEof()) {
                 delete m_subscript;
-                m_subscript = 0;
+                m_subscript = nullptr;
                 continue;  // retry using current script processing
             }
             return m_subscript->getNextByte(byte);
@@ -490,7 +490,7 @@ ScriptFile::getNextByte(int *byte)
 
                 if (!m_subscript->openedOk()) {
                     delete m_subscript;
-                    m_subscript = 0;
+                    m_subscript = nullptr;
                     string location = getLineDescription();
                     string msg("Error opening file '" + abs_inc_fname +
                                "',\nincluded from " + location);

@@ -745,7 +745,6 @@ PrinterFrame::OnConfigureDialog(wxCommandEvent& WXUNUSED(event))
     sys.freezeEmu(true);    // halt emulation
 
     PrinterDialogDataTransfer *data = new PrinterDialogDataTransfer();
-    assert(data != nullptr);
 
     //set data values here
     int linelength, pagelength;

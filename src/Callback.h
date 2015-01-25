@@ -41,9 +41,9 @@ public:
     void operator()() const { (t_->*f_)(p_); }
 
 private:
-    T* t_;
-    F  f_;
-    P  p_;
+    T* const t_;        // object pointer
+    F  const f_;        // callback function pointer
+    const P  p_;        // parameter to callback function
 
     // this would actually work, but we don't need it
     CANT_ASSIGN_OR_COPY_CLASS(Callback);

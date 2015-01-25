@@ -249,7 +249,7 @@ void
 IoCardDisk::editConfiguration(CardCfgState *cfg)
 {
     DiskCtrlCfgState* pcfg( dynamic_cast<DiskCtrlCfgState*>(cfg) );
-    assert( pcfg != 0 );
+    assert( pcfg != nullptr );
 
     UI_ConfigureCard(pcfg);
 };
@@ -702,8 +702,8 @@ IoCardDisk::tcbTrack(int arg)
 void
 IoCardDisk::tcbMotorOff(int arg)
 {
-    assert(m_tmr_motor_off != 0);
-    m_tmr_motor_off = 0;
+    assert(m_tmr_motor_off != nullptr);
+    m_tmr_motor_off = nullptr;
 
     if (DBG > 1)
         dbglog("MOTOR OFF timer fired\n");
@@ -724,7 +724,7 @@ IoCardDisk::tcbSector(int arg)
     int prev_sec;
 
     assert(drive >= 0 && drive < numDrives());
-    assert(m_d[drive].tmr_sector != 0);
+    assert(m_d[drive].tmr_sector != nullptr);
 
     if (0 && (NOISY > 2))
         dbglog("Drive %d SECTOR timer fired: sector %d\n", drive, m_d[drive].sector);

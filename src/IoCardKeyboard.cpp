@@ -79,7 +79,7 @@ IoCardKeyboard::reset(int hard_reset)
 
     if (m_script_handle) {
         delete m_script_handle;
-        m_script_handle = 0;
+        m_script_handle = nullptr;
     }
 
     // reset card state
@@ -170,7 +170,7 @@ IoCardKeyboard::receiveKeystroke(int io_addr, int keycode)
             // cancel any script in progress
             ENSURE_TIMER_DEAD(tthis->m_tmr_script);
             delete tthis->m_script_handle;
-            tthis->m_script_handle = 0;
+            tthis->m_script_handle = nullptr;
             tthis->m_key_ready     = false;
         }
         tthis->m_cpu.halt();
@@ -222,7 +222,7 @@ IoCardKeyboard::invoke_script(const int io_addr, const string &filename)
 
     if (!tthis->m_script_handle->openedOk()) {
         delete tthis->m_script_handle;
-        tthis->m_script_handle = 0;
+        tthis->m_script_handle = nullptr;
         return false;
     }
 
@@ -295,7 +295,7 @@ IoCardKeyboard::script_poll()
         } else {
             // EOF
             delete m_script_handle;
-            m_script_handle = 0;
+            m_script_handle = nullptr;
             m_key_ready     = false;
         }
     }

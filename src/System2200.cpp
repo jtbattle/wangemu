@@ -156,7 +156,6 @@ System2200::initialize()
     setTerminationState(RUNNING);
 
     m_scheduler = new Scheduler();
-    assert(m_scheduler != 0);
 
     // attempt to load configuration from saved state
     SysCfgState ini_cfg;
@@ -194,7 +193,7 @@ System2200::breakdown_cards(void)
 void
 System2200::setConfig(const SysCfgState &newcfg)
 {
-    if (m_config == 0) {
+    if (m_config == nullptr) {
         // first time we don't need to tear anything down
         m_config = new SysCfgState();
     } else {
@@ -217,9 +216,9 @@ System2200::setConfig(const SysCfgState &newcfg)
         }
 
         // the change was major, so delete existing resources
-        assert(m_cpu != 0);
+        assert(m_cpu != nullptr);
         delete m_cpu;
-        m_cpu = 0;
+        m_cpu = nullptr;
 
         // remember which virtual disks are installed
         saveDiskMounts();
@@ -244,7 +243,7 @@ System2200::setConfig(const SysCfgState &newcfg)
             m_cpu = new Cpu2200vp( *this, scheduler(), ramsize, Cpu2200::CPUTYPE_2200VP );
             break;
     }
-    assert(m_cpu != 0);
+    assert(m_cpu != nullptr);
 
     // build cards that go into each slot.
     // a hack -- when a display card is made, the crtframe status bar queries
@@ -296,14 +295,14 @@ System2200::cleanup()
     breakdown_cards();
 
     delete m_cpu;
-    m_cpu = 0;
+    m_cpu = nullptr;
 
     delete m_scheduler;
-    m_scheduler = 0;
+    m_scheduler = nullptr;
 
     config().saveIni();  // save state to ini file
     delete m_config;
-    m_config = 0;
+    m_config = nullptr;
 
 #ifdef _DEBUG
     dbglog_close();               // turn off logging
@@ -745,7 +744,7 @@ System2200::findDisk(const string &filename,
 
         const CardCfgState *cfg = config().getCardConfig(slt);
         const DiskCtrlCfgState *dcfg = dynamic_cast<const DiskCtrlCfgState*>(cfg);
-        assert(dcfg != 0);
+        assert(dcfg != nullptr);
         int num_drives = dcfg->getNumDrives();
         for(int d=0; d<num_drives; d++) {
             int stat = IoCardDisk::wvdDriveStatus(slt, d);
@@ -792,7 +791,7 @@ System2200::saveDiskMounts(void)
             string val;
             const CardCfgState *cfg = config().getCardConfig(slot);
             const DiskCtrlCfgState *dcfg = dynamic_cast<const DiskCtrlCfgState*>(cfg);
-            assert(dcfg != 0);
+            assert(dcfg != nullptr);
             int num_drives = dcfg->getNumDrives();
             for(int drive=0; drive<num_drives; drive++) {
                 ostringstream item;
@@ -822,7 +821,7 @@ System2200::restoreDiskMounts(void)
         if (isDiskController(slot)) {
             const CardCfgState *cfg = config().getCardConfig(slot);
             const DiskCtrlCfgState *dcfg = dynamic_cast<const DiskCtrlCfgState*>(cfg);
-            assert(dcfg != 0);
+            assert(dcfg != nullptr);
             int num_drives = dcfg->getNumDrives();
             for(int drive=0; drive<num_drives; drive++) {
                 ostringstream subgroup;
