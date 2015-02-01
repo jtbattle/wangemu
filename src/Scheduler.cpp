@@ -125,17 +125,18 @@ Scheduler::Scheduler() :
     m_numActive(0),
     m_numRetired(0)
 {
+    // prefab timer objects so we can just hand them out on demand,
+    // vs. having to malloc them
+    for(int i=0; i<NUM_TIMERS; i++) {
+        m_timer[i].ctr = 0;
+        m_timer[i].callback = nullptr;
+        m_timer[i].ptmr = new Timer(this, i);
+    }
+
     // establish free list
-    for(int i=0; i<NUM_TIMERS; i++)
+    for(int i=0; i<NUM_TIMERS; i++) {
         m_freeIdx[i] = i;
-
-    // callback list
-    for(int j=0; j<NUM_TIMERS; j++)
-        m_timer[j].callback = nullptr;
-
-    // prefab timer handles
-    for(int k=0; k<NUM_TIMERS; k++)
-        m_timer[k].ptmr = new Timer(this, k);
+    }
 
 #if TEST_TIMER
     if (this == &test_scheduler)
@@ -149,21 +150,23 @@ Scheduler::~Scheduler()
 {
     // kill any active timers
     for(int i=0; i < NUM_TIMERS; i++) {
-        if (m_timer[i].callback != nullptr)
+        if (m_timer[i].callback != nullptr) {
             delete m_timer[i].callback;
-        m_timer[i].callback = nullptr;
+	    m_timer[i].callback = nullptr;
+	}
     }
 
     // delete dynamic storage
-    for(int j=0; j < NUM_TIMERS; j++)
+    for(int j=0; j < NUM_TIMERS; j++) {
         delete m_timer[j].ptmr;
+        m_timer[j].ptmr = nullptr;
+    }
 };
 
 
-// create a new timer; an int handle is returned.
-// this handle can be used to identify the timer later.
-// ticks is the number of clock ticks before the callback fires,
-// passing back the stored arg.
+// return a timer object; the caller doesn't destroy this object,
+// but calls Kill() if it wants to terminate it.
+// 'ticks' is the number of clock ticks before the callback fires.
 Timer* Scheduler::TimerCreateImpl(int ticks, CallbackBase *fcn)
 {
     // funny things happen if we try to time intervals that are too big

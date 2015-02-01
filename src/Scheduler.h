@@ -28,8 +28,7 @@ public:
     Scheduler();
     ~Scheduler();
 
-    // create a new timer; an int handle is returned.
-    // this handle can be used to identify the timer later.
+    // create a new timer
     // ticks is the number of clock ticks before the callback fires,
     // passing back the stored arg.
     template <class T, typename P>
