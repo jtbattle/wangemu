@@ -42,7 +42,6 @@
 #include "Scheduler.h"
 #include "Ui.h"         // needed for UI_Error()
 
-
 // ======================================================================
 // minimal scheduler test
 // ======================================================================
@@ -72,7 +71,7 @@ TimerTestFoo::report1(int i)
 {
     printf("report1: got callback for timer %d after %d clocks\n", i, g_testtime);
     if (i == 2)
-        (void)test_scheduler.TimerCreate( 4, make_callback(g_foo2, &TimerTestFoo::report1, 5) );
+        (void)test_scheduler.TimerCreate( 4, std::bind(&TimerTestFoo::report1, &g_foo2, 5) );
 }
 
 void
@@ -89,15 +88,12 @@ TimerTest(void)
     g_testtime = 0;
 
     // method 1: create a static timer object, then pass it to scheduler
-    Callback<TimerTestFoo, int> cb1 = make_callback(foo, &TimerTestFoo::report1, 1);
+    callback_t cb1 = std::bind(&TimerTestFoo::report1, &foo, 1);
     Timer *t1 = test_scheduler.TimerCreate( TIMER_US(3.0f), cb1 );
 
     // method 2: like method 1, but all inline
-    Timer *t2 = test_scheduler.TimerCreate( 10, make_callback(foo, &TimerTestFoo::report1, 2) );
-    Timer *t3 = test_scheduler.TimerCreate( 50, make_callback(foo, &TimerTestFoo::report2, 3) );
-
-    // method 3: use different TimerCreate signature to avoid make_callback() function
-    Timer *t4 = test_scheduler.TimerCreate( 10, foo, &TimerTestFoo::report2, 4);
+    Timer *t2 = test_scheduler.TimerCreate( 10, std::bind(&TimerTestFoo::report1, &foo, 2) );
+    Timer *t3 = test_scheduler.TimerCreate( 50, std::bind(&TimerTestFoo::report2, &foo, 3) );
 
     for(int n=0; n<100; n++) {
         if (n == 5)
@@ -106,12 +102,6 @@ TimerTest(void)
     }
 }
 #endif
-
-// ======================================================================
-// virtual destructor  has to live somewhere; here it is
-// ======================================================================
-
-CallbackBase::~CallbackBase() { }
 
 // ======================================================================
 // Scheduler implementation
@@ -129,7 +119,6 @@ Scheduler::Scheduler() :
     // vs. having to malloc them
     for(int i=0; i<NUM_TIMERS; i++) {
         m_timer[i].ctr = 0;
-        m_timer[i].callback = nullptr;
         m_timer[i].ptmr = new Timer(this, i);
     }
 
@@ -148,14 +137,6 @@ Scheduler::Scheduler() :
 // free allocated data
 Scheduler::~Scheduler()
 {
-    // kill any active timers
-    for(int i=0; i < NUM_TIMERS; i++) {
-        if (m_timer[i].callback != nullptr) {
-            delete m_timer[i].callback;
-	    m_timer[i].callback = nullptr;
-	}
-    }
-
     // delete dynamic storage
     for(int j=0; j < NUM_TIMERS; j++) {
         delete m_timer[j].ptmr;
@@ -167,7 +148,8 @@ Scheduler::~Scheduler()
 // return a timer object; the caller doesn't destroy this object,
 // but calls Kill() if it wants to terminate it.
 // 'ticks' is the number of clock ticks before the callback fires.
-Timer* Scheduler::TimerCreateImpl(int ticks, CallbackBase *fcn)
+Timer*
+Scheduler::TimerCreate(int ticks, const callback_t &fcn)
 {
     // funny things happen if we try to time intervals that are too big
     assert(ticks <= MAX_TICKS);
@@ -180,11 +162,12 @@ Timer* Scheduler::TimerCreateImpl(int ticks, CallbackBase *fcn)
     }
 
     // move timer from free list to active list
+    assert(m_numFree > 0);
     int tmr = m_freeIdx[--m_numFree];
     m_activeIdx[m_numActive++] = tmr;
 
     m_timer[tmr].ctr      = ticks;  // clocks until expiration
-    m_timer[tmr].callback = fcn;    // pointer to the copy we created
+    m_timer[tmr].callback = fcn;    // copy callback
 
     if (m_numActive == 1) {
         // this is the only timer
@@ -209,7 +192,7 @@ Timer* Scheduler::TimerCreateImpl(int ticks, CallbackBase *fcn)
         m_timer[tmr].ctr += elapsed;
     }
 
-    // timer handle
+    // return timer handle
     return m_timer[tmr].ptmr;
 }
 
@@ -223,12 +206,6 @@ Timer* Scheduler::TimerCreateImpl(int ticks, CallbackBase *fcn)
 // be triggered, and a new countdown will be established then.
 void Scheduler::TimerKill(int n)
 {
-    // free the callback thunk we allocated
-    if (m_timer[n].callback != nullptr) {
-        delete m_timer[n].callback;    // pointer to the copy we created
-        m_timer[n].callback = nullptr;
-    }
-
     // the fact that we have to do this lookup doesn't matter since
     // TimerKill isn't used very frequently.
     int idx = -1;
@@ -304,19 +281,10 @@ void Scheduler::TimerCredit(void)
     for(i=0; i<m_numRetired; i++) {
         int idx = m_retiredIdx[i];
 
-        if (m_timer[idx].callback == nullptr) {
-#ifdef TMR_DEBUG
-            UI_Error("Error: killing non-existent simulated timer");
-#endif
-        } else {
-            // ideally, we'd also pass the number of base ticks of overshoot
-            // so that a periodic timer could make sure the new period for
-            // the next cycle accounted for this small (?) difference.
-            (*m_timer[idx].callback)();
-
-            delete m_timer[idx].callback;
-            m_timer[idx].callback = nullptr;
-        }
+	// ideally, we'd also pass the number of base ticks of overshoot
+	// so that a periodic timer could make sure the new period for
+	// the next cycle accounted for this small (?) difference.
+	(m_timer[idx].callback)();
 
         // move it to the free list
         assert(m_numFree < NUM_TIMERS);

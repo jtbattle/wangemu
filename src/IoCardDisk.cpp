@@ -399,15 +399,15 @@ IoCardDisk::stopMotor(int drive)
 void
 IoCardDisk::createDiskController()
 {
-    m_tmr_motor_off = 0;
+    m_tmr_motor_off = nullptr;
 
     for(int drive=0; drive<4; drive++) {
         m_d[drive].wvd = (drive < numDrives()) ? new Wvd : 0;
         m_d[drive].state = DRIVE_EMPTY;
         // timing emulation:
         m_d[drive].track      = 0;    // which track head is on
-        m_d[drive].tmr_track  = 0;
-        m_d[drive].tmr_sector = 0;
+        m_d[drive].tmr_track  = nullptr;
+        m_d[drive].tmr_sector = nullptr;
     }
 
     reset();
@@ -478,7 +478,8 @@ IoCardDisk::wvdTickleMotorOffTimer()
     if ((disktype == Wvd::DISKTYPE_FD5) || (disktype == Wvd::DISKTYPE_FD8)) {
         ENSURE_TIMER_DEAD(m_tmr_motor_off);
         m_tmr_motor_off = m_scheduler.TimerCreate(
-                        TICK_TEN_SEC, *this, &IoCardDisk::tcbMotorOff, m_drive );
+                            TICK_TEN_SEC,
+                            std::bind(&IoCardDisk::tcbMotorOff, this, m_drive) );
     }
 }
 
@@ -567,7 +568,7 @@ IoCardDisk::wvdSeekTrack(int nominal_ticks)
     const bool empty = (m_d[m_drive].state == DRIVE_EMPTY);
 
     // this shouldn't already be in use
-    assert(m_d[m_drive].tmr_track == 0);
+    assert(m_d[m_drive].tmr_track == nullptr);
 
     // the disk controller counts how many times a command has been
     // issued without accessing a given drive.  if that count exceeds 32,
@@ -594,7 +595,7 @@ IoCardDisk::wvdSeekTrack(int nominal_ticks)
         switch (m_d[m_drive].state) {
             case DRIVE_EMPTY:
             case DRIVE_IDLE:
-                assert(m_d[m_drive].tmr_sector == 0);
+                assert(m_d[m_drive].tmr_sector == nullptr);
                 ticks += TICK_ONE_SEC;
                 break;
             case DRIVE_SPINNING:
@@ -605,10 +606,10 @@ IoCardDisk::wvdSeekTrack(int nominal_ticks)
     }
 
     // start sector timer
-    if (!empty && (m_d[m_drive].tmr_sector == 0))
+    if (!empty && (m_d[m_drive].tmr_sector == nullptr))
         m_d[m_drive].tmr_sector = m_scheduler.TimerCreate(
-                                    m_d[m_drive].ticks_per_sector, *this,
-                                    &IoCardDisk::tcbSector, m_drive );
+                                    m_d[m_drive].ticks_per_sector,
+                                    std::bind( &IoCardDisk::tcbSector, this, m_drive) );
 
     if (ticks <= 0)
         ticks = DISK_MIN_TICKS;
@@ -616,7 +617,8 @@ IoCardDisk::wvdSeekTrack(int nominal_ticks)
         ticks = DISK_MIN_TICKS;
 
     m_d[m_drive].tmr_track =
-        m_scheduler.TimerCreate( ticks, *this, &IoCardDisk::tcbTrack, m_drive );
+        m_scheduler.TimerCreate( ticks,
+                                 std::bind(&IoCardDisk::tcbTrack, this, m_drive) );
 }
 
 
@@ -671,7 +673,7 @@ IoCardDisk::tcbTrack(int arg)
     if (DBG > 1)
         dbglog("TRACK SEEK timer fired\n");
 
-    m_d[m_drive].tmr_track = 0;
+    m_d[m_drive].tmr_track = nullptr;
 
     if (m_d[m_drive].state == DRIVE_IDLE)
         m_d[m_drive].state = DRIVE_SPINNING;
@@ -731,7 +733,7 @@ IoCardDisk::tcbSector(int arg)
 
     // retrigger the timer
     m_d[drive].tmr_sector = m_scheduler.TimerCreate(
-        m_d[drive].ticks_per_sector, *this, &IoCardDisk::tcbSector, drive);
+        m_d[drive].ticks_per_sector, std::bind(&IoCardDisk::tcbSector, this, drive) );
 
     // advance to next sector, mod sectors per track
     prev_sec = m_d[drive].sector;

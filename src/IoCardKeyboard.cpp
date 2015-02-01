@@ -236,7 +236,7 @@ IoCardKeyboard::invoke_script(const int io_addr, const string &filename)
 // =================== private functions ===================
 
 void
-IoCardKeyboard::tcbScript(int arg)
+IoCardKeyboard::tcbScript()
 {
     if (m_selected) {
         assert(!m_cpb);
@@ -247,9 +247,7 @@ IoCardKeyboard::tcbScript(int arg)
         m_cpu.setDevRdy(m_key_ready);
     }
 
-    m_tmr_script = 0;
-
-    arg = arg;  // keep lint happy
+    m_tmr_script = nullptr;
 }
 
 
@@ -273,7 +271,7 @@ IoCardKeyboard::check_keyready()
             if (!m_tmr_script)
                 m_tmr_script = m_scheduler.TimerCreate(
                         TIMER_US(50),     // 30 is OK, 20 is too little
-                        *this, &IoCardKeyboard::tcbScript, 0 );
+                        std::bind(&IoCardKeyboard::tcbScript, this) );
         }
         m_cpu.setDevRdy(m_key_ready);
     }

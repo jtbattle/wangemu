@@ -1023,8 +1023,8 @@ Cpu2200vp::exec_one_op()
             // 30 ms one shot gets retriggered.
             m_cpu.sh |= SH_MASK_30MS;     // one shot output rises
             ENSURE_TIMER_DEAD(m_tmr_30ms);
-            m_tmr_30ms = m_scheduler.TimerCreate(
-                            TIMER_MS(27), *this, &Cpu2200vp::tcb30msDone, 0 );
+            m_tmr_30ms = m_scheduler.TimerCreate( TIMER_MS(27),
+                                std::bind(&Cpu2200vp::tcb30msDone, this) );
 // FIXME: if I set the timer to TIMER_MS(30), MVP Basic-2 2.6.2 reports
 //        the timeslice as being 36 ms.  what gives?
 //        TIMER_MS(29) reports "35 MS TICK".
@@ -1406,7 +1406,7 @@ Cpu2200vp::Cpu2200vp(System2200 &sys, Scheduler &scheduler,
     Cpu2200(),  // init base class
     m_sys(sys),
     m_scheduler(scheduler),
-    m_tmr_30ms(0),
+    m_tmr_30ms(nullptr),
     m_memsize_KB(ramsize),
     m_dbg(false)
 {
@@ -1583,12 +1583,10 @@ Cpu2200vp::getAB() const
 
 // this callback occurs when the 30 ms timeslicing one-shot times out.
 void
-Cpu2200vp::tcb30msDone(int arg)
+Cpu2200vp::tcb30msDone()
 {
     m_cpu.sh &= ~SH_MASK_30MS;    // one shot output falls
-    m_tmr_30ms = 0;               // dead timer
-
-    arg = arg; // keep lint happy
+    m_tmr_30ms = nullptr;         // dead timer
 }
 
 

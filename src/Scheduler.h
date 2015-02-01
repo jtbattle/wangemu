@@ -7,8 +7,7 @@
 
 #include "w2200.h"  // pick up def of int32
 
-// simple callback mechanism
-#include "Callback.h"
+#include <functional>
 
 // for now, statically define how many timers can be active.
 // in the future we could use a vector container to grow automatically,
@@ -17,6 +16,9 @@
 
 // fwd reference
 class Timer;
+
+// when a timer expires, we invoke the callback function
+typedef std::function<void()> callback_t;
 
 // this class manages event-driven behavior for the emulator.
 // time advances every cpu tick, and callers can request to be called
@@ -30,24 +32,16 @@ public:
 
     // create a new timer
     // ticks is the number of clock ticks before the callback fires,
-    // passing back the stored arg.
-    template <class T, typename P>
-    Timer* TimerCreate(int ticks, Callback<T,P> &fcn) {
-        Callback<T,P> *fcncopy = new Callback<T,P>(fcn);
-        return TimerCreateImpl(ticks, fcncopy);
-    }
-
-    // specify callback without and intermediate callback function, e.g.
+    // passing back the stored arg. e.g.,
+    //
     //   void TimerTestFoo::report(int i)
     //   { printf("got callback for timer %d after %d clocks\n", i, g_testtime); }
     //
-    //   Timer* tmr = TimerCreate( 100, foo, &TimerTestFoo:report, 33 );
+    //   Timer* tmr = TimerCreate( 100,
+    //                             std::bind(&TimerTestFoo:report, &foo, 33) );
     //
-    // After 100 clocks, TimerTestFoo::report(33) is called.
-    template <class T, typename P>
-    Timer* TimerCreate(int ticks, T& t, void (T::*f)(P), P p) {
-        return TimerCreateImpl(ticks, new Callback<T,P>(t, f, p));
-    }
+    // After 100 clocks, foo.report(33) is called.
+    Timer* TimerCreate(int ticks, const callback_t &fcn);
 
     // remove a pending timer event by passing its index
     // (called only from Timer.Kill())
@@ -66,9 +60,6 @@ public:
     const static int MAX_TICKS = (1 << 30)-1;
 
 private:
-    // actual implementation
-    Timer* TimerCreateImpl(int ticks, CallbackBase *fcn);
-
     // transfer accumulated timer deficit to each active timer.
     // n is added to the already elapsed time.
     // this shouldn't need to be called very frequently.
@@ -93,9 +84,9 @@ private:
     // cause a callback to the supplied function using the
     // supplied parameters.
     struct {
-        int32         ctr;      // counter until expiration
-        CallbackBase *callback; // registered callback function
-        Timer        *ptmr;     // timer handle
+        int32       ctr;      // counter until expiration
+        callback_t  callback; // registered callback function
+        Timer      *ptmr;     // timer handle
     } m_timer[NUM_TIMERS];
 
     // list of free timers
@@ -113,8 +104,8 @@ private:
 
 // scale a floating point time in microseconds to be an
 // argument appropriate for the TimerCreate() function.
-#define TIMER_US(f) (int(   10.0*(f)+0.5))
-#define TIMER_MS(f) (int(10000.0*(f)+0.5))
+inline int TIMER_US(double f) { return int(   10.0*f+0.5); }
+inline int TIMER_MS(double f) { return int(10000.0*f+0.5); }
 
 // this is used to kill off a timer that may or may not be inactive
 #define ENSURE_TIMER_DEAD(thnd) {       \

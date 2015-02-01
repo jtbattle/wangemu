@@ -290,8 +290,8 @@ IoCardDisplay::tcbHsync(int arg)
     }
 
     // retrigger the timer
-    m_thnd_hsync = m_scheduler.TimerCreate(
-                        new_period, *this, &IoCardDisplay::tcbHsync, arg);
+    m_thnd_hsync = m_scheduler.TimerCreate( new_period,
+                            std::bind(&IoCardDisplay::tcbHsync, this, arg) );
 
     // advance state machine
     switch (m_busy_state) {
