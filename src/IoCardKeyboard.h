@@ -53,7 +53,7 @@ private:
     vector<int> getBaseAddresses() const;
 
     // timer callback function to put some required delay in script processing
-    void tcbScript(int arg);
+    void tcbScript();
 
     // see if script has any chars to inject
     void script_poll();

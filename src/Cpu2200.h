@@ -236,7 +236,7 @@ private:
     int exec_one_op();
 
     // this callback occurs when the 30 ms timeslicing one-shot times out.
-    void tcb30msDone(int arg);
+    void tcb30msDone();
 
 #ifdef HAVE_FILE_DUMP
     void dump_ram(const string &filename);
