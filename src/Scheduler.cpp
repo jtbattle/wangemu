@@ -2,11 +2,13 @@
 //
 // A routine desiring later notification at some specific time calls
 //
-//     Timer *tmr = TimerCreate(ticks, obj, &obj::fcn, arg);
+//     Timer *tmr = TimerCreate(ticks, std::bind(&obj::fcn, &obj, arg) );
 //
 // which causes 'fcn' to be called back with parameter arg after simulating
 // 'ticks' clock cycles.  The event is then removed from the active list.
-// That is, timers are one-shots, not oscillators.
+// That is, timers are one-shots, not oscillators.  The function arg list
+// can be zero, one, two, etc, arguments, just so long as bind supplies
+// an argument for each parameter in the called function.
 //
 // A timer can be canceled early like this:
 //
@@ -17,12 +19,9 @@
 //         2003: modified for wangemu,  a wang 2200 emulator
 //         2007: rewritten in c++ oo style for the wang 3300 emulator
 //         2008: adapted for a new revision of the wang 2200 emulator
+//         2015: replaced Callback.h with std::function/std::bind
 // All revisions, Jim Battle.
 
-// The code perhaps attempts to be too efficient in some ways, while no doubt
-// being inefficient in others.  A fixed pool of timers are pre-manufactured
-// and kept on free and in-use lists for quick allocation.
-//
 // In theory, on each TimerTick() we deduct the specified number of ticks
 // from all the timers.  All expiring timers are put on a retirement list.
 // Once all active timers are swept like this, all retired timers perform
@@ -41,6 +40,7 @@
 
 #include "Scheduler.h"
 #include "Ui.h"         // needed for UI_Error()
+#include <algorithm>    // for std::sort
 
 // ======================================================================
 // minimal scheduler test
@@ -110,23 +110,8 @@ TimerTest(void)
 Scheduler::Scheduler() :
     m_updating(false),
     m_countdown(0),
-    m_startcnt(0),
-    m_numFree(NUM_TIMERS),
-    m_numActive(0),
-    m_numRetired(0)
+    m_startcnt(0)
 {
-    // prefab timer objects so we can just hand them out on demand,
-    // vs. having to malloc them
-    for(int i=0; i<NUM_TIMERS; i++) {
-        m_timer[i].ctr = 0;
-        m_timer[i].ptmr = new Timer(this, i);
-    }
-
-    // establish free list
-    for(int i=0; i<NUM_TIMERS; i++) {
-        m_freeIdx[i] = i;
-    }
-
 #if TEST_TIMER
     if (this == &test_scheduler)
         TimerTest();
@@ -137,11 +122,7 @@ Scheduler::Scheduler() :
 // free allocated data
 Scheduler::~Scheduler()
 {
-    // delete dynamic storage
-    for(int j=0; j < NUM_TIMERS; j++) {
-        delete m_timer[j].ptmr;
-        m_timer[j].ptmr = nullptr;
-    }
+    m_timer.clear();
 };
 
 
@@ -155,21 +136,9 @@ Scheduler::TimerCreate(int ticks, const callback_t &fcn)
     assert(ticks <= MAX_TICKS);
     assert(ticks >= 1);
 
-    // find an available slot
-    if (m_numFree == 0) {
-        UI_Error("Error: ran out of simulated timers");
-        exit(-1);
-    }
+    Timer *tmr = new Timer(this, ticks, fcn);
 
-    // move timer from free list to active list
-    assert(m_numFree > 0);
-    int tmr = m_freeIdx[--m_numFree];
-    m_activeIdx[m_numActive++] = tmr;
-
-    m_timer[tmr].ctr      = ticks;  // clocks until expiration
-    m_timer[tmr].callback = fcn;    // copy callback
-
-    if (m_numActive == 1) {
+    if (m_timer.size() == 1) {
         // this is the only timer
         m_startcnt = m_countdown = ticks;
     } else if (ticks < m_countdown) {
@@ -189,14 +158,14 @@ Scheduler::TimerCreate(int ticks, const callback_t &fcn)
         // which is to trigger in M cycles was actually scheduled for M+N
         // ticks N cycles ago.
         int elapsed = (m_startcnt - m_countdown);
-        m_timer[tmr].ctr += elapsed;
+        tmr->ctr += elapsed;
     }
 
-    // return timer handle
-    return m_timer[tmr].ptmr;
-}
+    m_timer.push_back(tmr);
 
-// remove a pending timer event by passing its handle
+    // return timer handle
+    return tmr;
+}
 
 // kill a timer.  the timer number passed to this function
 // is the one returned by the TimerCreate function.
@@ -204,31 +173,19 @@ Scheduler::TimerCreate(int ticks, const callback_t &fcn)
 // we don't bother messing with updating m_countdown.
 // instead, we just let that countdown expire, nothing will
 // be triggered, and a new countdown will be established then.
-void Scheduler::TimerKill(int n)
+void Scheduler::TimerKill(Timer *tmr)
 {
     // the fact that we have to do this lookup doesn't matter since
-    // TimerKill isn't used very frequently.
-    int idx = -1;
-    for(int i=0; i<m_numActive; i++) {
-        if (m_activeIdx[i] == n) {
-            idx = i;
-            break;
+    // TimerKill is infrequently used.
+    for(unsigned int n=0; n<m_timer.size(); n++) {
+        if (m_timer[n] == tmr) {
+            m_timer.erase(m_timer.begin() + n);
+            return;
         }
     }
-    if (idx < 0) {
 #ifdef TMR_DEBUG
-        UI_Error("Error: killing non-existent simulated timer");
+    UI_Error("Error: killing non-existent simulated timer");
 #endif
-        return;
-    }
-
-    // add index to free list
-    m_freeIdx[m_numFree++] = n;
-
-    // remove it from the active list
-    for(int j=idx; j<m_numActive-1; j++)
-        m_activeIdx[j] = m_activeIdx[j+1];
-    m_numActive--;
 }
 
 // transfer accumulated timer deficit to each active timer.
@@ -236,7 +193,7 @@ void Scheduler::TimerKill(int n)
 // this shouldn't need to be called very frequently.
 void Scheduler::TimerCredit(void)
 {
-    if (m_numActive == 0) {
+    if (m_timer.empty()) {
         // don't trigger this fcn again until there is real work to do,
         // or a long time has passed.
         m_countdown = MAX_TICKS;
@@ -250,45 +207,43 @@ void Scheduler::TimerCredit(void)
     // this flag is used in that routine to avoid a reentrancy issue.
     m_updating = true;
 
-    // scan each active timer, moving expired ones to the dead list
-    m_numRetired = 0;
-    int i, j;
-    for(i=j=0; i<m_numActive; i++) {
-        int idx = m_activeIdx[i];
-        int overshoot = (elapsed - m_timer[idx].ctr);
-        if (overshoot >= 0) {
-            // a timer has expired; add it to the retired list
-            m_retiredIdx[m_numRetired++] = idx;
+    // scan each active timer, moving expired ones to the retired list
+    vector<Timer *> retired;
+    unsigned int active_before = m_timer.size();
+    unsigned int active_after = 0;
+    for(unsigned int s=0; s<active_before; s++) {
+        m_timer[s]->ctr -= elapsed;
+        if (m_timer[s]->ctr <= 0) {
+            // a timer has expired; move it to the retired list
+            retired.push_back(m_timer[s]);
         } else {
             // this timer hasn't expired
-            m_timer[idx].ctr -= elapsed;
-            m_activeIdx[j] = idx;
-            j++;
+            m_timer[active_after++] = m_timer[s];  // keep it in the active list
         }
     }
-    m_numActive -= m_numRetired;
+    if (active_after < active_before) {
+        // shrink active list, but null out pointers so resize doesn't
+        // free them, as they now live on the retired list
+        for(unsigned int i=active_after; i < active_before; i++) {
+            m_timer[i] = nullptr;
+        }
+        m_timer.resize(active_after);  // delete any expired timers
+    }
 
-    // determine the new countdown target time
+    // determine the minimum countdown value of the remaining active timers
     m_countdown = MAX_TICKS;
-    for(i=0; i<m_numActive; i++) {
-        int idx = m_activeIdx[i];
-        if ((i==0) || (m_timer[idx].ctr < m_countdown))
-            m_countdown = m_timer[idx].ctr;
+    for(auto t : m_timer) {
+        m_countdown = std::min(m_countdown, t->ctr);
     }
     m_startcnt = m_countdown;
 
+    // sort retired events in order they expired
+    std::sort(retired.begin(), retired.end(),
+              [](Timer *a, Timer *b) { return (a->ctr < b->ctr); }
+             );
     // scan through the retired list and perform callbacks
-    for(i=0; i<m_numRetired; i++) {
-        int idx = m_retiredIdx[i];
-
-	// ideally, we'd also pass the number of base ticks of overshoot
-	// so that a periodic timer could make sure the new period for
-	// the next cycle accounted for this small (?) difference.
-	(m_timer[idx].callback)();
-
-        // move it to the free list
-        assert(m_numFree < NUM_TIMERS);
-        m_freeIdx[m_numFree++] = idx;
+    for(auto t : retired) {
+        (t->callback)();
     }
 
     m_updating = false; // done updating
@@ -328,5 +283,5 @@ void Scheduler::TimerTick(int n)
 // kill off this timer
 void Timer::Kill()
 {
-    s->TimerKill(idx);
+    s->TimerKill(this);
 }

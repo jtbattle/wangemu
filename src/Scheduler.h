@@ -9,25 +9,49 @@
 
 #include <functional>
 
-// for now, statically define how many timers can be active.
-// in the future we could use a vector container to grow automatically,
-// which is cleaner but a bit slower.
-#define NUM_TIMERS 10
-
-// fwd reference
-class Timer;
 
 // when a timer expires, we invoke the callback function
 typedef std::function<void()> callback_t;
 
+// ======================================================================
+// This is just a handle that Scheduler can pass back on timer creation,
+// making it more natural for the recipient to manipulate the timer later.
+
+// fwd reference
+class Scheduler;
+
+class Timer
+{
+    friend class Scheduler;
+
+public:
+    Timer(Scheduler *sched, int ticks, callback_t cb) :
+        s(sched), ctr(ticks), callback(cb) { };
+    ~Timer() { };
+
+    // kill off this timer
+    void Kill();
+
+private:
+    Scheduler * const s;  // pointer to owning scheduler
+    int32       ctr;      // tick count until expiration
+    callback_t  callback; // registered callback function
+
+    // actually I think it would be safe, but there is no need to do this
+    CANT_ASSIGN_OR_COPY_CLASS(Timer);
+};
+
+
+// ======================================================================
 // this class manages event-driven behavior for the emulator.
 // time advances every cpu tick, and callers can request to be called
 // back with a specific parameter after some number of cycles.
 // timers can also be killed before they have come due.
+
 class Scheduler
 {
 public:
-    Scheduler();
+     Scheduler();
     ~Scheduler();
 
     // create a new timer
@@ -43,16 +67,17 @@ public:
     // After 100 clocks, foo.report(33) is called.
     Timer* TimerCreate(int ticks, const callback_t &fcn);
 
-    // remove a pending timer event by passing its index
+    // remove a pending timer event by passing the timer object
     // (called only from Timer.Kill())
-    void TimerKill(int n);
+    void TimerKill(Timer *tmr);
 
     // let 'n' cpu cycles of simulated time go past
     inline void TimerTick(int n)
     {
         m_countdown -= n;
-        if (m_countdown <= 0)
+        if (m_countdown <= 0) {
             TimerCredit();
+        }
     }
 
     // when computing time deltas, we don't want to get confused
@@ -83,23 +108,7 @@ private:
     // any timer that has its own counter go <=0 will then
     // cause a callback to the supplied function using the
     // supplied parameters.
-    struct {
-        int32       ctr;      // counter until expiration
-        callback_t  callback; // registered callback function
-        Timer      *ptmr;     // timer handle
-    } m_timer[NUM_TIMERS];
-
-    // list of free timers
-    int m_numFree;
-    int m_freeIdx[NUM_TIMERS];
-
-    // list of active timers
-    int m_numActive;
-    int m_activeIdx[NUM_TIMERS];
-
-    // list of expired timers
-    int m_numRetired;
-    int m_retiredIdx[NUM_TIMERS];
+    vector<Timer *> m_timer;
 };
 
 // scale a floating point time in microseconds to be an
@@ -114,26 +123,5 @@ inline int TIMER_MS(double f) { return int(10000.0*f+0.5); }
             (thnd) = 0;                 \
         }                               \
     } while (0)
-
-// ======================================================================
-// This is just a handle that Scheduler can pass back on timer creation,
-// making it more natural for the recipient to manipulate the timer later.
-
-class Timer
-{
-public:
-    Timer(Scheduler *sched, int i) : s(sched), idx(i) { };
-    ~Timer() { };
-
-    // kill off this timer
-    void Kill();
-
-private:
-    Scheduler * const s;  // pointer to owning scheduler
-    int idx;              // index into the array that Scheduler keeps
-
-    // actually I think it would be safe, but there is no need to do this
-    CANT_ASSIGN_OR_COPY_CLASS(Timer);
-};
 
 #endif // _INCLUDE_SCHEDULER_H_
