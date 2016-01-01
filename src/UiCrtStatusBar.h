@@ -29,6 +29,7 @@
 class MyStaticBitmap : public wxStaticBitmap
 {
 public:
+    CANT_ASSIGN_OR_COPY_CLASS(MyStaticBitmap);
     MyStaticBitmap( wxWindow *parent, wxWindowID id, const wxBitmap &label,
                     const wxPoint &pos = wxDefaultPosition,
                     const wxSize &size = wxDefaultSize,
@@ -40,7 +41,6 @@ private:
 #endif
     int m_myid;
 
-    CANT_ASSIGN_OR_COPY_CLASS(MyStaticBitmap);
     DECLARE_EVENT_TABLE()
 };
 
@@ -52,6 +52,7 @@ private:
 class CrtStatusBar : public wxStatusBar
 {
 public:
+    CANT_ASSIGN_OR_COPY_CLASS(CrtStatusBar);
     CrtStatusBar(CrtFrame *parent, bool shown);
     ~CrtStatusBar();
 
@@ -94,7 +95,6 @@ private:
     enum { unknown, insert_disk, eject_disk, inspect_disk, format_disk }
           m_popup_action;
 
-    CANT_ASSIGN_OR_COPY_CLASS(CrtStatusBar);
     DECLARE_EVENT_TABLE()
 };
 

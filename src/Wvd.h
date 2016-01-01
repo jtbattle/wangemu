@@ -58,6 +58,7 @@ using std::fstream;
 class Wvd
 {
 public:
+    CANT_ASSIGN_OR_COPY_CLASS(Wvd);
      Wvd();  // default constructor must be followed by either open() or create()
     ~Wvd();
 
@@ -163,8 +164,6 @@ private:
 //  int      m_numTrackSectors;     // sectors per track
 //  int      m_rpm;                 // rotational speed
 //  int      m_stepTime;            // time to step one track, in ms
-
-    CANT_ASSIGN_OR_COPY_CLASS(Wvd);
 };
 
 #endif // _INCLUDE_WVD_H_

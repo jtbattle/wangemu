@@ -32,6 +32,7 @@ public:
 class PrinterConfigDlg : public wxDialog
 {
 public:
+    CANT_ASSIGN_OR_COPY_CLASS(PrinterConfigDlg);
     PrinterConfigDlg(wxWindow *parent, const wxString& title,
                      PrinterDialogDataTransfer *data,
                      const wxPoint& pos = wxDefaultPosition,
@@ -41,8 +42,6 @@ public:
 
     bool TransferDataToWindow();
     wxTextCtrl *text;
-
-    CANT_ASSIGN_OR_COPY_CLASS(PrinterConfigDlg);
 };
 
 #endif _INCLUDE_PRINTERCONFIGDLG_H_

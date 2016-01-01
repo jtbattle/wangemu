@@ -10,6 +10,7 @@ class IoCardPrinter : public IoCard
 {
 public:
     // see the base class for the definition of the public functions
+    CANT_ASSIGN_OR_COPY_CLASS(IoCardPrinter);
 
     // ----- common IoCard functions -----
     IoCardPrinter(Cpu2200 &cpu, int baseaddr, int cardslot);
@@ -39,8 +40,6 @@ private:
     bool        m_selected;       // the card is currently selected
     bool        m_cpb;            // the cpu is busy
     void       *m_wndhnd;         // opaque handle to UI window
-
-    CANT_ASSIGN_OR_COPY_CLASS(IoCardPrinter);
 };
 
 #endif // _INCLUDE_IOCARD_PRINTER_H_

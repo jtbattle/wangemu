@@ -14,6 +14,7 @@ enum wxPrintBin;
 class PrinterFrame : public wxFrame
 {
 public:
+    CANT_ASSIGN_OR_COPY_CLASS(PrinterFrame);
     // constructor
     PrinterFrame(const wxString &title, const int io_addr);
 
@@ -113,7 +114,6 @@ private:
 //  wxPageSetupData* m_pageSetupData;           // Page setup data - this was in the sample. It works, but is wrong.
     wxPageSetupDialogData *m_pageSetupData;     // Page setup data
 
-    CANT_ASSIGN_OR_COPY_CLASS(PrinterFrame);
     DECLARE_EVENT_TABLE()
 };
 

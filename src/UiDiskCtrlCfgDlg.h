@@ -12,6 +12,7 @@
 class DiskCtrlCfgDlg : public wxDialog
 {
 public:
+    CANT_ASSIGN_OR_COPY_CLASS(DiskCtrlCfgDlg);
     DiskCtrlCfgDlg(wxFrame *parent, DiskCtrlCfgState &cfg);
     // ~DiskCtrlCfgDlg();
 
@@ -41,7 +42,6 @@ private:
     void saveDefaults();
     void getDefaults();
 
-    CANT_ASSIGN_OR_COPY_CLASS(DiskCtrlCfgDlg);
     DECLARE_EVENT_TABLE()
 };
 

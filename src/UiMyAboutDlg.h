@@ -7,13 +7,13 @@
 class MyAboutDlg : public wxDialog
 {
 public:
+    CANT_ASSIGN_OR_COPY_CLASS(MyAboutDlg);
     MyAboutDlg(wxWindow *parent);
 
 private:
     // ---- event handlers ----
     void OnClick(wxMouseEvent& WXUNUSED(event));
 
-    CANT_ASSIGN_OR_COPY_CLASS(MyAboutDlg);
     DECLARE_EVENT_TABLE()
 };
 

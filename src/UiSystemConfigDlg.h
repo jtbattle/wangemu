@@ -14,6 +14,7 @@
 class SystemConfigDlg : public wxDialog
 {
 public:
+    CANT_ASSIGN_OR_COPY_CLASS(SystemConfigDlg);
     explicit SystemConfigDlg(wxFrame *parent);
     // ~SystemConfigDlg();
 
@@ -61,7 +62,6 @@ private:
     void saveDefaults();
     void getDefaults();
 
-    CANT_ASSIGN_OR_COPY_CLASS(SystemConfigDlg);
     DECLARE_EVENT_TABLE()
 };
 

@@ -12,6 +12,7 @@ class IoCardKeyboard : public IoCard
 {
 public:
     // see the base class for the definition of the public functions
+    CANT_ASSIGN_OR_COPY_CLASS(IoCardKeyboard);
 
     // ----- common IoCard functions -----
     IoCardKeyboard(Scheduler &scheduler, Cpu2200 &cpu,
@@ -70,8 +71,6 @@ private:
     bool        m_key_ready;      // key_code is valid
     int         m_key_code;       // keycode of most recently received keystroke
     ScriptFile *m_script_handle;  // ID of which script stream we're processing
-
-    CANT_ASSIGN_OR_COPY_CLASS(IoCardKeyboard);
 };
 
 

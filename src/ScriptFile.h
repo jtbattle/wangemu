@@ -10,6 +10,8 @@ using std::ifstream;
 class ScriptFile
 {
 public:
+    CANT_ASSIGN_OR_COPY_CLASS(ScriptFile);
+
     // options when opening file
     enum { SCRIPT_META_KEY = 0x0001,  // interpret \<LOAD> and the like
            SCRIPT_META_HEX = 0x0002,  // interpret \3F and the like
@@ -68,8 +70,6 @@ private:
     // helpers
     bool ishexdigit(char ch) const;
     int  hexval(char ch) const;
-
-    CANT_ASSIGN_OR_COPY_CLASS(ScriptFile);
 };
 
 #endif // ifdef _INCLUDE_SCRIPT_H_

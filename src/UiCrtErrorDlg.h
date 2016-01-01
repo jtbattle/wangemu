@@ -9,6 +9,7 @@
 class CrtErrorDlg : public wxDialog
 {
 public:
+    CANT_ASSIGN_OR_COPY_CLASS(CrtErrorDlg);
     CrtErrorDlg(wxWindow *parent,
                 const wxString &errcode,
                 const wxPoint origin );
@@ -17,7 +18,6 @@ private:
     // ---- event handlers ----
     void OnClick(wxMouseEvent& WXUNUSED(event));
 
-    CANT_ASSIGN_OR_COPY_CLASS(CrtErrorDlg);
     DECLARE_EVENT_TABLE()
 };
 

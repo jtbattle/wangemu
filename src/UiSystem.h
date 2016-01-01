@@ -65,6 +65,8 @@ public:
     // create a help menu, used for all frames that care
     static wxMenu* makeHelpMenu();
 
+    CANT_ASSIGN_CLASS(TheApp);
+
 private:
     // ---- event handlers ----
 
@@ -88,7 +90,6 @@ private:
     static void getGlobalDefaults();
     static void saveGlobalDefaults();
 
-    CANT_ASSIGN_CLASS(TheApp);
     DECLARE_EVENT_TABLE()
 };
 

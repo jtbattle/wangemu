@@ -14,6 +14,7 @@ class IoCardDisplay : public IoCard
 {
 public:
     // see the base class for the definition of the public functions
+    CANT_ASSIGN_OR_COPY_CLASS(IoCardDisplay);
 
     // ----- common IoCard functions -----
     IoCardDisplay(Scheduler &scheduler, Cpu2200 &cpu,
@@ -60,8 +61,6 @@ private:
          } m_busy_state;
 
     void tcbHsync(int arg);     // timer callback
-
-    CANT_ASSIGN_OR_COPY_CLASS(IoCardDisplay);
 };
 
 #endif // _INCLUDE_IOCARD_DISPLAY_H_

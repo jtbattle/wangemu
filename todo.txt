@@ -2,8 +2,7 @@
 Emulator TODO list
 ============================================================================
 
-*) use "= delete;" on disallowed copy constructor, etc
-   add "override" annotation on overridden functions in derived classes
+*) add "override" annotation on overridden functions in derived classes
 
 *) use smart pointers instead of raw pointers
     std::shared_ptr<>, std::make_shared<>, std::unique_ptr<>

@@ -15,6 +15,7 @@ class CrtStatusBar;
 class CrtFrame : public wxFrame
 {
 public:
+    CANT_ASSIGN_OR_COPY_CLASS(CrtFrame);
     // constructor
     CrtFrame(   const wxString &title,
                 const int screen_size,
@@ -200,7 +201,6 @@ private:
 
     static vector<CrtFrame*> m_crtlist;     // list of crt's in the system
 
-    CANT_ASSIGN_OR_COPY_CLASS(CrtFrame);
     DECLARE_EVENT_TABLE()
 };
 

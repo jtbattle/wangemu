@@ -72,6 +72,7 @@ private:
 class Cpu2200t: public Cpu2200
 {
 public:
+    CANT_ASSIGN_OR_COPY_CLASS(Cpu2200t);
     // ---- see base class for description of these members: ----
     Cpu2200t(System2200 &sys, Scheduler &scheduler, int ramsize, int subtype);
     ~Cpu2200t();
@@ -182,8 +183,6 @@ private:
 
     // debugging feature
     bool m_dbg;
-
-    CANT_ASSIGN_OR_COPY_CLASS(Cpu2200t);
 };
 
 
@@ -191,6 +190,7 @@ private:
 class Cpu2200vp: public Cpu2200
 {
 public:
+    CANT_ASSIGN_OR_COPY_CLASS(Cpu2200vp);
     // ---- see base class for description of these members: ----
     Cpu2200vp(System2200 &sys, Scheduler &scheduler, int ramsize, int subtype);
     ~Cpu2200vp();
@@ -286,8 +286,6 @@ private:
 
     // debugging feature
     bool m_dbg;
-
-    CANT_ASSIGN_OR_COPY_CLASS(Cpu2200vp);
 };
 
 // microcode disassembly utilities

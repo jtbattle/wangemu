@@ -27,6 +27,7 @@ class Scheduler;
 class System2200
 {
 public:
+    CANT_ASSIGN_OR_COPY_CLASS(System2200);
      System2200();
     ~System2200();
 
@@ -166,8 +167,6 @@ private:
     static     int64 perf_real_ms[100];         // realtime at start of each slice
     static       int perf_hist_len;             // number of entries written
     static       int perf_hist_ptr;             // next entry to write
-
-    CANT_ASSIGN_OR_COPY_CLASS(System2200);
 };
 
 

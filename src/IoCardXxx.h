@@ -11,6 +11,7 @@ class IoCardXxx : public IoCard
 {
 public:
     // see the base class for the definition of the public functions
+    CANT_ASSIGN_OR_COPY_CLASS(IoCardXxx);
 
     // ----- common IoCard functions -----
     IoCardXxx(Cpu2200 &cpu, int baseaddr, int cardslot);
@@ -42,8 +43,6 @@ private:
     bool        m_selected;       // the card is currently selected
     bool        m_cpb;            // the cpu is busy
     bool        m_card_busy;      // the card is busy doing something
-
-    CANT_ASSIGN_OR_COPY_CLASS(IoCardXxx);
 };
 
 #endif // _INCLUDE_IOCARD_XXX_H_

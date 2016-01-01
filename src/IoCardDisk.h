@@ -17,6 +17,7 @@ class IoCardDisk : public IoCard
 {
 public:
     // see the base class for the definition of the public functions
+    CANT_ASSIGN_OR_COPY_CLASS(IoCardDisk);
 
     // ----- common IoCard functions -----
     IoCardDisk(Scheduler &scheduler, Cpu2200 &cpu,
@@ -360,9 +361,6 @@ private:
     // the next command is a normal READ in form, but the normal READ
     // behavior is taken over by the COPY semantics.
     bool       m_copy_pending;        // the state below is meaningful
-
-
-    CANT_ASSIGN_OR_COPY_CLASS(IoCardDisk);
 };
 
 #endif // _INCLUDE_IOCARD_DISK_H_

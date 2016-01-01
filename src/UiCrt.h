@@ -9,6 +9,7 @@ class CrtFrame;
 class Crt: public wxWindow
 {
 public:
+    CANT_ASSIGN_OR_COPY_CLASS(Crt);
     Crt( CrtFrame *parent, int screen_size);    // constructor
     ~Crt();                                     // destructor
 
@@ -147,7 +148,6 @@ private:
     int         m_frame_count;  // for tracking refresh fps
     bool        m_dirty;        // something has changed since last refresh
 
-    CANT_ASSIGN_OR_COPY_CLASS(Crt);
     DECLARE_EVENT_TABLE()
 };
 

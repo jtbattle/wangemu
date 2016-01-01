@@ -66,6 +66,7 @@ static const int num_disk_types = sizeof(disk_choices) / sizeof(disk_choice_t);
 class PropPanel : public wxPanel
 {
 public:
+    CANT_ASSIGN_OR_COPY_CLASS(PropPanel);
     PropPanel(DiskFactory *df, wxWindow *parent, Wvd *diskdata);
 //    ~PropPanel();
 
@@ -93,7 +94,6 @@ private:
     // data
     Wvd          *m_diskdata;
 
-    CANT_ASSIGN_OR_COPY_CLASS(PropPanel);
     DECLARE_EVENT_TABLE()
 };
 
@@ -105,6 +105,7 @@ private:
 class LabelPanel : public wxPanel
 {
 public:
+    CANT_ASSIGN_OR_COPY_CLASS(LabelPanel);
     LabelPanel(DiskFactory *df, wxWindow *parent, Wvd *diskdata);
 //    ~LabelPanel();
 
@@ -124,7 +125,6 @@ private:
     // data
     Wvd * const m_diskdata;
 
-    CANT_ASSIGN_OR_COPY_CLASS(LabelPanel);
     DECLARE_EVENT_TABLE()
 };
 

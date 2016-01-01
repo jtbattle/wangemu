@@ -46,6 +46,7 @@ class wxStopWatch;
 class Host
 {
 public:
+    CANT_ASSIGN_OR_COPY_CLASS(Host);
     Host();
     ~Host();
 
@@ -157,8 +158,6 @@ private:
     static string m_FileFilter[FILEREQ_NUM];      // suffix filter string
     static int    m_FileFilterIdx[FILEREQ_NUM];   // which filter was chosen
     static string m_IniGroup[FILEREQ_NUM];        // name in .ini file
-
-    CANT_ASSIGN_OR_COPY_CLASS(Host);
 };
 
 #endif _INCLUDE_HOST_H_

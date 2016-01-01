@@ -11,6 +11,7 @@ class Wvd;
 class DiskFactory : public wxDialog
 {
 public:
+    CANT_ASSIGN_OR_COPY_CLASS(DiskFactory);
      DiskFactory(wxFrame *parent, const string &filename);
     ~DiskFactory();
 
@@ -35,7 +36,6 @@ private:
     wxButton   *m_butCancel;
     wxButton   *m_butSave;
 
-    CANT_ASSIGN_OR_COPY_CLASS(DiskFactory);
     DECLARE_EVENT_TABLE()
 };
 

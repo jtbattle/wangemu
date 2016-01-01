@@ -22,6 +22,9 @@ class Scheduler;
 
 class Timer
 {
+    // actually I think it would be safe, but there is no need to do this
+    CANT_ASSIGN_OR_COPY_CLASS(Timer);
+
     friend class Scheduler;
 
 public:
@@ -36,9 +39,6 @@ private:
     Scheduler * const s;  // pointer to owning scheduler
     int32       ctr;      // tick count until expiration
     callback_t  callback; // registered callback function
-
-    // actually I think it would be safe, but there is no need to do this
-    CANT_ASSIGN_OR_COPY_CLASS(Timer);
 };
 
 

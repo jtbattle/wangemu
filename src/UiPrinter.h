@@ -11,6 +11,7 @@ class PrinterFrame;
 class Printer: public wxScrolledWindow
 {
 public:
+    CANT_ASSIGN_OR_COPY_CLASS(Printer);
     Printer( PrinterFrame *parent );
     ~Printer();
 
@@ -176,7 +177,6 @@ private:
     vector<string> m_printstream;       // represents the entire print stream
     vector<string> m_printstream_copy;  // this is a copy that is used for printing purposes
 
-    CANT_ASSIGN_OR_COPY_CLASS(Printer);
     DECLARE_EVENT_TABLE()
 };
 
@@ -184,6 +184,7 @@ private:
 class Printout : public wxPrintout
 {
 public:
+    CANT_ASSIGN_OR_COPY_CLASS(Printout);
     Printout(wxChar *title, Printer *printer);
 
     // ---- event handlers ----
@@ -195,8 +196,6 @@ public:
 
 private:
     Printer *m_printer;
-
-    CANT_ASSIGN_OR_COPY_CLASS(Printout);
 };
 
 #endif _INCLUDE_UI_PRINTER_H_

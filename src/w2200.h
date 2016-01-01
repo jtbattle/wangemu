@@ -31,14 +31,14 @@ typedef  uint8_t   uint4;  // for clarity; not really 4b
 // Put this at the end of a class declaration to make the class
 // uncopyable and unassignable
 
-#define CANT_ASSIGN_CLASS(ClassName)            \
-  private:                                      \
-    ClassName& operator=(const ClassName& rhs);
+#define CANT_ASSIGN_CLASS(ClassName)                 \
+  public:                                            \
+    ClassName& operator=(const ClassName&) = delete;
 
-#define CANT_ASSIGN_OR_COPY_CLASS(ClassName)    \
-  private:                                      \
-    ClassName& operator=(const ClassName& rhs); \
-    ClassName(ClassName& obj)
+#define CANT_ASSIGN_OR_COPY_CLASS(ClassName)         \
+  public:                                            \
+    ClassName& operator=(const ClassName&) = delete; \
+    ClassName(ClassName&) = delete;
 
 
 // -------------------------------------------------------------------------

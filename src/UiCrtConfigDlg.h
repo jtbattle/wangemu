@@ -6,6 +6,7 @@
 class CrtConfigDlg : public wxDialog
 {
 public:
+    CANT_ASSIGN_OR_COPY_CLASS(CrtConfigDlg);
     CrtConfigDlg(wxFrame *parent, wxString title);
     ~CrtConfigDlg();
 
@@ -28,7 +29,6 @@ private:
     wxSlider    *m_ContrastSlider;      // display contrast
     wxSlider    *m_BrightnessSlider;    // display brightness
 
-    CANT_ASSIGN_OR_COPY_CLASS(CrtConfigDlg);
     DECLARE_EVENT_TABLE()
 };
 
