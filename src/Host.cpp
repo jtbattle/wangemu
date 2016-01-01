@@ -489,3 +489,5 @@ Host::sleep(unsigned int ms)
 {
     wxMilliSleep(ms);
 }
+
+// vim: ts=8:et:sw=4:smarttab

@@ -134,3 +134,5 @@ CrtErrorDlg::OnClick(wxMouseEvent& WXUNUSED(event))
 {
     EndModal(0);
 }
+
+// vim: ts=8:et:sw=4:smarttab

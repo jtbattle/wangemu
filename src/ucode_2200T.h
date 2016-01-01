@@ -12,3 +12,5 @@ extern uint32 ucode_2200T[UCODE_WORDS_2200T];
 extern uint8 kROM_2200T[KROM_WORDS_2200T];
 
 #endif  // _INCLUDE_UCODE_2200T_H_
+
+// vim: ts=8:et:sw=4:smarttab

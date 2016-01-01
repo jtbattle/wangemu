@@ -1430,3 +1430,5 @@ uint8 xlat_char[128] = {
 #else
     ERROR: undefined port
 #endif
+
+// vim: ts=8:et:sw=4:smarttab

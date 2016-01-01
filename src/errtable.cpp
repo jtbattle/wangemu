@@ -1952,3 +1952,5 @@ const vector<errtable_t> errtable_vp = {
     }
 
 };
+
+// vim: ts=8:et:sw=4:smarttab

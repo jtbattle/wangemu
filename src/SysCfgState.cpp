@@ -576,3 +576,5 @@ SysCfgState::needsReboot(const SysCfgState &other) const
 
     return false;
 }
+
+// vim: ts=8:et:sw=4:smarttab

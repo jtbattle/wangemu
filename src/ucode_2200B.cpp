@@ -18702,3 +18702,5 @@ uint8 kROM_2200B[KROM_WORDS_2200B] = {
         0x3D,   // 7FE
         0x20,   // 7FF
 };
+
+// vim: ts=8:et:sw=4:smarttab

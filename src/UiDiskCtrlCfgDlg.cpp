@@ -404,3 +404,5 @@ DiskCtrlCfgDlg::getDefaults()
     const string subgroup("ui/diskcfgdlg");
     Host().ConfigReadWinGeom(this, subgroup);
 }
+
+// vim: ts=8:et:sw=4:smarttab

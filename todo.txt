@@ -2,71 +2,191 @@
 Emulator TODO list
 ============================================================================
 
-*) add terminal mux emulation and smart terminal emulation so I can run
-        MVP, Szudzik BASIC mods, BASIC-3 / COBOL
+*) use "= delete;" on disallowed copy constructor, etc
+   add "override" annotation on overridden functions in derived classes
 
-   + OptionC.pdf in the jim/wang2200/docs/system/2200MVP_MaintenanceManual
-     directory describes the upgrade to give 64KB of control ram and
-     512KB of RAM.  0x8000 to 0x8FFF is a hole where the bootstram PROM lives.
-   - incorporate an open source z80 emulator
-        http://fms.komkon.org/EMUL8/ (Marat's code)
-        put in subdirectory, say src/z80,  or maybe src/chips/Z80
-        IoCard_MuxE would then make use of it
-        There may be multiple MuxE cards, or maybe multiple devices each
-          with a Z80 (say I add 2227/8 support).  z80.c allows for creating
-          different sets of register state, but what about providing different
-          sets of memory & I/O hooks for a given instance?
-            Yes: simstate.foo_func hooks (foo=RdZ80, WrZ80, InZ80, OutZ80)
-                 or maybe this is my hackery for solace.  Yes, this is
-                 just for solace.
-     model memory, rom, timer, serial ports
-        mgr-no-3.pdf describes the 2236 MXC debug and has some tech info
-        mux also used two Z80 DARTs (Z8470)
-        mux also used two Z80 CTCs  (Z8430)
-            http://nyangau.org/memu/emulation.htm#ctc
-            http://www.seasip.info/Unix/QDAE/
-            mame has one
-     figure out how to time share instruction interpretation loop
-   ? section 8 of 2200MVP_MaintenanceManual.729-0584-A.1-84.pdf lists
+*) use smart pointers instead of raw pointers
+    std::shared_ptr<>, std::make_shared<>, std::unique_ptr<>
+        note: p464:
+            shared_ptr<int> p1 = new int(1234); // syntax error
+            shared_ptr<int> p2(new int(1234));  // OK
+        and I think this would work too:
+            shared_ptr<int> p3 = shared_ptr<int>(new int(1234));
+        or better yet,
+            shared_ptr<int> p3 = make_shared<int>(1234);  // I think
+
+   basically, look for "delete" occurrences; if these were smart pointers,
+   just setting the pointer to nullptr would automatically free the resource.
+   eg, if the recent Scheduler m_timer[] vector held shared_ptr<Timer>
+       it would also get rid of the zeroing out pointers of m_timer before
+       calling resize.
+
+*) add terminal mux emulation and terminal emulation so I can run MVP OS's
+
+   - MXC,D,E notes: f:/jim/documents/wang2200/boards/terminal_mux_notes.txt
+
+   - note that 2236DE terminal could be used with VP rel 2.1 and later,
+     and supported things like PRINT BOX statement.  this means it would
+     be an interesting enhancement by itself to allow 2236DE support,
+     even without MUXD emulation.
+
+   - currently the division is
+          IoCardKeyboard
+        + IoCardDisplay
+        + UiCrtKeyboard
+        + UiCrtFrame
+            + UiCrtStatusBar
+            + UiCrtConfigDlg
+            + UiCrt
+                + UiCrt_Charset.h
+                + UiCrtErrorDlg
+     IoCardKeyboard.cpp has a fair amount of script processing logic in it,
+        and I don't want to duplicate this for dumb & smart terminal modes
+     UiCrtFrame constructor takes title, screen_size, io_addr.
+        To reuse this, it needs a more generic attachment than io_addr;
+        it needs to either me an io_addr port N of term mux at io_addr nn.
+     Crt state is saved in the .ini file by ui/CRT-nn, where nn is the addr;
+        this needs to be generalized
+     The CrtFrame displays disk icons and activity, but in mux mode,
+        there really shouldn't be a 1:1 mapping.  However, in the typical
+        use case of one term, it is most useful.
+     The CrtFrame logic enables some config options only on the "primary" crt,
+        which historically has been the one at io_addr=05.  Rethink this.
+     Config dialog needs to allow term mux configurations.
+     UiCrt_Keyboard is really part of UiCrt, and provides the OnChar/OnKeyDown
+        handling.  When it recognizes a key, it calls
+            core_sysKeystroke(tied io_addr, key)
+        which then routes it to the associated IoCardKeyboard function.
+        The three related functions are
+            core_sysKeystroke(io_addr, key)
+            core_invokeScript(io_addr, filename)
+            core_isKbInScriptMode(io_addr)  // used to disable some fcns while processing the script
+        IoCardKeyboard::check_keyready() is a private function, and one of
+            the things it does is poll the script.  To move this into the
+            UiCrt logic would require IOCardKeyboard to move that script
+            logic into UiCrt and have check_keyready() poll it there.
+        Huh -- the logic grabs the next char from the script file only
+            after the keystroke buffer is empty, but then waits 50ms before
+            reporting it because something breaks in the ucode without it.
+            (50ms of simulated time, not realtime)
+
+   - emulating MXD, not MXE, because MXE runs only >= OS ver 2.4
+
+   - emulate the MXD at the protocol level
+        + more efficient
+        + probably less less work overall
+            - no 8080/z80 integration
+            - no integrating the instruction dispatch & speed regulation
+        - harder to offer an MXE option, which needs a real z80 emulation
+
+   - section 8 of 2200MVP_MaintenanceManual.729-0584-A.1-84.pdf lists
      what is involved to upgrade a VP to an MVP.  part of it requires
      changing the boot ROM ucode to deal with the larger program memory.
      do I have these boot ROMs?
         double check boards/other boards/6789 and see if those ROMs match
         what the emulator uses
+     the MVP service manual section 8.2 (page 8-2) says
+         2200 VP/MVP Bootstrap Release 2.2 has been incorporated by ECN
+         #9772.  For a system to operate with an expanded memory, this ECN
+         must be performed.  The old PROMS on the 210-6789 must be replaced
+         with the following:
+             378-2045R1 = L27
+             378-2046R1 = L28
+             378-2047R1 = L29
+     the 6789 board that I got the 2nd set of bootstrap PROMs from
+     are windowed eproms without official Wang revision numbers.
+     handwritten on the chips are the following:
+         L29 says "2047"
+         L28 says "2046R5"
+         L27 says "2045R5"
+     It is possible that the contents were R5, but the EPROMs were
+     later erased and overwritten, making the handwritten note
+     meaningless.
+
    - model a serial terminal
-        - should the terminal be embedded in the program,
-          or connected via a socket or something like that?
-          socket-based opens up the chance of connecting remotely.
-        - it would be best to to handle the protocol directly instead
-          of emulating the term as Z80+ROM+RAM+serial chip.
-          someome some time ago sent me a mock up of the term handling
-          see if they are willing to share or just do it
-        - if connecting virtually, maybe make the terminal a javascript
-          browser based app -- multiple terminals would just be multiple tabs
+     - maybe as a first step, just connect to a real serial port
+         - a mac/linux/win lib: http://sigrok.org/wiki/Libserialport
+         - http://wjwwood.io/serial/
+         - https://iftools.com/opensource/ctb.en.php
+         - windows+linux only: http://www.teuniz.net/RS-232/
+     - should the terminal be embedded in the program,
+       or connected via a socket or something like that?
+       socket-based opens up the chance of connecting remotely.
+     - it would be best to to handle the protocol directly instead
+       of emulating the term as Z80+ROM+RAM+serial chip.
+     - if connecting virtually, maybe make the terminal a javascript
+       browser based app -- multiple terminals would just be multiple tabs
+     - Mark Pickersgill has a wang terminal emulator he has shared,
+       but it connects only via a serial port.  It can connect to a
+       virtual serial port, but there is no way for a program to create
+       a virtual COM port without having to install a driver, and some
+       of them cost $$:
+             http://www.virtual-serial-port.org/products/vspdxp/
+             http://www.eterlogic.com/Products.VSPE.html
+             http://www.eztcp.com/en/support/ezvsp.php
+     - write a terminal emulator class embedded in the emulator and just pop
+       open windows.  this has the drawback of needing to write the terminal
+       emulator, just like the socket case, and is less flexible.  it is
+       easier for the casual user, though.
 
-*) add 22C32 or 2236MUXE plus 2[245]36 terminal emulation support so
-   we can run MVP BASIC-2.  one approach is to add a z80 core to emulate
-   the mux controller cycle-by-cycle.  the MUXE requires it as the microcode
-   is downloaded and is changed in different OS releases.  the 22C32, though,
-   is just a set of EPROMs and a small RAM (1.25KB).  This could be
-   functionally emulated.  but emulating the intelligent terminals have the
-   same considerations: functional emulation or cpu-level emulation?
+*) Add 64K words of control memory, so BASIC-3/COBOL can run
+   OptionC.pdf in the jim/wang2200/docs/system/2200MVP_MaintenanceManual
+   directory describes the upgrade to give 64KB of control ram and
+   512KB of RAM.  0x8000 to 0x8FFF is a hole where the bootstram PROM lives.
+   Don't make it configurable -- just give it all 64K to reduce UI clutter.
 
-   note, the BASIC-2 Multiuser OS Release 2.4.pdf document says some
-   interesting things.  2.4 was "primarily" introduced to support the MUXE.
-   No VP OS is compatible with the MUXE card.  2.4 introduces DATE, TIME,
-   $DISCONNECT, and INPUT SCREEN.  DATE and TIME work with "the current
-   version of the Model 22C32".  $DISCONNECT is not supported by the 22C32,
-   and neither is INPUT SCREEN.
+*) Maybe have an easy config mode and an expert mode:
+      a) 2200T   w/ 32KB RAM, printer, two disk drives, KB + 64x16 screen
+      b) 2200VP  w/ 64KB RAM, printer, two disk drives, KB + 80x24 screen
+      c) 2200MVP w/512KB RAM, printer, two disk drives, 2236 MXD, one term
+      d) expert mode
 
-   Note: I have no schematics for 22C32, nor 2236MUXE
+*) Document how to work around this problem in the README.
 
-   Note:
-      f:\users\jim\wang2200\docs\system\module repair guides\mrg-no-3.pdf
-      Wang Module Repair Guide No. 3 concerns debugging 2236 systems,
-      both terminal and mux.  This note is for earlier versions of
-      terminal and mux, but presumably some of the information is
-      still valid, such as the I/O map on page 7.
+   the printer config allows picking either LPT1 or LPT2 as the real printer
+   to stream to.  This doesn't work if the computer has a USB printer.
+   using "net use LPT1: \\JIM-860\HP-920 /PERSISTENT:YES" does map LPT1 to the
+   named network printer, but at least in my case, the printer doesn't model a
+   simple ASCII printer.  It apparently is expecting some HP protocol or
+   something.
+
+   This guy wrote a lib to allow querying which printers are available,
+   and returning properties about a given printer.
+      http://hdrlab.org.nz/projects/wxwidgets-projects/custom-print-dialog-toolkit/
+   It doesn't address the above point, it seems.
+
+    + Go to "Devices and Printers" control panel.
+    + select the "Add a printer" menu at the top.
+    + specify "Add a local printer"
+    + under "Use an existing port:", select the one corresponding to your USB printer
+      ("USB001" in my case); press "Next"
+    + it now asks to install the printer driver.  Under Manufacturer, pick "Generic".
+      Under Printers, pick "Generic / Text Only"; press "Next"
+    + select "use the driver that is currently installed" (at least, that is what I did);
+      press "Next"
+    + time to create a printer name.  I made mine "USB-ASCII"; press "Next"
+    + from a dos prompt, type
+        NET USE LPT2: \\<machine_name>\USB-ASCII /PERSISTENT:YES
+      it should reply "The command completed successfully"
+    + from the Wang 2200 emulator printer windows, select LPT2 as the real printer to
+      direct output to
+    + in my case, I had to do "SELECT LIST 015" to get the wang to put out a
+      line feed after each carriage return.  The 215 device just ends each line
+      with a CR and no LF.
+    + if the program ends without filling the last page, you may need to send a
+      HEX(0C) (page feed) to the printer to flush out the partial page.
+
+*) the read and write routines go to great lengths to inline things,
+   but they both have the expression (m_memsize_KB<<10).  That should
+   be precomputed as m_memsize.  or should I just get rid of m_memsize_KB?
+
+*) When changing configurations, currently I:
+        - destroy current config
+        - rebuild world
+   Would it be cleaner to do the following?
+        - build new world
+        - on success, swap to new world, then destroy old world
+        - on failure, report problem, and old world is still usable
 
 *) notes on disk protocol and unimplemented commands:
     f:/jim/documents/wang2200/disk_protocol/notes.txt
@@ -126,53 +246,6 @@ Emulator TODO list
     - adaptec AHA-2930LP scsi interface cards apparently work with win/7
         and are $15 on ebay
 
-*) Document how to work around this problem in the README.
-
-   the printer config allows picking either LPT1 or LPT2 as the real printer
-   to stream to.  This doesn't work if the computer has a USB printer.
-   using "net use LPT1: \\JIM-860\HP-920 /PERSISTENT:YES" does map LPT1 to the
-   named network printer, but at least in my case, the printer doesn't model a
-   simple ASCII printer.  It apparently is expecting some HP protocol or
-   something.
-
-   This guy wrote a lib to allow querying which printers are available,
-   and returning properties about a given printer.
-      http://hdrlab.org.nz/projects/wxwidgets-projects/custom-print-dialog-toolkit/
-   It doesn't address the above point, it seems.
-
-    + Go to "Devices and Printers" control panel.
-    + select the "Add a printer" menu at the top.
-    + specify "Add a local printer"
-    + under "Use an existing port:", select the one corresponding to your USB printer
-      ("USB001" in my case); press "Next"
-    + it now asks to install the printer driver.  Under Manufacturer, pick "Generic".
-      Under Printers, pick "Generic / Text Only"; press "Next"
-    + select "use the driver that is currently installed" (at least, that is what I did);
-      press "Next"
-    + time to create a printer name.  I made mine "USB-ASCII"; press "Next"
-    + from a dos prompt, type
-        NET USE LPT2: \\<machine_name>\USB-ASCII /PERSISTENT:YES
-      it should reply "The command completed successfully"
-    + from the Wang 2200 emulator printer windows, select LPT2 as the real printer to
-      direct output to
-    + in my case, I had to do "SELECT LIST 015" to get the wang to put out a
-      line feed after each carriage return.  The 215 device just ends each line
-      with a CR and no LF.
-    + if the program ends without filling the last page, you may need to send a
-      HEX(0C) (page feed) to the printer to flush out the partial page.
-
-*) the read and write routines go to great lengths to inline things,
-   but they both have the expression (m_memsize_KB<<10).  That should
-   be precomputed as m_memsize.  or should I just get rid of m_memsize_KB?
-
-*) When changing configurations, currently I:
-        - destroy current config
-        - rebuild world
-   Would it be cleaner to do the following?
-        - build new world
-        - on success, swap to new world, then destroy old world
-        - on failure, report problem, and old world is still usable
-
 *) finally got a wang PC keyboard.  there are some extra keys, but the guess
    I made how they'd be expressed was wrong (see UiCrt_Keyboard.cpp).
    This is what the wx sample app "keyboard" sees:
@@ -211,26 +284,6 @@ Emulator TODO list
     - the VP disassembler doesn't match the assembler syntax as specified
       in the 2600 sw development manual.
       (2200MVP_ComputerArchitecture.11-79.pdf, pdf page 81 or so)
-
-*) the MVP service manual section 8.2 (page 8-2) says
-        2200 VP/MVP Bootstrap Release 2.2 has been incorporated by ECN
-        #9772.  For a system to operate with an expanded memory, this ECN
-        must be performed.  The old PROMS on the 210-6789 must be replaced
-        with the following:
-
-        378-2045R1 = L27
-        378-2046R1 = L28
-        378-2047R1 = L29
-
-    the 6789 board that I got the 2nd set of bootstrap PROMs from
-    are windowed eproms without official Wang revision numbers.
-    handwritten on the chips are the following:
-        L29 says "2047"
-        L28 says "2046R5"
-        L27 says "2045R5"
-    It is possible that the contents were R5, but the EPROMs were
-    later erased and overwritten, making the handwritten note
-    meaningless.
 
 *) emulate plotter?  no point really without an interesting program.
    plotter commands:

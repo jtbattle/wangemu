@@ -1002,3 +1002,5 @@ Printout::GetPageInfo(int *minPage, int *maxPage, int *selPageFrom, int * selPag
     *selPageFrom = 1;
     *selPageTo = m_printer->numberOfPages();
 }
+
+// vim: ts=8:et:sw=4:smarttab

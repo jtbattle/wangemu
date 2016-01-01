@@ -93,3 +93,5 @@
 #define GLOBAL_NEW_DEBUGGING 0
 
 #endif _INCLUDE_COMPILE_OPTIONS_H_
+
+// vim: ts=8:et:sw=4:smarttab

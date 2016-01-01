@@ -73,3 +73,5 @@ private:
 };
 
 #endif // ifdef _INCLUDE_SCRIPT_H_
+
+// vim: ts=8:et:sw=4:smarttab

@@ -33,3 +33,5 @@ private:
 };
 
 #endif _INCLUDE_UI_CRT_CONFIG_DLG_H_
+
+// vim: ts=8:et:sw=4:smarttab

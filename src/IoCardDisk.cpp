@@ -192,10 +192,7 @@ IoCardDisk::getName() const
 vector<int>
 IoCardDisk::getBaseAddresses() const
 {
-    vector<int> v;
-    v.push_back( 0x310 );
-    v.push_back( 0x320 );
-    v.push_back( 0x330 );
+    vector<int> v { 0x310, 0x320, 0x330 };
     return v;
 }
 
@@ -352,12 +349,6 @@ IoCardDisk::CBS(int val)
     if (val & 1)
         reset(true);
 #endif
-}
-
-int
-IoCardDisk::getIB5() const
-{
-    return 0;   // this card doesn't use this feature
 }
 
 // change of CPU Busy state
@@ -886,7 +877,7 @@ void
 IoCardDisk::wvdFlush(int slot, int drive)
 {
     assert(slot >= 0 && slot <= NUM_IOSLOTS);
-    assert(drive >= 0 || drive < 4);
+    assert(drive >= 0 && drive < 4);
 
     IoCardDisk *tthis = reinterpret_cast<IoCardDisk*>
                                 (System2200().getInstFromSlot(slot));
@@ -1347,3 +1338,5 @@ IoCardDisk::diskHasBit15Problem(Wvd *wvd, bool fix_it)
 
     return has_problem;
 }
+
+// vim: ts=8:et:sw=4:smarttab

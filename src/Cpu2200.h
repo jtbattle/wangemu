@@ -295,3 +295,5 @@ int dasm_one   (char *buff, uint32 ic, uint32 ucode);
 int dasm_one_vp(char *buff, uint32 ic, uint32 ucode);
 
 #endif _INCLUDE_CPU2200_H_
+
+// vim: ts=8:et:sw=4:smarttab

@@ -162,3 +162,5 @@ private:
 };
 
 #endif _INCLUDE_HOST_H_
+
+// vim: ts=8:et:sw=4:smarttab

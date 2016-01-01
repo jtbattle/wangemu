@@ -148,10 +148,7 @@ IoCardDisplay::getName() const
 vector<int>
 IoCardDisplay::getBaseAddresses() const
 {
-    vector<int> v;
-    v.push_back( 0x005 );
-    v.push_back( 0x006 );
-    v.push_back( 0x007 );
+    vector<int> v {0x005, 0x006, 0x007 };
     return v;
 }
 
@@ -332,3 +329,4 @@ IoCardDisplay::tcbHsync(int arg)
     }
 }
 
+// vim: ts=8:et:sw=4:smarttab

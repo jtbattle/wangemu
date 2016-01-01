@@ -148,3 +148,5 @@ enum token_t {
 };
 
 #endif // _INCLUDE_TOKENS_H_
+
+// vim: ts=8:et:sw=4:smarttab

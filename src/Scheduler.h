@@ -125,3 +125,5 @@ inline int TIMER_MS(double f) { return int(10000.0*f+0.5); }
     } while (0)
 
 #endif // _INCLUDE_SCHEDULER_H_
+
+// vim: ts=8:et:sw=4:smarttab

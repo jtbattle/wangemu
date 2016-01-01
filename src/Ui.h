@@ -67,3 +67,5 @@ void UI_Info(const char *fmt, ...);
 bool UI_Confirm(const char *fmt, ...);
 
 #endif // _INCLUDE_UI_H_
+
+// vim: ts=8:et:sw=4:smarttab

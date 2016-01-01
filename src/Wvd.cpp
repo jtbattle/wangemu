@@ -634,3 +634,5 @@ Wvd::createFile(const string &filename)
 
     return ok;
 }
+
+// vim: ts=8:et:sw=4:smarttab

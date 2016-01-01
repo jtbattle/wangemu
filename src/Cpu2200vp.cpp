@@ -1681,4 +1681,4 @@ Cpu2200vp::dump_state(int fulldump)
 }
 #endif
 
-
+// vim: ts=8:et:sw=4:smarttab

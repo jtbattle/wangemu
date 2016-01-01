@@ -60,10 +60,7 @@ IoCardXxx::getName() const
 vector<int>
 IoCardXxx:getBaseAddresses() const
 {
-    vector<int> v;
-    v.push_back( 0x710 );  // eg
-    v.push_back( 0x720 );  // eg
-    v.push_back( 0x730 );  // eg
+    vector<int> v { 0x710, 0x720, 0x730 };  // e.g.
     return v;
 }
 
@@ -155,3 +152,5 @@ IoCardXxx::CPB(bool busy)
     // ...
     m_cpu.setDevRdy(!m_card_busy);
 }
+
+// vim: ts=8:et:sw=4:smarttab

@@ -285,3 +285,5 @@ void Timer::Kill()
 {
     s->TimerKill(this);
 }
+
+// vim: ts=8:et:sw=4:smarttab

@@ -581,3 +581,5 @@ CrtStatusBar::diskEvent(int slot, int drive)
 {
     SetDiskIcon(slot, drive);
 }
+
+// vim: ts=8:et:sw=4:smarttab

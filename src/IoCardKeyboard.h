@@ -25,7 +25,6 @@ public:
     void  deselect();
     void  OBS(int val);
     void  CBS(int val);
-    int   getIB5() const;
     void  CPB(bool busy);
 
     // ----- IoCardKeyboard specific functions -----
@@ -91,3 +90,5 @@ bool core_invokeScript(const int io_addr, const string &filename);
 bool core_isKbInScriptMode(int io_addr);
 
 #endif // _INCLUDE_IOCARD_KEYBOARD_H_
+
+// vim: ts=8:et:sw=4:smarttab

@@ -103,3 +103,5 @@ PrinterConfigDlg::TransferDataToWindow()
     text->SetFocus();
     return r;
 }
+
+// vim: ts=8:et:sw=4:smarttab

@@ -60,3 +60,5 @@ private:
 };
 
 #endif // _INCLUDE_DISK_CONTROLLER_CFG_H_
+
+// vim: ts=8:et:sw=4:smarttab

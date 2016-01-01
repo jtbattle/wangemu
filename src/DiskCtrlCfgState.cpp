@@ -204,3 +204,5 @@ DiskCtrlCfgState::needsReboot(const CardCfgState &other) const
 
     return (getNumDrives() != oother.getNumDrives());
 }
+
+// vim: ts=8:et:sw=4:smarttab

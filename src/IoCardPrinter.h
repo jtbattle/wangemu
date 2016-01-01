@@ -22,7 +22,6 @@ public:
     void  deselect();
     void  OBS(int val);
     void  CBS(int val);
-    int   getIB5() const;
     void  CPB(bool busy);
 
     // give access to associated gui window
@@ -45,3 +44,5 @@ private:
 };
 
 #endif // _INCLUDE_IOCARD_PRINTER_H_
+
+// vim: ts=8:et:sw=4:smarttab

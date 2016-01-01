@@ -65,3 +65,5 @@ private:
 };
 
 #endif // _INCLUDE_IOCARD_DISPLAY_H_
+
+// vim: ts=8:et:sw=4:smarttab

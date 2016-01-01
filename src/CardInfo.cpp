@@ -78,3 +78,5 @@ CardInfo::getCardCfgState(IoCard::card_type_e cardtype)
     delete tmpcard;
     return rv;
 }
+
+// vim: ts=8:et:sw=4:smarttab

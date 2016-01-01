@@ -111,3 +111,5 @@ private:
 };
 
 #endif // _INCLUDE_SYS_CONFIG_STATE_H_
+
+// vim: ts=8:et:sw=4:smarttab

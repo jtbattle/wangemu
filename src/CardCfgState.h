@@ -46,3 +46,7 @@ public:
 };
 
 #endif // _INCLUDE_CARD_CFG_STATE_H_
+
+// vim: ts=8:et:sw=4:smarttab
+
+// vim: ts=8:et:sw=4:smarttab

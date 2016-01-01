@@ -17,7 +17,7 @@
 IoCardKeyboard::IoCardKeyboard(Scheduler &scheduler, Cpu2200 &cpu,
                                int baseaddr, int cardslot) :
     m_scheduler(scheduler),
-    m_tmr_script(0),
+    m_tmr_script(nullptr),
     m_cpu(cpu),
     m_baseaddr(baseaddr),
     m_slot(cardslot),
@@ -25,7 +25,7 @@ IoCardKeyboard::IoCardKeyboard(Scheduler &scheduler, Cpu2200 &cpu,
     m_cpb(true),
     m_key_ready(false),
     m_key_code(0),
-    m_script_handle(0)
+    m_script_handle(nullptr)
 {
     if (m_slot >= 0)
         reset();
@@ -55,11 +55,7 @@ IoCardKeyboard::getName() const
 vector<int>
 IoCardKeyboard::getBaseAddresses() const
 {
-    vector<int> v;
-    v.push_back( 0x001 );
-    v.push_back( 0x002 );
-    v.push_back( 0x003 );
-    v.push_back( 0x004 );
+    vector<int> v { 0x001, 0x002, 0x003, 0x004 };
     return v;
 }
 
@@ -131,12 +127,6 @@ IoCardKeyboard::CBS(int val)
 #endif
 }
 
-int
-IoCardKeyboard::getIB5() const
-{
-    return 0;   // this card doesn't use this feature (or change if it does)
-}
-
 // change of CPU Busy state
 void
 IoCardKeyboard::CPB(bool busy)
@@ -198,7 +188,7 @@ IoCardKeyboard::script_mode(int io_addr)
                                 (System2200().getInstFromIoAddr(io_addr));
     if (tthis == nullptr) {
         // this can happen during initialization when there are two keyboards
-        return 0;
+        return false;
     }
     return (tthis->m_script_handle != 0);
 }
@@ -318,3 +308,5 @@ core_sysKeystroke(int io_addr, int keycode)
 {
     IoCardKeyboard::receiveKeystroke(io_addr, keycode);
 }
+
+// vim: ts=8:et:sw=4:smarttab

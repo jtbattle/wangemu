@@ -1029,3 +1029,4 @@ uint32 ucode_2200vp[UCODE_WORDS_2200VP] = {
         0x66CF4F,       // 83FF
 };
 
+// vim: ts=8:et:sw=4:smarttab

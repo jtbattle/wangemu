@@ -71,3 +71,5 @@ IoCard::makeCardImpl(Scheduler& scheduler, Cpu2200& cpu, card_type_e type,
 
     return crd;
 }
+
+// vim: ts=8:et:sw=4:smarttab

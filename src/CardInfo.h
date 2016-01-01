@@ -33,3 +33,5 @@ public:
 };
 
 #endif  // _INCLUDE_CARDINFO_H_
+
+// vim: ts=8:et:sw=4:smarttab

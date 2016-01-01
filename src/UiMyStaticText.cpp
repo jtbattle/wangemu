@@ -40,3 +40,5 @@ void MyStaticText::OnKeyDown(wxKeyEvent &event)
         event.Skip();
     }
 }
+
+// vim: ts=8:et:sw=4:smarttab

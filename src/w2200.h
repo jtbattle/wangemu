@@ -63,3 +63,5 @@ typedef  uint8_t   uint4;  // for clarity; not really 4b
 #endif
 
 #endif  // _INCLUDE_W2200_H_
+
+// vim: ts=8:et:sw=4:smarttab

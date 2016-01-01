@@ -1488,3 +1488,5 @@ CrtFrame::diskEvent(int controller, int drive)
     if (pf != nullptr)
         pf->m_statBar->diskEvent(controller, drive);
 }
+
+// vim: ts=8:et:sw=4:smarttab

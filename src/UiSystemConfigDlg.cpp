@@ -565,3 +565,5 @@ SystemConfigDlg::setValidIoChoices(int slot, int cardtype_idx)
     bool show_btn = occupied && CardInfo::isCardConfigurable(ct);
     hCfgCtl->Show(show_btn);
 }
+
+// vim: ts=8:et:sw=4:smarttab

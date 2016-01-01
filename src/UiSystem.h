@@ -93,3 +93,5 @@ private:
 };
 
 #endif // _INCLUDE_UI_SYSTEM_H_
+
+// vim: ts=8:et:sw=4:smarttab

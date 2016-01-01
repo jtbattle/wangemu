@@ -751,3 +751,4 @@ dasm_one(char *buff, uint32 ic, uint32 ucode)
     return illegal;
 }
 
+// vim: ts=8:et:sw=4:smarttab

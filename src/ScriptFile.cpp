@@ -510,3 +510,5 @@ ScriptFile::getNextByte(int *byte)
 
     } // end while
 }
+
+// vim: ts=8:et:sw=4:smarttab

@@ -33,3 +33,5 @@ extern const vector<errtable_t> errtable;
 extern const vector<errtable_t> errtable_vp;
 
 #endif _INCLUDE_ERRTABLE_H_
+
+// vim: ts=8:et:sw=4:smarttab

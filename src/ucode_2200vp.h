@@ -9,3 +9,5 @@
 extern uint32 ucode_2200vp[UCODE_WORDS_2200VP];  // boot ucode
 
 #endif  // _INCLUDE_UCODE_2200VP_H_
+
+// vim: ts=8:et:sw=4:smarttab

@@ -46,3 +46,5 @@ public:
 };
 
 #endif _INCLUDE_PRINTERCONFIGDLG_H_
+
+// vim: ts=8:et:sw=4:smarttab

@@ -47,3 +47,5 @@ private:
 };
 
 #endif // _INCLUDE_IOCARD_XXX_H_
+
+// vim: ts=8:et:sw=4:smarttab

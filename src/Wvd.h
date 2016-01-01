@@ -168,3 +168,5 @@ private:
 };
 
 #endif // _INCLUDE_WVD_H_
+
+// vim: ts=8:et:sw=4:smarttab

@@ -233,3 +233,4 @@ tags
 src/make_tags.bat
 *.exe
 todo.txt
+verify_multisectors.w22

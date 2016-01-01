@@ -55,9 +55,7 @@ IoCardPrinter::getName() const
 vector<int>
 IoCardPrinter::getBaseAddresses() const
 {
-    vector<int> v;
-    v.push_back( 0x215 );
-    v.push_back( 0x216 );
+    vector<int> v { 0x215, 0x216 };
     return v;
 }
 
@@ -121,12 +119,6 @@ IoCardPrinter::CBS(int val)
     OBS(val);
 }
 
-int
-IoCardPrinter::getIB5() const
-{
-    return 0;   // this card doesn't use this feature
-}
-
 // change of CPU Busy state
 void
 IoCardPrinter::CPB(bool busy)
@@ -149,3 +141,5 @@ IoCardPrinter::getGuiPtr() const
 {
     return m_wndhnd;
 }
+
+// vim: ts=8:et:sw=4:smarttab

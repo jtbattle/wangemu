@@ -382,3 +382,5 @@ UI_ConfigureCard(DiskCtrlCfgState *cfg)
 {
     DiskCtrlCfgDlg(nullptr, *cfg).ShowModal();
 }
+
+// vim: ts=8:et:sw=4:smarttab

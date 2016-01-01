@@ -1414,3 +1414,5 @@ Cpu2200t::run(int ticks)
 
     m_status = (op_ticks == EXEC_ERR) ? CPU_HALTED : CPU_RUNNING;
 }
+
+// vim: ts=8:et:sw=4:smarttab

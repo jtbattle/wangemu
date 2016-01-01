@@ -1186,3 +1186,5 @@ Crt::emitChar(uint8 byte)
     }
     setDirty();
 }
+
+// vim: ts=8:et:sw=4:smarttab
