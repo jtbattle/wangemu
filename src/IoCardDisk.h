@@ -26,17 +26,17 @@ public:
                const CardCfgState *cfg);
     ~IoCardDisk();
 
-    vector<int> getAddresses() const;
+    vector<int> getAddresses() const override;
 
-    void  setConfiguration(const CardCfgState &cfg);
-    void  editConfiguration(CardCfgState *cfg);
+    void  setConfiguration(const CardCfgState &cfg) override;
+    void  editConfiguration(CardCfgState *cfg) override;
 
-    void  reset(int hard_reset=1);
-    void  select();
-    void  deselect();
-    void  OBS(int val);
-    void  CBS(int val);
-    void  CPB(bool busy);
+    void  reset(int hard_reset=1) override;
+    void  select() override;
+    void  deselect() override;
+    void  OBS(int val) override;
+    void  CBS(int val) override;
+    void  CPB(bool busy) override;
 
     // ----- IoCardDisk specific functions -----
 
@@ -96,11 +96,11 @@ public:
 
 private:
     // ---- card properties ----
-    const string  getDescription() const;
-    const string  getName() const;
-    vector<int>   getBaseAddresses() const;
-    bool          isConfigurable() const { return true; }
-    CardCfgState *getCfgState();
+    const string  getDescription() const override;
+    const string  getName() const override;
+    vector<int>   getBaseAddresses() const override;
+    bool          isConfigurable() const override { return true; }
+    CardCfgState *getCfgState() override;
 
     // ---- disk access functions, tied to an object ----
     // "iwvd" == internal wang virtual disk function

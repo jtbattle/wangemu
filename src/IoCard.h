@@ -89,7 +89,7 @@ public:
     // This bit is polled in a number of other places in the ucode,
     // but their use is so far undetermined.  I do know that if one
     // does a LOAD or SAVE on a tape device, the bit is somehow used.
-    virtual int getIB5() { return 0; };
+    virtual int getIB5() const { return 0; };
 
     // a request to return data.
     // when the CPU ST1.2 (CPB, "CPU Busy") is set low, it signals

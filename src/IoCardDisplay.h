@@ -21,21 +21,21 @@ public:
                   int baseaddr, int cardslot, int size=UI_SCREEN_64x16);
     ~IoCardDisplay();
 
-    vector<int> getAddresses() const;
+    vector<int> getAddresses() const override;
 
-    void  reset(int hard_reset=1);
-    void  select();
-    void  deselect();
-    void  OBS(int val);
-    void  CBS(int val);
-    int   getIB5() const;
-    void  CPB(bool busy);
+    void  reset(int hard_reset=1) override;
+    void  select() override;
+    void  deselect() override;
+    void  OBS(int val) override;
+    void  CBS(int val) override;
+    int   getIB5() const override;
+    void  CPB(bool busy) override;
 
 private:
     // ---- card properties ----
-    const string getDescription() const;
-    const string getName() const;
-    vector<int> getBaseAddresses() const;
+    const string getDescription() const override;
+    const string getName() const override;
+    vector<int> getBaseAddresses() const override;
 
     Scheduler &m_scheduler;     // shared system event scheduler
     Cpu2200   &m_cpu;           // associated CPU
@@ -52,13 +52,14 @@ private:
     Timer     *m_thnd_hsync;    // horizontal sync timer
     bool       m_realtime;      // true: match real timing, false: go fast
     int        m_hsync_count;   // which horizontal line we are on
-    enum { BUSY_NOT,     // not busy
-           BUSY_CHAR,    // wait for next hsync then clear busy
-           BUSY_CLEAR1,  // wait for vsync, then advance to BUSY_CLEAR2
-           BUSY_CLEAR2,  // wait for vsync, then clear busy
-           BUSY_ROLL1,   // wait for hsync, then advance to BUSY_ROLL2
-           BUSY_ROLL2,   // wait for hsync, then clear busy
-         } m_busy_state;
+    enum {
+        BUSY_NOT,     // not busy
+        BUSY_CHAR,    // wait for next hsync then clear busy
+        BUSY_CLEAR1,  // wait for vsync, then advance to BUSY_CLEAR2
+        BUSY_CLEAR2,  // wait for vsync, then clear busy
+        BUSY_ROLL1,   // wait for hsync, then advance to BUSY_ROLL2
+        BUSY_ROLL2,   // wait for hsync, then clear busy
+    } m_busy_state;
 
     void tcbHsync(int arg);     // timer callback
 };

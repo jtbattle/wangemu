@@ -19,14 +19,14 @@ public:
                    int baseaddr, int cardslot);
     ~IoCardKeyboard();
 
-    vector<int> getAddresses() const;
+    vector<int> getAddresses() const override;
 
-    void  reset(int hard_reset=1);
-    void  select();
-    void  deselect();
-    void  OBS(int val);
-    void  CBS(int val);
-    void  CPB(bool busy);
+    void  reset(int hard_reset=1) override;
+    void  select() override;
+    void  deselect() override;
+    void  OBS(int val) override;
+    void  CBS(int val) override;
+    void  CPB(bool busy) override;
 
     // ----- IoCardKeyboard specific functions -----
 
@@ -48,9 +48,9 @@ public:
 
 private:
     // ---- card properties ----
-    const string getDescription() const;
-    const string getName() const;
-    vector<int> getBaseAddresses() const;
+    const string getDescription() const override;
+    const string getName() const override;
+    vector<int> getBaseAddresses() const override;
 
     // timer callback function to put some required delay in script processing
     void tcbScript();

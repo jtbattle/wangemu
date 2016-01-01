@@ -17,24 +17,24 @@ public:
     IoCardXxx(Cpu2200 &cpu, int baseaddr, int cardslot);
     ~IoCardXxx();
 
-    vector<int> getAddresses() const;
+    vector<int> getAddresses() const override;
 
-    void  reset(int hard_reset=1);
-    void  select();
-    void  deselect();
-    void  OBS(int val);
-    void  CBS(int val);
-    int   getIB5() const;
-    void  CPB(bool busy);
+    void  reset(int hard_reset=1) override;
+    void  select() override;
+    void  deselect() override;
+    void  OBS(int val) override;
+    void  CBS(int val) override;
+    int   getIB5() const override;
+    void  CPB(bool busy) override;
 
     // ----- IoCardXxx specific functions -----
     // ...
 
 private:
     // ---- card properties ----
-    const string getDescription() const;
-    const string getName() const;
-    vector<int> getBaseAddresses() const;
+    const string getDescription() const override;
+    const string getName() const override;
+    vector<int> getBaseAddresses() const override;
 
     // ...
     Cpu2200    &m_cpu;            // associated CPU
