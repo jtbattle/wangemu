@@ -478,7 +478,7 @@ CrtStatusBar::OnDiskButton(wxMouseEvent &event)
         menu.Append(Disk_Popup_Format,  "&Format",  "reformat the disk");
         (void)PopupMenu(&menu);
     } else {
-        assert(0);
+        assert(false);
         return;
     }
 
@@ -523,7 +523,7 @@ CrtStatusBar::OnDiskButton(wxMouseEvent &event)
             return;
 
         default:
-            assert(0);
+            assert(false);
             return;
     }
 
@@ -544,7 +544,7 @@ CrtStatusBar::OnDiskPopup(wxCommandEvent &event)
         case Disk_Popup_Inspect: m_popup_action = inspect_disk; break;
         case Disk_Popup_Format:  m_popup_action = format_disk;  break;
         default:
-            assert(0);
+            assert(false);
             m_popup_action = unknown;
             break;
     }

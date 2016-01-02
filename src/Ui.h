@@ -21,7 +21,11 @@ class DiskCtrlCfgState;
 typedef void* UI_gui_handle_t;
 
 // called at the start of time to create the actual display
-enum { UI_SCREEN_64x16, UI_SCREEN_80x24 };
+enum ui_screen_t {
+    UI_SCREEN_64x16,
+    UI_SCREEN_80x24,
+    UI_SCREEN_2236DE
+};
 UI_gui_handle_t UI_initCrt(int screen_size, int io_addr);
 
 // called before the display gets shut down

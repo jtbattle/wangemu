@@ -74,12 +74,12 @@ IoCardXxx::getAddresses() const
 }
 
 void
-IoCardXxx::reset(int hard_reset)
+IoCardXxx::reset(bool hard_reset)
 {
     // reset card state
     m_selected   = false;
     m_cpb        = true;   // CPU busy
-    m_card_busy  = 0;
+    m_card_busy  = false;
     ...
 }
 

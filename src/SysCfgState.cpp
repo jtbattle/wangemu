@@ -199,7 +199,7 @@ SysCfgState::loadIni()
                         setRamKB( ival );
                     break;
                 default:
-                    assert(0);
+                    assert(false);
             }
         }
 
@@ -371,7 +371,7 @@ SysCfgState::setRamKB(int kb)
 
     // should never happen
         default:
-            assert(0);
+            assert(false);
             m_ramsize = 32;
             break;
     }

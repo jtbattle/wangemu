@@ -895,7 +895,7 @@ dasm_op_vp(char *buf, uint32 ic, uint32 uop)
                 break;
 
             default: // impossible
-                assert(0);
+                assert(false);
                 break;
         }
     }

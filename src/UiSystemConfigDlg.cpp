@@ -262,7 +262,7 @@ SystemConfigDlg::setMemsizeStrings()
             m_memSize->Append("512 KB", (void*)512);
             break;
         default:
-            assert(0);
+            assert(false);
             break;
     }
 }

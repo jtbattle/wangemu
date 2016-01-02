@@ -127,7 +127,7 @@ DiskCtrlCfgState::saveIni(const string &subgroup) const
         case DISK_CTRL_DUMB:        foo = "dumb";  break;
         case DISK_CTRL_INTELLIGENT: foo = "smart"; break;
         case DISK_CTRL_AUTO:        foo = "auto";  break;
-        default: assert(0);         foo = "smart";  break;
+        default: assert(false);     foo = "smart";  break;
     }
     hst.ConfigWriteStr(subgroup, "intelligence", foo);
 

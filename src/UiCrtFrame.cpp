@@ -932,7 +932,7 @@ CrtFrame::OnReset(wxCommandEvent &event)
 
     switch (event.GetId()) {
         default:
-            assert(0);
+            assert(false);
         case CPU_HardReset:
             sys.reset(true);      // hard reset
             break;
@@ -1080,7 +1080,7 @@ CrtFrame::OnDisk(wxCommandEvent &event)
 
         default:
             ok = false;
-            assert(0);
+            assert(false);
             break;
     }
 

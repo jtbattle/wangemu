@@ -20,6 +20,64 @@ Emulator TODO list
 
 *) add terminal mux emulation and terminal emulation so I can run MVP OS's
 
+   - F:\Jim\Documents\wang2200\bahia\2236\L55.c contains the character
+     generator for chars 0x80 - 0xFF for the alternate character set.
+     the 2236 fiche (Dia's box, 00071.tif), says
+        "The 64 graphics characters, HEX(C0) to HEX(FF), are represented by
+         all the combinations of sixths of a character space, etc.
+         When displayed, graphic characters are extrapolated to fill the
+         entire character position."
+
+      Attribute byte:
+        bit 7: character set graphics
+        bit 6: inverse video
+        bit 5: blink
+        bit 4: hi intensity
+        bit 3: upper character set
+        bit 2: left horizontal line
+        bit 1: vertical line
+        bit 0: right horizontal line
+
+      The emulator uses a 10x11 cell to embed an 8x8 character.
+      But how does this extrapolation work?  It would be easy to
+      extrapolate the first/last bit and first/last row, but that
+      leads to a 10x10 cell.  How to get to 10x11?
+                  OOOOOOOOOO
+                  OxxxxxxxxO
+                  OxxxxxxxxO
+                  OxxxxxxxxO
+                  OxxxxxxxxO
+                  OxxxxxxxxO
+                  OxxxxxxxxO
+                  OxxxxxxxxO
+                  OxxxxxxxxO
+                  OOOOOOOOOO
+      Dia's box, 742-1727-1 .. -3 has 2436DW schematics.
+          19.2 MHz osc / 16 = 1.2 MHz dot clock
+          That feeds a 74175, producing:
+              !Q0 <= ripple carry, = !SCLK1, active once every 16 (19.2 MHz) cycles
+               Q1 <= Q0
+               Q2 <= Q1, = SCLK3
+
+      A small rom generates these outputs based on the scanline-of-character
+        scanline   6 5 4 3  sel  cha2:0
+        --------   - - - -  ---  ------
+          0        0 0 1 0   0    000
+          1        0 1 0 0   0    001
+          2        0 1 0 0   1    000
+          3        0 1 0 0   1    001
+          4        0 1 0 0   1    010
+          5        0 1 0 0   1    011
+          6        0 1 0 0   1    100
+          7        0 1 0 0   1    101
+          8        0 1 0 0   1    110
+          9        1 1 0 0   1    111
+          A        1 1 0 1   0    110
+      cha[2:0] feeds the character generator ROM.
+      b3 = last row, used to generate underline when char>=0x80
+      when (!sel && !char_set_graphics)
+
+
    - MXC,D,E notes: f:/jim/documents/wang2200/boards/terminal_mux_notes.txt
 
    - note that 2236DE terminal could be used with VP rel 2.1 and later,

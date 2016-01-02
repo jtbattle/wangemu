@@ -497,7 +497,7 @@ PropPanel::refresh()
         case Wvd::DISKTYPE_FD8:  type = "2270(A) 8\" floppy"; break;
         case Wvd::DISKTYPE_HD60: type = "2260 hard disk";     break;
         case Wvd::DISKTYPE_HD80: type = "2280 hard disk";     break;
-        default: assert(0);
+        default: assert(false);
     }
     m_st_type->SetLabel(type);
 
@@ -632,7 +632,7 @@ LabelPanel::OnLabelEdit(wxCommandEvent &event)
             break;
 
         default:
-            assert(0);
+            assert(false);
             break;
     }
 }

@@ -22,7 +22,7 @@ IoCardTermMux::IoCardTermMux(Cpu2200 &cpu, int baseaddr, int cardslot) :
     m_slot(cardslot),
     m_selected(false),
     m_cpb(true),
-    m_card_busy(0)
+    m_card_busy(false)
 {
     if (m_slot < 0) {
         // this is just a probe to query properties, so don't make a window
@@ -88,12 +88,12 @@ IoCardTermMux::getAddresses() const
 }
 
 void
-IoCardTermMux::reset(int hard_reset)
+IoCardTermMux::reset(bool hard_reset)
 {
     // reset card state
     m_selected   = false;
     m_cpb        = true;   // CPU busy
-    m_card_busy  = 0;
+    m_card_busy  = false;
 
 Really, I don't want to duplicate all the logic in IoCardKeyboard.cpp.
 I need to restructure things so that logic can be shared.
@@ -121,7 +121,7 @@ IoCardTermMux::select()
     bool vp_mode_next = (offset == 1) || (offset == 5);
     if (!vp_mode && !vp_mode_next) {
         // leaving mvp mode for vp mode; reset
-        reset(0);
+        reset(false);
     }
     m_vp_mode = vp_mode_next;
 

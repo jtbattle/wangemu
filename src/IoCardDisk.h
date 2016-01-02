@@ -31,7 +31,7 @@ public:
     void  setConfiguration(const CardCfgState &cfg) override;
     void  editConfiguration(CardCfgState *cfg) override;
 
-    void  reset(int hard_reset=1) override;
+    void  reset(bool hard_reset=true) override;
     void  select() override;
     void  deselect() override;
     void  OBS(int val) override;

@@ -69,7 +69,7 @@ IoCardPrinter::getAddresses() const
 }
 
 void
-IoCardPrinter::reset(int hard_reset)
+IoCardPrinter::reset(bool hard_reset)
 {
     // reset card state
     m_selected   = false;

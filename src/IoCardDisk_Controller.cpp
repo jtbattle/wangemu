@@ -113,7 +113,7 @@ IoCardDisk::statename(int state) const
         case CTRL_VERIFY_RANGE3:        return "CTRL_VERIFY_RANGE3";
         case CTRL_VERIFY_RANGE4:        return "CTRL_VERIFY_RANGE4";
         case CTRL_VERIFY_RANGE5:        return "CTRL_VERIFY_RANGE5";
-        default: /*assert(0);*/         return "CTRL_???";
+        default: /*assert(false);*/     return "CTRL_???";
     }
 }
 
@@ -331,7 +331,7 @@ IoCardDisk::advanceStateInt(disk_event_t event, const int val)
                     default: // GIO can send anything; assume non-zero is intelligent
                         switch (intelligence()) {
                             default:
-                                assert(0);
+                                assert(false);
                                 // fall through
                             case DiskCtrlCfgState::DISK_CTRL_DUMB:
                                 m_acting_intelligent = false;
@@ -583,7 +583,7 @@ disk operation
                             m_state = CTRL_VERIFY_RANGE1;
                             break;
                     default:
-                        assert(0);
+                        assert(false);
                         m_state = CTRL_COMMAND;
                         break;
                     }
@@ -674,7 +674,7 @@ disk operation
                     m_state = CTRL_READ1;  // yes, READ1 -- it shares logic
                     break;
                 default:
-                    assert(0);
+                    assert(false);
                     m_state = CTRL_COMMAND;
                     break;
                 }
@@ -1454,7 +1454,7 @@ disk operation
     // should have been filtered out already
 
     default:
-        assert(0);
+        assert(false);
         break;
     }
 

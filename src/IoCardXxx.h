@@ -19,7 +19,7 @@ public:
 
     vector<int> getAddresses() const override;
 
-    void  reset(int hard_reset=1) override;
+    void  reset(bool hard_reset=true) override;
     void  select() override;
     void  deselect() override;
     void  OBS(int val) override;

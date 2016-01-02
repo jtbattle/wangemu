@@ -1,4 +1,4 @@
-// This is a skeleton file for patterning future I/O devices
+// Function MXD Terminal Mux card emulation
 
 #ifndef _INCLUDE_IOCARD_TERM_MUX_H_
 #define _INCLUDE_IOCARD_TERM_MUX_H_
@@ -19,7 +19,7 @@ public:
 
     vector<int> getAddresses() const override;
 
-    void  reset(int hard_reset=1) override;
+    void  reset(bool hard_reset=true) override;
     void  select() override;
     void  deselect() override;
     void  OBS(int val) override;

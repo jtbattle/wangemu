@@ -98,10 +98,10 @@ IoCardDisplay::IoCardDisplay(Scheduler &scheduler, Cpu2200 &cpu,
     m_slot(cardslot),
     m_selected(false),
     m_cpb(true),
-    m_card_busy(0),
+    m_card_busy(false),
     m_size(size),
-    m_wndhnd(0),
-    m_thnd_hsync(0),
+    m_wndhnd(nullptr),
+    m_thnd_hsync(nullptr),
     m_realtime(true),
     m_hsync_count(0),
     m_busy_state(BUSY_NOT)
@@ -162,13 +162,13 @@ IoCardDisplay::getAddresses() const
 }
 
 void
-IoCardDisplay::reset(int hard_reset)
+IoCardDisplay::reset(bool hard_reset)
 {
     // reset card state
     m_busy_state = BUSY_NOT;
     m_selected   = false;
     m_cpb        = true;   // CPU busy
-    m_card_busy  = 0;
+    m_card_busy  = false;
 
     // get the horizontal sync timer going
     ENSURE_TIMER_DEAD(m_thnd_hsync);
@@ -213,15 +213,15 @@ IoCardDisplay::OBS(int val)
     if (System2200().isCpuSpeedRegulated()) {
         if (val == 0x03) {
             m_busy_state = BUSY_CLEAR1;
-            m_card_busy = 1;
+            m_card_busy = true;
 #if 0
         } else if (val == 0x0A && cur_row == 15) {
             m_busy_state = BUSY_ROLL1;
-            m_card_busy = 1;
+            m_card_busy = true;
 #endif
         } else if (val >= 0x10) {
             m_busy_state = BUSY_CHAR;
-            m_card_busy = 1;
+            m_card_busy = true;
         }
     }
 
@@ -297,7 +297,7 @@ IoCardDisplay::tcbHsync(int arg)
             break;
 
         case BUSY_CHAR:
-            m_card_busy = 0;
+            m_card_busy = false;
             m_busy_state = BUSY_NOT;
             m_cpu.setDevRdy(true);
             break;
@@ -308,7 +308,7 @@ IoCardDisplay::tcbHsync(int arg)
             break;
         case BUSY_CLEAR2:
             if (m_hsync_count == 1) {    // vblank
-                m_card_busy = 0;
+                m_card_busy = false;
                 m_busy_state = BUSY_NOT;
                 m_cpu.setDevRdy(true);
             }
@@ -318,13 +318,13 @@ IoCardDisplay::tcbHsync(int arg)
             m_busy_state = BUSY_ROLL2;
             break;
         case BUSY_ROLL2:
-            m_card_busy = 0;
+            m_card_busy = false;
             m_busy_state = BUSY_NOT;
             m_cpu.setDevRdy(true);
             break;
 
         default:
-            assert(0);
+            assert(false);
             break;
     }
 }

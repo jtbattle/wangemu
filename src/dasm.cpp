@@ -117,7 +117,7 @@ dasm_a_field(char *buf, uint32 uop, int *adj)
         case 14: str = "CL+"; pc = 1; break;
         case 15: str = "+";   pc = 1; break;
         default: str = "";    pc = 0;
-            assert(0);
+            assert(false);
             break;
     }
 
@@ -164,7 +164,7 @@ dasm_b_field(char *buf, uint32 uop)
             case 13: str = "CH";  break;
             case 14: str = "CL";  break;
             case 15: str = "0";   break;
-            default: str = nullptr; assert(0); break;
+            default: str = nullptr; assert(false); break;
         }
     } else {
         switch (field) {
@@ -176,7 +176,7 @@ dasm_b_field(char *buf, uint32 uop)
             case 13: str = "CH";  break;
             case 14: str = "CL";  break;
             case 15: str = "0";   break;
-            default: str = nullptr; assert(0); break;
+            default: str = nullptr; assert(false); break;
         }
     }
 
@@ -208,7 +208,7 @@ dasm_c_field(char *buf, int *illegal, uint32 uop)
             case 13: str = nullptr; break;
             case 14: str = nullptr; break;
             case 15: str = "";      break;        // dummy destination
-            default: str = nullptr; assert(0); break;
+            default: str = nullptr; assert(false); break;
         }
     } else {
         switch (field) {
@@ -220,7 +220,7 @@ dasm_c_field(char *buf, int *illegal, uint32 uop)
             case 13: str = nullptr; break;
             case 14: str = nullptr; break;
             case 15: str = "";      break;        // dummy destination
-            default: str = nullptr; assert(0); break;
+            default: str = nullptr; assert(false); break;
         }
     }
 
@@ -251,7 +251,7 @@ dasm_m_field(char *buf, uint32 uop)
          case 1: return sprintf(buf, ",R");
          case 2: return sprintf(buf, ",W1");
          case 3: return sprintf(buf, ",W2");
-        default: assert(0); return 0;
+        default: assert(false); return 0;
     }
 }
 

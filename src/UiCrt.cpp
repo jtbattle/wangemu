@@ -337,7 +337,7 @@ Crt::generateFontmap()
         };
 
         switch (filter) {
-            default: assert(0);
+            default: assert(false);
             case 0: filter_w = w_noop;           break;
             case 1: filter_w = w_semi_gaussian;  break;
             case 2: filter_w = w_gaussian;       break;
@@ -944,7 +944,7 @@ Crt::OnLeftDClick(wxMouseEvent &event)
     }
 
 #ifdef REVIEW_ALL_ERROR_MESSAGES
-    if (0) {
+    if (false) {
         for(int ec=0; ec<100; ec++) {
             wxString ecs;
             ecs.Printf("%02d", ec);

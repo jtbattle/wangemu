@@ -257,7 +257,7 @@ IoCardDisk::editConfiguration(CardCfgState *cfg)
 // -----------------------------------------------------
 
 void
-IoCardDisk::reset(int hard_reset)
+IoCardDisk::reset(bool hard_reset)
 {
     // reset controller state
     m_selected  = false;
@@ -507,7 +507,7 @@ IoCardDisk::wvdGetTicksToTrack(int track)
             break;
 
         default:
-            assert(0);
+            assert(false);
             break;
     }
 
@@ -592,7 +592,7 @@ IoCardDisk::wvdSeekTrack(int nominal_ticks)
             case DRIVE_SPINNING:
                 break;
             default:
-                assert(0);
+                assert(false);
         }
     }
 
@@ -1097,7 +1097,7 @@ IoCardDisk::getDiskGeometry(int disktype,
     switch (disktype) {
 
         default:
-            assert(0);
+            assert(false);
             // fall through in release mode ...
         case Wvd::DISKTYPE_FD5:
             sectors_per_track = 10;

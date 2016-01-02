@@ -23,7 +23,7 @@ public:
 
     vector<int> getAddresses() const override;
 
-    void  reset(int hard_reset=1) override;
+    void  reset(bool hard_reset=true) override;
     void  select() override;
     void  deselect() override;
     void  OBS(int val) override;
@@ -43,7 +43,7 @@ private:
     const int  m_slot;          // which slot the card is plugged into
     bool       m_selected;      // the card is currently selected
     bool       m_cpb;           // the cpu is busy
-    int        m_card_busy;     // the card is busy doing something
+    bool       m_card_busy;     // the card is busy doing something
 
     const int  m_size;          // display type
     UI_gui_handle_t m_wndhnd;   // opaque handle to UI window

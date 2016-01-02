@@ -155,20 +155,20 @@ enum {
             }                                                   \
             m_ucode[addr].op  = (uint8)(oper);                  \
             m_ucode[addr].p16 = (uint16)(param);                \
-        } while (0)
+        } while (false)
 
 // copy bits [14:10] to [24:20]
 // [13:10] contain the B field specifier, and [14] is the X bit
 #define REPACK_B_FIELD(dst, uop)                \
     do {                                        \
         (dst) |= ((uop) << 10) & 0x01F00000;    \
-    } while (0)
+    } while (false)
 
 // as above, but there is no X bit and B comes from [15:12] instead of [13:10]
 #define REPACK_B2_FIELD(dst, uop)               \
     do {                                        \
         (dst) |= ((uop) << 8) & 0x00F00000;     \
-    } while (0)
+    } while (false)
 
 // extract the branch target for an unconditional branch
 #define FULL_TARGET(u) \
@@ -535,7 +535,7 @@ Cpu2200t::mem_write(uint16 addr, uint4 wr_value, int write2)
 {
     if (m_cpu.st1 & ST1_MASK_ROM) {
         // ROM address space
-        assert(0);      // ucode shouldn't ever write to ROM
+        assert(false);    // ucode shouldn't ever write to ROM
     } else {
         // RAM address space
         int RAMaddr;
@@ -668,7 +668,7 @@ Cpu2200t::store_C_operand(uint32 uop, uint4 value)
                 mem_write(m_cpu.pc, (wr_value), 1);     \
                 break;                                  \
         }                                               \
-    } while (0)
+    } while (false)
 
 uint8
 Cpu2200t::decimal_add(uint4 a_op, uint4 b_op, int ci) const
@@ -722,7 +722,7 @@ Cpu2200t::decimal_sub(uint4 a_op, uint4 b_op, int ci) const
         do {                                                    \
             (pc) = (uint16)( ((pc)                & 0xFFF0) |   \
                             (((pc) + (int8)(inc)) & 0x000F) );  \
-        } while (0)
+        } while (false)
 
 #define IMM4(uop) ((uint4)((uop >> 4) & 0xF))
 
@@ -764,7 +764,7 @@ Cpu2200t::exec_one_op()
         case 15: pcinc = +1; a_op = (uint4)(0x0);                       break;  // dummy
 
         default:
-            assert(0);
+            assert(false);
             pcinc = 0;
             a_op  = (uint4)0x0;
             break;
@@ -810,7 +810,7 @@ Cpu2200t::exec_one_op()
         case 31: b_op = (uint4)(0x0);                    break;  // dummy
 
         default:
-            assert(0);
+            assert(false);
             b_op = (uint4)0x0;
             break;
         }
@@ -1156,7 +1156,7 @@ Cpu2200t::exec_one_op()
         break;
 
     default:
-        assert(0);
+        assert(false);
         return EXEC_ERR;
     }
 
@@ -1207,7 +1207,7 @@ Cpu2200t::Cpu2200t(System2200 &sys, Scheduler &scheduler,
                 m_kROM[i] = kROM_2200T[i];
             break;
         default:
-            assert(0);
+            assert(false);
     }
 
 #if 0

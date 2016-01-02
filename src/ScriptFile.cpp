@@ -26,7 +26,7 @@ ScriptFile::ScriptFile(const string &filename,
                        int metaflags,
                        int max_nesting_depth,
                        int cur_nesting_depth) :
-        m_ifs(0),
+        m_ifs(nullptr),
         m_filename(""),
         m_opened_ok(false),
         m_eof(false),

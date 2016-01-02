@@ -122,7 +122,7 @@ inline int TIMER_MS(double f) { return int(10000.0*f+0.5); }
             (thnd)->Kill();             \
             (thnd) = 0;                 \
         }                               \
-    } while (0)
+    } while (false)
 
 #endif // _INCLUDE_SCHEDULER_H_
 

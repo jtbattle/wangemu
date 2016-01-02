@@ -69,7 +69,7 @@ IoCardKeyboard::getAddresses() const
 }
 
 void
-IoCardKeyboard::reset(int hard_reset)
+IoCardKeyboard::reset(bool hard_reset)
 {
     ENSURE_TIMER_DEAD(m_tmr_script);
 
@@ -79,9 +79,9 @@ IoCardKeyboard::reset(int hard_reset)
     }
 
     // reset card state
-    m_selected  =  false;
-    m_key_ready =  false;   // no pending keys
-    m_cpb       =  true;    // CPU busy, presumably
+    m_selected  = false;
+    m_key_ready = false;   // no pending keys
+    m_cpb       = true;    // CPU busy, presumably
 
     hard_reset = hard_reset;    // silence lint
 }

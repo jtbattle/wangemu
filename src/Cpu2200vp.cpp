@@ -411,7 +411,7 @@ Cpu2200vp::write_ucode(uint16 addr, uint32 uop)
                 break;
 
             default: // impossible
-                assert(0);
+                assert(false);
                 break;
         }
 
@@ -438,18 +438,18 @@ Cpu2200vp::write_ucode(uint16 addr, uint32 uop)
         do {                                                      \
         m_cpu.sh = (uint8)( (m_cpu.sh & ~SH_MASK_CARRY) |         \
                             (((v) & 0x100) ? SH_MASK_CARRY : 0)); \
-        } while (0)
+        } while (false)
 
 // increment and decrement the ucode subroutine stack
 #define INC_ICSP                                        \
         do {                                            \
         if (++m_cpu.icsp >= STACKSIZE) m_cpu.icsp = 0;  \
-        } while (0)
+        } while (false)
 
 #define DEC_ICSP                                        \
         do {                                            \
         if (--m_cpu.icsp < 0) m_cpu.icsp = STACKSIZE-1; \
-        } while (0)
+        } while (false)
 
 // setting SL can have more complicated side effects.
 // we keep shadow state of the memory bank addressing bits.
@@ -468,7 +468,7 @@ Cpu2200vp::set_sl(uint8 value)
         m_cpu.bank_offset = (((value >> 6) & 3) << 16)  // bits [7:6]
                           | (((value >> 5) & 1) << 18); // bit [5]
     } else {
-        assert(0);
+        assert(false);
         m_cpu.bank_offset = 0;
     }
 }
@@ -588,7 +588,7 @@ Cpu2200vp::decimal_sub8(int a_op, int b_op, int ci) const
             case 14: m_cpu.k  = (uint8)v;  break;                       \
             case 15: break;     /* dummy (don't save results) */        \
         }                                                               \
-    } while (0)
+    } while (false)
 
 #if INLINE_STORE_C
     #define store_c(c_field,val) inlined_store_c(c_field,val)
@@ -643,7 +643,7 @@ Cpu2200vp::decimal_sub8(int a_op, int b_op, int ci) const
             la ^= write2;                       \
             m_RAM[la] = (uint8)wr_value;        \
         }                                       \
-    } while (0)
+    } while (false)
 
 // return the chosen bits of B and A, returns with the bits
 // of b in [7:4] and the bits of A in [3:0]
@@ -670,7 +670,7 @@ Cpu2200vp::get_HbHa(int HbHa, int a_op, int b_op) const
                  | ((a_op >> 4) & 0x0F);
             break;
         default:
-            assert(0);
+            assert(false);
             rslt = 0;   // keep lint happy
             break;
     }
@@ -715,7 +715,7 @@ Cpu2200vp::get_HbHa(int HbHa, int a_op, int b_op) const
     #define perform_dd_op(uop,wr_val)           \
         do {                                    \
             inlined_perform_dd_op(uop,wr_val)   \
-        } while (0)
+        } while (false)
 #else
     static void
     perform_dd_op(uint32 uop, int wr_val) { inlined_perform_dd_op(uop,wr_val); }
@@ -760,7 +760,7 @@ Cpu2200vp::exec_one_op()
             case 3: m_cpu.sh |=  SH_MASK_CARRY; break;    // set
             case 0:     // no change, but this shouldn't be called then
             default:
-                assert(0);
+                assert(false);
                 break;
         }
     }
@@ -783,7 +783,7 @@ Cpu2200vp::exec_one_op()
             case 14: b_op = m_cpu.k; break;
             case 15: b_op = 0x00; break; // dummy
             default:
-                assert(0);
+                assert(false);
                 b_op = 0x00;
                 break;
         }
@@ -806,7 +806,7 @@ Cpu2200vp::exec_one_op()
                     a_op = 0;
                     break;
                 default:
-                    assert(0);
+                    assert(false);
                     a_op = 0;
                     break;
             }
@@ -859,7 +859,7 @@ Cpu2200vp::exec_one_op()
                 b_op2 = m_cpu.reg[0];
                 break;
             default:
-                assert(0);
+                assert(false);
                 b_op = b_op2 = 0;
                 break;
         }
@@ -899,7 +899,7 @@ Cpu2200vp::exec_one_op()
                 a_op2 = m_cpu.reg[0];
                 break;
             default:
-                assert(0);
+                assert(false);
                 a_op = a_op2 = 0;
                 break;
         }
@@ -1383,7 +1383,7 @@ Cpu2200vp::exec_one_op()
         break;
 
     default:
-        assert(0);
+        assert(false);
         break;
 
     } // op

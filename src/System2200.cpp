@@ -235,7 +235,7 @@ System2200::setConfig(const SysCfgState &newcfg)
         case Cpu2200::CPUTYPE_2200B:
             m_cpu = new Cpu2200t( *this, scheduler(), ramsize, Cpu2200::CPUTYPE_2200B );
             break;
-        default: assert(0);
+        default: assert(false);
         case Cpu2200::CPUTYPE_2200T:
             m_cpu = new Cpu2200t( *this, scheduler(), ramsize, Cpu2200::CPUTYPE_2200T );
             break;
@@ -363,7 +363,7 @@ System2200::onIdle()
             // do nothing -- we already requested a cleanup
             break;
         default:
-            assert(0);
+            assert(false);
             break;
     }
 
