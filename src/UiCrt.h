@@ -10,7 +10,7 @@ class Crt: public wxWindow
 {
 public:
     CANT_ASSIGN_OR_COPY_CLASS(Crt);
-    Crt( CrtFrame *parent, int screen_size);    // constructor
+    Crt( CrtFrame *parent, int screen_type);    // constructor
     ~Crt();                                     // destructor
 
     // ---- setters/getters ----
@@ -49,8 +49,11 @@ public:
     void setFrameCount(int n)  { m_frame_count = n; }
     int  getFrameCount() const { return m_frame_count; }
 
+    // hardware reset
+    void reset();
+
     // redraw the CRT display as necessary
-    void refreshWindow(void);
+    void refreshWindow();
 
     // redraw entire screen, or just the text region
     void invalidateAll()  { Refresh(false); }
@@ -59,8 +62,8 @@ public:
     // return a pointer to the screen image
     wxBitmap* grabScreen();
 
-    // emit a character to the display
-    void emitChar(uint8 byte);
+    // send a character to the display controller
+    void processChar(uint8 byte);
 
 private:
     // ---- event handlers ----
@@ -86,7 +89,7 @@ private:
     void generateScreen();
     bool generateScreenByRawBmp(wxColor fg, wxColor bg);
     void generateScreenByBlits(wxMemoryDC &memDC);
-    void generateScreenByText(wxMemoryDC &memDC, wxColor fg, wxColor bg);
+    void generateScreenOverlay(wxMemoryDC &memDC);
 
     // map an intensity to a display color
     wxColor intensityToColor(float f) const;
@@ -94,10 +97,17 @@ private:
     // clear the display; home the cursor
     void scr_clear();
 
-    // write 1 character to the video memory at location (x,y)
-    // but don't redraw it.
-    void scr_write_char(int x, int y, char ch)
+    // write 1 character to the video memory at location (x,y).
+    // it is up to the caller to set the screen dirty flag.
+    void scr_write_char(int x, int y, uint8 ch)
         { m_display[m_chars_w*y + x] = ch; }
+    void scr_write_attr(int x, int y, uint8 attr)
+        { m_attr[m_chars_w*y + x] = attr; }
+
+    // lower level character handling
+    void processChar2(uint8 byte);
+    // lowest level character handling
+    void processChar3(uint8 byte);
 
     // scroll the contents of the screen up one row,
     // and fill the new row with blanks.
@@ -107,46 +117,73 @@ private:
     void setCursorY(int y);             // set vertical position
     void adjustCursorY(int delta);      // advance the cursor in y
     void adjustCursorX(int delta);      // move cursor left or right
-    void updateCursor();                // redraw the cursor at current loc
     void explainError(const string &errcode,
                       const wxPoint &orig); // pop up error description
 
-    CrtFrame * const m_parent;  // who owns us
-    const int   m_chars_w;      // screen dimension, in characters
-    const int   m_chars_h;      // screen dimension, in characters
+    CrtFrame * const m_parent;      // who owns us
+    const int     m_screen_type;    // UI_SCREEN_* enum value
+    const int     m_chars_w;        // screen dimension, in characters
+    const int     m_chars_h;        // screen dimension, in characters
 
-    unsigned char m_display[80*24]; // sometimes only 64x16 of it is used
-    wxBitmap    m_scrbits;      // image of the display
+    uint8         m_display[80*24]; // character codes
+    wxBitmap      m_scrbits;        // image of the display
 
-    wxFont      m_font;         // font in use
-    wxBitmap    m_fontmap;      // image of the font in use
-    int         m_fontsize;     // size of font (in points)
-    bool        m_fontdirty;    // font/color/contrast/brightness has changed
-    int         m_charcell_w;   // width of one character cell
-    int         m_charcell_h;   // height of one character cell
-    int         m_begin_ul;     // vertical offset for underline
-    int         m_begin_curs;   // vertical offset for cursor
-    int         m_rows_curs;    // vertical height for ul/cursor
+    wxFont        m_font;           // font in use
+    wxBitmap      m_fontmap;        // image of the font in use
+    int           m_fontsize;       // size of font (in points)
+    bool          m_fontdirty;      // font/color/contrast/brightness changed
+    int           m_charcell_w;     // width of one character cell
+    int           m_charcell_h;     // height of one character cell
+    int           m_begin_ul;       // vertical offset for underline
+    int           m_begin_curs;     // vertical offset for cursor
+    int           m_rows_curs;      // vertical height for ul/cursor
 
-    wxColor     m_FGcolor;      // screen phosphor color
-    wxColor     m_BGcolor;      // screen background color
-    int         m_display_contrast;
-    int         m_display_brightness;
+    wxColor       m_FGcolor;        // screen phosphor color
+    wxColor       m_BGcolor;        // screen background color
+    int           m_display_contrast;
+    int           m_display_brightness;
 
     // this holds the dimensions of the visible area we have to draw on,
     // which is entirely independent of the logical CRT dimensions.
-    int         m_scrpix_w;     // display dimension, in pixels
-    int         m_scrpix_h;     // display dimension, in pixels
-    wxRect      m_RCscreen;     // active text area
+    int           m_scrpix_w;       // display dimension, in pixels
+    int           m_scrpix_h;       // display dimension, in pixels
+    wxRect        m_RCscreen;       // active text area
 
-    int         m_curs_x;       // cursor location now
-    int         m_curs_y;       // cursor location now
-    int         m_curs_prevx;   // cursor location at last UpdateCursor()
-    int         m_curs_prevy;   // cursor location at last UpdateCursor()
-    bool        m_curs_on;      // cursor is enabled
+    int           m_curs_x;         // cursor location now
+    int           m_curs_y;         // cursor location now
+    bool          m_curs_on;        // cursor is enabled
 
-    int         m_frame_count;  // for tracking refresh fps
-    bool        m_dirty;        // something has changed since last refresh
+    int           m_frame_count;    // for tracking refresh fps
+    bool          m_dirty;          // something has changed since last refresh
+
+    // state used only in smart terminal mode (eg 2236DE)
+    enum char_attr_t : uint8 {
+        CHAR_ATTR_RIGHT  = 0x01,  // top right horizontal line
+        CHAR_ATTR_VERT   = 0x02,  // mid cell vertical line
+        CHAR_ATTR_LEFT   = 0x04,  // top left horizontal line
+        CHAR_ATTR_ALT    = 0x08,  // alternate character set
+        CHAR_ATTR_BRIGHT = 0x10,  // high intensity
+        CHAR_ATTR_BLINK  = 0x40,  // blink character
+        CHAR_ATTR_INV    = 0x80,  // inverse character
+    };
+    uint8         m_attr[80*24];    // display attributes
+    int           m_raw_cnt;        // raw input stream buffered until we have
+    uint8         m_raw_buf[3];     // ... a complete runlength sequence
+    int           m_input_cnt;      // buffered input stream
+    uint8         m_input_buf[90];  // ... after decompression and accumulation
+    bool          m_box_bottom;     // true if we've seen at least one 0B
+    bool          m_curs_blink;     // cursor blinks if enabled
+    int           m_attrs;          // current char attributes
+    bool          m_attr_on;        // use attr bits until next 0F
+    bool          m_attr_temp;      // use attr bits until next 0D or 0F
+    bool          m_attr_under;     // draw underlined char if m_attr_on
+
+    void setBoxAttr(bool box_draw, uint8 attr) {
+        if (box_draw)
+            m_attr[80*m_curs_y + m_curs_x] |=  attr;
+        else // erase
+            m_attr[80*m_curs_y + m_curs_x] &= ~attr;
+    }
 
     DECLARE_EVENT_TABLE()
 };

@@ -94,7 +94,7 @@ enum
     TB_EDIT,
 
     Timer_Frame,
-    Timer_Sec,
+    Timer_QSec,
 };
 
 
@@ -203,7 +203,7 @@ BEGIN_EVENT_TABLE(CrtFrame, wxFrame)
     EVT_MENU_OPEN (CrtFrame::OnMenuOpen)
     EVT_CLOSE     (CrtFrame::OnClose)
     EVT_TIMER     (Timer_Frame, CrtFrame::OnTimer)
-    EVT_TIMER     (Timer_Sec,   CrtFrame::OnTimer)
+    EVT_TIMER     (Timer_QSec,  CrtFrame::OnTimer)
 
     // help menu items do whatever they need to do
     HELP_MENU_EVENT_MAPPINGS()
@@ -213,7 +213,7 @@ END_EVENT_TABLE()
 
 // constructor
 CrtFrame::CrtFrame( const wxString& title,
-                    const int screen_size,
+                    const int screen_type,
                     const int io_addr) :
        wxFrame((wxFrame *)nullptr, -1, title, wxDefaultPosition, wxDefaultSize,
                wxDEFAULT_FRAME_STYLE | wxNO_FULL_REPAINT_ON_RESIZE),
@@ -227,7 +227,8 @@ CrtFrame::CrtFrame( const wxString& title,
     m_crt_addr(io_addr),
     m_assoc_kb_addr(-1),
     m_RefreshTimer(nullptr),
-    m_OneSecTimer(nullptr),
+    m_QSecTimer(nullptr),
+    m_blink_phase(0),
     m_fps(0)
 {
 
@@ -253,7 +254,7 @@ CrtFrame::CrtFrame( const wxString& title,
     initToolBar(m_toolBar);
     m_toolBar->Show(false); // can get changed in GetDefaults()
 
-    m_crt = new Crt( this, screen_size );
+    m_crt = new Crt( this, screen_type );
 
     addCrt();
 
@@ -273,12 +274,12 @@ CrtFrame::CrtFrame( const wxString& title,
 
     // only the primary has a status bar
     m_RefreshTimer = new wxTimer(this, Timer_Frame);
-    m_OneSecTimer = new wxTimer(this, Timer_Sec);
+    m_QSecTimer    = new wxTimer(this, Timer_QSec);
 
     // it is hard to predict what the optimal refresh period
     // for a given system
     m_RefreshTimer->Start(30, wxTIMER_CONTINUOUS);   // ~30 fps
-    m_OneSecTimer->Start(1000, wxTIMER_CONTINUOUS);
+    m_QSecTimer->Start(250, wxTIMER_CONTINUOUS);     // 4 Hz
 }
 
 
@@ -286,9 +287,9 @@ CrtFrame::CrtFrame( const wxString& title,
 CrtFrame::~CrtFrame()
 {
     m_RefreshTimer->Stop();
-    m_OneSecTimer->Stop();
+    m_QSecTimer->Stop();
     wxDELETE(m_RefreshTimer);
-    wxDELETE(m_OneSecTimer);
+    wxDELETE(m_QSecTimer);
 }
 
 
@@ -868,6 +869,14 @@ CrtFrame::setSimSeconds(int secs, float relative_speed)
 }
 
 
+// indicate if the blink effect should be on or off
+bool
+CrtFrame::getBlinkPhase() const
+{
+    return (m_blink_phase >= 2);
+}
+
+
 // ----------------------------------------------------------------------------
 // event handlers
 // ----------------------------------------------------------------------------
@@ -1114,13 +1123,19 @@ CrtFrame::OnTimer(wxTimerEvent &event)
 {
     if (event.GetId() == Timer_Frame) {
         m_crt->refreshWindow(); // ask screen to update
-    } else if (event.GetId() == Timer_Sec) {
+    } else if (event.GetId() == Timer_QSec) {
         // count frames each second to display FPS figure
-        m_fps = m_crt->getFrameCount();
-        m_crt->setFrameCount(0);
+        m_blink_phase = (m_blink_phase == 3) ? 0 : (m_blink_phase+1);
+        if (m_blink_phase == 0) {
+            m_fps = m_crt->getFrameCount();
+            m_crt->setFrameCount(0);
+        }
+        if (~m_blink_phase % 2) {
+            // blink just turned on or off, so redraw screen
+            m_crt->setDirty();
+        }
     }
 }
-
 
 void
 CrtFrame::OnConfigureDialog(wxCommandEvent& WXUNUSED(event))
@@ -1468,10 +1483,10 @@ CrtFrame::refreshWindow()
 
 // emit a character to the display
 void
-CrtFrame::emitChar(uint8 byte)
+CrtFrame::processChar(uint8 byte)
 {
     // pass it through
-    m_crt->emitChar(byte);
+    m_crt->processChar(byte);
 }
 
 

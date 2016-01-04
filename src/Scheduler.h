@@ -109,6 +109,9 @@ private:
     // cause a callback to the supplied function using the
     // supplied parameters.
     vector<Timer *> m_timer;
+
+    // for sanity checking
+    static const int MAX_TIMERS = 25;
 };
 
 // scale a floating point time in microseconds to be an

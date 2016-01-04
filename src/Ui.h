@@ -26,7 +26,7 @@ enum ui_screen_t {
     UI_SCREEN_80x24,
     UI_SCREEN_2236DE
 };
-UI_gui_handle_t UI_initCrt(int screen_size, int io_addr);
+UI_gui_handle_t UI_initCrt(int screen_type, int io_addr);
 
 // called before the display gets shut down
 void UI_destroyCrt(UI_gui_handle_t inst);

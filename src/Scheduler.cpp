@@ -136,6 +136,9 @@ Scheduler::TimerCreate(int ticks, const callback_t &fcn)
     assert(ticks <= MAX_TICKS);
     assert(ticks >= 1);
 
+    // make sure we don't leak timers
+    assert(m_timer.size() < MAX_TIMERS);
+
     Timer *tmr = new Timer(this, ticks, fcn);
 
     if (m_timer.size() == 1) {

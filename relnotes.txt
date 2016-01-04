@@ -1,6 +1,6 @@
 ============================================================================
-                   Wang 2200 emulator release notes, v2.2-pre
-				January 16, 2015
+		   Wang 2200 emulator release notes, v2.2-pre
+				January 3, 2016
 ============================================================================
 
 
@@ -20,12 +20,9 @@ and a number of periperhals:
       2270 floppy disk, 2260 hard disk, and 2280 large hard disk subsystems
     * configurable printer controller
 
-The emulator is primarily written under Windows XP, but it should also run
-on Vista as well.  Version 2.1 no longer runs on Windows 9x; this is not due
-to the emulator code, nor the wxWidgets library.  Rather it is because the
-code was compiled with Microsoft Visual Studio Express 2008, which refuses
-to create a binary that can run on Windows 9x.  If the code is compiled with
-a different compiler, the emulator will work under Windows 9x.
+The emulator is primarily written under Windows 7, but it should also run
+under Windows Vista, Windows 8, and Windows 10 as well.  This emulator
+does not run under Windows XP.
 
 Due to the contribution of Paul Heller, the emulator now runs natively on Mac
 OS X (10.4.2 at least) as well.  Starting with version 2.1, the OSX version
@@ -40,6 +37,8 @@ The emulator very well might run on Linux via Wine, but it hasn't been tested.
    in addition to the previously supported 32 KB and 64 KB.  VP OS's
    can't make use of any memory above 64 KB, though.
 
+*) added emulation of a 2236DE terminal, although it isn't exposed yet,
+   pending addition of 2236MUXD terminal mux emulation.
 
 ---- Bugs Fixed in this Release ----
 

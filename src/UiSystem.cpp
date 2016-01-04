@@ -277,14 +277,14 @@ UI_Confirm(const char *fmt, ...)
 
 // called at the start of time to create the actual display
 UI_gui_handle_t
-UI_initCrt(int screen_size, int io_addr)
+UI_initCrt(int screen_type, int io_addr)
 {
     int cputype = System2200().config().getCpuType();
     const char *cpustr = (cputype == Cpu2200::CPUTYPE_2200B) ? "2200B" :
                          (cputype == Cpu2200::CPUTYPE_2200T) ? "2200T" :
                                                                "2200VP";
     char *dispstr;
-    switch (screen_size) {
+    switch (screen_type) {
         default: assert(false);
         case UI_SCREEN_64x16:  dispstr = "64x16"; break;
         case UI_SCREEN_80x24:  dispstr = "80x24"; break;
@@ -295,7 +295,7 @@ UI_initCrt(int screen_size, int io_addr)
     title.Printf("Wang %s %s CRT /0%02X", cpustr, dispstr, io_addr);
 
     // Create the main application window
-    CrtFrame *frame = new CrtFrame( title, screen_size, io_addr );
+    CrtFrame *frame = new CrtFrame( title, screen_type, io_addr );
     return (UI_gui_handle_t)frame;
 }
 
@@ -314,7 +314,7 @@ void
 UI_displayChar(UI_gui_handle_t inst, uint8 byte)
 {
     CrtFrame *crt_inst = reinterpret_cast<CrtFrame*>(inst);
-    crt_inst->emitChar(byte);
+    crt_inst->processChar(byte);
 }
 
 

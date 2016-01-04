@@ -18,7 +18,7 @@ public:
     CANT_ASSIGN_OR_COPY_CLASS(CrtFrame);
     // constructor
     CrtFrame(   const wxString &title,
-                const int screen_size,
+                const int screen_type,
                 const int io_addr
             );
 
@@ -38,7 +38,7 @@ public:
     int getTiedAddr() const;
 
     // emit a character to the display
-    void emitChar(uint8 byte);
+    void processChar(uint8 byte);
 
     // add CRT to list
     void addCrt();
@@ -58,8 +58,8 @@ public:
     static string getFontName(int idx);
 
     // set/get CRT font size
-    void            setFontSize(int size);
-    int             getFontSize() const;
+    void          setFontSize(int size);
+    int           getFontSize() const;
 
     // pick one of N color schemes
     static int    getNumColorSchemes();
@@ -72,6 +72,8 @@ public:
     void setDisplayBrightness(int n);
     int  getDisplayContrast() const;
     int  getDisplayBrightness() const;
+
+    bool getBlinkPhase() const;
 
     // mechanics of carrying out format for a given filename
     // must be public so statusbar can use it
@@ -196,8 +198,9 @@ private:
     // destructor would stop the (static) timer that the new window had
     // just initiated.
     wxTimer *m_RefreshTimer;    // triggers to cause a screen update
-    wxTimer *m_OneSecTimer;     // triggers at a 1 Hz for calculating fps
-    int m_fps;                  // most recent frames/sec count
+    wxTimer *m_QSecTimer;       // 4 Hz event for blink & frames/sec calc
+    int      m_blink_phase;
+    int      m_fps;             // most recent frames/sec count
 
     static vector<CrtFrame*> m_crtlist;     // list of crt's in the system
 

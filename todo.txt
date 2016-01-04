@@ -2,6 +2,10 @@
 Emulator TODO list
 ============================================================================
 
+*) None of the recent changes has been compiled on OSX, so most likely there
+   will be problems.  Once the code is somewhat stable under windows,
+   build it on OSX and iron out the problems.
+
 *) use smart pointers instead of raw pointers
     std::shared_ptr<>, std::make_shared<>, std::unique_ptr<>
         note: p464:
@@ -18,72 +22,43 @@ Emulator TODO list
        it would also get rid of the zeroing out pointers of m_timer before
        calling resize.
 
+*) improved 2236 terminal emulation
+
+    - add smart terminal commands that I've skipped
+        - make it so FB Cx actually causes a x/6 second delay
+        - add command to return terminal ID
+        - screen input (capture)
+
+    - Fasstcom Terminal Specs v1.0.pdf, pdf page 8 says
+      "... the terminal must always transmit a HEX(F8F9) every 3 to 5 seconds
+       whenever it is ready to receive new data during idle time.
+       This is called the constant poll."
+      The emulated terminal doesn't.  Should it?
+
+    - pre-blurring the char set to a glyph map, then blitting to the display
+      works OK, except the cursor isn't blurred because it is dynamic, and
+      edges of block graphic characters are noticable because the blurring
+      kernel needs to span across characters.
+
+      render unblurred and then use OGL to do the blurring.  this has the
+      benefit of offering flexible scaling at low cost, and perhaps other
+      video generation defect emulation.
+
+    - 742-0903.MNL.IntegratedTerminal2236DW.85-02-27.pdf, pdf page 68 says
+          2236DW and 2236DW have mostly the same character generators,
+          except for characters 5F/7F/80/8D/8F/DF/FF
+
+    - the smart terminal menu should have an option to reset just the terminal
+
+    - allow running terminal as a separate process
+        - running in process is easier to manage for the casual user, though
+        - actual serial port connection
+        - running via sockets, allowing local or remote connection
+        - perhaps as a javascript app, with multiple terminals as tabs?
+
 *) add terminal mux emulation and terminal emulation so I can run MVP OS's
 
-   - F:\Jim\Documents\wang2200\bahia\2236\L55.c contains the character
-     generator for chars 0x80 - 0xFF for the alternate character set.
-     the 2236 fiche (Dia's box, 00071.tif), says
-        "The 64 graphics characters, HEX(C0) to HEX(FF), are represented by
-         all the combinations of sixths of a character space, etc.
-         When displayed, graphic characters are extrapolated to fill the
-         entire character position."
-
-      Attribute byte:
-        bit 7: character set graphics
-        bit 6: inverse video
-        bit 5: blink
-        bit 4: hi intensity
-        bit 3: upper character set
-        bit 2: left horizontal line
-        bit 1: vertical line
-        bit 0: right horizontal line
-
-      The emulator uses a 10x11 cell to embed an 8x8 character.
-      But how does this extrapolation work?  It would be easy to
-      extrapolate the first/last bit and first/last row, but that
-      leads to a 10x10 cell.  How to get to 10x11?
-                  OOOOOOOOOO
-                  OxxxxxxxxO
-                  OxxxxxxxxO
-                  OxxxxxxxxO
-                  OxxxxxxxxO
-                  OxxxxxxxxO
-                  OxxxxxxxxO
-                  OxxxxxxxxO
-                  OxxxxxxxxO
-                  OOOOOOOOOO
-      Dia's box, 742-1727-1 .. -3 has 2436DW schematics.
-          19.2 MHz osc / 16 = 1.2 MHz dot clock
-          That feeds a 74175, producing:
-              !Q0 <= ripple carry, = !SCLK1, active once every 16 (19.2 MHz) cycles
-               Q1 <= Q0
-               Q2 <= Q1, = SCLK3
-
-      A small rom generates these outputs based on the scanline-of-character
-        scanline   6 5 4 3  sel  cha2:0
-        --------   - - - -  ---  ------
-          0        0 0 1 0   0    000
-          1        0 1 0 0   0    001
-          2        0 1 0 0   1    000
-          3        0 1 0 0   1    001
-          4        0 1 0 0   1    010
-          5        0 1 0 0   1    011
-          6        0 1 0 0   1    100
-          7        0 1 0 0   1    101
-          8        0 1 0 0   1    110
-          9        1 1 0 0   1    111
-          A        1 1 0 1   0    110
-      cha[2:0] feeds the character generator ROM.
-      b3 = last row, used to generate underline when char>=0x80
-      when (!sel && !char_set_graphics)
-
-
    - MXC,D,E notes: f:/jim/documents/wang2200/boards/terminal_mux_notes.txt
-
-   - note that 2236DE terminal could be used with VP rel 2.1 and later,
-     and supported things like PRINT BOX statement.  this means it would
-     be an interesting enhancement by itself to allow 2236DE support,
-     even without MUXD emulation.
 
    - currently the division is
           IoCardKeyboard
@@ -125,64 +100,44 @@ Emulator TODO list
             reporting it because something breaks in the ucode without it.
             (50ms of simulated time, not realtime)
 
-   - emulating MXD, not MXE, because MXE runs only >= OS ver 2.4
+    - emulating MXD, not MXE, because MXE runs only >= OS ver 2.4
 
-   - emulate the MXD at the protocol level
+    - emulate the MXD at the protocol level
         + more efficient
         + probably less less work overall
             - no 8080/z80 integration
             - no integrating the instruction dispatch & speed regulation
         - harder to offer an MXE option, which needs a real z80 emulation
 
-   - section 8 of 2200MVP_MaintenanceManual.729-0584-A.1-84.pdf lists
-     what is involved to upgrade a VP to an MVP.  part of it requires
-     changing the boot ROM ucode to deal with the larger program memory.
-     do I have these boot ROMs?
-        double check boards/other boards/6789 and see if those ROMs match
-        what the emulator uses
-     the MVP service manual section 8.2 (page 8-2) says
-         2200 VP/MVP Bootstrap Release 2.2 has been incorporated by ECN
-         #9772.  For a system to operate with an expanded memory, this ECN
-         must be performed.  The old PROMS on the 210-6789 must be replaced
-         with the following:
-             378-2045R1 = L27
-             378-2046R1 = L28
-             378-2047R1 = L29
-     the 6789 board that I got the 2nd set of bootstrap PROMs from
-     are windowed eproms without official Wang revision numbers.
-     handwritten on the chips are the following:
-         L29 says "2047"
-         L28 says "2046R5"
-         L27 says "2045R5"
-     It is possible that the contents were R5, but the EPROMs were
-     later erased and overwritten, making the handwritten note
-     meaningless.
+    - allow term MUX to connect to a real serial port
+        - a mac/linux/win lib: http://sigrok.org/wiki/Libserialport
+        - http://wjwwood.io/serial/
+        - https://iftools.com/opensource/ctb.en.php
+        - windows+linux only: http://www.teuniz.net/RS-232/
 
-   - model a serial terminal
-     - maybe as a first step, just connect to a real serial port
-         - a mac/linux/win lib: http://sigrok.org/wiki/Libserialport
-         - http://wjwwood.io/serial/
-         - https://iftools.com/opensource/ctb.en.php
-         - windows+linux only: http://www.teuniz.net/RS-232/
-     - should the terminal be embedded in the program,
-       or connected via a socket or something like that?
-       socket-based opens up the chance of connecting remotely.
-     - it would be best to to handle the protocol directly instead
-       of emulating the term as Z80+ROM+RAM+serial chip.
-     - if connecting virtually, maybe make the terminal a javascript
-       browser based app -- multiple terminals would just be multiple tabs
-     - Mark Pickersgill has a wang terminal emulator he has shared,
-       but it connects only via a serial port.  It can connect to a
-       virtual serial port, but there is no way for a program to create
-       a virtual COM port without having to install a driver, and some
-       of them cost $$:
-             http://www.virtual-serial-port.org/products/vspdxp/
-             http://www.eterlogic.com/Products.VSPE.html
-             http://www.eztcp.com/en/support/ezvsp.php
-     - write a terminal emulator class embedded in the emulator and just pop
-       open windows.  this has the drawback of needing to write the terminal
-       emulator, just like the socket case, and is less flexible.  it is
-       easier for the casual user, though.
+    - section 8 of 2200MVP_MaintenanceManual.729-0584-A.1-84.pdf lists
+      what is involved to upgrade a VP to an MVP.  part of it requires
+      changing the boot ROM ucode to deal with the larger program memory.
+      do I have these boot ROMs?
+         double check boards/other boards/6789 and see if those ROMs match
+         what the emulator uses
+      the MVP service manual section 8.2 (page 8-2) says
+          2200 VP/MVP Bootstrap Release 2.2 has been incorporated by ECN
+          #9772.  For a system to operate with an expanded memory, this ECN
+          must be performed.  The old PROMS on the 210-6789 must be replaced
+          with the following:
+              378-2045R1 = L27
+              378-2046R1 = L28
+              378-2047R1 = L29
+      the 6789 board that I got the 2nd set of bootstrap PROMs from
+      are windowed eproms without official Wang revision numbers.
+      handwritten on the chips are the following:
+          L29 says "2047"
+          L28 says "2046R5"
+          L27 says "2045R5"
+      It is possible that the contents were R5, but the EPROMs were
+      later erased and overwritten, making the handwritten note
+      meaningless.
 
 *) Add 64K words of control memory, so BASIC-3/COBOL can run
    OptionC.pdf in the jim/wang2200/docs/system/2200MVP_MaintenanceManual

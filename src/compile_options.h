@@ -40,13 +40,6 @@
     #define DRAW_WITH_RAWBMP 0
 #endif
 
-// FORCE_FONTMAP == 0
-//    the display is drawn a string at a time, if possible.
-// FORCE_FONTMAP == 1
-//    the font is pre-rendered in to a bitmap, and a characters are
-//    copied over a character at a time.  This may be faster or slower.
-#define FORCE_FONTMAP 1
-
 // ========================================================================
 // UiCrt_Keyboard.cpp compile-time options
 // ========================================================================
