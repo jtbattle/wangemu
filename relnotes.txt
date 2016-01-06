@@ -1,6 +1,6 @@
 ============================================================================
 		   Wang 2200 emulator release notes, v2.2-pre
-				January 3, 2016
+				January 5, 2016
 ============================================================================
 
 
@@ -36,6 +36,9 @@ The emulator very well might run on Linux via Wine, but it hasn't been tested.
 *) (M)VP systems can be configured to have 128 KB, 256 KB, or 512 KB,
    in addition to the previously supported 32 KB and 64 KB.  VP OS's
    can't make use of any memory above 64 KB, though.
+
+*) previously, printing HEX(07) produced a default bell-like sound.
+   now the emulator emits a sound very much like a real Wang terminal.
 
 *) added emulation of a 2236DE terminal, although it isn't exposed yet,
    pending addition of 2236MUXD terminal mux emulation.

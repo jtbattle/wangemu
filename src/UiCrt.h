@@ -4,6 +4,8 @@
 #ifndef _INCLUDE_UI_CRT_H_
 #define _INCLUDE_UI_CRT_H_
 
+#include <wx/sound.h>           // "beep!"
+
 class CrtFrame;
 
 class Crt: public wxWindow
@@ -184,6 +186,10 @@ private:
         else // erase
             m_attr[80*m_curs_y + m_curs_x] &= ~attr;
     }
+
+    // sound for beep
+    void create_beep();
+    wxSound      *m_beep;
 
     DECLARE_EVENT_TABLE()
 };

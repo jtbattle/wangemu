@@ -64,7 +64,7 @@ BEGIN_EVENT_TABLE(Crt, wxWindow)
     EVT_LEFT_DCLICK      (Crt::OnLeftDClick)
 END_EVENT_TABLE()
 
-static char id_string[] = "*2236DE R01 19200BPS 8+O (USA)";
+static char id_string[] = "*2236DE R2016 19200BPS 8+O (USA)";
 
 Crt::Crt(CrtFrame *parent, int screen_type) :
     wxWindow(parent, -1, wxDefaultPosition, wxDefaultSize),
@@ -87,8 +87,14 @@ Crt::Crt(CrtFrame *parent, int screen_type) :
     m_scrpix_w(0),
     m_scrpix_h(0),
     m_RCscreen(wxRect(0,0,0,0)),
-    m_frame_count(0)
+    m_frame_count(0),
+    m_beep(nullptr)
 {
+    create_beep();
+    if (m_beep == nullptr) {
+        UI_Warn("Emulator was unable to create the beep sound.\n"
+                "HEX(07) will produce the host bell sound.");
+    }
     scr_clear();
     reset();
 }
@@ -97,7 +103,7 @@ Crt::Crt(CrtFrame *parent, int screen_type) :
 // free resources on destruction
 Crt::~Crt()
 {
-    // nothing
+    wxDELETE(m_beep);
 }
 
 // hardware reset
@@ -130,7 +136,7 @@ Crt::reset()
 
     // model 2236 behavior by emitting ID string
     if (true) {
-        char *idptr = id_string;
+        char *idptr = &id_string[1];  // skip the leading asterisk
         while (*idptr) {
             processChar3(*idptr);
             idptr++;
@@ -284,6 +290,11 @@ Crt::intensityToColor(float f) const
 // we generate all 256 characters and not worry about manually underlining.
 // The 2236 also offers an alternate upper character set for 0x80-0xFF.
 // In the end, we generate 256+128 characters.
+
+// the schematic for the 2336DW has a mapping PROM based on the scanline row.
+// it shows that glyph rows 0-7 map to scanlines 2-9.  scanline 10 uses
+// glyph row 6.  I believe this is only used in box graphics mode, in which
+// case glyph rows 6 and 7 will be identical.
 
 void
 Crt::generateFontmap()
@@ -1401,10 +1412,18 @@ Crt::processChar2(uint8 byte)
 {
     assert(m_screen_type == UI_SCREEN_2236DE);
 
+static int belch = 0;
+if (belch) {
+    UI_Info("sending 0x%02x", byte);
+}
+
     if (m_input_cnt == 0) {
         switch (byte) {
         case 0x02:  // character attribute, draw/erase box
-        case 0xF7:  // position cursor
+//      case 0xF7:  // position cursor FIXME: somewhere I read that F7 xx yy
+//                     does this, but I can't recall where, and none of the
+//                     other sources indicate this is a valid sequence.
+//                     I'm disabling it until I figure out why I thought this.
             m_input_buf[0] = byte;
             m_input_cnt = 1;
             return;
@@ -1433,10 +1452,11 @@ Crt::processChar2(uint8 byte)
     // accumulate this byte on the current command string
     m_input_buf[m_input_cnt++] = byte;
 
+#if 0
     // look a for completed cursor positioning command: F7 xx yy
     if (m_input_cnt == 2 && m_input_buf[0] == 0xF7) {
         if (m_input_buf[1] > 79) {
-            m_input_cnt = 0;  // just ignore it?
+            m_input_cnt = 0;  // TODO: just ignore it?
         }
         return;
     }
@@ -1452,6 +1472,7 @@ Crt::processChar2(uint8 byte)
         setDirty();
         return;
     }
+#endif
 
     // look for completed 02 ... command sequences
     assert(m_input_cnt > 0 && m_input_buf[0] == 0x02);
@@ -1532,7 +1553,7 @@ Crt::processChar2(uint8 byte)
         return;
     }
 
-    // return self-ID string
+    // return self-ID string: 02 08 09 0F
     if (m_input_cnt == 4 && m_input_buf[1] == 0x08
                          && m_input_buf[2] == 0x09
                          && m_input_buf[3] == 0x0F) {
@@ -1679,7 +1700,12 @@ Crt::processChar3(uint8 byte)
             break;
 
         case 0x07:      // bell
-            wxBell();
+            if (m_beep == nullptr) {
+                wxBell();
+            } else {
+                m_beep->Stop();
+                m_beep->Play(wxSOUND_ASYNC);
+            }
             break;
 
         case 0x08:      // cursor left
@@ -1737,6 +1763,132 @@ Crt::processChar3(uint8 byte)
             break;
     }
     setDirty();
+}
+
+// RIFF WAV file format
+//  __________________________
+// | RIFF WAVE Chunk          |
+// |   groupID  = 'RIFF'      |
+// |   riffType = 'WAVE'      |
+// |    __________________    |
+// |   | Format Chunk     |   |
+// |   |   ckID = 'fmt '  |   |
+// |   |__________________|   |
+// |    __________________    |
+// |   | Sound Data Chunk |   |
+// |   |   ckID = 'data'  |   |
+// |   |__________________|   |
+// |__________________________|
+//
+// although it is legal to have more than one data chunk, this
+// program assumes there is only one.
+
+const uint32 riffID = ('R' << 24) | ('I' << 16) | ('F' << 8) | ('F' << 0);
+const uint32 waveID = ('W' << 24) | ('A' << 16) | ('V' << 8) | ('E' << 0);
+typedef struct {
+    uint32      groupID;        // should be 'RIFF'
+    uint32      riffBytes;      // number of bytes in file after this header
+    uint32      riffType;       // should be 'WAVE'
+} RIFF_t;
+
+const uint32 fmtID = ('f' << 24) | ('m' << 16) | ('t' << 8) | (' ' << 0);
+typedef struct {
+    uint32      chunkID;        // should be 'fmt '
+    int32       chunkSize;      // not including first 8 bytes of header
+    int16       formatTag;      // data format
+    uint16      channels;       // number of audio channels
+    uint32      sampleRate;     // samples/sec
+    uint32      bytesPerSec;    // samples/sec * #channels * bytes/sample
+    uint16      blockAlign;     // # bytes per (sample*channels)
+    uint16      bitsPerSample;
+} FormatChunk_t;
+
+const uint32 dataID = ('d' << 24) | ('a' << 16) | ('t' << 8) | ('a' << 0);
+typedef struct {
+    uint32      chunkID;        // must be 'data'
+    int32       chunkSize;      // not including first 8 bytes of header
+//  unsigned char data[];       // everything that follows
+} DataChunk_t;
+
+
+// most of the data fields are stored little endian, but the ID tags
+// are big endian.
+#define LE16(v) wxUINT16_SWAP_ON_BE(v)
+#define LE32(v) wxUINT32_SWAP_ON_BE(v)
+#define BE16(v) wxUINT16_SWAP_ON_LE(v)
+#define BE32(v) wxUINT32_SWAP_ON_LE(v)
+
+// create a beep sound which chr(0x07) produces
+void
+Crt::create_beep()
+{
+    RIFF_t        RiffHdr;
+    FormatChunk_t FormatHdr;
+    DataChunk_t   DataHdr;
+
+    const int sample_rate   = 16000;
+    const int samples_naive = sample_rate * 8/60;    // 8 vblank intervals
+    const int samples       = (samples_naive & ~3);  // multiple of 4
+
+    int total_bytes = sizeof(RIFF_t)
+                    + sizeof(FormatChunk_t)
+                    + sizeof(DataChunk_t)
+                    + 1*samples;  // 1 byte per sample
+
+    // chunk description
+    RiffHdr.groupID   = (uint32)BE32(riffID);
+    RiffHdr.riffBytes = (uint32)LE32(total_bytes-8);
+    RiffHdr.riffType  = (uint32)BE32(waveID);
+
+    // first subchunk, format description
+    FormatHdr.chunkID       = (uint32)BE32(fmtID);
+    FormatHdr.chunkSize     = ( int32)LE32(sizeof(FormatHdr)-8);
+    FormatHdr.formatTag     = ( int16)LE16(1);  // pcm
+    FormatHdr.channels      = (uint16)LE16(1);  // mono
+    FormatHdr.sampleRate    = (uint32)LE32(  sample_rate);
+    FormatHdr.bytesPerSec   = (uint32)LE32(1*sample_rate);
+    FormatHdr.blockAlign    = (uint16)LE16(1);
+    FormatHdr.bitsPerSample = (uint16)LE16(8);  // good enough for a beep
+
+    // second subchunk, data
+    DataHdr.chunkID   = (uint32)BE32(dataID);
+    DataHdr.chunkSize = (uint32)LE32(1*samples);
+
+    // create a contiguous block, copy the headers into it,
+    // then append the sample data
+//  uint8 *wav = new (nothrow) uint8 [total_bytes];
+    uint8 *wav = new uint8 [total_bytes];
+    if (wav == nullptr) {
+        return;
+    }
+    uint8 *wp = wav;
+    memcpy(wp, &RiffHdr,   sizeof(RiffHdr));    wp += sizeof(RiffHdr);
+    memcpy(wp, &FormatHdr, sizeof(FormatHdr));  wp += sizeof(FormatHdr);
+    memcpy(wp, &DataHdr,   sizeof(DataHdr));    wp += sizeof(DataHdr);
+
+    // make a clipped sin wave at 1 KHz
+    // the frequency has been chosen to match that of my real 2336DE terminal
+    float freq_Hz     = 1940.0f;
+    float phase_scale = 2*3.14159f * freq_Hz / sample_rate;
+    float clip        = 0.70f;  // chop off top/bottom of wave
+    float amplitude   = 40.0f;  // loudness
+    for(int n=0; n<samples; n++) {
+        float s = sin(phase_scale * n);
+        s = (s >  clip) ?  clip
+          : (s < -clip) ? -clip
+                        : s;
+        int sample = int(128.0 + amplitude * s);
+        *wp++ = sample;
+    }
+
+    m_beep = new wxSound;
+    bool success = m_beep->Create(total_bytes, wav);
+    if (!success) {
+        wxDELETE(m_beep);
+        m_beep = nullptr;
+    }
+
+    delete wav;
 }
 
 // vim: ts=8:et:sw=4:smarttab

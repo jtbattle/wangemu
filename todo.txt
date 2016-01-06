@@ -24,16 +24,88 @@ Emulator TODO list
 
 *) improved 2236 terminal emulation
 
+    - I made the arbitrary decision to make the blink timer 4 Hz, meaning
+      it goes through on/off/on/off each second. what should it be?
+      Looking at the schematic, VSYN clocks L67, a  7497 binary rate multiplier
+          fout = fin*M/64
+      M = { F,E,D,C,B,A }; in the schematic it is hardwired to M=4
+      It seems like a complicated way to make a /16 counter.
+      This output goes to L89, a 7474 /2 flop.
+      So the final frequency is 60Hz/32 = ~2Hz.
+
+      The 2336DW schematic shows vsync is divided by 16 with a LS393,
+      and that is divided by 16 by the other half, though only the two low
+      bits are used.
+            /2       -> text blink
+           (/2 & /4) -> cursor blink
+        00 -> blink text off, cursor blink on
+        01 -> blink text on,  cursor blink on
+        10 -> blink text off, cursor blink on
+        11 -> blink text on,  cursor blink off
+
+    - look at the schematics.
+          are box overlay lines affected by blink/inv/bright attributes?
+          is cursor             affected by blink/inv/bright attributes?
+          is underline          affected by blink/inv/bright attributes?
+      make the emulation match.
+      digging:
+        L95/S86 is an xor gate which does the inv vid function.
+       +the cursor goes into the video generation logic independently of inv,
+        at NR2 gate L88/S02
+       +box line graphics goes to same cursor NR2 gate, so isn't affected
+        by inv
+       +the horizontal box lines merge at NR2 L92, which drives L90/7400
+        this blocks the blink chain.  so
+       +BK5 must be the blink attribute bit.  this gates the BLINK signal.
+        next horizontal lines suppress blink for that scanline
+
+    - looking at the 2236DW schematics (this one is legible):
+        742-0903 2236DW INTEGRATED WORKSTATION 02-27-85_2
+      the cursor is active on two scanlines, not one.
+      underline is one scanline.
+      an LS138 has tricky wiring:
+            scanline  '138   2708 A[2:0]  cursor   underline  box L/R
+            --------  -----  -----------  -------  ---------  -------
+               0       Y0           ??0                       enabled
+               1       Y1           ??1   
+               2       Y2 n/c       ??0   
+               3       Y3 n/c       ??1   
+               4       none*        ??0   
+               5       none*        ??1   
+               6       none*        ??0   
+               7       none*        ??1   
+               8       Y4 n/c       ??0   
+               9       Y5           ??1   enabled
+              10       Y6           ??0   enabled  enabled
+              11       Y7           ??1   
+      In rows marked "*", row counter bit R2 goes to !G2A, which forces
+      all outputs inactive.
+      That it maps 12 rows makes me think this terminal uses a 12 scanline
+      character cell, not 11.
+      A[2:0] maps scanline row to one of eight charmap rows
+      hmm, but a later 2236 schematic uses a PROM, and the truth table
+      only shows entries for 0-A (11 scanline rows).  so I'm not sure why
+      the one above uses Y7.
+
+    - for remapping the graphics block glyph to fill the character cell,
+      I forgot that the cell is 11 rows, not 12, so it isn't evenly divisible.
+      The existing code maps glyph row 0 to charcell 0-3
+                             glyph row 2 to charcell 4-7
+                             glyph row 7 to charcell 8-10 (not 11)
+      One of the three block rows must be 3 scanlines, not 4, so figure
+      out what the real hardware does.
+
+    - looking at the schematic, there are two '166 8b shift registers.
+      one is to shift out the glyph row.  the other is for other attributes.
+      top left  appears on inputs 0 & 2.
+      top left | right | vert appears on input 4.
+      top right appears on input 6.
+      in short, the horizontal lines are stippled, not solid
+
     - add smart terminal commands that I've skipped
         - make it so FB Cx actually causes a x/6 second delay
         - add command to return terminal ID
         - screen input (capture)
-
-    - Fasstcom Terminal Specs v1.0.pdf, pdf page 8 says
-      "... the terminal must always transmit a HEX(F8F9) every 3 to 5 seconds
-       whenever it is ready to receive new data during idle time.
-       This is called the constant poll."
-      The emulated terminal doesn't.  Should it?
 
     - pre-blurring the char set to a glyph map, then blitting to the display
       works OK, except the cursor isn't blurred because it is dynamic, and
@@ -43,6 +115,12 @@ Emulator TODO list
       render unblurred and then use OGL to do the blurring.  this has the
       benefit of offering flexible scaling at low cost, and perhaps other
       video generation defect emulation.
+
+    - Fasstcom Terminal Specs v1.0.pdf, pdf page 8 says
+      "... the terminal must always transmit a HEX(F8F9) every 3 to 5 seconds
+       whenever it is ready to receive new data during idle time.
+       This is called the constant poll."
+      The emulated terminal doesn't.  Should it?
 
     - 742-0903.MNL.IntegratedTerminal2236DW.85-02-27.pdf, pdf page 68 says
           2236DW and 2236DW have mostly the same character generators,
