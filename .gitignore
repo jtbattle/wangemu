@@ -192,3 +192,6 @@ src/make_tags.bat
 *.exe
 todo.txt
 verify_multisectors.w22
+
+*.pyc
+termtest/poll.py
