@@ -73,7 +73,8 @@ public:
     int  getDisplayContrast() const;
     int  getDisplayBrightness() const;
 
-    bool getBlinkPhase() const;
+    bool getTextBlinkPhase() const;
+    bool getCursorBlinkPhase() const;
 
     // mechanics of carrying out format for a given filename
     // must be public so statusbar can use it

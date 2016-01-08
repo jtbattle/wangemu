@@ -66,6 +66,8 @@ END_EVENT_TABLE()
 
 static char id_string[] = "*2236DE R2016 19200BPS 8+O (USA)";
 
+wxLog *g_logger = nullptr;
+
 Crt::Crt(CrtFrame *parent, int screen_type) :
     wxWindow(parent, -1, wxDefaultPosition, wxDefaultSize),
     m_parent(parent),
@@ -90,6 +92,7 @@ Crt::Crt(CrtFrame *parent, int screen_type) :
     m_frame_count(0),
     m_beep(nullptr)
 {
+    if (0) g_logger = new wxLogWindow(m_parent, "Logging window", true, false);
     create_beep();
     if (m_beep == nullptr) {
         UI_Warn("Emulator was unable to create the beep sound.\n"
@@ -103,6 +106,7 @@ Crt::Crt(CrtFrame *parent, int screen_type) :
 // free resources on destruction
 Crt::~Crt()
 {
+    wxDELETE(g_logger);
     wxDELETE(m_beep);
 }
 
@@ -118,18 +122,14 @@ Crt::reset()
     // dumb/smart terminal state:
     m_curs_x     = 0;
     m_curs_y     = 0;
-    m_curs_on    = true;  // enable cursor on reset
+    m_curs_attr  = cursor_attr_t::CURSOR_ON;
     m_dirty      = true;  // must regenerate display
 
     // smart terminal state:
     m_raw_cnt    = 0;
     m_input_cnt  = 0;
 
-    m_box_bottom = false;
-
-    m_curs_blink = false;
-
-    m_attrs      = char_attr_t::CHAR_ATTR_BRIGHT;
+    m_attrs      = char_attr_t::CHAR_ATTR_BRIGHT; // implicitly primary char set
     m_attr_on    = false;
     m_attr_temp  = false;
     m_attr_under = false;
@@ -536,33 +536,31 @@ Crt::generateFontmap()
                     int pixrow;
                     if (chr >= 0x140) {
                         // alt character set (block graphics)
-                        // rows 0-3 are same, rows 4-7 are same, rows 8-11 are same
-                        pixrow = (bmr < 4) ? chargen_2236_alt[8*cc+0]
-                               : (bmr < 8) ? chargen_2236_alt[8*cc+2]
-                                           : chargen_2236_alt[8*cc+7];
+                        // hardware maps it this way, so we do too
+                        pixrow = (bmr <  2) ? chargen_2236_alt[8*cc + 0+(bmr&1)]
+                               : (bmr < 10) ? chargen_2236_alt[8*cc + bmr-2]
+                                            : chargen_2236_alt[8*cc + 6+(bmr&1)];
                     } else if (chr >= 0x100) {
                         // alt character set
                         pixrow = (bmr <  2) ? 0x00
-                               : (bmr < 10) ? chargen_2236_alt[8*cc+bmr-2]
+                               : (bmr < 10) ? chargen_2236_alt[8*cc + bmr-2]
                                             : 0x00;
                     } else {
                         // normal character set
                         pixrow = (bmr <  2) ? 0x00
-                               : (bmr < 10) ? chargen[8*cc+bmr-2]
+                               : (bmr < 10) ? chargen[8*cc + bmr-2]
                                             : 0x00;
                     }
 
                     // pad out to 10 pixel row
                     pixrow <<= 1;
                     if (chr >= 0x140) {
-                        // block graphics fills the cell
-                        // we pad to the left using bit 6 not 7 of the original
-                        // bitmap and we pad to the right using bit 1 not bit 0.
-                        // this is how the hardware does it, because the bitmaps
-                        // are not solid; eg, all on (FF) is made up of rows of
-                        // nothing but 0x55 bit patterns.  doing it this way
-                        // keeps the stipple pattern regular.  it seems like
-                        // bit 1 will always be 0 though.
+                        // block graphics fills the character cell.
+                        // from the original bitmap, we pad to the left using
+                        // bit 6 (not 7), and we pad to the right using bit 1
+                        // (not 0). this is how the hardware does it, because
+                        // the bitmaps are not solid; eg, all on (FF) is made
+                        // up of rows of nothing but 0x55 bit patterns.
                         pixrow |= ((pixrow << 2) & 0x200)
                                |  ((pixrow >> 2) & 0x001);
                     }
@@ -683,14 +681,91 @@ Crt::generateScreen()
     memDC.Clear();
 
     generateScreenByBlits(memDC);
-
-    // draw box/line overlay onto DC
+    generateScreenCursor(memDC);  // FIXME: should this come after overlay?
     if (m_screen_type == UI_SCREEN_2236DE)
         generateScreenOverlay(memDC);
 
-    // draw cursor -- there can be only zero/one on screen.
-    // it is drawn one scanline lower than the underline
-    if (m_curs_on) {
+    // release the bitmap
+    memDC.SelectObject(wxNullBitmap);
+}
+
+
+// draw each character by blit'ing from the fontmap
+void
+Crt::generateScreenByBlits(wxMemoryDC &memDC)
+{
+    // draw each character from the fontmap
+    wxMemoryDC fontmapDC;
+    fontmapDC.SelectObjectAsSource(m_fontmap);
+
+    bool text_blink_enable = m_parent->getTextBlinkPhase();
+
+    // draw each row of the text
+    for(int row=0; row<m_chars_h; row++) {
+
+        if (m_screen_type == UI_SCREEN_2236DE) {
+
+            for(int col=0; col<m_chars_w; col++) {
+
+                int chr     = m_display[row*m_chars_w + col];
+                uint8 attr  =    m_attr[row*m_chars_w + col];
+                bool alt    = (attr & char_attr_t::CHAR_ATTR_ALT)    ? true : false;
+                bool blink  = (attr & char_attr_t::CHAR_ATTR_BLINK)  ? true : false;
+                int  inv    = (attr & char_attr_t::CHAR_ATTR_INV)    ? 2    : 0;
+                int  bright = (attr & char_attr_t::CHAR_ATTR_BRIGHT) ? 1    : 0;
+
+                // blinking alternates between normal and bright intensity
+                // but intense text can't blink because it is already intense
+                if (text_blink_enable && blink)
+                    bright = 1;
+
+                int font_row = m_charcell_h * (bright + inv);
+
+                // remap to codes 256-383 for alternate char set
+                chr = (alt && (chr >= 0x80)) ? (chr & 0x7F) + 256
+                                             :  chr;
+
+                if ((chr >= 0x10 && chr != 0x20) || inv) {
+                    // if (non-blank character)
+                    memDC.Blit(col*m_charcell_w, row*m_charcell_h,  // dest x,y
+                               m_charcell_w, m_charcell_h,          // w,h
+                               &fontmapDC,                          // src image
+                               chr*m_charcell_w, font_row);         // src x,y
+                }
+            }
+
+        } else {
+
+            // old terminal: one character set, no attributes
+            for(int col=0; col<m_chars_w; col++) {
+                int chr = m_display[row*m_chars_w + col];
+                if ((chr >= 0x10) && (chr != 0x20)) {  // if (non-blank character)
+                    memDC.Blit(col*m_charcell_w, row*m_charcell_h,  // dest x,y
+                               m_charcell_w, m_charcell_h,          // w,h
+                               &fontmapDC,                          // src image
+                               chr*m_charcell_w, 0);                // src x,y
+                }
+            }
+        }
+    }
+
+    fontmapDC.SelectObject(wxNullBitmap);
+}
+
+
+void
+Crt::generateScreenCursor(wxMemoryDC &memDC)
+{
+    // FIXME: should this be brighter than 1.0?
+    wxColor fg(intensityToColor(1.0f));  // color of cursor
+
+    bool cursor_blink_enable = m_parent->getCursorBlinkPhase();
+
+    // cursor it is drawn one scanline lower than the underline
+    // FIXME: it should be two scanlines high, I believe
+    if (m_curs_attr == cursor_attr_t::CURSOR_ON  ||
+        m_curs_attr == cursor_attr_t::CURSOR_BLINK && cursor_blink_enable
+       ) {
         // draw the one actual cursor, wherever it is
         int top   = m_curs_y * m_charcell_h + m_begin_curs;
         int left  = m_curs_x * m_charcell_w;
@@ -700,9 +775,6 @@ Crt::generateScreen()
             memDC.DrawLine(left,  top + yy,
                            right, top + yy);
     }
-
-    // release the bitmap
-    memDC.SelectObject(wxNullBitmap);
 }
 
 
@@ -792,64 +864,6 @@ Crt::generateScreenOverlay(wxMemoryDC &memDC)
             memDC.DrawRectangle(mid, start, sx, end-start+sy);
         }
     }
-}
-
-
-// draw each character by blit'ing from the fontmap
-void
-Crt::generateScreenByBlits(wxMemoryDC &memDC)
-{
-    // draw each character from the fontmap
-    wxMemoryDC fontmapDC;
-    fontmapDC.SelectObjectAsSource(m_fontmap);
-
-    bool blink_enable = m_parent->getBlinkPhase();
-
-    // draw each row of the text
-    for(int row=0; row<m_chars_h; row++) {
-
-        if (m_screen_type == UI_SCREEN_2236DE) {
-
-            for(int col=0; col<m_chars_w; col++) {
-
-                int chr     = m_display[row*m_chars_w + col];
-                uint8 attr  =    m_attr[row*m_chars_w + col];
-                bool alt    = (attr & char_attr_t::CHAR_ATTR_ALT)    ? true : false;
-                bool blink  = (attr & char_attr_t::CHAR_ATTR_BLINK)  ? true : false;
-                int  inv    = (attr & char_attr_t::CHAR_ATTR_INV)    ? 2    : 0;
-                int  bright = (attr & char_attr_t::CHAR_ATTR_BRIGHT) ? 1    : 0;
-
-                int font_row = m_charcell_h * (bright + inv);
-
-                chr = (blink_enable && blink) ? 0x20
-                    : (alt && (chr >= 0x80))  ? (chr & 0x7F) + 256
-                                              :  chr;
-
-                if ((chr >= 0x10 && chr != 0x20) || inv) {
-                    // if (non-blank character)
-                    memDC.Blit(col*m_charcell_w, row*m_charcell_h,  // dest x,y
-                               m_charcell_w, m_charcell_h,          // w,h
-                               &fontmapDC,                          // src image
-                               chr*m_charcell_w, font_row);         // src x,y
-                }
-            }
-
-        } else {
-
-            // old terminal: one character set, no attributes
-            for(int col=0; col<m_chars_w; col++) {
-                int chr = m_display[row*m_chars_w + col];
-                if ((chr >= 0x10) && (chr != 0x20)) {  // if (non-blank character)
-                    memDC.Blit(col*m_charcell_w, row*m_charcell_h,  // dest x,y
-                               m_charcell_w, m_charcell_h,          // w,h
-                               &fontmapDC,                          // src image
-                               chr*m_charcell_w, 0);                // src x,y
-                }
-            }
-        }
-    }
-
-    fontmapDC.SelectObject(wxNullBitmap);
 }
 
 
@@ -971,7 +985,10 @@ Crt::generateScreenByRawBmp(wxColor fg, wxColor bg)
 
     // draw cursor -- there can be only zero/one on screen.
     // it is drawn one scanline lower than the underline
-    if (m_curs_on) {
+    bool cursor_blink_enable = m_parent->getCursorBlinkPhase();
+    if (m_curs_attr == cursor_attr_t::CURSOR_ON ||
+        m_curs_attr == cursor_attr_t::CURSOR_BLINK && cursor_blink_enable
+       ) {
 
         // draw the one actual cursor, wherever it is
         int top  = m_curs_y * m_charcell_h + m_begin_curs;
@@ -1350,6 +1367,7 @@ Crt::processChar(uint8 byte)
         processChar3(byte);
         return;
     }
+    //wxLogMessage("processChar(0x%02x)", byte);
 
     if (m_raw_cnt > 0) {
         // keep accumulating
@@ -1395,7 +1413,7 @@ Crt::processChar(uint8 byte)
     // what is left is a run count: FB nn cc
     // where nn is the repetition count, and cc is the character
     if (m_raw_cnt == 3 && m_raw_buf[0] == 0xFB && m_raw_buf[1] < 0x60) {
-UI_Info("Decompress: cnt=%d, chr=0x%02x", m_raw_buf[1], m_raw_buf[2]);
+//UI_Info("Decompress: cnt=%d, chr=0x%02x", m_raw_buf[1], m_raw_buf[2]);
         for(int i=0; i<m_raw_buf[1]; i++)
             processChar2(m_raw_buf[2]);
         m_raw_cnt = 0;
@@ -1411,19 +1429,13 @@ void
 Crt::processChar2(uint8 byte)
 {
     assert(m_screen_type == UI_SCREEN_2236DE);
+    //wxLogMessage("processChar2(0x%02x), m_input_cnt=%d", byte, m_input_cnt);
 
-static int belch = 0;
-if (belch) {
-    UI_Info("sending 0x%02x", byte);
-}
+    assert( m_input_cnt < sizeof(m_input_buf) );
 
     if (m_input_cnt == 0) {
         switch (byte) {
         case 0x02:  // character attribute, draw/erase box
-//      case 0xF7:  // position cursor FIXME: somewhere I read that F7 xx yy
-//                     does this, but I can't recall where, and none of the
-//                     other sources indicate this is a valid sequence.
-//                     I'm disabling it until I figure out why I thought this.
             m_input_buf[0] = byte;
             m_input_cnt = 1;
             return;
@@ -1452,35 +1464,13 @@ if (belch) {
     // accumulate this byte on the current command string
     m_input_buf[m_input_cnt++] = byte;
 
-#if 0
-    // look a for completed cursor positioning command: F7 xx yy
-    if (m_input_cnt == 2 && m_input_buf[0] == 0xF7) {
-        if (m_input_buf[1] > 79) {
-            m_input_cnt = 0;  // TODO: just ignore it?
-        }
-        return;
-    }
-    if (m_input_cnt == 3 && m_input_buf[0] == 0xF7) {
-        int x = m_input_buf[1];
-        int y = m_input_buf[2];
-        m_input_cnt = 0;
-        if (y > 23) {
-            return;     // TODO: just ignore it?
-        }
-        setCursorX(x);
-        setCursorY(y);
-        setDirty();
-        return;
-    }
-#endif
-
     // look for completed 02 ... command sequences
     assert(m_input_cnt > 0 && m_input_buf[0] == 0x02);
 
     // cursor blink enable: 02 05 0F
     if (m_input_cnt == 3 && m_input_buf[1] == 0x05
                          && m_input_buf[2] == 0x0F) {
-        m_curs_blink = true;
+        m_curs_attr = cursor_attr_t::CURSOR_BLINK;
         m_input_cnt = 0;
         return;
     }
@@ -1495,6 +1485,7 @@ if (belch) {
     if (m_input_cnt == 4 && m_input_buf[1] == 0x02
                          && m_input_buf[2] == 0x00
                          && m_input_buf[3] == 0x0F) {
+// wxLogMessage("esc: 02 02 00 0F --> ALT disabled");
 //      UI_Info("esc: 02 02 00 0F --> ALT disabled");
         m_attrs &= ~(char_attr_t::CHAR_ATTR_ALT);
         m_input_cnt = 0;
@@ -1504,6 +1495,7 @@ if (belch) {
     if (m_input_cnt == 4 && m_input_buf[1] == 0x02
                          && m_input_buf[2] == 0x02
                          && m_input_buf[3] == 0x0F) {
+// wxLogMessage("esc: 02 02 02 0F --> ALT enabled");
 //      UI_Info("esc: 02 02 02 0F --> ALT enabled");
         m_attrs |= (char_attr_t::CHAR_ATTR_ALT);
         m_input_cnt = 0;
@@ -1637,7 +1629,12 @@ if (belch) {
         }
     }
 
-    // reinitialize terminal
+    // reinitialize terminal: 02 0D 0C 03 0F
+    // 2336DW_InteractiveTerminalUserManual.700-7636.11-82.pdf says this:
+    //   1. Clears the screen, homes the cursor and turns the cursor on
+    //   2. Selects normal intensity characters
+    //   3. Selects bright as attribute to be activated by HEX(0E)
+    //   4. Select the default character set for that version of terminal
     if (m_input_cnt == 3 && m_input_buf[1] == 0x0D
                          && m_input_buf[2] != 0x0C) {
         m_input_cnt = 0;
@@ -1690,13 +1687,11 @@ Crt::processChar3(uint8 byte)
             break;
 
         case 0x05:      // enable cursor
-            m_curs_on    = true;
-            m_curs_blink = false;  // TODO: is this the right behavior?
+            m_curs_attr = cursor_attr_t::CURSOR_ON;
             break;
 
         case 0x06:      // disable cursor
-            m_curs_on    = false;
-            m_curs_blink = false;  // TODO: is this the right behavior?
+            m_curs_attr = cursor_attr_t::CURSOR_OFF;
             break;
 
         case 0x07:      // bell

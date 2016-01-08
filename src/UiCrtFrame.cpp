@@ -869,11 +869,24 @@ CrtFrame::setSimSeconds(int secs, float relative_speed)
 }
 
 
-// indicate if the blink effect should be on or off
+// 2336: there is 2b counter
+//        text   cursor
+//   00:  norm     on
+//   01:  bright   on
+//   10:  norm     on
+//   11:  bright   off
 bool
-CrtFrame::getBlinkPhase() const
+CrtFrame::getTextBlinkPhase() const
 {
-    return (m_blink_phase >= 2);
+    return (m_blink_phase & 1) == 1;
+}
+
+bool
+CrtFrame::getCursorBlinkPhase() const
+{
+    // I believe the 2236 had a 50% duty cycle,
+    // but the 2336 definitely has a 75% duty cycle
+    return (m_blink_phase < 3);
 }
 
 
@@ -1130,10 +1143,8 @@ CrtFrame::OnTimer(wxTimerEvent &event)
             m_fps = m_crt->getFrameCount();
             m_crt->setFrameCount(0);
         }
-        if (~m_blink_phase % 2) {
-            // blink just turned on or off, so redraw screen
-            m_crt->setDirty();
-        }
+        // there might be blinking text or blinking cursor
+        m_crt->setDirty();
     }
 }
 

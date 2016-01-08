@@ -92,6 +92,7 @@ private:
     bool generateScreenByRawBmp(wxColor fg, wxColor bg);
     void generateScreenByBlits(wxMemoryDC &memDC);
     void generateScreenOverlay(wxMemoryDC &memDC);
+    void generateScreenCursor(wxMemoryDC &memDC);
 
     // map an intensity to a display color
     wxColor intensityToColor(float f) const;
@@ -151,9 +152,14 @@ private:
     int           m_scrpix_h;       // display dimension, in pixels
     wxRect        m_RCscreen;       // active text area
 
+    enum cursor_attr_t {
+        CURSOR_OFF,
+        CURSOR_ON,
+        CURSOR_BLINK
+    };
     int           m_curs_x;         // cursor location now
     int           m_curs_y;         // cursor location now
-    bool          m_curs_on;        // cursor is enabled
+    cursor_attr_t m_curs_attr;      // cursor state
 
     int           m_frame_count;    // for tracking refresh fps
     bool          m_dirty;          // something has changed since last refresh
@@ -171,10 +177,9 @@ private:
     uint8         m_attr[80*24];    // display attributes
     int           m_raw_cnt;        // raw input stream buffered until we have
     uint8         m_raw_buf[3];     // ... a complete runlength sequence
-    int           m_input_cnt;      // buffered input stream
-    uint8         m_input_buf[90];  // ... after decompression and accumulation
+    int           m_input_cnt;      // buffered input stream while decoding
+    uint8         m_input_buf[10];  // ... character sequence escapes
     bool          m_box_bottom;     // true if we've seen at least one 0B
-    bool          m_curs_blink;     // cursor blinks if enabled
     int           m_attrs;          // current char attributes
     bool          m_attr_on;        // use attr bits until next 0F
     bool          m_attr_temp;      // use attr bits until next 0D or 0F

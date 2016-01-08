@@ -24,40 +24,36 @@ Emulator TODO list
 
 *) improved 2236 terminal emulation
 
-    - I made the arbitrary decision to make the blink timer 4 Hz, meaning
-      it goes through on/off/on/off each second. what should it be?
-      Looking at the schematic, VSYN clocks L67, a  7497 binary rate multiplier
-          fout = fin*M/64
-      M = { F,E,D,C,B,A }; in the schematic it is hardwired to M=4
-      It seems like a complicated way to make a /16 counter.
-      This output goes to L89, a 7474 /2 flop.
-      So the final frequency is 60Hz/32 = ~2Hz.
-
-      The 2336DW schematic shows vsync is divided by 16 with a LS393,
-      and that is divided by 16 by the other half, though only the two low
-      bits are used.
-            /2       -> text blink
-           (/2 & /4) -> cursor blink
-        00 -> blink text off, cursor blink on
-        01 -> blink text on,  cursor blink on
-        10 -> blink text off, cursor blink on
-        11 -> blink text on,  cursor blink off
+    - get rid of 1x1 dot matrix mode -- doesn't model the real hw,
+      isn't readable
+    - dot stream is gated by pixclk
+    - alternate lines are always black, even in reverse video mode
+    - the cursor should be two rows high (last two)
+    - the cursor is always high-intensity if it is on a non-invering cell.
+      on inverted cells it is just black.
+    - the emulator inverts the entire charcell in inv mode, but the real
+      terminal still has alternate lines solid black
+    - box horizontal lines are stipped, not solid
+    - the real 2336 has a 25th line, but only the upper box line attribute
+      bits can be used.  this allows completing a box on the last row.
 
     - look at the schematics.
           are box overlay lines affected by blink/inv/bright attributes?
           is cursor             affected by blink/inv/bright attributes?
           is underline          affected by blink/inv/bright attributes?
       make the emulation match.
-      digging:
-        L95/S86 is an xor gate which does the inv vid function.
-       +the cursor goes into the video generation logic independently of inv,
-        at NR2 gate L88/S02
-       +box line graphics goes to same cursor NR2 gate, so isn't affected
-        by inv
-       +the horizontal box lines merge at NR2 L92, which drives L90/7400
-        this blocks the blink chain.  so
-       +BK5 must be the blink attribute bit.  this gates the BLINK signal.
-        next horizontal lines suppress blink for that scanline
+
+    - the Z80 doesn't necessarily store the stated value in the char cell.
+      eg, when writing 0x8A, it actually saves 0x0A in the cell, to prevent
+      an underline  (underline is active effectively only on 0x90-0xFF)
+      but if the underline attribute is set, I believe the terminal will
+      generate 0x8A with an underline.  double check the 
+
+    - test some corner case on the real terminal.  eg, what happens if
+      box line mode moves left or right off the screen?
+      or up or down off the screen?
+      or if there is an incorrect escape sequence: at what point are the
+      bytes swallowed, or are they passed through?
 
     - looking at the 2236DW schematics (this one is legible):
         742-0903 2236DW INTEGRATED WORKSTATION 02-27-85_2
@@ -87,21 +83,6 @@ Emulator TODO list
       only shows entries for 0-A (11 scanline rows).  so I'm not sure why
       the one above uses Y7.
 
-    - for remapping the graphics block glyph to fill the character cell,
-      I forgot that the cell is 11 rows, not 12, so it isn't evenly divisible.
-      The existing code maps glyph row 0 to charcell 0-3
-                             glyph row 2 to charcell 4-7
-                             glyph row 7 to charcell 8-10 (not 11)
-      One of the three block rows must be 3 scanlines, not 4, so figure
-      out what the real hardware does.
-
-    - looking at the schematic, there are two '166 8b shift registers.
-      one is to shift out the glyph row.  the other is for other attributes.
-      top left  appears on inputs 0 & 2.
-      top left | right | vert appears on input 4.
-      top right appears on input 6.
-      in short, the horizontal lines are stippled, not solid
-
     - add smart terminal commands that I've skipped
         - make it so FB Cx actually causes a x/6 second delay
         - add command to return terminal ID
@@ -115,6 +96,14 @@ Emulator TODO list
       render unblurred and then use OGL to do the blurring.  this has the
       benefit of offering flexible scaling at low cost, and perhaps other
       video generation defect emulation.
+
+    - if OGL isn't done, and if the mac port is still slow using the blit
+      method so we have to keep the separate screen rendering path, try this.
+      maybe the mac path shouldn't draw the cursor at all, and instead
+      after the bitmap is converted to memDC, use the drawcursor/overlay
+      routines to superimpose those features.  although blitting was very
+      slow because we have to do thousands of blits requiring a lot of
+      bitmap conversions, maybe drawing the overlays isn't so bad.
 
     - Fasstcom Terminal Specs v1.0.pdf, pdf page 8 says
       "... the terminal must always transmit a HEX(F8F9) every 3 to 5 seconds
