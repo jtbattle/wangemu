@@ -11,28 +11,26 @@ term.sendline("Hello from python")
 term.sendline()
 
 if 0:
+    term.clear()
     term.sendline("Charset #1:")
-    term.send("                ")
+    term.send(''.join(' ' for i in range(16)))
     term.charset1()
     for n in range(16, 256):
         term.send(chr(n))
-        if (n % 32) == 31:
+        if (n % 64) == 63:
             term.sendline()
     term.sendline();
     term.sendline();
-    time.sleep(0.5)
 
-if 0:
     term.sendline("Charset #2:");
-    term.send("                ")
+    term.send(''.join(' ' for i in range(16)))
     term.charset2()
     for n in range(16, 256):
         term.send(chr(n))
-        if (n % 32) == 31:
+        if (n % 64) == 63:
             term.sendline()
     term.sendline();
     term.sendline();
-    time.sleep(0.5)
 
 if 0:
     for n in range(1,50):
@@ -162,7 +160,7 @@ if 0:
     term.at(0,20).box(25,2)
     term.read(1)
 
-if 1:
+if 0:
     # blink w/ intense test
     term.clear().attrUse()
     term.attrUse().send("Normal intensity, no blink, normal  video --> ").attrUse(bright=0, blink=0, inv=0).sendline("TEST STRING")
@@ -190,6 +188,28 @@ if 0:
                     term.at(0,2).box(7,0)    # vertical line
                     term.at(3,10)            # cursor
                     foo = term.read(1)
+
+if 0:
+    # what if a bunch of 0As are emitted?
+    # does the x cursor position get reset on scroll?
+    term.clear()
+    term.at(0,0).send("top row")
+    term.at(23,0).send("bottom row")
+    term.at(0,20)
+    for n in range(30):
+        term.sendhex('0A')
+        time.sleep(0.25)
+
+if 1:
+    # what if a bunch of 0Cs are emitted?
+    # does the x cursor position get reset on scroll?  does it do reverse scroll?
+    term.clear()
+    term.at(0,0).send("top row")
+    term.at(23,0).send("bottom row")
+    term.at(10,20)
+    for n in range(20):
+        term.sendhex('0C')
+        time.sleep(0.25)
 
 if 0:
     term.clear()

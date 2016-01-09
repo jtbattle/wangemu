@@ -127,8 +127,9 @@ private:
     const int     m_screen_type;    // UI_SCREEN_* enum value
     const int     m_chars_w;        // screen dimension, in characters
     const int     m_chars_h;        // screen dimension, in characters
+    const int     m_chars_h2;       // 2236: 25, otherwise == m_chars_h
 
-    uint8         m_display[80*24]; // character codes
+    uint8         m_display[80*25]; // character codes
     wxBitmap      m_scrbits;        // image of the display
 
     wxFont        m_font;           // font in use
@@ -174,7 +175,7 @@ private:
         CHAR_ATTR_BLINK  = 0x40,  // blink character
         CHAR_ATTR_INV    = 0x80,  // inverse character
     };
-    uint8         m_attr[80*24];    // display attributes
+    uint8         m_attr[80*25];    // display attributes
     int           m_raw_cnt;        // raw input stream buffered until we have
     uint8         m_raw_buf[3];     // ... a complete runlength sequence
     int           m_input_cnt;      // buffered input stream while decoding
@@ -185,11 +186,11 @@ private:
     bool          m_attr_temp;      // use attr bits until next 0D or 0F
     bool          m_attr_under;     // draw underlined char if m_attr_on
 
-    void setBoxAttr(bool box_draw, uint8 attr) {
+    void setBoxAttr(bool box_draw, uint8 attr, int y_adj=0) {
         if (box_draw)
-            m_attr[80*m_curs_y + m_curs_x] |=  attr;
+            m_attr[80*(m_curs_y+y_adj) + m_curs_x] |=  attr;
         else // erase
-            m_attr[80*m_curs_y + m_curs_x] &= ~attr;
+            m_attr[80*(m_curs_y+y_adj) + m_curs_x] &= ~attr;
     }
 
     // sound for beep

@@ -33,9 +33,6 @@
 // slow.  #1 and #3 are about the same speed, but #3 using the dot matrix
 // font wins on the basis of nostalgia.
 
-// TODO:
-//    *) in dot matrix mode, the cursor isn't blurred.
-
 // ----------------------------------------------------------------------------
 // headers
 // ----------------------------------------------------------------------------
@@ -71,9 +68,10 @@ wxLog *g_logger = nullptr;
 Crt::Crt(CrtFrame *parent, int screen_type) :
     wxWindow(parent, -1, wxDefaultPosition, wxDefaultSize),
     m_parent(parent),
-    m_screen_type((1) ? screen_type : UI_SCREEN_2236DE),  // FIXME: just a hack to test 2236 emulation behavior
+    m_screen_type((0) ? screen_type : UI_SCREEN_2236DE),  // FIXME: just a hack to test 2236 emulation behavior
     m_chars_w((screen_type == UI_SCREEN_80x24) ? 80 : 64),
     m_chars_h((screen_type == UI_SCREEN_80x24) ? 24 : 16),
+    m_chars_h2((m_screen_type == UI_SCREEN_2236DE) ? 25 : m_chars_h),
     m_font(wxNullFont),         // until SetFontSize() is called
     m_fontsize(FONT_MATRIX12),
     m_fontdirty(true),          // must be regenerated
@@ -701,7 +699,7 @@ Crt::generateScreenByBlits(wxMemoryDC &memDC)
     bool text_blink_enable = m_parent->getTextBlinkPhase();
 
     // draw each row of the text
-    for(int row=0; row<m_chars_h; row++) {
+    for(int row=0; row<m_chars_h2; row++) {
 
         if (m_screen_type == UI_SCREEN_2236DE) {
 
@@ -782,6 +780,8 @@ Crt::generateScreenCursor(wxMemoryDC &memDC)
 void
 Crt::generateScreenOverlay(wxMemoryDC &memDC)
 {
+    assert(m_screen_type == UI_SCREEN_2236DE);
+
     int sx, sy;  // scale factor for logical pixel to screen mapping
     switch (getFontSize()) {
         default: // in case someone has diddled the ini file
@@ -809,7 +809,7 @@ Crt::generateScreenOverlay(wxMemoryDC &memDC)
     memDC.SetPen(wxPen(fg, 0, wxSOLID));
 
     // find horizontal runs of lines and draw them
-    for(int row=0; row < 24; row++) {
+    for(int row=0; row < 25; row++) {
         int off = 80 * row;
         int top = row * m_charcell_h;
         int start = -1;
@@ -842,11 +842,12 @@ Crt::generateScreenOverlay(wxMemoryDC &memDC)
     }
 
     // find vertical runs of lines and draw them
+    // the 25th line is guaranteed to not have the vert attribute
     for(int col=0; col < 80; col++) {
         int off = col;
         int mid = col * m_charcell_w + (m_charcell_w >> 1);
         int start = -1;
-        for(int row=0; row < 24; row++, off += 80) {
+        for(int row=0; row < 25; row++, off += 80) {
             if (m_attr[off] & (char_attr_t::CHAR_ATTR_VERT)) {
                 if (start < 0)  // start of run
                     start = row * m_charcell_h;
@@ -856,12 +857,6 @@ Crt::generateScreenOverlay(wxMemoryDC &memDC)
                 memDC.DrawRectangle(mid, start, sx, end-start+sy);
                 start = -1;
             }
-        }
-        // draw if we made it all the way to the bottom
-        // I'm not sure if this is possible
-        if (start >= 0) {
-            int end = 24 * m_charcell_h;
-            memDC.DrawRectangle(mid, start, sx, end-start+sy);
         }
     }
 }
@@ -932,7 +927,7 @@ Crt::generateScreenByRawBmp(wxColor fg, wxColor bg)
     // draw the characters (diddlescan order),
     // skipping non-printing characters
     wxAlphaPixelData::Iterator sp(raw_screen);  // screen pointer
-    for(int row=0; row<m_chars_h; ++row) {
+    for(int row=0; row<m_chars_h2; ++row) {
 
         // the upper left corner of the leftmost char of row
         wxAlphaPixelData::Iterator rowUL = sp;
@@ -1245,7 +1240,7 @@ Crt::recalcBorders()
 {
     // figure out where the active drawing area is
     int width  = m_charcell_w*m_chars_w;
-    int height = m_charcell_h*m_chars_h;
+    int height = m_charcell_h*m_chars_h2;
     int orig_x = (width  < m_scrpix_w) ? (m_scrpix_w-width)/2  : 0;
     int orig_y = (height < m_scrpix_h) ? (m_scrpix_h-height)/2 : 0;
 
@@ -1281,11 +1276,13 @@ Crt::adjustCursorY(int delta)
     m_curs_y += delta;
     if (m_curs_y >= m_chars_h) {
         m_curs_y = m_chars_h-1;
-        m_curs_x = 0;   // yes, scrolling has this effect
-                        // (maybe an artifact of the microcode?  probably not)
+        if (m_screen_type != UI_SCREEN_2236DE) {
+            m_curs_x = 0;   // yes, scrolling has this effect
+        }
         scr_scroll();
-    } else if (m_curs_y < 0)
+    } else if (m_curs_y < 0) {
         m_curs_y = m_chars_h-1;     // wrap around
+    }
 }
 
 // move cursor left or right
@@ -1293,10 +1290,11 @@ void
 Crt::adjustCursorX(int delta)
 {
     m_curs_x += delta;
-    if (m_curs_x >= m_chars_w)
+    if (m_curs_x >= m_chars_w) {
         m_curs_x = 0;
-    else if (m_curs_x < 0)
+    } else if (m_curs_x < 0) {
         m_curs_x = m_chars_w - 1;
+    }
 }
 
 
@@ -1312,8 +1310,11 @@ Crt::scr_clear()
 
     if (m_screen_type == UI_SCREEN_2236DE) {
         uint8 attr = 0;
-        for(int y=0; y<m_chars_h; y++)
-            for(int x=0; x<m_chars_w; x++)
+        // take care of the 25th row
+        for(int x=0; x<m_chars_w; x++)
+            scr_write_char(x, 24, fillval);
+        for(int y=0; y<25; y++)
+            for(int x=0; x<80; x++)
                 scr_write_attr(x, y, attr);
     }
 
@@ -1327,23 +1328,24 @@ Crt::scr_clear()
 void
 Crt::scr_scroll()
 {
-    uint8 *d  = m_display;                    // first char of row 0
-    uint8 *s  = d + m_chars_w;                // first char of row 1
-    uint8 *d2 = d + m_chars_w*(m_chars_h-1);  // first char of last row
+    uint8 *d  = m_display;                     // first char of row 0
+    uint8 *s  = d + m_chars_w;                 // first char of row 1
+    uint8 *d2 = d + m_chars_w*(m_chars_h2-1);  // first char of last row
 
     // scroll up the data
-    (void)memcpy(d, s, (m_chars_h-1)*m_chars_w);
+    (void)memcpy(d, s, (m_chars_h2-1)*m_chars_w);
     // blank the last line
     (void)memset(d2, ' ', m_chars_w);
 
+    // cake care of the attribute plane
     if (m_screen_type == UI_SCREEN_2236DE) {
-        d  = (uint8*)m_attr;               // first char of row 0
-        s  = d + m_chars_w;                // first char of row 1
-        d2 = d + m_chars_w*(m_chars_h-1);  // first char of last row
+        d  = (uint8*)m_attr;                // first char of row 0
+        s  = d + m_chars_w;                 // first char of row 1
+        d2 = d + m_chars_w*(m_chars_h2-1);  // first char of last row
         uint8 attr_fill = 0;
 
         // scroll up the data
-        (void)memcpy(d, s, (m_chars_h-1)*m_chars_w);
+        (void)memcpy(d, s, (m_chars_h2-1)*m_chars_w);
         // blank the last line
         (void)memset(d2, attr_fill, m_chars_w);
     }
@@ -1584,15 +1586,11 @@ Crt::processChar2(uint8 byte)
                 // draw top left  side of char below old position
                 // draw top right side of char below new position
                 if (m_box_bottom) {
-                    adjustCursorY(+1);
-                    setBoxAttr(box_draw, char_attr_t::CHAR_ATTR_LEFT);
-                    adjustCursorY(-1);
+                    setBoxAttr(box_draw, char_attr_t::CHAR_ATTR_LEFT, +1);
                 }
                 adjustCursorX(-1);
                 if (m_box_bottom) {
-                    adjustCursorY(+1);
-                    setBoxAttr(box_draw, char_attr_t::CHAR_ATTR_RIGHT);
-                    adjustCursorY(-1);
+                    setBoxAttr(box_draw, char_attr_t::CHAR_ATTR_RIGHT, +1);
                 }
                 return;
             case 0x09: // move right

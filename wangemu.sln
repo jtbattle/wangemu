@@ -8,11 +8,15 @@ EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
+		DLL Debug|Win32 = DLL Debug|Win32
+		DLL Release|Win32 = DLL Release|Win32
 		Release|Win32 = Release|Win32
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{D2B25D33-CBC3-4057-8B24-5C08E0D56C78}.Debug|Win32.ActiveCfg = Debug|Win32
 		{D2B25D33-CBC3-4057-8B24-5C08E0D56C78}.Debug|Win32.Build.0 = Debug|Win32
+		{D2B25D33-CBC3-4057-8B24-5C08E0D56C78}.DLL Debug|Win32.ActiveCfg = Debug|Win32
+		{D2B25D33-CBC3-4057-8B24-5C08E0D56C78}.DLL Release|Win32.ActiveCfg = Release|Win32
 		{D2B25D33-CBC3-4057-8B24-5C08E0D56C78}.Release|Win32.ActiveCfg = Release|Win32
 		{D2B25D33-CBC3-4057-8B24-5C08E0D56C78}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection

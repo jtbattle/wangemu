@@ -24,36 +24,26 @@ Emulator TODO list
 
 *) improved 2236 terminal emulation
 
-    - get rid of 1x1 dot matrix mode -- doesn't model the real hw,
-      isn't readable
-    - dot stream is gated by pixclk
-    - alternate lines are always black, even in reverse video mode
     - the cursor should be two rows high (last two)
-    - the cursor is always high-intensity if it is on a non-invering cell.
+    - the cursor is always high-intensity if it is on a non-inverting cell.
       on inverted cells it is just black.
-    - the emulator inverts the entire charcell in inv mode, but the real
-      terminal still has alternate lines solid black
-    - box horizontal lines are stipped, not solid
-    - the real 2336 has a 25th line, but only the upper box line attribute
-      bits can be used.  this allows completing a box on the last row.
-
-    - look at the schematics.
-          are box overlay lines affected by blink/inv/bright attributes?
-          is cursor             affected by blink/inv/bright attributes?
-          is underline          affected by blink/inv/bright attributes?
-      make the emulation match.
+    - alternate lines are always black, even in reverse video mode
+    - dot stream is gated by pixclk.  not easily do-able in 2:1 dot mode
+    - get rid of 1x1 dot matrix mode -- doesn't model the real hw,
+      isn't readable.
+    - for native font mode, can I use unicode to get better mapping for
+      diamond shapes, arrows, etc?
+        http://unicodelookup.com/#diamond/1
 
     - the Z80 doesn't necessarily store the stated value in the char cell.
       eg, when writing 0x8A, it actually saves 0x0A in the cell, to prevent
       an underline  (underline is active effectively only on 0x90-0xFF)
       but if the underline attribute is set, I believe the terminal will
-      generate 0x8A with an underline.  double check the 
+      generate 0x8A with an underline.
 
-    - test some corner case on the real terminal.  eg, what happens if
-      box line mode moves left or right off the screen?
-      or up or down off the screen?
-      or if there is an incorrect escape sequence: at what point are the
-      bytes swallowed, or are they passed through?
+    - test some corner case on the real terminal
+      what happens if there is an incorrect escape sequence:
+      at what point are the bytes swallowed, or are they passed through?
 
     - looking at the 2236DW schematics (this one is legible):
         742-0903 2236DW INTEGRATED WORKSTATION 02-27-85_2

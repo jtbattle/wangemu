@@ -2,6 +2,8 @@ import serial
 
 class Term_2336:
     """A wrapper around pyserial to enact Wang flow controlled serial I/O"""
+    # FIXME: this doesn't compress the input stream, nor does it
+    #        allow the caller to manually send a FB ... sequence.
 
     def __init__(self, port='COM13', baudrate=19200):
         self.throttled = False   # flow control switch
@@ -134,7 +136,13 @@ class Term_2336:
     def send(self, s):
         for ch in s:
             self._wait_to_write()
-            self.ser.write(ch)
+            if (ch == chr(0xFB)):
+                # must escape to get literal 0xFB
+                self.ser.write(chr(0xFB))
+                self._wait_to_write()
+                self.ser.write(chr(0xD0))
+            else:
+                self.ser.write(ch)
         return self
     
     # send n null bytes
