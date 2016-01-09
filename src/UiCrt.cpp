@@ -333,7 +333,24 @@ Crt::generateFontmap()
         case FONT_NATIVE14:
         case FONT_NATIVE18:
         case FONT_NATIVE24:
-                m_font = wxFont(getFontSize(), wxMODERN, wxNORMAL, wxNORMAL);
+                m_font = wxFont(getFontSize(), wxFONTFAMILY_MODERN,
+                                               wxFONTSTYLE_NORMAL,
+                                               wxFONTWEIGHT_NORMAL);
+// Experiment: can we use a unicode capable-font to get better
+// mapping to wang symbols?
+#undef TRY_UNICODE
+#ifdef TRY_UNICODE
+    #if 0
+                // this doesn't seem to help
+                m_font = wxFont(getFontSize(), wxFONTFAMILY_SWISS,
+                                               wxFONTSTYLE_NORMAL,
+                                               wxFONTWEIGHT_NORMAL);
+    #else
+                // this seems to work!, but it is small
+                m_font = *wxNORMAL_FONT;
+                m_font.SetPointSize(getFontSize());
+    #endif
+#endif
                 assert(m_font != wxNullFont);
                 dc.SetFont( m_font );
                 m_charcell_w = dc.GetCharWidth();
@@ -512,6 +529,10 @@ Crt::generateFontmap()
                     charDC.DrawText(text, offset, offset);
                 } else {
                     wxString text((wxChar)(xlat_char[ch]));
+#ifdef TRY_UNICODE
+// an experiment to use unicode "BLACK LEFT-POINTING TRIANGLE"
+text = L"\u25c0";
+#endif
                     charDC.DrawText(text, offset, offset);
                 }
 

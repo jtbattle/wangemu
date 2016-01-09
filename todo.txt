@@ -24,9 +24,11 @@ Emulator TODO list
 
 *) improved 2236 terminal emulation
 
-    - the cursor should be two rows high (last two)
-    - the cursor is always high-intensity if it is on a non-inverting cell.
-      on inverted cells it is just black.
+    - the cursor:
+        should be two rows high (last two)
+        spans the full width of the character cell
+        is solid white and high-intensity on a non-inverting cell
+        is solid black on an inverted cell
     - alternate lines are always black, even in reverse video mode
     - dot stream is gated by pixclk.  not easily do-able in 2:1 dot mode
     - get rid of 1x1 dot matrix mode -- doesn't model the real hw,
