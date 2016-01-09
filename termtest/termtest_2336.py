@@ -10,8 +10,10 @@ term.attrSet(bright=True).attrOff()
 term.sendline("Hello from python")
 term.sendline()
 
-if 0:
+if 1:
     term.clear()
+    term.attrUse(under=False)
+
     term.sendline("Charset #1:")
     term.send(''.join(' ' for i in range(16)))
     term.charset1()
@@ -31,6 +33,11 @@ if 0:
             term.sendline()
     term.sendline();
     term.sendline();
+
+    # this should be a solid block of white
+    term.at(14,0)
+    for n in range(4):
+        term.sendline(''.join(chr(0xFF) for i in range(16)))
 
 if 0:
     for n in range(1,50):
@@ -200,7 +207,7 @@ if 0:
         term.sendhex('0A')
         time.sleep(0.25)
 
-if 1:
+if 0:
     # what if a bunch of 0Cs are emitted?
     # does the x cursor position get reset on scroll?  does it do reverse scroll?
     term.clear()

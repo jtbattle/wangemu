@@ -68,9 +68,13 @@ wxLog *g_logger = nullptr;
 Crt::Crt(CrtFrame *parent, int screen_type) :
     wxWindow(parent, -1, wxDefaultPosition, wxDefaultSize),
     m_parent(parent),
-    m_screen_type((0) ? screen_type : UI_SCREEN_2236DE),  // FIXME: just a hack to test 2236 emulation behavior
-    m_chars_w((screen_type == UI_SCREEN_80x24) ? 80 : 64),
-    m_chars_h((screen_type == UI_SCREEN_80x24) ? 24 : 16),
+#if 0
+    m_screen_type(UI_SCREEN_2236DE),  // FIXME: just a hack to test 2236 emulation behavior
+#else
+    m_screen_type(screen_type),
+#endif
+    m_chars_w((m_screen_type == UI_SCREEN_64x16) ? 64 : 80),
+    m_chars_h((m_screen_type == UI_SCREEN_64x16) ? 16 : 24),
     m_chars_h2((m_screen_type == UI_SCREEN_2236DE) ? 25 : m_chars_h),
     m_font(wxNullFont),         // until SetFontSize() is called
     m_fontsize(FONT_MATRIX12),
@@ -258,8 +262,8 @@ Crt::intensityToColor(float f) const
 // optional for native font)
 //
 // Wang character cell layout (10x11 character cell)
-//   x = 8x8 active pixel area, X=might overlap underline
-//   u = underline
+//   x = 8x8 active pixel area
+//   u = underline or cursor
 //   c = cursor
 //      |. . . . . . . . . .|
 //      |. . . . . . . . . .|
@@ -271,8 +275,8 @@ Crt::intensityToColor(float f) const
 //      |. x x x x x x x x .|
 //      |. x x x x x x x x .|
 //      |. x x x x x x x x .|
-//      |u X X X X X X X X .|
 //      |c c c c c c c c c c|
+//      |c c u c u c u c u c|
 //
 // the "cccccccccc" row is drawn on top of the stored character cell, so
 // it appears as black pixels in the fontmap.  it is important that the
@@ -399,11 +403,21 @@ Crt::generateFontmap()
         }
     }
 
-    // reallocate the bitmap which holds all the glyphs
-    // build up a 384 character image map of the font.
-    // the first 256 are the normal character set, and glyphs
-    // 256-383 are for the alternate upper character set.
-    m_fontmap = wxBitmap( 384*m_charcell_w, 4*m_charcell_h, -1);
+    // reallocate the bitmap which holds all the glyphs.
+    // there are 8 rows of 256 characters; characters 00-7F
+    // are not underined, while characters 80-FF are.
+    // each row contains one combination of attributes:
+    //     row   charset  reverse  intensity
+    //     ---   -------  -------  ---------
+    //       0 : normal   no       normal
+    //       1 : normal   no       normal
+    //       2 : normal   yes      high
+    //       3 : normal   yes      high
+    //       4 : alt      no       normal
+    //       5 : alt      no       normal
+    //       6 : alt      yes      high
+    //       7 : alt      yes      high
+    m_fontmap = wxBitmap( 256*m_charcell_w, 8*m_charcell_h, -1);
     wxMemoryDC fdc(m_fontmap);  // create a dc for us to write to
 
     // allocate a temp bitmap for working on one character.
@@ -433,19 +447,12 @@ Crt::generateFontmap()
 
     charDC.SelectObject(wxNullBitmap);
 
-    // boudaries for drawing graphics chars
+    // boundaries for drawing graphics chars
     int boxx[3] = { 0, m_charcell_w / 2, m_charcell_w };
     int boxy[4] = { 0, m_charcell_h / 3, 2*m_charcell_h/3, m_charcell_h };
 
-    // build a glyph map of the entire character set:
-    // row 0: normal attributes
-    // row 1: bright
-    // row 2: inverse
-    // row 3: bright & inverse
-    // Each row has three sets of 128 characters:
-    //      0-127: normal character set
-    //    127-255: normal upper character set (mostly underlined version of lower set)
-    //    255-383: alternate upper character set (including box graphics)
+    // build a glyph map of the entire character set
+    for(int alt=0; alt<2; alt++) {
     for(int inv=0; inv<2; inv++) {
     for(int bright=0; bright<2; bright++) {
 
@@ -474,10 +481,9 @@ Crt::generateFontmap()
             setDisplayContrast(tmp_contrast);
         }
 
-        for(int chr=0; chr<384; chr++) {
+        for(int chr=0; chr<256; chr++) {
 
-            int cc = (chr < 0x10) ? 0x20    // controls map to space
-                   : (chr & 0x7F);          // wraps around
+            int ch = (chr & 0x7F);  // minus underline flag
 
             if (getFontSize() >= FONT_NATIVE8) {
 
@@ -485,7 +491,7 @@ Crt::generateFontmap()
                 charDC.SelectObject(char_bitmap);
                 charDC.Clear();
 
-                if (chr >= 0x140) {
+                if (alt && (ch >= 0x40)) {
                     // box graphics characters
                     for(int yy=0; yy<3; yy++) {
                         for(int xx=0; xx<2; xx++) {
@@ -501,17 +507,18 @@ Crt::generateFontmap()
                             }
                         }
                     }
-                } else if (chr >= 0x120) {
-                    // blank in the extended char set
+                } else if (alt) {
+                    wxString text((wxChar)(xlat_char_alt[ch]));
+                    charDC.DrawText(text, offset, offset);
                 } else {
-                    wxString text((wxChar)(xlat_char[cc]));
-                    // underline style doesn't work for all platforms,
-                    // so superimpose the underline later
+                    wxString text((wxChar)(xlat_char[ch]));
                     charDC.DrawText(text, offset, offset);
                 }
 
-                if (chr >= 0x90 && chr <= 0xFF) {
-                    // draw underline, account for scaling
+                // at this level of representation >=0x80 always means underline.
+                // underline style doesn't work for all platforms, so we do it
+                // manually. not ideal.
+                if (chr >= 0x80 && chr <= 0xFF) {
                     for(int yy=0; yy<sy; yy++) {
                         int lft = offset;
                         int rgt = offset + m_charcell_w - 1;
@@ -528,31 +535,30 @@ Crt::generateFontmap()
                 // blank it
                 char_image.SetRGB( wxRect(0,0,img_w,img_h), 0x00, 0x00, 0x00 );
 
-                // use authentic Wang bitmap
                 for(int bmr=0; bmr<11; bmr++) {  // bitmap row
 
                     int pixrow;
-                    if (chr >= 0x140) {
-                        // alt character set (block graphics)
+                    if (alt && (ch >= 0x40)) {
+                        // alt character set, w/block graphics
                         // hardware maps it this way, so we do too
-                        pixrow = (bmr <  2) ? chargen_2236_alt[8*cc + 0+(bmr&1)]
-                               : (bmr < 10) ? chargen_2236_alt[8*cc + bmr-2]
-                                            : chargen_2236_alt[8*cc + 6+(bmr&1)];
-                    } else if (chr >= 0x100) {
+                        pixrow = (bmr <  2) ? chargen_2236_alt[8*ch + 0+(bmr&1)]
+                               : (bmr < 10) ? chargen_2236_alt[8*ch + bmr-2]
+                                            : chargen_2236_alt[8*ch + 6+(bmr&1)];
+                    } else if (alt) {
                         // alt character set
                         pixrow = (bmr <  2) ? 0x00
-                               : (bmr < 10) ? chargen_2236_alt[8*cc + bmr-2]
+                               : (bmr < 10) ? chargen_2236_alt[8*ch + bmr-2]
                                             : 0x00;
                     } else {
                         // normal character set
                         pixrow = (bmr <  2) ? 0x00
-                               : (bmr < 10) ? chargen[8*cc + bmr-2]
+                               : (bmr < 10) ? chargen[8*ch + bmr-2]
                                             : 0x00;
                     }
 
                     // pad out to 10 pixel row
                     pixrow <<= 1;
-                    if (chr >= 0x140) {
+                    if (alt && (ch >= 0x40)) {
                         // block graphics fills the character cell.
                         // from the original bitmap, we pad to the left using
                         // bit 6 (not 7), and we pad to the right using bit 1
@@ -561,6 +567,12 @@ Crt::generateFontmap()
                         // up of rows of nothing but 0x55 bit patterns.
                         pixrow |= ((pixrow << 2) & 0x200)
                                |  ((pixrow >> 2) & 0x001);
+                    }
+
+                    // add underline on the last bitmap row
+                    // the hardware stipples the underline this way
+                    if ((chr >= 0x80) && (bmr == 10)) {
+                        pixrow = 0x55 << 1;
                     }
 
                     for(int bmc=0; bmc<10; pixrow <<= 1, bmc++) {  // bitmap col
@@ -576,17 +588,6 @@ Crt::generateFontmap()
                     } // for bmc
 
                 } // for bmr
-
-                if (0x90 <= chr && chr <= 0xFF) {
-                    // draw underline, keeping scaling into account
-                    for(int yy=0; yy<sy; yy++) {
-                        int lft = offset;
-                        int rgt = offset + m_charcell_w - 1;
-                        int top = offset + m_begin_ul + yy + 1;
-                        for(int xx=lft; xx<rgt; xx++)
-                            char_image.SetRGB(xx, top, 0xff, 0xff, 0xff);
-                    }
-                }
 
             } // use Wang bitmap
 
@@ -623,13 +624,13 @@ Crt::generateFontmap()
             } // for x,y
 
             // copy it to the final font bitmap
-            int row_offset = m_charcell_h * (bright + 2*inv);
+            int row_offset = m_charcell_h * (4*alt + 2*inv + bright);
             fdc.DrawBitmap( wxBitmap(blur_img),    // source image
                             chr*m_charcell_w, row_offset ); // dest x,y
 
         } // for chr
 
-    } } // bright, inv
+    } } } // bright, inv, alt
 
     fdc.SelectObject(wxNullBitmap);  // release m_fontmap
 
@@ -704,27 +705,21 @@ Crt::generateScreenByBlits(wxMemoryDC &memDC)
         if (m_screen_type == UI_SCREEN_2236DE) {
 
             for(int col=0; col<m_chars_w; col++) {
-
-                int chr     = m_display[row*m_chars_w + col];
+                uint8 chr   = m_display[row*m_chars_w + col];
                 uint8 attr  =    m_attr[row*m_chars_w + col];
-                bool alt    = (attr & char_attr_t::CHAR_ATTR_ALT)    ? true : false;
                 bool blink  = (attr & char_attr_t::CHAR_ATTR_BLINK)  ? true : false;
-                int  inv    = (attr & char_attr_t::CHAR_ATTR_INV)    ? 2    : 0;
-                int  bright = (attr & char_attr_t::CHAR_ATTR_BRIGHT) ? 1    : 0;
+                int  alt    = (attr & char_attr_t::CHAR_ATTR_ALT)    ? 4 : 0;
+                int  inv    = (attr & char_attr_t::CHAR_ATTR_INV)    ? 2 : 0;
+                int  bright = (attr & char_attr_t::CHAR_ATTR_BRIGHT) ? 1 : 0;
 
                 // blinking alternates between normal and bright intensity
                 // but intense text can't blink because it is already intense
                 if (text_blink_enable && blink)
                     bright = 1;
 
-                int font_row = m_charcell_h * (bright + inv);
-
-                // remap to codes 256-383 for alternate char set
-                chr = (alt && (chr >= 0x80)) ? (chr & 0x7F) + 256
-                                             :  chr;
-
-                if ((chr >= 0x10 && chr != 0x20) || inv) {
+                if ((chr != 0x20) || inv) {
                     // if (non-blank character)
+                    int font_row = m_charcell_h * (alt + inv + bright);
                     memDC.Blit(col*m_charcell_w, row*m_charcell_h,  // dest x,y
                                m_charcell_w, m_charcell_h,          // w,h
                                &fontmapDC,                          // src image
@@ -1574,7 +1569,6 @@ Crt::processChar2(uint8 byte)
         // this flag is used during 08 sub-commands
         // we draw the bottom only if we've seen a previous 0B command
         m_box_bottom = false;
-//UI_Info("box: entering");
         return;
     }
     if (m_input_cnt == 4 && m_input_buf[1] == 0x0B) {
@@ -1582,7 +1576,6 @@ Crt::processChar2(uint8 byte)
         m_input_cnt--;  // drop current command byte
         switch (byte) {
             case 0x08: // move left
-//UI_Info("box: left");
                 // draw top left  side of char below old position
                 // draw top right side of char below new position
                 if (m_box_bottom) {
@@ -1594,7 +1587,6 @@ Crt::processChar2(uint8 byte)
                 }
                 return;
             case 0x09: // move right
-//UI_Info("box: right");
                 // draw top right side at old position
                 // draw top left  side at new position
                 setBoxAttr(box_draw, char_attr_t::CHAR_ATTR_RIGHT);
@@ -1602,22 +1594,18 @@ Crt::processChar2(uint8 byte)
                 setBoxAttr(box_draw, char_attr_t::CHAR_ATTR_LEFT);
                 return;
             case 0x0A: // move down one line and draw vertical line
-//UI_Info("box: down");
                 adjustCursorY(+1);
                 setBoxAttr(box_draw, char_attr_t::CHAR_ATTR_VERT);
                 return;
             case 0x0B: // draw vertical line at current position
-//UI_Info("box: turn");
                 setBoxAttr(box_draw, char_attr_t::CHAR_ATTR_VERT);
                 m_box_bottom = true;  // subsequent 08 must draw bottom
                 return;
             case 0x0C: // draw vertical line at current position
-//UI_Info("box: up");
                 adjustCursorY(-1);
                 setBoxAttr(box_draw, char_attr_t::CHAR_ATTR_VERT);
                 return;
             case 0x0F: // end of box mode
-//UI_Info("box: end");
                 m_input_cnt = 0;
                 return;
             default:
@@ -1722,37 +1710,41 @@ Crt::processChar3(uint8 byte)
             break;
 
         default:        // just a character
+            assert(byte >= 0x10);
 #if 0
             // this is true for the old 64x16 display generator, not 80x24
             if (0x10 <= byte && byte <= 0x1F)
                 byte = byte + 0x40;     // 0x10 aliases into 0x50, etc.
 #endif
-            if (byte >= 0x10) {  // ignore control characters
-                // update character in screen buffer
-                bool force_underline = m_attr_under
-                                    && (m_attr_on || m_attr_temp)
-                                    && (m_screen_type == UI_SCREEN_2236DE);
-                if (force_underline)
-                    byte |= 0x80;
-                scr_write_char(m_curs_x, m_curs_y, byte);
+            bool use_alt_char = (byte >= 0x80)
+                             && (m_attrs & char_attr_t::CHAR_ATTR_ALT);
 
-                // update char attributes in screen buffer
-                int old = m_attr[m_chars_w*m_curs_y + m_curs_x]
-                        & ( char_attr_t::CHAR_ATTR_LEFT  |
-                            char_attr_t::CHAR_ATTR_RIGHT |
-                            char_attr_t::CHAR_ATTR_VERT  );
+            bool use_underline = ((byte >= 0x90) && !use_alt_char)
+                              || (m_attr_under && (m_attr_on || m_attr_temp));
 
-                int attr_mask = 0;
-                if (force_underline)
-                    attr_mask |= (char_attr_t::CHAR_ATTR_ALT);
-                if (!m_attr_on && !m_attr_temp)
-                    attr_mask |= (char_attr_t::CHAR_ATTR_BLINK)
-                              |  (char_attr_t::CHAR_ATTR_BRIGHT)
-                              |  (char_attr_t::CHAR_ATTR_INV);
+            byte = (byte & 0x7F)
+                 | ((use_underline) ? 0x80 : 0x00);
 
-                scr_write_attr(m_curs_x, m_curs_y, old | (m_attrs & ~attr_mask));
-                adjustCursorX(+1);
+            scr_write_char(m_curs_x, m_curs_y, byte);
+
+            // update char attributes in screen buffer
+            int old = m_attr[m_chars_w*m_curs_y + m_curs_x]
+                    & ( char_attr_t::CHAR_ATTR_LEFT  |
+                        char_attr_t::CHAR_ATTR_RIGHT |
+                        char_attr_t::CHAR_ATTR_VERT  );
+
+            int attr_mask = 0;
+            if (!m_attr_on && !m_attr_temp) {
+                attr_mask |= (char_attr_t::CHAR_ATTR_BLINK)
+                          |  (char_attr_t::CHAR_ATTR_BRIGHT)
+                          |  (char_attr_t::CHAR_ATTR_INV);
             }
+            if (!use_alt_char) {
+                attr_mask |= (char_attr_t::CHAR_ATTR_ALT);
+            }
+
+            scr_write_attr(m_curs_x, m_curs_y, old | (m_attrs & ~attr_mask));
+            adjustCursorX(+1);
             break;
     }
     setDirty();
