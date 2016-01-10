@@ -139,12 +139,6 @@ Crt::intensityToColor(float f) const
 // indicate underline for characters > 0x90.  However, for simplicity
 // we generate all 256 characters and not worry about manually underlining.
 // The 2236 also offers an alternate upper character set for 0x80-0xFF.
-// In the end, we generate 256+128 characters.
-
-// the schematic for the 2336DW has a mapping PROM based on the scanline row.
-// it shows that glyph rows 0-7 map to scanlines 2-9.  scanline 10 uses
-// glyph row 6.  I believe this is only used in box graphics mode, in which
-// case glyph rows 6 and 7 will be identical.
 
 void
 Crt::generateFontmap()
@@ -209,9 +203,9 @@ Crt::generateFontmap()
                 break;
     }
 
-    m_begin_ul   = m_charcell_h - 2*sy*dy;
-    m_begin_curs = m_charcell_h - 1*sy*dy;
-    m_rows_curs  = sy;
+    m_begin_curs = m_charcell_h - 2*sy*dy;  // bottom two scanlines
+    m_begin_ul   = m_charcell_h - 1*sy*dy;  // bottom scanline
+    m_rows_curs  = 2*sy;                    // two scanlines
 
     // pick a filter kernel for blurring
     const float *filter_w;
@@ -282,7 +276,13 @@ Crt::generateFontmap()
     //       5 : alt      no       normal
     //       6 : alt      yes      high
     //       7 : alt      yes      high
+#if 0
+    m_fontmap = wxBitmap( 256*m_charcell_w, 8*m_charcell_h, 32);
+#elif 0
+    m_fontmap = wxBitmap( 256*m_charcell_w, 8*m_charcell_h, 24);
+#else
     m_fontmap = wxBitmap( 256*m_charcell_w, 8*m_charcell_h, -1);
+#endif
     wxMemoryDC fdc(m_fontmap);  // create a dc for us to write to
 
     // allocate a temp bitmap for working on one character.
@@ -317,9 +317,9 @@ Crt::generateFontmap()
     int boxy[4] = { 0, m_charcell_h / 3, 2*m_charcell_h/3, m_charcell_h };
 
     // build a glyph map of the entire character set
-    for(int alt=0; alt<2; alt++) {
-    for(int inv=0; inv<2; inv++) {
-    for(int bright=0; bright<2; bright++) {
+    for(int alt=0; alt<2; ++alt) {
+    for(int inv=0; inv<2; ++inv) {
+    for(int bright=0; bright<2; ++bright) {
 
         // mapping from filtered image intensity to a color
         wxColor colormap[256];
@@ -337,7 +337,7 @@ Crt::generateFontmap()
                             /*( bright &&  inv)*/ : 1.2;
                 setDisplayContrast(tmp_contrast * scale);
             }
-            for(int n=0; n<256; n++) {
+            for(int n=0; n<256; ++n) {
                 float w = n * (1.0/256.0);
                 wxColor c = intensityToColor(w);
                 int nn = (inv) ? 255-n : n;
@@ -346,7 +346,7 @@ Crt::generateFontmap()
             setDisplayContrast(tmp_contrast);
         }
 
-        for(int chr=0; chr<256; chr++) {
+        for(int chr=0; chr<256; ++chr) {
 
             int ch = (chr & 0x7F);  // minus underline flag
 
@@ -358,8 +358,8 @@ Crt::generateFontmap()
 
                 if (alt && (ch >= 0x40)) {
                     // box graphics characters
-                    for(int yy=0; yy<3; yy++) {
-                        for(int xx=0; xx<2; xx++) {
+                    for(int yy=0; yy<3; ++yy) {
+                        for(int xx=0; xx<2; ++xx) {
                             int shift = 2*yy + xx;
                             if ((chr >> shift) & 1) {
                                 // x,y,w,h
@@ -388,7 +388,7 @@ text = L"\u25c0";
                 // underline style doesn't work for all platforms, so we do it
                 // manually. not ideal.
                 if (chr >= 0x80 && chr <= 0xFF) {
-                    for(int yy=0; yy<sy; yy++) {
+                    for(int yy=0; yy<sy; ++yy) {
                         int lft = offset;
                         int rgt = offset + m_charcell_w - 1;
                         int top = offset + m_begin_ul + yy - 1;
@@ -404,7 +404,7 @@ text = L"\u25c0";
                 // blank it
                 char_image.SetRGB( wxRect(0,0,img_w,img_h), 0x00, 0x00, 0x00 );
 
-                for(int bmr=0; bmr<11; bmr++) {  // bitmap row
+                for(int bmr=0; bmr<11; ++bmr) {  // bitmap row
 
                     int pixrow;
                     if (alt && (ch >= 0x40)) {
@@ -444,11 +444,11 @@ text = L"\u25c0";
                         pixrow = 0x55 << 1;
                     }
 
-                    for(int bmc=0; bmc<10; pixrow <<= 1, bmc++) {  // bitmap col
+                    for(int bmc=0; bmc<10; pixrow <<= 1, ++bmc) {  // bitmap col
                         if (pixrow & 0x200) {
                             // the pixel should be lit; replicate it
-                            for(int yy=0; yy<sy; yy++)
-                            for(int xx=0; xx<sx; xx++) {
+                            for(int yy=0; yy<sy; ++yy)
+                            for(int xx=0; xx<sx; ++xx) {
                                 char_image.SetRGB(offset + bmc*sx    + xx,
                                                   offset + bmr*sy*dy + yy,
                                                   0xff, 0xff, 0xff);
@@ -464,13 +464,13 @@ text = L"\u25c0";
             // to simulate the limited bandwidth of the real CRT.
             wxImage blur_img(m_charcell_w, m_charcell_h);
 
-            for(int y=0; y<m_charcell_h; y++)
-            for(int x=0; x<m_charcell_w; x++) {
+            for(int y=0; y<m_charcell_h; ++y)
+            for(int x=0; x<m_charcell_w; ++x) {
 
                 // pick up 3x3 neighborhood around pixel of interest
                 int pix[9];
-                for(int yy=-1;yy<=1;yy++)
-                for(int xx=-1;xx<=1;xx++)
+                for(int yy=-1; yy<=1; ++yy)
+                for(int xx=-1; xx<=1; ++xx)
                     // wxImage is always RGB, so we can just pick any one channel
                     pix[(yy+1)*3 + (xx+1)] =
                         char_image.GetBlue(x+offset+xx, y+offset+yy);
@@ -511,6 +511,8 @@ text = L"\u25c0";
 void
 Crt::generateScreen()
 {
+    static bool reentrant = false;
+
     if (isFontDirty()) {
         generateFontmap();
         recalcBorders();  // the bitmap store might have changed size
@@ -519,15 +521,18 @@ Crt::generateScreen()
     wxColor fg(intensityToColor(1.0f)),  // color of text
             bg(intensityToColor(0.0f));  // color of background
 
+    assert(!reentrant);
+    reentrant = true;
 #if DRAW_WITH_RAWBMP
-    {
 // FIXME: see if we still need this for OSX
 // FIXME: it doesn't have box mode overlay
+    {
         bool success = generateScreenByRawBmp(fg, bg);
-        if (success)
+        if (success) {
+            reentrant = false;
             return;
+        }
     }
-
     // that didn't work, so build image via more platform-independent means
 #endif
 
@@ -539,11 +544,13 @@ Crt::generateScreen()
 
     generateScreenByBlits(memDC);
     generateScreenCursor(memDC);  // FIXME: should this come after overlay?
-    if (m_screen_type == UI_SCREEN_2236DE)
+    if (m_screen_type == UI_SCREEN_2236DE) {
         generateScreenOverlay(memDC);
+    }
 
     // release the bitmap
     memDC.SelectObject(wxNullBitmap);
+    reentrant = false;
 }
 
 
@@ -558,11 +565,11 @@ Crt::generateScreenByBlits(wxMemoryDC &memDC)
     bool text_blink_enable = m_parent->getTextBlinkPhase();
 
     // draw each row of the text
-    for(int row=0; row<m_chars_h2; row++) {
+    for(int row=0; row<m_chars_h2; ++row) {
 
         if (m_screen_type == UI_SCREEN_2236DE) {
 
-            for(int col=0; col<m_chars_w; col++) {
+            for(int col=0; col<m_chars_w; ++col) {
                 uint8 chr   = m_display[row*m_chars_w + col];
                 uint8 attr  =    m_attr[row*m_chars_w + col];
                 bool blink  = (attr & char_attr_t::CHAR_ATTR_BLINK)  ? true : false;
@@ -588,7 +595,7 @@ Crt::generateScreenByBlits(wxMemoryDC &memDC)
         } else {
 
             // old terminal: one character set, no attributes
-            for(int col=0; col<m_chars_w; col++) {
+            for(int col=0; col<m_chars_w; ++col) {
                 int chr = m_display[row*m_chars_w + col];
                 if ((chr >= 0x10) && (chr != 0x20)) {  // if (non-blank character)
                     memDC.Blit(col*m_charcell_w, row*m_charcell_h,  // dest x,y
@@ -607,25 +614,28 @@ Crt::generateScreenByBlits(wxMemoryDC &memDC)
 void
 Crt::generateScreenCursor(wxMemoryDC &memDC)
 {
-    // FIXME: should this be brighter than 1.0?
-    wxColor fg(intensityToColor(1.0f));  // color of cursor
-
     bool cursor_blink_enable = m_parent->getCursorBlinkPhase();
-
-    // cursor it is drawn one scanline lower than the underline
-    // FIXME: it should be two scanlines high, I believe
-    if (m_curs_attr == cursor_attr_t::CURSOR_ON  ||
-        m_curs_attr == cursor_attr_t::CURSOR_BLINK && cursor_blink_enable
-       ) {
-        // draw the one actual cursor, wherever it is
-        int top   = m_curs_y * m_charcell_h + m_begin_curs;
-        int left  = m_curs_x * m_charcell_w;
-        int right = left + m_charcell_w - 1;
-        memDC.SetPen( wxPen(fg, 1, wxSOLID) );
-        for(int yy=0; yy<m_rows_curs; yy++)
-            memDC.DrawLine(left,  top + yy,
-                           right, top + yy);
+    if (m_curs_attr == cursor_attr_t::CURSOR_OFF  ||
+        m_curs_attr == cursor_attr_t::CURSOR_BLINK && !cursor_blink_enable) {
+        // don't draw the cursor at all
+        return;
     }
+
+    wxColor fg(intensityToColor(1.0f));
+    wxColor bg(intensityToColor(0.0f));
+    wxColor color(fg);
+    if (m_screen_type == UI_SCREEN_2236DE) {
+        uint8 attr = m_attr[80*m_curs_y + m_curs_x];
+        color = (attr & char_attr_t::CHAR_ATTR_INV) ? bg : fg;
+    }
+
+    int top   = m_curs_y * m_charcell_h + m_begin_curs;
+    int left  = m_curs_x * m_charcell_w;
+    int right = left + m_charcell_w - 1;
+    memDC.SetPen( wxPen(color, 1, wxSOLID) );
+    for(int yy=0; yy < m_rows_curs; ++yy)
+        memDC.DrawLine(left,  top + yy,
+                       right, top + yy);
 }
 
 
@@ -662,11 +672,11 @@ Crt::generateScreenOverlay(wxMemoryDC &memDC)
     memDC.SetPen(wxPen(fg, 0, wxSOLID));
 
     // find horizontal runs of lines and draw them
-    for(int row=0; row < 25; row++) {
+    for(int row=0; row < 25; ++row) {
         int off = 80 * row;
         int top = row * m_charcell_h;
         int start = -1;
-        for(int col=0; col < 80; col++, off++) {
+        for(int col=0; col < 80; ++col, ++off) {
             if (m_attr[off] & (char_attr_t::CHAR_ATTR_LEFT)) {
                 // start or extend
                 if (start < 0)
@@ -696,11 +706,11 @@ Crt::generateScreenOverlay(wxMemoryDC &memDC)
 
     // find vertical runs of lines and draw them
     // the 25th line is guaranteed to not have the vert attribute
-    for(int col=0; col < 80; col++) {
+    for(int col=0; col < 80; ++col) {
         int off = col;
         int mid = col * m_charcell_w + (m_charcell_w >> 1);
         int start = -1;
-        for(int row=0; row < 25; row++, off += 80) {
+        for(int row=0; row < 25; ++row, off += 80) {
             if (m_attr[off] & (char_attr_t::CHAR_ATTR_VERT)) {
                 if (start < 0)  // start of run
                     start = row * m_charcell_h;
@@ -718,40 +728,67 @@ Crt::generateScreenOverlay(wxMemoryDC &memDC)
 #if DRAW_WITH_RAWBMP
 // update the bitmap of the screen image, using rawbmp interface
 // returns false if it fails.
-// TODO: random ideas, need to be vetted
-//   + add code that when it sees a non-printing character,
-//     it looks for a run of such characters and blanks them
-//     all in raster scan order, instead of diddle scan.
-//   + keep a copy of the ascii array, and do an incremental update
-//     based on the character differences.  need to track the cursor too!
 bool
 Crt::generateScreenByRawBmp(wxColor fg, wxColor bg)
 {
-    // set to true if a fair portion of the chars on screen are blank.
-    // set to false if most characters are non-blank
-    const bool pre_clear = false;
-
-    // select how pre_clear is carried out.
-    // at least on my machine, using DrawRect is faster.
-    const bool clear_with_rawbmp = false;
-
     // this path is faster only if we are drawing to a 32b surface.
     // this is because the code must commit to using either
     // wxAlphaPixeldata (32b) or wxNativePixelData (24b except under OSX).
     if (m_scrbits.GetDepth() != 32)
         return false;
 
-    // this must be done after isFontDirty(), as it may affect m_scrbits
+if (0) {
+    // fill it as a test: yes, this works
+    wxMemoryDC mdc(m_scrbits);
+    wxColor bg(wxColor(0xFF,0x00,0x00));
+    mdc.SetBackground( wxBrush(bg, wxSOLID) );
+    mdc.Clear();
+    mdc.SelectObject(wxNullBitmap);
+    return true;
+}
+
+This stuff has stopped working since 2.9.5.
+Rather than wasting more hours debugging this, see if OSX still needs it.
+if (0) {
+    // fill it with red to check if these iterators work as expected
+    wxNativePixelData rs(m_scrbits);
+    wxNativePixelData::Iterator rowStart(rs);
+    wxColor bg(wxColor(0xFF,0x00,0x00));
     const int h = m_scrbits.GetHeight();
     const int w = m_scrbits.GetWidth();
-
-    if (pre_clear && !clear_with_rawbmp) {
-        // blank everything, as we skip blank characters
-        wxMemoryDC mdc(m_scrbits);
-        mdc.SetBackground( wxBrush(bg, wxSOLID) );
-        mdc.Clear();
-        mdc.SelectObject(wxNullBitmap);
+    for(int y=0; y<h; ++y) {
+        wxNativePixelData::Iterator p = rowStart;
+        for(int x=0; x<w; ++x) {
+            p.Red()   = bg.Red();
+            p.Green() = bg.Green();
+            p.Blue()  = bg.Blue();
+//          p.Alpha() = 0xFF;
+            ++p;
+        }
+        rowStart.OffsetY(rs, 1);
     }
+    return true;
+}
+if (1) {
+    // fill it with red to check if these iterators work as expected
+    wxAlphaPixelData rs(m_scrbits);
+    wxAlphaPixelData::Iterator rowStart(rs);
+    wxColor bg(wxColor(0xFF,0x00,0x00));
+    const int h = m_scrbits.GetHeight();
+    const int w = m_scrbits.GetWidth();
+    for(int y=0; y<h; ++y) {
+        wxAlphaPixelData::Iterator p = rowStart;
+        for(int x=0; x<w; ++x) {
+            p.Red()   = bg.Red();
+            p.Green() = bg.Green();
+            p.Blue()  = bg.Blue();
+//          p.Alpha() = 0xFF;
+            ++p;
+        }
+        rowStart.OffsetY(rs, 1);
+    }
+    return true;
+}
 
     wxAlphaPixelData raw_screen(m_scrbits);
     if (!raw_screen)
@@ -761,24 +798,7 @@ Crt::generateScreenByRawBmp(wxColor fg, wxColor bg)
     if (!raw_font)
         return false;
 
-    if (pre_clear && clear_with_rawbmp) {
-        // blank everything, as we skip blank characters
-        wxAlphaPixelData::Iterator p(raw_screen);
-        for(int y=0; y<h; ++y) {
-            wxAlphaPixelData::Iterator rowStart = p;
-            for(int x=0; x<w; ++x) {
-                p.Red()   = bg.Red();
-                p.Green() = bg.Green();
-                p.Blue()  = bg.Blue();
-                ++p;
-            }
-            p = rowStart;
-            p.OffsetY(raw_screen, 1);
-        }
-    }
-
-    // draw the characters (diddlescan order),
-    // skipping non-printing characters
+    // draw the characters (diddlescan order)
     wxAlphaPixelData::Iterator sp(raw_screen);  // screen pointer
     for(int row=0; row<m_chars_h2; ++row) {
 
@@ -790,33 +810,35 @@ Crt::generateScreenByRawBmp(wxColor fg, wxColor bg)
             // the upper left corner of the char on the screen
             wxAlphaPixelData::Iterator charUL = sp;
 
-            int ch = m_display[row*m_chars_w + col];
-            if (!pre_clear || ((ch >= 0x10) && (ch != 0x20))) { // control or space
+            int ch   = m_display[row*m_chars_w + col];
+            int attr =    m_attr[row*m_chars_w + col];
 
-                // pick out subimage of current character from the
-                // fontmap and copy it to the screen image
-                wxAlphaPixelData::Iterator cp(raw_font);
-                cp.OffsetX(raw_font, ch*m_charcell_w);
+            // pick out subimage of current character from the
+            // fontmap and copy it to the screen image
+            wxAlphaPixelData::Iterator cp(raw_font);
+            cp.OffsetX(raw_font, m_charcell_w * ch);
+            int attr_offset = 0;  // FIXME: base this on m_attr[x,y]
+            cp.OffsetY(raw_font, m_charcell_h * attr_offset);
 
-                for(int rr=0; rr<m_charcell_h; ++rr) {
-
-                    // pointers to the start of the current character scanline
-                    wxAlphaPixelData::Iterator sRowp = sp;
-                    wxAlphaPixelData::Iterator cRowp = cp;
-
-                    for(int cc=0; cc<m_charcell_w; ++cc) {
-                        sp.Red()   = cp.Red();
-                        sp.Green() = cp.Green();
-                        sp.Blue()  = cp.Blue();
-                        ++sp;
-                        ++cp;
-                    }
-
-                    sp = sRowp;  sp.OffsetY(raw_screen, 1);
-                    cp = cRowp;  cp.OffsetY(raw_font, 1);
+            for(int rr=0; rr<m_charcell_h; ++rr) {
+                // pointers to the start of the current character scanline
+                wxAlphaPixelData::Iterator sRowp = sp;
+                wxAlphaPixelData::Iterator cRowp = cp;
+                for(int cc=0; cc<m_charcell_w; ++cc) {
+#if 0
+                    sp.Red()   = cp.Red();
+                    sp.Green() = cp.Green();
+                    sp.Blue()  = cp.Blue();
+#else
+                    // fails for 24bpp; but 32b was asserted earlier
+                    sp.Data() = cp.Data();
+#endif
+                    ++sp;
+                    ++cp;
                 }
-
-            } // if (drawable character)
+                sp = sRowp;  sp.OffsetY(raw_screen, 1);
+                cp = cRowp;  cp.OffsetY(raw_font, 1);
+            } // for (rr)
 
             // advance to the next character of row
             sp = charUL;
@@ -831,6 +853,9 @@ Crt::generateScreenByRawBmp(wxColor fg, wxColor bg)
     } // for(row)
 
 
+#if 1
+    // draw the cursor from the calling point via generateScreenCursor()
+#else
     // draw cursor -- there can be only zero/one on screen.
     // it is drawn one scanline lower than the underline
     bool cursor_blink_enable = m_parent->getCursorBlinkPhase();
@@ -842,10 +867,10 @@ Crt::generateScreenByRawBmp(wxColor fg, wxColor bg)
         int top  = m_curs_y * m_charcell_h + m_begin_curs;
         int left = m_curs_x * m_charcell_w;
 
-        for(int yy=0; yy<m_rows_curs; yy++) {
+        for(int yy=0; yy<m_rows_curs; ++yy) {
             wxAlphaPixelData::Iterator spi(raw_screen);  // screen pointer
             spi.MoveTo(raw_screen, left, top+yy);
-            for(int xx=0; xx<m_charcell_w; xx++) {
+            for(int xx=0; xx<m_charcell_w; ++xx) {
                 spi.Red()   = fg.Red();
                 spi.Green() = fg.Green();
                 spi.Blue()  = fg.Blue();
@@ -853,6 +878,7 @@ Crt::generateScreenByRawBmp(wxColor fg, wxColor bg)
             }
         }
     }
+#endif
 
     return true;
 }

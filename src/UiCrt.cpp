@@ -437,8 +437,15 @@ Crt::recalcBorders()
     // size, or changes the font color, contrast, or brightness.
     // only a font change requires a new wxBitmap.
     if ( !m_scrbits.IsOk() || (m_scrbits.GetWidth()  != width)  ||
-                              (m_scrbits.GetHeight() != height) )
+                              (m_scrbits.GetHeight() != height) ) {
+#if 0
+        m_scrbits = wxBitmap(width, height, 32);
+#elif 0
+        m_scrbits = wxBitmap(width, height, 24);
+#else
         m_scrbits = wxBitmap(width, height, -1);  // native depth
+#endif
+    }
 }
 
 

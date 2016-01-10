@@ -24,12 +24,6 @@ Emulator TODO list
 
 *) improved 2236 terminal emulation
 
-    - move the font caching/screen rendering into its own file
-    - the cursor:
-        should be two rows high (last two)
-        spans the full width of the character cell
-        is solid white and high-intensity on a non-inverting cell
-        is solid black on an inverted cell
     - alternate lines are always black, even in reverse video mode
     - dot stream is gated by pixclk.  not easily do-able in 2:1 dot mode
     - get rid of 1x1 dot matrix mode -- doesn't model the real hw,
@@ -50,34 +44,6 @@ Emulator TODO list
     - test some corner case on the real terminal
       what happens if there is an incorrect escape sequence:
       at what point are the bytes swallowed, or are they passed through?
-
-    - looking at the 2236DW schematics (this one is legible):
-        742-0903 2236DW INTEGRATED WORKSTATION 02-27-85_2
-      the cursor is active on two scanlines, not one.
-      underline is one scanline.
-      an LS138 has tricky wiring:
-            scanline  '138   2708 A[2:0]  cursor   underline  box L/R
-            --------  -----  -----------  -------  ---------  -------
-               0       Y0           ??0                       enabled
-               1       Y1           ??1   
-               2       Y2 n/c       ??0   
-               3       Y3 n/c       ??1   
-               4       none*        ??0   
-               5       none*        ??1   
-               6       none*        ??0   
-               7       none*        ??1   
-               8       Y4 n/c       ??0   
-               9       Y5           ??1   enabled
-              10       Y6           ??0   enabled  enabled
-              11       Y7           ??1   
-      In rows marked "*", row counter bit R2 goes to !G2A, which forces
-      all outputs inactive.
-      That it maps 12 rows makes me think this terminal uses a 12 scanline
-      character cell, not 11.
-      A[2:0] maps scanline row to one of eight charmap rows
-      hmm, but a later 2236 schematic uses a PROM, and the truth table
-      only shows entries for 0-A (11 scanline rows).  so I'm not sure why
-      the one above uses Y7.
 
     - add smart terminal commands that I've skipped
         - make it so FB Cx actually causes a x/6 second delay

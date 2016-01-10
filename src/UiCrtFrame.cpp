@@ -126,9 +126,9 @@ static const struct colorscheme_t {
 } colorscheme[] = {
     {
 #ifdef __WXMAC__
-      0x60, 0xFF, 0x60, // Mac has different gamma than a PC, I guess
+      0x80, 0xFF, 0x80, // Mac has different gamma than a PC, I guess
 #else
-      0x60, 0xFF, 0x60,
+      0x80, 0xFF, 0x80,
 #endif
       0x00, 0x00, 0x00,
       "Green phosphor" },
