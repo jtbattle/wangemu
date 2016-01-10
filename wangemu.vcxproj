@@ -170,6 +170,7 @@
     <ClCompile Include="src\UiCrtStatusBar.cpp" />
     <ClCompile Include="src\UiCrt_Charset.cpp" />
     <ClCompile Include="src\UiCrt_Keyboard.cpp" />
+    <ClCompile Include="src\UiCrt_Render.cpp" />
     <ClCompile Include="src\UiDiskCtrlCfgDlg.cpp" />
     <ClCompile Include="src\UiDiskFactory.cpp" />
     <ClCompile Include="src\UiMyAboutDlg.cpp" />

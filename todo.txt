@@ -24,6 +24,7 @@ Emulator TODO list
 
 *) improved 2236 terminal emulation
 
+    - move the font caching/screen rendering into its own file
     - the cursor:
         should be two rows high (last two)
         spans the full width of the character cell
@@ -36,12 +37,15 @@ Emulator TODO list
     - for native font mode, can I use unicode to get better mapping for
       diamond shapes, arrows, etc?
         http://unicodelookup.com/#diamond/1
-
-    - the Z80 doesn't necessarily store the stated value in the char cell.
-      eg, when writing 0x8A, it actually saves 0x0A in the cell, to prevent
-      an underline  (underline is active effectively only on 0x90-0xFF)
-      but if the underline attribute is set, I believe the terminal will
-      generate 0x8A with an underline.
+    - write an opengl shader which uses the attr/char maps as a texture
+      to generate the output in parallel. can also add contrast, brightness,
+      blur, TV warp, etc
+          Js amiga emulator using webgl for display:
+              http://scriptedamigaemulator.net
+          Stack overflow: using webgl to map palettized display to rgb display
+              http://stackoverflow.com/questions/19695658/emulating-palette-based-graphics-in-webgl-v-s-canvas-2d
+          apple II js w/webgl rendering option:
+              http://porkrind.org/a2/
 
     - test some corner case on the real terminal
       what happens if there is an incorrect escape sequence:
