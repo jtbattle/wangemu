@@ -24,13 +24,21 @@ Emulator TODO list
 
 *) improved 2236 terminal emulation
 
-    - alternate lines are always black, even in reverse video mode
-    - dot stream is gated by pixclk.  not easily do-able in 2:1 dot mode
-    - get rid of 1x1 dot matrix mode -- doesn't model the real hw,
-      isn't readable.
     - for native font mode, can I use unicode to get better mapping for
       diamond shapes, arrows, etc?
         http://unicodelookup.com/#diamond/1
+    - the weird thing where inverse mode causes video to be lit
+      either when the current dot is 0 or the previous dot was 0
+      gets tricky in the presence of box line graphics.
+        1) vert is kind of screwed because it could interact with the
+           glyph bitmap under it
+        2) horizontal box lines should be stippled if normal video,
+           but solid black if inverse mode
+      the fix is either to buy into full-screen at once blurring,
+      or to double the fontmap to have with/without vertical bar
+    - dot stream is gated by pixclk.  not easily do-able in 2:1 dot mode
+    - get rid of 1x1 dot matrix mode -- doesn't model the real hw,
+      isn't readable.
     - write an opengl shader which uses the attr/char maps as a texture
       to generate the output in parallel. can also add contrast, brightness,
       blur, TV warp, etc
@@ -53,19 +61,12 @@ Emulator TODO list
     - pre-blurring the char set to a glyph map, then blitting to the display
       works OK, except the cursor isn't blurred because it is dynamic, and
       edges of block graphic characters are noticable because the blurring
-      kernel needs to span across characters.
+      kernel needs to span across characters.  it also interacts poorly
+      with the box line graphics overlay.
 
       render unblurred and then use OGL to do the blurring.  this has the
       benefit of offering flexible scaling at low cost, and perhaps other
       video generation defect emulation.
-
-    - if OGL isn't done, and if the mac port is still slow using the blit
-      method so we have to keep the separate screen rendering path, try this.
-      maybe the mac path shouldn't draw the cursor at all, and instead
-      after the bitmap is converted to memDC, use the drawcursor/overlay
-      routines to superimpose those features.  although blitting was very
-      slow because we have to do thousands of blits requiring a lot of
-      bitmap conversions, maybe drawing the overlays isn't so bad.
 
     - Fasstcom Terminal Specs v1.0.pdf, pdf page 8 says
       "... the terminal must always transmit a HEX(F8F9) every 3 to 5 seconds

@@ -149,7 +149,9 @@ Crt::generateFontmap()
         dy;     // step in y (allows skipping rows)
     int filter; // which filter kernel to use
 
-    switch (getFontSize()) {
+    const int fontsize = getFontSize();
+
+    switch (fontsize) {
         default: // just in case someone has diddled the ini file with a bad value
         case FONT_MATRIX12:     // this is closest to the original
                 sx = 1; sy = 1; dy = 2;
@@ -175,22 +177,22 @@ Crt::generateFontmap()
         case FONT_NATIVE14:
         case FONT_NATIVE18:
         case FONT_NATIVE24:
-                m_font = wxFont(getFontSize(), wxFONTFAMILY_MODERN,
-                                               wxFONTSTYLE_NORMAL,
-                                               wxFONTWEIGHT_NORMAL);
+                m_font = wxFont(fontsize, wxFONTFAMILY_MODERN,
+                                          wxFONTSTYLE_NORMAL,
+                                          wxFONTWEIGHT_NORMAL);
 // Experiment: can we use a unicode capable-font to get better
 // mapping to wang symbols?
 #undef TRY_UNICODE
 #ifdef TRY_UNICODE
     #if 0
                 // this doesn't seem to help
-                m_font = wxFont(getFontSize(), wxFONTFAMILY_SWISS,
-                                               wxFONTSTYLE_NORMAL,
-                                               wxFONTWEIGHT_NORMAL);
+                m_font = wxFont(fontsize(), wxFONTFAMILY_SWISS,
+                                            wxFONTSTYLE_NORMAL,
+                                            wxFONTWEIGHT_NORMAL);
     #else
                 // this seems to work!, but it is small
                 m_font = *wxNORMAL_FONT;
-                m_font.SetPointSize(getFontSize());
+                m_font.SetPointSize(fontsize);
     #endif
 #endif
                 assert(m_font != wxNullFont);
@@ -203,9 +205,10 @@ Crt::generateFontmap()
                 break;
     }
 
-    m_begin_curs = m_charcell_h - 2*sy*dy;  // bottom two scanlines
-    m_begin_ul   = m_charcell_h - 1*sy*dy;  // bottom scanline
-    m_rows_curs  = 2*sy;                    // two scanlines
+    // this stuff is needed when drawing in other routines, eg generateScreenCursor()
+    m_charcell_sx = sx;
+    m_charcell_sy = sy;
+    m_charcell_dy = dy;
 
     // pick a filter kernel for blurring
     const float *filter_w;
@@ -251,6 +254,7 @@ Crt::generateFontmap()
             0.2500f*0.7f,  0.2500f*0.7f,  0.2500f*0.7f,
         };
 
+//filter = 0; // debugging, makes it easier to see pixel pattern
         switch (filter) {
             default: assert(false);
             case 0: filter_w = w_noop;           break;
@@ -296,14 +300,19 @@ Crt::generateFontmap()
     wxImage  char_image( img_w, img_h);
     wxBitmap char_bitmap(img_w, img_h, 32);
 
-    wxColor fg(*wxWHITE), bg(*wxBLACK);
+    // at this point we are just dealing with intensities, not color
+    wxColor bg(*wxBLACK),
+            fg(*wxWHITE),
+            fg_bright(*wxWHITE);
+    if (m_screen_type == UI_SCREEN_2236DE) {
+        // this will be used for non-bright characters and underlines
+        fg = wxColor(0xA0,0xA0,0xA0);  // really, only blue channel matters
+    }
+
     wxMemoryDC charDC;
     charDC.SelectObject(char_bitmap);
-    charDC.SetBackground( wxBrush(bg, wxSOLID) );
-    charDC.SetPen(wxPen(fg, 0, wxSOLID));
-    charDC.SetBrush(wxBrush(fg, wxSOLID));
     charDC.SetBackgroundMode(wxSOLID);
-    charDC.SetTextForeground(fg);
+    charDC.SetBackground( wxBrush(bg, wxSOLID) );
     charDC.SetTextBackground(bg);
 
     // get ready for setting pixels for bitmap
@@ -311,6 +320,14 @@ Crt::generateFontmap()
         charDC.SetFont(m_font);
 
     charDC.SelectObject(wxNullBitmap);
+
+    // mapping from filtered image intensity to a color
+    wxColor colormap[256];
+    for(int n=0; n<256; ++n) {
+        float w = n * (1.0f/256.0f);
+        wxColor c = intensityToColor(w);
+        colormap[n].Set(c.Red(), c.Green(), c.Blue());
+    }
 
     // boundaries for drawing graphics chars
     int boxx[3] = { 0, m_charcell_w / 2, m_charcell_w };
@@ -321,36 +338,23 @@ Crt::generateFontmap()
     for(int inv=0; inv<2; ++inv) {
     for(int bright=0; bright<2; ++bright) {
 
-        // mapping from filtered image intensity to a color
-        wxColor colormap[256];
-        {
-            int tmp_contrast = getDisplayContrast();
-            if (m_screen_type == UI_SCREEN_2236DE) {
-                // make normal mode darker and bright brighter
-                // to increase the difference between them.
-                // inverse video looks bad as the bright swamps the dark, so
-                // change the scale factor for inverse video to favor dark.
-                // FIXME: this needs to be better wrt inverse video
-                float scale = (!bright && !inv)   ? 0.8
-                            : ( bright && !inv)   ? 1.7
-                            : (!bright &&  inv)   ? 0.4
-                            /*( bright &&  inv)*/ : 1.2;
-                setDisplayContrast(tmp_contrast * scale);
-            }
-            for(int n=0; n<256; ++n) {
-                float w = n * (1.0/256.0);
-                wxColor c = intensityToColor(w);
-                int nn = (inv) ? 255-n : n;
-                colormap[nn].Set(c.Red(), c.Green(), c.Blue());
-            }
-            setDisplayContrast(tmp_contrast);
+// boost 1
+        if (bright) {
+            // high intensity
+            charDC.SetTextForeground(fg_bright);
+            charDC.SetPen( wxPen(fg_bright, 1, wxSOLID) );
+            charDC.SetBrush( wxBrush(fg_bright, wxSOLID) );
+        } else {
+            // normal intensity
+            charDC.SetTextForeground(fg);
+            charDC.SetPen( wxPen(fg, 1, wxSOLID) );
+            charDC.SetBrush( wxBrush(fg, wxSOLID) );
         }
 
         for(int chr=0; chr<256; ++chr) {
-
             int ch = (chr & 0x7F);  // minus underline flag
 
-            if (getFontSize() >= FONT_NATIVE8) {
+            if (fontsize >= FONT_NATIVE8) {
 
                 // prepare by blanking out everything
                 charDC.SelectObject(char_bitmap);
@@ -386,13 +390,18 @@ text = L"\u25c0";
 
                 // at this level of representation >=0x80 always means underline.
                 // underline style doesn't work for all platforms, so we do it
-                // manually. not ideal.
+                // manually. underline is always normal intensity.
                 if (chr >= 0x80 && chr <= 0xFF) {
+                    int lft = offset + m_charcell_sx;
+                    int rgt = offset + m_charcell_w - 1;
                     for(int yy=0; yy<sy; ++yy) {
-                        int lft = offset;
-                        int rgt = offset + m_charcell_w - 1;
-                        int top = offset + m_begin_ul + yy - 1;
-                        charDC.DrawLine(lft, top, rgt, top);
+                        int top = offset + (m_charcell_h-sy) + yy;
+                        // one pixel of dark
+                        charDC.SetPen( wxPen(bg, 1, wxSOLID) );
+                        charDC.DrawLine(lft, top, lft+sx, top);
+                        // the rest lit
+                        charDC.SetPen( wxPen(fg, 1, wxSOLID) );
+                        charDC.DrawLine(lft+sx, top, rgt, top);
                     }
                 }
 
@@ -403,6 +412,11 @@ text = L"\u25c0";
 
                 // blank it
                 char_image.SetRGB( wxRect(0,0,img_w,img_h), 0x00, 0x00, 0x00 );
+
+// boost 1b
+                int rr = (bright) ? fg_bright.Red()   : fg.Red();
+                int gg = (bright) ? fg_bright.Green() : fg.Green();
+                int bb = (bright) ? fg_bright.Blue()  : fg.Blue();
 
                 for(int bmr=0; bmr<11; ++bmr) {  // bitmap row
 
@@ -438,21 +452,37 @@ text = L"\u25c0";
                                |  ((pixrow >> 2) & 0x001);
                     }
 
+                    // inv is a bit strange, but this is what the hardware does.
+                    // dot = (inv & !dot_last_cycle) ? 0
+                    //     : (inv)                   ? !(glyph_dot | box_dot)
+                    //                               :  (glyph_dot | box_dot);
+                    //
+                    // I can't model this accurately right now because the box
+                    // graphics overlay is done separately
+                    if (inv) {
+                        pixrow = (~pixrow >> 1)  // 1st term above
+                               &  ~pixrow;       // 2nd term above
+                    }
+
                     // add underline on the last bitmap row
                     // the hardware stipples the underline this way
                     if ((chr >= 0x80) && (bmr == 10)) {
                         pixrow = 0x55 << 1;
+                        // underline suppresses bright
+                        rr = fg.Red();
+                        gg = fg.Green();
+                        bb = fg.Blue();
                     }
 
                     for(int bmc=0; bmc<10; pixrow <<= 1, ++bmc) {  // bitmap col
                         if (pixrow & 0x200) {
                             // the pixel should be lit; replicate it
-                            for(int yy=0; yy<sy; ++yy)
+                            for(int yy=0; yy<sy; ++yy) {
                             for(int xx=0; xx<sx; ++xx) {
                                 char_image.SetRGB(offset + bmc*sx    + xx,
                                                   offset + bmr*sy*dy + yy,
-                                                  0xff, 0xff, 0xff);
-                            } // for xx,yy
+                                                  rr, gg, bb);
+                            } } // for xx,yy
                         } // pixel is lit
                     } // for bmc
 
@@ -464,16 +494,32 @@ text = L"\u25c0";
             // to simulate the limited bandwidth of the real CRT.
             wxImage blur_img(m_charcell_w, m_charcell_h);
 
-            for(int y=0; y<m_charcell_h; ++y)
+            for(int y=0; y<m_charcell_h; ++y) {
             for(int x=0; x<m_charcell_w; ++x) {
+
+                // this is a good place for doing brightness modulation in dot
+                // matrix mode, because the driving pixel can be super-luminal
+                // and spread to other pixels.  it doesn't work for native fonts
+                // because the filter kernal is a noop.
+                // The downside: even when a character has the intense attribute,
+                // the underline is supposed to be normal intensity, yet the code
+                // below boost everything.
+// boost 2
+                float brightness_modulation =
+                        (m_screen_type != UI_SCREEN_2236DE) ? 1.0f : // attributes unsupported
+                        (fontsize >= FONT_NATIVE8)          ? 1.0f : // modulation done earlier
+                        (bright)                            ? 1.2f : // superluminal
+                                                              0.8f ; // dimmed
 
                 // pick up 3x3 neighborhood around pixel of interest
                 int pix[9];
-                for(int yy=-1; yy<=1; ++yy)
-                for(int xx=-1; xx<=1; ++xx)
-                    // wxImage is always RGB, so we can just pick any one channel
+                for(int yy=-1; yy<=1; ++yy) {
+                for(int xx=-1; xx<=1; ++xx) {
+                    // source is monochromatic, so any channel will do
                     pix[(yy+1)*3 + (xx+1)] =
+                        brightness_modulation *
                         char_image.GetBlue(x+offset+xx, y+offset+yy);
+                } }
 
                 // apply kernel
                 int idx = int(
@@ -487,10 +533,11 @@ text = L"\u25c0";
                     : (idx > 0xFF) ? 0xFF
                                    : idx;
 
-                const wxColor rgb = colormap[idx]; // colorize
+                wxColor rgb = (inv && (fontsize >= FONT_NATIVE8)) ? colormap[255-idx]
+                                                                  : colormap[    idx];
                 blur_img.SetRGB(x, y, rgb.Red(), rgb.Green(), rgb.Blue());
 
-            } // for x,y
+            } } // for x,y
 
             // copy it to the final font bitmap
             int row_offset = m_charcell_h * (4*alt + 2*inv + bright);
@@ -512,6 +559,8 @@ void
 Crt::generateScreen()
 {
     static bool reentrant = false;
+    assert(!reentrant);
+    reentrant = true;
 
     if (isFontDirty()) {
         generateFontmap();
@@ -521,32 +570,24 @@ Crt::generateScreen()
     wxColor fg(intensityToColor(1.0f)),  // color of text
             bg(intensityToColor(0.0f));  // color of background
 
-    assert(!reentrant);
-    reentrant = true;
+    bool success = false;
 #if DRAW_WITH_RAWBMP
 // FIXME: see if we still need this for OSX
 // FIXME: it doesn't have box mode overlay
-    {
-        bool success = generateScreenByRawBmp(fg, bg);
-        if (success) {
-            reentrant = false;
-            return;
-        }
-    }
-    // that didn't work, so build image via more platform-independent means
+    success = generateScreenByRawBmp(fg, bg);
 #endif
-
     wxMemoryDC memDC(m_scrbits);
+    if (!success) {
+        memDC.SetBackground( wxBrush(bg, wxSOLID) );
+        memDC.Clear();
+        generateScreenByBlits(memDC);
+    }
 
-    // start by blanking out everything
-    memDC.SetBackground( wxBrush(bg, wxSOLID) );
-    memDC.Clear();
-
-    generateScreenByBlits(memDC);
-    generateScreenCursor(memDC);  // FIXME: should this come after overlay?
     if (m_screen_type == UI_SCREEN_2236DE) {
         generateScreenOverlay(memDC);
     }
+
+    generateScreenCursor(memDC);
 
     // release the bitmap
     memDC.SelectObject(wxNullBitmap);
@@ -629,13 +670,17 @@ Crt::generateScreenCursor(wxMemoryDC &memDC)
         color = (attr & char_attr_t::CHAR_ATTR_INV) ? bg : fg;
     }
 
-    int top   = m_curs_y * m_charcell_h + m_begin_curs;
-    int left  = m_curs_x * m_charcell_w;
+    int top   = m_charcell_h*(m_curs_y+1) - (2 * m_charcell_sy*m_charcell_dy);
+    int left  = m_charcell_w* m_curs_x;
     int right = left + m_charcell_w - 1;
     memDC.SetPen( wxPen(color, 1, wxSOLID) );
-    for(int yy=0; yy < m_rows_curs; ++yy)
-        memDC.DrawLine(left,  top + yy,
-                       right, top + yy);
+    for(int y=0; y < 2; ++y) {
+        for(int yy=0; yy<m_charcell_sy; ++yy) {
+            int yyy = top + y*m_charcell_dy*m_charcell_sy + yy;
+            memDC.DrawLine(left,  yyy,
+                           right, yyy);
+        }
+    }
 }
 
 
@@ -645,31 +690,23 @@ Crt::generateScreenOverlay(wxMemoryDC &memDC)
 {
     assert(m_screen_type == UI_SCREEN_2236DE);
 
-    int sx, sy;  // scale factor for logical pixel to screen mapping
-    switch (getFontSize()) {
-        default: // in case someone has diddled the ini file
-        case FONT_MATRIX12:     // this is closest to the original
-                sx = 1; sy = 2;
-                break;
-        case FONT_MATRIX11:
-                sx = 1; sy = 1;
-                break;
-        case FONT_MATRIX24:
-                sx = 2; sy = 2;
-                break;
-        case FONT_NATIVE8:
-        case FONT_NATIVE10:
-        case FONT_NATIVE12:
-        case FONT_NATIVE14:
-        case FONT_NATIVE18:
-        case FONT_NATIVE24:
-                sx = sy = 1;
-                break;
+    // box overlay is always normal brightness.
+    // in 2236 mode, we diminish normal brightness in order to get bright (1.0)
+    wxColor fg = (m_screen_type == UI_SCREEN_2236DE) ? intensityToColor(0.6f)
+                                                     : intensityToColor(1.0f);
+    wxPen pen(fg, 1, wxPENSTYLE_USER_DASH);
+    wxDash dashpat[2];
+    if (m_charcell_sx == 1) {
+        // rather than 1 on, 1 off, this looks like a solid line
+        // but I can't find a work around to make it look right
+        dashpat[0] = 1; dashpat[1] = 1;
+    } else {
+        assert(m_charcell_sx == 2);
+    //  dashpat[0] = 2; dashpat[1] = 2; // 3 on, 1 off for some reason
+        dashpat[0] = 1; dashpat[1] = 3; // 2 on, 2 off (empirically, win7)
     }
-
-    wxColor fg(intensityToColor(1.0f));
-    memDC.SetBrush(wxBrush(fg, wxSOLID));
-    memDC.SetPen(wxPen(fg, 0, wxSOLID));
+    pen.SetDashes(2, dashpat);
+    memDC.SetPen(pen);
 
     // find horizontal runs of lines and draw them
     for(int row=0; row < 25; ++row) {
@@ -684,7 +721,8 @@ Crt::generateScreenOverlay(wxMemoryDC &memDC)
             } else if (start >= 0) {
                 // hit the end
                 int rgt = col * m_charcell_w;
-                memDC.DrawRectangle(start, top, rgt-start+sx, sy);
+                for(int yy=0; yy<m_charcell_sy; ++yy)
+                    memDC.DrawLine(start, top+yy, rgt, top+yy);
                 start = -1;
             }
             if (m_attr[off] & (char_attr_t::CHAR_ATTR_RIGHT)) {
@@ -693,14 +731,16 @@ Crt::generateScreenOverlay(wxMemoryDC &memDC)
             } else if (start >= 0) {
                 // end of run
                 int rgt = col * m_charcell_w + (m_charcell_w >> 1);
-                memDC.DrawRectangle(start, top, rgt-start+sx, sy);
+                for(int yy=0; yy<m_charcell_sy; ++yy)
+                    memDC.DrawLine(start, top+yy, rgt, top+yy);
                 start = -1;
             }
         }
         // draw if we made it all the way to the right side
         if (start >= 0) {
             int rgt = 80 * m_charcell_w;
-            memDC.DrawRectangle(start, top, rgt-start+sx, sy);
+            for(int yy=0; yy<m_charcell_sy; ++yy)
+                memDC.DrawLine(start, top+yy, rgt, top+yy);
         }
     }
 
@@ -717,7 +757,8 @@ Crt::generateScreenOverlay(wxMemoryDC &memDC)
             } else if (start >= 0) {
                 // end of run
                 int end = row * m_charcell_h;
-                memDC.DrawRectangle(mid, start, sx, end-start+sy);
+                for(int xx=0; xx<m_charcell_sx; ++xx)
+                    memDC.DrawLine(mid+xx, start, mid+xx, end+(m_charcell_sy>>1));
                 start = -1;
             }
         }
@@ -851,34 +892,6 @@ if (1) {
         sp.OffsetY(raw_screen, m_charcell_h);
 
     } // for(row)
-
-
-#if 1
-    // draw the cursor from the calling point via generateScreenCursor()
-#else
-    // draw cursor -- there can be only zero/one on screen.
-    // it is drawn one scanline lower than the underline
-    bool cursor_blink_enable = m_parent->getCursorBlinkPhase();
-    if (m_curs_attr == cursor_attr_t::CURSOR_ON ||
-        m_curs_attr == cursor_attr_t::CURSOR_BLINK && cursor_blink_enable
-       ) {
-
-        // draw the one actual cursor, wherever it is
-        int top  = m_curs_y * m_charcell_h + m_begin_curs;
-        int left = m_curs_x * m_charcell_w;
-
-        for(int yy=0; yy<m_rows_curs; ++yy) {
-            wxAlphaPixelData::Iterator spi(raw_screen);  // screen pointer
-            spi.MoveTo(raw_screen, left, top+yy);
-            for(int xx=0; xx<m_charcell_w; ++xx) {
-                spi.Red()   = fg.Red();
-                spi.Green() = fg.Green();
-                spi.Blue()  = fg.Blue();
-                ++spi;
-            }
-        }
-    }
-#endif
 
     return true;
 }

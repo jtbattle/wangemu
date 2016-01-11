@@ -138,9 +138,9 @@ private:
     bool          m_fontdirty;      // font/color/contrast/brightness changed
     int           m_charcell_w;     // width of one character cell
     int           m_charcell_h;     // height of one character cell
-    int           m_begin_ul;       // vertical offset for underline
-    int           m_begin_curs;     // vertical offset for cursor
-    int           m_rows_curs;      // vertical height for ul/cursor
+    int           m_charcell_sx;    // real x pixels per logical pixel
+    int           m_charcell_sy;    // # real y pixels per logical pixel
+    int           m_charcell_dy;    // row skipping factor
 
     wxColor       m_FGcolor;        // screen phosphor color
     wxColor       m_BGcolor;        // screen background color

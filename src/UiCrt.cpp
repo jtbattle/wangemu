@@ -47,9 +47,9 @@ Crt::Crt(CrtFrame *parent, int screen_type) :
     m_fontdirty(true),          // must be regenerated
     m_charcell_w(1),            // until SetFontSize overrides.  this prevents
     m_charcell_h(1),            // problems when m_scrbits is first allocated.
-    m_begin_ul(0),
-    m_begin_curs(0),
-    m_rows_curs(0),
+    m_charcell_sx(1),
+    m_charcell_sy(1),
+    m_charcell_dy(1),
     m_FGcolor( wxColor(0xff,0xff,0xff) ),
     m_BGcolor( wxColor(0x00,0x00,0x00) ),
     m_display_contrast(100),

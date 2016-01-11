@@ -10,7 +10,7 @@ term.attrSet(bright=True).attrOff()
 term.sendline("Hello from python")
 term.sendline()
 
-if 1:
+if 0:
     term.clear()
     term.attrUse(under=False)
 
@@ -67,7 +67,7 @@ if 0:
     time.sleep(2)
     term.sendline()
 
-if 0:
+if 1:
     # attribute test
     term.attrUse()
     term.sendline("Normal")
@@ -224,6 +224,46 @@ if 0:
     while 1:
         term.sendhex('07')
         time.sleep(1)
+
+if 0:
+    # what does a blinking cursor on inverse field look like?
+    term.clear()
+    term.attrUse(inv=True)
+    for n in range(8):
+        term.sendline("                        ")
+    term.at(4,8)
+    while True:
+        term.cursor("on")
+        time.sleep(5)
+        term.cursor("blink")
+        time.sleep(5)
+        term.cursor("off")
+        time.sleep(5)
+
+if 0:
+    # verify width of cursor relative to character
+    term.clear()
+    term.charset2()
+    term.at(1,0).sendhex('FFFFFF')
+    term.at(2,1).sendhex('FF')
+    term.at(3,0).sendhex('FFFFFF')
+    term.at(2,1)
+    time.sleep(100)
+
+if 0:
+    term.clear()
+    term.sendline("READY (BASIC-2)")
+    term.send(":")
+    term.readline()
+
+if 0:
+    term.clear()
+    term.charset2()
+    term.at(10,35).attrUse(inv=False).sendhex('FFFF41FFFF').sendline()
+    term.at(11,35).attrUse(inv=True).sendhex('FFFF41FFFF').sendline()
+    term.at(12,35).attrUse(inv=False).sendhex('FFFF41FFFF').sendline()
+    term.at(16,0)
+
 
 term.cursor('on').charset1().attrOff()
 term.sendline("done!")
