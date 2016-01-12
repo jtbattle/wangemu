@@ -280,10 +280,8 @@ Crt::generateFontmap()
     //       5 : alt      no       normal
     //       6 : alt      yes      high
     //       7 : alt      yes      high
-#if 0
-    m_fontmap = wxBitmap( 256*m_charcell_w, 8*m_charcell_h, 32);
-#elif 0
-    m_fontmap = wxBitmap( 256*m_charcell_w, 8*m_charcell_h, 24);
+#if !(__WXMAC__) && DRAW_WITH_RAWBMP
+    m_fontmap = wxBitmap( 256*m_charcell_w, 8*m_charcell_h, 24);   // use DIB
 #else
     m_fontmap = wxBitmap( 256*m_charcell_w, 8*m_charcell_h, -1);
 #endif
@@ -411,7 +409,8 @@ text = L"\u25c0";
             } else {  // use real bitmap font
 
                 // blank it
-                char_image.SetRGB( wxRect(0,0,img_w,img_h), 0x00, 0x00, 0x00 );
+                char_image.SetRGB( wxRect(0,0,img_w,img_h),
+                                   bg.Red(), bg.Green(), bg.Blue() );
 
 // boost 1b
                 int rr = (bright) ? fg_bright.Red()   : fg.Red();
@@ -772,107 +771,78 @@ Crt::generateScreenOverlay(wxMemoryDC &memDC)
 bool
 Crt::generateScreenByRawBmp(wxColor fg, wxColor bg)
 {
+// this is very hacky, and for windows it works only if the m_scrbits and
+// m_fontmap bitmaps are declared with depth 24, instead of 32 or -1.
+// enabling it for windows is mostly useful for debugging
+#if __WXMAC__
+  #define TT_t wxAlphaPixelData
+  #define TW 32
+#else
+  #define TT_t wxNativePixelData
+  #define TW 24
+#endif
+
     // this path is faster only if we are drawing to a 32b surface.
     // this is because the code must commit to using either
-    // wxAlphaPixeldata (32b) or wxNativePixelData (24b except under OSX).
-    if (m_scrbits.GetDepth() != 32)
+    // wxAlphaPixelData (32b) or wxNativePixelData (24b except under OSX).
+    if (m_scrbits.GetDepth() != TW)
         return false;
 
-if (0) {
-    // fill it as a test: yes, this works
-    wxMemoryDC mdc(m_scrbits);
-    wxColor bg(wxColor(0xFF,0x00,0x00));
-    mdc.SetBackground( wxBrush(bg, wxSOLID) );
-    mdc.Clear();
-    mdc.SelectObject(wxNullBitmap);
-    return true;
-}
-
-This stuff has stopped working since 2.9.5.
-Rather than wasting more hours debugging this, see if OSX still needs it.
-if (0) {
-    // fill it with red to check if these iterators work as expected
-    wxNativePixelData rs(m_scrbits);
-    wxNativePixelData::Iterator rowStart(rs);
-    wxColor bg(wxColor(0xFF,0x00,0x00));
-    const int h = m_scrbits.GetHeight();
-    const int w = m_scrbits.GetWidth();
-    for(int y=0; y<h; ++y) {
-        wxNativePixelData::Iterator p = rowStart;
-        for(int x=0; x<w; ++x) {
-            p.Red()   = bg.Red();
-            p.Green() = bg.Green();
-            p.Blue()  = bg.Blue();
-//          p.Alpha() = 0xFF;
-            ++p;
-        }
-        rowStart.OffsetY(rs, 1);
-    }
-    return true;
-}
-if (1) {
-    // fill it with red to check if these iterators work as expected
-    wxAlphaPixelData rs(m_scrbits);
-    wxAlphaPixelData::Iterator rowStart(rs);
-    wxColor bg(wxColor(0xFF,0x00,0x00));
-    const int h = m_scrbits.GetHeight();
-    const int w = m_scrbits.GetWidth();
-    for(int y=0; y<h; ++y) {
-        wxAlphaPixelData::Iterator p = rowStart;
-        for(int x=0; x<w; ++x) {
-            p.Red()   = bg.Red();
-            p.Green() = bg.Green();
-            p.Blue()  = bg.Blue();
-//          p.Alpha() = 0xFF;
-            ++p;
-        }
-        rowStart.OffsetY(rs, 1);
-    }
-    return true;
-}
-
-    wxAlphaPixelData raw_screen(m_scrbits);
+    TT_t raw_screen(m_scrbits);
     if (!raw_screen)
         return false;
 
-    wxAlphaPixelData raw_font(m_fontmap);
+    TT_t raw_font(m_fontmap);
     if (!raw_font)
         return false;
 
+    bool text_blink_enable = m_parent->getTextBlinkPhase();
+
     // draw the characters (diddlescan order)
-    wxAlphaPixelData::Iterator sp(raw_screen);  // screen pointer
+    TT_t::Iterator sp(raw_screen);  // screen pointer
     for(int row=0; row<m_chars_h2; ++row) {
 
         // the upper left corner of the leftmost char of row
-        wxAlphaPixelData::Iterator rowUL = sp;
+        TT_t::Iterator rowUL = sp;
 
         for(int col=0; col<m_chars_w; ++col) {
 
             // the upper left corner of the char on the screen
-            wxAlphaPixelData::Iterator charUL = sp;
+            TT_t::Iterator charUL = sp;
 
             int ch   = m_display[row*m_chars_w + col];
             int attr =    m_attr[row*m_chars_w + col];
 
             // pick out subimage of current character from the
             // fontmap and copy it to the screen image
-            wxAlphaPixelData::Iterator cp(raw_font);
+            TT_t::Iterator cp(raw_font);
             cp.OffsetX(raw_font, m_charcell_w * ch);
-            int attr_offset = 0;  // FIXME: base this on m_attr[x,y]
-            cp.OffsetY(raw_font, m_charcell_h * attr_offset);
+
+            bool blink  = (attr & char_attr_t::CHAR_ATTR_BLINK)  ? true : false;
+            int  alt    = (attr & char_attr_t::CHAR_ATTR_ALT)    ? 4 : 0;
+            int  inv    = (attr & char_attr_t::CHAR_ATTR_INV)    ? 2 : 0;
+            int  bright = (attr & char_attr_t::CHAR_ATTR_BRIGHT) ? 1 : 0;
+
+            // blinking alternates between normal and bright intensity
+            // but intense text can't blink because it is already intense
+            if (text_blink_enable && blink)
+                bright = 1;
+
+            int font_row = m_charcell_h * (alt + inv + bright);
+            cp.OffsetY(raw_font, font_row);
 
             for(int rr=0; rr<m_charcell_h; ++rr) {
                 // pointers to the start of the current character scanline
-                wxAlphaPixelData::Iterator sRowp = sp;
-                wxAlphaPixelData::Iterator cRowp = cp;
+                TT_t::Iterator sRowp = sp;
+                TT_t::Iterator cRowp = cp;
                 for(int cc=0; cc<m_charcell_w; ++cc) {
-#if 0
+#if __WXMAC__
+                    // fails for 24bpp; but 32b was asserted earlier
+                    sp.Data() = cp.Data();
+#else
                     sp.Red()   = cp.Red();
                     sp.Green() = cp.Green();
                     sp.Blue()  = cp.Blue();
-#else
-                    // fails for 24bpp; but 32b was asserted earlier
-                    sp.Data() = cp.Data();
 #endif
                     ++sp;
                     ++cp;

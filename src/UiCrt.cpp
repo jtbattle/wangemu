@@ -438,9 +438,7 @@ Crt::recalcBorders()
     // only a font change requires a new wxBitmap.
     if ( !m_scrbits.IsOk() || (m_scrbits.GetWidth()  != width)  ||
                               (m_scrbits.GetHeight() != height) ) {
-#if 0
-        m_scrbits = wxBitmap(width, height, 32);
-#elif 0
+#if !(__WXMAC__) && DRAW_WITH_RAWBMP
         m_scrbits = wxBitmap(width, height, 24);
 #else
         m_scrbits = wxBitmap(width, height, -1);  // native depth

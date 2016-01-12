@@ -24,9 +24,76 @@ Emulator TODO list
 
 *) improved 2236 terminal emulation
 
+    - visual leak detector  (I have some problem)
+	http://vld.codeplex.com/
+
+    - refresher: wxBitmap is a platform-dependent image format
+                 wxImage  is a platform-independent image format
+
+        wxImage is just a buffer of RGB bytes with an optional
+        buffer for the alpha bytes. It is all generic, platform
+        independent and image file format independent code. It
+        includes generic code for scaling, resizing, clipping, and
+        other manipulations of the image data.
+
+        OTOH, wxBitmap is intended to be a wrapper of whatever is
+        the native image format that is quickest/easiest to draw to
+        a DC or to be the target of the drawing operations performed
+        on a wxMemoryDC.
+
+        By splitting the responsibilities between wxImage/wxBitmap
+        like this then it's easier to use generic code shared by all
+        platforms and image types for generic operations and
+        platform specific code where performance or compatibility is
+        needed.
+
+        --- also
+
+        If you need direct access the bitmap data instead going
+        through drawing to it using wxMemoryDC you need to use the
+        wxPixelData class (either wxNativePixelData for RGB bitmaps
+        or wxAlphaPixelData for bitmaps with an additionally alpha
+        channel).
+
+        --- also
+
+        Implemented on Windows, GTK+ and OS X:
+
+            wxNativePixelData: Class to access to wxBitmap's internal data
+                               without alpha channel (RGB).
+            wxAlphaPixelData: Class to access to wxBitmap's internal data
+                              with alpha channel (RGBA).
+
+        Implemented everywhere:
+
+            wxImagePixelData: Class to access to wxImage's internal data
+                              with alpha channel (RGBA).
+
+        wxMSW note: efficient access is only possible to the bits of
+        the so called device independent bitmaps (DIB) under MSW. To
+        ensure that wxBitmap uses a DIB internally and not a device
+        dependent bitmap (DDB), you need to pass an explicit depth
+        to its ctor, i.e. either 24 or 32, as by default wxBitmap
+        creates a DDB of the screen depth.
+
+        --- final thoughts
+
+        That explains some things, but then why does it barf under MSW
+        with an explicit bitmap depth of 32 and using wxAlphaPixelData?
+
+    - rather than drawing to a bitmap for the character into
+      wxImage char_image, then converting to an int array, blurring,
+      then converting back to wxImage blur_img, there are advantages to
+      rendering the intensity right to an int array (namely values
+      can be >1.0) and then we can skip the conversion to the int array.
+      this would allow making underline not dependent on the bright attr, eg.
+      as the boosting/suppression would happen before the blur work.
+      think harder about this before investing the work.
+
     - for native font mode, can I use unicode to get better mapping for
       diamond shapes, arrows, etc?
         http://unicodelookup.com/#diamond/1
+
     - the weird thing where inverse mode causes video to be lit
       either when the current dot is 0 or the previous dot was 0
       gets tricky in the presence of box line graphics.
@@ -48,6 +115,9 @@ Emulator TODO list
               http://stackoverflow.com/questions/19695658/emulating-palette-based-graphics-in-webgl-v-s-canvas-2d
           apple II js w/webgl rendering option:
               http://porkrind.org/a2/
+      in many ways this is simpler, in that it only has to deal with one
+      single 10x22 dot format and can then stretch to the current screen size,
+      instead of having 1:1, 1:2, 2:4 dot matrix modes.
 
     - test some corner case on the real terminal
       what happens if there is an incorrect escape sequence:
