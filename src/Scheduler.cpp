@@ -123,6 +123,11 @@ Scheduler::Scheduler() :
 // free allocated data
 Scheduler::~Scheduler()
 {
+// FIXME: use smart pointers so I don't need to explicitly delete dead timers
+//        (here and TimerKill and from the retired list in TimerCredit)
+    for(auto t : m_timer) {
+        delete t;
+    }
     m_timer.clear();
 };
 
@@ -184,6 +189,7 @@ void Scheduler::TimerKill(Timer *tmr)
     for(unsigned int n=0; n<m_timer.size(); n++) {
         if (m_timer[n] == tmr) {
             m_timer.erase(m_timer.begin() + n);
+            delete tmr;
             return;
         }
     }
@@ -248,6 +254,7 @@ void Scheduler::TimerCredit(void)
     // scan through the retired list and perform callbacks
     for(auto t : retired) {
         (t->callback)();
+        delete t;
     }
 
     m_updating = false; // done updating
