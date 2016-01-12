@@ -4,8 +4,7 @@
 #ifndef _INCLUDE_UI_CRT_H_
 #define _INCLUDE_UI_CRT_H_
 
-#include <wx/sound.h>           // "beep!"
-
+class wxSound;
 class CrtFrame;
 
 class Crt: public wxWindow

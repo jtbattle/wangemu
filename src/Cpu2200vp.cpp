@@ -17,7 +17,6 @@
 #include "System2200.h"
 #include "ucode_2200vp.h"
 
-
 // control which functions get inlined
 #define INLINE_STORE_C 1
 #define INLINE_MEM_RD  1  // FIXME: this doesn't work, due to static declaration

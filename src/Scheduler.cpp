@@ -40,6 +40,7 @@
 
 #include "Scheduler.h"
 #include "Ui.h"         // needed for UI_Error()
+
 #include <algorithm>    // for std::sort
 
 // ======================================================================

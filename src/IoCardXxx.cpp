@@ -9,7 +9,6 @@
 #include "IoCardXxx.h"
 #include "Cpu2200.h"
 
-
 #define NOISY  0        // turn on some debugging messages
 
 #ifdef _MSC_VER

@@ -1,9 +1,8 @@
 // Wang 2200-T microcode disassembler.
 
-#include <fstream>
-
 #include "w2200.h"
 
+#include <fstream>
 
 // ======================================================================
 // compile time options
@@ -20,7 +19,6 @@
 
 // which column the comments begin
 #define COMMENT_COL 26
-
 
 // ======================================================================
 // the rest

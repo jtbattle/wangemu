@@ -2,17 +2,6 @@
 // headers
 // ----------------------------------------------------------------------------
 
-#include <algorithm>
-
-#include <sstream>
-using std::ostringstream;
-
-#include <iomanip>
-using std::hex;
-using std::setw;
-using std::setfill;
-using std::uppercase;
-
 #include "Host.h"
 #include "IoCardDisk.h"
 #include "IoCardKeyboard.h"     // to pick up core_* keyboard interface
@@ -26,6 +15,17 @@ using std::uppercase;
 #include "UiCrtStatusBar.h"
 #include "UiDiskFactory.h"
 #include "UiPrinterFrame.h"
+
+#include <algorithm>
+
+#include <sstream>
+using std::ostringstream;
+
+#include <iomanip>
+using std::hex;
+using std::setw;
+using std::setfill;
+using std::uppercase;
 
 // ----------------------------------------------------------------------------
 // resources

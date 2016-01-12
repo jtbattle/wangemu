@@ -49,13 +49,6 @@
 // headers
 // ----------------------------------------------------------------------------
 
-#include <sstream>
-using std::ostringstream;
-#include <iomanip>
-using std::hex;
-using std::setw;
-using std::setfill;
-
 #include "Host.h"
 #include "System2200.h"
 #include "Ui.h"                 // emulator interface
@@ -67,6 +60,12 @@ using std::setfill;
 #include "wx/printdlg.h"        // print preview interfaces
 #include "wx/paper.h"           // pick up paper database
                                 // (for translation of enums - see PaperSize)
+#include <sstream>
+using std::ostringstream;
+#include <iomanip>
+using std::hex;
+using std::setw;
+using std::setfill;
 
 // ----------------------------------------------------------------------------
 // constants

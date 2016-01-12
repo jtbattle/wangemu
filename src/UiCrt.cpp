@@ -12,6 +12,8 @@
 #include "UiCrtErrorDlg.h"      // error code decoder
 #include "UiCrtFrame.h"         // this module's owner
 
+#include <wx/sound.h>           // "beep!"
+
 // ----------------------------------------------------------------------------
 // Crt
 // ----------------------------------------------------------------------------
