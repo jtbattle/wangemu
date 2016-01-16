@@ -12,17 +12,9 @@
 #ifndef _INCLUDE_UI_SYSTEM_H_
 #define _INCLUDE_UI_SYSTEM_H_
 
-#if !GLOBAL_NEW_DEBUGGING       // this is controlled in compile_options.h
-    #include "wx/wx.h"
-
-    // Normally, new is automatically defined to be the debugging version.
-    // If not, this does it.
-    #if !defined(new) && defined(WXDEBUG_NEW) && wxUSE_MEMORY_TRACING && wxUSE_GLOBAL_MEMORY_OPERATORS
-    #define new WXDEBUG_NEW
-    #endif
-#endif
-
 #include "w2200.h"
+
+#include "wx/wx.h"
 
 // ==================== exported by UiSystem.cpp ====================
 

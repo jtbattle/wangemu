@@ -74,16 +74,6 @@
 // it is used all over the place
 #define NUM_IOSLOTS 6
 
-// ========================================================================
-// heap leak checker control
-// ========================================================================
-
-// this enables/disables leaked heap objects globally in the project.
-// actually, it is all always checked, this just enables better diagnostics
-// when leaks do happen.  if it is set to 0, only the Ui* code has good
-// diagnostics.  The downside is that it exposes all of the wx include
-// files to the non-GUI code too, making compiles twice as long.
-#define GLOBAL_NEW_DEBUGGING 0
 
 #endif _INCLUDE_COMPILE_OPTIONS_H_
 
