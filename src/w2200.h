@@ -12,6 +12,8 @@
 using std::string;
 #include <vector>
 using std::vector;
+#include <memory>
+using std::shared_ptr;
 
 
 // types used globally in the wang emulator

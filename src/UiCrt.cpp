@@ -14,6 +14,8 @@
 
 #include <wx/sound.h>           // "beep!"
 
+#define USE_STRETCH_BLIT 0
+
 // ----------------------------------------------------------------------------
 // Crt
 // ----------------------------------------------------------------------------
@@ -44,7 +46,6 @@ Crt::Crt(CrtFrame *parent, int screen_type) :
     m_chars_w((m_screen_type == UI_SCREEN_64x16) ? 64 : 80),
     m_chars_h((m_screen_type == UI_SCREEN_64x16) ? 16 : 24),
     m_chars_h2((m_screen_type == UI_SCREEN_2236DE) ? 25 : m_chars_h),
-    m_font(wxNullFont),         // until SetFontSize() is called
     m_fontsize(FONT_MATRIX12),
     m_fontdirty(true),          // must be regenerated
     m_charcell_w(1),            // until SetFontSize overrides.  this prevents
@@ -80,7 +81,6 @@ Crt::Crt(CrtFrame *parent, int screen_type) :
 Crt::~Crt()
 {
     wxDELETE(g_logger);
-    wxDELETE(m_beep);
 }
 
 // hardware reset
@@ -183,7 +183,12 @@ void
 Crt::refreshWindow()
 {
     if (isDirty()) {
+#if USE_STRETCH_BLIT
+        // FIXME: needed for stretchblit mode until I redo border stuff
+        invalidateAll();
+#else
         invalidateText();
+#endif
         setDirty(false);
     }
 }
@@ -216,6 +221,21 @@ Crt::OnPaint(wxPaintEvent &WXUNUSED(event))
 #endif
 
     generateScreen();   // update the screen image bitmap
+#if USE_STRETCH_BLIT
+    wxMemoryDC memDC(m_scrbits);
+    dc.StretchBlit(
+            0,                       // xdest
+            0,                       // ydest
+            m_scrpix_w,              // dstWidth
+            m_scrpix_h,              // dstHeight
+            &memDC,                  // source
+            0,                       // xsrc
+            0,                       // ysrc
+            m_RCscreen.GetWidth(),   // srcWidth
+            m_RCscreen.GetHeight()   // srcHeight
+    );
+    memDC.SelectObject(wxNullBitmap);
+#else
     dc.DrawBitmap( m_scrbits, m_RCscreen.GetX(), m_RCscreen.GetY() );
 
     // draw borders around active text area.
@@ -254,6 +274,7 @@ Crt::OnPaint(wxPaintEvent &WXUNUSED(event))
         dc.SetPen(wxNullPen);
         dc.SetBrush(wxNullBrush);
     }
+#endif
 
     setFrameCount( getFrameCount() + 1 );
 }
@@ -443,7 +464,7 @@ Crt::recalcBorders()
 #if !(__WXMAC__) && DRAW_WITH_RAWBMP
         m_scrbits = wxBitmap(width, height, 24);
 #else
-        m_scrbits = wxBitmap(width, height, -1);  // native depth
+        m_scrbits = wxBitmap(width, height, wxBITMAP_SCREEN_DEPTH);
 #endif
     }
 }
@@ -1059,14 +1080,13 @@ Crt::create_beep()
         *wp++ = sample;
     }
 
-    m_beep = new wxSound;
+    m_beep = std::make_shared<wxSound>();
     bool success = m_beep->Create(total_bytes, wav);
     if (!success) {
-        wxDELETE(m_beep);
         m_beep = nullptr;
     }
 
-    delete wav;
+    delete [] wav;
 }
 
 // vim: ts=8:et:sw=4:smarttab

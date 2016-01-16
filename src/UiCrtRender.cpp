@@ -64,7 +64,7 @@ Crt::intensityToColor(float f) const
 {
     assert(f >= 0.0f && f <= 1.0f);
 
-    const float contrast   = getDisplayContrast()   * 0.01f;
+    const float contrast   = getDisplayContrast()   * 0.01f * 1.3f;
     const float brightness = getDisplayBrightness() * 0.01f;
 
     bool black_bg = (m_BGcolor.Red()   == 0x00) &&
@@ -144,10 +144,11 @@ void
 Crt::generateFontmap()
 {
     wxClientDC dc(this);
-    int sx,     // bitmap replication factor in x
-        sy,     // bitmap replication factor in y
-        dy;     // step in y (allows skipping rows)
-    int filter; // which filter kernel to use
+    wxFont font;  // for prerendering native font
+    int sx,       // bitmap replication factor in x
+        sy,       // bitmap replication factor in y
+        dy;       // step in y (allows skipping rows)
+    int filter;   // which filter kernel to use
 
     const int fontsize = getFontSize();
 
@@ -177,26 +178,28 @@ Crt::generateFontmap()
         case FONT_NATIVE14:
         case FONT_NATIVE18:
         case FONT_NATIVE24:
-                m_font = wxFont(fontsize, wxFONTFAMILY_MODERN,
-                                          wxFONTSTYLE_NORMAL,
-                                          wxFONTWEIGHT_NORMAL);
+                // FIXME: set to BOLD for now; it helps inverse mode,
+                // but eventually make it regular weight for normal mode
+                font = wxFont(fontsize, wxFONTFAMILY_MODERN,
+                                        wxFONTSTYLE_NORMAL,
+                                        wxFONTWEIGHT_BOLD);
 // Experiment: can we use a unicode capable-font to get better
 // mapping to wang symbols?
 #undef TRY_UNICODE
 #ifdef TRY_UNICODE
     #if 0
                 // this doesn't seem to help
-                m_font = wxFont(fontsize(), wxFONTFAMILY_SWISS,
-                                            wxFONTSTYLE_NORMAL,
-                                            wxFONTWEIGHT_NORMAL);
+                font = wxFont(fontsize(), wxFONTFAMILY_SWISS,
+                                          wxFONTSTYLE_NORMAL,
+                                          wxFONTWEIGHT_NORMAL);
     #else
                 // this seems to work!, but it is small
-                m_font = *wxNORMAL_FONT;
-                m_font.SetPointSize(fontsize);
+                font = *wxNORMAL_FONT;
+                font.SetPointSize(fontsize);
     #endif
 #endif
-                assert(m_font != wxNullFont);
-                dc.SetFont( m_font );
+                assert(font != wxNullFont);
+                dc.SetFont( font );
                 m_charcell_w = dc.GetCharWidth();
                 m_charcell_h = dc.GetCharHeight()
                              + 3;  // make room for underline, cursor, blank
@@ -283,7 +286,7 @@ Crt::generateFontmap()
 #if !(__WXMAC__) && DRAW_WITH_RAWBMP
     m_fontmap = wxBitmap( 256*m_charcell_w, 8*m_charcell_h, 24);   // use DIB
 #else
-    m_fontmap = wxBitmap( 256*m_charcell_w, 8*m_charcell_h, -1);
+    m_fontmap = wxBitmap( 256*m_charcell_w, 8*m_charcell_h, wxBITMAP_SCREEN_DEPTH);
 #endif
     wxMemoryDC fdc(m_fontmap);  // create a dc for us to write to
 
@@ -291,35 +294,24 @@ Crt::generateFontmap()
     // it has a one pixel border all around so we can do 3x3 convolution
     // easily and not worry about the edge cases.
     // char_bitmap is used to receive a real font character.
-    // char_image is used to construct a filtered bitmap image.
     const int offset = 1;
     const int img_w = m_charcell_w + 2*offset;
     const int img_h = m_charcell_h + 2*offset;
-    wxImage  char_image( img_w, img_h);
     wxBitmap char_bitmap(img_w, img_h, 32);
-
-    // at this point we are just dealing with intensities, not color
-    wxColor bg(*wxBLACK),
-            fg(*wxWHITE),
-            fg_bright(*wxWHITE);
-    if (m_screen_type == UI_SCREEN_2236DE) {
-        // this will be used for non-bright characters and underlines
-        fg = wxColor(0xA0,0xA0,0xA0);  // really, only blue channel matters
-    }
+    vector<vector<float>> char_intensity(img_h, vector<float>(img_w, 0.0f));
 
     wxMemoryDC charDC;
     charDC.SelectObject(char_bitmap);
     charDC.SetBackgroundMode(wxSOLID);
-    charDC.SetBackground( wxBrush(bg, wxSOLID) );
-    charDC.SetTextBackground(bg);
 
     // get ready for setting pixels for bitmap
-    if (m_font != wxNullFont)
-        charDC.SetFont(m_font);
+    if (font != wxNullFont)
+        charDC.SetFont(font);
 
     charDC.SelectObject(wxNullBitmap);
 
     // mapping from filtered image intensity to a color
+    // FIMXE: gamma compensation?
     wxColor colormap[256];
     for(int n=0; n<256; ++n) {
         float w = n * (1.0f/256.0f);
@@ -336,18 +328,22 @@ Crt::generateFontmap()
     for(int inv=0; inv<2; ++inv) {
     for(int bright=0; bright<2; ++bright) {
 
-// boost 1
-        if (bright) {
-            // high intensity
-            charDC.SetTextForeground(fg_bright);
-            charDC.SetPen( wxPen(fg_bright, 1, wxSOLID) );
-            charDC.SetBrush( wxBrush(fg_bright, wxSOLID) );
-        } else {
-            // normal intensity
-            charDC.SetTextForeground(fg);
-            charDC.SetPen( wxPen(fg, 1, wxSOLID) );
-            charDC.SetBrush( wxBrush(fg, wxSOLID) );
+        wxColor blk(*wxBLACK), norm(*wxWHITE), intense(*wxWHITE);
+        float f_blk(0.0f),   f_norm(1.0f),   f_intense(1.0f);
+        if (m_screen_type == UI_SCREEN_2236DE) {
+            // diminish normal to differentiate it from bright intensity
+            norm = wxColor(0x70,0x70,0x70);  // only blue channel is used
+            f_norm = 160.0f/255.0f;
         }
+
+        // brightness modulation for native font rendering
+        wxColor fg_eff = ( inv) ? blk : (bright) ? intense : norm;
+        wxColor bg_eff = (!inv) ? blk : (bright) ? intense : norm;
+        charDC.SetBackground( wxBrush(bg_eff, wxSOLID) );
+        charDC.SetTextBackground(bg_eff);
+        charDC.SetTextForeground(fg_eff);
+        charDC.SetPen( wxPen(fg_eff, 1, wxSOLID) );
+        charDC.SetBrush( wxBrush(fg_eff, wxSOLID) );
 
         for(int chr=0; chr<256; ++chr) {
             int ch = (chr & 0x7F);  // minus underline flag
@@ -385,37 +381,40 @@ text = L"\u25c0";
 #endif
                     charDC.DrawText(text, offset, offset);
                 }
+                charDC.SelectObject(wxNullBitmap);  // release char_bitmap
 
-                // at this level of representation >=0x80 always means underline.
-                // underline style doesn't work for all platforms, so we do it
-                // manually. underline is always normal intensity.
-                if (chr >= 0x80 && chr <= 0xFF) {
-                    int lft = offset + m_charcell_sx;
-                    int rgt = offset + m_charcell_w - 1;
-                    for(int yy=0; yy<sy; ++yy) {
-                        int top = offset + (m_charcell_h-sy) + yy;
-                        // one pixel of dark
-                        charDC.SetPen( wxPen(bg, 1, wxSOLID) );
-                        charDC.DrawLine(lft, top, lft+sx, top);
-                        // the rest lit
-                        charDC.SetPen( wxPen(fg, 1, wxSOLID) );
-                        charDC.DrawLine(lft+sx, top, rgt, top);
+                // convert to float intensity
+                wxImage char_image(char_bitmap.ConvertToImage());
+                for(int rr=0; rr < m_charcell_h; ++rr) {
+                    for(int cc=0; cc < m_charcell_w; ++cc) {
+                        char_intensity[rr+offset][cc+offset] =
+                            char_image.GetBlue(cc+offset, rr+offset) / 255.0f;
                     }
                 }
 
-                charDC.SelectObject(wxNullBitmap);  // release char_bitmap
-                char_image = char_bitmap.ConvertToImage();
+                // at this point, chr >=0x80 always means underline.
+                // underline style doesn't work for all platforms,
+                // so do it manually.
+                if (chr >= 0x80) {
+                    float dot_bg = blk.Blue() / 255.0f;
+                    float dot_fg = norm.Blue() / 255.0f;
+                    int thickness = (fontsize > FONT_NATIVE10) ? 2 : 1;
+                    for(int yy=0; yy<thickness; ++yy) {
+                        int row = offset + (m_charcell_h-sy) + yy - thickness+1;
+                        for(int x=0; x<m_charcell_w; ++x) {
+                            // normal mode:
+                            //    alternate pixels, skipping the first pair
+                            // inv mode:
+                            //    light just the first pair
+                            bool lit = (inv) ? (x < 2)
+                                             : (x > 1 && ((x&1)==1));
+                            float v = (lit) ? dot_fg : dot_bg;
+                            char_intensity[row][x] = v;
+                        }
+                    }
+                }
 
             } else {  // use real bitmap font
-
-                // blank it
-                char_image.SetRGB( wxRect(0,0,img_w,img_h),
-                                   bg.Red(), bg.Green(), bg.Blue() );
-
-// boost 1b
-                int rr = (bright) ? fg_bright.Red()   : fg.Red();
-                int gg = (bright) ? fg_bright.Green() : fg.Green();
-                int bb = (bright) ? fg_bright.Blue()  : fg.Blue();
 
                 for(int bmr=0; bmr<11; ++bmr) {  // bitmap row
 
@@ -465,76 +464,50 @@ text = L"\u25c0";
 
                     // add underline on the last bitmap row
                     // the hardware stipples the underline this way
+                    float dot_fg = (bright) ? f_intense : f_norm;
                     if ((chr >= 0x80) && (bmr == 10)) {
                         pixrow = 0x55 << 1;
-                        // underline suppresses bright
-                        rr = fg.Red();
-                        gg = fg.Green();
-                        bb = fg.Blue();
+                        dot_fg = f_norm;   // underline is not affected by bright
                     }
 
-                    for(int bmc=0; bmc<10; pixrow <<= 1, ++bmc) {  // bitmap col
-                        if (pixrow & 0x200) {
-                            // the pixel should be lit; replicate it
-                            for(int yy=0; yy<sy; ++yy) {
-                            for(int xx=0; xx<sx; ++xx) {
-                                char_image.SetRGB(offset + bmc*sx    + xx,
-                                                  offset + bmr*sy*dy + yy,
-                                                  rr, gg, bb);
-                            } } // for xx,yy
-                        } // pixel is lit
+                    for(int bmc=0; bmc<10; pixrow <<= 1, ++bmc) { // bitmap col
+                        float v = (pixrow & 0x200) ? dot_fg : f_blk;
+                        for(int yy=0; yy<sy; ++yy) {
+                        for(int xx=0; xx<sx; ++xx) {
+                            char_intensity[offset + bmr*sy*dy + yy]
+                                          [offset + bmc*sx    + xx] = v;
+                        } } // for xx,yy
                     } // for bmc
 
                 } // for bmr
 
             } // use Wang bitmap
 
-            // we run a 3x3 convolution kernel on each character of the font map
-            // to simulate the limited bandwidth of the real CRT.
             wxImage blur_img(m_charcell_w, m_charcell_h);
 
-            for(int y=0; y<m_charcell_h; ++y) {
-            for(int x=0; x<m_charcell_w; ++x) {
+            // we run a 3x3 convolution kernel on each character of the
+            // font map to simulate the limited bandwidth of the real CRT
+            for(int y=offset; y<m_charcell_h+offset; ++y) {
+            for(int x=offset; x<m_charcell_w+offset; ++x) {
 
-                // this is a good place for doing brightness modulation in dot
-                // matrix mode, because the driving pixel can be super-luminal
-                // and spread to other pixels.  it doesn't work for native fonts
-                // because the filter kernal is a noop.
-                // The downside: even when a character has the intense attribute,
-                // the underline is supposed to be normal intensity, yet the code
-                // below boost everything.
-// boost 2
-                float brightness_modulation =
-                        (m_screen_type != UI_SCREEN_2236DE) ? 1.0f : // attributes unsupported
-                        (fontsize >= FONT_NATIVE8)          ? 1.0f : // modulation done earlier
-                        (bright)                            ? 1.2f : // superluminal
-                                                              0.8f ; // dimmed
+                float fv = filter_w[0]*char_intensity[y-1][x-1]
+                         + filter_w[1]*char_intensity[y-1][x+0]
+                         + filter_w[2]*char_intensity[y-1][x+1]
+                         + filter_w[3]*char_intensity[y+0][x-1]
+                         + filter_w[4]*char_intensity[y+0][x+0]
+                         + filter_w[5]*char_intensity[y+0][x+1]
+                         + filter_w[6]*char_intensity[y+1][x-1]
+                         + filter_w[7]*char_intensity[y+1][x+0]
+                         + filter_w[8]*char_intensity[y+1][x+1];
 
-                // pick up 3x3 neighborhood around pixel of interest
-                int pix[9];
-                for(int yy=-1; yy<=1; ++yy) {
-                for(int xx=-1; xx<=1; ++xx) {
-                    // source is monochromatic, so any channel will do
-                    pix[(yy+1)*3 + (xx+1)] =
-                        brightness_modulation *
-                        char_image.GetBlue(x+offset+xx, y+offset+yy);
-                } }
-
-                // apply kernel
-                int idx = int(
-                          filter_w[0]*pix[0] + filter_w[1]*pix[1] + filter_w[2]*pix[2]
-                        + filter_w[3]*pix[3] + filter_w[4]*pix[4] + filter_w[5]*pix[5]
-                        + filter_w[6]*pix[6] + filter_w[7]*pix[7] + filter_w[8]*pix[8]
-                        + 0.5f);  // round
-
-                // clamp
+                int idx = int(255.0f*fv + 0.5f);
                 idx = (idx < 0x00) ? 0x00
                     : (idx > 0xFF) ? 0xFF
                                    : idx;
 
-                wxColor rgb = (inv && (fontsize >= FONT_NATIVE8)) ? colormap[255-idx]
-                                                                  : colormap[    idx];
-                blur_img.SetRGB(x, y, rgb.Red(), rgb.Green(), rgb.Blue());
+                wxColor rgb = colormap[idx];
+                blur_img.SetRGB(x-offset, y-offset,
+                                rgb.Red(), rgb.Green(), rgb.Blue());
 
             } } // for x,y
 
@@ -572,7 +545,6 @@ Crt::generateScreen()
     bool success = false;
 #if DRAW_WITH_RAWBMP
 // FIXME: see if we still need this for OSX
-// FIXME: it doesn't have box mode overlay
     success = generateScreenByRawBmp(fg, bg);
 #endif
     wxMemoryDC memDC(m_scrbits);

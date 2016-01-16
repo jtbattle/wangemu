@@ -131,7 +131,6 @@ private:
     uint8         m_display[80*25]; // character codes
     wxBitmap      m_scrbits;        // image of the display
 
-    wxFont        m_font;           // font in use
     wxBitmap      m_fontmap;        // image of the font in use
     int           m_fontsize;       // size of font (in points)
     bool          m_fontdirty;      // font/color/contrast/brightness changed
@@ -194,7 +193,7 @@ private:
 
     // sound for beep
     void create_beep();
-    wxSound      *m_beep;
+    shared_ptr<wxSound> m_beep;
 
     DECLARE_EVENT_TABLE()
 };

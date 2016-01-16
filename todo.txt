@@ -6,45 +6,14 @@ Emulator TODO list
    will be problems.  Once the code is somewhat stable under windows,
    build it on OSX and iron out the problems.
 
-*) use smart pointers instead of raw pointers
-    std::shared_ptr<>, std::make_shared<>, std::unique_ptr<>
-        note: p464:
-            shared_ptr<int> p1 = new int(1234); // syntax error
-            shared_ptr<int> p2(new int(1234));  // OK
-        and I think this would work too:
-            shared_ptr<int> p3 = shared_ptr<int>(new int(1234));
-        or better yet,
-            shared_ptr<int> p3 = make_shared<int>(1234);  // I think
-
-   basically, look for "delete" occurrences; if these were smart pointers,
-   just setting the pointer to nullptr would automatically free the resource.
-   eg, if the recent Scheduler m_timer[] vector held shared_ptr<Timer>
-       it would also get rid of the zeroing out pointers of m_timer before
-       calling resize.
-
 *) improved 2236 terminal emulation
-
-    - memory leak in Timer
-	I fixed by adding delete, but should I use smart pointers?
-
-    - memory leaks?
-	- why doesn't the wx leak logger work?
-	    A: setup.h needs to flip on a number of defines too
-	- visual leak detector
-	    http://vld.codeplex.com/
-
-    - rather than drawing to a bitmap for the character into
-      wxImage char_image, then converting to an int array, blurring,
-      then converting back to wxImage blur_img, there are advantages to
-      rendering the intensity right to an int array (namely values
-      can be >1.0) and then we can skip the conversion to the int array.
-      this would allow making underline not dependent on the bright attr, eg.
-      as the boosting/suppression would happen before the blur work.
-      think harder about this before investing the work.
 
     - for native font mode, can I use unicode to get better mapping for
       diamond shapes, arrows, etc?
         http://unicodelookup.com/#diamond/1
+      I think the key issue is in identifying a font for each of windows
+      and osx which is reliably available and has those unicode symbols
+    - should I just scrap the native font mode entirely?
 
     - the weird thing where inverse mode causes video to be lit
       either when the current dot is 0 or the previous dot was 0
@@ -202,6 +171,34 @@ Emulator TODO list
       b) 2200VP  w/ 64KB RAM, printer, two disk drives, KB + 80x24 screen
       c) 2200MVP w/512KB RAM, printer, two disk drives, 2236 MXD, one term
       d) expert mode
+
+*) use smart pointers instead of raw pointers
+    std::shared_ptr<>, std::make_shared<>, std::unique_ptr<>
+        note: p464:
+            shared_ptr<int> p1 = new int(1234); // syntax error
+            shared_ptr<int> p2(new int(1234));  // OK
+        and I think this would work too:
+            shared_ptr<int> p3 = shared_ptr<int>(new int(1234));
+        or better yet,
+            shared_ptr<int> p3 = make_shared<int>(1234);  // I think
+
+   basically, look for "delete" occurrences; if these were smart pointers,
+   just setting the pointer to nullptr would automatically free the resource.
+   eg, if the recent Scheduler m_timer[] vector held shared_ptr<Timer>
+       it would also get rid of the zeroing out pointers of m_timer before
+       calling resize.
+   but every caller would need to declare a shared_ptr<Timer>.
+   Can I define a type which is shared_ptr<Timer> and use that instead
+   of having to do shared_ptr<> everywhere?
+
+*) do a memory leak check towards the end of development
+
+    - installed Dr. Memory, seems easy to use, no source changes and does
+      much more than just detecting leaks.  http://www.drmemory.org/
+    - why doesn't the wx leak logger work?
+	A: setup.h needs to flip on a number of defines too
+    - I've used visual leak detector in the past
+	http://vld.codeplex.com/
 
 *) Document how to work around this problem in the README.
 

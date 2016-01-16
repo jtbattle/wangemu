@@ -84,7 +84,7 @@ class Term_2336:
         else:  # inverse and underlined
             byte1 = chr(0x0B)
 
-        return (byte0, byte1)
+        return ''.join([chr(0x02), chr(0x04), byte0, byte1])
 
 
     # -------------------- public functions --------------------
@@ -216,23 +216,17 @@ class Term_2336:
         
     # set an enable text attributes
     def attrUse(self, under=False, inv=False, bright=False, blink=False):
-        (byte0, byte1) = self._attribute_bytes(
+        attr_seq = self._attribute_bytes(
                             under=under, inv=inv, bright=bright, blink=blink )
-        self.send(chr(0x02))
-        self.send(chr(0x04))
-        self.send(byte0)
-        self.send(byte1)
+        self.send(attr_seq)
         self.send(chr(0x0E))
         return self
 
     # set but don't enable text attributes
     def attrSet(self, under=False, inv=False, bright=False, blink=False):
-        (byte0, byte1) = self._attribute_bytes(
+        attr_seq = self._attribute_bytes(
                             under=under, inv=inv, bright=bright, blink=blink )
-        self.send(chr(0x02))
-        self.send(chr(0x04))
-        self.send(byte0)
-        self.send(byte1)
+        self.send(attr_seq)
         self.send(chr(0x0F))
         return self
 

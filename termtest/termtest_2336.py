@@ -85,7 +85,10 @@ if 1:
     term.attrUse(under=True,blink=True)
     term.sendline("Underlined and blinking")
     term.attrUse(under=True,bright=True)
-    term.send("Underlined").attrOff().send(" and ").attrOn().send("highlighted")
+    term.send("Underlined").attrOff().send(" and ").attrOn().sendline("highlighted")
+    term.attrUse(inv=True,bright=True).send("both ").attrUse(inv=True).sendline("one").attrOff()
+    term.attrUse(under=True,inv=True,bright=True).send("both ").attrUse(under=True,inv=True).sendline("one").attrOff()
+    term.sendline()
 
 if 0:
     # fetch id string
