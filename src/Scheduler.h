@@ -41,7 +41,6 @@ private:
     callback_t  callback; // registered callback function
 };
 
-
 // ======================================================================
 // this class manages event-driven behavior for the emulator.
 // time advances every cpu tick, and callers can request to be called
@@ -50,6 +49,8 @@ private:
 
 class Scheduler
 {
+    friend class Timer;  // so timer can see TimerKill()
+
 public:
      Scheduler();
     ~Scheduler();
@@ -61,15 +62,11 @@ public:
     //   void TimerTestFoo::report(int i)
     //   { printf("got callback for timer %d after %d clocks\n", i, g_testtime); }
     //
-    //   Timer* tmr = TimerCreate( 100,
+    //   spTimer tmr = TimerCreate( 100,
     //                             std::bind(&TimerTestFoo:report, &foo, 33) );
     //
     // After 100 clocks, foo.report(33) is called.
-    Timer* TimerCreate(int ticks, const callback_t &fcn);
-
-    // remove a pending timer event by passing the timer object
-    // (called only from Timer.Kill())
-    void TimerKill(Timer *tmr);
+    spTimer TimerCreate(int ticks, const callback_t &fcn);
 
     // let 'n' cpu cycles of simulated time go past
     inline void TimerTick(int n)
@@ -90,6 +87,10 @@ private:
     // this shouldn't need to be called very frequently.
     void TimerCredit();
 
+    // remove a pending timer event by passing the timer object
+    // (called only from Timer.Kill())
+    void TimerKill(Timer* tmr);
+
     // semaphore that indicates TimerCredit() is running so that
     // we can double check that nobody calls TimerTick() until
     // from a callback function.
@@ -108,7 +109,7 @@ private:
     // any timer that has its own counter go <=0 will then
     // cause a callback to the supplied function using the
     // supplied parameters.
-    vector<Timer *> m_timer;
+    vector<spTimer> m_timer;
 
     // for sanity checking
     static const int MAX_TIMERS = 25;
@@ -121,9 +122,9 @@ inline int TIMER_MS(double f) { return int(10000.0*f+0.5); }
 
 // this is used to kill off a timer that may or may not be inactive
 #define ENSURE_TIMER_DEAD(thnd) {       \
-        if ((thnd) != 0) {              \
+        if ((thnd) != nullptr) {        \
             (thnd)->Kill();             \
-            (thnd) = 0;                 \
+            (thnd) = nullptr;           \
         }                               \
     } while (false)
 

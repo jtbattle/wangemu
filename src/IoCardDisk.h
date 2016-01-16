@@ -10,7 +10,6 @@
 
 class Cpu2200;
 class Scheduler;
-class Timer;
 class Wvd;
 
 class IoCardDisk : public IoCard
@@ -174,7 +173,7 @@ private:
     bool       m_cpb;               // cpb is asserted
     bool       m_card_busy;         // the card isn't ready to accept a command or reply
     bool       m_compare_err;       // compare status (true=miscompare)
-    Timer     *m_tmr_motor_off;     // turn off both drives after a period of inactivity
+    spTimer    m_tmr_motor_off;     // turn off both drives after a period of inactivity
     bool       m_acting_intelligent; // what we told the host most recently
 
     enum state_t { DRIVE_EMPTY, DRIVE_IDLE, DRIVE_SPINNING };
@@ -194,8 +193,8 @@ private:
         int     secwait;        // waiting for this sector (<0: not waiting)
 
         int     idle_cnt;       // number of operations done w/o this drive
-        Timer  *tmr_track;      // spin up + track seek timer
-        Timer  *tmr_sector;     // sector timer
+        spTimer tmr_track;      // spin up + track seek timer
+        spTimer tmr_sector;     // sector timer
     } m_d[4];   // drives: two primary, two secondary
 
     // ---- emulation sequencing logic ----

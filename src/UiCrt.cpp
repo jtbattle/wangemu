@@ -38,7 +38,7 @@ wxLog *g_logger = nullptr;
 Crt::Crt(CrtFrame *parent, int screen_type) :
     wxWindow(parent, -1, wxDefaultPosition, wxDefaultSize),
     m_parent(parent),
-#if 0
+#if 1
     m_screen_type(UI_SCREEN_2236DE),  // FIXME: just a hack to test 2236 emulation behavior
 #else
     m_screen_type(screen_type),

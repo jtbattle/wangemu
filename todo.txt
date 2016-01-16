@@ -6,71 +6,15 @@ Emulator TODO list
    will be problems.  Once the code is somewhat stable under windows,
    build it on OSX and iron out the problems.
 
-*) improved 2236 terminal emulation
-
-    - add smart terminal commands that I've skipped
-        - make it so FB Cx actually causes a x/6 second delay
-        - add command to return terminal ID
-        - screen input (capture)
-
-    - test some corner case on the real terminal
-      what happens if there is an incorrect escape sequence:
-      at what point are the bytes swallowed, or are they passed through?
-
-    - Fasstcom Terminal Specs v1.0.pdf, pdf page 8 says
-      "... the terminal must always transmit a HEX(F8F9) every 3 to 5 seconds
-       whenever it is ready to receive new data during idle time.
-       This is called the constant poll."
-      The emulated terminal doesn't.  Should it?  Is this just to compensate
-      for the fact that the serial link wasn't perfect, so this avoided
-      accidently dropping a XON character and freezing the handshake?
-
-    - 742-0903.MNL.IntegratedTerminal2236DW.85-02-27.pdf, pdf page 68 says
-          2236DW and 2236DW have mostly the same character generators,
-          except for characters 5F/7F/80/8D/8F/DF/FF
-
-    - the weird thing where inverse mode causes video to be lit
-      either when the current dot is 0 or the previous dot was 0
-      gets tricky in the presence of box line graphics.
-        1) vert is kind of screwed because it could interact with the
-           glyph bitmap under it
-        2) horizontal box lines should be stippled if normal video,
-           but solid black if inverse mode
-      the fix is either to buy into full-screen at once blurring,
-      or to double the fontmap to have with/without vertical bar
-    - dot stream is gated by pixclk.  not easily do-able in 2:1 dot mode
-    - get rid of 1x1 dot matrix mode -- doesn't model the real hw,
-      isn't readable.
-    - write an opengl shader which uses the attr/char maps as a texture
-      to generate the output in parallel. can also add contrast, brightness,
-      blur, TV warp, etc
-          Js amiga emulator using webgl for display:
-              http://scriptedamigaemulator.net
-          Stack overflow: using webgl to map palettized display to rgb display
-              http://stackoverflow.com/questions/19695658/emulating-palette-based-graphics-in-webgl-v-s-canvas-2d
-          apple II js w/webgl rendering option:
-              http://porkrind.org/a2/
-      in many ways this is simpler, in that it only has to deal with one
-      single 10x22 dot format and can then stretch to the current screen size,
-      instead of having 1:1, 1:2, 2:4 dot matrix modes.
-
-    - pre-blurring the char set to a glyph map, then blitting to the display
-      works OK, except the cursor isn't blurred because it is dynamic, and
-      edges of block graphic characters are noticable because the blurring
-      kernel needs to span across characters.  it also interacts poorly
-      with the box line graphics overlay.
-
-      render unblurred and then use OGL to do the blurring.  this has the
-      benefit of offering flexible scaling at low cost, and perhaps other
-      video generation defect emulation.
-
-    - the smart terminal menu should have an option to reset just the terminal
-
-    - allow running terminal as a separate process
-        - running in process is easier to manage for the casual user, though
-        - actual serial port connection
-        - running via sockets, allowing local or remote connection
-        - perhaps as a javascript app, with multiple terminals as tabs?
+*) I modified the code to use shared_ptr<> for timers.
+   but the ENSURE_TIMER_DEAD(m_tmr_foo) is ugly.  Can I do better?
+   eg, just reassigning the ptr or assigning it to nullptr could
+   kill the timer?
+      (1) create my own shared_ptr wrapper.  on assignment, it would
+          check if the refcnt is 1, and if so, it means the only holder
+          of it is the timer list itself.
+      (2) during traversal of the timer list, cull out any with a refcnt of 1
+   #2 is easier.  #1 is more elegant.
 
 *) add terminal mux emulation and terminal emulation so I can run MVP OS's
 
@@ -154,6 +98,72 @@ Emulator TODO list
       It is possible that the contents were R5, but the EPROMs were
       later erased and overwritten, making the handwritten note
       meaningless.
+
+*) improved 2236 terminal emulation
+
+    - add smart terminal commands that I've skipped
+        - make it so FB Cx actually causes a x/6 second delay
+        - add command to return terminal ID
+        - screen input (capture)
+
+    - test some corner case on the real terminal
+      what happens if there is an incorrect escape sequence:
+      at what point are the bytes swallowed, or are they passed through?
+
+    - Fasstcom Terminal Specs v1.0.pdf, pdf page 8 says
+      "... the terminal must always transmit a HEX(F8F9) every 3 to 5 seconds
+       whenever it is ready to receive new data during idle time.
+       This is called the constant poll."
+      The emulated terminal doesn't.  Should it?  Is this just to compensate
+      for the fact that the serial link wasn't perfect, so this avoided
+      accidently dropping a XON character and freezing the handshake?
+
+    - 742-0903.MNL.IntegratedTerminal2236DW.85-02-27.pdf, pdf page 68 says
+          2236DW and 2236DW have mostly the same character generators,
+          except for characters 5F/7F/80/8D/8F/DF/FF
+
+    - the weird thing where inverse mode causes video to be lit
+      either when the current dot is 0 or the previous dot was 0
+      gets tricky in the presence of box line graphics.
+        1) vert is kind of screwed because it could interact with the
+           glyph bitmap under it
+        2) horizontal box lines should be stippled if normal video,
+           but solid black if inverse mode
+      the fix is either to buy into full-screen at once blurring,
+      or to double the fontmap to have with/without vertical bar
+    - dot stream is gated by pixclk.  not easily do-able in 2:1 dot mode
+    - get rid of 1x1 dot matrix mode -- doesn't model the real hw,
+      isn't readable.
+    - write an opengl shader which uses the attr/char maps as a texture
+      to generate the output in parallel. can also add contrast, brightness,
+      blur, TV warp, etc
+          Js amiga emulator using webgl for display:
+              http://scriptedamigaemulator.net
+          Stack overflow: using webgl to map palettized display to rgb display
+              http://stackoverflow.com/questions/19695658/emulating-palette-based-graphics-in-webgl-v-s-canvas-2d
+          apple II js w/webgl rendering option:
+              http://porkrind.org/a2/
+      in many ways this is simpler, in that it only has to deal with one
+      single 10x22 dot format and can then stretch to the current screen size,
+      instead of having 1:1, 1:2, 2:4 dot matrix modes.
+
+    - pre-blurring the char set to a glyph map, then blitting to the display
+      works OK, except the cursor isn't blurred because it is dynamic, and
+      edges of block graphic characters are noticable because the blurring
+      kernel needs to span across characters.  it also interacts poorly
+      with the box line graphics overlay.
+
+      render unblurred and then use OGL to do the blurring.  this has the
+      benefit of offering flexible scaling at low cost, and perhaps other
+      video generation defect emulation.
+
+    - the smart terminal menu should have an option to reset just the terminal
+
+    - allow running terminal as a separate process
+        - running in process is easier to manage for the casual user, though
+        - actual serial port connection
+        - running via sockets, allowing local or remote connection
+        - perhaps as a javascript app, with multiple terminals as tabs?
 
 *) Add 64K words of control memory, so BASIC-3/COBOL can run
    OptionC.pdf in the jim/wang2200/docs/system/2200MVP_MaintenanceManual

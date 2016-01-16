@@ -7,7 +7,6 @@
 
 class Scheduler;
 class System2200;
-class Timer;
 
 // ============================= base class =============================
 class Cpu2200
@@ -246,7 +245,7 @@ private:
 
     System2200 &m_sys;          // pointer back to system services
     Scheduler  &m_scheduler;    // shared system timing scheduler object
-    Timer      *m_tmr_30ms;     // time slice 30 ms one shot
+    spTimer     m_tmr_30ms;     // time slice 30 ms one shot
 
     static const int MAX_RAM   = 512*1024; // max # bytes of main memory
     static const int MAX_UCODE =  64*1024; // max # words in ucode store

@@ -15,6 +15,8 @@ using std::vector;
 #include <memory>
 using std::shared_ptr;
 
+class Timer;
+using spTimer = std::shared_ptr<Timer>;
 
 // types used globally in the wang emulator
 

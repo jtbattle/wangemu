@@ -2,7 +2,7 @@
 //
 // A routine desiring later notification at some specific time calls
 //
-//     Timer *tmr = TimerCreate(ticks, std::bind(&obj::fcn, &obj, arg) );
+//     spTimer tmr = TimerCreate(ticks, std::bind(&obj::fcn, &obj, arg) );
 //
 // which causes 'fcn' to be called back with parameter arg after simulating
 // 'ticks' clock cycles.  The event is then removed from the active list.
@@ -90,11 +90,11 @@ TimerTest(void)
 
     // method 1: create a static timer object, then pass it to scheduler
     callback_t cb1 = std::bind(&TimerTestFoo::report1, &foo, 1);
-    Timer *t1 = test_scheduler.TimerCreate( TIMER_US(3.0f), cb1 );
+    spTimer t1 = test_scheduler.TimerCreate( TIMER_US(3.0f), cb1 );
 
     // method 2: like method 1, but all inline
-    Timer *t2 = test_scheduler.TimerCreate( 10, std::bind(&TimerTestFoo::report1, &foo, 2) );
-    Timer *t3 = test_scheduler.TimerCreate( 50, std::bind(&TimerTestFoo::report2, &foo, 3) );
+    spTimer t2 = test_scheduler.TimerCreate( 10, std::bind(&TimerTestFoo::report1, &foo, 2) );
+    spTimer t3 = test_scheduler.TimerCreate( 50, std::bind(&TimerTestFoo::report2, &foo, 3) );
 
     for(int n=0; n<100; n++) {
         if (n == 5)
@@ -123,11 +123,6 @@ Scheduler::Scheduler() :
 // free allocated data
 Scheduler::~Scheduler()
 {
-// FIXME: use smart pointers so I don't need to explicitly delete dead timers
-//        (here and TimerKill and from the retired list in TimerCredit)
-    for(auto t : m_timer) {
-        delete t;
-    }
     m_timer.clear();
 };
 
@@ -135,7 +130,7 @@ Scheduler::~Scheduler()
 // return a timer object; the caller doesn't destroy this object,
 // but calls Kill() if it wants to terminate it.
 // 'ticks' is the number of clock ticks before the callback fires.
-Timer*
+spTimer
 Scheduler::TimerCreate(int ticks, const callback_t &fcn)
 {
     // funny things happen if we try to time intervals that are too big
@@ -145,7 +140,7 @@ Scheduler::TimerCreate(int ticks, const callback_t &fcn)
     // make sure we don't leak timers
     assert(m_timer.size() < MAX_TIMERS);
 
-    Timer *tmr = new Timer(this, ticks, fcn);
+    spTimer tmr(std::make_shared<Timer>(this, ticks, fcn));
 
     if (m_timer.size() == 1) {
         // this is the only timer
@@ -182,14 +177,13 @@ Scheduler::TimerCreate(int ticks, const callback_t &fcn)
 // we don't bother messing with updating m_countdown.
 // instead, we just let that countdown expire, nothing will
 // be triggered, and a new countdown will be established then.
-void Scheduler::TimerKill(Timer *tmr)
+void Scheduler::TimerKill(Timer* tmr)
 {
     // the fact that we have to do this lookup doesn't matter since
     // TimerKill is infrequently used.
     for(unsigned int n=0; n<m_timer.size(); n++) {
-        if (m_timer[n] == tmr) {
+        if (m_timer[n].get() == tmr) {
             m_timer.erase(m_timer.begin() + n);
-            delete tmr;
             return;
         }
     }
@@ -218,7 +212,7 @@ void Scheduler::TimerCredit(void)
     m_updating = true;
 
     // scan each active timer, moving expired ones to the retired list
-    vector<Timer *> retired;
+    vector<spTimer> retired;
     unsigned int active_before = m_timer.size();
     unsigned int active_after = 0;
     for(unsigned int s=0; s<active_before; s++) {
@@ -249,12 +243,11 @@ void Scheduler::TimerCredit(void)
 
     // sort retired events in order they expired
     std::sort(retired.begin(), retired.end(),
-              [](Timer *a, Timer *b) { return (a->ctr < b->ctr); }
+              [](spTimer a, spTimer b) { return (a->ctr < b->ctr); }
              );
     // scan through the retired list and perform callbacks
     for(auto t : retired) {
         (t->callback)();
-        delete t;
     }
 
     m_updating = false; // done updating

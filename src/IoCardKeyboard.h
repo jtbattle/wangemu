@@ -5,7 +5,6 @@
 
 class Cpu2200;
 class Scheduler;
-class Timer;
 class ScriptFile;
 
 class IoCardKeyboard : public IoCard
@@ -62,7 +61,7 @@ private:
     void check_keyready();
 
     Scheduler  &m_scheduler;      // shared event scheduler
-    Timer      *m_tmr_script;     // keystrokes are sent a few 10s of uS after !CPB
+    spTimer     m_tmr_script;     // keystrokes are sent a few 10s of uS after !CPB
     Cpu2200    &m_cpu;            // associated CPU
     const int   m_baseaddr;       // the address the card is mapped to
     const int   m_slot;           // which slot the card is plugged into
