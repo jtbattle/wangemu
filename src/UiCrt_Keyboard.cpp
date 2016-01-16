@@ -262,9 +262,6 @@ oc_keymap_t onchar_keymap_table[] = {
     { 'Z',      TOKEN_SELECT,           'Z' },
 };
 
-#define NUM_KEYDOWN_KEYMAP_ENTRIES (sizeof(keydown_keymap_table) / sizeof(kd_keymap_t))
-#define NUM_ONCHAR_KEYMAP_ENTRIES  (sizeof(onchar_keymap_table)  / sizeof(oc_keymap_t))
-
 
 void
 Crt::OnKeyDown(wxKeyEvent &event)
@@ -278,21 +275,21 @@ Crt::OnKeyDown(wxKeyEvent &event)
     int wxKey = event.GetKeyCode();
     int shift = event.ShiftDown();
     int ctrl  = event.ControlDown();
-    long key = 0x00;    // key value we stuff into emulator
+    int key = 0x00;    // key value we stuff into emulator
 
     bool foundmap = false;
-    for(unsigned int i=0; (i<NUM_KEYDOWN_KEYMAP_ENTRIES) && !foundmap; i++) {
-        if (keydown_keymap_table[i].wxKey != wxKey)
+    for(auto const &kkey : keydown_keymap_table) {
+        if (kkey.wxKey != wxKey)
             continue;
-        if ( shift && ((keydown_keymap_table[i].wxKeyFlags & KC_NOSHIFT) != 0))
+        if ( shift && ((kkey.wxKeyFlags & KC_NOSHIFT) != 0))
             continue;
-        if (!shift && ((keydown_keymap_table[i].wxKeyFlags & KC_SHIFT) != 0))
+        if (!shift && ((kkey.wxKeyFlags & KC_SHIFT) != 0))
             continue;
-        if ( ctrl && ((keydown_keymap_table[i].wxKeyFlags & KC_NOCTRL) != 0))
+        if ( ctrl  && ((kkey.wxKeyFlags & KC_NOCTRL) != 0))
             continue;
-        if (!ctrl && ((keydown_keymap_table[i].wxKeyFlags & KC_CTRL) != 0))
+        if (!ctrl  && ((kkey.wxKeyFlags & KC_CTRL) != 0))
             continue;
-        key = keydown_keymap_table[i].wangKey;
+        key = kkey.wangKey;
         foundmap = true;
     }
 
@@ -334,17 +331,18 @@ Crt::OnChar(wxKeyEvent &event)
     }
 
     int wxKey = event.GetKeyCode();
-    long key = 0x00;    // keep lint happy
+    int key = 0x00;    // keep lint happy
 
     bool foundmap = false;
     bool keyword_mode = m_parent->getKeywordMode();
-    for(unsigned int i=0; (i<NUM_ONCHAR_KEYMAP_ENTRIES) && !foundmap; i++)
-        if (onchar_keymap_table[i].wxKey == wxKey) {
-            key = (keyword_mode)
-                ? onchar_keymap_table[i].wangKey_KW_mode
-                : onchar_keymap_table[i].wangKey_Aa_mode;
+    for(auto const &kkey : onchar_keymap_table) {
+        if (kkey.wxKey == wxKey) {
+            key = (keyword_mode) ? kkey.wangKey_KW_mode
+                                 : kkey.wangKey_Aa_mode;
             foundmap = true;
+            break;
         }
+    }
 
     if (!foundmap && (wxKey >= 32) && (wxKey < 128)) {
         // non-mapped simple ASCII key
@@ -354,8 +352,7 @@ Crt::OnChar(wxKeyEvent &event)
 
     if (foundmap) {
         core_sysKeystroke(m_parent->getTiedAddr(), key);
-        // if we call skip, the menubar & etc logic of the frame will
-        // process it.
+        // calling skip causes the menubar & etc logic to process it
         // event.Skip();
     } else {
         event.Skip();
