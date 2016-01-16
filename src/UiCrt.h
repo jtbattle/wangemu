@@ -77,6 +77,7 @@ private:
 
     // ---- utility functions ----
 
+    wxFont pickFont(int pointsize, int bold, const string &facename="");
     int getFontSize() const;
 
     // rebuild m_fontmap

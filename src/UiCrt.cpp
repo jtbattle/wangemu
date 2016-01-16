@@ -108,7 +108,7 @@ Crt::reset()
     m_attr_under = false;
 
     // model 2236 behavior by emitting ID string
-    if (true) {
+    if (m_screen_type == UI_SCREEN_2236DE) {
         char *idptr = &id_string[1];  // skip the leading asterisk
         while (*idptr) {
             processChar3(*idptr);

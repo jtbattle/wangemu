@@ -140,10 +140,40 @@ Crt::intensityToColor(float f) const
 // we generate all 256 characters and not worry about manually underlining.
 // The 2236 also offers an alternate upper character set for 0x80-0xFF.
 
+wxFont Crt::pickFont(int pointsize, int bold, const string &facename)
+{
+    wxFont font;
+    auto fontweight = (bold) ? wxFONTWEIGHT_BOLD : wxFONTWEIGHT_NORMAL;
+    bool underline = false;
+
+    if (facename != "") {
+        // try the specified family name
+        font = wxFont(pointsize,
+                      wxFONTFAMILY_MODERN,  // fixed pitch
+                      wxFONTSTYLE_NORMAL,
+                      fontweight,
+                      underline,
+                      facename
+                );
+    }
+
+    // pick whatever the default fixed size font is
+    if (!font.IsOk()) {
+        font = wxFont(pointsize, wxFONTFAMILY_MODERN,
+                                 wxFONTSTYLE_NORMAL,
+                                 fontweight);
+        string name = font.GetFaceName();
+        name = "";
+    }
+
+    return font;
+}
+
 void
 Crt::generateFontmap()
 {
     wxClientDC dc(this);
+    wxMemoryDC charDC;
     wxFont font;  // for prerendering native font
     int sx,       // bitmap replication factor in x
         sy,       // bitmap replication factor in y
@@ -178,32 +208,14 @@ Crt::generateFontmap()
         case FONT_NATIVE14:
         case FONT_NATIVE18:
         case FONT_NATIVE24:
-                // FIXME: set to BOLD for now; it helps inverse mode,
-                // but eventually make it regular weight for normal mode
-                font = wxFont(fontsize, wxFONTFAMILY_MODERN,
-                                        wxFONTSTYLE_NORMAL,
-                                        wxFONTWEIGHT_BOLD);
-// Experiment: can we use a unicode capable-font to get better
-// mapping to wang symbols?
-#undef TRY_UNICODE
-#ifdef TRY_UNICODE
-    #if 0
-                // this doesn't seem to help
-                font = wxFont(fontsize(), wxFONTFAMILY_SWISS,
-                                          wxFONTSTYLE_NORMAL,
-                                          wxFONTWEIGHT_NORMAL);
-    #else
-                // this seems to work!, but it is small
-                font = *wxNORMAL_FONT;
-                font.SetPointSize(fontsize);
-    #endif
-#endif
+                font = pickFont(fontsize, /*bold*/false, "Courier New");
                 assert(font != wxNullFont);
-                dc.SetFont( font );
-                m_charcell_w = dc.GetCharWidth();
-                m_charcell_h = dc.GetCharHeight()
+                charDC.SetFont(font);
+                m_charcell_w = charDC.GetCharWidth();
+                m_charcell_h = charDC.GetCharHeight()
                              + 3;  // make room for underline, cursor, blank
                 sx = sy = dy = 1; // keep lint happy
+
                 filter = 0;  // no filter, although filtering does look cool too
                 break;
     }
@@ -214,6 +226,7 @@ Crt::generateFontmap()
     m_charcell_dy = dy;
 
     // pick a filter kernel for blurring
+    // there is no real science here, just ad-hoc tweaking
     const float *filter_w;
     {
         static const float w_noop[9] = {
@@ -300,15 +313,16 @@ Crt::generateFontmap()
     wxBitmap char_bitmap(img_w, img_h, 32);
     vector<vector<float>> char_intensity(img_h, vector<float>(img_w, 0.0f));
 
-    wxMemoryDC charDC;
     charDC.SelectObject(char_bitmap);
     charDC.SetBackgroundMode(wxSOLID);
 
-    // get ready for setting pixels for bitmap
-    if (font != wxNullFont)
-        charDC.SetFont(font);
-
-    charDC.SelectObject(wxNullBitmap);
+    wxColor blk(*wxBLACK), norm(*wxWHITE), intense(*wxWHITE);
+    float f_blk(0.0f),   f_norm(1.0f),   f_intense(1.0f);
+    if (m_screen_type == UI_SCREEN_2236DE) {
+        // diminish normal to differentiate it from bright intensity
+        norm = wxColor(0x70,0x70,0x70);  // only blue channel is used
+        f_norm = 160.0f/255.0f;
+    }
 
     // mapping from filtered image intensity to a color
     // FIMXE: gamma compensation?
@@ -324,203 +338,214 @@ Crt::generateFontmap()
     int boxy[4] = { 0, m_charcell_h / 3, 2*m_charcell_h/3, m_charcell_h };
 
     // build a glyph map of the entire character set
-    for(int alt=0; alt<2; ++alt) {
-    for(int inv=0; inv<2; ++inv) {
     for(int bright=0; bright<2; ++bright) {
+    for(int inv=0; inv<2; ++inv) {
 
-        wxColor blk(*wxBLACK), norm(*wxWHITE), intense(*wxWHITE);
-        float f_blk(0.0f),   f_norm(1.0f),   f_intense(1.0f);
-        if (m_screen_type == UI_SCREEN_2236DE) {
-            // diminish normal to differentiate it from bright intensity
-            norm = wxColor(0x70,0x70,0x70);  // only blue channel is used
-            f_norm = 160.0f/255.0f;
+        // using bold font helps make black on white readability
+        if (fontsize >= FONT_NATIVE8) {
+// on windows, at least, the bold font is shifted slightly relative to
+// normal weight, so blink causes the characters to shift up/down. too bad.
+//          font = pickFont(fontsize, /*bold*/(inv==1) || (bright==1) );
+            font = pickFont(fontsize, /*bold*/(inv==1), "Courier New");
+            charDC.SetFont(font);
         }
 
-        // brightness modulation for native font rendering
-        wxColor fg_eff = ( inv) ? blk : (bright) ? intense : norm;
-        wxColor bg_eff = (!inv) ? blk : (bright) ? intense : norm;
-        charDC.SetBackground( wxBrush(bg_eff, wxSOLID) );
-        charDC.SetTextBackground(bg_eff);
-        charDC.SetTextForeground(fg_eff);
-        charDC.SetPen( wxPen(fg_eff, 1, wxSOLID) );
-        charDC.SetBrush( wxBrush(fg_eff, wxSOLID) );
+        for(int alt=0; alt<2; ++alt) {
 
-        for(int chr=0; chr<256; ++chr) {
-            int ch = (chr & 0x7F);  // minus underline flag
+            // brightness modulation for native font rendering
+            wxColor fg_eff = ( inv) ? blk : (bright) ? intense : norm;
+            wxColor bg_eff = (!inv) ? blk : (bright) ? intense : norm;
+            charDC.SetBackground( wxBrush(bg_eff, wxSOLID) );
+            charDC.SetTextBackground(bg_eff);
+            charDC.SetTextForeground(fg_eff);
+            charDC.SetPen( wxPen(fg_eff, 1, wxSOLID) );
+            charDC.SetBrush( wxBrush(fg_eff, wxSOLID) );
 
-            if (fontsize >= FONT_NATIVE8) {
+            for(int chr=0; chr<256; ++chr) {
+                int ch = (chr & 0x7F);  // minus underline flag
 
-                // prepare by blanking out everything
-                charDC.SelectObject(char_bitmap);
-                charDC.Clear();
+                if (fontsize >= FONT_NATIVE8) {
 
-                if (alt && (ch >= 0x40)) {
-                    // box graphics characters
-                    for(int yy=0; yy<3; ++yy) {
-                        for(int xx=0; xx<2; ++xx) {
-                            int shift = 2*yy + xx;
-                            if ((chr >> shift) & 1) {
-                                // x,y,w,h
-                                charDC.DrawRectangle(
-                                    boxx[xx],
-                                    boxy[yy],
-                                    boxx[xx+1] - boxx[xx] + 1,
-                                    boxy[yy+1] - boxy[yy] + 1
-                                );
+                    // prepare by blanking out everything
+                    charDC.Clear();
+
+                    if (alt && (ch >= 0x40)) {
+                        // box graphics characters
+                        for(int yy=0; yy<3; ++yy) {
+                            for(int xx=0; xx<2; ++xx) {
+                                int shift = 2*yy + xx;
+                                if ((chr >> shift) & 1) {
+                                    // x,y,w,h
+                                    charDC.DrawRectangle(
+                                        boxx[xx],
+                                        boxy[yy],
+                                        boxx[xx+1] - boxx[xx] + 1,
+                                        boxy[yy+1] - boxy[yy] + 1
+                                    );
+                                }
+                            }
+                        }
+                    } else if (alt) {
+#if 0
+                        wxString text((wxChar)(xlat_char_alt[ch]));
+#else
+                        wxString text(unicode_xlat_char_alt[ch]);
+#endif
+                        charDC.DrawText(text, offset, offset);
+                    } else {
+#if 0
+                        wxString text((wxChar)(xlat_char[ch]));
+#else
+                        wxString text(unicode_xlat_char[ch]);
+#endif
+                        charDC.DrawText(text, offset, offset);
+                    }
+
+                    // convert to float intensity
+                    wxImage char_image(char_bitmap.ConvertToImage());
+                    for(int rr=0; rr < m_charcell_h; ++rr) {
+                        for(int cc=0; cc < m_charcell_w; ++cc) {
+                            char_intensity[rr+offset][cc+offset] =
+                                char_image.GetBlue(cc+offset, rr+offset) / 255.0f;
+                        }
+                    }
+
+                    // at this point, chr >=0x80 always means underline.
+                    // underline style doesn't work for all platforms,
+                    // so do it manually.
+                    if (chr >= 0x80) {
+                        float dot_bg = blk.Blue() / 255.0f;
+                        float dot_fg = norm.Blue() / 255.0f;
+                        int thickness = (fontsize > FONT_NATIVE10) ? 2 : 1;
+                        for(int yy=0; yy<thickness; ++yy) {
+                            int row = offset + (m_charcell_h-sy) + yy - thickness+1;
+                            for(int x=0; x<m_charcell_w; ++x) {
+#if 0
+                                // normal mode:
+                                //    alternate pixels, skipping the first pair
+                                // inv mode:
+                                //    light just the first pair
+                                bool lit = (inv) ? (x < 2)
+                                                 : (x > 1 && ((x&1)==1));
+#else
+                                bool lit = (inv) ? (x < 2) : (x > 1);
+#endif
+                                float v = (lit) ? dot_fg : dot_bg;
+                                char_intensity[row][x] = v;
                             }
                         }
                     }
-                } else if (alt) {
-                    wxString text((wxChar)(xlat_char_alt[ch]));
-                    charDC.DrawText(text, offset, offset);
-                } else {
-                    wxString text((wxChar)(xlat_char[ch]));
-#ifdef TRY_UNICODE
-// an experiment to use unicode "BLACK LEFT-POINTING TRIANGLE"
-text = L"\u25c0";
-#endif
-                    charDC.DrawText(text, offset, offset);
-                }
-                charDC.SelectObject(wxNullBitmap);  // release char_bitmap
 
-                // convert to float intensity
-                wxImage char_image(char_bitmap.ConvertToImage());
-                for(int rr=0; rr < m_charcell_h; ++rr) {
-                    for(int cc=0; cc < m_charcell_w; ++cc) {
-                        char_intensity[rr+offset][cc+offset] =
-                            char_image.GetBlue(cc+offset, rr+offset) / 255.0f;
-                    }
-                }
+                } else {  // use real bitmap font
 
-                // at this point, chr >=0x80 always means underline.
-                // underline style doesn't work for all platforms,
-                // so do it manually.
-                if (chr >= 0x80) {
-                    float dot_bg = blk.Blue() / 255.0f;
-                    float dot_fg = norm.Blue() / 255.0f;
-                    int thickness = (fontsize > FONT_NATIVE10) ? 2 : 1;
-                    for(int yy=0; yy<thickness; ++yy) {
-                        int row = offset + (m_charcell_h-sy) + yy - thickness+1;
-                        for(int x=0; x<m_charcell_w; ++x) {
-                            // normal mode:
-                            //    alternate pixels, skipping the first pair
-                            // inv mode:
-                            //    light just the first pair
-                            bool lit = (inv) ? (x < 2)
-                                             : (x > 1 && ((x&1)==1));
-                            float v = (lit) ? dot_fg : dot_bg;
-                            char_intensity[row][x] = v;
+                    for(int bmr=0; bmr<11; ++bmr) {  // bitmap row
+
+                        int pixrow;
+                        if (alt && (ch >= 0x40)) {
+                            // alt character set, w/block graphics
+                            // hardware maps it this way, so we do too
+                            pixrow = (bmr <  2) ? chargen_2236_alt[8*ch + 0+(bmr&1)]
+                                   : (bmr < 10) ? chargen_2236_alt[8*ch + bmr-2]
+                                                : chargen_2236_alt[8*ch + 6+(bmr&1)];
+                        } else if (alt) {
+                            // alt character set
+                            pixrow = (bmr <  2) ? 0x00
+                                   : (bmr < 10) ? chargen_2236_alt[8*ch + bmr-2]
+                                                : 0x00;
+                        } else {
+                            // normal character set
+                            pixrow = (bmr <  2) ? 0x00
+                                   : (bmr < 10) ? chargen[8*ch + bmr-2]
+                                                : 0x00;
                         }
-                    }
-                }
 
-            } else {  // use real bitmap font
+                        // pad out to 10 pixel row
+                        pixrow <<= 1;
+                        if (alt && (ch >= 0x40)) {
+                            // block graphics fills the character cell.
+                            // from the original bitmap, we pad to the left using
+                            // bit 6 (not 7), and we pad to the right using bit 1
+                            // (not 0). this is how the hardware does it, because
+                            // the bitmaps are not solid; eg, all on (FF) is made
+                            // up of rows of nothing but 0x55 bit patterns.
+                            pixrow |= ((pixrow << 2) & 0x200)
+                                   |  ((pixrow >> 2) & 0x001);
+                        }
 
-                for(int bmr=0; bmr<11; ++bmr) {  // bitmap row
+                        // inv is a bit strange, but this is what the hardware does.
+                        // dot = (inv & !dot_last_cycle) ? 0
+                        //     : (inv)                   ? !(glyph_dot | box_dot)
+                        //                               :  (glyph_dot | box_dot);
+                        //
+                        // I can't model this accurately right now because the box
+                        // graphics overlay is done separately
+                        if (inv) {
+                            pixrow = (~pixrow >> 1)  // 1st term above
+                                   &  ~pixrow;       // 2nd term above
+                        }
 
-                    int pixrow;
-                    if (alt && (ch >= 0x40)) {
-                        // alt character set, w/block graphics
-                        // hardware maps it this way, so we do too
-                        pixrow = (bmr <  2) ? chargen_2236_alt[8*ch + 0+(bmr&1)]
-                               : (bmr < 10) ? chargen_2236_alt[8*ch + bmr-2]
-                                            : chargen_2236_alt[8*ch + 6+(bmr&1)];
-                    } else if (alt) {
-                        // alt character set
-                        pixrow = (bmr <  2) ? 0x00
-                               : (bmr < 10) ? chargen_2236_alt[8*ch + bmr-2]
-                                            : 0x00;
-                    } else {
-                        // normal character set
-                        pixrow = (bmr <  2) ? 0x00
-                               : (bmr < 10) ? chargen[8*ch + bmr-2]
-                                            : 0x00;
-                    }
+                        // add underline on the last bitmap row
+                        // the hardware stipples the underline this way
+                        float dot_fg = (bright) ? f_intense : f_norm;
+                        if ((chr >= 0x80) && (bmr == 10)) {
+                            pixrow = 0x55 << 1;
+                            dot_fg = f_norm;   // underline is not affected by bright
+                        }
 
-                    // pad out to 10 pixel row
-                    pixrow <<= 1;
-                    if (alt && (ch >= 0x40)) {
-                        // block graphics fills the character cell.
-                        // from the original bitmap, we pad to the left using
-                        // bit 6 (not 7), and we pad to the right using bit 1
-                        // (not 0). this is how the hardware does it, because
-                        // the bitmaps are not solid; eg, all on (FF) is made
-                        // up of rows of nothing but 0x55 bit patterns.
-                        pixrow |= ((pixrow << 2) & 0x200)
-                               |  ((pixrow >> 2) & 0x001);
-                    }
+                        for(int bmc=0; bmc<10; pixrow <<= 1, ++bmc) { // bitmap col
+                            float v = (pixrow & 0x200) ? dot_fg : f_blk;
+                            for(int yy=0; yy<sy; ++yy) {
+                            for(int xx=0; xx<sx; ++xx) {
+                                char_intensity[offset + bmr*sy*dy + yy]
+                                              [offset + bmc*sx    + xx] = v;
+                            } } // for xx,yy
+                        } // for bmc
 
-                    // inv is a bit strange, but this is what the hardware does.
-                    // dot = (inv & !dot_last_cycle) ? 0
-                    //     : (inv)                   ? !(glyph_dot | box_dot)
-                    //                               :  (glyph_dot | box_dot);
-                    //
-                    // I can't model this accurately right now because the box
-                    // graphics overlay is done separately
-                    if (inv) {
-                        pixrow = (~pixrow >> 1)  // 1st term above
-                               &  ~pixrow;       // 2nd term above
-                    }
+                    } // for bmr
 
-                    // add underline on the last bitmap row
-                    // the hardware stipples the underline this way
-                    float dot_fg = (bright) ? f_intense : f_norm;
-                    if ((chr >= 0x80) && (bmr == 10)) {
-                        pixrow = 0x55 << 1;
-                        dot_fg = f_norm;   // underline is not affected by bright
-                    }
+                } // use Wang bitmap
 
-                    for(int bmc=0; bmc<10; pixrow <<= 1, ++bmc) { // bitmap col
-                        float v = (pixrow & 0x200) ? dot_fg : f_blk;
-                        for(int yy=0; yy<sy; ++yy) {
-                        for(int xx=0; xx<sx; ++xx) {
-                            char_intensity[offset + bmr*sy*dy + yy]
-                                          [offset + bmc*sx    + xx] = v;
-                        } } // for xx,yy
-                    } // for bmc
+                wxImage blur_img(m_charcell_w, m_charcell_h);
 
-                } // for bmr
+                // we run a 3x3 convolution kernel on each character of the
+                // font map to simulate the limited bandwidth of the real CRT
+                for(int y=offset; y<m_charcell_h+offset; ++y) {
+                for(int x=offset; x<m_charcell_w+offset; ++x) {
 
-            } // use Wang bitmap
+                    float fv = filter_w[0]*char_intensity[y-1][x-1]
+                             + filter_w[1]*char_intensity[y-1][x+0]
+                             + filter_w[2]*char_intensity[y-1][x+1]
+                             + filter_w[3]*char_intensity[y+0][x-1]
+                             + filter_w[4]*char_intensity[y+0][x+0]
+                             + filter_w[5]*char_intensity[y+0][x+1]
+                             + filter_w[6]*char_intensity[y+1][x-1]
+                             + filter_w[7]*char_intensity[y+1][x+0]
+                             + filter_w[8]*char_intensity[y+1][x+1];
 
-            wxImage blur_img(m_charcell_w, m_charcell_h);
+                    int idx = int(255.0f*fv + 0.5f);
+                    idx = (idx < 0x00) ? 0x00
+                        : (idx > 0xFF) ? 0xFF
+                                       : idx;
 
-            // we run a 3x3 convolution kernel on each character of the
-            // font map to simulate the limited bandwidth of the real CRT
-            for(int y=offset; y<m_charcell_h+offset; ++y) {
-            for(int x=offset; x<m_charcell_w+offset; ++x) {
+                    wxColor rgb = colormap[idx];
+                    blur_img.SetRGB(x-offset, y-offset,
+                                    rgb.Red(), rgb.Green(), rgb.Blue());
 
-                float fv = filter_w[0]*char_intensity[y-1][x-1]
-                         + filter_w[1]*char_intensity[y-1][x+0]
-                         + filter_w[2]*char_intensity[y-1][x+1]
-                         + filter_w[3]*char_intensity[y+0][x-1]
-                         + filter_w[4]*char_intensity[y+0][x+0]
-                         + filter_w[5]*char_intensity[y+0][x+1]
-                         + filter_w[6]*char_intensity[y+1][x-1]
-                         + filter_w[7]*char_intensity[y+1][x+0]
-                         + filter_w[8]*char_intensity[y+1][x+1];
+                } } // for x,y
 
-                int idx = int(255.0f*fv + 0.5f);
-                idx = (idx < 0x00) ? 0x00
-                    : (idx > 0xFF) ? 0xFF
-                                   : idx;
+                // copy it to the final font bitmap
+                int row_offset = m_charcell_h * (4*alt + 2*inv + bright);
+                fdc.DrawBitmap( wxBitmap(blur_img),    // source image
+                                chr*m_charcell_w, row_offset ); // dest x,y
 
-                wxColor rgb = colormap[idx];
-                blur_img.SetRGB(x-offset, y-offset,
-                                rgb.Red(), rgb.Green(), rgb.Blue());
+            } // for chr
 
-            } } // for x,y
+        } // for alt
 
-            // copy it to the final font bitmap
-            int row_offset = m_charcell_h * (4*alt + 2*inv + bright);
-            fdc.DrawBitmap( wxBitmap(blur_img),    // source image
-                            chr*m_charcell_w, row_offset ); // dest x,y
-
-        } // for chr
-
-    } } } // bright, inv, alt
+    } } // inv, bright
 
     fdc.SelectObject(wxNullBitmap);  // release m_fontmap
+    charDC.SelectObject(wxNullBitmap);  // release char_bitmap
 
     setFontDirty(false);
 }
@@ -531,7 +556,7 @@ void
 Crt::generateScreen()
 {
     static bool reentrant = false;
-    assert(!reentrant);
+//  assert(!reentrant);
     reentrant = true;
 
     if (isFontDirty()) {
