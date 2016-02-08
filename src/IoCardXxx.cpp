@@ -1,7 +1,7 @@
 // This is a skeleton file for patterning future I/O devices
 // When creating a new card type, beside filling in thte skeleton code,
 // there is one step that must be performed.  An enum symbol for the new
-// card must be added to card_type_e in IoCard.h, and the card factory
+// card must be added to card_t in IoCard.h, and the card factory
 // function, IoCard::makeCardImpl(), must be taught to associate the new
 // class with this enum.
 

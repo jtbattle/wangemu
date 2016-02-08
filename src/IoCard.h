@@ -4,7 +4,7 @@
 //
 // There is an aspect to the class design that dovetails with the friend class,
 // CardInfo, that should be explained.  CardInfo's member functions take a
-// card_type_e enum and return some attribute of cards of that type.
+// card_t enum and return some attribute of cards of that type.
 // Not wanting to have a bunch of switch statements that need to be edited
 // each time a new card is added to the emulator, instead the makeTmpCard()
 // function of this class provides a card of the given type.  The various
@@ -12,7 +12,7 @@
 //
 // Thus, when a new card type is introduced, three things must be added:
 //   (1) the new class must be created (see IoCardXXX.[ch] for a skeleton)
-//   (2) a new enum value must be added to card_type_e below
+//   (2) a new enum value must be added to card_t below
 //   (3) one switch statement, in makeCardImpl(), must be edited to
 //       map the enum to an instance of the new card type
 // Cardinfo knows nothing about the new card.
@@ -105,26 +105,37 @@ public:
     // --------------- static member functions ---------------
 
     // the types of cards that may by plugged into a slot
-    enum card_type_e
+    enum class card_t
     {
-        card_none = -1,         // signifies empty slot
-        card_keyboard,
-        card_disp_64x16,
-        card_disp_80x24,
-        card_printer,
-        card_disk,
-        NUM_CARDTYPES
+        none = -1,         // signifies empty slot
+        keyboard,
+        disp_64x16,
+        disp_80x24,
+        term_mux,
+        printer,
+        disk,
+        LAST,
     };
+    static const int NUM_CARDTYPES = static_cast<int>(card_t::LAST);
+
+    static bool legal_card_t(card_t c) {
+        return (c == card_t::keyboard)
+            || (c == card_t::disp_64x16)
+            || (c == card_t::disp_80x24)
+            || (c == card_t::term_mux)
+            || (c == card_t::printer)
+            || (c == card_t::disk);
+    }
 
     // create an instance of the specified card; the card configuration,
     // if it has one, will come from the ini file
     static IoCard *makeCard(Scheduler &scheduler, Cpu2200 &cpu,
-                            card_type_e type, int baseaddr, int cardslot,
+                            card_t type, int baseaddr, int cardslot,
                             const CardCfgState *cfg);
 
     // make a temporary card in order to query its properties.
     // the IoCard* functions know to do only partial construction.
-    static IoCard *makeTmpCard(card_type_e type);
+    static IoCard *makeTmpCard(card_t type);
 
 protected:  // these are used by the CardInfo class
 
@@ -151,7 +162,7 @@ private:
     // information and existing_card is false, we return a new card
     // that has default state associated with it.
     static IoCard *makeCardImpl(Scheduler &scheduler, Cpu2200 &cpu,
-                                card_type_e type, int baseaddr, int cardslot,
+                                card_t type, int baseaddr, int cardslot,
                                 const CardCfgState *cfg);
 };
 

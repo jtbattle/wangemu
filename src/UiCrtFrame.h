@@ -19,7 +19,9 @@ public:
     // constructor
     CrtFrame(   const wxString &title,
                 const int screen_type,
-                const int io_addr
+                const int io_addr,
+                const int term_num,     // -1 if dumb, 1-4 if term mux
+                const kbCallback &kbHandler
             );
 
     // destructor
@@ -85,6 +87,9 @@ public:
     // resumes, it will be forced to reopen the file, picking up any changes
     // made to the disk metadata.
     void doInspect(const string &filename);
+
+// FIXME: hack so m_crt can access it
+    const kbCallback m_kbHandler; // keystroke handler
 
 private:
     // ---- event handlers ----
@@ -175,15 +180,17 @@ private:
     CrtStatusBar *m_statBar;
     wxToolBar    *m_toolBar;
 
-    Crt *m_crt;                 // emulated CRT display window
+    Crt             *m_crt;       // emulated CRT display window
 
     bool m_fullscreen;          // currently fullscreen or not
     bool m_showstats;           // show timing statistics
 
-    int m_colorsel;             // index of selected color scheme
-    int m_fontsize[2];          // [1]=fullscreen, [0]=not fullscreen
+    int  m_colorsel;            // index of selected color scheme
+    int  m_fontsize[2];         // [1]=fullscreen, [0]=not fullscreen
 
-    int  m_crt_addr;            // we use this to track configuration options
+    int  m_crt_addr;            // used to track configuration options
+    int  m_term_num;            // 0 for dumb terms, 1-4 for muxed terms
+    bool m_primary_crt;         // true for main crt
 
     int  m_assoc_kb_addr;       // io address of associated keyboard
 

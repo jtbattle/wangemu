@@ -77,9 +77,9 @@ public:
     void editCardConfig(int slot);
 
     // set/get the type of the card in the specified backplane slot
-    void setSlotCardType(int slot, IoCard::card_type_e type);
-    IoCard::card_type_e getSlotCardType(int slot) const;
-    bool        isSlotOccupied(int slot) const;
+    void setSlotCardType(int slot, IoCard::card_t type);
+    IoCard::card_t getSlotCardType(int slot) const;
+    bool isSlotOccupied(int slot) const;
 
     // set/get the address of the card in the specified backplane slot
     void setSlotCardAddr(int slot, int addr);
@@ -96,10 +96,9 @@ private:
     // -------------- information about slots --------------
     // a list of which cards are plugged into each slot of the IO backplane
     struct {
-        IoCard::card_type_e
-                      type;   // what is plugged into the slot
-        int           addr;   // where it will be located (only 8 lsb matter on match)
-        CardCfgState *cardCfg; // per-card configuration state, or nullptr
+        IoCard::card_t type;    // what is plugged into the slot
+        int            addr;    // where it will be located (only 8 lsb matter on match)
+        CardCfgState  *cardCfg; // per-card configuration state, or nullptr
     } m_slot[NUM_IOSLOTS];
 
     // -------------- misc information --------------

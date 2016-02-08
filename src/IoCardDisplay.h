@@ -34,30 +34,29 @@ private:
     // ---- card properties ----
     const string getDescription() const override;
     const string getName() const override;
-    vector<int> getBaseAddresses() const override;
+    vector<int>  getBaseAddresses() const override;
 
     Scheduler &m_scheduler;     // shared system event scheduler
     Cpu2200   &m_cpu;           // associated CPU
     const int  m_baseaddr;      // the address the card is mapped to
     const int  m_slot;          // which slot the card is plugged into
     bool       m_selected;      // the card is currently selected
-    bool       m_cpb;           // the cpu is busy
     bool       m_card_busy;     // the card is busy doing something
 
     const int  m_size;          // display type
-    UI_gui_handle_t m_wndhnd;   // opaque handle to UI window
+    CrtFrame  *m_wndhnd;        // opaque handle to UI window
 
     // model controller "busy" timing
     spTimer    m_thnd_hsync;    // horizontal sync timer
     bool       m_realtime;      // true: match real timing, false: go fast
     int        m_hsync_count;   // which horizontal line we are on
-    enum {
-        BUSY_NOT,     // not busy
-        BUSY_CHAR,    // wait for next hsync then clear busy
-        BUSY_CLEAR1,  // wait for vsync, then advance to BUSY_CLEAR2
-        BUSY_CLEAR2,  // wait for vsync, then clear busy
-        BUSY_ROLL1,   // wait for hsync, then advance to BUSY_ROLL2
-        BUSY_ROLL2,   // wait for hsync, then clear busy
+    enum class busy_state {
+        IDLE,    // not busy
+        CHAR,    // wait for next hsync then clear busy
+        CLEAR1,  // wait for vsync, then advance to BUSY_CLEAR2
+        CLEAR2,  // wait for vsync, then clear busy
+        ROLL1,   // wait for hsync, then advance to BUSY_ROLL2
+        ROLL2,   // wait for hsync, then clear busy
     } m_busy_state;
 
     void tcbHsync(int arg);     // timer callback

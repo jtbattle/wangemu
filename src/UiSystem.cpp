@@ -276,8 +276,9 @@ UI_Confirm(const char *fmt, ...)
 // ---- Crt wrappers ----
 
 // called at the start of time to create the actual display
-UI_gui_handle_t
-UI_initCrt(int screen_type, int io_addr)
+CrtFrame*
+UI_initCrt(const int screen_type, const int io_addr,
+           const int term_num, const kbCallback &kbHandler)
 {
     int cputype = System2200().config().getCpuType();
     const char *cpustr = (cputype == Cpu2200::CPUTYPE_2200B) ? "2200B" :
@@ -292,29 +293,33 @@ UI_initCrt(int screen_type, int io_addr)
     }
 
     wxString title;
-    title.Printf("Wang %s %s CRT /0%02X", cpustr, dispstr, io_addr);
+    if (term_num < 1) {
+        // old style display
+        title.Printf("Wang %s %s CRT /0%02X", cpustr, dispstr, io_addr);
+    } else {
+        // smart terminal mux
+        title.Printf("Wang %s %s CRT /0%02X term %d",
+                        cpustr, dispstr, io_addr, term_num);
+    }
 
     // Create the main application window
-    CrtFrame *frame = new CrtFrame( title, screen_type, io_addr );
-    return (UI_gui_handle_t)frame;
+    return new CrtFrame( title, screen_type, io_addr, term_num, kbHandler );
 }
 
 
 // called before the display gets shut down
 void
-UI_destroyCrt(UI_gui_handle_t inst)
+UI_destroyCrt(CrtFrame *wnd)
 {
-    CrtFrame *crt_inst = reinterpret_cast<CrtFrame*>(inst);
-    crt_inst->destroyWindow();
+    wnd->destroyWindow();
 }
 
 
 // emit a character to the display
 void
-UI_displayChar(UI_gui_handle_t inst, uint8 byte)
+UI_displayChar(CrtFrame *wnd, uint8 byte)
 {
-    CrtFrame *crt_inst = reinterpret_cast<CrtFrame*>(inst);
-    crt_inst->processChar(byte);
+    wnd->processChar(byte);
 }
 
 
@@ -336,34 +341,29 @@ UI_diskEvent(int controller, int drive)
 // ---- printer wrappers ----
 
 // called at the start of time to create the actual display
-UI_gui_handle_t
+PrinterFrame*
 UI_initPrinter(int io_addr)
 {
-    PrinterFrame *frame;
     char title[32];
-
     sprintf(title, "Wang Printer /%03X", io_addr);
-    frame = new PrinterFrame( title, io_addr );
-    return (UI_gui_handle_t)frame;
+    return new PrinterFrame( title, io_addr );
 }
 
 
 // called before the display gets shut down
 void
-UI_destroyPrinter(UI_gui_handle_t inst)
+UI_destroyPrinter(PrinterFrame *wnd)
 {
-    PrinterFrame *prt_inst = reinterpret_cast<PrinterFrame*>(inst);
-    prt_inst->destroyWindow();
+    wnd->destroyWindow();
 }
 
 
 // this is called only from IoCardPrinter::OBS()
 // emit a character to the display
 void
-UI_printChar(UI_gui_handle_t inst, uint8 byte)
+UI_printChar(PrinterFrame *wnd, uint8 byte)
 {
-    PrinterFrame *tthis = reinterpret_cast<PrinterFrame*>(inst);
-    tthis->printChar(byte);
+    wnd->printChar(byte);
 }
 
 // ---- system configuration wrapper ----

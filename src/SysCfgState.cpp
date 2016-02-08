@@ -142,20 +142,20 @@ SysCfgState::setDefaults()
 
     // wipe out all cards
     for(int slot=0; slot < NUM_IOSLOTS; slot++) {
-        setSlotCardType( slot, IoCard::card_none );
+        setSlotCardType( slot, IoCard::card_t::none );
         setSlotCardAddr( slot, 0x000 );
     }
 
-    setSlotCardType( 0, IoCard::card_keyboard );
+    setSlotCardType( 0, IoCard::card_t::keyboard );
     setSlotCardAddr( 0, 0x001 );
 
-    setSlotCardType( 1, IoCard::card_disp_64x16 );
+    setSlotCardType( 1, IoCard::card_t::disp_64x16 );
     setSlotCardAddr( 1, 0x005 );
 
-    setSlotCardType( 2, IoCard::card_disk );
+    setSlotCardType( 2, IoCard::card_t::disk );
     setSlotCardAddr( 2, 0x310 );
 
-    setSlotCardType( 3, IoCard::card_printer );
+    setSlotCardType( 3, IoCard::card_t::printer );
     setSlotCardAddr( 3, 0x215 );
 
     m_initialized = true;
@@ -218,7 +218,7 @@ SysCfgState::loadIni()
         string subgroup(osf.str());
         string sval;
         int b;
-        IoCard::card_type_e cardtype = IoCard::card_none;
+        IoCard::card_t cardtype = IoCard::card_t::none;
 
         int io_addr;
         (void)hst.ConfigReadInt(subgroup, "addr", &io_addr, -1);
@@ -228,9 +228,8 @@ SysCfgState::loadIni()
 
         // TODO: ideally, we'd check the card type against the list of
         //       addresses allowed for that card type
-        bool plausible_card =
-            ((0 <= cardtype) && (cardtype < (int)IoCard::NUM_CARDTYPES)) &&
-            ((0 <= io_addr)  && (io_addr <= 0xFFF));
+        bool plausible_card = IoCard::legal_card_t(cardtype)
+                           && ((0 <= io_addr)  && (io_addr <= 0xFFF));
 
         if (plausible_card) {
             setSlotCardType( slot, cardtype );
@@ -249,7 +248,7 @@ SysCfgState::loadIni()
             }
         } else {
             // the slot is empty
-            setSlotCardType( slot, IoCard::card_none );
+            setSlotCardType( slot, IoCard::card_t::none );
             setSlotCardAddr( slot, 0x000 );
         }
     }
@@ -282,8 +281,8 @@ SysCfgState::saveIni() const
     for(int slot=0; slot<NUM_IOSLOTS; slot++) {
         string subgroup("io/slot-" + std::to_string(slot));
 
-        IoCard::card_type_e cardtype = m_slot[slot].type;
-        if (cardtype != IoCard::card_none) {
+        IoCard::card_t cardtype = m_slot[slot].type;
+        if (cardtype != IoCard::card_t::none) {
             char val[10];
             sprintf(val, "0x%03X", m_slot[slot].addr);
             string cardname = CardInfo::getCardName(cardtype);
@@ -396,12 +395,12 @@ SysCfgState::setWarnIo(bool warn)
 // set the card type.  if the card type is configurable, set up a cardCfg
 // object of the appropriate type, discarding whatever was there before.
 void
-SysCfgState::setSlotCardType(int slot, IoCard::card_type_e type)
+SysCfgState::setSlotCardType(int slot, IoCard::card_t type)
 {
     m_slot[slot].type = type;
 
     // create a config state object if the card type needs one
-    if ((type != IoCard::card_none) && (CardInfo::isCardConfigurable(type))) {
+    if ((type != IoCard::card_t::none) && (CardInfo::isCardConfigurable(type))) {
         if (m_slot[slot].cardCfg != nullptr) {
             delete m_slot[slot].cardCfg;
             m_slot[slot].cardCfg = nullptr;
@@ -439,13 +438,13 @@ bool
 SysCfgState::getWarnIo() const
         { return m_warn_io; }
 
-IoCard::card_type_e
+IoCard::card_t
 SysCfgState::getSlotCardType(int slot) const
         { return m_slot[slot].type; }
 
 bool
 SysCfgState::isSlotOccupied(int slot) const
-        { return m_slot[slot].type != IoCard::card_none; }
+        { return m_slot[slot].type != IoCard::card_t::none; }
 
 int
 SysCfgState::getSlotCardAddr(int slot) const
@@ -497,34 +496,64 @@ SysCfgState::configOk(bool warn) const
 
     for(int slot=0; slot<NUM_IOSLOTS; slot++) {
 
-        if (m_slot[slot].type == IoCard::card_none)
+        if (!isSlotOccupied(slot))
             continue;
 
         // make sure we have a keyboard at 0x01
-        if ( (m_slot[slot].type == IoCard::card_keyboard) &&
+        if ( (m_slot[slot].type == IoCard::card_t::keyboard) &&
              (m_slot[slot].addr & 0xFF) == 0x01)
             pri_kb_found = true;
 
+        if ( (m_slot[slot].type == IoCard::card_t::term_mux) &&
+             (m_slot[slot].addr & 0xFF) == 0x00)
+            pri_kb_found = true;
+
         // make sure we have a crt at 0x05
-        if ( ((m_slot[slot].type == IoCard::card_disp_64x16) ||
-              (m_slot[slot].type == IoCard::card_disp_80x24)) &&
+        if ( ((m_slot[slot].type == IoCard::card_t::disp_64x16) ||
+              (m_slot[slot].type == IoCard::card_t::disp_80x24)) &&
              (m_slot[slot].addr & 0xFF) == 0x05)
             pri_crt_found = true;
 
-        // check for address conflicts
-        for(int j=slot+1; j<NUM_IOSLOTS; j++) {
+        if ( (m_slot[slot].type == IoCard::card_t::term_mux) &&
+             (m_slot[slot].addr & 0xFF) == 0x00)
+            pri_crt_found = true;
 
-            if (m_slot[j].type == IoCard::card_none)
+        // FIXME: this is sinful to pass 0 to a ref! (three times!)
+        IoCard *slotInst = IoCard::makeCard(*(Scheduler*)0, *(Cpu2200*)0,
+                                            getSlotCardType(slot),
+                                            getSlotCardAddr(slot) & 0xFF,
+                                            -1, // just a dummy instance
+                                            (CardCfgState *)0);
+        vector<int> slotAddresses = slotInst->getAddresses();
+        delete slotInst;
+
+        // check for address conflicts
+        for(int slot2=slot+1; slot2<NUM_IOSLOTS; slot2++) {
+
+            if (!isSlotOccupied(slot2))
                 continue;
 
-            if ((m_slot[slot].type != IoCard::card_none) &&
-                (m_slot[slot].addr & 0xFF) == (m_slot[j].addr & 0xFF)) {
-                if (warn)
-                    UI_Error("Configuration problem: "
-                             "card in slots %d and %d both responding to address 0x%02X",
-                             slot, j, m_slot[slot].addr & 0xFF);
-                return false;
-            }
+            // FIXME: this is sinful to pass 0 to a ref! (three times!)
+            IoCard *slot2Inst = IoCard::makeCard(*(Scheduler*)0, *(Cpu2200*)0,
+                                                 getSlotCardType(slot2),
+                                                 getSlotCardAddr(slot2) & 0xFF,
+                                                 -1, // just a dummy instance
+                                                 (CardCfgState *)0);
+            vector<int> slot2Addresses = slot2Inst->getAddresses();
+            delete slot2Inst;
+
+            // sweep through all occupied addresses and look for collisions
+            for(const int slot_addr : slotAddresses) {
+                for(const int slot2_addr : slot2Addresses) {
+                    if ((slot_addr & 0xFF) == (slot2_addr & 0xFF)) {
+                        if (warn)
+                            UI_Error("Configuration problem: "
+                                     "card in slots %d and %d both responding to address 0x%02X",
+                                     slot, slot2, slot_addr & 0xFF);
+                        return false;
+                    }
+                } // slot2_addr
+            } // slot_addr
         }
     }
 
@@ -565,7 +594,7 @@ SysCfgState::needsReboot(const SysCfgState &other) const
         if (m_slot[slot].type != other.m_slot[slot].type)
             return true;
 
-        if ( (m_slot[slot].type != IoCard::card_none) &&
+        if ( (m_slot[slot].type != IoCard::card_t::none) &&
              (m_slot[slot].addr & 0xFF) != (other.m_slot[slot].addr & 0xFF) )
             return true;
 

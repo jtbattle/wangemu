@@ -150,7 +150,7 @@ IoCardKeyboard::receiveKeystroke(int io_addr, int keycode)
     assert( (io_addr >= 0) && (io_addr <= 255) );
     assert( (keycode >= 0) );
 
-    IoCardKeyboard *tthis = reinterpret_cast<IoCardKeyboard*>
+    IoCardKeyboard *tthis = static_cast<IoCardKeyboard*>
                                 (System2200().getInstFromIoAddr(io_addr));
     assert(tthis != nullptr);
 
@@ -184,7 +184,7 @@ IoCardKeyboard::script_mode(int io_addr)
 {
     assert( (io_addr >= 0) && (io_addr <= 255) );
 
-    IoCardKeyboard *tthis = reinterpret_cast<IoCardKeyboard*>
+    IoCardKeyboard *tthis = static_cast<IoCardKeyboard*>
                                 (System2200().getInstFromIoAddr(io_addr));
     if (tthis == nullptr) {
         // this can happen during initialization when there are two keyboards
@@ -200,7 +200,7 @@ IoCardKeyboard::invoke_script(const int io_addr, const string &filename)
 {
     assert( (io_addr >= 0) && (io_addr <= 255) );
 
-    IoCardKeyboard *tthis = reinterpret_cast<IoCardKeyboard*>
+    IoCardKeyboard *tthis = static_cast<IoCardKeyboard*>
                                 (System2200().getInstFromIoAddr(io_addr));
     assert(tthis != nullptr);
     assert(tthis->m_script_handle == 0);  // can't have two scripts to one kb

@@ -597,10 +597,12 @@ IoCardDisk::wvdSeekTrack(int nominal_ticks)
     }
 
     // start sector timer
-    if (!empty && (m_d[m_drive].tmr_sector == nullptr))
+    if (!empty && (m_d[m_drive].tmr_sector == nullptr)) {
         m_d[m_drive].tmr_sector = m_scheduler.TimerCreate(
                                     m_d[m_drive].ticks_per_sector,
                                     std::bind( &IoCardDisk::tcbSector, this, m_drive) );
+assert(m_d[m_drive].tmr_sector != nullptr);
+    }
 
     if (ticks <= 0)
         ticks = DISK_MIN_TICKS;
@@ -717,6 +719,10 @@ IoCardDisk::tcbSector(int arg)
     int prev_sec;
 
     assert(drive >= 0 && drive < numDrives());
+if (m_d[drive].tmr_sector == nullptr) {
+    int foo = 1;
+    foo++;
+}
     assert(m_d[drive].tmr_sector != nullptr);
 
     if (0 && (NOISY > 2))
@@ -725,6 +731,7 @@ IoCardDisk::tcbSector(int arg)
     // retrigger the timer
     m_d[drive].tmr_sector = m_scheduler.TimerCreate(
         m_d[drive].ticks_per_sector, std::bind(&IoCardDisk::tcbSector, this, drive) );
+assert(m_d[m_drive].tmr_sector != nullptr);
 
     // advance to next sector, mod sectors per track
     prev_sec = m_d[drive].sector;
@@ -768,7 +775,7 @@ IoCardDisk::wvdGetDiskType(const int slot, const int drive, int *disktype)
     assert(slot  >= 0 && slot  <= NUM_IOSLOTS);
     assert(drive >= 0 && drive <= 3);
 
-    IoCardDisk *tthis = reinterpret_cast<IoCardDisk*>
+    IoCardDisk *tthis = static_cast<IoCardDisk*>
                                 (System2200().getInstFromSlot(slot));
     if (tthis->m_d[drive].state == DRIVE_EMPTY)
         return false;
@@ -788,7 +795,7 @@ IoCardDisk::wvdGetFilename(const int slot,
     assert(slot  >= 0 && slot  <= NUM_IOSLOTS);
     assert(drive >= 0 && drive <= 3);
 
-    IoCardDisk *tthis = reinterpret_cast<IoCardDisk*>
+    IoCardDisk *tthis = static_cast<IoCardDisk*>
                                 (System2200().getInstFromSlot(slot));
     if (tthis->m_d[drive].state == DRIVE_EMPTY)
         return false;
@@ -806,7 +813,7 @@ IoCardDisk::wvdDriveStatus(int slot, int drive)
     assert(slot >=0 && slot < NUM_IOSLOTS);
     assert(drive >=0 && drive < 4);
 
-    IoCardDisk *tthis = reinterpret_cast<IoCardDisk*>
+    IoCardDisk *tthis = static_cast<IoCardDisk*>
                                 (System2200().getInstFromSlot(slot));
     if (tthis == nullptr) {
         // can happen at init time -- this routine is called when the
@@ -844,7 +851,7 @@ IoCardDisk::wvdInsertDisk(int slot,
     assert(slot >= 0 && slot <= NUM_IOSLOTS);
     assert(drive >= 0 || drive < 4);
 
-    IoCardDisk *tthis = reinterpret_cast<IoCardDisk*>
+    IoCardDisk *tthis = static_cast<IoCardDisk*>
                                 (System2200().getInstFromSlot(slot));
     assert(tthis != nullptr);
 
@@ -862,7 +869,7 @@ IoCardDisk::wvdRemoveDisk(int slot, int drive)
     assert(slot >= 0 && slot <= NUM_IOSLOTS);
     assert(drive >= 0 || drive < 4);
 
-    IoCardDisk *tthis = reinterpret_cast<IoCardDisk*>
+    IoCardDisk *tthis = static_cast<IoCardDisk*>
                                 (System2200().getInstFromSlot(slot));
     assert(tthis != nullptr);
 
@@ -879,7 +886,7 @@ IoCardDisk::wvdFlush(int slot, int drive)
     assert(slot >= 0 && slot <= NUM_IOSLOTS);
     assert(drive >= 0 && drive < 4);
 
-    IoCardDisk *tthis = reinterpret_cast<IoCardDisk*>
+    IoCardDisk *tthis = static_cast<IoCardDisk*>
                                 (System2200().getInstFromSlot(slot));
     assert(tthis != nullptr);
 

@@ -204,7 +204,7 @@ System2200::setConfig(const SysCfgState &newcfg)
             // notify all configured cards about possible new configuration
             for(int slot=0; slot < NUM_IOSLOTS; slot++) {
                 if (config().isSlotOccupied(slot)) {
-                    IoCard::card_type_e ct = config().getSlotCardType(slot);
+                    IoCard::card_t ct = config().getSlotCardType(slot);
                     if (CardInfo::isCardConfigurable(ct)) {
                         IoCard *card = getInstFromSlot(slot);
                         const CardCfgState *cfg = config().getCardConfig(slot);
@@ -258,11 +258,11 @@ System2200::setConfig(const SysCfgState &newcfg)
         if (!config().isSlotOccupied(slot))
             continue;
 
-        IoCard::card_type_e cardtype = config().getSlotCardType(slot);
-        int io_addr                  = config().getSlotCardAddr(slot) & 0xFF;
+        IoCard::card_t cardtype = config().getSlotCardType(slot);
+        int io_addr             = config().getSlotCardAddr(slot) & 0xFF;
 
-        bool display = (cardtype == IoCard::card_disp_64x16) ||
-                       (cardtype == IoCard::card_disp_80x24) ;
+        bool display = (cardtype == IoCard::card_t::disp_64x16) ||
+                       (cardtype == IoCard::card_t::disp_80x24) ;
 
         if ((pass==0 && display) || (pass==1 && !display))
             continue;
@@ -641,7 +641,7 @@ System2200::getKbIoAddr(int n)
     int num = 0;
 
     for(int slot=0; slot<NUM_IOSLOTS; slot++) {
-        if (config().getSlotCardType(slot) == IoCard::card_keyboard) {
+        if (config().getSlotCardType(slot) == IoCard::card_t::keyboard) {
             if (num == n)
                 return config().getSlotCardAddr(slot);
             num++;
@@ -660,7 +660,7 @@ System2200::getPrinterIoAddr(int n)
     int num = 0;
 
     for(int slot=0; slot<NUM_IOSLOTS; slot++) {
-        if (config().getSlotCardType(slot) == IoCard::card_printer) {
+        if (config().getSlotCardType(slot) == IoCard::card_t::printer) {
             if (num == n)
                 return config().getSlotCardAddr(slot);
             num++;
@@ -703,7 +703,7 @@ System2200::isDiskController(int slot) const
     int cardtype_idx;
     bool ok = System2200().getSlotInfo(slot, &cardtype_idx, 0);
 
-    return (ok && (cardtype_idx == IoCard::card_disk));
+    return ok && (cardtype_idx == static_cast<int>(IoCard::card_t::disk));
 }
 
 

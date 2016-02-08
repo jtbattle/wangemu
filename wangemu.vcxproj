@@ -156,6 +156,7 @@
     <ClCompile Include="src\IoCardDisplay.cpp" />
     <ClCompile Include="src\IoCardKeyboard.cpp" />
     <ClCompile Include="src\IoCardPrinter.cpp" />
+    <ClCompile Include="src\IoCardTermMux.cpp" />
     <ClCompile Include="src\Scheduler.cpp" />
     <ClCompile Include="src\ScriptFile.cpp" />
     <ClCompile Include="src\SysCfgState.cpp" />
@@ -199,6 +200,7 @@
     <ClInclude Include="src\IoCardDisplay.h" />
     <ClInclude Include="src\IoCardKeyboard.h" />
     <ClInclude Include="src\IoCardPrinter.h" />
+    <ClInclude Include="src\IoCardTermMux.h" />
     <ClInclude Include="src\Scheduler.h" />
     <ClInclude Include="src\ScriptFile.h" />
     <ClInclude Include="src\SysCfgState.h" />

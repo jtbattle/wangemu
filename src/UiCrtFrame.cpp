@@ -214,23 +214,29 @@ END_EVENT_TABLE()
 // constructor
 CrtFrame::CrtFrame( const wxString& title,
                     const int screen_type,
-                    const int io_addr) :
+                    const int io_addr,
+                    const int term_num,
+                    const kbCallback &kbHandler) :
        wxFrame((wxFrame *)nullptr, -1, title, wxDefaultPosition, wxDefaultSize,
                wxDEFAULT_FRAME_STYLE | wxNO_FULL_REPAINT_ON_RESIZE),
     m_menuBar(nullptr),
     m_statBar(nullptr),
     m_toolBar(nullptr),
     m_crt(nullptr),
+    m_kbHandler(kbHandler),
     m_fullscreen(false),
     m_showstats(false),
     m_colorsel(0),
     m_crt_addr(io_addr),
+    m_term_num(term_num),
     m_assoc_kb_addr(-1),
     m_RefreshTimer(nullptr),
     m_QSecTimer(nullptr),
     m_blink_phase(0),
     m_fps(0)
 {
+    m_primary_crt = (screen_type == UI_SCREEN_2236DE) ? (m_crt_addr == 0x00)
+                                                      : (m_crt_addr == 0x05);
 
     // set the frame icon
     SetIcon(wang_xpm);
@@ -297,7 +303,7 @@ CrtFrame::~CrtFrame()
 bool
 CrtFrame::isPrimaryCrt() const
 {
-    return (m_crt_addr == 0x05);
+    return m_primary_crt;
 }
 
 
@@ -523,8 +529,8 @@ CrtFrame::initToolBar(wxToolBar *tb)
     // as of wxWidgets 2.5.5 at least, toolbar icons must be <=32 pixels wide
     // or they must be exactly 48 pixels (and maybe 128) pixels wide otherwise
     // something forces the icon to shrink and the results aren't pretty.
-    // this is combatted two ways.  first, shorter strings are used; second, we
-    // keep trying smaller fonts until one meets the requirements.
+    // this is combatted two ways.  first, shorter strings are used; second,
+    // we keep trying smaller fonts until one meets the requirements.
     for(int font_size=14; font_size>=8; font_size--) {
 #else
     int font_size = 8;
@@ -782,6 +788,7 @@ CrtFrame::getDefaults()
     // make sure that old mapping still makes sense
     System2200 sys;
     int found = 0;
+// FIXME: why 10?  why not NUM_IOSLOTS?
     for(int i=0; i<10; i++) {
         if (sys.getKbIoAddr(i) == m_assoc_kb_addr) {
             found = 1;
@@ -1225,13 +1232,11 @@ CrtFrame::OnPrinter(wxCommandEvent &event)
     assert(inst != nullptr);
 
     // get the printer controller card handle
-    IoCardPrinter *card = reinterpret_cast<IoCardPrinter*>(inst);
-    UI_gui_handle_t wnd = card->getGuiPtr();
+    IoCardPrinter *card = static_cast<IoCardPrinter*>(inst);
+    PrinterFrame *prtwnd = card->getGuiPtr();
 
-    // get the corresponding gui device and tell it to show
-    PrinterFrame *tthis = reinterpret_cast<PrinterFrame*>(wnd);
-    tthis->Show(true);
-    tthis->Raise();
+    prtwnd->Show(true);
+    prtwnd->Raise();
 }
 
 // print all printer contents, and then clear all printers
@@ -1253,12 +1258,11 @@ CrtFrame::OnPrintAndClear(wxCommandEvent& WXUNUSED(event))
             // map device I/O address to card handle
             IoCard *inst = sys.getInstFromIoAddr(io_addr);
             assert(inst != nullptr);
-            IoCardPrinter *card = reinterpret_cast<IoCardPrinter*>(inst);
+            IoCardPrinter *card = static_cast<IoCardPrinter*>(inst);
 
             // fetch associated gui window pointer and use it
-            UI_gui_handle_t wnd = card->getGuiPtr();
-            PrinterFrame *tthis = reinterpret_cast<PrinterFrame*>(wnd);
-            tthis->printAndClear();
+            PrinterFrame *prtwnd = card->getGuiPtr();
+            prtwnd->printAndClear();
         }
     }
 }
@@ -1450,7 +1454,7 @@ CrtFrame::destroyWindow()
     saveDefaults();     // save config options
 
     // find ourselves in the list of crts
-    auto it = find(m_crtlist.begin(), m_crtlist.end(), this);
+    auto it = find(begin(m_crtlist), end(m_crtlist), this);
     assert( it != m_crtlist.end() );
 
     // close this window  (system may defer it for a while)

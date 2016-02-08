@@ -89,7 +89,7 @@ TimerTest(void)
     g_testtime = 0;
 
     // method 1: create a static timer object, then pass it to scheduler
-    callback_t cb1 = std::bind(&TimerTestFoo::report1, &foo, 1);
+    sched_callback_t cb1 = std::bind(&TimerTestFoo::report1, &foo, 1);
     spTimer t1 = test_scheduler.TimerCreate( TIMER_US(3.0f), cb1 );
 
     // method 2: like method 1, but all inline
@@ -109,7 +109,6 @@ TimerTest(void)
 // ======================================================================
 
 Scheduler::Scheduler() :
-    m_updating(false),
     m_countdown(0),
     m_startcnt(0)
 {
@@ -131,7 +130,7 @@ Scheduler::~Scheduler()
 // but calls Kill() if it wants to terminate it.
 // 'ticks' is the number of clock ticks before the callback fires.
 spTimer
-Scheduler::TimerCreate(int ticks, const callback_t &fcn)
+Scheduler::TimerCreate(int ticks, const sched_callback_t &fcn)
 {
     // funny things happen if we try to time intervals that are too big
     assert(ticks <= MAX_TICKS);
@@ -142,17 +141,28 @@ Scheduler::TimerCreate(int ticks, const callback_t &fcn)
 
     spTimer tmr(std::make_shared<Timer>(this, ticks, fcn));
 
-    if (m_timer.size() == 1) {
+    if (m_timer.empty()) {
         // this is the only timer
         m_startcnt = m_countdown = ticks;
     } else if (ticks < m_countdown) {
         // the new timer expires before current target, so make this timer
-        // the new expiration count.  we have to twiddle startcnt to make
-        // sure we end up with the proper timer credits for those that
-        // have already been running.
+        // the new expiration count.
+#if 1
+        // we have to twiddle startcnt to make sure we end up with the proper
+        // timer credits for those that have already been running.
         int32 diff = (m_countdown - ticks);
         m_startcnt  -= diff;
         m_countdown -= diff;    // == ticks
+#else
+        // do it the slow way, but it has the advantage that when this timer
+        // expires, it won't look like we overshot by a ton of cycles
+        int32 elapsed = (m_startcnt - m_countdown);
+        for(auto &t : m_timer) {
+            t->ctr -= elapsed;
+            assert(t->ctr > 0);
+        }
+        m_startcnt = m_countdown = ticks;
+#endif
     } else {
         // the timer state might be that we already have credits lined up
         // for other timers.  rather than doling out the elapsed time to
@@ -206,11 +216,6 @@ void Scheduler::TimerCredit(void)
 
     uint32 elapsed = (m_startcnt - m_countdown);
 
-    // we set this flag because the loop below may end up calling one
-    // or more callbacks which themselves might call TimerCreate(), and
-    // this flag is used in that routine to avoid a reentrancy issue.
-    m_updating = true;
-
     // scan each active timer, moving expired ones to the retired list
     vector<spTimer> retired;
     unsigned int active_before = m_timer.size();
@@ -236,50 +241,29 @@ void Scheduler::TimerCredit(void)
 
     // determine the minimum countdown value of the remaining active timers
     m_countdown = MAX_TICKS;
-    for(auto t : m_timer) {
+    for(auto &t : m_timer) {
+#ifdef _DEBUG
+        if (t.unique()) {
+            UI_Warn("Hey, got a dead timer");
+        }
+        if (t.use_count() != 2) {
+            UI_Warn("Hey, retiring a timer with a use_count() of %d", t.use_count());
+        }
+#endif
         m_countdown = std::min(m_countdown, t->ctr);
     }
     m_startcnt = m_countdown;
 
     // sort retired events in order they expired
-    std::sort(retired.begin(), retired.end(),
-              [](spTimer a, spTimer b) { return (a->ctr < b->ctr); }
+    std::sort(begin(retired), end(retired),
+              [](const spTimer &a, const spTimer &b) { return (a->ctr < b->ctr); }
              );
     // scan through the retired list and perform callbacks
-    for(auto t : retired) {
+    for(auto &t : retired) {
         (t->callback)();
     }
-
-    m_updating = false; // done updating
 }
 
-
-// this is called periodically to advance time
-
-#if 0
-// let 'n' cpu cycles of simulated time go past
-void Scheduler::TimerTick(int n)
-{
-#if TEST_TIMER
-    if (this == &test_scheduler) {
-        g_testtime += n;
-        if (g_testtime < 100)
-            printf("inc %d, time=%d\n", n, g_testtime);
-    }
-#endif
-    assert(!m_updating);
-
-    m_countdown -= n;
-    if (m_countdown <= 0) {
-
-        // it is likely that one or more timers has expired.
-        // it isn't guaranteed since it is possible that the timer
-        // which was nearest to completion was recently TimerKill'd.
-        TimerCredit();
-
-    } // else no active timers
-}
-#endif
 
 // ======================================================================
 // ======================================================================

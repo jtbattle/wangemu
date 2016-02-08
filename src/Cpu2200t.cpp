@@ -1322,7 +1322,10 @@ Cpu2200t::reset(bool hard_reset)
 }
 
 
-// this function is called by a device to return requested data
+// this function is called by a device to return requested data.
+// in the real hardware, the selected IO device drives the IBS signal active
+// for 7 uS via a one-shot.  In the emulator, the strobe is effectively
+// instantaneous.
 void
 Cpu2200t::IoCardCbIbs(int data)
 {
@@ -1330,7 +1333,7 @@ Cpu2200t::IoCardCbIbs(int data)
     assert( (m_cpu.st1 & ST1_MASK_CPB) == 0 );
     m_cpu.k = (uint8)(data & 0xFF);
     m_cpu.st1 |= ST1_MASK_CPB;          // CPU busy; inhibit IBS
-    m_sys.cpu_CPB( true );              // we are busy now
+    m_sys.cpu_CPB( true );              // the cpu is busy now
 
     // return special status if it is a special function key
     if (data & IoCardKeyboard::KEYCODE_SF)

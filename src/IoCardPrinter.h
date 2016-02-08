@@ -1,7 +1,7 @@
 #ifndef _INCLUDE_IOCARD_PRINTER_H_
 #define _INCLUDE_IOCARD_PRINTER_H_
 
-#include "Ui.h"         // pick up def of UI_gui_handle_t
+#include "Ui.h"
 #include "IoCard.h"
 
 class Cpu2200;
@@ -26,7 +26,7 @@ public:
     void  CPB(bool busy) override;
 
     // give access to associated gui window
-    UI_gui_handle_t getGuiPtr() const;
+    PrinterFrame *getGuiPtr() const;
 
 private:
     // ---- card properties ----
@@ -34,12 +34,12 @@ private:
     const string getName() const override;
     vector<int> getBaseAddresses() const override;
 
-    Cpu2200    &m_cpu;            // associated CPU
-    const int   m_baseaddr;       // the address the card is mapped to
-    const int   m_slot;           // which slot the card is plugged into
-    bool        m_selected;       // the card is currently selected
-    bool        m_cpb;            // the cpu is busy
-    void       *m_wndhnd;         // opaque handle to UI window
+    Cpu2200      &m_cpu;          // associated CPU
+    const int     m_baseaddr;     // the address the card is mapped to
+    const int     m_slot;         // which slot the card is plugged into
+    bool          m_selected;     // the card is currently selected
+    bool          m_cpb;          // the cpu is busy
+    PrinterFrame *m_wndhnd;       // opaque handle to UI window
 };
 
 #endif // _INCLUDE_IOCARD_PRINTER_H_

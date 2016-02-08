@@ -11,14 +11,12 @@
 #include "w2200.h"
 
 class DiskCtrlCfgState;
+class CrtFrame;
+class PrinterFrame;
 
 // =============================================================
 // exported by UI
 // =============================================================
-
-// this is an opaque pointer to a gui window associated with a given
-// emulated core device.
-typedef void* UI_gui_handle_t;
 
 // called at the start of time to create the actual display
 enum ui_screen_t {
@@ -26,13 +24,14 @@ enum ui_screen_t {
     UI_SCREEN_80x24,
     UI_SCREEN_2236DE
 };
-UI_gui_handle_t UI_initCrt(int screen_type, int io_addr);
+CrtFrame* UI_initCrt(const int screen_type, const int io_addr,
+                     const int term_num, const kbCallback &kbHandler);
 
 // called before the display gets shut down
-void UI_destroyCrt(UI_gui_handle_t inst);
+void UI_destroyCrt(CrtFrame *wnd);
 
 // emit a character to the display
-void UI_displayChar(UI_gui_handle_t inst, uint8 byte);
+void UI_displayChar(CrtFrame *wnd, uint8 byte);
 
 // inform the UI how far along the simulation is in emulated time
 void UI_setSimSeconds(unsigned long seconds, float relative_speed);
@@ -43,13 +42,13 @@ void UI_diskEvent(int slot, int drive);
 // ---- printer interface ----
 
 // printer view
-UI_gui_handle_t UI_initPrinter(int io_addr);
+PrinterFrame* UI_initPrinter(int io_addr);
 
 // called before the printer view gets shut down
-void UI_destroyPrinter(UI_gui_handle_t inst);
+void UI_destroyPrinter(PrinterFrame *wnd);
 
 // emit a character to the printer
-void UI_printChar(UI_gui_handle_t inst, uint8 byte);
+void UI_printChar(PrinterFrame *wnd, uint8 byte);
 
 // ---- system configuration ----
 

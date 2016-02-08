@@ -171,7 +171,7 @@ SystemConfigDlg::SystemConfigDlg(wxFrame *parent) :
         m_cardDesc[slot]->Append("(vacant)", (void*)(-2));
 
         for(int ctype=0; ctype<IoCard::NUM_CARDTYPES; ctype++) {
-            IoCard::card_type_e ct = (IoCard::card_type_e)ctype;
+            IoCard::card_t ct = static_cast<IoCard::card_t>(ctype);
             string cardname = CardInfo::getCardName(ct);
             string carddesc = CardInfo::getCardDesc(ct);
             string str( cardname + " (" + carddesc + ")" );
@@ -290,12 +290,13 @@ SystemConfigDlg::updateDlg()
     m_warnIo->SetValue(m_cfg.getWarnIo());
 
     for(int slot=0; slot<NUM_IOSLOTS; slot++) {
-        int cardtype = m_cfg.getSlotCardType(slot);
-        if (cardtype == IoCard::card_none)
+        IoCard::card_t cardtype = m_cfg.getSlotCardType(slot);
+        int int_cardtype = static_cast<int>(cardtype);
+        if (cardtype == IoCard::card_t::none)
             m_cardDesc[slot]->SetSelection(0);
         else
-            m_cardDesc[slot]->SetSelection(cardtype+1);
-        setValidIoChoices(slot, cardtype);
+            m_cardDesc[slot]->SetSelection(int_cardtype + 1);
+        setValidIoChoices(slot, int_cardtype);
     }
 }
 
@@ -403,7 +404,7 @@ SystemConfigDlg::OnCardChoice( wxCommandEvent &event )
     int selection = hCtl->GetSelection();
     int idx = (int)(hCtl->GetClientData(selection));
     if (idx < 0) idx = -1;  // hack due to -2 hack earlier
-    IoCard::card_type_e cardtype = (IoCard::card_type_e)idx;
+    IoCard::card_t cardtype = static_cast<IoCard::card_t>(idx);
 
     m_cfg.setSlotCardType( slot, cardtype );
     m_cfg.setSlotCardAddr( slot, 0x00 );       // user must set io later
@@ -426,7 +427,7 @@ SystemConfigDlg::OnAddrChoice( wxCommandEvent &event )
     int addrsel      =       m_cardAddr[slot]->GetSelection();
     assert(cardtype_idx >= 0);
 
-    vector<int> base_addresses = CardInfo::getCardBaseAddresses((IoCard::card_type_e)cardtype_idx);
+    vector<int> base_addresses = CardInfo::getCardBaseAddresses(static_cast<IoCard::card_t>(cardtype_idx));
     m_cfg.setSlotCardAddr( slot, base_addresses[addrsel] );
 
     updateButtons();
@@ -531,7 +532,7 @@ SystemConfigDlg::setValidIoChoices(int slot, int cardtype_idx)
     bool occupied = m_cfg.isSlotOccupied(slot);
     hAddrCtl->Enable(occupied);
 
-    IoCard::card_type_e ct = (IoCard::card_type_e)cardtype_idx;
+    IoCard::card_t ct = static_cast<IoCard::card_t>(cardtype_idx);
     if (occupied) {
         vector<int> base_addresses = CardInfo::getCardBaseAddresses(ct);
 

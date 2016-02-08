@@ -97,14 +97,13 @@ IoCardDisplay::IoCardDisplay(Scheduler &scheduler, Cpu2200 &cpu,
     m_baseaddr(baseaddr),
     m_slot(cardslot),
     m_selected(false),
-    m_cpb(true),
     m_card_busy(false),
     m_size(size),
     m_wndhnd(nullptr),
     m_thnd_hsync(nullptr),
     m_realtime(true),
     m_hsync_count(0),
-    m_busy_state(BUSY_NOT)
+    m_busy_state(busy_state::IDLE)
 {
     if (m_slot < 0) {
         // this is just a probe to query properties, so don't make a window
@@ -114,7 +113,8 @@ IoCardDisplay::IoCardDisplay(Scheduler &scheduler, Cpu2200 &cpu,
     int io_addr;
     bool ok = System2200().getSlotInfo(cardslot, 0, &io_addr);
     assert(ok); ok=ok;
-    m_wndhnd = UI_initCrt(m_size, io_addr);
+// FIXME: somehow unify passing of keyboard handler
+    m_wndhnd = UI_initCrt(m_size, io_addr, 0, nullptr);
 
     reset(true);
 }
@@ -165,9 +165,8 @@ void
 IoCardDisplay::reset(bool hard_reset)
 {
     // reset card state
-    m_busy_state = BUSY_NOT;
+    m_busy_state = busy_state::IDLE;
     m_selected   = false;
-    m_cpb        = true;   // CPU busy
     m_card_busy  = false;
 
     // get the horizontal sync timer going
@@ -195,13 +194,12 @@ IoCardDisplay::deselect()
         UI_Info("display -ABS");
 
     m_selected = false;
-    m_cpb      = true;
 }
 
 void
 IoCardDisplay::OBS(int val)
 {
-    assert(m_busy_state == BUSY_NOT);
+    assert(m_busy_state == busy_state::IDLE);
 
     val &= 0xFF;
 
@@ -212,15 +210,15 @@ IoCardDisplay::OBS(int val)
 
     if (System2200().isCpuSpeedRegulated()) {
         if (val == 0x03) {
-            m_busy_state = BUSY_CLEAR1;
+            m_busy_state = busy_state::CLEAR1;
             m_card_busy = true;
 #if 0
         } else if (val == 0x0A && cur_row == 15) {
-            m_busy_state = BUSY_ROLL1;
+            m_busy_state = busy_state::ROLL1;
             m_card_busy = true;
 #endif
         } else if (val >= 0x10) {
-            m_busy_state = BUSY_CHAR;
+            m_busy_state = busy_state::CHAR;
             m_card_busy = true;
         }
     }
@@ -254,16 +252,18 @@ IoCardDisplay::getIB5() const
 }
 
 // change of CPU Busy state
+// because the display is write-only, we don't expect the CPU
+// to poll us for input.
 void
 IoCardDisplay::CPB(bool busy)
 {
+    busy = busy; // make lint happy
+
     // it appears that except for reset, ucode only ever clears it,
     // and of course the IBS sets it back.
     if (NOISY)
         UI_Info("display CPB%c", busy?'+':'-');
 
-    m_cpb = busy;
-    // ...
     m_cpu.setDevRdy(!m_card_busy);
 }
 
@@ -293,33 +293,33 @@ IoCardDisplay::tcbHsync(int arg)
     // advance state machine
     switch (m_busy_state) {
 
-        case BUSY_NOT:
+        case busy_state::IDLE:
             break;
 
-        case BUSY_CHAR:
+        case busy_state::CHAR:
             m_card_busy = false;
-            m_busy_state = BUSY_NOT;
+            m_busy_state = busy_state::IDLE;
             m_cpu.setDevRdy(true);
             break;
 
-        case BUSY_CLEAR1:
+        case busy_state::CLEAR1:
             if (m_hsync_count == 1)      // vblank
-                m_busy_state = BUSY_CLEAR2;
+                m_busy_state = busy_state::CLEAR2;
             break;
-        case BUSY_CLEAR2:
+        case busy_state::CLEAR2:
             if (m_hsync_count == 1) {    // vblank
                 m_card_busy = false;
-                m_busy_state = BUSY_NOT;
+                m_busy_state = busy_state::IDLE;
                 m_cpu.setDevRdy(true);
             }
             break;
 
-        case BUSY_ROLL1:
-            m_busy_state = BUSY_ROLL2;
+        case busy_state::ROLL1:
+            m_busy_state = busy_state::ROLL2;
             break;
-        case BUSY_ROLL2:
+        case busy_state::ROLL2:
             m_card_busy = false;
-            m_busy_state = BUSY_NOT;
+            m_busy_state = busy_state::IDLE;
             m_cpu.setDevRdy(true);
             break;
 

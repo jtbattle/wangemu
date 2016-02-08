@@ -1530,7 +1530,10 @@ Cpu2200vp::run(int ticks)
 }
 
 
-// this function is called by a device to return requested data
+// this function is called by a device to return requested data.
+// in the real hardware, the selected IO device drives the IBS signal active
+// for 7 uS via a one-shot.  In the emulator, the strobe is effectively
+// instantaneous.
 void
 Cpu2200vp::IoCardCbIbs(int data)
 {

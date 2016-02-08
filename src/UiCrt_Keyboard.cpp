@@ -310,7 +310,16 @@ Crt::OnKeyDown(wxKeyEvent &event)
 #endif
 
     if (foundmap) {
-        core_sysKeystroke(m_parent->getTiedAddr(), key);
+        // FIXME: unify this instead of this hackery
+        // it seems like the best way to get rid of this is to avoid
+        // unusual configurations, and require that old style keyboard and CRT
+        // are a pair, perhaps allowing only one: KB/01 + CRT/05
+        if (m_parent->m_kbHandler == nullptr) {
+            // dumb term
+            core_sysKeystroke(m_parent->getTiedAddr(), key);
+        } else {
+            m_parent->m_kbHandler(key);
+        }
         // if we call skip, the menubar & etc logic of the frame will
         // process it.
         // event.Skip();
@@ -351,7 +360,13 @@ Crt::OnChar(wxKeyEvent &event)
     }
 
     if (foundmap) {
-        core_sysKeystroke(m_parent->getTiedAddr(), key);
+        // FIXME: unify this instead of this hackery
+        if (m_parent->m_kbHandler == nullptr) {
+            // dumb term
+            core_sysKeystroke(m_parent->getTiedAddr(), key);
+        } else {
+            m_parent->m_kbHandler(key);
+        }
         // calling skip causes the menubar & etc logic to process it
         // event.Skip();
     } else {

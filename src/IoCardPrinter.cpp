@@ -24,7 +24,7 @@ IoCardPrinter::IoCardPrinter(Cpu2200 &cpu, int baseaddr, int cardslot) :
         int io_addr;
         bool ok = System2200().getSlotInfo(cardslot, 0, &io_addr);
         assert(ok); ok=ok;
-        m_wndhnd = reinterpret_cast<UI_gui_handle_t>(UI_initPrinter(io_addr));
+        m_wndhnd = UI_initPrinter(io_addr);
         reset();
     }
 }
@@ -136,7 +136,7 @@ IoCardPrinter::CPB(bool busy)
 
 // ---- accessor of opaque gui pointer ----
 
-UI_gui_handle_t
+PrinterFrame *
 IoCardPrinter::getGuiPtr() const
 {
     return m_wndhnd;

@@ -7,11 +7,9 @@
 
 #include "w2200.h"  // pick up def of int32
 
-#include <functional>
-
 
 // when a timer expires, we invoke the callback function
-typedef std::function<void()> callback_t;
+typedef std::function<void()> sched_callback_t;
 
 // ======================================================================
 // This is just a handle that Scheduler can pass back on timer creation,
@@ -28,7 +26,7 @@ class Timer
     friend class Scheduler;
 
 public:
-    Timer(Scheduler *sched, int ticks, callback_t cb) :
+    Timer(Scheduler *sched, int ticks, sched_callback_t cb) :
         s(sched), ctr(ticks), callback(cb) { };
     ~Timer() { };
 
@@ -36,9 +34,9 @@ public:
     void Kill();
 
 private:
-    Scheduler * const s;  // pointer to owning scheduler
-    int32       ctr;      // tick count until expiration
-    callback_t  callback; // registered callback function
+    Scheduler       * const s;  // pointer to owning scheduler
+    int32             ctr;      // tick count until expiration
+    sched_callback_t  callback; // registered callback function
 };
 
 // ======================================================================
@@ -66,7 +64,7 @@ public:
     //                             std::bind(&TimerTestFoo:report, &foo, 33) );
     //
     // After 100 clocks, foo.report(33) is called.
-    spTimer TimerCreate(int ticks, const callback_t &fcn);
+    spTimer TimerCreate(int ticks, const sched_callback_t &fcn);
 
     // let 'n' cpu cycles of simulated time go past
     inline void TimerTick(int n)
@@ -90,11 +88,6 @@ private:
     // remove a pending timer event by passing the timer object
     // (called only from Timer.Kill())
     void TimerKill(Timer* tmr);
-
-    // semaphore that indicates TimerCredit() is running so that
-    // we can double check that nobody calls TimerTick() until
-    // from a callback function.
-    bool m_updating;
 
     // rather than updating all N counters every instruction, we instead
     // find the one which will expire first, and transfer that into

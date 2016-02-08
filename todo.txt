@@ -6,30 +6,85 @@ Emulator TODO list
    will be problems.  Once the code is somewhat stable under windows,
    build it on OSX and iron out the problems.
 
-*) I modified the code to use shared_ptr<> for timers.
-   but the ENSURE_TIMER_DEAD(m_tmr_foo) is ugly.  Can I do better?
-   eg, just reassigning the ptr or assigning it to nullptr could
-   kill the timer?
-      (1) create my own shared_ptr wrapper.  on assignment, it would
-          check if the refcnt is 1, and if so, it means the only holder
-          of it is the timer list itself.
-      (2) during traversal of the timer list, cull out any with a refcnt of 1
-   #2 is easier.  #1 is more elegant.
-
 *) add terminal mux emulation and terminal emulation so I can run MVP OS's
+
+   - immediate code changes
+      - get vp mode working for TermMux
+      - right now I can config a system with kb=001,crt=005,mux=000
+      - allow config to config a system with a MXD and no display+keyboard
+      - route keyboard input when the focus is on a given window to the
+        associated keyboard port when there is a MXD too
+	+ IoCardKeyboard.cpp contans core_sysKeystroke() function.
+          this dispatches it to the IoCardKeyboard::receiveKeystroke(),
+          which isn't able to route keys to IoCardTermMux.
+          This needs to be generalized.  Perhaps the keyboard or TermMux
+          should pass a keystroke handler callback to CrtFrame, which does
+          the dispatching.  This would use <function> to do the callback.
+        + the problem is that at the the frame is created in IoCardDisplay
+          by calling UI_initCrt() (which then calls new Crt), but at that
+	  point we don't know what the associated keyboard is. on each
+	  keystroke, Crt::OnKeyDown (in UiCrt_Keyboard.cpp) calls
+	  m_parent->GetTiedAddr(), which returns UiCrtFrame->m_assoc_kb_addr.
+	  that association is set in these cases:
+	    . from the .ini file on start up
+	    . defaults to 0x01 if the .ini isn't valid
+	    . user manually changes if if there are multiple KB devices
+	  that association is found 
+        + the tied_keyboard setting is read during getDefaults() in UiCrtFrame
+but tied_keyboard doesn't make sense for term mux because it is not an
+independent address
+        + the TermMux type does know the mapping at creation time.
+          perhaps we should mandate that the mapping must be known at
+          creation time, and for old display types it is always 0x01 and
+          remove the possibility (at least for now) of unusual mappings.
+
+   - the hardware has an 8b "RBI" register (ready/busy), one bit for each
+     logical port.  Software maintains the logical readiness of each
+     port, but hardware takes care of muxing out the appropriate bit to the
+     RBI bus signal.  note that the flop with these bits is cleared on reset
+     but also any time the OB1-8 bus is read from the latch; that is, after
+     OBS or CBS, reading the data latch clears the OBS/CBS strobe latches
+     and it also clears the RBI[7:1] latch (== not ready), thus the Z80
+     must write the latch to indicate ready again.
+
+     does it makes sense for the the emulation to do something similar?
+     m_cpu.setDevRdy() is how it currently returns ready status.
+
+     This is what tells ucode that the device is ready to accept another
+     OBS or CBS strobe.
+        Understand this better:
+            on the MXE schematic, if there is no OBS or CBS input pending
+            and the card is selected, the !RBI mux "!STB" input is low,
+            then it lets the mux drive !RBI.  But if (OBS or CBS) is pending
+            AND latched AB3=1 then !RBI is driven high (not ready).
+            why "&& AB3"?
+                0: not mapped
+                1: keyboard (in vp mode), doesn't accept CBS/OBS
+                2: read status
+                3: MXD: unused; MXE: read bytes from screen dump
+            OK, so OBS/CBS aren't used in this range, but then && AB3 
+            is a don't care, no?
+
+     Cards drive:   RBI, IBS, IB1-9
+     Cards receive: ABS, AB1-8, CBS, OBS, OB1-8, CPB
+            CPB indicates when the host is waiting for input
+                ucode only ever sets this to "!busy"
+                when a card drives IBS, it resets CBP back to the busy state
+            RBI indicates when the card is ready for OBS/CBS input
+                !RBI=0 is ready, !RBI=1 is busy
 
    - MXC,D,E notes: f:/jim/documents/wang2200/boards/terminal_mux_notes.txt
 
    - currently the division is
-          IoCardKeyboard
+        + IoCardKeyboard
         + IoCardDisplay
-        + UiCrtKeyboard
         + UiCrtFrame
             + UiCrtStatusBar
             + UiCrtConfigDlg
             + UiCrt
                 + UiCrt_Charset.h
                 + UiCrtErrorDlg
+		+ UiCrt_Keyboard
      IoCardKeyboard.cpp has a fair amount of script processing logic in it,
         and I don't want to duplicate this for dumb & smart terminal modes
      UiCrtFrame constructor takes title, screen_size, io_addr.
@@ -62,12 +117,8 @@ Emulator TODO list
 
     - emulating MXD, not MXE, because MXE runs only >= OS ver 2.4
 
-    - emulate the MXD at the protocol level
-        + more efficient
-        + probably less less work overall
-            - no 8080/z80 integration
-            - no integrating the instruction dispatch & speed regulation
-        - harder to offer an MXE option, which needs a real z80 emulation
+    - interesting: when in mvp mode, port 01 appears as always busy
+      (p10 of 2236MXE_Documentation.8-83.pdf)
 
     - allow term MUX to connect to a real serial port
         - a mac/linux/win lib: http://sigrok.org/wiki/Libserialport
@@ -98,6 +149,16 @@ Emulator TODO list
       It is possible that the contents were R5, but the EPROMs were
       later erased and overwritten, making the handwritten note
       meaningless.
+
+*) I modified the code to use shared_ptr<> for timers.
+   but the ENSURE_TIMER_DEAD(m_tmr_foo) is ugly.  Can I do better?
+   eg, just reassigning the ptr or assigning it to nullptr could
+   kill the timer?
+      (1) create my own shared_ptr wrapper.  on assignment, it would
+          check if the refcnt is 1, and if so, it means the only holder
+          of it is the timer list itself.
+      (2) during traversal of the timer list, cull out any with a refcnt of 1
+   #2 is easier.  #1 is more elegant.
 
 *) improved 2236 terminal emulation
 
@@ -540,3 +601,6 @@ creates a DDB of the screen depth.
 
 That explains some things, but then why does it barf under MSW with an
 explicit bitmap depth of 32 and using wxAlphaPixelData?
+
+-----
+vim: et ts=8 sw=4
