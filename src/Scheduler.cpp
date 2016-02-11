@@ -221,15 +221,22 @@ void Scheduler::TimerCredit(void)
     unsigned int active_before = m_timer.size();
     unsigned int active_after = 0;
     for(unsigned int s=0; s<active_before; s++) {
-        m_timer[s]->ctr -= elapsed;
-        if (m_timer[s]->ctr <= 0) {
-            // a timer has expired; move it to the retired list
-            retired.push_back(m_timer[s]);
+        if (m_timer[s].unique()) {
+            // the timer was effectively killed by dropping the reference
+            // to it; the only reference is the live timer list.  kill it.
+            ;
         } else {
-            // this timer hasn't expired
-            m_timer[active_after++] = m_timer[s];  // keep it in the active list
+            m_timer[s]->ctr -= elapsed;
+            if (m_timer[s]->ctr <= 0) {
+                // a timer has expired; move it to the retired list
+                retired.push_back(m_timer[s]);
+            } else {
+                // this timer hasn't expired
+                m_timer[active_after++] = m_timer[s];  // keep it in the active list
+            }
         }
     }
+
     if (active_after < active_before) {
         // shrink active list, but null out pointers so resize doesn't
         // free them, as they now live on the retired list
@@ -243,9 +250,6 @@ void Scheduler::TimerCredit(void)
     m_countdown = MAX_TICKS;
     for(auto &t : m_timer) {
 #ifdef _DEBUG
-        if (t.unique()) {
-            UI_Warn("Hey, got a dead timer");
-        }
         if (t.use_count() != 2) {
             UI_Warn("Hey, retiring a timer with a use_count() of %d", t.use_count());
         }

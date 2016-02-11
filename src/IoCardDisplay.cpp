@@ -124,7 +124,7 @@ IoCardDisplay::~IoCardDisplay()
 {
     if (m_slot >= 0) {
         reset(true);    // turns off handshakes in progress
-        ENSURE_TIMER_DEAD(m_thnd_hsync);
+        m_thnd_hsync = nullptr;
         UI_destroyCrt(m_wndhnd);
     }
 }
@@ -170,7 +170,7 @@ IoCardDisplay::reset(bool hard_reset)
     m_card_busy  = false;
 
     // get the horizontal sync timer going
-    ENSURE_TIMER_DEAD(m_thnd_hsync);
+    m_thnd_hsync = nullptr;
     m_hsync_count = 0;
     tcbHsync(0);
 

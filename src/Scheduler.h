@@ -87,6 +87,8 @@ private:
 
     // remove a pending timer event by passing the timer object
     // (called only from Timer.Kill())
+    // Alternately, just set the timer pointer to null.  If the only ref
+    // to the timer is the active timer list, it will be treated as dead.
     void TimerKill(Timer* tmr);
 
     // rather than updating all N counters every instruction, we instead
@@ -112,14 +114,6 @@ private:
 // argument appropriate for the TimerCreate() function.
 inline int TIMER_US(double f) { return int(   10.0*f+0.5); }
 inline int TIMER_MS(double f) { return int(10000.0*f+0.5); }
-
-// this is used to kill off a timer that may or may not be inactive
-#define ENSURE_TIMER_DEAD(thnd) {       \
-        if ((thnd) != nullptr) {        \
-            (thnd)->Kill();             \
-            (thnd) = nullptr;           \
-        }                               \
-    } while (false)
 
 #endif // _INCLUDE_SCHEDULER_H_
 

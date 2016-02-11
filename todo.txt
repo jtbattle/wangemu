@@ -9,9 +9,6 @@ Emulator TODO list
 *) add terminal mux emulation and terminal emulation so I can run MVP OS's
 
    - immediate code changes
-      - get vp mode working for TermMux
-      - right now I can config a system with kb=001,crt=005,mux=000
-      - allow config to config a system with a MXD and no display+keyboard
       - route keyboard input when the focus is on a given window to the
         associated keyboard port when there is a MXD too
 	+ IoCardKeyboard.cpp contans core_sysKeystroke() function.
@@ -250,12 +247,6 @@ independent address
 
    basically, look for "delete" occurrences; if these were smart pointers,
    just setting the pointer to nullptr would automatically free the resource.
-   eg, if the recent Scheduler m_timer[] vector held shared_ptr<Timer>
-       it would also get rid of the zeroing out pointers of m_timer before
-       calling resize.
-   but every caller would need to declare a shared_ptr<Timer>.
-   Can I define a type which is shared_ptr<Timer> and use that instead
-   of having to do shared_ptr<> everywhere?
 
 *) do a memory leak check towards the end of development
 

@@ -161,6 +161,8 @@ IoCardTermMux::select()
             break;
         case 6:
             m_card_busy = true;  // FIXME
+//we hang because it wants to send us a command but we say we are busy.
+m_card_busy = false;  // FIXME
             break;
         case 7:
             m_card_busy = true;  // FIXME
@@ -303,7 +305,7 @@ IoCardTermMux::receiveKeystroke(int keycode)
     if ((keycode & KEYCODE_HALT) && m_vp_mode) {
 //      if (tthis->m_script_handle) {
 //          // cancel any script in progress
-//          ENSURE_TIMER_DEAD(tthis->m_tmr_script);
+//          tthis->m_tmr_script = nullptr;
 //          delete tthis->m_script_handle;
 //          tthis->m_script_handle = nullptr;
 //          tthis->m_01_key_ready  = false;

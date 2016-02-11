@@ -71,7 +71,7 @@ IoCardKeyboard::getAddresses() const
 void
 IoCardKeyboard::reset(bool hard_reset)
 {
-    ENSURE_TIMER_DEAD(m_tmr_script);
+    m_tmr_script = nullptr;
 
     if (m_script_handle) {
         delete m_script_handle;
@@ -158,7 +158,7 @@ IoCardKeyboard::receiveKeystroke(int io_addr, int keycode)
     if (keycode & KEYCODE_HALT) {
         if (tthis->m_script_handle) {
             // cancel any script in progress
-            ENSURE_TIMER_DEAD(tthis->m_tmr_script);
+            tthis->m_tmr_script = nullptr;
             delete tthis->m_script_handle;
             tthis->m_script_handle = nullptr;
             tthis->m_key_ready     = false;

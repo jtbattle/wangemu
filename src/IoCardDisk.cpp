@@ -268,7 +268,7 @@ IoCardDisk::reset(bool hard_reset)
     m_acting_intelligent = false;
 
     // reset drive state
-    ENSURE_TIMER_DEAD(m_tmr_motor_off);
+    m_tmr_motor_off = nullptr;
 
     for(int drive=0; drive<numDrives(); drive++)
         stopMotor(drive);
@@ -376,11 +376,11 @@ IoCardDisk::stopMotor(int drive)
 
     if (m_d[drive].state != DRIVE_EMPTY)
         m_d[drive].state = DRIVE_IDLE;
-    m_d[drive].sector   = 0;    // which sector is being read
-    m_d[drive].idle_cnt = 0;    // number of operations done w/o this drive
-    m_d[drive].secwait  = -1;
-    ENSURE_TIMER_DEAD(m_d[drive].tmr_track);
-    ENSURE_TIMER_DEAD(m_d[drive].tmr_sector);
+    m_d[drive].sector     = 0;    // which sector is being read
+    m_d[drive].idle_cnt   = 0;    // number of operations done w/o this drive
+    m_d[drive].secwait    = -1;
+    m_d[drive].tmr_track  = nullptr;
+    m_d[drive].tmr_sector = nullptr;
 
     UI_diskEvent(m_slot, drive);        // let UI know things have changed
 }
@@ -467,7 +467,6 @@ IoCardDisk::wvdTickleMotorOffTimer()
 
     int disktype = m_d[m_drive].wvd->getDiskType();
     if ((disktype == Wvd::DISKTYPE_FD5) || (disktype == Wvd::DISKTYPE_FD8)) {
-        ENSURE_TIMER_DEAD(m_tmr_motor_off);
         m_tmr_motor_off = m_scheduler.TimerCreate(
                             TICK_TEN_SEC,
                             std::bind(&IoCardDisk::tcbMotorOff, this, m_drive) );
@@ -1005,10 +1004,10 @@ IoCardDisk::iwvdInsertDisk(int drive,
     }
 
     m_d[drive].state = DRIVE_IDLE;
-    ENSURE_TIMER_DEAD(m_d[drive].tmr_track);
-    ENSURE_TIMER_DEAD(m_d[drive].tmr_sector);
-    m_d[drive].secwait  = -1;
-    m_d[drive].idle_cnt = 0;
+    m_d[drive].tmr_track  = nullptr;
+    m_d[drive].tmr_sector = nullptr;
+    m_d[drive].secwait    = -1;
+    m_d[drive].idle_cnt   = 0;
 
     // cache disk timing properties
     int track_seek_ms, disk_rpm;
@@ -1040,10 +1039,10 @@ IoCardDisk::iwvdRemoveDisk(int drive)
 
     if (iwvdIsDiskIdle(drive)) {
         m_d[drive].wvd->close();
-        m_d[drive].state = DRIVE_EMPTY;
-        m_d[drive].secwait = -1;
-        ENSURE_TIMER_DEAD(m_d[drive].tmr_track);
-        ENSURE_TIMER_DEAD(m_d[drive].tmr_sector);
+        m_d[drive].state      = DRIVE_EMPTY;
+        m_d[drive].secwait    = -1;
+        m_d[drive].tmr_track  = nullptr;
+        m_d[drive].tmr_sector = nullptr;
         return true;
     }
 
