@@ -402,7 +402,7 @@ PropPanel::PropPanel(DiskFactory *df, wxWindow *parent, Wvd *diskdata) :
         wxStaticText *st_heading = new wxStaticText(this, -1, "Disk Properties");
         wxFont heading_font = st_heading->GetFont();
         heading_font.SetUnderlined(true);
-        heading_font.SetWeight(wxBOLD);
+        heading_font.SetWeight(wxFONTWEIGHT_BOLD);
         st_heading->SetFont(heading_font);
 #endif
 
@@ -581,7 +581,7 @@ LabelPanel::LabelPanel(DiskFactory *df, wxWindow *parent, Wvd *diskdata) :
                             wxDefaultPosition, wxDefaultSize,
                             style);
 
-    wxFont fontstyle = wxFont(10, wxMODERN, wxNORMAL, wxNORMAL);  // fixed pitch
+    wxFont fontstyle = wxFont(10, wxFONTFAMILY_MODERN, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL);  // fixed pitch
     m_text->SetFont(fontstyle);
     m_text->SetMaxLength(WVD_MAX_LABEL_LEN-1);
     m_text->SetValue(m_diskdata->getLabel());

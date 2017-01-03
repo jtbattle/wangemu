@@ -196,3 +196,5 @@ verify_multisectors.w22
 
 *.pyc
 termtest/poll.py
+
+*.db

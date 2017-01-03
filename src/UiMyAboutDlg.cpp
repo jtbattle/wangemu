@@ -65,7 +65,7 @@ MyAboutDlg::MyAboutDlg(wxWindow *parent) :
 
     MyStaticText *version = new MyStaticText(this, wxID_ANY,
         "Wang 2200 Emulator\n"
-        "Version 2.2-pre; February 7, 2016");
+        "Version 2.2-pre; January 2, 2017");
     wxFont boldfont(*wxNORMAL_FONT);
     boldfont.SetPointSize(boldfont.GetPointSize() + 2);
     boldfont.SetWeight(wxFONTWEIGHT_BOLD);
@@ -75,7 +75,7 @@ MyAboutDlg::MyAboutDlg(wxWindow *parent) :
     vsizer->AddSpacer(8);
 
     MyStaticText *copyright = new MyStaticText(this, wxID_ANY,
-        "(c) 2002-2016 Jim Battle, Slash && Burn Software\n"
+        "(c) 2002-2017 Jim Battle, Slash && Burn Software\n"
         "      wxMac port and printer support by Paul Heller");
     vsizer->Add(copyright, 0, wxRIGHT, side_margin);
 

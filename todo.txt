@@ -8,6 +8,11 @@ Emulator TODO list
 
 *) add terminal mux emulation and terminal emulation so I can run MVP OS's
 
+   - disassemble MXD code to understand behavior better
+        C:\Users\Jim\Documents\wang2200\boards\LVP box\7291_dasm\
+
+   - MXC,D,E notes: c:/users/jim/documents/wang2200/boards/terminal_mux_notes.txt
+
    - immediate code changes
       - route keyboard input when the focus is on a given window to the
         associated keyboard port when there is a MXD too
@@ -69,8 +74,6 @@ independent address
                 when a card drives IBS, it resets CBP back to the busy state
             RBI indicates when the card is ready for OBS/CBS input
                 !RBI=0 is ready, !RBI=1 is busy
-
-   - MXC,D,E notes: f:/jim/documents/wang2200/boards/terminal_mux_notes.txt
 
    - currently the division is
         + IoCardKeyboard
@@ -147,15 +150,12 @@ independent address
       later erased and overwritten, making the handwritten note
       meaningless.
 
-*) I modified the code to use shared_ptr<> for timers.
-   but the ENSURE_TIMER_DEAD(m_tmr_foo) is ugly.  Can I do better?
-   eg, just reassigning the ptr or assigning it to nullptr could
-   kill the timer?
-      (1) create my own shared_ptr wrapper.  on assignment, it would
-          check if the refcnt is 1, and if so, it means the only holder
-          of it is the timer list itself.
-      (2) during traversal of the timer list, cull out any with a refcnt of 1
-   #2 is easier.  #1 is more elegant.
+*) on toolbar, add superscript to some SF keys in (M)VP mode:
+     SF4: END
+     SF5: down arrow  (useful when the edited line wraps)
+     SF6: up arrow    (useful when the edited line wraps)
+     SF7: BEGIN
+   Also, make up/down arrow keys map to SF5 and SF6
 
 *) improved 2236 terminal emulation
 

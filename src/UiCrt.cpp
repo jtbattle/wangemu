@@ -259,8 +259,8 @@ Crt::OnPaint(wxPaintEvent &WXUNUSED(event))
         int right_w  = (m_scrpix_w - right);
 
         wxColor bg(intensityToColor(0.0f));
-        dc.SetBrush(wxBrush(bg, wxSOLID));
-        dc.SetPen(wxPen(bg, 1, wxSOLID));
+        dc.SetBrush(wxBrush(bg, wxBRUSHSTYLE_SOLID));
+        dc.SetPen(wxPen(bg, 1, wxPENSTYLE_SOLID));
 
         if (top > 0)    // top border is required
             dc.DrawRectangle(0,0, m_scrpix_w,top);

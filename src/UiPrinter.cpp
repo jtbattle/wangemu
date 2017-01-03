@@ -98,7 +98,7 @@ Printer::setFontSize(const int size)
 {
     wxClientDC dc(this);
 
-    m_font = wxFont(size, wxMODERN, wxNORMAL, wxNORMAL, false);
+    m_font = wxFont(size, wxFONTFAMILY_MODERN, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL, false);
     dc.SetFont( m_font );
 
     m_fontsize   = size;

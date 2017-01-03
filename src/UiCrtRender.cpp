@@ -355,11 +355,11 @@ Crt::generateFontmap()
             // brightness modulation for native font rendering
             wxColor fg_eff = ( inv) ? blk : (bright) ? intense : norm;
             wxColor bg_eff = (!inv) ? blk : (bright) ? intense : norm;
-            charDC.SetBackground( wxBrush(bg_eff, wxSOLID) );
+            charDC.SetBackground( wxBrush(bg_eff, wxBRUSHSTYLE_SOLID) );
             charDC.SetTextBackground(bg_eff);
             charDC.SetTextForeground(fg_eff);
-            charDC.SetPen( wxPen(fg_eff, 1, wxSOLID) );
-            charDC.SetBrush( wxBrush(fg_eff, wxSOLID) );
+            charDC.SetPen( wxPen(fg_eff, 1, wxPENSTYLE_SOLID) );
+            charDC.SetBrush( wxBrush(fg_eff, wxBRUSHSTYLE_SOLID) );
 
             for(int chr=0; chr<256; ++chr) {
                 int ch = (chr & 0x7F);  // minus underline flag
@@ -574,7 +574,7 @@ Crt::generateScreen()
 #endif
     wxMemoryDC memDC(m_scrbits);
     if (!success) {
-        memDC.SetBackground( wxBrush(bg, wxSOLID) );
+        memDC.SetBackground( wxBrush(bg, wxBRUSHSTYLE_SOLID) );
         memDC.Clear();
         generateScreenByBlits(memDC);
     }
@@ -669,7 +669,7 @@ Crt::generateScreenCursor(wxMemoryDC &memDC)
     int top   = m_charcell_h*(m_curs_y+1) - (2 * m_charcell_sy*m_charcell_dy);
     int left  = m_charcell_w* m_curs_x;
     int right = left + m_charcell_w - 1;
-    memDC.SetPen( wxPen(color, 1, wxSOLID) );
+    memDC.SetPen( wxPen(color, 1, wxPENSTYLE_SOLID) );
     for(int y=0; y < 2; ++y) {
         for(int yy=0; yy<m_charcell_sy; ++yy) {
             int yyy = top + y*m_charcell_dy*m_charcell_sy + yy;

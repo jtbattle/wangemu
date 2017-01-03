@@ -416,10 +416,11 @@ IoCardTermMux::OBS_06(int val)
 
         case mux_cmd_t::CMD_SELECT_TERMINAL:
             if (cmd_len == 2) {
-                if ((val < 1 || val > 4) && NOISY) {
+                val &= 0x7;     // this is what the mxd ucode does
+                if ((val < 0 || val > 3) && NOISY) {
                     UI_Warn("unexpected TermMux command sequence FF %02X", val);
                 } else {
-                    m_port = val - 1;  // terminal # is 1-based, but m_port is 0-based
+                    m_port = val;
                     m_term = m_terms[m_port];
                 }
                 m_term.command_buf.clear();

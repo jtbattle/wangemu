@@ -56,10 +56,10 @@ CrtErrorDlg::CrtErrorDlg( wxWindow *parent,
     }
 
     // this is the font used for the example and correction code text
-    wxFont fixedfont = wxFont(  10,             // point size
-                                wxMODERN,       // fixed pitch
-                                wxNORMAL,       // style (wxNORMAL, wxSLANT, wxITALIC)
-                                wxBOLD    );    // weight (wxNORMAL, wxLIGHT, wxBOLD)
+    wxFont fixedfont = wxFont(  10,                       // point size
+                                wxFONTFAMILY_MODERN,
+                                wxFONTSTYLE_NORMAL,
+                                wxFONTWEIGHT_BOLD    );
 
     // the FlexGridSizer is wrapped by a BoxSizer so we can put a margin
     // all the way around it so the text isn't flush with the window edges

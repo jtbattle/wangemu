@@ -1,6 +1,6 @@
 ============================================================================
 		   Wang 2200 emulator release notes, v2.2-pre
-				January 5, 2016
+				January 2, 2017
 ============================================================================
 
 
@@ -85,7 +85,8 @@ The emulator very well might run on Linux via Wine, but it hasn't been tested.
 
 ---- Minor Tweaks and Implementation Changes ----
 
-*) compiled with the latest wxWidgets library release, 3.0.2
+*) compiled with the latest wxWidgets library release, 3.1.0,
+   and Microsoft Studio Community 2015 compiler.
 
 *) fixed a typo in errtable.cpp for error 73;
    it should read "SAVE DCF" instead of "SAVE SCF"

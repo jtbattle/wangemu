@@ -604,7 +604,7 @@ CrtFrame::initToolBar(wxToolBar *tb)
     wxPen bgPen(bg, 1, wxSOLID);
 
     memDC.SelectObject(img);
-    memDC.SetBrush(wxBrush(bg, wxSOLID));
+    memDC.SetBrush(wxBrush(bg, wxBRUSHSTYLE_SOLID));
     memDC.SetBackgroundMode(wxSOLID);
     memDC.SetTextForeground(fg);
     memDC.SetTextBackground(bg);
@@ -667,7 +667,7 @@ CrtFrame::initToolBar(wxToolBar *tb)
 #if __WXMSW__
                 // the USER_DASH style doesn't seem to work as I'd expect
                 // (as of wxWidgets 2.6.0)
-                dashPen.SetStyle(wxUSER_DASH);
+                dashPen.SetStyle(wxPENSTYLE_USER_DASH);
                 dashPen.SetDashes(2, dashes);
 #endif
                 // four dashes, three spaces
