@@ -322,12 +322,14 @@ CrtFrame::makeMenubar(int primary_crt)
     System2200 sys;
 
     wxMenu *menuFile = new wxMenu;
-    if (primary_crt)
+    if (primary_crt) {
         menuFile->Append(File_Script,   "&Script...", "Redirect keyboard from a file");
+    }
     menuFile->Append(File_Snapshot, "Screen &Grab...\t" ALT "+G", "Save an image of the screen to a file");
 #if HAVE_FILE_DUMP
-    if (primary_crt)
+    if (primary_crt) {
         menuFile->Append(File_Dump,     "Dump Memory...", "Save an image of the system memory to a file");
+    }
 #endif
     menuFile->Append(File_Quit,     "E&xit\t" ALT "+X", "Quit the program");
 
@@ -354,8 +356,9 @@ CrtFrame::makeMenubar(int primary_crt)
         menuPrinter = new wxMenu;
         for(int i=0; ;i++) {
             int io_addr = sys.getPrinterIoAddr(i);
-            if (io_addr < 0)
+            if (io_addr < 0) {
                 break;
+            }
             wxString label;
             wxString help;
             label.Printf("Show Printer /%03X", io_addr);
@@ -366,21 +369,24 @@ CrtFrame::makeMenubar(int primary_crt)
     }
 
     wxMenu *menuConfig = new wxMenu;
-    if (primary_crt)
+    if (primary_crt) {
         menuConfig->Append(Configure_Dialog,     "&Configure System...",      "Change I/O settings");
+    }
     menuConfig->Append(Configure_Screen_Dialog,  "&Configure Screen...",      "Change display settings");
     menuConfig->Append(Configure_KeywordMode,    "&Keyword mode\t" ALT "+K",  "Toggle keyboard keyword mode",        wxITEM_CHECK);
     menuConfig->Append(Configure_SF_toolBar,     "SF key toolbar",            "Toggle special function key toolbar", wxITEM_CHECK);
     menuConfig->Append(Configure_Fullscreen,     "Fullscreen\t" ALT "+Enter", "Toggle full screen display",          wxITEM_CHECK);
-    if (primary_crt)
+    if (primary_crt) {
         menuConfig->Append(Configure_Stats,      "Statistics",                "Toggle statistics on statusbar",      wxITEM_CHECK);
+    }
     if (sys.getKbIoAddr(1) >= 0) {
         // there is more than one keyboard
         menuConfig->AppendSeparator();
         for(int i=0; ;i++) {
             int addr = sys.getKbIoAddr(i);
-            if (addr < 0)
+            if (addr < 0) {
                 break;
+            }
             wxString label;
             wxString help;
             label.Printf("Tie keyboard to /%03X", addr);
@@ -396,12 +402,15 @@ CrtFrame::makeMenubar(int primary_crt)
     m_menuBar = new wxMenuBar;
 
     m_menuBar->Append(menuFile, "&File");
-    if (menuCPU != nullptr)
+    if (menuCPU != nullptr) {
         m_menuBar->Append(menuCPU, "C&PU");
-    if(menuDisk != nullptr)
+    }
+    if (menuDisk != nullptr) {
         m_menuBar->Append(menuDisk, "&Disk");
-    if (menuPrinter != nullptr)
+    }
+    if (menuPrinter != nullptr) {
         m_menuBar->Append(menuPrinter, "&Printer");
+    }
     m_menuBar->Append(menuConfig, "&Configure");
     m_menuBar->Append(menuHelp, "&Help");
 
@@ -451,8 +460,9 @@ CrtFrame::setMenuChecks(const wxMenu *menu)
         // see if there are any disk controllers
         for(int controller=0; ; controller++) {
             int slot, io_addr;
-            if (!System2200().findDiskController(controller, &slot))
+            if (!System2200().findDiskController(controller, &slot)) {
                 break;
+            }
             bool ok = sys.getSlotInfo(slot, 0, &io_addr);
             assert(ok); ok=ok;
             for(int d=0; d<2; d++) {
@@ -481,14 +491,16 @@ CrtFrame::setMenuChecks(const wxMenu *menu)
     if (menu == m_menuBar->GetMenu(ConfigMenuPos)) {
         m_menuBar->Check( Configure_KeywordMode, getKeywordMode() );
         m_menuBar->Check( Configure_SF_toolBar,  m_toolBar->IsShown() );
-        if (isPrimaryCrt())
+        if (isPrimaryCrt()) {
             m_menuBar->Check( Configure_Stats,   getShowStatistics() );
+        }
         if (sys.getKbIoAddr(1) >= 0) {
             // there is more than one keyboard
             for(int i=0; ;i++) {
                 int addr = sys.getKbIoAddr(i);
-                if (addr < 0)
+                if (addr < 0) {
                     break;
+                }
                 m_menuBar->Check( Configure_KB_Tie0+i, (m_assoc_kb_addr == addr) );
             }
         }
@@ -518,8 +530,9 @@ CrtFrame::initToolBar(wxToolBar *tb)
         }
         tb->AddTool(TB_SF0+i, label, img, tooltip);
 #ifdef __WXMAC__
-        if (i==3 || i==7 || i==11)
+        if (i==3 || i==7 || i==11) {
             tb->AddSeparator();
+        }
 #endif
     }
 
@@ -578,10 +591,12 @@ CrtFrame::initToolBar(wxToolBar *tb)
     for(int ii=0; ii<17; ii++) {
         int width, height;
         memDC.GetTextExtent(sf_labels[ii], &width, &height);
-        if (width > textW)
+        if (width > textW) {
             textW = width;
-        if (height > textH)
+        }
+        if (height > textH) {
             textH = height;
+        }
     }
     int buttonH(2*textH);
 #else // !BIG_BUTTONS
@@ -589,8 +604,9 @@ CrtFrame::initToolBar(wxToolBar *tb)
 #endif
     int buttonW(textW);
 #ifdef __WXMAC__
-    if (buttonW > 32)
+    if (buttonW > 32) {
         continue;       // try next smaller font size
+    }
 #endif
 
     tb->SetToolBitmapSize(wxSize(buttonW,buttonH));
@@ -746,8 +762,9 @@ CrtFrame::saveDefaults()
     hst.ConfigWriteStr(subgroup, "tied_keyboard", foo);
 
     // save position and size
-    if (!m_fullscreen)
+    if (!m_fullscreen) {
         hst.ConfigWriteWinGeom(this, subgroup);
+    }
 
     // save statistics display mode
     hst.ConfigWriteBool(subgroup, "timingstats", getShowStatistics() );
@@ -781,10 +798,11 @@ CrtFrame::getDefaults()
 
     // pick up tied keyboard io address
     b = hst.ConfigReadInt(subgroup, "tied_keyboard", &v);
-    if (b && (v >= 0x00) && (v <= 0xFF))
+    if (b && (v >= 0x00) && (v <= 0xFF)) {
         m_assoc_kb_addr = v;
-    else
+    } else {
         m_assoc_kb_addr = 0x01; // default
+    }
     // make sure that old mapping still makes sense
     System2200 sys;
     int found = 0;
@@ -795,8 +813,9 @@ CrtFrame::getDefaults()
             break;
         }
     }
-    if (!found)
+    if (!found) {
         m_assoc_kb_addr = 0x01; // old mapping doesn't exist; use default
+    }
 
     // pick up statistics display mode
     bool showstats;
@@ -822,19 +841,22 @@ CrtFrame::getDefaults()
     m_crt->setDisplayBrightness(v);
 
     (void)hst.ConfigReadInt(subgroup, "colorscheme", &v, 0);
-    if ((v >= 0) && (v < num_colorschemes))
+    if ((v >= 0) && (v < num_colorschemes)) {
         setDisplayColorScheme(v);
-    else
+    } else {
         setDisplayColorScheme(0);
+    }
 
     // pick up screen font size
     m_fontsize[0] = m_fontsize[1] = 2; // default
     b = hst.ConfigReadInt(subgroup, "fontsize", &v);
-    if (b && ((v >=1 && v <= 3) || (v >= 8 && v <= 28)))
+    if (b && ((v >=1 && v <= 3) || (v >= 8 && v <= 28))) {
         m_fontsize[0] = v;
+    }
     (void)hst.ConfigReadInt(subgroup, "fontsize2", &v);
-    if (b && ((v >=1 && v <= 3) || (v >= 8 && v <= 28)))
+    if (b && ((v >=1 && v <= 3) || (v >= 8 && v <= 28))) {
         m_fontsize[1] = v;
+    }
 
     m_crt->setFontSize(m_fontsize[m_fullscreen]);
 }
@@ -853,8 +875,9 @@ void
 CrtFrame::setSimSeconds(int secs, float relative_speed)
 {
     CrtFrame *pf = getPrimaryFrame();
-    if (pf == nullptr)
+    if (pf == nullptr) {
         return;
+    }
 
     wxString str;
 #if 0
@@ -869,10 +892,11 @@ CrtFrame::setSimSeconds(int secs, float relative_speed)
                     : "Sim time: %d seconds, %3.1fx";
     str.Printf( format, secs, relative_speed );
 #endif
-    if (pf->getShowStatistics())
+    if (pf->getShowStatistics()) {
         pf->m_statBar->SetStatusMessage(string(str));
-    else
+    } else {
         pf->m_statBar->SetStatusMessage("");
+    }
 }
 
 
@@ -940,8 +964,9 @@ CrtFrame::OnDump(wxCommandEvent& WXUNUSED(event))
     string fullpath;
     int r = Host::fileReq(Host::FILEREQ_GRAB, "Name of file to save to", 0, &fullpath);
 
-    if (r == Host::FILEREQ_OK)
+    if (r == Host::FILEREQ_OK) {
         dump_ram(fullpath);
+    }
 }
 #endif
 
@@ -1044,11 +1069,13 @@ CrtFrame::doFormat(const string &filename)
         bool in_use = sys.findDisk(filename, &slot, &drive, &io_addr);
 
         wxString prompt = "";
-        if (in_use)
+        if (in_use) {
             prompt = wxString::Format("Warning: this disk is in use at /%03X, drive %d.\n\n",
                                         io_addr, drive);
-        if (wp)
+        }
+        if (wp) {
             prompt += "Warning: write protected disk!\n\n";
+        }
 
         prompt += "Formatting will lose all disk contents.\n"
                   "Do you really want me to format the disk?";
@@ -1062,8 +1089,9 @@ CrtFrame::doFormat(const string &filename)
         }
     }
 
-    if (!ok)
+    if (!ok) {
         UI_Error("Error: operation failed");
+    }
 
     sys.freezeEmu(false);   // run emulation
 }
@@ -1102,8 +1130,9 @@ CrtFrame::OnDisk(wxCommandEvent &event)
 
 #if 0
         case 2: // format disk
-            if (UI_Confirm("Do you really want me to format the disk in drive %d?", drive))
+            if (UI_Confirm("Do you really want me to format the disk in drive %d?", drive)) {
                 ok = IoCardDisk::wvd_format(slot, drive);
+            }
             break;
 #endif
 
@@ -1113,8 +1142,9 @@ CrtFrame::OnDisk(wxCommandEvent &event)
             break;
     }
 
-    if (!ok)
+    if (!ok) {
         UI_Error("Error: operation failed");
+    }
 }
 
 
@@ -1252,8 +1282,9 @@ CrtFrame::OnPrintAndClear(wxCommandEvent& WXUNUSED(event))
         // there is at least one printer
         for(int i=0; ;i++) {
             int io_addr = sys.getPrinterIoAddr(i);
-            if (io_addr < 0)
+            if (io_addr < 0) {
                 break; // no more printers
+            }
 
             // map device I/O address to card handle
             IoCard *inst = sys.getInstFromIoAddr(io_addr);
@@ -1400,10 +1431,11 @@ CrtFrame::setShowStatistics(bool show)
     m_showstats = show;
     CrtFrame *pf = getPrimaryFrame();
     if ((pf != nullptr) && isPrimaryCrt()) {
-        if (getShowStatistics())
+        if (getShowStatistics()) {
             pf->m_statBar->SetStatusMessage("(Performance statistics will appear here)");
-        else
+        } else {
             pf->m_statBar->SetStatusMessage("");
+        }
     }
 }
 
@@ -1515,8 +1547,9 @@ void
 CrtFrame::diskEvent(int controller, int drive)
 {
     CrtFrame *pf = getPrimaryFrame();
-    if (pf != nullptr)
+    if (pf != nullptr) {
         pf->m_statBar->diskEvent(controller, drive);
+    }
 }
 
 // vim: ts=8:et:sw=4:smarttab

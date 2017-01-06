@@ -75,8 +75,9 @@ dbglog_open(const string &filename)
 void
 dbglog_close()
 {
-    if (dbg_ofs.is_open())
+    if (dbg_ofs.is_open()) {
         dbg_ofs.close();
+    }
 }
 #endif // _DEBUG
 
@@ -138,8 +139,9 @@ System2200::initialize()
         m_IoMap[i].inst   = nullptr;
         m_IoMap[i].ignore = false;
     }
-    for(int i=0; i<NUM_IOSLOTS; i++)
+    for(int i=0; i<NUM_IOSLOTS; i++) {
         m_cardInSlot[i] = nullptr;
+    }
     m_IoCurSelected = -1;
 
     // CPU speed regulation
@@ -255,8 +257,9 @@ System2200::setConfig(const SysCfgState &newcfg)
     for(int pass=0; pass<2; pass++) {
     for(int slot=0; slot<NUM_IOSLOTS; slot++) {
 
-        if (!m_config->isSlotOccupied(slot))
+        if (!m_config->isSlotOccupied(slot)) {
             continue;
+        }
 
         IoCard::card_t cardtype = m_config->getSlotCardType(slot);
         int io_addr             = m_config->getSlotCardAddr(slot) & 0xFF;
@@ -264,8 +267,9 @@ System2200::setConfig(const SysCfgState &newcfg)
         bool display = (cardtype == IoCard::card_t::disp_64x16) ||
                        (cardtype == IoCard::card_t::disp_80x24) ;
 
-        if ((pass==0 && display) || (pass==1 && !display))
+        if ((pass==0 && display) || (pass==1 && !display)) {
             continue;
+        }
 
         IoCard *inst = IoCard::makeCard(m_scheduler, m_cpu, cardtype, io_addr,
                                         slot, m_config->getCardConfig(slot));
@@ -275,8 +279,9 @@ System2200::setConfig(const SysCfgState &newcfg)
         } else {
             m_cardInSlot[slot] = inst;
             vector<int> addresses = inst->getAddresses();
-            for(unsigned int n=0; n<addresses.size(); n++)
+            for(unsigned int n=0; n<addresses.size(); n++) {
                 m_IoMap[addresses[n]].inst = inst;
+            }
         }
     }}
 
@@ -314,8 +319,9 @@ System2200::reset(bool cold_reset)
 
     // reset all I/O devices
     for(int slot=0; slot<NUM_IOSLOTS; slot++) {
-        if (m_config->isSlotOccupied(slot))
+        if (m_config->isSlotOccupied(slot)) {
             m_cardInSlot[slot]->reset(cold_reset);
+        }
     }
 }
 
@@ -376,8 +382,9 @@ System2200::emulateTimeslice(int ts_ms)
     // try to stae reatime within this window
     const int64 adj_window = 10*ts_ms;  // look at the last 10 timeslices
 
-    if (m_cpu->status() != Cpu2200::CPU_RUNNING)
+    if (m_cpu->status() != Cpu2200::CPU_RUNNING) {
         return;
+    }
 
     uint64 now_ms = hst.getTimeMs();
     int64 realtime_elapsed;
@@ -413,10 +420,12 @@ System2200::emulateTimeslice(int ts_ms)
 
         // keep track of when each slice started
         perf_real_ms[perf_hist_ptr++] = now_ms;
-        if (perf_hist_ptr >= perf_hist_size)
+        if (perf_hist_ptr >= perf_hist_size) {
             perf_hist_ptr -= perf_hist_size;
-        if (perf_hist_len < perf_hist_size)
+        }
+        if (perf_hist_len < perf_hist_size) {
             perf_hist_len++;
+        }
 
         // simulate one timeslice's worth of instructions
         m_cpu->run(ts_ms*10000);  // 10 MHz = 10,000 clks/ms
@@ -445,8 +454,9 @@ System2200::emulateTimeslice(int ts_ms)
                     int n0 = (n1 - n + perf_hist_size) % perf_hist_size;
                     slices = n;
                     ms_diff = (perf_real_ms[n1] - perf_real_ms[n0]);
-                    if (ms_diff > 1000)
+                    if (ms_diff > 1000) {
                         break;
+                    }
                 }
                 float relative_speed = (float)(slices*ts_ms) / (float)ms_diff;
 
@@ -516,8 +526,9 @@ void
 System2200::cpu_ABS(uint8 byte)
 {
     // done if reselecting same device
-    if (byte == m_IoCurSelected)
+    if (byte == m_IoCurSelected) {
         return;
+    }
 
     if ((m_IoCurSelected > 0) && (m_IoMap[m_IoCurSelected].inst != nullptr)) {
         (m_IoMap[m_IoCurSelected].inst)->deselect();
@@ -575,8 +586,9 @@ System2200::cpu_CBS()
     //   * some use it like another OBS strobe to capture some type
     //     of command word
     //   * some cards use it to trigger an IBS strobe
-    if ((m_IoCurSelected > 0) && (m_IoMap[m_IoCurSelected].inst != nullptr))
+    if ((m_IoCurSelected > 0) && (m_IoMap[m_IoCurSelected].inst != nullptr)) {
         (m_IoMap[m_IoCurSelected].inst)->CBS(0);
+    }
 }
 
 
@@ -616,14 +628,17 @@ bool
 System2200::getSlotInfo(int slot, int *cardtype_idx, int *addr)
 {
     assert(0 <= slot && slot < NUM_IOSLOTS);
-    if (!m_config->isSlotOccupied(slot))
+    if (!m_config->isSlotOccupied(slot)) {
         return false;
+    }
 
-    if (cardtype_idx != 0)
+    if (cardtype_idx != 0) {
         *cardtype_idx = (int)m_config->getSlotCardType(slot);
+    }
 
-    if (addr != 0)
+    if (addr != 0) {
         *addr = m_config->getSlotCardAddr(slot);
+    }
 
     return true;
 }
@@ -638,8 +653,9 @@ System2200::getKbIoAddr(int n)
 
     for(int slot=0; slot<NUM_IOSLOTS; slot++) {
         if (m_config->getSlotCardType(slot) == IoCard::card_t::keyboard) {
-            if (num == n)
+            if (num == n) {
                 return m_config->getSlotCardAddr(slot);
+            }
             num++;
         }
     }
@@ -657,8 +673,9 @@ System2200::getPrinterIoAddr(int n)
 
     for(int slot=0; slot<NUM_IOSLOTS; slot++) {
         if (m_config->getSlotCardType(slot) == IoCard::card_t::printer) {
-            if (num == n)
+            if (num == n) {
                 return m_config->getSlotCardAddr(slot);
+            }
             num++;
         }
     }
@@ -736,8 +753,9 @@ System2200::findDisk(const string &filename,
     for(int controller=0; ; controller++) {
 
         int slt;
-        if (!findDiskController(controller, &slt))
+        if (!findDiskController(controller, &slt)) {
             break;
+        }
 
         const CardCfgState *cfg = m_config->getCardConfig(slt);
         const DiskCtrlCfgState *dcfg = dynamic_cast<const DiskCtrlCfgState*>(cfg);
@@ -750,10 +768,12 @@ System2200::findDisk(const string &filename,
                 bool ok = IoCardDisk::wvdGetFilename(slt, d, &fname);
                 assert(ok); ok=ok;
                 if (filename == fname) {
-                    if (slot != nullptr)
+                    if (slot != nullptr) {
                         *slot = slt;
-                    if (drive != nullptr)
+                    }
+                    if (drive != nullptr) {
                         *drive = d;
+                    }
                     if (io_addr != nullptr) {
                         ok = System2200().getSlotInfo(slt, 0, io_addr);
                         assert(ok); ok = ok;

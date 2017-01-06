@@ -432,8 +432,9 @@ PrinterFrame::getDefaults()
     // is important the paperid is an enum that might change at some point.
     wxPaperSize paperid = wxPAPER_NONE;
     b = hst.ConfigReadStr(subgroup, "papername", &valstr);
-    if (b)
+    if (b) {
         paperid = PaperSize(valstr);
+    }
     string papername(PaperSize(paperid));
     if (papername.empty()) {
         // we did not find a match. use none
@@ -446,8 +447,9 @@ PrinterFrame::getDefaults()
     // pick up paper bin
     wxPrintBin paperbin = wxPRINTBIN_DEFAULT;
     b = hst.ConfigReadStr(subgroup, "paperbin", &valstr);
-    if (b)
+    if (b) {
         paperbin = PaperBin(valstr);
+    }
     m_printer->setBin(paperbin);
 
     // pick up printer name
@@ -621,12 +623,13 @@ PrinterFrame::OnPrint(wxCommandEvent& WXUNUSED(event))
 
     Printout printout(_T(""), m_printer);
     if (!printer.Print(this, &printout, true)) {
-        if (wxPrinter::GetLastError() == wxPRINTER_ERROR)
+        if (wxPrinter::GetLastError() == wxPRINTER_ERROR) {
             wxMessageBox("There was a problem printing.\n"
                          "Perhaps your current printer is not set correctly?",
                          "Printing", wxOK);
-        else
+        } else {
             wxMessageBox("Printing canceled", "Printing", wxOK);
+        }
     } else {
         (*m_printData) = printer.GetPrintDialogData().GetPrintData();
     }
@@ -837,12 +840,13 @@ PrinterFrame::printAndClear()
 
     Printout printout(_T(""), m_printer);
     if (!printer.Print(this, &printout, false)) {
-        if (wxPrinter::GetLastError() == wxPRINTER_ERROR)
+        if (wxPrinter::GetLastError() == wxPRINTER_ERROR) {
             wxMessageBox("There was a problem printing.\n"
                         "Perhaps your current printer is not set correctly?",
                         "Printing", wxOK);
-        else
+        } else {
             assert(false);    // this should never happen
+        }
     } else {
         //printing was ok. now clear the stream.
         m_printer->printClear();

@@ -313,16 +313,19 @@ Crt::OnLeftDClick(wxMouseEvent &event)
     wxPoint pos     = event.GetPosition();      // client window coordinates
     wxPoint abs_pos = ClientToScreen(pos);      // absolute screen coordinates
 
-    if (m_charcell_w == 0 || m_charcell_h == 0)
+    if (m_charcell_w == 0 || m_charcell_h == 0) {
         return;
+    }
 
     int cell_x = (pos.x - m_RCscreen.GetX()) / m_charcell_w;
     int cell_y = (pos.y - m_RCscreen.GetY()) / m_charcell_h;
 
-    if (cell_x < 0 || cell_x > m_chars_w)
+    if (cell_x < 0 || cell_x > m_chars_w) {
         return;
-    if (cell_y < 0 || cell_y > m_chars_h)
+    }
+    if (cell_y < 0 || cell_y > m_chars_h) {
         return;
+    }
 
     // scan line to see if it is an error line.  Although most errors
     // are of the form:
@@ -343,23 +346,27 @@ Crt::OnLeftDClick(wxMouseEvent &event)
     // this scanner is lax and scans for both with this pattern:
     for( ; p < e-7; p++) {
 
-        if (strncmp(p, "^ERR ", 5) != 0)
+        if (strncmp(p, "^ERR ", 5) != 0) {
             continue;
+        }
         char *pp = p + 5;
 
         string errcode;
 
         // check for optional initial letter or '='
-        if ((*pp >= 'A' && *pp <= 'Z') || (*pp == '='))
+        if ((*pp >= 'A' && *pp <= 'Z') || (*pp == '=')) {
             errcode = *pp++;
+        }
 
         // make sure there is at least one digit
-        if (!isdigit(*pp))
+        if (!isdigit(*pp)) {
             continue;
+        }
 
         // grab the number
-        while ((pp < e) && isdigit(*pp))
+        while ((pp < e) && isdigit(*pp)) {
             errcode += *pp++;
+        }
 
     #if 0
         // launch an HTML browser and look up the error code
@@ -513,18 +520,21 @@ Crt::scr_clear()
 {
     char fillval = ' ';
 
-    for(int y=0; y<m_chars_h; y++)
-        for(int x=0; x<m_chars_w; x++)
-            scr_write_char(x, y, fillval);
+    for(int y=0; y<m_chars_h; y++) {
+    for(int x=0; x<m_chars_w; x++) {
+        scr_write_char(x, y, fillval);
+    }}
 
     if (m_screen_type == UI_SCREEN_2236DE) {
         uint8 attr = 0;
         // take care of the 25th row
-        for(int x=0; x<m_chars_w; x++)
+        for(int x=0; x<m_chars_w; x++) {
             scr_write_char(x, 24, fillval);
-        for(int y=0; y<25; y++)
-            for(int x=0; x<80; x++)
-                scr_write_attr(x, y, attr);
+        }
+        for(int y=0; y<25; y++) {
+        for(int x=0; x<80; x++) {
+            scr_write_attr(x, y, attr);
+        }}
     }
 
     setCursorX(0);
@@ -625,8 +635,9 @@ Crt::processChar(uint8 byte)
     // where nn is the repetition count, and cc is the character
     if (m_raw_cnt == 3 && m_raw_buf[0] == 0xFB && m_raw_buf[1] < 0x60) {
 //UI_Info("Decompress: cnt=%d, chr=0x%02x", m_raw_buf[1], m_raw_buf[2]);
-        for(int i=0; i<m_raw_buf[1]; i++)
+        for(int i=0; i<m_raw_buf[1]; i++) {
             processChar2(m_raw_buf[2]);
+        }
         m_raw_cnt = 0;
         return;
     }
@@ -736,20 +747,25 @@ Crt::processChar2(uint8 byte)
     }
     if (m_input_cnt == 5 && m_input_buf[1] == 0x04) {
         m_input_cnt = 0;
-        if (m_input_buf[4] != 0x0E && m_input_buf[4] != 0x0F)
+        if (m_input_buf[4] != 0x0E && m_input_buf[4] != 0x0F) {
             return;  // TODO: ignore?
+        }
         m_attrs &= ~( char_attr_t::CHAR_ATTR_BRIGHT |
                       char_attr_t::CHAR_ATTR_BLINK  |
                       char_attr_t::CHAR_ATTR_INV    );
         m_attr_under = false;
-        if (m_input_buf[2] == 0x02 || m_input_buf[2] == 0x0B)
+        if (m_input_buf[2] == 0x02 || m_input_buf[2] == 0x0B) {
             m_attrs |= (char_attr_t::CHAR_ATTR_BRIGHT);
-        if (m_input_buf[2] == 0x04 || m_input_buf[2] == 0x0B)
+        }
+        if (m_input_buf[2] == 0x04 || m_input_buf[2] == 0x0B) {
             m_attrs |= (char_attr_t::CHAR_ATTR_BLINK);
-        if (m_input_buf[3] == 0x02 || m_input_buf[3] == 0x0B)
+        }
+        if (m_input_buf[3] == 0x02 || m_input_buf[3] == 0x0B) {
             m_attrs |= (char_attr_t::CHAR_ATTR_INV);
-        if (m_input_buf[3] == 0x04 || m_input_buf[3] == 0x0B)
+        }
+        if (m_input_buf[3] == 0x04 || m_input_buf[3] == 0x0B) {
             m_attr_under = true;
+        }
         m_attr_on   = (m_input_buf[4] == 0x0E);
         m_attr_temp = false;
 //      UI_Info("attrs: 02 04 %02x %02x %02x --> %02x, %d", m_input_buf[2], m_input_buf[3], m_input_buf[4], m_attrs, m_attr_under);
@@ -927,8 +943,9 @@ Crt::processChar3(uint8 byte)
             assert(byte >= 0x10);
 #if 0
             // this is true for the old 64x16 display generator, not 80x24
-            if (0x10 <= byte && byte <= 0x1F)
+            if (0x10 <= byte && byte <= 0x1F) {
                 byte = byte + 0x40;     // 0x10 aliases into 0x50, etc.
+            }
 #endif
             bool use_alt_char = (byte >= 0x80)
                              && (m_attrs & char_attr_t::CHAR_ATTR_ALT);

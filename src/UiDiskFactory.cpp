@@ -238,8 +238,9 @@ DiskFactory::updateButtons()
     // disable the Save or SaveAs button if there have been no changes
     bool new_disk = m_diskdata->getPath().empty();
     bool modified = m_diskdata->isModified();
-    if (m_butSave)
+    if (m_butSave) {
         m_butSave->Enable(new_disk || modified);
+    }
 }
 
 
@@ -318,8 +319,9 @@ DiskFactory::OnClose(wxCloseEvent& WXUNUSED(event))
                         "Do you still want to cancel?");
     }
 
-    if (ok)
+    if (ok) {
         Destroy();
+    }
 }
 
 
@@ -433,9 +435,10 @@ PropPanel::PropPanel(DiskFactory *df,
         prop_sizer->Add(m_st_steptime, 0, wxALIGN_LEFT | wxBOTTOM, bottom_margin);
         prop_sizer->Add(m_st_rpm,      0, wxALIGN_LEFT | wxBOTTOM, bottom_margin);
 
-        if (new_disk)
-            m_st_type->Hide();
+        if (new_disk) {
             // we don't need to show what is shown in the selection box
+            m_st_type->Hide();
+        }
 
         int flags = wxALIGN_LEFT | wxALIGN_TOP | wxRIGHT | wxTOP |
                     ((new_disk) ? wxLEFT : 0);

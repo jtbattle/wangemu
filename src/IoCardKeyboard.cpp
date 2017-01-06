@@ -28,15 +28,17 @@ IoCardKeyboard::IoCardKeyboard(std::shared_ptr<Scheduler> scheduler,
     m_key_code(0),
     m_script_handle(nullptr)
 {
-    if (m_slot >= 0)
+    if (m_slot >= 0) {
         reset();
+    }
 }
 
 // instance destructor
 IoCardKeyboard::~IoCardKeyboard()
 {
-    if (m_slot >= 0)
+    if (m_slot >= 0) {
         reset();        // turns off handshakes in progress
+    }
 }
 
 const string
@@ -86,8 +88,9 @@ IoCardKeyboard::reset(bool hard_reset)
 void
 IoCardKeyboard::select()
 {
-    if (NOISY)
+    if (NOISY) {
         UI_Info("keyboard ABS");
+    }
 
     m_selected = true;
     check_keyready(); // doesn't seem to matter if it is here or not
@@ -96,8 +99,9 @@ IoCardKeyboard::select()
 void
 IoCardKeyboard::deselect()
 {
-    if (NOISY)
+    if (NOISY) {
         UI_Info("keyboard -ABS");
+    }
 
     m_selected = false;
     m_cpb      = true;
@@ -106,8 +110,9 @@ IoCardKeyboard::deselect()
 void
 IoCardKeyboard::OBS(int val)
 {
-    if (NOISY)
+    if (NOISY) {
         UI_Warn("unexpected keyboard OBS: Output of byte 0x%02x", val);
+    }
 }
 
 void
@@ -119,8 +124,9 @@ IoCardKeyboard::CBS(int val)
     // handle it if card uses it instead of the message here
 #else
     // unexpected -- the real hardware ignores this byte
-    if (NOISY)
+    if (NOISY) {
         UI_Warn("unexpected keyboard CBS: Output of byte 0x%02x", val);
+    }
 #endif
 }
 
@@ -128,8 +134,9 @@ IoCardKeyboard::CBS(int val)
 void
 IoCardKeyboard::CPB(bool busy)
 {
-    if (NOISY)
+    if (NOISY) {
         UI_Info("keyboard CPB%c", busy?'+':'-');
+    }
 
     // it appears that except for reset, ucode only ever clears it,
     // and of course the IBS sets it back.
@@ -255,10 +262,11 @@ IoCardKeyboard::check_keyready()
         if (m_key_ready && !m_cpb) {
             // we can't return IBS right away -- apparently there
             // must be some delay otherwise the handshake breaks
-            if (!m_tmr_script)
+            if (!m_tmr_script) {
                 m_tmr_script = m_scheduler->TimerCreate(
                         TIMER_US(50),     // 30 is OK, 20 is too little
                         std::bind(&IoCardKeyboard::tcbScript, this) );
+            }
         }
         m_cpu->setDevRdy(m_key_ready);
     }

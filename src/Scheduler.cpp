@@ -71,8 +71,9 @@ void
 TimerTestFoo::report1(int i)
 {
     printf("report1: got callback for timer %d after %d clocks\n", i, g_testtime);
-    if (i == 2)
+    if (i == 2) {
         (void)test_scheduler.TimerCreate( 4, std::bind(&TimerTestFoo::report1, &g_foo2, 5) );
+    }
 }
 
 void
@@ -97,8 +98,9 @@ TimerTest(void)
     spTimer t3 = test_scheduler.TimerCreate( 50, std::bind(&TimerTestFoo::report2, &foo, 3) );
 
     for(int n=0; n<100; n++) {
-        if (n == 5)
+        if (n == 5) {
             t1->Kill();
+        }
         test_scheduler.TimerTick(1);
     }
 }
@@ -113,8 +115,9 @@ Scheduler::Scheduler() :
     m_startcnt(0)
 {
 #if TEST_TIMER
-    if (this == &test_scheduler)
+    if (this == &test_scheduler) {
         TimerTest();
+    }
 #endif
 };
 

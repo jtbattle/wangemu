@@ -279,16 +279,21 @@ Crt::OnKeyDown(wxKeyEvent &event)
 
     bool foundmap = false;
     for(auto const &kkey : keydown_keymap_table) {
-        if (kkey.wxKey != wxKey)
+        if (kkey.wxKey != wxKey) {
             continue;
-        if ( shift && ((kkey.wxKeyFlags & KC_NOSHIFT) != 0))
+        }
+        if ( shift && ((kkey.wxKeyFlags & KC_NOSHIFT) != 0)) {
             continue;
-        if (!shift && ((kkey.wxKeyFlags & KC_SHIFT) != 0))
+        }
+        if (!shift && ((kkey.wxKeyFlags & KC_SHIFT) != 0)) {
             continue;
-        if ( ctrl  && ((kkey.wxKeyFlags & KC_NOCTRL) != 0))
+        }
+        if ( ctrl  && ((kkey.wxKeyFlags & KC_NOCTRL) != 0)) {
             continue;
-        if (!ctrl  && ((kkey.wxKeyFlags & KC_CTRL) != 0))
+        }
+        if (!ctrl  && ((kkey.wxKeyFlags & KC_CTRL) != 0)) {
             continue;
+        }
         key = kkey.wangKey;
         foundmap = true;
     }

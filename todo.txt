@@ -2,11 +2,6 @@
 Emulator TODO list
 ============================================================================
 
-*) augment
-     if (foo)
-        return;
-   type statements with { }
-
 *) cpu2200{t,vp} holds a ref called m_sys which is a pointer back
    to the system object.  it should be made a pointer to match
    other things.  it didn't be a smart pointer, though, as the

@@ -188,8 +188,9 @@ bool
 DiskCtrlCfgState::configOk(bool warn) const
 {
     assert(m_initialized);
-    if (!m_initialized)
+    if (!m_initialized) {
         return false;
+    }
 
     warn = warn;  // keep lint happy
     return true;  // pretty hard to screw it up

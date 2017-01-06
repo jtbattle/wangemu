@@ -82,8 +82,9 @@ IoCardPrinter::reset(bool hard_reset)
 void
 IoCardPrinter::select()
 {
-    if (NOISY)
+    if (NOISY) {
         UI_Info("printer ABS");
+    }
 
     m_selected = true;
     m_cpu->setDevRdy(true);
@@ -92,8 +93,9 @@ IoCardPrinter::select()
 void
 IoCardPrinter::deselect()
 {
-    if (NOISY)
+    if (NOISY) {
         UI_Info("printer -ABS");
+    }
 
     // ...
 
@@ -106,8 +108,9 @@ IoCardPrinter::OBS(int val)
 {
     val &= 0xFF;
 
-    if (NOISY)
+    if (NOISY) {
         UI_Info("printer OBS: Output of byte 0x%02x", val);
+    }
 
     UI_printChar(getGuiPtr(), (uint8)val);
 
@@ -126,8 +129,9 @@ IoCardPrinter::CPB(bool busy)
 {
     // it appears that except for reset, ucode only ever clears it,
     // and of course the IBS sets it back.
-    if (NOISY)
+    if (NOISY) {
         UI_Info("printer CPB%c", busy?'+':'-');
+    }
 
     m_cpb = busy;
     // FIXME: return printer status (requires handshaking logic, though)

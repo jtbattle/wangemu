@@ -143,8 +143,9 @@ CrtStatusBar::CrtStatusBar(CrtFrame *parent, bool shown) :
     // determine how many disk controllers there are
     System2200 sys;
     int slt;
-    while (sys.findDiskController(m_num_disk_controllers, &slt))
+    while (sys.findDiskController(m_num_disk_controllers, &slt)) {
         m_num_disk_controllers++;
+    }
 
     // the layout is keyboard button, text message, N disk controllers, dead space
     int panes = 0;
@@ -182,10 +183,11 @@ CrtStatusBar::CrtStatusBar(CrtFrame *parent, bool shown) :
         m_num_drives[ctrl] = 0;
         for(int d=0; d<4; d++) {
             int stat = IoCardDisk::wvdDriveStatus(slot, d);
-            if (stat & IoCardDisk::WVD_STAT_DRIVE_EXISTENT)
+            if (stat & IoCardDisk::WVD_STAT_DRIVE_EXISTENT) {
                 m_num_drives[ctrl]++;
-            else
+            } else {
                 break;
+            }
         }
 
         // make a label to indicate the base address associated with drives
@@ -229,16 +231,17 @@ CrtStatusBar::CrtStatusBar(CrtFrame *parent, bool shown) :
                                     0                   // draw flat -- not wxBU_AUTODRAW
                                 );
             m_diskstate[idx] = -1;      // force update
-            if (drive < 2)
+            if (drive < 2) {
                 m_diskicon_xoff[idx] = m_disklabel_xoff[2*ctrl+0]
                                      + label_width0
                                      + DISK_ICON_GAP
                                      + ((drive == 1) ? (DISK_ICON_WIDTH+DISK_ICON_GAP) : 0);
-            else
+            } else {
                 m_diskicon_xoff[idx] = m_disklabel_xoff[2*ctrl+1]
                                      + label_width1
                                      + DISK_ICON_GAP
                                      + ((drive == 3) ? (DISK_ICON_WIDTH+DISK_ICON_GAP) : 0);
+            }
 
 #ifdef __WXMSW__
             // windows tooltips have a couple oddities:
@@ -308,8 +311,9 @@ CrtStatusBar::SetDiskIcon(const int slot, const int drive)
         int thisslot;
         ok = sys.findDiskController(controller, &thisslot);
         assert(ok); ok = ok;
-        if (thisslot == slot)
+        if (thisslot == slot) {
             break;
+        }
     }
     int idx = 4*controller+drive;
     int mod_addr = io_addr + ((drive >= 2) ? 0x40 : 0x00);
@@ -438,8 +442,9 @@ void
 CrtStatusBar::OnDiskButton(wxMouseEvent &event)
 {
     int diff = event.GetId() - ID_Button_DiskCtrl0_FDrive;
-    if (diff < 0)
+    if (diff < 0) {
         return; // clicked somewhere else on the status bar
+    }
 
     int controller = diff >> 2;
     int drive      = diff & 3;
@@ -524,8 +529,9 @@ CrtStatusBar::OnDiskButton(wxMouseEvent &event)
             return;
     }
 
-    if (!ok)
+    if (!ok) {
         UI_Error("Error: operation failed");
+    }
 
     // return focus to frame, otherwise the control will eat keyed input
     m_parent->refocus();

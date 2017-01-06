@@ -27,8 +27,9 @@ SysCfgState::SysCfgState() :
     m_disk_realtime(true),
     m_warn_io(true)
 {
-    for(int slot=0; slot<NUM_IOSLOTS; slot++)
+    for(int slot=0; slot<NUM_IOSLOTS; slot++) {
         m_slot[slot].cardCfg = nullptr;
+    }
 }
 
 
@@ -51,8 +52,9 @@ SysCfgState::operator=(const SysCfgState &rhs)
     assert(rhs.m_initialized);
 
     // check for self-assignment
-    if (this == &rhs)
+    if (this == &rhs) {
         return *this;
+    }
 
     for(int slot=0; slot<NUM_IOSLOTS; slot++) {
         m_slot[slot].type = rhs.m_slot[slot].type;
@@ -62,8 +64,9 @@ SysCfgState::operator=(const SysCfgState &rhs)
             delete m_slot[slot].cardCfg;
             m_slot[slot].cardCfg = nullptr;
         }
-        if (rhs.m_slot[slot].cardCfg != nullptr)
+        if (rhs.m_slot[slot].cardCfg != nullptr) {
             m_slot[slot].cardCfg = rhs.m_slot[slot].cardCfg->clone();
+        }
     }
 
     setCpuType( rhs.getCpuType() );
@@ -83,10 +86,11 @@ SysCfgState::SysCfgState(const SysCfgState &obj)
         m_slot[slot].type = obj.m_slot[slot].type;
         m_slot[slot].addr = obj.m_slot[slot].addr;
         // here we must do a deep copy:
-        if (obj.m_slot[slot].cardCfg != nullptr)
+        if (obj.m_slot[slot].cardCfg != nullptr) {
             m_slot[slot].cardCfg = obj.m_slot[slot].cardCfg->clone();
-        else
+        } else {
             m_slot[slot].cardCfg = nullptr;
+        }
     }
 
     setCpuType( obj.getCpuType() );
@@ -206,8 +210,9 @@ SysCfgState::loadIni()
         // learn whether CPU speed is regulated or not
         regulateCpuSpeed( true );  // default
         b = hst.ConfigReadStr(subgroup, "speed", &sval);
-        if (b && (sval == "unregulated"))
+        if (b && (sval == "unregulated")) {
             regulateCpuSpeed( false );
+        }
     }
 
     // get IO slot attributes
@@ -223,8 +228,9 @@ SysCfgState::loadIni()
         int io_addr;
         (void)hst.ConfigReadInt(subgroup, "addr", &io_addr, -1);
         b =   hst.ConfigReadStr(subgroup, "type", &sval);
-        if (b)
+        if (b) {
             cardtype = CardInfo::getCardTypeFromName(sval);
+        }
 
         // TODO: ideally, we'd check the card type against the list of
         //       addresses allowed for that card type
@@ -488,16 +494,18 @@ SysCfgState::editCardConfig(int slot)
 bool
 SysCfgState::configOk(bool warn) const
 {
-    if (!m_initialized)
+    if (!m_initialized) {
         return false;
+    }
 
     bool pri_crt_found = false;
     bool pri_kb_found  = false;
 
     for(int slot=0; slot<NUM_IOSLOTS; slot++) {
 
-        if (!isSlotOccupied(slot))
+        if (!isSlotOccupied(slot)) {
             continue;
+        }
 
         // make sure we have a keyboard at 0x01
         if ( (m_slot[slot].type == IoCard::card_t::keyboard) &&
@@ -526,8 +534,9 @@ SysCfgState::configOk(bool warn) const
         // check for address conflicts
         for(int slot2=slot+1; slot2<NUM_IOSLOTS; slot2++) {
 
-            if (!isSlotOccupied(slot2))
+            if (!isSlotOccupied(slot2)) {
                 continue;
+            }
 
             IoCard *slot2Inst = IoCard::makeTmpCard(getSlotCardType(slot2),
                                                     getSlotCardAddr(slot2) & 0xFF);
@@ -538,10 +547,11 @@ SysCfgState::configOk(bool warn) const
             for(const int slot_addr : slotAddresses) {
                 for(const int slot2_addr : slot2Addresses) {
                     if ((slot_addr & 0xFF) == (slot2_addr & 0xFF)) {
-                        if (warn)
+                        if (warn) {
                             UI_Error("Configuration problem: "
                                      "card in slots %d and %d both responding to address 0x%02X",
                                      slot, slot2, slot_addr & 0xFF);
+                        }
                         return false;
                     }
                 } // slot2_addr
@@ -550,14 +560,16 @@ SysCfgState::configOk(bool warn) const
     }
 
     if (!pri_kb_found) {
-        if (warn)
+        if (warn) {
             UI_Error("Configuration problem: there must be a keyboard controller at address 0x01");
+        }
         return false;
     }
 
     if (!pri_crt_found) {
-        if (warn)
+        if (warn) {
             UI_Error("Configuration problem: there must be a CRT controller at address 0x05");
+        }
         return false;
     }
 
@@ -571,28 +583,34 @@ SysCfgState::configOk(bool warn) const
 bool
 SysCfgState::needsReboot(const SysCfgState &other) const
 {
-    if (!m_initialized)
+    if (!m_initialized) {
         return true;
+    }
 
     // check for things that do require a reset
-    if (m_cputype != other.m_cputype)
+    if (m_cputype != other.m_cputype) {
         return true;
+    }
 
-    if (m_ramsize != other.m_ramsize)
+    if (m_ramsize != other.m_ramsize) {
         return true;
+    }
 
     for(int slot=0; slot<NUM_IOSLOTS; slot++) {
 
-        if (m_slot[slot].type != other.m_slot[slot].type)
+        if (m_slot[slot].type != other.m_slot[slot].type) {
             return true;
+        }
 
         if ( (m_slot[slot].type != IoCard::card_t::none) &&
-             (m_slot[slot].addr & 0xFF) != (other.m_slot[slot].addr & 0xFF) )
+             (m_slot[slot].addr & 0xFF) != (other.m_slot[slot].addr & 0xFF) ) {
             return true;
+        }
 
         if ( (m_slot[slot].cardCfg) &&
-              m_slot[slot].cardCfg->needsReboot(*other.m_slot[slot].cardCfg))
+              m_slot[slot].cardCfg->needsReboot(*other.m_slot[slot].cardCfg)) {
             return true;
+        }
     }
 
     return false;

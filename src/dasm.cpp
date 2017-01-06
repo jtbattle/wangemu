@@ -59,8 +59,9 @@ hex(char *buf, int *off, int value, int digits)
 
     // figure out if we need a leading zero
     int first_dig = (value >> 4*(digits-1)) & 0xF;
-    if (first_dig >= 10)
+    if (first_dig >= 10) {
         digits++;
+    }
 
     sprintf(fmtstr, "%%0%dX", digits);
     sprintf(&buf[*off], fmtstr, value);
@@ -78,15 +79,16 @@ addr(char *buf, int *off, int cur_pc, int new_pc)
     const int window = 2;       // how big of a window to use relative addr
     int diff = new_pc - cur_pc;
 
-    if (diff == 0)
+    if (diff == 0) {
         len += sprintf(&buf[*off], "*");
-    else if (diff > 0 && diff <= window)
+    } else if (diff > 0 && diff <= window) {
         len += sprintf(&buf[*off], "*+%d", diff);
-    else if (diff < 0 && diff >= -window)
+    } else if (diff < 0 && diff >= -window) {
         len += sprintf(&buf[*off], "*%d", diff);
-    else
+    } else {
 #endif
         hex(buf, off, new_pc, 4);
+    }
 
     *off += len;
 }
@@ -102,8 +104,9 @@ dasm_a_field(char *buf, uint32 uop, int *adj)
     char *str;
     int pc;
 
-    if (field < 8)
+    if (field < 8) {
         return sprintf(buf, "F%d", field);
+    }
 
     switch (field) {
         case  8: str = "CH";  pc = 0; break;
@@ -120,8 +123,9 @@ dasm_a_field(char *buf, uint32 uop, int *adj)
     }
 
     // indicate if the PC would get adjusted
-    if (adj != nullptr)
+    if (adj != nullptr) {
         *adj |= pc;
+    }
 
     return sprintf(buf, str);
 }
@@ -149,8 +153,9 @@ dasm_b_field(char *buf, uint32 uop)
     int field = ((uop >> 10) & 0xF);
     char *str;
 
-    if (field < 8)
+    if (field < 8) {
         return sprintf(buf, "F%d", field);
+    }
 
     if (xbit) {
         switch (field) {
@@ -227,8 +232,9 @@ dasm_c_field(char *buf, int *illegal, uint32 uop)
         return sprintf(buf, "???");
     } else {
         *illegal = 0;
-        if (str[0] != '\0')
+        if (str[0] != '\0') {
             return sprintf(buf, "%s", str);
+        }
         return 0; // no dest
     }
 }
@@ -373,12 +379,15 @@ dasm_type2(char *buf, char *mnemonic, int *illegal, uint32 uop)
     len += dasm_m_field(&buf[len], uop);
     pad_spaces(buf, &len, PARAM_COL);
 
-    if (!mov)
+    if (!mov) {
         len += dasm_i_field(&buf[len], uop);
-    if (!mov && !mvi)
+    }
+    if (!mov && !mvi) {
         len += sprintf(&buf[len], ",");
-    if (!mvi)
+    }
+    if (!mvi) {
         len += dasm_b_field(&buf[len], uop);
+    }
     len += sprintf(&buf[len], ",");
     len += dasm_c_field(&buf[len], &bad, uop);
 
@@ -538,8 +547,9 @@ dasm_miniop(char *buf, int *illegal, uint32 uop)
                     len += sprintf(&buf[len], "%s-OBS", comma);
                     comma = ", ";
                 }
-                if (uop & 0x10)
+                if (uop & 0x10) {
                     len += sprintf(&buf[len], "%s-CBS", comma);
+                }
             }
 
             switch (uop & 0x7F) {

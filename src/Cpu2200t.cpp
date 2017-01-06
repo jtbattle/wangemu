@@ -392,13 +392,15 @@ Cpu2200t::write_ucode(int addr, uint32 uop)
 void
 Cpu2200t::dump_state(int fulldump)
 {
-    if (fulldump)
+    if (fulldump) {
         dbglog("---------------------------------------------\n");
+    }
 
     dbglog("ic=%04X, pc=%04X, c=%02X, k=%02X, ab=%02X, ab_sel=%02X, cy=%X\n",
         m_cpu.ic, m_cpu.pc, m_cpu.c, m_cpu.k, m_cpu.ab, m_cpu.ab_sel, CARRY_BIT);
-    if (!fulldump)
+    if (!fulldump) {
         return;
+    }
 
     dbglog("st1=%X, st2=%X, st3=%X, st4=%X\n",
             m_cpu.st1, m_cpu.st2, m_cpu.st3, m_cpu.st4);
@@ -419,8 +421,9 @@ Cpu2200t::dump_state(int fulldump)
         int todo = (num > 6) ? 6 : num;
         int i;
         dbglog("    recent: ");
-        for(i=ICSTACK_TOP; i>ICSTACK_TOP-todo; i--)
+        for(i=ICSTACK_TOP; i>ICSTACK_TOP-todo; i--) {
             dbglog("%04X ", m_cpu.icstack[i]);
+        }
         dbglog("\n");
     }
     dbglog("---------------------------------------------\n");
@@ -437,8 +440,9 @@ Cpu2200t::dump_16n(int addr)
     int i;
     addr &= ~1;
     sprintf(buff, "RAM[%04X] = ", addr);
-    for(i=0; i<8; i++)
+    for(i=0; i<8; i++) {
         sprintf(&buff[12+i],"%X", nibble_swap(m_RAM[addr+i]));
+    }
     dbglog("%s\n", buff);
 }
 #endif
@@ -471,14 +475,15 @@ Cpu2200t::mem_read(uint16 addr) const
             rv = nibble_swap(m_kROM[ROMaddr]);
         }
 #if 0
-        if (rv < 32)
+        if (rv < 32) {
             dbglog(">>kROM[%03X] = %02X, at ic=%04X\n", ROMaddr, (uint16)rv, m_cpu.ic);
-        else if (rv < 128)
+        } else if (rv < 128) {
             dbglog(">>kROM[%03X] = %02X ('%c'), at ic=%04X\n", ROMaddr, (uint16)rv, (char)rv, m_cpu.ic);
-        else if (rv < 128+32)
+        } else if (rv < 128+32) {
             dbglog(">>kROM[%03X] = %02X, at ic=%04X\n", ROMaddr, (uint16)rv, m_cpu.ic);
-        else
+        } else {
             dbglog(">>kROM[%03X] = %02X (0x80+'%c'), at ic=%04X\n", ROMaddr, (uint16)rv, (char)(0x7F & rv), m_cpu.ic);
+        }
 #endif
     } else {
 
@@ -595,8 +600,9 @@ Cpu2200t::set_st1(uint4 value)
     int cpb_changed = ((m_cpu.st1 ^ value) & ST1_MASK_CPB);
     m_cpu.st1 = value;
 
-    if (cpb_changed)
+    if (cpb_changed) {
         m_sys.cpu_CPB( !!(m_cpu.st1 & ST1_MASK_CPB) );
+    }
 }
 
 
@@ -686,8 +692,9 @@ Cpu2200t::decimal_add(uint4 a_op, uint4 b_op, int ci) const
     sum = a_op + b_op + ci; // ranges from binary 0 to 19
     co = (sum > 9);
 
-    if (co)
+    if (co) {
         sum -= 10;
+    }
 
     return (uint8)((co << 4) + sum);
 }
@@ -1048,8 +1055,9 @@ Cpu2200t::exec_one_op()
     case OP_CIO: // control I/O
 
         // emit address and address strobe if requested
-        if (uop & 0x80)
+        if (uop & 0x80) {
             m_cpu.ab = m_cpu.k;
+        }
 
         switch (uop & 0x7F) {
 
@@ -1057,17 +1065,19 @@ Cpu2200t::exec_one_op()
                 break;
 
             case 0x10: // generate -CBS
-                if (m_dbg)
+                if (m_dbg) {
                     dbglog("-CBS when AB=%02X\n", m_cpu.ab_sel);
                     //UI_Info("CPU:CBS when AB=%02X\n, AB_SEL=%02X", m_cpu.ab, m_cpu.ab_sel);
+                }
                 m_sys.cpu_CBS();  // control bus strobe
                 break;
 
             case 0x20: // generate -OBS
                 if (m_dbg) {
                     char buf[8];
-                    if (m_cpu.k >= 32 && m_cpu.k < 128)
+                    if (m_cpu.k >= 32 && m_cpu.k < 128) {
                         sprintf(buf, " ('%c')", m_cpu.k);
+                    }
                     dbglog("-OBS when AB=%02X, K=%02X%s\n", m_cpu.ab_sel, m_cpu.k, buf);
                 }
                 //UI_Info("CPU:OBS when AB=%02X, AB_SEL=%02X, K=%02X\n", m_cpu.ab, m_cpu.ab_sel, m_cpu.k);
@@ -1076,8 +1086,9 @@ Cpu2200t::exec_one_op()
 
             case 0x40: // generate -ABS
                 m_cpu.ab_sel = m_cpu.ab;
-                if (m_dbg)
+                if (m_dbg) {
                     dbglog("-ABS with AB=%02X\n", m_cpu.ab_sel);
+                }
                 //UI_Info("CPU:ABS when AB=%02X\n", m_cpu.ab);
                 m_sys.cpu_ABS(m_cpu.ab_sel);  // address bus strobe
                 break;
@@ -1194,18 +1205,23 @@ Cpu2200t::Cpu2200t(System2200 &sys,
     switch (m_cpuType) {
         int i;
         case CPUTYPE_2200B:
-            for(i=0; i<m_ucode_size; i++)
+            for(i=0; i<m_ucode_size; i++) {
                 write_ucode(i, ucode_2200B[i]);
-            for(i=0; i<UCODE_WORDS_2200BX; i++)
+            }
+            for(i=0; i<UCODE_WORDS_2200BX; i++) {
                 write_ucode(0x7E00+i, ucode_2200BX[i]);
-            for(i=0; i<m_krom_size; i++)
+            }
+            for(i=0; i<m_krom_size; i++) {
                 m_kROM[i] = kROM_2200B[i];
+            }
             break;
         case CPUTYPE_2200T:
-            for(i=0; i<m_ucode_size; i++)
+            for(i=0; i<m_ucode_size; i++) {
                 write_ucode(i, ucode_2200T[i]);
-            for(i=0; i<m_krom_size; i++)
+            }
+            for(i=0; i<m_krom_size; i++) {
                 m_kROM[i] = kROM_2200T[i];
+            }
             break;
         default:
             assert(false);
@@ -1272,13 +1288,16 @@ Cpu2200t::reset(bool hard_reset)
     // the real HW doesn't reset these, but do it anyway for purity
     m_cpu.pc = 0;
 #if 0 // interestingly, this must not be reset, or warm reset doesn't work
-    for(int i=0; i<16; i++)
+    for(int i=0; i<16; i++) {
         m_cpu.aux[i] = 0x0000;
+    }
 #endif
-    for(int i=0; i<8; i++)
+    for(int i=0; i<8; i++) {
         m_cpu.reg[i] = 0x0;
-    for(int i=0; i<ICSTACK_SIZE; i++)
+    }
+    for(int i=0; i<ICSTACK_SIZE; i++) {
         m_cpu.icstack[i] = 0x0000;
+    }
     m_cpu.c = 0x00;
     m_cpu.k = 0x00;
     m_cpu.ab = 0x00;
@@ -1337,8 +1356,9 @@ Cpu2200t::IoCardCbIbs(int data)
     m_sys.cpu_CPB( true );              // the cpu is busy now
 
     // return special status if it is a special function key
-    if (data & IoCardKeyboard::KEYCODE_SF)
+    if (data & IoCardKeyboard::KEYCODE_SF) {
         m_cpu.st1 |= ST1_MASK_SF;       // special function key
+    }
 }
 
 
@@ -1408,8 +1428,9 @@ Cpu2200t::run(int ticks)
             illegal = dasm_one(buff, m_cpu.ic, m_ucode[m_cpu.ic].ucode & 0x000FFFFF);
             dbglog("cycle %5d: %s", g_num_ops, buff);
             g_num_ops++;
-            if (illegal)
+            if (illegal) {
                 break;
+            }
         }
 #endif
         op_ticks = exec_one_op();

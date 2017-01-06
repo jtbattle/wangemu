@@ -162,8 +162,9 @@ CrtConfigDlg::updateDlg()
     int font_size = pp->getFontSize();
     int font_choice = -1;
     for(unsigned int i=0; i<m_FontChoice->GetCount(); i++) {
-        if ((int)(m_FontChoice->GetClientData(i)) == font_size)
+        if ((int)(m_FontChoice->GetClientData(i)) == font_size) {
             font_choice = i;
+        }
     }
     m_FontChoice->SetSelection(font_choice);
 

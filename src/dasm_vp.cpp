@@ -103,8 +103,9 @@ hex(char *buf, int *off, int value, int digits)
 
     // figure out if we need a leading zero
     int first_dig = (value >> 4*(digits-1)) & 0xF;
-    if (first_dig >= 10)
+    if (first_dig >= 10) {
         digits++;
+    }
 
     sprintf(fmtstr, "%%0%dX", digits);
     sprintf(&buf[*off], fmtstr, value);
@@ -122,15 +123,16 @@ addr(char *buf, int *off, int cur_pc, int new_pc)
     const int window = 2;       // how big of a window to use relative addr
     int diff = new_pc - cur_pc;
 
-    if (diff == 0)
+    if (diff == 0) {
         len += sprintf(&buf[*off], "*");
-    else if (diff > 0 && diff <= window)
+    } else if (diff > 0 && diff <= window) {
         len += sprintf(&buf[*off], "*+%d", diff);
-    else if (diff < 0 && diff >= -window)
+    } else if (diff < 0 && diff >= -window) {
         len += sprintf(&buf[*off], "*%d", diff);
-    else
+    } else {
 #endif
         hex(buf, off, new_pc, 4);
+    }
 
     *off += len;
 }
@@ -497,8 +499,9 @@ dasm_type3(char *buf, char *mnemonic, uint32 ic, uint32 uop)
 
     strcpy(buf, mnemonic);
     len = strlen(buf);
-    if (x_field)
+    if (x_field) {
         buf[len++] = 'X';
+    }
     pad_spaces(buf, &len, PARAM_COL);
 
     len += dasm_a_field(&buf[len], munged_uop);
@@ -654,8 +657,9 @@ dasm_op_vp(char *buf, uint32 ic, uint32 uop)
     illegal = 0;        // default
 
     parity = 0;
-    for(bit=0; bit<24; bit++)
+    for(bit=0; bit<24; bit++) {
         parity ^= (uop >> bit) & 1;
+    }
 
     // primary instruction decode
     if (lpi_op) {
@@ -716,8 +720,9 @@ dasm_op_vp(char *buf, uint32 ic, uint32 uop)
                 strcpy(buf, "CIO");
                 len = 3;
                 pad_spaces(buf, &len, PARAM_COL);
-                if (s_field)
+                if (s_field) {
                     len += sprintf(&buf[len], "AB=K,");
+                }
                 switch (t_field) {
                     case 0x40: // ABS
                         strcpy(&buf[len], "ABS");
@@ -912,8 +917,9 @@ dasm_one_vp(char *buff, uint32 ic, uint32 ucode)
     char dasmtext[100];
     int illegal;
 
-    if (ic==0x807B)
+    if (ic==0x807B) {
         printf("FLAG\n");
+    }
 
     illegal = dasm_op_vp(dasmtext, ic, ucode);
     sprintf(buff, "%04X: %06X : %s%s\n", ic, ucode & 0x00FFFFFF, dasmtext,

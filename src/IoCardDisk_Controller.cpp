@@ -123,10 +123,12 @@ IoCardDisk::statename(int state) const
 bool
 IoCardDisk::inIdleState() const
 {
-    if (m_state == CTRL_WAKEUP)
+    if (m_state == CTRL_WAKEUP) {
         return true;
-    if ((m_state == CTRL_COMMAND) && (m_state_cnt==0))
+    }
+    if ((m_state == CTRL_COMMAND) && (m_state_cnt==0)) {
         return true;
+    }
     return false;
 }
 
@@ -191,8 +193,9 @@ IoCardDisk::advanceState(disk_event_t event, const int val)
     bool rv = advanceStateInt(event, val);
     bool poll_after  = (!m_cpb && !m_card_busy);
 
-    if (!poll_before && poll_after)
+    if (!poll_before && poll_after) {
         checkDiskReady();  // causes reentrancy to this function
+    }
 
     return rv;
 }
@@ -293,8 +296,9 @@ IoCardDisk::advanceStateInt(disk_event_t event, const int val)
             break;
     }
     if (!expecting_obs && (event == EVENT_OBS)) {
-        if (NOISY > 0)
+        if (NOISY > 0) {
             UI_Info("Unexpected OBS in state %s", statename(m_state).c_str());
+        }
     }
 
     switch (m_state) {
@@ -364,12 +368,14 @@ IoCardDisk::advanceStateInt(disk_event_t event, const int val)
                         }
                         break;
                 }
-                if ((NOISY > 0) && (m_host_type > 0x02))
+                if ((NOISY > 0) && (m_host_type > 0x02)) {
                     UI_Warn("CTRL_WAKEUP got bad host type of 0x%02x", val);
+                }
                 m_state = CTRL_STATUS1;
             } else {
-                if (NOISY > 0)
+                if (NOISY > 0) {
                     UI_Warn("Unexpected cax condition in WAKEUP state");
+                }
             }
         }
         break;
@@ -423,8 +429,9 @@ IoCardDisk::advanceStateInt(disk_event_t event, const int val)
         if (event == EVENT_IBS_POLL) {
             rv = true;
             m_byte_to_send = m_send_bytes[m_send_bytes_ptr++];
-            if (m_send_bytes_ptr >= m_byte_count)
+            if (m_send_bytes_ptr >= m_byte_count) {
                 m_state = m_return_state;
+            }
         }
         break;
 
@@ -543,12 +550,13 @@ disk operation
                 m_state_cnt = 0;        // prepare it for the next command
 
                 // header is complete -- decode it, presuming READ, WRITE, VERIFY
-                if (m_acting_intelligent)
+                if (m_acting_intelligent) {
                     m_secaddr = (m_header[1] << 16) |
                                 (m_header[2] <<  8) |
                                  m_header[3];
-                else
+                } else {
                     m_secaddr = (m_header[1] << 8) | m_header[2];
+                }
 
                 if (m_command == CMD_SPECIAL) {
 
@@ -654,8 +662,9 @@ disk operation
                 m_state = CTRL_COMMAND;
             } else  {
                 // let the UI know that selection might have changed
-                for(int d=0; d<numDrives(); d++)
+                for(int d=0; d<numDrives(); d++) {
                     UI_diskEvent(m_slot, d);
+                }
 
                 switch (m_command) {
                 case CMD_READ:
@@ -698,8 +707,9 @@ disk operation
     //     up to the CPU to decide whether to abort the sequence or not.
     case CTRL_READ1:
         if (event == EVENT_OBS) {
-            if ((NOISY > 0) && (val != 0x00))
+            if ((NOISY > 0) && (val != 0x00)) {
                 UI_Warn("CTRL_READ1 received mystery byte of 0x%02x", val);
+            }
             m_state = CTRL_READ2;
             bool ok = iwvdReadSector();  // really read the data
             m_byte_to_send = (ok) ? 0x00 : 0x01;
@@ -739,8 +749,9 @@ disk operation
             m_buffer[m_bufptr++] = (uint8)val;
             if (m_bufptr == 257) {
                 int cksum = 0;
-                for(int i=0; i<256; i++)
+                for(int i=0; i<256; i++) {
                     cksum += m_buffer[i];
+                }
                 cksum &= 0xFF;  // LRC
                 if (cksum != val) {
                     m_byte_to_send = 0x04;  // error status
@@ -804,11 +815,13 @@ disk operation
                 // this is the right thing to do, although the disk controller
                 // microcode in the Module Repair Guide #2 ignores the LRC byte
                 int cksum = 0;
-                for(int i=0; i<256; i++)
+                for(int i=0; i<256; i++) {
                     cksum += m_buffer[i];
+                }
                 cksum &= 0xFF;
-                if (cksum != val)
+                if (cksum != val) {
                     m_byte_to_send = 0x04;
+                }
             #endif
                 m_state = CTRL_VERIFY2;
             }
@@ -943,15 +956,17 @@ disk operation
     // the copy doesn't start until we get this token.
     case CTRL_COPY4:
         if (event == EVENT_OBS) {
-            if ((NOISY > 0) && (val != 0x00))
+            if ((NOISY > 0) && (val != 0x00)) {
                 UI_Warn("CTRL_COPY4 received mystery byte of 0x%02x", val);
+            }
             if (m_d[m_drive].wvd->getWriteProtect()) {
                 m_byte_to_send = 0x01;  // signal write protect
                 m_state = CTRL_COPY7;
             } else {
                 setBusyState(true);
-                for(int d=0; d<numDrives(); d++)
+                for(int d=0; d<numDrives(); d++) {
                     UI_diskEvent(m_slot, d);
+                }
                 m_drive = m_range_drive;
                 m_state = CTRL_COPY5;
                 // seek the first track
@@ -982,8 +997,9 @@ disk operation
 
             // wvdGetTicksToTrack() and wvdSeekTrack() need m_drive set
             m_drive = m_dest_drive;
-            for(int d=0; d<numDrives(); d++)
+            for(int d=0; d<numDrives(); d++) {
                 UI_diskEvent(m_slot, d);
+            }
 
             int delay = src_ticks_per_trk  // time reading source track
                       + wvdGetTicksToTrack(dst_cur_track);  // seeking dst track
@@ -1026,8 +1042,9 @@ disk operation
                 } else {
                     ok = m_d[m_dest_drive].wvd->writeSector
                                     (m_dest_platter, m_dest_start+n, data);
-                    if (!ok)
+                    if (!ok) {
                         m_byte_to_send = 0x02;  // generic error
+                    }
                 }
             }
 
@@ -1041,8 +1058,9 @@ disk operation
             if (ok && (m_range_start <= m_range_end)) {
                 m_state = CTRL_COPY5;
                 // account for one rotation of disk, plus step time
-                for(int d=0; d<numDrives(); d++)
+                for(int d=0; d<numDrives(); d++) {
                     UI_diskEvent(m_slot, d);
+                }
                 m_drive = m_range_drive;
                 int delay = dst_ticks_per_trk
                           + wvdGetTicksToTrack(src_cur_track+1);
@@ -1061,8 +1079,9 @@ disk operation
     // 00=ok, 01=write protect, 02=format (or other) error
     // (set in previous state)
     case CTRL_COPY7:
-        if (event == EVENT_IBS_POLL)
+        if (event == EVENT_IBS_POLL) {
             rv = true;
+        }
         m_state = CTRL_COMMAND;
         break;
 
@@ -1100,8 +1119,9 @@ disk operation
     // expecting the 0x00 byte. the 0x00 bytes it isn't echoed.
     case CTRL_FORMAT1:
         if (event == EVENT_OBS) {
-            if ((NOISY > 0) && (val != 0x00))
+            if ((NOISY > 0) && (val != 0x00)) {
                 UI_Warn("FORMAT1 was expecting a 0x00 padding byte, but got 0x%02x",val);
+            }
             if (m_drive >= numDrives()) {
                 // bad drive selection
                 m_byte_to_send = 0x01;
@@ -1135,10 +1155,12 @@ disk operation
                 // fill all sectors with 0x00
                 uint8 data[256];
                 memset(data, (uint8)0x00, 256);
-                for(int n=0; ok && n<sec_per_trk; n++)
+                for(int n=0; ok && n<sec_per_trk; n++) {
                     ok = m_d[m_drive].wvd->writeSector(m_platter, n, data);
-                if (!ok)
+                }
+                if (!ok) {
                     m_byte_to_send = 0x02;
+                }
             }
 
             int next_track = m_d[m_drive].track + 1;
@@ -1160,8 +1182,9 @@ disk operation
     // everything is done; we must return final status
     // 00=ok, 01=write protect, 02=formatting error
     case CTRL_FORMAT3:
-        if (event == EVENT_IBS_POLL)
+        if (event == EVENT_IBS_POLL) {
             rv = true;
+        }
         m_state = CTRL_COMMAND;
         break;
 
@@ -1193,8 +1216,9 @@ disk operation
 
     case CTRL_MSECT_WR_START:
         if (event == EVENT_OBS) {
-            if ((NOISY > 0) && (val != 0x00))
+            if ((NOISY > 0) && (val != 0x00)) {
                 UI_Warn("MULTI-SECTOR-START was expecting a 0x00 padding byte, but got 0x%02x",val);
+            }
             // m_multisector_mode = true;
         }
         m_state = CTRL_COMMAND;
@@ -1219,8 +1243,9 @@ disk operation
 
     case CTRL_MSECT_WR_END1:
         if (event == EVENT_OBS) {
-            if ((NOISY > 0) && (val != 0x00))
+            if ((NOISY > 0) && (val != 0x00)) {
                 UI_Warn("MULTI-SECTOR-END was expecting a 0x00 padding byte, but got 0x%02x",val);
+            }
             // m_multisector_mode = false;
             // setBusyState(true);
             // ... flush write sector cache ...
@@ -1324,8 +1349,9 @@ disk operation
     // wait for the 0x00 byte
     case CTRL_VERIFY_RANGE3:
         if (event == EVENT_OBS) {
-            if ((NOISY > 0) && (val != 0x00))
+            if ((NOISY > 0) && (val != 0x00)) {
                 UI_Warn("VERIFY_RANGE3 was expecting a 0x00 padding byte, but got 0x%02x",val);
+            }
             setBusyState(true);
             m_state = CTRL_VERIFY_RANGE4;
             // seek the first track
@@ -1351,10 +1377,12 @@ disk operation
             m_byte_to_send = 0x00;
             uint8 data[256];
 
-            for(m_secaddr = first; ok && (m_secaddr <= last); m_secaddr++)
+            for(m_secaddr = first; ok && (m_secaddr <= last); m_secaddr++) {
                 ok = m_d[m_drive].wvd->readSector(m_range_platter, m_secaddr, data);
-            if (!ok)
+            }
+            if (!ok) {
                 m_byte_to_send = 0x01;  // seek error
+            }
 
             int next_track = m_d[m_drive].track + 1;
             if (ok && (next_track <= last_track)) {
@@ -1410,10 +1438,12 @@ disk operation
         // at this point we expect to see a 0x00 dummy byte from the CPU
         if (event == EVENT_OBS) {
             int num_sectors = 0;
-            if ((NOISY > 0) && (val != 0x00))
+            if ((NOISY > 0) && (val != 0x00)) {
                 UI_Warn("READ_STATUS was expecting a 0x00 padding byte, but got 0x%02x",val);
-            if (m_drive < numDrives())
+            }
+            if (m_drive < numDrives()) {
                 num_sectors = m_d[m_drive].wvd->getNumSectors();
+            }
             m_send_bytes[0] = 0x0F;     // count of bytes in message (not including this one)
             m_send_bytes[1] = 0x41;     // DPU type (1st ascii digit) = 'A'
             m_send_bytes[2] = 0x42;     // DPU type (2nd ascii digit) = 'B'

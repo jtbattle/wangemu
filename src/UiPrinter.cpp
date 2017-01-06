@@ -331,8 +331,9 @@ to the next tab stop.
             // HORIZONTAL TAB HEX(09)
             // Assumed to be hardcoded to tabstop of 8 characters
             do {
-                if (m_linebuf_len >= m_linebuf_maxlen)
+                if (m_linebuf_len >= m_linebuf_maxlen) {
                     break;
+                }
                 m_linebuf[m_linebuf_len++] = ' ';
             } while (m_linebuf_len%8 != 0);
             break;
@@ -342,8 +343,9 @@ to the next tab stop.
             // Advances paper one line.
 
             // Emit two lines to the printer.
-            if (m_linebuf_len > 0)
+            if (m_linebuf_len > 0) {
                 emitLine();
+            }
             emitLine();
 
             break;
@@ -354,8 +356,9 @@ to the next tab stop.
             // of the Vertical Format Unit paper tape is reached.
 
             // Emit line to the printer, add empty lines to advance stream to the next page.
-            if (m_linebuf_len > 0)
+            if (m_linebuf_len > 0) {
                 emitLine();
+            }
             formFeed();
 
             break;
@@ -559,8 +562,9 @@ Printer::OnPaint(wxPaintEvent &WXUNUSED(event))
 
     // scroll-wheeling up can produce large offset
     const int num_rows = m_printstream.size();    // # rows in log
-    if (num_rows < m_chars_h)
+    if (num_rows < m_chars_h) {
         firstLine = 0;
+    }
 
     wxPaintDC dc(this);
     drawScreen(dc, firstCol, firstLine);
@@ -577,10 +581,12 @@ Printer::OnSize(wxSizeEvent &event)
     m_scrpix_h = height;
 
     //reset the number of rows in the view
-    if (m_charcell_h != 0)              // the first time through, when font has not initialized, it is zero
+    if (m_charcell_h != 0) {            // the first time through, when font has not initialized, it is zero
         m_chars_h = height / m_charcell_h;
-    if (m_charcell_w != 0)
+    }
+    if (m_charcell_w != 0) {
         m_chars_w = width / m_charcell_w;
+    }
 
     m_scrpix_h = m_scrpix_h + m_charcell_h; // add one extra row to make scrolling work
 
@@ -727,8 +733,9 @@ Printer::generateScreen(int startCol, int startRow)
 
         int first_break = ((startRow                )/m_pagelength)*m_pagelength;
         int last_break  = ((startRow + m_chars_h + 1)/m_pagelength)*m_pagelength;
-        if (startRow == 0)
+        if (startRow == 0) {
             first_break += m_pagelength;        // skip first break
+        }
         for(int brk = first_break; brk <= last_break; brk += m_pagelength) {
             int x_off = left_edge;
             int y_off = m_charcell_h * (brk - startRow);
@@ -780,15 +787,17 @@ Printer::emitLine()
     m_printstream.push_back(string(m_linebuf));
     m_linebuf_len = 0;
 
-    if (m_autoshow)
+    if (m_autoshow) {
         m_parent->Show(true);   //show the printer window if it is off (this should be a
+    }
 
     updateView();
 
     if (m_printasgo) {
-        if ((m_printstream.size() % m_pagelength) == 0)
+        if ((m_printstream.size() % m_pagelength) == 0) {
             // we just added the last line on a page. orint it.
             m_parent->printAndClear();
+        }
     }
 }
 
@@ -990,8 +999,9 @@ Printout::HasPage(int page)
 bool
 Printout::OnBeginDocument(int startPage, int endPage)
 {
-    if (!wxPrintout::OnBeginDocument(startPage, endPage))
+    if (!wxPrintout::OnBeginDocument(startPage, endPage)) {
         return false;
+    }
     return true;
 }
 

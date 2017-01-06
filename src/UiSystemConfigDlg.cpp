@@ -281,8 +281,9 @@ SystemConfigDlg::updateDlg()
     m_memSize->SetSelection(-1); // just in case there is no match, make it obvious
     int ramsize = m_cfg.getRamKB();
     for(unsigned int i=0; i<m_memSize->GetCount(); i++) {
-        if ((int)(m_memSize->GetClientData(i)) == ramsize)
+        if ((int)(m_memSize->GetClientData(i)) == ramsize) {
             m_memSize->SetSelection(i);
+        }
     }
 
     m_diskRealtime->SetValue(m_cfg.getDiskRealtime());
@@ -292,10 +293,11 @@ SystemConfigDlg::updateDlg()
     for(int slot=0; slot<NUM_IOSLOTS; slot++) {
         IoCard::card_t cardtype = m_cfg.getSlotCardType(slot);
         int int_cardtype = static_cast<int>(cardtype);
-        if (cardtype == IoCard::card_t::none)
+        if (cardtype == IoCard::card_t::none) {
             m_cardDesc[slot]->SetSelection(0);
-        else
+        } else {
             m_cardDesc[slot]->SetSelection(int_cardtype + 1);
+        }
         setValidIoChoices(slot, int_cardtype);
     }
 }
@@ -315,12 +317,13 @@ SystemConfigDlg::updateButtons()
     // why it is disabled.  It would also be possible to add a tooltip to
     // serve this purpose.
     string label;
-    if (!configStateOk(false /*don't warn*/))
+    if (!configStateOk(false /*don't warn*/)) {
         label = "not OK";
-    else if (m_oldcfg.needsReboot(m_cfg))
+    } else if (m_oldcfg.needsReboot(m_cfg)) {
         label = "OK, reboot";
-    else
+    } else {
         label = "OK";
+    }
     m_btnOk->SetLabel(label);
 
     // it might be that we remove the last card with a config button,
@@ -441,12 +444,14 @@ SystemConfigDlg::configStateOk(bool warn)
     // make sure all io addresses have been selected
     for(int slot=0; slot<NUM_IOSLOTS; slot++) {
         int cardsel = m_cardDesc[slot]->GetSelection();
-        if (cardsel == 0)
+        if (cardsel == 0) {
             continue;   // not occupied
+        }
         int addrsel = m_cardAddr[slot]->GetSelection();
         if (addrsel < 0) {
-            if (warn)
+            if (warn) {
                 UI_Error("Please select an I/O address for slot %d", slot);
+            }
             return false;
         }
     }
@@ -542,8 +547,9 @@ SystemConfigDlg::setValidIoChoices(int slot, int cardtype_idx)
             wxString str;
             str.Printf( "0x%03X", io_addr);
             hAddrCtl->Append(str);
-            if ((io_addr & 0xFF) == (m_cfg.getSlotCardAddr(slot) & 0xFF))
+            if ((io_addr & 0xFF) == (m_cfg.getSlotCardAddr(slot) & 0xFF)) {
                 addr_mtch_idx = j;
+            }
         }
         //assert(addr_mtch_idx > -1);
         // if the card changes and the old io address isn't valid for the

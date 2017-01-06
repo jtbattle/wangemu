@@ -54,8 +54,9 @@ TheApp::OnInit()
 {
 #if 0
     // read wxToolBar notes to see why this is done
-    if (wxTheApp->GetComCtl32Version() >= 600 && ::wxDisplayDepth() >= 32)
+    if (wxTheApp->GetComCtl32Version() >= 600 && ::wxDisplayDepth() >= 32) {
         wxSystemOptions::SetOption("msw.remap", 2);
+    }
 #endif
 
     System2200 sys;     // invoke it to build the world
@@ -72,8 +73,9 @@ TheApp::OnInit()
 void
 TheApp::OnIdle(wxIdleEvent &event)
 {
-    if (System2200().onIdle())
+    if (System2200().onIdle()) {
         event.RequestMore(true);            // give more idle events
+    }
 }
 
 
@@ -119,8 +121,9 @@ TheApp::OnCmdLineParsed(wxCmdLineParser& parser)
             const int io_addr = 0x01;   // default keyboard device
             string fn(filename.c_str());
             bool success = core_invokeScript(io_addr, fn);
-            if (!success)
+            if (!success) {
                 UI_Warn("Failed to open script '%s'", filename.c_str());
+            }
         }
     }
 

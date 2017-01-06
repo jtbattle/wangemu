@@ -203,8 +203,9 @@ Cpu2200vp::write_ucode(uint16 addr, uint32 uop)
 
     } else if (lpi_op) {
 
-        if (d_field == 1)
+        if (d_field == 1) {
             m_ucode[addr].ucode |= FETCH_B;
+        }
         m_ucode[addr].op  = OP_LPI;
         m_ucode[addr].p16 =
                   (uint16)(   ((uop >> 3) & 0xC000)     // [18:17] -> [15:14]
@@ -219,8 +220,9 @@ Cpu2200vp::write_ucode(uint16 addr, uint32 uop)
 
             case 0x5:   // TAP
                 illegal = (uop & 0x7F8000) != 0x0B8000;
-                if (d_field >= 2)
+                if (d_field >= 2) {
                     m_ucode[addr].ucode |= FETCH_B;
+                }
                 m_ucode[addr].op  = OP_TAP;
                 break;
 
@@ -228,8 +230,9 @@ Cpu2200vp::write_ucode(uint16 addr, uint32 uop)
                 illegal = (uop & 0x7F8800) != 0x018000;
                 inc = ((uop >> 12) & 4)         // sign
                     | ((uop >>  9) & 3);        // offset
-                if (d_field >= 2)
+                if (d_field >= 2) {
                     m_ucode[addr].ucode |= FETCH_B;
+                }
                 m_ucode[addr].op  = OP_TPA;
                 m_ucode[addr].p16 = (uint16)incmap[inc];
                 break;
@@ -238,8 +241,9 @@ Cpu2200vp::write_ucode(uint16 addr, uint32 uop)
                 illegal = (uop & 0x7F8800) != 0x038000;
                 inc = ((uop >> 12) & 4)         // sign
                     | ((uop >>  9) & 3);        // offset
-                if (d_field >= 2)
+                if (d_field >= 2) {
                     m_ucode[addr].ucode |= FETCH_B;
+                }
                 m_ucode[addr].op  = OP_XPA;
                 m_ucode[addr].p16 = (uint16)incmap[inc];
                 break;
@@ -248,16 +252,18 @@ Cpu2200vp::write_ucode(uint16 addr, uint32 uop)
                 illegal = (uop & 0x7F8800) != 0x058000;
                 inc = ((uop >> 12) & 4)         // sign
                     | ((uop >>  9) & 3);        // offset
-                if (d_field >= 2)
+                if (d_field >= 2) {
                     m_ucode[addr].ucode |= FETCH_B;
+                }
                 m_ucode[addr].op  = OP_TPS;
                 m_ucode[addr].p16 = (uint16)incmap[inc];
                 break;
 
             case 0x6:   // TSP
                 illegal = (uop & 0x7F8800) != 0x0D8000;
-                if (d_field >= 2)
+                if (d_field >= 2) {
                     m_ucode[addr].ucode |= FETCH_B;
+                }
                 m_ucode[addr].op  = OP_TSP;
                 break;
 
@@ -270,8 +276,9 @@ Cpu2200vp::write_ucode(uint16 addr, uint32 uop)
                     m_ucode[addr].op  = OP_WCM;
                 } else if ((uop & 0x7F8C00) == 0x078000) {
                     // perform subroutine return
-                    if (d_field >= 2)
+                    if (d_field >= 2) {
                         m_ucode[addr].ucode |= FETCH_B;
+                    }
                     m_ucode[addr].op  = OP_SR;
                 } else {
                     illegal = 1;
@@ -319,8 +326,9 @@ Cpu2200vp::write_ucode(uint16 addr, uint32 uop)
             case 0x04:  // DAC: decimal add w/ carry
             case 0x05:  // DSC: decimal subtract w/ carry
             case 0x06:  // AC: binary add w/ carry
-                if (((uop >> 14) & 3) >= 2)
+                if (((uop >> 14) & 3) >= 2) {
                     m_ucode[addr].ucode |= FETCH_CY;    // clear or set
+                }
             case 0x07:  // M: multiply
                 illegal = (uop & 0x010000) != 0x000000;
                 x_field = (uop >> 17) & 1;
@@ -484,8 +492,9 @@ Cpu2200vp::set_sh(uint8 value)
     m_cpu.sh = (uint8)(   (~mask & value)
                         | ( mask & m_cpu.sh) );
 
-    if (cpb_changed)
+    if (cpb_changed) {
         m_sys.cpu_CPB( !!(m_cpu.sh & SH_MASK_CPB) );
+    }
 }
 
 
@@ -509,13 +518,15 @@ Cpu2200vp::decimal_add8(int a_op, int b_op, int ci) const
 
     sum_low = a_op_low + b_op_low + ci; // ranges from binary 0 to 19
     co      = (sum_low > 9);
-    if (co)
+    if (co) {
         sum_low -= 10;
+    }
 
     sum_high = a_op_high + b_op_high + co; // ranges from binary 0 to 19
     co       = (sum_high > 9);
-    if (co)
+    if (co) {
         sum_high -= 10;
+    }
 
     return (uint16)((co << 8) + (sum_high << 4) + sum_low);
 }
@@ -1014,8 +1025,9 @@ Cpu2200vp::exec_one_op()
     case OP_CIO:
         s_field = (uop >> 11) & 0x1;
         t_field = (uop >>  4) & 0x7F;
-        if (s_field)
+        if (s_field) {
             m_cpu.ab = m_cpu.k;     // I/O address bus register takes K reg value
+        }
         if ((uop & 0xC) == 0xC) {
             // this is not documented in the arch manual, but it appears
             // in the MVP CPU schematic.  if bits 3:2 are both one, the
@@ -1041,17 +1053,19 @@ Cpu2200vp::exec_one_op()
                 break;
             case 0x20: // OBS
                 if (m_dbg) {
-                    if (m_cpu.k < 32 || m_cpu.k > 128)
+                    if (m_cpu.k < 32 || m_cpu.k > 128) {
                         dbglog("-OBS when AB=%02X, K=%02X\n", m_cpu.ab_sel, m_cpu.k);
-                    else
+                    } else {
                         dbglog("-OBS when AB=%02X, K=%02X ('%c')\n", m_cpu.ab_sel, m_cpu.k, m_cpu.k);
+                    }
                 }
                 //UI_Info("CPU:OBS when AB=%02X, AB_SEL=%02X, K=%02X\n", m_cpu.ab, m_cpu.ab_sel, m_cpu.k);
                 m_sys.cpu_OBS(m_cpu.k);  // output data bus strobe
                 break;
             case 0x10: // CBS
-                if (m_dbg)
+                if (m_dbg) {
                     dbglog("-CBS when AB=%02X\n", m_cpu.ab_sel);
+                }
                 //UI_Info("CPU:CBS when AB=%02X\n, AB_SEL=%02X", m_cpu.ab, m_cpu.ab_sel);
                 m_sys.cpu_CBS();    // control bus strobe
                 break;
@@ -1417,10 +1431,12 @@ Cpu2200vp::Cpu2200vp(System2200 &sys,
     assert((ramsize&0xF) == 0);         // multiple of 15
 
     // init microcode
-    for(int i=0; i<MAX_RAM; i++)
+    for(int i=0; i<MAX_RAM; i++) {
         write_ucode((uint16)i, 0);
-    for(int i=0; i<1024; i++)
+    }
+    for(int i=0; i<1024; i++) {
         write_ucode((uint16)(0x8000+i), ucode_2200vp[i]);
+    }
 
 #if 0
     // disassemble boot ROM
@@ -1470,17 +1486,21 @@ Cpu2200vp::reset(bool hard_reset)
 
     if (hard_reset) {
         int i;
-        for(i=0; i<(m_memsize_KB<<10); i++)
+        for(i=0; i<(m_memsize_KB<<10); i++) {
             m_RAM[i] = 0xFF;
+        }
 #if 0
         m_cpu.pc = 0;
         m_cpu.orig_pc;
-        for(i=0; i<32; i++)
+        for(i=0; i<32; i++) {
             m_cpu.aux[32];
-        for(i=0; i<8; i++)
+        }
+        for(i=0; i<8; i++) {
             m_cpu.reg[i];
-        for(i=0; i<STACKSIZE; i++)
+        }
+        for(i=0; i<STACKSIZE; i++) {
             m_cpu.icstack[i] = 0;
+        }
         m_cpu.ch = 0;
         m_cpu.cl = 0;
         m_cpu.k = 0;
@@ -1515,8 +1535,9 @@ Cpu2200vp::run(int ticks)
                 dump_state( 1 );
                 illegal = dasm_one_vp(buff, m_cpu.ic, m_ucode[m_cpu.ic].ucode);
                 dbglog("cycle %5d: %s", m_num_ops, buff);
-                if (illegal)
+                if (illegal) {
                     break;
+                }
             }
         }
 #endif
@@ -1544,8 +1565,9 @@ Cpu2200vp::IoCardCbIbs(int data)
     m_sys.cpu_CPB( true );              // we are busy now
 
     // return special status if it is a special function key
-    if (data & IoCardKeyboard::KEYCODE_SF)
+    if (data & IoCardKeyboard::KEYCODE_SF) {
         m_cpu.sh |= SH_MASK_SF;         // special function key
+    }
 }
 
 
@@ -1618,8 +1640,9 @@ Cpu2200vp::dump_ram(const string &filename)
     ofs.fill('0');
     for(int addr=0; addr < (m_memsize_KB<<10); addr += 16) {
         ofs << setw(4) << hex << uppercase << addr << ":";
-        for(int i=0; i<16; i++)
+        for(int i=0; i<16; i++) {
             ofs << " " << setw(2) << hex << uppercase << int(m_RAM[addr+i]);
+        }
         ofs << endl;
     }
 
@@ -1641,8 +1664,9 @@ Cpu2200vp::dump_ram(const string &filename)
 void
 Cpu2200vp::dump_state(int fulldump)
 {
-    if (fulldump)
+    if (fulldump) {
         dbglog("---------------------------------------------\n");
+    }
 
     dbglog(" K SH SL CH CL PH PL F7 F6 F5 F4 F3 F2 F1 F0\n");
     dbglog("%02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X\n",
@@ -1653,8 +1677,9 @@ Cpu2200vp::dump_state(int fulldump)
     dbglog("    AB=%02X, AB_SEL=%02X, cy=%d\n",
             m_cpu.ab, m_cpu.ab_sel, CARRY_BIT);
 
-    if (!fulldump)
+    if (!fulldump) {
         return;
+    }
 
     dbglog("AUX 00-07   %04X %04X %04X %04X %04X %04X %04X %04X\n",
             m_cpu.aux[0], m_cpu.aux[1], m_cpu.aux[2], m_cpu.aux[3],
@@ -1675,8 +1700,9 @@ Cpu2200vp::dump_state(int fulldump)
         int todo = (num > 6) ? 6 : num;
         int i;
         dbglog("    recent: ");
-        for(i=STACKSIZE-1; i>STACKSIZE-1-todo; i--)
+        for(i=STACKSIZE-1; i>STACKSIZE-1-todo; i--) {
             dbglog("%04X ", m_cpu.icstack[i]);
+        }
         dbglog("\n");
     }
     dbglog("---------------------------------------------\n");

@@ -240,10 +240,11 @@ Host::ConfigReadStr(const string &subgroup,
     wxString wxval;
     m_config->SetPath( "/wangemu/config-0/" + subgroup);
     bool b = m_config->Read(key, &wxval);
-    if (!b && (defaultval != nullptr))
+    if (!b && (defaultval != nullptr)) {
         *val = *defaultval;
-    else
+    } else {
         *val = wxval;
+    }
     return b;
 }
 
@@ -275,10 +276,11 @@ Host::ConfigReadBool(const string &subgroup,
     wxString valstr;
     int v;
     bool b = ConfigReadInt(subgroup, key, &v, ((defaultval) ? 1:0) );
-    if (b && (v >= 0) && (v <= 1))
+    if (b && (v >= 0) && (v <= 1)) {
         *val = (v==1);
-    else
+    } else {
         *val = defaultval;
+    }
 }
 
 
@@ -342,19 +344,22 @@ Host::ConfigReadWinGeom(wxWindow *wxwin,
     }
 
     // don't let the window be bigger than the screen
-    if (w > screen_w)
+    if (w > screen_w) {
         w = screen_w;
-    if (h > screen_h)
+    }
+    if (h > screen_h) {
         h = screen_h;
+    }
 
     // now move and resize the window
     wxPoint pt(x,y);
     wxSize  sz(w,h);
     wxwin->Move(pt);
-    if (client_size)
+    if (client_size) {
         wxwin->SetClientSize(sz);
-    else
+    } else {
         wxwin->SetSize(sz);
+    }
 }
 
 
@@ -406,10 +411,11 @@ Host::ConfigWriteWinGeom(wxWindow *wxwin,
 
     int x, y, w, h;
     wxwin->GetPosition(&x, &y);
-    if (client_size)
+    if (client_size) {
         wxwin->GetClientSize(&w, &h);
-    else
+    } else {
         wxwin->GetSize(&w, &h);
+    }
 
     wxString prop;
     prop.Printf("%d,%d,%d,%d", x,y,w,h);

@@ -186,10 +186,11 @@ private:
     bool          m_attr_under;     // draw underlined char if m_attr_on
 
     void setBoxAttr(bool box_draw, uint8 attr, int y_adj=0) {
-        if (box_draw)
+        if (box_draw) {
             m_attr[80*(m_curs_y+y_adj) + m_curs_x] |=  attr;
-        else // erase
+        } else { // erase
             m_attr[80*(m_curs_y+y_adj) + m_curs_x] &= ~attr;
+        }
     }
 
     // sound for beep

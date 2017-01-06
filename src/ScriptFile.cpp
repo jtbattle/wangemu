@@ -164,12 +164,15 @@ ScriptFile::ishexdigit(char ch) const
 int
 ScriptFile::hexval(char ch) const
 {
-    if (ch >= '0' && ch <= '9')
+    if (ch >= '0' && ch <= '9') {
         return ch - '0';
-    if (ch >= 'A' && ch <= 'F')
+    }
+    if (ch >= 'A' && ch <= 'F') {
         return ch - 'A' + 10;
-    if (ch >= 'a' && ch <= 'f')
+    }
+    if (ch >= 'a' && ch <= 'f') {
         return ch - 'a' + 10;
+    }
     return -1;
 }
 
@@ -392,8 +395,9 @@ ScriptFile::getNextByte(int *byte)
             return m_subscript->getNextByte(byte);
         }
 
-        if (isEof())
+        if (isEof()) {
             return false;
+        }
 
         if (m_charbuf[m_cur_char] == 0) {
             // we hit the end of line
@@ -453,8 +457,9 @@ ScriptFile::getNextByte(int *byte)
             // scan for either end of line or ">"
             m_cur_char += 9;
             int end_char;
-            for(end_char = m_cur_char; m_charbuf[end_char] && m_charbuf[end_char]!='>'; end_char++)
+            for(end_char = m_cur_char; m_charbuf[end_char] && m_charbuf[end_char]!='>'; end_char++) {
                 ;
+            }
             if (m_charbuf[end_char] == '>') {
                 m_charbuf[end_char] = '\0';  // terminate filename
                 string inc_fname( &m_charbuf[m_cur_char] );

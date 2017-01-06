@@ -616,8 +616,9 @@ Crt::generateScreenByBlits(wxMemoryDC &memDC)
 
                 // blinking alternates between normal and bright intensity
                 // but intense text can't blink because it is already intense
-                if (text_blink_enable && blink)
+                if (text_blink_enable && blink) {
                     bright = 1;
+                }
 
                 if ((chr != 0x20) || inv) {
                     // if (non-blank character)
@@ -712,13 +713,15 @@ Crt::generateScreenOverlay(wxMemoryDC &memDC)
         for(int col=0; col < 80; ++col, ++off) {
             if (m_attr[off] & (char_attr_t::CHAR_ATTR_LEFT)) {
                 // start or extend
-                if (start < 0)
+                if (start < 0) {
                     start = col*m_charcell_w;
+                }
             } else if (start >= 0) {
                 // hit the end
                 int rgt = col * m_charcell_w;
-                for(int yy=0; yy<m_charcell_sy; ++yy)
+                for(int yy=0; yy<m_charcell_sy; ++yy) {
                     memDC.DrawLine(start, top+yy, rgt, top+yy);
+                }
                 start = -1;
             }
             if (m_attr[off] & (char_attr_t::CHAR_ATTR_RIGHT)) {
@@ -727,16 +730,18 @@ Crt::generateScreenOverlay(wxMemoryDC &memDC)
             } else if (start >= 0) {
                 // end of run
                 int rgt = col * m_charcell_w + (m_charcell_w >> 1);
-                for(int yy=0; yy<m_charcell_sy; ++yy)
+                for(int yy=0; yy<m_charcell_sy; ++yy) {
                     memDC.DrawLine(start, top+yy, rgt, top+yy);
+                }
                 start = -1;
             }
         }
         // draw if we made it all the way to the right side
         if (start >= 0) {
             int rgt = 80 * m_charcell_w;
-            for(int yy=0; yy<m_charcell_sy; ++yy)
+            for(int yy=0; yy<m_charcell_sy; ++yy) {
                 memDC.DrawLine(start, top+yy, rgt, top+yy);
+            }
         }
     }
 
@@ -753,8 +758,9 @@ Crt::generateScreenOverlay(wxMemoryDC &memDC)
             } else if (start >= 0) {
                 // end of run
                 int end = row * m_charcell_h;
-                for(int xx=0; xx<m_charcell_sx; ++xx)
+                for(int xx=0; xx<m_charcell_sx; ++xx) {
                     memDC.DrawLine(mid+xx, start, mid+xx, end+(m_charcell_sy>>1));
+                }
                 start = -1;
             }
         }
@@ -782,16 +788,19 @@ Crt::generateScreenByRawBmp(wxColor fg, wxColor bg)
     // this path is faster only if we are drawing to a 32b surface.
     // this is because the code must commit to using either
     // wxAlphaPixelData (32b) or wxNativePixelData (24b except under OSX).
-    if (m_scrbits.GetDepth() != TW)
+    if (m_scrbits.GetDepth() != TW) {
         return false;
+    }
 
     TT_t raw_screen(m_scrbits);
-    if (!raw_screen)
+    if (!raw_screen) {
         return false;
+    }
 
     TT_t raw_font(m_fontmap);
-    if (!raw_font)
+    if (!raw_font) {
         return false;
+    }
 
     bool text_blink_enable = m_parent->getTextBlinkPhase();
 
@@ -822,8 +831,9 @@ Crt::generateScreenByRawBmp(wxColor fg, wxColor bg)
 
             // blinking alternates between normal and bright intensity
             // but intense text can't blink because it is already intense
-            if (text_blink_enable && blink)
+            if (text_blink_enable && blink) {
                 bright = 1;
+            }
 
             int font_row = m_charcell_h * (alt + inv + bright);
             cp.OffsetY(raw_font, font_row);

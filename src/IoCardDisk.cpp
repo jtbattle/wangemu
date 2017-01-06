@@ -271,8 +271,9 @@ IoCardDisk::reset(bool hard_reset)
     // reset drive state
     m_tmr_motor_off = nullptr;
 
-    for(int drive=0; drive<numDrives(); drive++)
+    for(int drive=0; drive<numDrives(); drive++) {
         stopMotor(drive);
+    }
 
     (void)advanceState(EVENT_RESET);
     m_host_type = -1;
@@ -288,25 +289,29 @@ IoCardDisk::select()
     m_primary = (abs_value & 0x40) != 0x40;  // primary drive
     m_selected = true;
 
-    if (DBG > 1)
+    if (DBG > 1) {
         dbglog("disk ABS (addr=0x%02x)\n", abs_value);
+    }
 
     m_cpu->setDevRdy(!m_card_busy);
-    for(int drive=0; drive<numDrives(); drive++)
+    for(int drive=0; drive<numDrives(); drive++) {
         UI_diskEvent(m_slot, drive);
+    }
 }
 
 void
 IoCardDisk::deselect()
 {
-    if (DBG > 1)
+    if (DBG > 1) {
         dbglog("disk -ABS\n");
+    }
 
     m_selected = false;
     m_cpb      = true;
 
-    for(int drive=0; drive<numDrives(); drive++)
+    for(int drive=0; drive<numDrives(); drive++) {
         UI_diskEvent(m_slot, drive);
+    }
 }
 
 void
@@ -314,8 +319,9 @@ IoCardDisk::OBS(int val)
 {
     val &= 0xFF;
 
-    if (DBG > 2)
+    if (DBG > 2) {
         dbglog("disk OBS(AB=0x%02x): byte=0x%02x\n", m_cpu->getAB(), val);
+    }
 
     (void)advanceState(EVENT_OBS, val);
     m_cpu->setDevRdy(!m_card_busy);
@@ -327,8 +333,9 @@ IoCardDisk::CBS(int val)
     val &= 0xFF;
 
     // unexpected -- the real hardware ignores this byte
-    if (NOISY > 0)
+    if (NOISY > 0) {
         UI_Warn("unexpected disk CBS: Output of byte 0x%02x", val);
+    }
 
 #if 0
     // later disk controllers allowed controlling disk hog mode via
@@ -347,8 +354,9 @@ IoCardDisk::CBS(int val)
     // hardwired to cause a hard reset of the disk controller.
     // I don't see that hardware in the early floppy disk controller
     // design, but they could have added it later.
-    if (val & 1)
+    if (val & 1) {
         reset(true);
+    }
 #endif
 }
 
@@ -358,8 +366,9 @@ IoCardDisk::CPB(bool val)
 {
     // it appears that except for reset, ucode only ever clears it,
     // and of course the IBS sets it back.
-    if (DBG > 2)
+    if (DBG > 2) {
         dbglog("disk CPB%c\n", val?'+':'-');
+    }
 
     m_cpb = val;
     checkDiskReady();
@@ -375,8 +384,9 @@ IoCardDisk::stopMotor(int drive)
 {
     assert(drive >= 0 && drive < 4);
 
-    if (m_d[drive].state != DRIVE_EMPTY)
+    if (m_d[drive].state != DRIVE_EMPTY) {
         m_d[drive].state = DRIVE_IDLE;
+    }
     m_d[drive].sector     = 0;    // which sector is being read
     m_d[drive].idle_cnt   = 0;    // number of operations done w/o this drive
     m_d[drive].secwait    = -1;
@@ -416,8 +426,9 @@ IoCardDisk::checkDiskReady()
         if (!m_cpb && !m_card_busy) {
             bool data_ready = advanceState(EVENT_IBS_POLL);
             if (data_ready) {
-                if (DBG > 2)
+                if (DBG > 2) {
                     dbglog("disk IBS of 0x%02x\n", m_byte_to_send);
+                }
                 m_cpu->IoCardCbIbs(m_byte_to_send);
             }
         }
@@ -440,11 +451,13 @@ IoCardDisk::checkDiskReady()
 void
 IoCardDisk::setBusyState(bool busy)
 {
-    if ((DBG> 1) && (m_card_busy != busy))
+    if ((DBG> 1) && (m_card_busy != busy)) {
         dbglog("disk setBusyState(%s)\n", busy ? "true" : "false");
+    }
     m_card_busy = busy;
-    if (m_selected)
+    if (m_selected) {
         m_cpu->setDevRdy(!m_card_busy);
+    }
 }
 
 
@@ -571,8 +584,9 @@ IoCardDisk::wvdSeekTrack(int nominal_ticks)
         bool floppy = (disktype == Wvd::DISKTYPE_FD5) ||
                       (disktype == Wvd::DISKTYPE_FD8);
         if ( (m_d[other_drive].state == DRIVE_SPINNING) && floppy) {
-            if (++m_d[other_drive].idle_cnt == 32)
+            if (++m_d[other_drive].idle_cnt == 32) {
                 stopMotor(other_drive);
+            }
         }
     }
 
@@ -604,10 +618,12 @@ IoCardDisk::wvdSeekTrack(int nominal_ticks)
 assert(m_d[m_drive].tmr_sector != nullptr);
     }
 
-    if (ticks <= 0)
+    if (ticks <= 0) {
         ticks = DISK_MIN_TICKS;
-    if (!realtime_disk())
+    }
+    if (!realtime_disk()) {
         ticks = DISK_MIN_TICKS;
+    }
 
     m_d[m_drive].tmr_track =
         m_scheduler->TimerCreate( ticks,
@@ -663,13 +679,15 @@ IoCardDisk::tcbTrack(int arg)
 
     const bool empty = (m_d[m_drive].state == DRIVE_EMPTY);
 
-    if (DBG > 1)
+    if (DBG > 1) {
         dbglog("TRACK SEEK timer fired\n");
+    }
 
     m_d[m_drive].tmr_track = nullptr;
 
-    if (m_d[m_drive].state == DRIVE_IDLE)
+    if (m_d[m_drive].state == DRIVE_IDLE) {
         m_d[m_drive].state = DRIVE_SPINNING;
+    }
 
     if ( (m_command == CMD_SPECIAL) ||
             // special commands do track-at-a-time processing,
@@ -700,11 +718,13 @@ IoCardDisk::tcbMotorOff(int arg)
     assert(m_tmr_motor_off != nullptr);
     m_tmr_motor_off = nullptr;
 
-    if (DBG > 1)
+    if (DBG > 1) {
         dbglog("MOTOR OFF timer fired\n");
+    }
 
-    for(int drive=0; drive<numDrives(); drive++)
+    for(int drive=0; drive<numDrives(); drive++) {
         stopMotor(drive);
+    }
 
     arg = arg; // keep lint happy
 }
@@ -725,8 +745,9 @@ if (m_d[drive].tmr_sector == nullptr) {
 }
     assert(m_d[drive].tmr_sector != nullptr);
 
-    if (0 && (NOISY > 2))
+    if (0 && (NOISY > 2)) {
         dbglog("Drive %d SECTOR timer fired: sector %d\n", drive, m_d[drive].sector);
+    }
 
     // retrigger the timer
     m_d[drive].tmr_sector = m_scheduler->TimerCreate(
@@ -736,8 +757,9 @@ assert(m_d[m_drive].tmr_sector != nullptr);
     // advance to next sector, mod sectors per track
     prev_sec = m_d[drive].sector;
     m_d[drive].sector++;
-    if (m_d[drive].sector >= m_d[drive].sectors_per_track)
+    if (m_d[drive].sector >= m_d[drive].sectors_per_track) {
         m_d[drive].sector = 0;
+    }
 
     // check if an operation was pending on having passed the sector
     if (m_d[drive].secwait == prev_sec) {
@@ -758,8 +780,9 @@ bool
 IoCardDisk::wvdGetWriteProtect(const string &filename, bool *write_protect)
 {
     Wvd dsk;
-    if (!dsk.open(filename))
+    if (!dsk.open(filename)) {
         return false;
+    }
 
     *write_protect = dsk.getWriteProtect();
     dsk.close();
@@ -777,8 +800,9 @@ IoCardDisk::wvdGetDiskType(const int slot, const int drive, int *disktype)
 
     IoCardDisk *tthis = static_cast<IoCardDisk*>
                                 (System2200().getInstFromSlot(slot));
-    if (tthis->m_d[drive].state == DRIVE_EMPTY)
+    if (tthis->m_d[drive].state == DRIVE_EMPTY) {
         return false;
+    }
 
     *disktype = tthis->m_d[drive].wvd->getDiskType();
     return true;
@@ -797,8 +821,9 @@ IoCardDisk::wvdGetFilename(const int slot,
 
     IoCardDisk *tthis = static_cast<IoCardDisk*>
                                 (System2200().getInstFromSlot(slot));
-    if (tthis->m_d[drive].state == DRIVE_EMPTY)
+    if (tthis->m_d[drive].state == DRIVE_EMPTY) {
         return false;
+    }
 
     *filename = tthis->m_d[drive].wvd->getPath();
     return true;
@@ -823,20 +848,25 @@ IoCardDisk::wvdDriveStatus(int slot, int drive)
 
     int rv = 0; // default return value
 
-    if (drive < tthis->numDrives())
+    if (drive < tthis->numDrives()) {
         rv |= WVD_STAT_DRIVE_EXISTENT;
+    }
 
-    if (rv && tthis->m_d[drive].state != DRIVE_EMPTY)
+    if (rv && tthis->m_d[drive].state != DRIVE_EMPTY) {
         rv |= WVD_STAT_DRIVE_OCCUPIED;
+    }
 
-    if (rv && tthis->m_selected && (tthis->m_drive == drive))
+    if (rv && tthis->m_selected && (tthis->m_drive == drive)) {
         rv |= WVD_STAT_DRIVE_SELECTED;
+    }
 
-    if (rv && !tthis->inIdleState())
+    if (rv && !tthis->inIdleState()) {
         rv |= WVD_STAT_DRIVE_BUSY;
+    }
 
-    if (rv && tthis->m_d[drive].state != DRIVE_IDLE)
+    if (rv && tthis->m_d[drive].state != DRIVE_IDLE) {
         rv |= WVD_STAT_DRIVE_RUNNING;
+    }
 
     return rv;
 }
@@ -901,12 +931,14 @@ IoCardDisk::wvdFormatFile(const string &filename)
 {
     Wvd dsk;
     bool ok = dsk.open(filename);
-    if (!ok)
+    if (!ok) {
         return false;
+    }
 
     int num_platters = dsk.getNumPlatters();
-    for(int p=0; ok && p<num_platters; p++)
+    for(int p=0; ok && p<num_platters; p++) {
         ok = dsk.format(p);
+    }
 
     return ok;
 }
@@ -925,8 +957,9 @@ IoCardDisk::iwvdIsDiskIdle(int drive) const
     assert(drive >= 0 && drive < numDrives());
     assert(m_d[drive].state != DRIVE_EMPTY);
 
-    if (!m_selected || (m_drive != drive) || inIdleState())
+    if (!m_selected || (m_drive != drive) || inIdleState()) {
         return true;
+    }
 
     return UI_Confirm("This disk is in the middle of an operation.\n"
                       "Are you sure you want to do that?");
@@ -945,8 +978,9 @@ IoCardDisk::iwvdInsertDisk(int drive,
     sprintf(disk_loc, "%c/3%02X", ((drive & 1) ? 'R' : 'F'),
                      m_baseaddr + ((drive & 2) ? 0x40 : 0x00) );
     bool ok = m_d[drive].wvd->open(filename);
-    if (!ok)
+    if (!ok) {
         return false;
+    }
 
     // we check a few issues here.
     //
@@ -999,8 +1033,9 @@ IoCardDisk::iwvdInsertDisk(int drive,
                 "Either switch the disk controller configuration to be dumb,\n"
                 "or click \"Yes\" below to automatically clear these bits.",
                 disk_loc);
-            if (do_it)
+            if (do_it) {
                 (void)diskHasBit15Problem(m_d[drive].wvd, true);
+            }
         }
     }
 
@@ -1060,8 +1095,9 @@ IoCardDisk::iwvdWriteSector()
     assert(m_platter < m_d[m_drive].wvd->getNumPlatters());
     assert(m_secaddr < m_d[m_drive].wvd->getNumSectors());
 
-    if (DBG > 0)
+    if (DBG > 0) {
         dbglog(">> writing virtual sector %d, platter %d, drive %d <<\n", m_secaddr, m_platter, m_drive);
+    }
     return m_d[m_drive].wvd->writeSector(m_platter, m_secaddr, m_buffer);
 }
 
@@ -1075,14 +1111,16 @@ IoCardDisk::iwvdReadSector()
     assert(m_platter < m_d[m_drive].wvd->getNumPlatters());
     assert(m_secaddr < m_d[m_drive].wvd->getNumSectors());
 
-    if (DBG > 0)
+    if (DBG > 0) {
         dbglog(">> reading virtual sector %d, platter %d, drive %d <<\n", m_secaddr, m_platter, m_drive);
+    }
     bool ok = m_d[m_drive].wvd->readSector(m_platter, m_secaddr, m_buffer);
 
     // compute LRC
     int cksum = 0;
-    for(int i=0; i<256; i++)
+    for(int i=0; i<256; i++) {
         cksum += m_buffer[i];
+    }
     m_buffer[256] = (uint8)(cksum & 0xFF);      // LRC byte
 
     return ok;
@@ -1150,14 +1188,18 @@ IoCardDisk::getDiskGeometry(int disktype,
     }
 
     // return what the caller asked for
-    if (sectorsPerTrack != nullptr)
+    if (sectorsPerTrack != nullptr) {
         *sectorsPerTrack = sectors_per_track;
-    if (trackSeekMs != nullptr)
+    }
+    if (trackSeekMs != nullptr) {
         *trackSeekMs = track_seek_ms;
-    if (diskRpm != nullptr)
+    }
+    if (diskRpm != nullptr) {
         *diskRpm = disk_rpm;
-    if (interleave != nullptr)
+    }
+    if (interleave != nullptr) {
         *interleave = inter;
+    }
 }
 
 
@@ -1185,15 +1227,17 @@ platterHasValidCatalog(Wvd *wvd, int p)
     // get sector 0 of the platter;
     // the first 16 bytes contains info about the index/catalog structure
     bool ok = wvd->readSector(p, 0, secbuffer);
-    if (!ok)
+    if (!ok) {
         return false;
+    }
 
     // a catalog disk has a byte 0 of 0x00, 0x01, or 0x02
     // 0x02 means the disk is using long (24b) sector addresses,
     // which I've never personally seen and I presume never suffers
     // from this problem, so we can opt out quickly.
-    if (secbuffer[0] > 0x01)
+    if (secbuffer[0] > 0x01) {
         return false;
+    }
 
     // how many sectors are set aside for the catalog?
     const int index_sectors = secbuffer[1];
@@ -1204,20 +1248,23 @@ platterHasValidCatalog(Wvd *wvd, int p)
     // start of non-catalog sectors (SCRATCH DISK END=nnnn parameter)
     int end_sector          = (256*secbuffer[4] + secbuffer[5]) & 0x7fff;
 
-    if (first_unused_sector > end_sector)
+    if (first_unused_sector > end_sector) {
         return false;  // nonsense
+    }
 
     const int numSectors = wvd->getNumSectors();   // sectors/platter
-    if (first_unused_sector > numSectors)
+    if (first_unused_sector > numSectors) {
         return false;  // nonsense
+    }
 
     // sweep through the presumed index, and make sure the data looks
     // like a valid catalog index.  the first sector has 15 index entries,
     // and the others have 16.
     for(int idx=0; idx < index_sectors; idx++) {
         ok = wvd->readSector(p, idx, secbuffer);
-        if (!ok)
+        if (!ok) {
             return false;  // that isn't good!
+        }
         bool unused_seen = false;
         const int first_idxoff = (idx == 0) ? 1 : 0;
         for(int idxoff = first_idxoff; idxoff < 16; idxoff++) {
@@ -1230,18 +1277,22 @@ platterHasValidCatalog(Wvd *wvd, int p)
                 unused_seen = true;
                 continue;
             }
-            if (unused_seen)
+            if (unused_seen) {
                 return false;  // should only see unused entries at this point
+            }
 
-            if ((entry[0] != 0x10) && (entry[0] != 11) && (entry[0] != 0x21))
+            if ((entry[0] != 0x10) && (entry[0] != 11) && (entry[0] != 0x21)) {
                 return false;  // illegal state
+            }
 
             int file_first_sector = (256*entry[2] + entry[3]) & 0x7fff;
             int file_last_sector  = (256*entry[4] + entry[5]) & 0x7fff;
-            if (file_first_sector > file_last_sector)
+            if (file_first_sector > file_last_sector) {
                 return false;  // nonsense
-            if (file_last_sector >= numSectors)
+            }
+            if (file_last_sector >= numSectors) {
                 return false;  // nonsense
+            }
             // TODO: one other check that could be done here is to read the
             //       final sector of the file, grab the count of used sectors,
             //       and make sure it is consistent with the file size.
@@ -1263,8 +1314,9 @@ IoCardDisk::platterHasBit15Problem(Wvd *wvd, int p, bool fix_it)
     // get sector 0 of the platter;
     // the first 16 bytes contains info about the index/catalog structure
     bool ok = wvd->readSector(p, 0, secbuffer);
-    if (!ok)
+    if (!ok) {
         return false;
+    }
 
     // how many sectors are set aside for the catalog?
     const int index_sectors = secbuffer[1];
@@ -1278,8 +1330,9 @@ IoCardDisk::platterHasBit15Problem(Wvd *wvd, int p, bool fix_it)
             secbuffer[2] &= 0x7f;  // msb of first unused sector location
             secbuffer[4] &= 0x7f;  // msb of SCRATCH DISK END=nnnn parameter
             ok = wvd->writeSector(p, 0, secbuffer);
-            if (!ok)
+            if (!ok) {
                 return true;
+            }
         }
     }
 
@@ -1288,8 +1341,9 @@ IoCardDisk::platterHasBit15Problem(Wvd *wvd, int p, bool fix_it)
     for(int idx=0; idx < index_sectors; idx++) {
 
         ok = wvd->readSector(p, idx, secbuffer);
-        if (!ok)
+        if (!ok) {
             return false;  // that isn't good!
+        }
 
         bool sector_modified = false;
 
@@ -1300,8 +1354,9 @@ IoCardDisk::platterHasBit15Problem(Wvd *wvd, int p, bool fix_it)
             // valid (0x10), scratched (0x11), or reclaimed (0x21).
             // any other value is a problem.  also, once an unused entry is
             // seen, the remaining entries should also be unused.
-            if (entry[0] == 0x00)
+            if (entry[0] == 0x00) {
                 continue;
+            }
 
             // if the first or last sector address >= 0x8000, the problem exists
             if ((entry[2] >= 0x80) || (entry[4] >= 0x80)) {
@@ -1314,8 +1369,9 @@ IoCardDisk::platterHasBit15Problem(Wvd *wvd, int p, bool fix_it)
 
         if (sector_modified && fix_it) {
             ok = wvd->writeSector(p, idx, secbuffer);
-            if (!ok)
+            if (!ok) {
                 return true;
+            }
         }
     }
 
@@ -1332,15 +1388,17 @@ IoCardDisk::diskHasBit15Problem(Wvd *wvd, bool fix_it)
     const int numSectors  = wvd->getNumSectors();   // sectors/platter
 
     // large disks don't have this problem
-    if ((numPlatters > 1) || (numSectors > 32768))
+    if ((numPlatters > 1) || (numSectors > 32768)) {
         return false;
+    }
 
     bool has_problem = false;
 
     for(int p=0; p<numPlatters; p++) {
         bool has_catalog = platterHasValidCatalog(wvd, p);
-        if (has_catalog)
+        if (has_catalog) {
             has_problem |= platterHasBit15Problem(wvd, p, fix_it);
+        }
     }
 
     return has_problem;

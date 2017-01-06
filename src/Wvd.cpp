@@ -88,8 +88,9 @@ Wvd::open(const string &filename)
     // set up a file handle
     m_file = new fstream(filename.c_str(),
                          fstream::in | fstream::out | fstream::binary );
-    if (!m_file)
+    if (!m_file) {
         return false;
+    }
 
     if (!m_file->good()) {
         UI_Error("Couldn't open file '%s'", m_path.c_str());
@@ -103,8 +104,9 @@ Wvd::open(const string &filename)
 
     bool ok = readHeader();
 // don't need to raise alarm, since readHeader() already did
-//  if (!ok)
+//  if (!ok) {
 //      UI_Info("Error opening file", filename.c_str());
+//  }
     m_metadataStale = !ok;
 
     return ok;
@@ -116,8 +118,9 @@ void
 Wvd::close()
 {
     if (m_file != nullptr) {
-        if (m_file->is_open())
+        if (m_file->is_open()) {
             m_file->close();
+        }
         delete m_file;
         m_file = nullptr;
     }
@@ -291,8 +294,9 @@ void
 Wvd::flush()
 {
     if (m_file != nullptr) {
-        if (m_file->is_open())
+        if (m_file->is_open()) {
             m_file->flush();
+        }
         m_file->close();
         m_metadataStale = true;
     }
@@ -308,10 +312,11 @@ Wvd::save()
     assert(!m_path.empty());
 
     if (isModified()) {
-        if (writeHeader())
+        if (writeHeader()) {
             setModified(false);
-        else
+        } else {
             UI_Error("Error: operation failed");
+        }
     }
 }
 
@@ -323,10 +328,11 @@ Wvd::save(const string &filename)
     assert(!filename.empty());
     assert(!m_hasPath);
 
-    if (createFile(filename))
+    if (createFile(filename)) {
         setModified(false);
-    else
+    } else {
         UI_Error("Error: operation failed");
+    }
 }
 
 // -------------------------------------------------------------------------
@@ -350,8 +356,9 @@ Wvd::rawWriteSector(const int sector, const uint8 *data)
         for(int i=0; i<256; i+=16) {
             char str[200];
             sprintf(str, "%02X:", i);
-            for(int ii=0; ii<16; ii++)
+            for(int ii=0; ii<16; ii++) {
                 sprintf(str+3+3*ii, " %02X", data[i+ii]);
+            }
             dbglog("%s\n", str);
         }
     }
@@ -413,8 +420,9 @@ Wvd::rawReadSector(const int sector, const uint8 *data)
         for(int i=0; i<256; i+=16) {
             char str[200];
             sprintf(str, "%02X:", i);
-            for(int ii=0; ii<16; ii++)
+            for(int ii=0; ii<16; ii++) {
                 sprintf(str+3+3*ii, " %02X", data[i+ii]);
+            }
             dbglog("%s\n", str);
         }
     }
@@ -523,8 +531,9 @@ Wvd::readHeader()
 
     uint8 data[256];
     bool ok = rawReadSector(0, data);
-    if (!ok)
+    if (!ok) {
         return false;
+    }
 
     // check magic
     if (data[0] != 'W' ||
@@ -593,8 +602,9 @@ Wvd::format(const int platter)
     memset(data, (uint8)0x00, 256);
 
     bool ok = true;
-    for(int n=0; ok && n<m_numPlatterSectors; n++)
+    for(int n=0; ok && n<m_numPlatterSectors; n++) {
         ok = writeSector(platter, n, data);
+    }
 
     return ok;
 }
@@ -616,8 +626,9 @@ Wvd::createFile(const string &filename)
     // create the file if it doesn't exist; erase if it does
     m_file = new fstream(filename.c_str(),
                  fstream::in | fstream::out | fstream::trunc | fstream::binary);
-    if (!m_file)
+    if (!m_file) {
         return false;
+    }
 
     if (!m_file->good()) {
         UI_Error("Couldn't create file '%s'", m_path.c_str());
@@ -628,8 +639,9 @@ Wvd::createFile(const string &filename)
 
     bool ok = writeHeader();
     if (ok) {
-        for(int p=0; ok && p<m_numPlatters; p++)
+        for(int p=0; ok && p<m_numPlatters; p++) {
             ok = format(p);
+        }
     }
 
     return ok;

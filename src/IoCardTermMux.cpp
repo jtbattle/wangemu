@@ -124,8 +124,9 @@ IoCardTermMux::select()
 {
     m_io_offset = (m_cpu->getAB() & 7);
 
-    if (NOISY)
+    if (NOISY) {
         UI_Info("TermMux ABS %02x+%1x", m_baseaddr, m_io_offset);
+    }
 
     // if the card is ever addressed at 01 or 05, the controller
     // drops back into vp mode. (2236MXE_Documentation.8-83.pdf, p4)
@@ -175,8 +176,9 @@ m_card_busy = false;  // FIXME
 void
 IoCardTermMux::deselect()
 {
-    if (NOISY)
+    if (NOISY) {
         UI_Info("TermMux -ABS %02x+%1x", m_baseaddr, m_io_offset);
+    }
 
     m_selected = false;
     m_cpb      = true;
@@ -186,8 +188,9 @@ void
 IoCardTermMux::OBS(int val)
 {
     val &= 0xFF;
-    if (NOISY)
+    if (NOISY) {
         UI_Info("TermMux OBS: byte 0x%02x", val);
+    }
 
     // NOTE: the hardware latches m_io_offset into another latch now.
     // I believe the reason is that say the board is addressed at offset 6.
@@ -214,8 +217,9 @@ void
 IoCardTermMux::CBS(int val)
 {
     val &= 0xFF;
-    if (NOISY)
+    if (NOISY) {
         UI_Info("TermMux CBS: 0x%02x", val);
+    }
 
     // NOTE: the hardware latches m_io_offset into another latch now.
     // see the explanation in ::OBS()
@@ -247,8 +251,9 @@ IoCardTermMux::CPB(bool busy)
 {
     // it appears that except for reset, ucode only ever clears it,
     // and of course the IBS sets it back.
-    if (NOISY)
+    if (NOISY) {
         UI_Info("TermMux CPB%c", busy ? '+' : '-');
+    }
 
     m_cpb = busy;
     m_cpu->setDevRdy(!m_card_busy);
@@ -270,8 +275,9 @@ IoCardTermMux::CPB(bool busy)
                 //IBS_06(val);
                 break;
             default:
-                if (NOISY)
+                if (NOISY) {
                     UI_Info("TermMux CPB %02 is not expected", m_io_offset);
+                }
                 break;
         }
     }
@@ -286,10 +292,11 @@ IoCardTermMux::check_keyready()
 //      if (m_term.key_ready && !m_cpb) {
 //          // we can't return IBS right away -- apparently there
 //          // must be some delay otherwise the handshake breaks
-//          if (!m_tmr_script)
+//          if (!m_tmr_script) {
 //              m_tmr_script = m_scheduler->TimerCreate(
 //                      TIMER_US(50),     // 30 is OK, 20 is too little
 //                      std::bind(&IoCardKeyboard::tcbScript, this) );
+//          }
 //      }
         m_cpu->setDevRdy(m_term.io1_key_ready);
     }
@@ -315,11 +322,13 @@ IoCardTermMux::receiveKeystroke(int keycode)
     }
 
     // ignore subsequent keys if one is already pending
-    if (m_vp_mode && m_term.io1_key_ready)
+    if (m_vp_mode && m_term.io1_key_ready) {
         return;
+    }
 
-//  if (tthis->m_script_handle)
+//  if (tthis->m_script_handle) {
 //      return;         // ignore any other keyboard if script is in progress
+//  }
 
     if (m_io_offset == 1) {
         // let CPU know we have a key
@@ -344,23 +353,26 @@ IoCardTermMux::receiveKeystroke(int keycode)
 void
 IoCardTermMux::OBS_01(int val)
 {
-    if (NOISY)
+    if (NOISY) {
         UI_Warn("unexpected TermMux OBS 01: 0x%02x", val);
+    }
 }
 
 void
 IoCardTermMux::OBS_02(int val)
 {
-    if (NOISY)
+    if (NOISY) {
         UI_Warn("unexpected TermMux OBS 02: 0x%02x; this is a status port", val);
+    }
     return;
 }
 
 void
 IoCardTermMux::OBS_03(int val)
 {
-    if (NOISY)
+    if (NOISY) {
         UI_Warn("unexpected TermMux OBS 03: 0x%02x (MXE only)", val);
+    }
 }
 
 // send bytes to printer attached to the currently selected terminal
@@ -379,8 +391,9 @@ IoCardTermMux::OBS_04(int val)
 void
 IoCardTermMux::OBS_05(int val)
 {
-    if (NOISY)
+    if (NOISY) {
         UI_Info("TermMux vp_mode OBS 05: byte 0x%02x", val);
+    }
 
     // FIXME: these should probably go into keyboard_buf (if not full)
     // and then some timer-based mechansim would be used to drain them
@@ -489,8 +502,9 @@ IoCardTermMux::OBS_06(int val)
 
         default:
             // unexpected -- the real hardware ignores this byte
-            if (NOISY)
+            if (NOISY) {
                 UI_Warn("unexpected TermMux CBS: 0x%02x", val);
+            }
             break;
     }
 }
@@ -514,38 +528,43 @@ void
 IoCardTermMux::CBS_01(int val)
 {
     // unexpected -- the real hardware ignores this byte
-    if (NOISY)
+    if (NOISY) {
         UI_Warn("unexpected TermMux CBS 01: 0x%02x", val);
+    }
 }
 
 void
 IoCardTermMux::CBS_02(int val)
 {
-    if (NOISY)
+    if (NOISY) {
         UI_Warn("unexpected TermMux CBS 02: 0x%02x; this is a status port", val);
+    }
 }
 
 void
 IoCardTermMux::CBS_03(int val)
 {
-    if (NOISY)
+    if (NOISY) {
         UI_Warn("unexpected TermMux CBS 03: 0x%02x (MXE only)", val);
+    }
 }
 
 void
 IoCardTermMux::CBS_04(int val)
 {
     // unexpected -- the real hardware ignores this byte
-    if (NOISY)
+    if (NOISY) {
         UI_Warn("unexpected TermMux CBS 04: 0x%02x", val);
+    }
 }
 
 void
 IoCardTermMux::CBS_05(int val)
 {
     // unexpected -- the real hardware ignores this byte
-    if (NOISY)
+    if (NOISY) {
         UI_Warn("unexpected TermMux CBS 05: 0x%02x", val);
+    }
 }
 
 // CBS to port 6 begins a control command sequence
@@ -710,8 +729,9 @@ IoCardTermMux::CBS_06(int val)
 
         // unknown/unsupported by MXD mux
         default:
-            if (NOISY)
+            if (NOISY) {
                 UI_Warn("unexpected TermMux CBS: 0x%02x", val);
+            }
             break;
     }
 }
@@ -722,8 +742,9 @@ IoCardTermMux::CBS_07(int val)
     val = val;
 
     // unexpected -- the real hardware ignores this byte
-    if (NOISY)
+    if (NOISY) {
         UI_Warn("unexpected TermMux CBS 07: byte 0x%02x", val);
+    }
 }
 
 

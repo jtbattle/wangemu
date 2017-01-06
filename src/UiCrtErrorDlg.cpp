@@ -120,10 +120,12 @@ CrtErrorDlg::CrtErrorDlg( wxWindow *parent,
     int screen_w = wxSystemSettings::GetMetric(wxSYS_SCREEN_X);
     int screen_h = wxSystemSettings::GetMetric(wxSYS_SCREEN_Y);
     // check bottom right
-    if (dlg_rect.GetBottom() > screen_h-1)
+    if (dlg_rect.GetBottom() > screen_h-1) {
         dlg_rect.Offset(0, screen_h-1 - dlg_rect.GetBottom());
-    if (dlg_rect.GetRight() > screen_w-1)
+    }
+    if (dlg_rect.GetRight() > screen_w-1) {
         dlg_rect.Offset(screen_w-1 - dlg_rect.GetRight(), 0);
+    }
     Move(dlg_rect.GetX(), dlg_rect.GetY());
 }
 
