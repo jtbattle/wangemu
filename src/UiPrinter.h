@@ -185,7 +185,7 @@ class Printout : public wxPrintout
 {
 public:
     CANT_ASSIGN_OR_COPY_CLASS(Printout);
-    Printout(wxChar *title, Printer *printer);
+    Printout(wxChar *title, std::shared_ptr<Printer> printer);
 
     // ---- event handlers ----
     bool OnPrintPage(int page);
@@ -195,7 +195,7 @@ public:
     void GetPageInfo(int *minPage, int *maxPage, int *selPageFrom, int *selPageTo);
 
 private:
-    Printer *m_printer;
+    std::shared_ptr<Printer> m_printer;
 };
 
 #endif _INCLUDE_UI_PRINTER_H_

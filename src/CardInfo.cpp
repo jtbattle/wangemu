@@ -7,10 +7,9 @@ CardInfo::getCardTypeFromName(const string &name)
 {
     for(int i=0; i<(int)IoCard::NUM_CARDTYPES; i++) {
         IoCard::card_t ii = static_cast<IoCard::card_t>(i);
-        IoCard *tmpcard = IoCard::makeTmpCard(ii);
+        std::unique_ptr<IoCard> tmpcard(IoCard::makeTmpCard(ii));
         assert(tmpcard != nullptr);
         string thisname = tmpcard->getName();
-        delete tmpcard;
         if (name == thisname) {
             return ii;
         }
@@ -24,9 +23,8 @@ string
 CardInfo::getCardName(IoCard::card_t cardtype)
 {
     assert(cardtype == IoCard::card_t::none || IoCard::legal_card_t(cardtype));
-    IoCard *tmpcard = IoCard::makeTmpCard(cardtype);
+    std::unique_ptr<IoCard> tmpcard(IoCard::makeTmpCard(cardtype));
     string name = tmpcard->getName();
-    delete tmpcard;
     return name;
 }
 
@@ -36,9 +34,8 @@ string
 CardInfo::getCardDesc(IoCard::card_t cardtype)
 {
     assert(cardtype == IoCard::card_t::none || IoCard::legal_card_t(cardtype));
-    IoCard *tmpcard = IoCard::makeTmpCard(cardtype);
+    std::unique_ptr<IoCard> tmpcard(IoCard::makeTmpCard(cardtype));
     string desc = tmpcard->getDescription();
-    delete tmpcard;
     return desc;
 }
 
@@ -48,10 +45,9 @@ vector<int>
 CardInfo::getCardBaseAddresses(IoCard::card_t cardtype)
 {
     assert(cardtype == IoCard::card_t::none || IoCard::legal_card_t(cardtype));
-    IoCard *tmpcard = IoCard::makeTmpCard(cardtype);
+    std::unique_ptr<IoCard> tmpcard(IoCard::makeTmpCard(cardtype));
 
     vector<int> addresses( tmpcard->getBaseAddresses() );
-    delete tmpcard;
     return addresses;
 }
 
@@ -61,9 +57,8 @@ bool
 CardInfo::isCardConfigurable(IoCard::card_t cardtype)
 {
     assert(cardtype == IoCard::card_t::none || IoCard::legal_card_t(cardtype));
-    IoCard *tmpcard = IoCard::makeTmpCard(cardtype);
+    std::unique_ptr<IoCard> tmpcard(IoCard::makeTmpCard(cardtype));
     bool rv = tmpcard->isConfigurable();
-    delete tmpcard;
     return rv;
 }
 
@@ -73,9 +68,8 @@ CardCfgState*
 CardInfo::getCardCfgState(IoCard::card_t cardtype)
 {
     assert(cardtype == IoCard::card_t::none || IoCard::legal_card_t(cardtype));
-    IoCard *tmpcard = IoCard::makeTmpCard(cardtype);
+    std::unique_ptr<IoCard> tmpcard(IoCard::makeTmpCard(cardtype));
     CardCfgState *rv = tmpcard->getCfgState();
-    delete tmpcard;
     return rv;
 }
 

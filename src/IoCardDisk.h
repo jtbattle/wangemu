@@ -19,7 +19,8 @@ public:
     CANT_ASSIGN_OR_COPY_CLASS(IoCardDisk);
 
     // ----- common IoCard functions -----
-    IoCardDisk(Scheduler &scheduler, Cpu2200 &cpu,
+    IoCardDisk(std::shared_ptr<Scheduler> scheduler,
+               std::shared_ptr<Cpu2200>   cpu,
                int baseaddr,        // eg 0x310, 0x320, 0x330
                int cardslot,        // which backplane slot this card is in
                const CardCfgState *cfg);
@@ -165,8 +166,8 @@ private:
     bool warnMismatch() { return m_cfg.getWarnMismatch(); }
 
     DiskCtrlCfgState m_cfg;         // current configuration
-    Scheduler &m_scheduler;         // system event scheduler
-    Cpu2200   &m_cpu;               // associated CPU
+    std::shared_ptr<Scheduler> m_scheduler;  // system event scheduler
+    std::shared_ptr<Cpu2200>   m_cpu;        // associated CPU
     const int  m_baseaddr;          // the address the card is mapped to
     const int  m_slot;              // which slot the card sits in
     bool       m_selected;          // this card is being addressed

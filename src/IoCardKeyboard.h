@@ -14,7 +14,8 @@ public:
     CANT_ASSIGN_OR_COPY_CLASS(IoCardKeyboard);
 
     // ----- common IoCard functions -----
-    IoCardKeyboard(Scheduler &scheduler, Cpu2200 &cpu,
+    IoCardKeyboard(std::shared_ptr<Scheduler> scheduler,
+                   std::shared_ptr<Cpu2200>   cpu,
                    int baseaddr, int cardslot);
     ~IoCardKeyboard();
 
@@ -60,16 +61,17 @@ private:
     // test if any key is ready to accept
     void check_keyready();
 
-    Scheduler  &m_scheduler;      // shared event scheduler
+    std::shared_ptr<Scheduler> m_scheduler;  // shared event scheduler
+    std::shared_ptr<Cpu2200>   m_cpu;        // associated CPU
     spTimer     m_tmr_script;     // keystrokes are sent a few 10s of uS after !CPB
-    Cpu2200    &m_cpu;            // associated CPU
     const int   m_baseaddr;       // the address the card is mapped to
     const int   m_slot;           // which slot the card is plugged into
     bool        m_selected;       // this card is being addressed
     bool        m_cpb;            // 1=CPU busy (not accepting IBS input)
     bool        m_key_ready;      // key_code is valid
     int         m_key_code;       // keycode of most recently received keystroke
-    ScriptFile *m_script_handle;  // ID of which script stream we're processing
+    std::unique_ptr<ScriptFile>
+                m_script_handle;  // ID of which script stream we're processing
 };
 
 

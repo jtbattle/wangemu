@@ -16,7 +16,8 @@
 
 
 // instance constructor
-IoCardTermMux::IoCardTermMux(Cpu2200 &cpu, int baseaddr, int cardslot) :
+IoCardTermMux::IoCardTermMux(std::shared_ptr<Cpu2200> cpu,
+                             int baseaddr, int cardslot) :
     m_cpu(cpu),
     m_baseaddr(baseaddr),
     m_slot(cardslot),
@@ -121,7 +122,7 @@ IoCardTermMux::reset(bool hard_reset)
 void
 IoCardTermMux::select()
 {
-    m_io_offset = (m_cpu.getAB() & 7);
+    m_io_offset = (m_cpu->getAB() & 7);
 
     if (NOISY)
         UI_Info("TermMux ABS %02x+%1x", m_baseaddr, m_io_offset);
@@ -168,7 +169,7 @@ m_card_busy = false;  // FIXME
             m_card_busy = true;  // FIXME
             break;
     }
-    m_cpu.setDevRdy(!m_card_busy);
+    m_cpu->setDevRdy(!m_card_busy);
 }
 
 void
@@ -206,7 +207,7 @@ IoCardTermMux::OBS(int val)
         case 7: OBS_07(val); break;
     }
 
-    m_cpu.setDevRdy(!m_card_busy);
+    m_cpu->setDevRdy(!m_card_busy);
 }
 
 void
@@ -250,7 +251,7 @@ IoCardTermMux::CPB(bool busy)
         UI_Info("TermMux CPB%c", busy ? '+' : '-');
 
     m_cpb = busy;
-    m_cpu.setDevRdy(!m_card_busy);
+    m_cpu->setDevRdy(!m_card_busy);
 
     if (!busy) {
         // the CPU is waiting for an IBS (input byte strobe)
@@ -258,7 +259,7 @@ IoCardTermMux::CPB(bool busy)
             case 1:
                 check_keyready();
                 if (m_term.io1_key_ready) {
-                    m_cpu.IoCardCbIbs(m_term.io1_key_code);
+                    m_cpu->IoCardCbIbs(m_term.io1_key_code);
                     m_term.io1_key_ready = false;
                 }
                 break;
@@ -286,11 +287,11 @@ IoCardTermMux::check_keyready()
 //          // we can't return IBS right away -- apparently there
 //          // must be some delay otherwise the handshake breaks
 //          if (!m_tmr_script)
-//              m_tmr_script = m_scheduler.TimerCreate(
+//              m_tmr_script = m_scheduler->TimerCreate(
 //                      TIMER_US(50),     // 30 is OK, 20 is too little
 //                      std::bind(&IoCardKeyboard::tcbScript, this) );
 //      }
-        m_cpu.setDevRdy(m_term.io1_key_ready);
+        m_cpu->setDevRdy(m_term.io1_key_ready);
     }
 }
 
@@ -306,11 +307,10 @@ IoCardTermMux::receiveKeystroke(int keycode)
 //      if (tthis->m_script_handle) {
 //          // cancel any script in progress
 //          tthis->m_tmr_script = nullptr;
-//          delete tthis->m_script_handle;
 //          tthis->m_script_handle = nullptr;
 //          tthis->m_01_key_ready  = false;
 //      }
-        m_cpu.halt();
+        m_cpu->halt();
         return;
     }
 
@@ -324,7 +324,7 @@ IoCardTermMux::receiveKeystroke(int keycode)
     if (m_io_offset == 1) {
         // let CPU know we have a key
         m_card_busy = false;
-        m_cpu.setDevRdy(!m_card_busy);
+        m_cpu->setDevRdy(!m_card_busy);
     }
     if (m_cpb) {
         // store it until CPU is ready for it
@@ -332,7 +332,7 @@ IoCardTermMux::receiveKeystroke(int keycode)
         m_term.io1_key_ready = true;
     } else {
         // cpu is waiting for input, so send it now
-        m_cpu.IoCardCbIbs(keycode);
+        m_cpu->IoCardCbIbs(keycode);
         m_term.io1_key_ready = false;
     }
 }
@@ -386,7 +386,7 @@ IoCardTermMux::OBS_05(int val)
     // and then some timer-based mechansim would be used to drain them
     // at baud rate
     UI_displayChar(m_term.wndhnd, (uint8)val);
-    m_cpu.setDevRdy(!m_card_busy);
+    m_cpu->setDevRdy(!m_card_busy);
 }
 
 void

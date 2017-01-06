@@ -79,13 +79,13 @@ private:
     void SetDiskIcon(const int slot, const int drive);
 
     CrtFrame * const m_parent;
-    wxCheckBox     *m_keyword_ctl;      // set = "Keyword/A", unset = "A/a"
-    wxStaticText   *m_disklabel[2*MAX_DISK_CONTROLLERS]; // eg "310:"
+    std::unique_ptr<wxCheckBox>   m_keyword_ctl;      // set = "Keyword/A", unset = "A/a"
+    std::unique_ptr<wxStaticText> m_disklabel[2*MAX_DISK_CONTROLLERS]; // eg "310:"
     int             m_disklabel_xoff[2*MAX_DISK_CONTROLLERS];  // positioning
     MyStaticBitmap *m_diskicon[MAX_DISK_DRIVES];  // icon for disk state
     int             m_diskicon_xoff[MAX_DISK_DRIVES];  // positioning
     int             m_diskstate[MAX_DISK_DRIVES]; // which icon we are showing
-    wxBitmap       *m_icon_set;         // collection of images in one place
+    std::unique_ptr<wxBitmap> m_icon_set;         // collection of images in one place
 
     int  m_num_disk_controllers;                // number of disk controllers
     int  m_num_drives[MAX_DISK_CONTROLLERS];    // drives per controller

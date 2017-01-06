@@ -104,15 +104,14 @@ private:
 
     wxMenuBar   *m_menuBar;     // menubar on frame
     wxStatusBar *m_statusBar;   // status bar on frame
-    Printer     *m_printer;     // emulated Printer display window
+    std::shared_ptr<Printer> m_printer; // emulated Printer display window
 
     int m_fontsize;             // eg 8 for 8 pt, 12 for 12 pt, etc
     int m_printer_addr;         // we use this to track configuration options
     int m_previewzoom;          // zoom factor for page preview
 
-    wxPrintData *m_printData;                   // Print data
-//  wxPageSetupData* m_pageSetupData;           // Page setup data - this was in the sample. It works, but is wrong.
-    wxPageSetupDialogData *m_pageSetupData;     // Page setup data
+    std::shared_ptr<wxPrintData>           m_printData;     // Print data
+    std::shared_ptr<wxPageSetupDialogData> m_pageSetupData; // Page setup data
 
     DECLARE_EVENT_TABLE()
 };

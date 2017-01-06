@@ -64,11 +64,6 @@ ScriptFile::ScriptFile(const string &filename,
 
 ScriptFile::~ScriptFile()
 {
-    if (m_subscript) {
-        delete m_subscript;
-        m_subscript = nullptr;
-    }
-
     if (m_ifs) {
         delete m_ifs;
         m_ifs = nullptr;
@@ -391,7 +386,6 @@ ScriptFile::getNextByte(int *byte)
         // if we have a subscript running, listen to it
         if (m_subscript) {
             if (m_subscript->isEof()) {
-                delete m_subscript;
                 m_subscript = nullptr;
                 continue;  // retry using current script processing
             }
@@ -485,11 +479,11 @@ ScriptFile::getNextByte(int *byte)
                 }
 
                 // do include processing ...
-                m_subscript = new ScriptFile( abs_inc_fname, m_metaflags,
-                                              m_max_depth, m_cur_depth+1 );
+                m_subscript = std::make_unique<ScriptFile>(
+                                    abs_inc_fname, m_metaflags,
+                                    m_max_depth, m_cur_depth+1 );
 
                 if (!m_subscript->openedOk()) {
-                    delete m_subscript;
                     m_subscript = nullptr;
                     string location = getLineDescription();
                     string msg("Error opening file '" + abs_inc_fname +

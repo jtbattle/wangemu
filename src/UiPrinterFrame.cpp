@@ -195,10 +195,10 @@ PrinterFrame::PrinterFrame(const wxString& title, const int io_addr) :
     m_printer_addr = io_addr;   // we use this later during configuration
 
     //Printer support
-    m_printData = new wxPrintData;
-    m_pageSetupData = new wxPageSetupDialogData;
+    m_printData     = std::make_shared<wxPrintData>();
+    m_pageSetupData = std::make_shared<wxPageSetupDialogData>();
 
-    m_printer = new Printer(this);
+    m_printer = std::make_shared<Printer>(this);
     getDefaults();      // get configuration options, or supply defaults
     setMenuChecks();    // might need to disable some menu items
 
@@ -211,11 +211,12 @@ PrinterFrame::PrinterFrame(const wxString& title, const int io_addr) :
 // destructor
 PrinterFrame::~PrinterFrame()
 {
-    if (m_printer->getPrintasgo())
+    if (m_printer->getPrintasgo()) {
         printAndClear();        // print anything left in the printer
-    delete m_printer;           m_printer = nullptr;
-    delete m_pageSetupData;     m_pageSetupData = nullptr;
-    delete m_printData;         m_printData = nullptr;
+    }
+    m_printer       = nullptr;
+    m_pageSetupData = nullptr;
+    m_printData     = nullptr;
 }
 
 
@@ -615,7 +616,7 @@ PrinterFrame::OnPrint(wxCommandEvent& WXUNUSED(event))
     System2200 sys;
     sys.freezeEmu(true);
 
-    wxPrintDialogData printDialogData(* m_printData);
+    wxPrintDialogData printDialogData(*m_printData);
     wxPrinter printer(& printDialogData);
 
     Printout printout(_T(""), m_printer);
@@ -657,15 +658,15 @@ void
 PrinterFrame::OnPageSetup(wxCommandEvent& WXUNUSED(event))
 {
     (*m_pageSetupData) = *m_printData;
-    wxPageSetupDialog pageSetupDialog(this, m_pageSetupData);
+    wxPageSetupDialog pageSetupDialog(this, m_pageSetupData.get());
     pageSetupDialog.ShowModal();
 
-    (*m_printData) = pageSetupDialog.GetPageSetupData().GetPrintData();
+    (*m_printData)     = pageSetupDialog.GetPageSetupData().GetPrintData();
     (*m_pageSetupData) = pageSetupDialog.GetPageSetupData();
 
     // (re)set margins
     wxPoint point, point2;
-    point = m_pageSetupData->GetMarginTopLeft();
+    point  = m_pageSetupData->GetMarginTopLeft();
     point2 = m_pageSetupData->GetMarginBottomRight();
     m_printer->setMargins(point.x, point2.x, point.y, point2.y);
 
@@ -749,12 +750,12 @@ PrinterFrame::OnConfigureDialog(wxCommandEvent& WXUNUSED(event))
     int linelength, pagelength;
     m_printer->getPageAttributes(linelength, pagelength);
 
-    data->m_string_linelength = std::to_string(linelength);
-    data->m_string_pagelength = std::to_string(pagelength);
-    data->m_checkbox_autoshow = m_printer->getAutoshow();
-    data->m_checkbox_printasgo = m_printer->getPrintasgo();
+    data->m_string_linelength   = std::to_string(linelength);
+    data->m_string_pagelength   = std::to_string(pagelength);
+    data->m_checkbox_autoshow   = m_printer->getAutoshow();
+    data->m_checkbox_printasgo  = m_printer->getPrintasgo();
     data->m_checkbox_portdirect = m_printer->getPortdirect();
-    data->m_choice_portstring = m_printer->getPortstring();
+    data->m_choice_portstring   = m_printer->getPortstring();
 
     PrinterConfigDlg dialog(this, "Printer Configuration", data);
 
@@ -820,8 +821,9 @@ PrinterFrame::destroyWindow()
 void
 PrinterFrame::printAndClear()
 {
-    if (m_printer->isEmpty())
+    if (m_printer->isEmpty()) {
         return;
+    }
 
     System2200 sys;
     sys.freezeEmu(true);
@@ -829,7 +831,7 @@ PrinterFrame::printAndClear()
     // remember where the focus was so we can restore it
     wxWindow *winHasFocus = FindFocus();
 
-    wxPrintDialogData printDialogData(* m_printData);
+    wxPrintDialogData printDialogData(*m_printData);
     printDialogData.SetToPage(m_printer->numberOfPages());
     wxPrinter printer(& printDialogData);
 

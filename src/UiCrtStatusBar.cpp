@@ -138,7 +138,7 @@ CrtStatusBar::CrtStatusBar(CrtFrame *parent, bool shown) :
     int pane_widths[2+MAX_DISK_DRIVES+1];
     int pane_styles[2+MAX_DISK_DRIVES+1];
 
-    m_icon_set = new wxBitmap(icons_xpm);
+    m_icon_set = std::make_unique<wxBitmap>(icons_xpm);
 
     // determine how many disk controllers there are
     System2200 sys;
@@ -191,12 +191,12 @@ CrtStatusBar::CrtStatusBar(CrtFrame *parent, bool shown) :
         // make a label to indicate the base address associated with drives
         wxString label;
         label.Printf("3%02X:", io & 0xff);
-        m_disklabel[2*ctrl+0] = new wxStaticText( this, -1, label );
+        m_disklabel[2*ctrl+0] = std::make_unique<wxStaticText>( this, -1, label );
         wxSize label_size0  = m_disklabel[2*ctrl+0]->GetSize();
         int    label_width0 = label_size0.GetWidth();
 
         label.Printf("3%02X:", (io + 0x40) & 0xff);
-        m_disklabel[2*ctrl+1] = new wxStaticText( this, -1, label );
+        m_disklabel[2*ctrl+1] = std::make_unique<wxStaticText>( this, -1, label );
         wxSize label_size1  = m_disklabel[2*ctrl+1]->GetSize();
         int    label_width1 = label_size1.GetWidth();
         if (m_num_drives[ctrl] <= 2) {
@@ -279,7 +279,8 @@ CrtStatusBar::CrtStatusBar(CrtFrame *parent, bool shown) :
     // keywords or cap characters.  the OnSize handler will size it and
     // move it into position later.  this member should be set last as
     // some methods test it to know if initialization is done yet.
-    m_keyword_ctl = new wxCheckBox(this, ID_Keyword_Mode, "Keyword");
+    m_keyword_ctl = std::make_unique<wxCheckBox>(
+                            this, ID_Keyword_Mode, "Keyword");
 
     Show(shown);
 
@@ -355,12 +356,9 @@ CrtStatusBar::SetDiskIcon(const int slot, const int drive)
 
 CrtStatusBar::~CrtStatusBar()
 {
-    delete m_keyword_ctl;
     m_keyword_ctl = nullptr;
 
     for(int ctrl=0; ctrl<m_num_disk_controllers; ctrl++) {
-        delete m_disklabel[2*ctrl+0];
-        delete m_disklabel[2*ctrl+1];
         m_disklabel[2*ctrl+0] = nullptr;
         m_disklabel[2*ctrl+1] = nullptr;
         for(int drive=0; drive<m_num_drives[ctrl]; drive++) {
@@ -369,7 +367,6 @@ CrtStatusBar::~CrtStatusBar()
         }
     }
 
-    delete m_icon_set;
     m_icon_set = nullptr;
 }
 
@@ -378,8 +375,9 @@ CrtStatusBar::~CrtStatusBar()
 void
 CrtStatusBar::OnSize(wxSizeEvent &event)
 {
-    if (!m_keyword_ctl)
+    if (!m_keyword_ctl) {
         return;         // not initialized yet
+    }
 
     // controls must be relocated
     wxRect rect;

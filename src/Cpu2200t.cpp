@@ -1161,8 +1161,8 @@ Cpu2200t::exec_one_op()
     }
 
     // instruction ended normally
-    m_scheduler.TimerTick(16);  // all operations take 16 100ns ticks
-    return 16;                  // let event loop know
+    m_scheduler->TimerTick(16);  // all operations take 16 100ns ticks
+    return 16;                   // let event loop know
 }
 
 
@@ -1173,7 +1173,8 @@ Cpu2200t::exec_one_op()
 // create a CPU instance.
 // ramsize should be a multiple of 4.
 // subtype selects between the flavors of the cpu
-Cpu2200t::Cpu2200t(System2200 &sys, Scheduler &scheduler,
+Cpu2200t::Cpu2200t(System2200 &sys,
+                   std::shared_ptr<Scheduler> scheduler,
                    int ramsize, int cpu_subtype) :
     Cpu2200(),  // init base class
     m_sys(sys),

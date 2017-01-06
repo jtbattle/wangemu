@@ -90,7 +90,8 @@ static const int num_scanlines = 256;
 //     the m_thnd_hsync timer event.
 
 // instance constructor
-IoCardDisplay::IoCardDisplay(Scheduler &scheduler, Cpu2200 &cpu,
+IoCardDisplay::IoCardDisplay(std::shared_ptr<Scheduler> scheduler,
+                             std::shared_ptr<Cpu2200>   cpu,
                              int baseaddr, int cardslot, int size) :
     m_scheduler(scheduler),
     m_cpu(cpu),
@@ -184,7 +185,7 @@ IoCardDisplay::select()
         UI_Info("display ABS");
 
     m_selected = true;
-    m_cpu.setDevRdy(!m_card_busy);
+    m_cpu->setDevRdy(!m_card_busy);
 }
 
 void
@@ -223,7 +224,7 @@ IoCardDisplay::OBS(int val)
         }
     }
 
-    m_cpu.setDevRdy(!m_card_busy);
+    m_cpu->setDevRdy(!m_card_busy);
 }
 
 void
@@ -264,7 +265,7 @@ IoCardDisplay::CPB(bool busy)
     if (NOISY)
         UI_Info("display CPB%c", busy?'+':'-');
 
-    m_cpu.setDevRdy(!m_card_busy);
+    m_cpu->setDevRdy(!m_card_busy);
 }
 
 
@@ -287,7 +288,7 @@ IoCardDisplay::tcbHsync(int arg)
     }
 
     // retrigger the timer
-    m_thnd_hsync = m_scheduler.TimerCreate( new_period,
+    m_thnd_hsync = m_scheduler->TimerCreate( new_period,
                             std::bind(&IoCardDisplay::tcbHsync, this, arg) );
 
     // advance state machine
@@ -299,7 +300,7 @@ IoCardDisplay::tcbHsync(int arg)
         case busy_state::CHAR:
             m_card_busy = false;
             m_busy_state = busy_state::IDLE;
-            m_cpu.setDevRdy(true);
+            m_cpu->setDevRdy(true);
             break;
 
         case busy_state::CLEAR1:
@@ -310,7 +311,7 @@ IoCardDisplay::tcbHsync(int arg)
             if (m_hsync_count == 1) {    // vblank
                 m_card_busy = false;
                 m_busy_state = busy_state::IDLE;
-                m_cpu.setDevRdy(true);
+                m_cpu->setDevRdy(true);
             }
             break;
 
@@ -320,7 +321,7 @@ IoCardDisplay::tcbHsync(int arg)
         case busy_state::ROLL2:
             m_card_busy = false;
             m_busy_state = busy_state::IDLE;
-            m_cpu.setDevRdy(true);
+            m_cpu->setDevRdy(true);
             break;
 
         default:

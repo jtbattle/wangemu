@@ -2,6 +2,152 @@
 Emulator TODO list
 ============================================================================
 
+*) augment
+     if (foo)
+        return;
+   type statements with { }
+
+*) cpu2200{t,vp} holds a ref called m_sys which is a pointer back
+   to the system object.  it should be made a pointer to match
+   other things.  it didn't be a smart pointer, though, as the
+   thing it points to is a singleton.
+
+*) the Scheduler class callback list should hold std::weak_ptr to
+   the callback objects.  when the scheduling code needs to use such
+   a pointer, it should first test if it is .expired(), and if not,
+   then use .lock() to obtain a pointer to the object.
+
+   hmm, the problem is the callback isn't to a shared object; it is
+   typically a pointer to a member function of a shared object. this
+   would complicate the calling site.  there is the concept of a shared
+   pointer aliasing constructor, where the new pointer is to a member
+   of the shared object but uses the control block of the whole object.
+   but there doesn't seem to be a similar concept for weak pointers.
+
+   I asked for clarity on reddit and got these replies:
+      https://www.reddit.com/r/cpp/comments/5m037m/why_isnt_there_an_aliasing_constructor_for/
+
+   This exposes that things don't work in my own code as I claimed.
+   I thought that I explicitly Kill()'d all timers when I wanted to reconfigure
+   the world, but I don't.  System2200::breakdown_cards() just deletes the
+   objects.  That means that the objects aren't actually destroyed when I
+   think they are; they are destroyed when the scheduler is destroyed.
+
+*) I haven't really grasped the use and purpose of unique_ptr.
+   I still have a lot of raw pointers around, eg IoCard.cpp has a factory
+   which creates and returns IoCard* values.  But after reading a bit more,
+   the general practice should be to use unique_ptr just about everywhere,
+   and that functions get get passed a pointer are receiving a reference
+   to that unique pointer, eg
+        void inc_baz( std::unique_ptr<foo> &p )
+        {
+            p->baz++;
+        }
+   somefunction can use that object without grabbing the pointer ownership.
+   Also, when a function creates a unique pointer and returns it, the
+   return automatically is treated as a move (as it makes no sense to
+   retain ownership inside the function).
+
+   In
+        https://herbsutter.com/2013/05/30/gotw-90-solution-factories/
+   Herb Sutter says factory functions should return a unique_ptr<foo>
+   if the factory doesn't maintain any bookeeping knowledge of the
+   created object, or a shared_ptr<foo> if the factory has to keep
+   track of it for some reason. My card factory certainly doesn't.
+
+   But in "smart pointer parameters":
+        https://herbsutter.com/2013/06/05/gotw-91-solution-smart-pointer-parameters/
+   he says that in general function paramters should accept raw pointers
+   or references.  Using std::unique_ptr<foo>& unnecessarily restricts the
+   routine to only accepting one type of pointer, and the subroutine
+   (in general) shouldn't care about the ownership type.  That seems to
+   contradict this talk by Sutter (which is 3 years more recent):
+        https://www.youtube.com/watch?v=JfmTagWcqoE
+   That same video (at around 38:00) says that to avoid cycles, lower
+   levels of an ownership hierarcy shouldn't hold pointers to a higher level,
+   which is exactly what I do.  He says th fix is to store a weak_ptr to
+   the higher level.  (same with timer callbacks, most likely)
+   ...
+   hmm, because of timer callback, then it seems like I really don't have
+   a unique_ptr situation with cards (in general).
+
+   Right now shared_ptr is used in two places:
+     (1) "using spTimer = std::shared_ptr<Timer>;"
+     (2) UiCrt.h has "shared_ptr<wxSound> m_beep;"
+
+   http://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#a-namerr-smartptrparamar30-take-smart-pointers-as-parameters-only-to-explicitly-express-lifetime-semantics
+   which is dec 2016, so it should reflect latest thinking, is that
+   raw T* or T& should be used if the subroutine isn't changing ownership,
+   that is, it uses it but doesn't store a copy or need to reseat the
+   pointer.  Use std::shared_ptr<T> if the subroutine is going to keep
+   a copy, or std::unique_ptr<T> if it is going to take ownership.
+   http://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#a-namerr-sharedptrparam-ownerar34-take-a-sharedptrwidget-parameter-to-express-that-a-function-is-part-owner
+
+*) in the same talk (10 minutes in), Sutter says the PIMPL pointer should be
+     template<class T>
+     using Pimpl = const unique_ptr<T>;
+     ...
+     class MyClass {
+       class Impl;  // defined in .cpp
+       Pimpl<impl> pimpl;
+     }
+
+*) use smart pointers instead of raw pointers
+   !! look for "delete" occurrences; if these were smart pointers,
+   just setting the pointer to nullptr would automatically free the resource.
+   Convert these to unique_ptr or shared_ptr when it makes sense.
+
+    IoCardDisk.h
+        m_d[drive]
+    SysCfgState.h
+        m_slot[slot].cardCfg
+    System2200.h
+        m_cardInSlot[n]
+        m_cpu
+        m_scheduler
+        m_config
+
+*) continuing the above theme, the card factory has a really ugly feature.
+   what is the right & clean way to do this?
+        IoCard *
+        IoCard::makeTmpCard(card_t type)
+        {
+        // FIXME: this is sinful to pass 0 to a ref!
+            return makeCardImpl( *(Scheduler*)0, *(Cpu2200*)0, type, 0x000, -1,
+                                 (CardCfgState *)0 );
+        }
+   who uses makeTmpCard()?
+      CardInfo::getCardTypeFromName(const string &name)
+      CardInfo::getCardName(IoCard::card_t cardtype)
+      CardInfo::getCardDesc(IoCard::card_t cardtype)
+      CardInfo::getCardBaseAddresses(IoCard::card_t cardtype)
+      CardInfo::isCardConfigurable(IoCard::card_t cardtype)
+      CardInfo::isCardCfgState(IoCard::card_t cardtype)
+      SysCfgState::editCardConfig(int slot)
+
+   We could require that each IoCardFoo have static class functions
+   to return the above info, then make CardInfo have a case statement
+   to call the right one for each function above, but that is violating
+   DRY principles.
+
+   Making the cards hold a weak_ptr to cpu and scheduler is a bit better
+   than the existing scheme of setting them up with a nullptr reference,
+   which is supposed to be illegal (refs are never null).
+
+*) 10 PRINT HEX(07);:GOTO 10
+   RUN
+   doesn't make any sound and kind of hands. CTRL-C eventually stops it,
+   but it takes awhile.  Doing PRINT HEX(0707070707070707070707) sounds
+   the same as PRINT HEX(07).  Is there something in the hardware which
+   ensures a given HEX(07) takes at least a certain amount of time?
+   I would guess each HEX(07) triggers a one-shot which gates a 1KHz
+   oscillator, and subsequent HEX(07) will either retrigger the one-shot,
+   or are ignored.  check the schematic.  Then change the logic to match,
+   either by making the wav file play in a loop and then using a timer
+   event to schedule when to turn it off (perhaps canceling and rescheduling
+   if another hex 07 arrives), or by always letting it run to completion
+   and ignoring new hex(07) if one arrives while the previous is playing.
+
 *) None of the recent changes has been compiled on OSX, so most likely there
    will be problems.  Once the code is somewhat stable under windows,
    build it on OSX and iron out the problems.
@@ -235,27 +381,10 @@ independent address
       c) 2200MVP w/512KB RAM, printer, two disk drives, 2236 MXD, one term
       d) expert mode
 
-*) use smart pointers instead of raw pointers
-    std::shared_ptr<>, std::make_shared<>, std::unique_ptr<>
-        note: p464:
-            shared_ptr<int> p1 = new int(1234); // syntax error
-            shared_ptr<int> p2(new int(1234));  // OK
-        and I think this would work too:
-            shared_ptr<int> p3 = shared_ptr<int>(new int(1234));
-        or better yet,
-            shared_ptr<int> p3 = make_shared<int>(1234);  // I think
-
-   basically, look for "delete" occurrences; if these were smart pointers,
-   just setting the pointer to nullptr would automatically free the resource.
-
 *) do a memory leak check towards the end of development
 
     - installed Dr. Memory, seems easy to use, no source changes and does
       much more than just detecting leaks.  http://www.drmemory.org/
-    - why doesn't the wx leak logger work?
-	A: setup.h needs to flip on a number of defines too
-    - I've used visual leak detector in the past
-	http://vld.codeplex.com/
 
 *) Document how to work around this problem in the README.
 

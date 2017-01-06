@@ -1021,7 +1021,7 @@ Cpu2200vp::exec_one_op()
             // in the MVP CPU schematic.  if bits 3:2 are both one, the
             // 30 ms one shot gets retriggered.
             m_cpu.sh |= SH_MASK_30MS;     // one shot output rises
-            m_tmr_30ms = m_scheduler.TimerCreate( TIMER_MS(27),
+            m_tmr_30ms = m_scheduler->TimerCreate( TIMER_MS(27),
                                 std::bind(&Cpu2200vp::tcb30msDone, this) );
 // FIXME: if I set the timer to TIMER_MS(30), MVP Basic-2 2.6.2 reports
 //        the timeslice as being 36 ms.  what gives?
@@ -1387,7 +1387,7 @@ Cpu2200vp::exec_one_op()
     } // op
 
     // at this point we know how long each instruction is
-    m_scheduler.TimerTick(ticks);   // tell the scheduler that time has passed
+    m_scheduler->TimerTick(ticks);  // tell the scheduler that time has passed
     return ticks;
 }
 
@@ -1399,7 +1399,8 @@ Cpu2200vp::exec_one_op()
 // constructor
 // ramsize should be a multiple of 4.
 // subtype *must* be 2200VP, at least presently
-Cpu2200vp::Cpu2200vp(System2200 &sys, Scheduler &scheduler,
+Cpu2200vp::Cpu2200vp(System2200 &sys,
+                     std::shared_ptr<Scheduler> scheduler,
                      int ramsize, int cpu_subtype) :
     Cpu2200(),  // init base class
     m_sys(sys),

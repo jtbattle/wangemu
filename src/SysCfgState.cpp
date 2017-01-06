@@ -518,12 +518,8 @@ SysCfgState::configOk(bool warn) const
              (m_slot[slot].addr & 0xFF) == 0x00)
             pri_crt_found = true;
 
-        // FIXME: this is sinful to pass 0 to a ref! (three times!)
-        IoCard *slotInst = IoCard::makeCard(*(Scheduler*)0, *(Cpu2200*)0,
-                                            getSlotCardType(slot),
-                                            getSlotCardAddr(slot) & 0xFF,
-                                            -1, // just a dummy instance
-                                            (CardCfgState *)0);
+        IoCard *slotInst = IoCard::makeTmpCard(getSlotCardType(slot),
+                                               getSlotCardAddr(slot) & 0xFF);
         vector<int> slotAddresses = slotInst->getAddresses();
         delete slotInst;
 
@@ -533,12 +529,8 @@ SysCfgState::configOk(bool warn) const
             if (!isSlotOccupied(slot2))
                 continue;
 
-            // FIXME: this is sinful to pass 0 to a ref! (three times!)
-            IoCard *slot2Inst = IoCard::makeCard(*(Scheduler*)0, *(Cpu2200*)0,
-                                                 getSlotCardType(slot2),
-                                                 getSlotCardAddr(slot2) & 0xFF,
-                                                 -1, // just a dummy instance
-                                                 (CardCfgState *)0);
+            IoCard *slot2Inst = IoCard::makeTmpCard(getSlotCardType(slot2),
+                                                    getSlotCardAddr(slot2) & 0xFF);
             vector<int> slot2Addresses = slot2Inst->getAddresses();
             delete slot2Inst;
 
@@ -598,7 +590,7 @@ SysCfgState::needsReboot(const SysCfgState &other) const
              (m_slot[slot].addr & 0xFF) != (other.m_slot[slot].addr & 0xFF) )
             return true;
 
-        if ( (m_slot[slot].cardCfg != nullptr) &&
+        if ( (m_slot[slot].cardCfg) &&
               m_slot[slot].cardCfg->needsReboot(*other.m_slot[slot].cardCfg))
             return true;
     }

@@ -65,7 +65,7 @@ MyAboutDlg::MyAboutDlg(wxWindow *parent) :
 
     MyStaticText *version = new MyStaticText(this, wxID_ANY,
         "Wang 2200 Emulator\n"
-        "Version 2.2-pre; January 2, 2017");
+        "Version 2.2-pre; January 5, 2017");
     wxFont boldfont(*wxNORMAL_FONT);
     boldfont.SetPointSize(boldfont.GetPointSize() + 2);
     boldfont.SetWeight(wxFONTWEIGHT_BOLD);

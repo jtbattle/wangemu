@@ -5,6 +5,7 @@
 #define _INCLUDE_SCRIPT_H_
 
 #include <fstream>
+#include <memory>
 using std::ifstream;
 
 class ScriptFile
@@ -60,7 +61,7 @@ private:
 
     int         m_cur_line;     // current line of file (starts at 1)
 
-    ScriptFile *m_subscript;    // the file we are pending on (or 0 if none)
+    std::unique_ptr<ScriptFile> m_subscript;    // the file we are pending on (or 0 if none)
 
     // does necessary manipulations to read next line of text and sets flags
     void        m_prepare_next_line();

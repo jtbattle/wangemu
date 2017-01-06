@@ -66,7 +66,7 @@ Crt::Crt(CrtFrame *parent, int screen_type) :
     if (0) g_logger = new wxLogWindow(m_parent, "Logging window", true, false);
 
     create_beep();
-    if (m_beep == nullptr) {
+    if (!m_beep && false) {
         UI_Warn("Emulator was unable to create the beep sound.\n"
                 "HEX(07) will produce the host bell sound.");
     }
@@ -895,7 +895,7 @@ Crt::processChar3(uint8 byte)
             break;
 
         case 0x07:      // bell
-            if (m_beep == nullptr) {
+            if (!m_beep) {
                 wxBell();
             } else {
                 m_beep->Stop();

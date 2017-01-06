@@ -14,7 +14,8 @@
 #endif
 
 // instance constructor
-IoCardKeyboard::IoCardKeyboard(Scheduler &scheduler, Cpu2200 &cpu,
+IoCardKeyboard::IoCardKeyboard(std::shared_ptr<Scheduler> scheduler,
+                               std::shared_ptr<Cpu2200>   cpu,
                                int baseaddr, int cardslot) :
     m_scheduler(scheduler),
     m_tmr_script(nullptr),
@@ -72,11 +73,7 @@ void
 IoCardKeyboard::reset(bool hard_reset)
 {
     m_tmr_script = nullptr;
-
-    if (m_script_handle) {
-        delete m_script_handle;
-        m_script_handle = nullptr;
-    }
+    m_script_handle = nullptr;
 
     // reset card state
     m_selected  = false;
@@ -158,17 +155,17 @@ IoCardKeyboard::receiveKeystroke(int io_addr, int keycode)
     if (keycode & KEYCODE_HALT) {
         if (tthis->m_script_handle) {
             // cancel any script in progress
-            tthis->m_tmr_script = nullptr;
-            delete tthis->m_script_handle;
+            tthis->m_tmr_script    = nullptr;
             tthis->m_script_handle = nullptr;
             tthis->m_key_ready     = false;
         }
-        tthis->m_cpu.halt();
+        tthis->m_cpu->halt();
         return;
     }
 
-    if (tthis->m_script_handle)
+    if (tthis->m_script_handle) {
         return;         // ignore any other keyboard if script is in progress
+    }
 
     tthis->m_key_code  = keycode;
     tthis->m_key_ready = true;
@@ -190,7 +187,7 @@ IoCardKeyboard::script_mode(int io_addr)
         // this can happen during initialization when there are two keyboards
         return false;
     }
-    return (tthis->m_script_handle != 0);
+    return (!!tthis->m_script_handle);
 }
 
 
@@ -203,15 +200,15 @@ IoCardKeyboard::invoke_script(const int io_addr, const string &filename)
     IoCardKeyboard *tthis = static_cast<IoCardKeyboard*>
                                 (System2200().getInstFromIoAddr(io_addr));
     assert(tthis != nullptr);
-    assert(tthis->m_script_handle == 0);  // can't have two scripts to one kb
+    assert(!tthis->m_script_handle);  // can't have two scripts to one kb
 
     int flags = ScriptFile::SCRIPT_META_INC |
                 ScriptFile::SCRIPT_META_HEX |
                 ScriptFile::SCRIPT_META_KEY ;
-    tthis->m_script_handle = new ScriptFile( filename, flags, 3 /*max nesting*/);
+    tthis->m_script_handle = std::make_unique<ScriptFile>(
+                                filename, flags, 3 /*max nesting*/);
 
     if (!tthis->m_script_handle->openedOk()) {
-        delete tthis->m_script_handle;
         tthis->m_script_handle = nullptr;
         return false;
     }
@@ -231,10 +228,10 @@ IoCardKeyboard::tcbScript()
     if (m_selected) {
         assert(!m_cpb);
         if (m_key_ready) {
-            m_cpu.IoCardCbIbs(m_key_code);
+            m_cpu->IoCardCbIbs(m_key_code);
             m_key_ready = false;
         }
-        m_cpu.setDevRdy(m_key_ready);
+        m_cpu->setDevRdy(m_key_ready);
     }
 
     m_tmr_script = nullptr;
@@ -259,11 +256,11 @@ IoCardKeyboard::check_keyready()
             // we can't return IBS right away -- apparently there
             // must be some delay otherwise the handshake breaks
             if (!m_tmr_script)
-                m_tmr_script = m_scheduler.TimerCreate(
+                m_tmr_script = m_scheduler->TimerCreate(
                         TIMER_US(50),     // 30 is OK, 20 is too little
                         std::bind(&IoCardKeyboard::tcbScript, this) );
         }
-        m_cpu.setDevRdy(m_key_ready);
+        m_cpu->setDevRdy(m_key_ready);
     }
 }
 
@@ -273,7 +270,7 @@ IoCardKeyboard::check_keyready()
 void
 IoCardKeyboard::script_poll()
 {
-    if ((m_script_handle) && !m_key_ready) {
+    if (m_script_handle && !m_key_ready) {
         int ch;
         bool rc = m_script_handle->getNextByte(&ch);
         if (rc) {
@@ -282,7 +279,6 @@ IoCardKeyboard::script_poll()
             m_key_ready = true;
         } else {
             // EOF
-            delete m_script_handle;
             m_script_handle = nullptr;
             m_key_ready     = false;
         }

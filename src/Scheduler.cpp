@@ -122,6 +122,7 @@ Scheduler::Scheduler() :
 // free allocated data
 Scheduler::~Scheduler()
 {
+    // TODO: s this necessary? won't the vector container destroy all members?
     m_timer.clear();
 };
 

@@ -22,8 +22,8 @@
 bool Host::m_initialized = false;
 
 string        Host::m_app_home;            // path to application home directory
-wxFileConfig *Host::m_config = nullptr;    // configuration file object
-wxStopWatch  *Host::m_stopwatch = nullptr; // time program started
+std::unique_ptr<wxFileConfig> Host::m_config    = nullptr; // configuration file object
+std::unique_ptr<wxStopWatch>  Host::m_stopwatch = nullptr; // time program started
 
 // remember where certain files are located
 string Host::m_FileDir[FILEREQ_NUM];         // dir where files come from
@@ -88,7 +88,7 @@ Host::initMembers()
     m_app_home = string(exe_path.GetPath(wxPATH_GET_VOLUME));
 
 #ifdef __WXMSW__
-    m_config = new wxFileConfig(
+    m_config = std::make_unique<wxFileConfig>(
                         wxEmptyString,                  // appName
                         wxEmptyString,                  // vendorName
                         m_app_home + "\\wangemu.ini",   // localFilename
@@ -104,12 +104,12 @@ Host::initMembers()
   #else
     wxFileName init_path( stdp.GetUserConfigDir() + "/wangemu.ini" );
   #endif
-    m_config = new wxFileConfig("", "", ini_path.GetFullPath());
+    m_config = std::make_unique<wxFileConfig>("", "", ini_path.GetFullPath());
     wxConfigBase::Set(m_config);
 #endif
 
     // needed so we can compute a time difference to get ms later
-    m_stopwatch = new wxStopWatch();
+    m_stopwatch = std::make_unique<wxStopWatch>();
     m_stopwatch->Start(0);
 
     // default file locations
@@ -147,18 +147,17 @@ Host::initMembers()
 }
 
 
-// FIXME: does anything call this?
+// Host is a kind of singleton, and as such it isn't owned and thus isn't
+// destroyed by going out of scope.  Instead, TheApp::OnExit() calls this
+// from UiSystem.cpp.
 void
 Host::terminate()
 {
     if (m_config) {
         saveConfigFileLocations();
-        delete m_config;
-        m_config = nullptr;
-        delete m_stopwatch;
-        m_stopwatch = nullptr;
     }
-
+    m_config      = nullptr;
+    m_stopwatch   = nullptr;
     m_initialized = false;
 }
 
@@ -322,8 +321,9 @@ Host::ConfigReadWinGeom(wxWindow *wxwin,
 
     if (!b) {
         // the specified geometry was bad; use the supplied default
-        if (default_geom == nullptr)
+        if (!default_geom) {
             return;     // nothing we can do
+        }
         x = default_geom->GetX();
         y = default_geom->GetY();
         w = default_geom->GetWidth();
@@ -337,8 +337,9 @@ Host::ConfigReadWinGeom(wxWindow *wxwin,
     // if origin is off screen, move it on screen
     if (x < 0) { x = 0; }
     if (y < 0) { y = 0; }
-    if ((x > screen_w-4) || (y > screen_h-4))   // at least a tiny nub must show
+    if ((x > screen_w-4) || (y > screen_h-4)) {  // at least a tiny nub must show
         return;
+    }
 
     // don't let the window be bigger than the screen
     if (w > screen_w)

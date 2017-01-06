@@ -73,7 +73,9 @@ class Cpu2200t: public Cpu2200
 public:
     CANT_ASSIGN_OR_COPY_CLASS(Cpu2200t);
     // ---- see base class for description of these members: ----
-    Cpu2200t(System2200 &sys, Scheduler &scheduler, int ramsize, int subtype);
+    Cpu2200t(System2200 &sys,
+             std::shared_ptr<Scheduler> scheduler,
+             int ramsize, int subtype);
     ~Cpu2200t();
     int   getCpuType() const;
     int   getRamSize() const;
@@ -125,7 +127,7 @@ private:
     // ---- data members ----
 
     System2200 &m_sys;          // pointer back to system services
-    Scheduler  &m_scheduler;    // shared system event scheduler
+    std::shared_ptr<Scheduler> m_scheduler;    // shared system event scheduler
     const int   m_cpuType;      // type cpu flavor, eg CPUTYPE_2200T
 
     // these shouldn't have to be changed; they are just symbolic defines
@@ -191,7 +193,9 @@ class Cpu2200vp: public Cpu2200
 public:
     CANT_ASSIGN_OR_COPY_CLASS(Cpu2200vp);
     // ---- see base class for description of these members: ----
-    Cpu2200vp(System2200 &sys, Scheduler &scheduler, int ramsize, int subtype);
+    Cpu2200vp(System2200 &sys,
+              std::shared_ptr<Scheduler> scheduler,
+              int ramsize, int subtype);
     ~Cpu2200vp();
     int   getCpuType() const;
     int   getRamSize() const;
@@ -244,7 +248,7 @@ private:
     // ---- data members ----
 
     System2200 &m_sys;          // pointer back to system services
-    Scheduler  &m_scheduler;    // shared system timing scheduler object
+    std::shared_ptr<Scheduler> m_scheduler;    // shared system timing scheduler object
     spTimer     m_tmr_30ms;     // time slice 30 ms one shot
 
     static const int MAX_RAM   = 512*1024; // max # bytes of main memory

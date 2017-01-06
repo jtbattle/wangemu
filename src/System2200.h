@@ -24,6 +24,7 @@ class IoCard;
 class SysCfgState;
 class Scheduler;
 
+// this is a singleton
 class System2200
 {
 public:
@@ -33,14 +34,11 @@ public:
 
     // because everything is static, we have to be told when
     // the sim is really starting and ending.
-    void initialize();  // T-0
+    void initialize();  // T -0
     void cleanup();     // Armageddon
 
     // give access to components
-    bool          cpuExists() { return  m_cpu != 0; }
-    Cpu2200&      cpu()       { return *m_cpu; }
-    SysCfgState&  config()    { return *m_config; }
-    Scheduler&    scheduler() { return *m_scheduler; };
+    const SysCfgState& config() { return *m_config; }
 
     // called whenever there is free time.  it returns true
     // if it wants to be called back later when idle again
@@ -116,12 +114,12 @@ private:
     void breakdown_cards(void);
 
     // singleton members, and a flag to know when to know first time
-    static bool           m_initialized;
-    static SysCfgState   *m_config;         // active system config
-    static Scheduler     *m_scheduler;      // for coordinating events in the emulator
-    static Cpu2200       *m_cpu;            // the central processing unit
-    static bool           m_freeze_emu;     // toggle to prevent time advancing
-    static bool           m_do_reconfig;    // deferred request to reconfigure
+    static bool                         m_initialized;
+    static std::shared_ptr<SysCfgState> m_config;       // active system config
+    static std::shared_ptr<Scheduler>   m_scheduler;    // for coordinating events in the emulator
+    static std::shared_ptr<Cpu2200>     m_cpu;          // the central processing unit
+    static bool                         m_freeze_emu;   // toggle to prevent time advancing
+    static bool                         m_do_reconfig;  // deferred request to reconfigure
 
     // help ensure an orderly shutdown
     static enum term_state_t

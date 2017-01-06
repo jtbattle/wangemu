@@ -16,7 +16,8 @@ public:
     CANT_ASSIGN_OR_COPY_CLASS(IoCardDisplay);
 
     // ----- common IoCard functions -----
-    IoCardDisplay(Scheduler &scheduler, Cpu2200 &cpu,
+    IoCardDisplay(std::shared_ptr<Scheduler> scheduler,
+                  std::shared_ptr<Cpu2200>   cpu,
                   int baseaddr, int cardslot, int size=UI_SCREEN_64x16);
     ~IoCardDisplay();
 
@@ -36,8 +37,8 @@ private:
     const string getName() const override;
     vector<int>  getBaseAddresses() const override;
 
-    Scheduler &m_scheduler;     // shared system event scheduler
-    Cpu2200   &m_cpu;           // associated CPU
+    std::shared_ptr<Scheduler> m_scheduler; // shared system event scheduler
+    std::shared_ptr<Cpu2200>   m_cpu;       // associated CPU
     const int  m_baseaddr;      // the address the card is mapped to
     const int  m_slot;          // which slot the card is plugged into
     bool       m_selected;      // the card is currently selected

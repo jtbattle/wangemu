@@ -12,7 +12,8 @@
 #endif
 
 
-IoCardPrinter::IoCardPrinter(Cpu2200 &cpu, int baseaddr, int cardslot) :
+IoCardPrinter::IoCardPrinter(std::shared_ptr<Cpu2200> cpu,
+                             int baseaddr, int cardslot) :
     m_cpu(cpu),
     m_baseaddr(baseaddr),
     m_slot(cardslot),
@@ -85,7 +86,7 @@ IoCardPrinter::select()
         UI_Info("printer ABS");
 
     m_selected = true;
-    m_cpu.setDevRdy(true);
+    m_cpu->setDevRdy(true);
 }
 
 void
@@ -110,7 +111,7 @@ IoCardPrinter::OBS(int val)
 
     UI_printChar(getGuiPtr(), (uint8)val);
 
-    m_cpu.setDevRdy(true);
+    m_cpu->setDevRdy(true);
 }
 
 void
@@ -130,7 +131,7 @@ IoCardPrinter::CPB(bool busy)
 
     m_cpb = busy;
     // FIXME: return printer status (requires handshaking logic, though)
-    m_cpu.setDevRdy(true);
+    m_cpu->setDevRdy(true);
 }
 
 

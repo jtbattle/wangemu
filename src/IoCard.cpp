@@ -21,7 +21,9 @@
 
 // create an instance of the specified card
 IoCard *
-IoCard::makeCard(Scheduler& scheduler, Cpu2200& cpu, card_t type,
+IoCard::makeCard(std::shared_ptr<Scheduler> scheduler,
+                 std::shared_ptr<Cpu2200>   cpu,
+                 card_t type,
                  int baseaddr, int cardslot, const CardCfgState *cfg)
 {
     return makeCardImpl(scheduler, cpu, type, baseaddr, cardslot, cfg);
@@ -31,18 +33,25 @@ IoCard::makeCard(Scheduler& scheduler, Cpu2200& cpu, card_t type,
 // make a temporary card; this is so code can query the properties of the card;
 // as such, the IoCard* functions know to do only partial construction
 IoCard *
-IoCard::makeTmpCard(card_t type)
+IoCard::makeTmpCard(card_t type, int baseaddr)
 {
-// FIXME: this is sinful to pass 0 to a ref!
-    return makeCardImpl( *(Scheduler*)0, *(Cpu2200*)0, type, 0x000, -1,
+// FIXME: this is sinful to pass 0 to a ref, and wasteful to build the dummies.
+// as a partial cure, perhaps create a CPUTYPE_DUMMY which is more lightweight.
+    auto dummy_scheduler = std::make_shared<Scheduler>();
+    auto dummy_cpu       = std::make_shared<Cpu2200t>(System2200(), dummy_scheduler, 8, Cpu2200::CPUTYPE_2200T);
+
+    return makeCardImpl( dummy_scheduler,
+                         dummy_cpu,
+                         type, baseaddr, -1,
                          (CardCfgState *)0 );
 }
 
 
 // this is the shared implementation that the other make*Card functions use
 IoCard *
-IoCard::makeCardImpl(Scheduler& scheduler, Cpu2200& cpu, card_t type,
-                     int baseaddr, int cardslot,
+IoCard::makeCardImpl(std::shared_ptr<Scheduler> scheduler,
+                     std::shared_ptr<Cpu2200>   cpu,
+                     card_t type, int baseaddr, int cardslot,
                      const CardCfgState *cfg)
 {
     IoCard* crd = nullptr;

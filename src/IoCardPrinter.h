@@ -13,7 +13,8 @@ public:
     CANT_ASSIGN_OR_COPY_CLASS(IoCardPrinter);
 
     // ----- common IoCard functions -----
-    IoCardPrinter(Cpu2200 &cpu, int baseaddr, int cardslot);
+    IoCardPrinter(std::shared_ptr<Cpu2200> cpu,
+                  int baseaddr, int cardslot);
     ~IoCardPrinter();
 
     vector<int> getAddresses() const override;
@@ -34,7 +35,7 @@ private:
     const string getName() const override;
     vector<int> getBaseAddresses() const override;
 
-    Cpu2200      &m_cpu;          // associated CPU
+    std::shared_ptr<Cpu2200> m_cpu;  // associated CPU
     const int     m_baseaddr;     // the address the card is mapped to
     const int     m_slot;         // which slot the card is plugged into
     bool          m_selected;     // the card is currently selected

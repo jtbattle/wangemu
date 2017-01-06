@@ -67,7 +67,8 @@ class PropPanel : public wxPanel
 {
 public:
     CANT_ASSIGN_OR_COPY_CLASS(PropPanel);
-    PropPanel(DiskFactory *df, wxWindow *parent, Wvd *diskdata);
+    PropPanel(DiskFactory *df, wxWindow *parent,
+              std::shared_ptr<Wvd> diskdata);
 //    ~PropPanel();
 
     void refresh();
@@ -92,7 +93,7 @@ private:
     wxCheckBox   *m_write_prot; // write protect checkbox
 
     // data
-    Wvd          *m_diskdata;
+    shared_ptr<Wvd> m_diskdata;
 
     DECLARE_EVENT_TABLE()
 };
@@ -106,7 +107,8 @@ class LabelPanel : public wxPanel
 {
 public:
     CANT_ASSIGN_OR_COPY_CLASS(LabelPanel);
-    LabelPanel(DiskFactory *df, wxWindow *parent, Wvd *diskdata);
+    LabelPanel(DiskFactory *df, wxWindow *parent,
+               std::shared_ptr<Wvd> diskdata);
 //    ~LabelPanel();
 
     void refresh();
@@ -123,7 +125,7 @@ private:
     wxTextCtrl  *m_text;
 
     // data
-    Wvd * const m_diskdata;
+    shared_ptr<Wvd> m_diskdata;
 
     DECLARE_EVENT_TABLE()
 };
@@ -158,7 +160,7 @@ DiskFactory::DiskFactory(wxFrame *parent, const string &filename) :
     m_butCancel = nullptr;
     m_butSave   = nullptr;
 
-    m_diskdata = new Wvd;
+    m_diskdata = std::make_shared<Wvd>();
     if (new_disk) {
         // blank disk, default type
         m_diskdata->create( disk_choices[0].disk_type,
@@ -221,7 +223,6 @@ DiskFactory::~DiskFactory()
     const string subgroup("ui/disk_dialog");
     Host().ConfigWriteWinGeom(this, subgroup);
 
-    delete m_diskdata;
     m_diskdata = nullptr;
 }
 
@@ -350,7 +351,9 @@ END_EVENT_TABLE()
 //    |             +-- wxStaticText *m_st_rpm
 //    +-- wxCheckBox *m_write_prot
 
-PropPanel::PropPanel(DiskFactory *df, wxWindow *parent, Wvd *diskdata) :
+PropPanel::PropPanel(DiskFactory *df,
+                     wxWindow *parent,
+                     std::shared_ptr<Wvd> diskdata) :
         wxPanel(parent, -1),
         m_parent(df),
         m_path(nullptr),
@@ -454,7 +457,7 @@ PropPanel::PropPanel(DiskFactory *df, wxWindow *parent, Wvd *diskdata) :
 void
 PropPanel::refresh()
 {
-    assert(m_diskdata != nullptr);
+    assert(m_diskdata);
 
     bool new_disk = (m_diskdata->getPath()).empty();
     bool modified = m_diskdata->isModified();
@@ -570,7 +573,9 @@ BEGIN_EVENT_TABLE(LabelPanel, wxPanel)
     EVT_TEXT     (LABEL_EDIT_LABEL,  LabelPanel::OnLabelEdit)
 END_EVENT_TABLE()
 
-LabelPanel::LabelPanel(DiskFactory *df, wxWindow *parent, Wvd *diskdata) :
+LabelPanel::LabelPanel(DiskFactory *df,
+                       wxWindow *parent,
+                       std::shared_ptr<Wvd> diskdata) :
         wxPanel(parent, -1),
         m_parent(df),
         m_text(nullptr),

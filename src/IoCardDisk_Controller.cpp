@@ -73,7 +73,7 @@ bool
 IoCardDisk::cax_init()
 {
     // return true if AB indicates this is command initiation
-    return (m_cpu.getAB() & 0xA0) == 0xA0;
+    return (m_cpu->getAB() & 0xA0) == 0xA0;
 }
 
 string

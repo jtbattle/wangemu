@@ -16,7 +16,7 @@ public:
     CANT_ASSIGN_OR_COPY_CLASS(IoCardTermMux);
 
     // ----- common IoCard functions -----
-    IoCardTermMux(Cpu2200 &cpu, int baseaddr, int cardslot);
+    IoCardTermMux(std::shared_ptr<Cpu2200> cpu, int baseaddr, int cardslot);
     ~IoCardTermMux();
 
     vector<int> getAddresses() const override;
@@ -93,7 +93,7 @@ private:
     void perform_end_of_line_req();
 
     // state
-    Cpu2200    &m_cpu;            // associated CPU
+    std::shared_ptr<Cpu2200> m_cpu;  // associated CPU
     const int   m_baseaddr;       // the address the card is mapped to
     const int   m_slot;           // which slot the card is plugged into
     bool        m_selected;       // the card is currently selected

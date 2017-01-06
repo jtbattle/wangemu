@@ -149,8 +149,8 @@ private:
     static bool m_initialized;
 
     static string        m_app_home;    // path to application home directory
-    static wxFileConfig *m_config;      // configuration file object
-    static wxStopWatch  *m_stopwatch;   // real time since simulation started
+    static std::unique_ptr<wxFileConfig> m_config;    // configuration file object
+    static std::unique_ptr<wxStopWatch>  m_stopwatch; // real time since simulation started
 
     // remember where certain files are located
     static string m_FileDir[FILEREQ_NUM];         // dir where files come from

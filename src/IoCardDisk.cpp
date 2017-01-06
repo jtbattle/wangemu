@@ -137,7 +137,8 @@ const int DISK_MIN_TICKS = TIMER_US( 20 );
 // =====================================================
 
 // instance constructor
-IoCardDisk::IoCardDisk(Scheduler &scheduler, Cpu2200 &cpu,
+IoCardDisk::IoCardDisk(std::shared_ptr<Scheduler> scheduler,
+                       std::shared_ptr<Cpu2200>   cpu,
                        int baseaddr, int cardslot, const CardCfgState *cfg) :
     m_scheduler(scheduler),
     m_cpu(cpu),
@@ -283,14 +284,14 @@ void
 IoCardDisk::select()
 {
     // we save the exact address in case of partial decode
-    const int abs_value = m_cpu.getAB();
+    const int abs_value = m_cpu->getAB();
     m_primary = (abs_value & 0x40) != 0x40;  // primary drive
     m_selected = true;
 
     if (DBG > 1)
         dbglog("disk ABS (addr=0x%02x)\n", abs_value);
 
-    m_cpu.setDevRdy(!m_card_busy);
+    m_cpu->setDevRdy(!m_card_busy);
     for(int drive=0; drive<numDrives(); drive++)
         UI_diskEvent(m_slot, drive);
 }
@@ -314,10 +315,10 @@ IoCardDisk::OBS(int val)
     val &= 0xFF;
 
     if (DBG > 2)
-        dbglog("disk OBS(AB=0x%02x): byte=0x%02x\n", m_cpu.getAB(), val);
+        dbglog("disk OBS(AB=0x%02x): byte=0x%02x\n", m_cpu->getAB(), val);
 
     (void)advanceState(EVENT_OBS, val);
-    m_cpu.setDevRdy(!m_card_busy);
+    m_cpu->setDevRdy(!m_card_busy);
 }
 
 void
@@ -417,10 +418,10 @@ IoCardDisk::checkDiskReady()
             if (data_ready) {
                 if (DBG > 2)
                     dbglog("disk IBS of 0x%02x\n", m_byte_to_send);
-                m_cpu.IoCardCbIbs(m_byte_to_send);
+                m_cpu->IoCardCbIbs(m_byte_to_send);
             }
         }
-        m_cpu.setDevRdy(!m_card_busy);
+        m_cpu->setDevRdy(!m_card_busy);
     }
 }
 
@@ -443,7 +444,7 @@ IoCardDisk::setBusyState(bool busy)
         dbglog("disk setBusyState(%s)\n", busy ? "true" : "false");
     m_card_busy = busy;
     if (m_selected)
-        m_cpu.setDevRdy(!m_card_busy);
+        m_cpu->setDevRdy(!m_card_busy);
 }
 
 
@@ -467,7 +468,7 @@ IoCardDisk::wvdTickleMotorOffTimer()
 
     int disktype = m_d[m_drive].wvd->getDiskType();
     if ((disktype == Wvd::DISKTYPE_FD5) || (disktype == Wvd::DISKTYPE_FD8)) {
-        m_tmr_motor_off = m_scheduler.TimerCreate(
+        m_tmr_motor_off = m_scheduler->TimerCreate(
                             TICK_TEN_SEC,
                             std::bind(&IoCardDisk::tcbMotorOff, this, m_drive) );
     }
@@ -597,7 +598,7 @@ IoCardDisk::wvdSeekTrack(int nominal_ticks)
 
     // start sector timer
     if (!empty && (m_d[m_drive].tmr_sector == nullptr)) {
-        m_d[m_drive].tmr_sector = m_scheduler.TimerCreate(
+        m_d[m_drive].tmr_sector = m_scheduler->TimerCreate(
                                     m_d[m_drive].ticks_per_sector,
                                     std::bind( &IoCardDisk::tcbSector, this, m_drive) );
 assert(m_d[m_drive].tmr_sector != nullptr);
@@ -609,8 +610,8 @@ assert(m_d[m_drive].tmr_sector != nullptr);
         ticks = DISK_MIN_TICKS;
 
     m_d[m_drive].tmr_track =
-        m_scheduler.TimerCreate( ticks,
-                                 std::bind(&IoCardDisk::tcbTrack, this, m_drive) );
+        m_scheduler->TimerCreate( ticks,
+                                  std::bind(&IoCardDisk::tcbTrack, this, m_drive) );
 }
 
 
@@ -728,7 +729,7 @@ if (m_d[drive].tmr_sector == nullptr) {
         dbglog("Drive %d SECTOR timer fired: sector %d\n", drive, m_d[drive].sector);
 
     // retrigger the timer
-    m_d[drive].tmr_sector = m_scheduler.TimerCreate(
+    m_d[drive].tmr_sector = m_scheduler->TimerCreate(
         m_d[drive].ticks_per_sector, std::bind(&IoCardDisk::tcbSector, this, drive) );
 assert(m_d[m_drive].tmr_sector != nullptr);
 

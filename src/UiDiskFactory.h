@@ -29,10 +29,10 @@ private:
     void updateDlg();
 
     // member data
+    std::shared_ptr<Wvd> m_diskdata;
     wxMenuBar  *m_menuBar;
     PropPanel  *m_tab1;
     LabelPanel *m_tab2;
-    Wvd        *m_diskdata;
     wxButton   *m_butCancel;
     wxButton   *m_butSave;
 
