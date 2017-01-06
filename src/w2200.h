@@ -21,9 +21,6 @@ using std::shared_ptr;
 #include <functional>
 typedef std::function<void(int)> kbCallback;
 
-class Timer;
-using spTimer = std::shared_ptr<Timer>;
-
 // types used globally in the wang emulator
 
 #include <cstdint>

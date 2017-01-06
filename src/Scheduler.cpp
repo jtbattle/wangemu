@@ -2,7 +2,7 @@
 //
 // A routine desiring later notification at some specific time calls
 //
-//     spTimer tmr = TimerCreate(ticks, std::bind(&obj::fcn, &obj, arg) );
+//     auto tmr = TimerCreate(ticks, std::bind(&obj::fcn, &obj, arg) );
 //
 // which causes 'fcn' to be called back with parameter arg after simulating
 // 'ticks' clock cycles.  The event is then removed from the active list.
@@ -91,11 +91,11 @@ TimerTest(void)
 
     // method 1: create a static timer object, then pass it to scheduler
     sched_callback_t cb1 = std::bind(&TimerTestFoo::report1, &foo, 1);
-    spTimer t1 = test_scheduler.TimerCreate( TIMER_US(3.0f), cb1 );
+    auto t1 = test_scheduler.TimerCreate( TIMER_US(3.0f), cb1 );
 
     // method 2: like method 1, but all inline
-    spTimer t2 = test_scheduler.TimerCreate( 10, std::bind(&TimerTestFoo::report1, &foo, 2) );
-    spTimer t3 = test_scheduler.TimerCreate( 50, std::bind(&TimerTestFoo::report2, &foo, 3) );
+    auto t2 = test_scheduler.TimerCreate( 10, std::bind(&TimerTestFoo::report1, &foo, 2) );
+    auto t3 = test_scheduler.TimerCreate( 50, std::bind(&TimerTestFoo::report2, &foo, 3) );
 
     for(int n=0; n<100; n++) {
         if (n == 5) {
@@ -133,7 +133,7 @@ Scheduler::~Scheduler()
 // return a timer object; the caller doesn't destroy this object,
 // but calls Kill() if it wants to terminate it.
 // 'ticks' is the number of clock ticks before the callback fires.
-spTimer
+std::shared_ptr<Timer>
 Scheduler::TimerCreate(int ticks, const sched_callback_t &fcn)
 {
     // funny things happen if we try to time intervals that are too big
@@ -143,7 +143,7 @@ Scheduler::TimerCreate(int ticks, const sched_callback_t &fcn)
     // make sure we don't leak timers
     assert(m_timer.size() < MAX_TIMERS);
 
-    spTimer tmr(std::make_shared<Timer>(this, ticks, fcn));
+    auto tmr = std::make_shared<Timer>(this, ticks, fcn);
 
     if (m_timer.empty()) {
         // this is the only timer
@@ -221,7 +221,7 @@ void Scheduler::TimerCredit(void)
     uint32 elapsed = (m_startcnt - m_countdown);
 
     // scan each active timer, moving expired ones to the retired list
-    vector<spTimer> retired;
+    vector<std::shared_ptr<Timer>> retired;
     unsigned int active_before = m_timer.size();
     unsigned int active_after = 0;
     for(unsigned int s=0; s<active_before; s++) {
@@ -264,7 +264,8 @@ void Scheduler::TimerCredit(void)
 
     // sort retired events in order they expired
     std::sort(begin(retired), end(retired),
-              [](const spTimer &a, const spTimer &b) { return (a->ctr < b->ctr); }
+              [](const std::shared_ptr<Timer> &a,
+                 const std::shared_ptr<Timer> &b) { return (a->ctr < b->ctr); }
              );
     // scan through the retired list and perform callbacks
     for(auto &t : retired) {

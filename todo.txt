@@ -7,6 +7,18 @@ Emulator TODO list
    other things.  it didn't be a smart pointer, though, as the
    thing it points to is a singleton.
 
+*) use smart pointers instead of raw pointers
+   !! look for "delete" occurrences; if these were smart pointers,
+   just setting the pointer to nullptr would automatically free the resource.
+   Convert these to unique_ptr or shared_ptr when it makes sense.
+
+    IoCardDisk.h
+        m_d[drive]
+    SysCfgState.h
+        m_slot[slot].cardCfg
+    System2200.h
+        m_cardInSlot[n]
+
 *) the Scheduler class callback list should hold std::weak_ptr to
    the callback objects.  when the scheduling code needs to use such
    a pointer, it should first test if it is .expired(), and if not,
@@ -66,10 +78,6 @@ Emulator TODO list
    hmm, because of timer callback, then it seems like I really don't have
    a unique_ptr situation with cards (in general).
 
-   Right now shared_ptr is used in two places:
-     (1) "using spTimer = std::shared_ptr<Timer>;"
-     (2) UiCrt.h has "shared_ptr<wxSound> m_beep;"
-
    http://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#a-namerr-smartptrparamar30-take-smart-pointers-as-parameters-only-to-explicitly-express-lifetime-semantics
    which is dec 2016, so it should reflect latest thinking, is that
    raw T* or T& should be used if the subroutine isn't changing ownership,
@@ -78,32 +86,23 @@ Emulator TODO list
    a copy, or std::unique_ptr<T> if it is going to take ownership.
    http://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#a-namerr-sharedptrparam-ownerar34-take-a-sharedptrwidget-parameter-to-express-that-a-function-is-part-owner
 
-*) in the same talk (10 minutes in), Sutter says the PIMPL pointer should be
-     template<class T>
-     using Pimpl = const unique_ptr<T>;
-     ...
-     class MyClass {
-       class Impl;  // defined in .cpp
-       Pimpl<impl> pimpl;
-     }
+   THOUGHT:
+        TimerCreate() returns a std::shared_ptr<Timer>
+        what if the caller owned the pointer, and the scheduler had
+        a weak_ptr to it.  when the card is destroyed, it will call
+        the destructor for the Timer handle, and that way the
+        scheduler can automatically be notified as soon as cleanup
+        is needed.  There is no need for Kill() either -- the consumer
+        just sets the pointer to nullptr and all the magic happens.
 
-*) use smart pointers instead of raw pointers
-   !! look for "delete" occurrences; if these were smart pointers,
-   just setting the pointer to nullptr would automatically free the resource.
-   Convert these to unique_ptr or shared_ptr when it makes sense.
-
-    IoCardDisk.h
-        m_d[drive]
-    SysCfgState.h
-        m_slot[slot].cardCfg
-    System2200.h
-        m_cardInSlot[n]
-        m_cpu
-        m_scheduler
-        m_config
+        Either that, or just let the timer object live until either
+        the scheduler is reset or destroyed, or until the queue is
+        swept and then remove all timers that are .expired().
 
 *) continuing the above theme, the card factory has a really ugly feature.
    what is the right & clean way to do this?
+   UPDATE: I now create non-zero dummy pointers to pass in,
+           but it is still pretty heavy-handed
         IoCard *
         IoCard::makeTmpCard(card_t type)
         {
@@ -119,6 +118,7 @@ Emulator TODO list
       CardInfo::isCardConfigurable(IoCard::card_t cardtype)
       CardInfo::isCardCfgState(IoCard::card_t cardtype)
       SysCfgState::editCardConfig(int slot)
+      SysCfgState::configOk(bool warn)
 
    We could require that each IoCardFoo have static class functions
    to return the above info, then make CardInfo have a case statement

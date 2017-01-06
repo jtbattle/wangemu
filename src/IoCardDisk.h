@@ -11,6 +11,7 @@
 class Cpu2200;
 class Scheduler;
 class Wvd;
+class Timer;
 
 class IoCardDisk : public IoCard
 {
@@ -165,17 +166,17 @@ private:
     // issue warnings on media mismatch?
     bool warnMismatch() { return m_cfg.getWarnMismatch(); }
 
-    DiskCtrlCfgState m_cfg;         // current configuration
-    std::shared_ptr<Scheduler> m_scheduler;  // system event scheduler
-    std::shared_ptr<Cpu2200>   m_cpu;        // associated CPU
-    const int  m_baseaddr;          // the address the card is mapped to
-    const int  m_slot;              // which slot the card sits in
-    bool       m_selected;          // this card is being addressed
-    bool       m_cpb;               // cpb is asserted
-    bool       m_card_busy;         // the card isn't ready to accept a command or reply
-    bool       m_compare_err;       // compare status (true=miscompare)
-    spTimer    m_tmr_motor_off;     // turn off both drives after a period of inactivity
-    bool       m_acting_intelligent; // what we told the host most recently
+    DiskCtrlCfgState m_cfg;                          // current configuration
+    std::shared_ptr<Scheduler> m_scheduler;          // system event scheduler
+    std::shared_ptr<Cpu2200>   m_cpu;                // associated CPU
+    const int                  m_baseaddr;           // the address the card is mapped to
+    const int                  m_slot;               // which slot the card sits in
+    bool                       m_selected;           // this card is being addressed
+    bool                       m_cpb;                // cpb is asserted
+    bool                       m_card_busy;          // the card isn't ready to accept a command or reply
+    bool                       m_compare_err;        // compare status (true=miscompare)
+    std::shared_ptr<Timer>     m_tmr_motor_off;      // turn off both drives after a period of inactivity
+    bool                       m_acting_intelligent; // what we told the host most recently
 
     enum state_t { DRIVE_EMPTY, DRIVE_IDLE, DRIVE_SPINNING };
     struct {
@@ -194,8 +195,8 @@ private:
         int     secwait;        // waiting for this sector (<0: not waiting)
 
         int     idle_cnt;       // number of operations done w/o this drive
-        spTimer tmr_track;      // spin up + track seek timer
-        spTimer tmr_sector;     // sector timer
+        std::shared_ptr<Timer> tmr_track;      // spin up + track seek timer
+        std::shared_ptr<Timer> tmr_sector;     // sector timer
     } m_d[4];   // drives: two primary, two secondary
 
     // ---- emulation sequencing logic ----

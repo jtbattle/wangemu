@@ -6,6 +6,7 @@
 class Cpu2200;
 class Scheduler;
 class ScriptFile;
+class Timer;
 
 class IoCardKeyboard : public IoCard
 {
@@ -63,7 +64,7 @@ private:
 
     std::shared_ptr<Scheduler> m_scheduler;  // shared event scheduler
     std::shared_ptr<Cpu2200>   m_cpu;        // associated CPU
-    spTimer     m_tmr_script;     // keystrokes are sent a few 10s of uS after !CPB
+    std::shared_ptr<Timer>     m_tmr_script; // keystrokes are sent a few 10s of uS after !CPB
     const int   m_baseaddr;       // the address the card is mapped to
     const int   m_slot;           // which slot the card is plugged into
     bool        m_selected;       // this card is being addressed

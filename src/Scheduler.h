@@ -60,11 +60,11 @@ public:
     //   void TimerTestFoo::report(int i)
     //   { printf("got callback for timer %d after %d clocks\n", i, g_testtime); }
     //
-    //   spTimer tmr = TimerCreate( 100,
-    //                             std::bind(&TimerTestFoo:report, &foo, 33) );
+    //   auto tmr = TimerCreate( 100,
+    //                           std::bind(&TimerTestFoo:report, &foo, 33) );
     //
     // After 100 clocks, foo.report(33) is called.
-    spTimer TimerCreate(int ticks, const sched_callback_t &fcn);
+    std::shared_ptr<Timer> TimerCreate(int ticks, const sched_callback_t &fcn);
 
     // let 'n' cpu cycles of simulated time go past
     inline void TimerTick(int n)
@@ -104,7 +104,7 @@ private:
     // any timer that has its own counter go <=0 will then
     // cause a callback to the supplied function using the
     // supplied parameters.
-    vector<spTimer> m_timer;
+    vector<std::shared_ptr<Timer>> m_timer;
 
     // for sanity checking
     static const int MAX_TIMERS = 25;

@@ -8,6 +8,7 @@
 
 class Cpu2200;
 class Scheduler;
+class Timer;
 
 class IoCardDisplay : public IoCard
 {
@@ -48,7 +49,7 @@ private:
     CrtFrame  *m_wndhnd;        // opaque handle to UI window
 
     // model controller "busy" timing
-    spTimer    m_thnd_hsync;    // horizontal sync timer
+    std::shared_ptr<Timer>    m_thnd_hsync;    // horizontal sync timer
     bool       m_realtime;      // true: match real timing, false: go fast
     int        m_hsync_count;   // which horizontal line we are on
     enum class busy_state {
