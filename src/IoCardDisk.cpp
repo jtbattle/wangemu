@@ -481,9 +481,8 @@ IoCardDisk::wvdTickleMotorOffTimer()
 
     int disktype = m_d[m_drive].wvd->getDiskType();
     if ((disktype == Wvd::DISKTYPE_FD5) || (disktype == Wvd::DISKTYPE_FD8)) {
-        m_tmr_motor_off = m_scheduler->TimerCreate(
-                            TICK_TEN_SEC,
-                            std::bind(&IoCardDisk::tcbMotorOff, this, m_drive) );
+        m_tmr_motor_off = m_scheduler->TimerCreate( TICK_TEN_SEC,
+                                                    [&](){ tcbMotorOff(m_drive); } );
     }
 }
 
@@ -614,7 +613,7 @@ IoCardDisk::wvdSeekTrack(int nominal_ticks)
     if (!empty && (m_d[m_drive].tmr_sector == nullptr)) {
         m_d[m_drive].tmr_sector = m_scheduler->TimerCreate(
                                     m_d[m_drive].ticks_per_sector,
-                                    std::bind( &IoCardDisk::tcbSector, this, m_drive) );
+                                    [&](){ tcbSector(m_drive); } );
 assert(m_d[m_drive].tmr_sector != nullptr);
     }
 
@@ -627,7 +626,7 @@ assert(m_d[m_drive].tmr_sector != nullptr);
 
     m_d[m_drive].tmr_track =
         m_scheduler->TimerCreate( ticks,
-                                  std::bind(&IoCardDisk::tcbTrack, this, m_drive) );
+                                  [&](){ tcbTrack(m_drive); } );
 }
 
 
@@ -751,8 +750,9 @@ if (m_d[drive].tmr_sector == nullptr) {
 
     // retrigger the timer
     m_d[drive].tmr_sector = m_scheduler->TimerCreate(
-        m_d[drive].ticks_per_sector, std::bind(&IoCardDisk::tcbSector, this, drive) );
-assert(m_d[m_drive].tmr_sector != nullptr);
+                                    m_d[drive].ticks_per_sector,
+                                    [&, drive](){ tcbSector(drive); } );
+    assert(m_d[m_drive].tmr_sector != nullptr);
 
     // advance to next sector, mod sectors per track
     prev_sec = m_d[drive].sector;

@@ -1034,7 +1034,7 @@ Cpu2200vp::exec_one_op()
             // 30 ms one shot gets retriggered.
             m_cpu.sh |= SH_MASK_30MS;     // one shot output rises
             m_tmr_30ms = m_scheduler->TimerCreate( TIMER_MS(27),
-                                std::bind(&Cpu2200vp::tcb30msDone, this) );
+                                                   [&](){ tcb30msDone(); } );
 // FIXME: if I set the timer to TIMER_MS(30), MVP Basic-2 2.6.2 reports
 //        the timeslice as being 36 ms.  what gives?
 //        TIMER_MS(29) reports "35 MS TICK".

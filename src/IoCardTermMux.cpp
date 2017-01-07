@@ -295,7 +295,7 @@ IoCardTermMux::check_keyready()
 //          if (!m_tmr_script) {
 //              m_tmr_script = m_scheduler->TimerCreate(
 //                      TIMER_US(50),     // 30 is OK, 20 is too little
-//                      std::bind(&IoCardKeyboard::tcbScript, this) );
+//                      [&](){ tcbScript(); } );
 //          }
 //      }
         m_cpu->setDevRdy(m_term.io1_key_ready);
