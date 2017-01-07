@@ -2,18 +2,6 @@
 Emulator TODO list
 ============================================================================
 
-*) cpu2200{t,vp} holds a ref called m_sys which is a pointer back
-   to the system object.  it should be made a pointer to match
-   other things.  it didn't be a smart pointer, though, as the
-   thing it points to is a singleton.
-
-   cpu calls these:
-        m_sys.cpu_poll_IB5()
-        m_sys.cpu_CPB(x)
-        m_sys.cpu_CBS()
-        m_sys.cpu_OBS(x)
-        m_sys.cpu_ABS(x)
-
 *) use smart pointers instead of raw pointers
    !! look for "delete" occurrences; if these were smart pointers,
    just setting the pointer to nullptr would automatically free the resource.
@@ -47,8 +35,7 @@ Emulator TODO list
    objects.  That means that the objects aren't actually destroyed when I
    think they are; they are destroyed when the scheduler is destroyed.
 
-*) I haven't really grasped the use and purpose of unique_ptr.
-   I still have a lot of raw pointers around, eg IoCard.cpp has a factory
+*) I still have a lot of raw pointers around, eg IoCard.cpp has a factory
    which creates and returns IoCard* values.  But after reading a bit more,
    the general practice should be to use unique_ptr just about everywhere,
    and that functions get get passed a pointer are receiving a reference

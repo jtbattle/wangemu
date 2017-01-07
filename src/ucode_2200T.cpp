@@ -2,7 +2,7 @@
 //
 // contributed by Carl Coffman
 
-#include "ucode_2200T.h"
+#include "ucode_2200.h"
 
 uint32 ucode_2200T[UCODE_WORDS_2200T] = {
         0x000B0418,     // 0000

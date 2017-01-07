@@ -1,6 +1,6 @@
 // this boot rom image came from Georg Schäfer's machine
 
-#include "ucode_2200vp.h"
+#include "ucode_2200.h"
 
 uint32 ucode_2200vp[UCODE_WORDS_2200VP] = {
         0x5C6380,       // 8000

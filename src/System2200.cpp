@@ -235,13 +235,13 @@ System2200::setConfig(const SysCfgState &newcfg)
             assert(false);
             // fall through in non-debug build if config type is invalid
         case Cpu2200::CPUTYPE_2200T:
-            m_cpu = std::make_shared<Cpu2200t>( *this, m_scheduler, ramsize, Cpu2200::CPUTYPE_2200T );
+            m_cpu = std::make_shared<Cpu2200t>( this, m_scheduler, ramsize, Cpu2200::CPUTYPE_2200T );
             break;
         case Cpu2200::CPUTYPE_2200B:
-            m_cpu = std::make_shared<Cpu2200t>( *this, m_scheduler, ramsize, Cpu2200::CPUTYPE_2200B );
+            m_cpu = std::make_shared<Cpu2200t>( this, m_scheduler, ramsize, Cpu2200::CPUTYPE_2200B );
             break;
         case Cpu2200::CPUTYPE_2200VP:
-            m_cpu = std::make_shared<Cpu2200vp>( *this, m_scheduler, ramsize, Cpu2200::CPUTYPE_2200VP );
+            m_cpu = std::make_shared<Cpu2200vp>( this, m_scheduler, ramsize, Cpu2200::CPUTYPE_2200VP );
             break;
     }
     assert(m_cpu);
@@ -595,9 +595,10 @@ System2200::cpu_CBS(uint8 byte)
 void
 System2200::cpu_CPB(bool busy)
 {
-    if  ((m_IoCurSelected > 0) && (m_IoMap[m_IoCurSelected].inst != nullptr))
+    if ((m_IoCurSelected > 0) && (m_IoMap[m_IoCurSelected].inst != nullptr)) {
         // signal that we want to get something
         (m_IoMap[m_IoCurSelected].inst)->CPB(busy);
+    }
 }
 
 

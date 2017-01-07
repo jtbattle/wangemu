@@ -15,7 +15,7 @@
 #include "IoCardKeyboard.h"
 #include "Scheduler.h"
 #include "System2200.h"
-#include "ucode_2200vp.h"
+#include "ucode_2200.h"
 
 // control which functions get inlined
 #define INLINE_STORE_C 1
@@ -493,7 +493,7 @@ Cpu2200vp::set_sh(uint8 value)
                         | ( mask & m_cpu.sh) );
 
     if (cpb_changed) {
-        m_sys.cpu_CPB( !!(m_cpu.sh & SH_MASK_CPB) );
+        m_sys->cpu_CPB( !!(m_cpu.sh & SH_MASK_CPB) );
     }
 }
 
@@ -1048,8 +1048,8 @@ Cpu2200vp::exec_one_op()
                 if (m_dbg) {
                     dbglog("-ABS with AB=%02X, ic=0x%04X\n", m_cpu.ab_sel, m_cpu.ic);
                 }
-                //UI_Info("CPU:ABS when AB=%02X\n", m_cpu.ab);
-                m_sys.cpu_ABS(m_cpu.ab_sel);  // address bus strobe
+                //UI_Info("CPU:ABS when AB=%02X", m_cpu.ab);
+                m_sys->cpu_ABS(m_cpu.ab_sel);  // address bus strobe
                 break;
             case 0x10: // CBS
                 if (m_dbg) {
@@ -1059,8 +1059,8 @@ Cpu2200vp::exec_one_op()
                         dbglog("-CBS when AB=%02X, K=%02X ('%c')\n", m_cpu.ab_sel, m_cpu.k, m_cpu.k);
                     }
                 }
-                //UI_Info("CPU:CBS when AB=%02X, AB_SEL=%02X, K=%02X\n", m_cpu.ab, m_cpu.ab_sel, m_cpu.k);
-                m_sys.cpu_CBS(m_cpu.k);    // control bus strobe
+                //UI_Info("CPU:CBS when AB=%02X, AB_SEL=%02X, K=%02X", m_cpu.ab, m_cpu.ab_sel, m_cpu.k);
+                m_sys->cpu_CBS(m_cpu.k);    // control bus strobe
                 break;
             case 0x20: // OBS
                 if (m_dbg) {
@@ -1070,8 +1070,8 @@ Cpu2200vp::exec_one_op()
                         dbglog("-OBS when AB=%02X, K=%02X ('%c')\n", m_cpu.ab_sel, m_cpu.k, m_cpu.k);
                     }
                 }
-                //UI_Info("CPU:OBS when AB=%02X, AB_SEL=%02X, K=%02X\n", m_cpu.ab, m_cpu.ab_sel, m_cpu.k);
-                m_sys.cpu_OBS(m_cpu.k);  // output data bus strobe
+                //UI_Info("CPU:OBS when AB=%02X, AB_SEL=%02X, K=%02X", m_cpu.ab, m_cpu.ab_sel, m_cpu.k);
+                m_sys->cpu_OBS(m_cpu.k);  // output data bus strobe
                 break;
             case 0x08: // empirical behavior
                 // the VP BASIC issues this operation in three places.
@@ -1085,7 +1085,7 @@ Cpu2200vp::exec_one_op()
                 //        results, but this is what the BASIC code uses.
                 {
                     // This is just a hack to fix the specific known case
-                    int ib5 = m_sys.cpu_poll_IB5();
+                    int ib5 = m_sys->cpu_poll_IB5();
                     m_cpu.k = (uint8)(ib5 << 4);
                 }
                 break;
@@ -1417,7 +1417,7 @@ Cpu2200vp::exec_one_op()
 // constructor
 // ramsize should be a multiple of 4.
 // subtype *must* be 2200VP, at least presently
-Cpu2200vp::Cpu2200vp(System2200 &sys,
+Cpu2200vp::Cpu2200vp(System2200 *const sys,
                      std::shared_ptr<Scheduler> scheduler,
                      int ramsize, int cpu_subtype) :
     Cpu2200(),  // init base class
@@ -1566,7 +1566,7 @@ Cpu2200vp::IoCardCbIbs(int data)
     assert( (m_cpu.sh & SH_MASK_CPB) == 0 );
     m_cpu.k = (uint8)(data & 0xFF);
     m_cpu.sh |= SH_MASK_CPB;            // CPU busy; inhibit IBS
-    m_sys.cpu_CPB( true );              // we are busy now
+    m_sys->cpu_CPB( true );             // we are busy now
 
     // return special status if it is a special function key
     if (data & IoCardKeyboard::KEYCODE_SF) {

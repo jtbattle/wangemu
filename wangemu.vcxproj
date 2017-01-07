@@ -206,9 +206,7 @@
     <ClInclude Include="src\SysCfgState.h" />
     <ClInclude Include="src\System2200.h" />
     <ClInclude Include="src\tokens.h" />
-    <ClInclude Include="src\ucode_2200B.h" />
-    <ClInclude Include="src\ucode_2200T.h" />
-    <ClInclude Include="src\ucode_2200vp.h" />
+    <ClInclude Include="src\ucode_2200.h" />
     <ClInclude Include="src\Ui.h" />
     <ClInclude Include="src\UiCrt.h" />
     <ClInclude Include="src\UiCrtConfigDlg.h" />

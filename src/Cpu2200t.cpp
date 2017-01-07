@@ -5,8 +5,7 @@
 #include "IoCardKeyboard.h"
 #include "Scheduler.h"
 #include "System2200.h"
-#include "ucode_2200B.h"
-#include "ucode_2200T.h"
+#include "ucode_2200.h"
 
 // if this is defined as 0, a few variables get initialized
 // unnecessarily, which may very slightly slow down the emulation,
@@ -584,7 +583,7 @@ Cpu2200t::mem_write(uint16 addr, uint4 wr_value, int write2)
 uint4
 Cpu2200t::read_st3() const
 {
-    int ib5 = m_sys.cpu_poll_IB5();
+    int ib5 = m_sys->cpu_poll_IB5();
     return (uint4)(  (m_cpu.st3 & 0x8)  // 1=horizontal RAM addressing
                    | (m_cpu.st3 & 0x4)  // 1=halt/step is pressed
                    | (ib5 << 1)         // wr: nop, rd: (I/O data bus & 0x10)
@@ -601,7 +600,7 @@ Cpu2200t::set_st1(uint4 value)
     m_cpu.st1 = value;
 
     if (cpb_changed) {
-        m_sys.cpu_CPB( !!(m_cpu.st1 & ST1_MASK_CPB) );
+        m_sys->cpu_CPB( !!(m_cpu.st1 & ST1_MASK_CPB) );
     }
 }
 
@@ -1072,8 +1071,8 @@ Cpu2200t::exec_one_op()
                         dbglog("-CBS when AB=%02X, K=%02X ('%c')\n", m_cpu.ab_sel, m_cpu.k, m_cpu.k);
                     }
                 }
-                //UI_Info("CPU:CBS when AB=%02X, AB_SEL=%02X, K=%02X\n", m_cpu.ab, m_cpu.ab_sel, m_cpu.k);
-                m_sys.cpu_CBS(m_cpu.k);  // control bus strobe
+                //UI_Info("CPU:CBS when AB=%02X, AB_SEL=%02X, K=%02X", m_cpu.ab, m_cpu.ab_sel, m_cpu.k);
+                m_sys->cpu_CBS(m_cpu.k);  // control bus strobe
                 break;
 
             case 0x20: // generate -OBS
@@ -1084,8 +1083,8 @@ Cpu2200t::exec_one_op()
                         dbglog("-OBS when AB=%02X, K=%02X ('%c')\n", m_cpu.ab_sel, m_cpu.k, m_cpu.k);
                     }
                 }
-                //UI_Info("CPU:OBS when AB=%02X, AB_SEL=%02X, K=%02X\n", m_cpu.ab, m_cpu.ab_sel, m_cpu.k);
-                m_sys.cpu_OBS(m_cpu.k);  // output data bus strobe
+                //UI_Info("CPU:OBS when AB=%02X, AB_SEL=%02X, K=%02X", m_cpu.ab, m_cpu.ab_sel, m_cpu.k);
+                m_sys->cpu_OBS(m_cpu.k);  // output data bus strobe
                 break;
 
             case 0x40: // generate -ABS
@@ -1093,8 +1092,8 @@ Cpu2200t::exec_one_op()
                 if (m_dbg) {
                     dbglog("-ABS with AB=%02X\n", m_cpu.ab_sel);
                 }
-                //UI_Info("CPU:ABS when AB=%02X\n", m_cpu.ab);
-                m_sys.cpu_ABS(m_cpu.ab_sel);  // address bus strobe
+                //UI_Info("CPU:ABS when AB=%02X", m_cpu.ab);
+                m_sys->cpu_ABS(m_cpu.ab_sel);  // address bus strobe
                 break;
 
             default:
@@ -1188,7 +1187,7 @@ Cpu2200t::exec_one_op()
 // create a CPU instance.
 // ramsize should be a multiple of 4.
 // subtype selects between the flavors of the cpu
-Cpu2200t::Cpu2200t(System2200 &sys,
+Cpu2200t::Cpu2200t(System2200 *const sys,
                    std::shared_ptr<Scheduler> scheduler,
                    int ramsize, int cpu_subtype) :
     Cpu2200(),  // init base class
@@ -1356,12 +1355,12 @@ Cpu2200t::IoCardCbIbs(int data)
     // we shouldn't receive an IBS while the cpu is busy
     assert( (m_cpu.st1 & ST1_MASK_CPB) == 0 );
     m_cpu.k = (uint8)(data & 0xFF);
-    m_cpu.st1 |= ST1_MASK_CPB;          // CPU busy; inhibit IBS
-    m_sys.cpu_CPB( true );              // the cpu is busy now
+    m_cpu.st1 |= ST1_MASK_CPB;      // CPU busy; inhibit IBS
+    m_sys->cpu_CPB( true );         // the cpu is busy now
 
     // return special status if it is a special function key
     if (data & IoCardKeyboard::KEYCODE_SF) {
-        m_cpu.st1 |= ST1_MASK_SF;       // special function key
+        m_cpu.st1 |= ST1_MASK_SF;   // special function key
     }
 }
 

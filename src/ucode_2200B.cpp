@@ -3,7 +3,7 @@
 //
 // contributed by Eilert Brinkmeyer
 
-#include "ucode_2200B.h"
+#include "ucode_2200.h"
 
 uint32 ucode_2200B[UCODE_WORDS_2200B] = {
         0x000B0418,     // 0000

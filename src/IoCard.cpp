@@ -38,7 +38,7 @@ IoCard::makeTmpCard(card_t type, int baseaddr)
 // FIXME: this is sinful to pass 0 to a ref, and wasteful to build the dummies.
 // as a partial cure, perhaps create a CPUTYPE_DUMMY which is more lightweight.
     auto dummy_scheduler = std::make_shared<Scheduler>();
-    auto dummy_cpu       = std::make_shared<Cpu2200t>(System2200(), dummy_scheduler, 8, Cpu2200::CPUTYPE_2200T);
+    auto dummy_cpu       = std::make_shared<Cpu2200t>(&System2200(), dummy_scheduler, 8, Cpu2200::CPUTYPE_2200T);
 
     return makeCardImpl( dummy_scheduler,
                          dummy_cpu,
