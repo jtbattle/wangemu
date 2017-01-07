@@ -17,7 +17,6 @@
 
 #include <algorithm>            // for std::max
 #include <fstream>
-using std::ofstream;
 
 // ----------------------------------------------------------------------------
 // static variables
@@ -171,12 +170,12 @@ Printer::getPaperId() const
 }
 
 void
-Printer::setPaperName(const string &papername)
+Printer::setPaperName(const std::string &papername)
 {
     m_papername = papername;
 }
 
-string
+std::string
 Printer::getPaperName() const
 {
     return m_papername;
@@ -195,12 +194,12 @@ Printer::getBin() const
 }
 
 void
-Printer::setRealPrinterName(const string &name)
+Printer::setRealPrinterName(const std::string &name)
 {
     m_realprintername = name;
 }
 
-string
+std::string
 Printer::getRealPrinterName() const
 {
     return m_realprintername;
@@ -275,12 +274,12 @@ Printer::getPortdirect() const
 
 //portstring attribute
 void
-Printer::setPortstring(const string &name)
+Printer::setPortstring(const std::string &name)
 {
     m_portstring = name;
 }
 
-string
+std::string
 Printer::getPortstring() const
 {
     return m_portstring;
@@ -424,16 +423,16 @@ Printer::closePort()
 void
 Printer::saveToFile()
 {
-    string fullpath;
+    std::string fullpath;
     Host hst;
     int r = hst.fileReq(Host::FILEREQ_PRINTER, "Save printer log file", 0,
                          &fullpath);
     if (r == Host::FILEREQ_OK) {
 
         // save the file
-        ofstream ofs(fullpath, ofstream::out   |  // we're writing
-                               ofstream::trunc |  // discard any existing file
-                               ofstream::binary); // just write what I ask
+        std::ofstream ofs(fullpath, std::ofstream::out   |  // we're writing
+                                    std::ofstream::trunc |  // discard any existing file
+                                    std::ofstream::binary); // just write what I ask
         if (!ofs.is_open()) {
             UI_Error("Couldn't write to file '%s'", fullpath.c_str());
             return;
@@ -443,9 +442,9 @@ Printer::saveToFile()
 
         for(int n = 0; n < maxn; n++) {
 #ifdef __WXMSW__
-            string tmpline(m_printstream[n] + "\r\n");
+            std::string tmpline(m_printstream[n] + "\r\n");
 #else
-            string tmpline(m_printstream[n] + "\n");
+            std::string tmpline(m_printstream[n] + "\n");
 #endif
             int len = tmpline.length();
             ofs.write( tmpline.c_str(), len );
@@ -492,7 +491,7 @@ Printer::generatePrintPage(wxDC *dc, int pagenum, float vertAdjust)
     size_t length = m_linelength;
     int startRow = ((pagenum - 1) * m_pagelength);
     int startCol = 0;
-    string line;
+    std::string line;
 
     dc->SetFont( m_font );
 
@@ -755,7 +754,7 @@ Printer::generateScreen(int startCol, int startRow)
         imgDC.SetFont(m_font);
 
         const int num_rows = m_printstream.size();
-        string line;
+        std::string line;
 
         for(int row = 0; row < m_chars_h + 1; row++) {
 
@@ -784,7 +783,7 @@ void
 Printer::emitLine()
 {
     m_linebuf[m_linebuf_len] = (char)0x00;
-    m_printstream.push_back(string(m_linebuf));
+    m_printstream.push_back(std::string(m_linebuf));
     m_linebuf_len = 0;
 
     if (m_autoshow) {
@@ -865,10 +864,10 @@ Printer::updateStatusbar()
     const int num_pages = numberOfPages();
     const int last_line = std::min(first_visible_row + m_chars_h+1, num_rows);
     const int cur_page = (last_line + m_pagelength-1) / m_pagelength;
-    string msg("Page " + std::to_string(cur_page) +
-               " of " + std::to_string(num_pages) +
-               " (line " + std::to_string(last_line) +
-               " of " + std::to_string(num_rows) + ")");
+    std::string msg("Page " + std::to_string(cur_page) +
+                    " of " + std::to_string(num_pages) +
+                    " (line " + std::to_string(last_line) +
+                    " of " + std::to_string(num_rows) + ")");
     m_parent->SetStatusText(msg);
 }
 

@@ -5,7 +5,7 @@
 // ##                          Wang BASIC Errors                          ##
 // #########################################################################
 
-const vector<errtable_t> errtable = {
+const std::vector<errtable_t> errtable = {
 
 // -------------------------------------------------------------------------
     {
@@ -994,7 +994,7 @@ const vector<errtable_t> errtable = {
 // ##                            BASIC-2 Errors                           ##
 // #########################################################################
 
-const vector<errtable_t> errtable_vp = {
+const std::vector<errtable_t> errtable_vp = {
 
     {
     // -------------------------------------------------------------------------

@@ -12,7 +12,6 @@
 #include "Ui.h"                 // for UI_Alert
 
 #include <sstream>
-using std::ostringstream;
 
 // ------------------------------------------------------------------------
 // public members
@@ -174,8 +173,8 @@ SysCfgState::loadIni()
 
     // get CPU attributes and start accumulating new configuration changes
     {
-        string subgroup("cpu");
-        string sval;
+        std::string subgroup("cpu");
+        std::string sval;
         int    ival;
 
         setCpuType( Cpu2200::CPUTYPE_2200T );  // default
@@ -218,10 +217,10 @@ SysCfgState::loadIni()
     // get IO slot attributes
     for(int slot=0; slot<NUM_IOSLOTS; slot++) {
 
-        ostringstream osf;
+        std::ostringstream osf;
         osf << "io/slot-" << slot;
-        string subgroup(osf.str());
-        string sval;
+        std::string subgroup(osf.str());
+        std::string sval;
         int b;
         IoCard::card_t cardtype = IoCard::card_t::none;
 
@@ -243,7 +242,7 @@ SysCfgState::loadIni()
             // if cardtype isCardConfigurable(), make a new config object,
             // and try to load it from the ini
             if (CardInfo::isCardConfigurable(cardtype)) {
-                string cardsubgroup("io/slot-" + std::to_string(slot) + "/cardcfg");
+                std::string cardsubgroup("io/slot-" + std::to_string(slot) + "/cardcfg");
                 // dump any attached cardCfg state
                 if (m_slot[slot].cardCfg != nullptr) {
                     delete m_slot[slot].cardCfg;
@@ -261,7 +260,7 @@ SysCfgState::loadIni()
 
     // get misc other config bits
     {
-        string subgroup("misc");
+        std::string subgroup("misc");
         bool bval;
 
         hst.ConfigReadBool(subgroup, "disk_realtime", &bval, true);
@@ -285,13 +284,13 @@ SysCfgState::saveIni() const
 
     // save IO information
     for(int slot=0; slot<NUM_IOSLOTS; slot++) {
-        string subgroup("io/slot-" + std::to_string(slot));
+        std::string subgroup("io/slot-" + std::to_string(slot));
 
         IoCard::card_t cardtype = m_slot[slot].type;
         if (cardtype != IoCard::card_t::none) {
             char val[10];
             sprintf(val, "0x%03X", m_slot[slot].addr);
-            string cardname = CardInfo::getCardName(cardtype);
+            std::string cardname = CardInfo::getCardName(cardtype);
             hst.ConfigWriteStr(subgroup, "type", cardname);
             hst.ConfigWriteStr(subgroup, "addr", val);
         } else {
@@ -300,7 +299,7 @@ SysCfgState::saveIni() const
         }
 
         if (m_slot[slot].cardCfg != nullptr) {
-            string cardsubgroup("io/slot-" + std::to_string(slot) + "/cardcfg");
+            std::string cardsubgroup("io/slot-" + std::to_string(slot) + "/cardcfg");
             m_slot[slot].cardCfg->saveIni(cardsubgroup);
         }
 
@@ -308,7 +307,7 @@ SysCfgState::saveIni() const
 
     // save CPU information
     {
-        const string subgroup("cpu");
+        const std::string subgroup("cpu");
 
         const char *foo = (m_cputype == Cpu2200::CPUTYPE_2200B) ? "2200B" :
                           (m_cputype == Cpu2200::CPUTYPE_2200T) ? "2200T" :
@@ -324,7 +323,7 @@ SysCfgState::saveIni() const
 
     // save misc other config bits
     {
-        const string subgroup("misc");
+        const std::string subgroup("misc");
         hst.ConfigWriteBool(subgroup, "disk_realtime", getDiskRealtime());
         hst.ConfigWriteBool(subgroup, "warnio",        getWarnIo());
     }
@@ -528,7 +527,7 @@ SysCfgState::configOk(bool warn) const
 
         IoCard *slotInst = IoCard::makeTmpCard(getSlotCardType(slot),
                                                getSlotCardAddr(slot) & 0xFF);
-        vector<int> slotAddresses = slotInst->getAddresses();
+        std::vector<int> slotAddresses = slotInst->getAddresses();
         delete slotInst;
 
         // check for address conflicts
@@ -540,7 +539,7 @@ SysCfgState::configOk(bool warn) const
 
             IoCard *slot2Inst = IoCard::makeTmpCard(getSlotCardType(slot2),
                                                     getSlotCardAddr(slot2) & 0xFF);
-            vector<int> slot2Addresses = slot2Inst->getAddresses();
+            std::vector<int> slot2Addresses = slot2Inst->getAddresses();
             delete slot2Inst;
 
             // sweep through all occupied addresses and look for collisions

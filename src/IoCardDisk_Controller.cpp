@@ -76,7 +76,7 @@ IoCardDisk::cax_init()
     return (m_cpu->getAB() & 0xA0) == 0xA0;
 }
 
-string
+std::string
 IoCardDisk::statename(int state) const
 {
     switch (state) {
@@ -203,7 +203,7 @@ IoCardDisk::advanceState(disk_event_t event, const int val)
 // return a pointer to a string describing a known extended command
 // which the emulator doesn't support.  return nullptr if it is either
 // supported or is unknown.
-string
+std::string
 IoCardDisk::unsupportedExtendedCommandName(int cmd)
 {
     switch (cmd) {
@@ -237,7 +237,7 @@ IoCardDisk::advanceStateInt(disk_event_t event, const int val)
         if (event == EVENT_OBS) {
             dbglog("State %s, received OBS(0x%02x)\n", statename(m_state).c_str(), val);
         } else {
-            string msg;
+            std::string msg;
             switch (event) {
                 case EVENT_RESET:     msg = "EVENT_RESET";     break;
                 case EVENT_OBS:       msg = "EVENT_OBS";       break;
@@ -514,7 +514,7 @@ disk operation
                 default: {
                     static bool reported[256] = { false };
                     if (!reported[m_special_command]) {
-                        string msg = unsupportedExtendedCommandName(m_special_command);
+                        std::string msg = unsupportedExtendedCommandName(m_special_command);
                         if (msg != "") {
                             UI_Warn("ERROR: disk controller received unimplemented special command 0x%02x (%s)\n"
                                     "Please notify the program developer if you want this feature added",

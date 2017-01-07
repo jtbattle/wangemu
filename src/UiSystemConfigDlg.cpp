@@ -172,9 +172,9 @@ SystemConfigDlg::SystemConfigDlg(wxFrame *parent) :
 
         for(int ctype=0; ctype<IoCard::NUM_CARDTYPES; ctype++) {
             IoCard::card_t ct = static_cast<IoCard::card_t>(ctype);
-            string cardname = CardInfo::getCardName(ct);
-            string carddesc = CardInfo::getCardDesc(ct);
-            string str( cardname + " (" + carddesc + ")" );
+            std::string cardname = CardInfo::getCardName(ct);
+            std::string carddesc = CardInfo::getCardDesc(ct);
+            std::string str( cardname + " (" + carddesc + ")" );
             m_cardDesc[slot]->Append(str, (void*)ctype);
         }
 
@@ -316,7 +316,7 @@ SystemConfigDlg::updateButtons()
     // we could disable it, but then the user couldn't hit OK and be told
     // why it is disabled.  It would also be possible to add a tooltip to
     // serve this purpose.
-    string label;
+    std::string label;
     if (!configStateOk(false /*don't warn*/)) {
         label = "not OK";
     } else if (m_oldcfg.needsReboot(m_cfg)) {
@@ -430,7 +430,7 @@ SystemConfigDlg::OnAddrChoice( wxCommandEvent &event )
     int addrsel      =       m_cardAddr[slot]->GetSelection();
     assert(cardtype_idx >= 0);
 
-    vector<int> base_addresses = CardInfo::getCardBaseAddresses(static_cast<IoCard::card_t>(cardtype_idx));
+    std::vector<int> base_addresses = CardInfo::getCardBaseAddresses(static_cast<IoCard::card_t>(cardtype_idx));
     m_cfg.setSlotCardAddr( slot, base_addresses[addrsel] );
 
     updateButtons();
@@ -508,7 +508,7 @@ SystemConfigDlg::OnButton(wxCommandEvent &event)
 void
 SystemConfigDlg::saveDefaults()
 {
-    const string subgroup("ui/configdlg");
+    const std::string subgroup("ui/configdlg");
 
     // save position and size
     Host().ConfigWriteWinGeom(this, subgroup);
@@ -519,7 +519,7 @@ void
 SystemConfigDlg::getDefaults()
 {
     // see if we've established a favored location and size
-    const string subgroup("ui/configdlg");
+    const std::string subgroup("ui/configdlg");
     Host().ConfigReadWinGeom(this, subgroup);
 }
 
@@ -539,7 +539,7 @@ SystemConfigDlg::setValidIoChoices(int slot, int cardtype_idx)
 
     IoCard::card_t ct = static_cast<IoCard::card_t>(cardtype_idx);
     if (occupied) {
-        vector<int> base_addresses = CardInfo::getCardBaseAddresses(ct);
+        std::vector<int> base_addresses = CardInfo::getCardBaseAddresses(ct);
 
         int addr_mtch_idx = -1;
         for(unsigned int j=0; j<base_addresses.size(); j++) {

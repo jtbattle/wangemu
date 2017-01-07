@@ -389,7 +389,7 @@ DiskCtrlCfgDlg::OnButton(wxCommandEvent &event)
 void
 DiskCtrlCfgDlg::saveDefaults()
 {
-    const string subgroup("ui/diskcfgdlg");
+    const std::string subgroup("ui/diskcfgdlg");
 
     // save position and size
     Host().ConfigWriteWinGeom(this, subgroup);
@@ -400,7 +400,7 @@ void
 DiskCtrlCfgDlg::getDefaults()
 {
     // see if we've established a favored location and size
-    const string subgroup("ui/diskcfgdlg");
+    const std::string subgroup("ui/diskcfgdlg");
     Host().ConfigReadWinGeom(this, subgroup);
 }
 

@@ -21,16 +21,16 @@
 
 bool Host::m_initialized = false;
 
-string        Host::m_app_home;            // path to application home directory
+std::string                   Host::m_app_home;            // path to application home directory
 std::unique_ptr<wxFileConfig> Host::m_config    = nullptr; // configuration file object
 std::unique_ptr<wxStopWatch>  Host::m_stopwatch = nullptr; // time program started
 
 // remember where certain files are located
-string Host::m_FileDir[FILEREQ_NUM];         // dir where files come from
-string Host::m_Filename[FILEREQ_NUM];        // most recently chosen
-string Host::m_FileFilter[FILEREQ_NUM];      // suffix filter string
-int    Host::m_FileFilterIdx[FILEREQ_NUM];   // which filter was chosen
-string Host::m_IniGroup[FILEREQ_NUM];        // name in .ini file
+std::string Host::m_FileDir[FILEREQ_NUM];         // dir where files come from
+std::string Host::m_Filename[FILEREQ_NUM];        // most recently chosen
+std::string Host::m_FileFilter[FILEREQ_NUM];      // suffix filter string
+int         Host::m_FileFilterIdx[FILEREQ_NUM];   // which filter was chosen
+std::string Host::m_IniGroup[FILEREQ_NUM];        // name in .ini file
 
 // ============================================================================
 // implementation
@@ -85,7 +85,7 @@ Host::initMembers()
   #endif
 #endif
 
-    m_app_home = string(exe_path.GetPath(wxPATH_GET_VOLUME));
+    m_app_home = std::string(exe_path.GetPath(wxPATH_GET_VOLUME));
 
 #ifdef __WXMSW__
     m_config = std::make_unique<wxFileConfig>(
@@ -168,7 +168,7 @@ Host::terminate()
 // ask user to provide a file location
 
 int
-Host::fileReq(int requestor, string title, int readonly, string *fullpath)
+Host::fileReq(int requestor, std::string title, int readonly, std::string *fullpath)
 {
     int style;
 
@@ -199,7 +199,7 @@ Host::fileReq(int requestor, string title, int readonly, string *fullpath)
 
 
 // return the absolute path to the dir containing the app
-string Host::getAppHome()
+std::string Host::getAppHome()
 {
     return m_app_home;
 }
@@ -208,7 +208,7 @@ string Host::getAppHome()
 // classifies the supplied filename as being either relative (false)
 // or absolute (returns true).
 bool
-Host::isAbsolutePath(const string &name)
+Host::isAbsolutePath(const std::string &name)
 {
     wxFileName filename(name);
     return filename.IsAbsolute();
@@ -216,12 +216,12 @@ Host::isAbsolutePath(const string &name)
 
 
 // make sure the name is put in normalized format
-string
-Host::asAbsolutePath(const string &name)
+std::string
+Host::asAbsolutePath(const std::string &name)
 {
     wxFileName fn(name);
     (void)fn.MakeAbsolute();
-    string rv(fn.GetFullPath());
+    std::string rv(fn.GetFullPath());
     return rv;
 }
 
@@ -232,10 +232,10 @@ Host::asAbsolutePath(const string &name)
 
 // fetch an association from the configuration file
 bool
-Host::ConfigReadStr(const string &subgroup,
-                    const string &key,
-                    string *val,
-                    const string *defaultval)
+Host::ConfigReadStr(const std::string &subgroup,
+                    const std::string &key,
+                    std::string *val,
+                    const std::string *defaultval)
 {
     wxString wxval;
     m_config->SetPath( "/wangemu/config-0/" + subgroup);
@@ -250,12 +250,12 @@ Host::ConfigReadStr(const string &subgroup,
 
 
 bool
-Host::ConfigReadInt(const string &subgroup,
-                    const string &key,
+Host::ConfigReadInt(const std::string &subgroup,
+                    const std::string &key,
                     int *val,
                     const int defaultval)
 {
-    string valstr;
+    std::string valstr;
     bool b = ConfigReadStr(subgroup, key, &valstr);
     long v = 0;
     if (b) {
@@ -268,8 +268,8 @@ Host::ConfigReadInt(const string &subgroup,
 
 
 void
-Host::ConfigReadBool(const string &subgroup,
-                     const string &key,
+Host::ConfigReadBool(const std::string &subgroup,
+                     const std::string &key,
                      bool *val,
                      const bool defaultval)
 {
@@ -294,12 +294,12 @@ Host::ConfigReadBool(const string &subgroup,
 // settings a bit on the changeover.
 void
 Host::ConfigReadWinGeom(wxWindow *wxwin,
-                        const string &subgroup,
+                        const std::string &subgroup,
                         wxRect *default_geom,
                         bool client_size)
 {
     long x=0, y=0, w=0, h=0;    // just for lint
-    string valstr;
+    std::string valstr;
 
     bool b = ConfigReadStr(subgroup, "window", &valstr);
     if (b) {
@@ -365,9 +365,9 @@ Host::ConfigReadWinGeom(wxWindow *wxwin,
 
 // send a string association to the configuration file
 void
-Host::ConfigWriteStr(const string &subgroup,
-                     const string &key,
-                     const string &val)
+Host::ConfigWriteStr(const std::string &subgroup,
+                     const std::string &key,
+                     const std::string &val)
 {
     wxString wxKey(key);
     wxString wxVal(val);
@@ -380,20 +380,20 @@ Host::ConfigWriteStr(const string &subgroup,
 
 // send an integer association to the configuration file
 void
-Host::ConfigWriteInt(const string &subgroup,
-                     const string &key,
+Host::ConfigWriteInt(const std::string &subgroup,
+                     const std::string &key,
                      const int val)
 {
     wxString foo;
     foo.Printf("%d", val);
-    ConfigWriteStr(subgroup, key, string(foo));
+    ConfigWriteStr(subgroup, key, std::string(foo));
 }
 
 
 // send a boolean association to the configuration file
 void
-Host::ConfigWriteBool(const string &subgroup,
-                      const string &key,
+Host::ConfigWriteBool(const std::string &subgroup,
+                      const std::string &key,
                       const bool val)
 {
     int foo = (val) ? 1 : 0;
@@ -404,7 +404,7 @@ Host::ConfigWriteBool(const string &subgroup,
 // write out the geometry for a window
 void
 Host::ConfigWriteWinGeom(wxWindow *wxwin,
-                         const string &subgroup,
+                         const std::string &subgroup,
                          bool client_size)
 {
     assert(wxwin != nullptr);
@@ -419,7 +419,7 @@ Host::ConfigWriteWinGeom(wxWindow *wxwin,
 
     wxString prop;
     prop.Printf("%d,%d,%d,%d", x,y,w,h);
-    ConfigWriteStr(subgroup, "window", string(prop));
+    ConfigWriteStr(subgroup, "window", std::string(prop));
 }
 
 
@@ -427,8 +427,8 @@ Host::ConfigWriteWinGeom(wxWindow *wxwin,
 void
 Host::getConfigFileLocations()
 {
-    string subgroup("..");
-    string foo;
+    std::string subgroup("..");
+    std::string foo;
 
     bool b = ConfigReadStr(subgroup, "configversion", &foo);
     if (b && (foo != "1")) {
@@ -457,8 +457,8 @@ Host::getConfigFileLocations()
 void
 Host::saveConfigFileLocations()
 {
-    string subgroup("..");
-    string version("1");
+    std::string subgroup("..");
+    std::string version("1");
 
     ConfigWriteStr(subgroup, "configversion", version);
 

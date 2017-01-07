@@ -61,7 +61,7 @@ END_EVENT_TABLE()
 MyStaticBitmap::MyStaticBitmap(
                     wxWindow *parent, wxWindowID id, const wxBitmap &label,
                     const wxPoint &pos, const wxSize &size,
-                    long style, const string &name ) :
+                    long style, const std::string &name ) :
         wxStaticBitmap (parent, id, label, pos, size, style, name),
         m_myid(id)
 {
@@ -326,7 +326,7 @@ CrtStatusBar::SetDiskIcon(const int slot, const int drive)
         assert(ok);
         harddisk = (disktype == Wvd::DISKTYPE_HD60) ||
                    (disktype == Wvd::DISKTYPE_HD80);
-        string filename;
+        std::string filename;
         ok = IoCardDisk::wvdGetFilename(slot, drive, &filename);
         assert(ok);
         // assign a tooltip
@@ -488,7 +488,7 @@ CrtStatusBar::OnDiskButton(wxMouseEvent &event)
     switch (m_popup_action) {
 
         case insert_disk: {
-            string fullpath;
+            std::string fullpath;
             if (Host().fileReq(Host::FILEREQ_DISK, "Disk to load", 1, &fullpath) ==
                                Host::FILEREQ_OK) {
                 int drive2, io_addr;
@@ -506,7 +506,7 @@ CrtStatusBar::OnDiskButton(wxMouseEvent &event)
             break;
 
         case inspect_disk: {
-            string filename;
+            std::string filename;
             ok = IoCardDisk::wvdGetFilename(slot, drive, &filename);
             assert(ok); ok=ok;
             m_parent->doInspect(filename);
@@ -514,7 +514,7 @@ CrtStatusBar::OnDiskButton(wxMouseEvent &event)
             break;
 
         case format_disk: {
-            string filename;
+            std::string filename;
             ok = IoCardDisk::wvdGetFilename(slot, drive, &filename);
             assert(ok); ok=ok;
             m_parent->doFormat(filename);
@@ -555,7 +555,7 @@ CrtStatusBar::OnDiskPopup(wxCommandEvent &event)
 
 
 void
-CrtStatusBar::SetStatusMessage(const string &text)
+CrtStatusBar::SetStatusMessage(const std::string &text)
 {
     wxStatusBar::SetStatusText(text, 1);        // let superclass handle it
 }

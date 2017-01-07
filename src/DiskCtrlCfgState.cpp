@@ -6,7 +6,6 @@
 #include "Ui.h"                 // for UI_Alert
 
 #include <sstream>
-using std::ostringstream;
 
 // ------------------------------------------------------------------------
 // public members
@@ -85,7 +84,7 @@ DiskCtrlCfgState::setDefaults()
 
 // read from configuration file
 void
-DiskCtrlCfgState::loadIni(const string &subgroup)
+DiskCtrlCfgState::loadIni(const std::string &subgroup)
 {
     Host hst;
     int ival;
@@ -97,7 +96,7 @@ DiskCtrlCfgState::loadIni(const string &subgroup)
     setNumDrives( ival );
 
     setIntelligence( DISK_CTRL_INTELLIGENT );  // default
-    string sval;
+    std::string sval;
     bool b = hst.ConfigReadStr(subgroup, "intelligence", &sval);
     if (b) {
              if (sval == "dumb")  setIntelligence( DISK_CTRL_DUMB );
@@ -115,14 +114,14 @@ DiskCtrlCfgState::loadIni(const string &subgroup)
 
 // save to configuration file
 void
-DiskCtrlCfgState::saveIni(const string &subgroup) const
+DiskCtrlCfgState::saveIni(const std::string &subgroup) const
 {
     assert(m_initialized);
 
     Host hst;
     hst.ConfigWriteInt(subgroup, "numDrives", getNumDrives());
 
-    string foo;
+    std::string foo;
     switch (m_intelligence) {
         case DISK_CTRL_DUMB:        foo = "dumb";  break;
         case DISK_CTRL_INTELLIGENT: foo = "smart"; break;

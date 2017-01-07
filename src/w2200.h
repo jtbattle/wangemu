@@ -8,15 +8,9 @@
 #include "compile_options.h"    // compile-time flags
 
 #include <cassert>
-
 #include <string>
-using std::string;
-
 #include <vector>
-using std::vector;
-
 #include <memory>
-using std::shared_ptr;
 
 #include <functional>
 typedef std::function<void(int)> kbCallback;

@@ -60,31 +60,31 @@ public:
     // the ConfigRead* functions take a defaultval; this is the value returned
     // if the key for that subgroup isn't found in the config file.
 
-    static bool ConfigReadStr(  const string &subgroup,
-                                const string &key,
-                                string *val,
-                                const string *defaultval = 0);
+    static bool ConfigReadStr(  const std::string &subgroup,
+                                const std::string &key,
+                                std::string *val,
+                                const std::string *defaultval = 0);
 
-    static void ConfigWriteStr( const string &subgroup,
-                                const string &key,
-                                const string &val);
+    static void ConfigWriteStr( const std::string &subgroup,
+                                const std::string &key,
+                                const std::string &val);
 
-    static bool ConfigReadInt(  const string &subgroup,
-                                const string &key,
+    static bool ConfigReadInt(  const std::string &subgroup,
+                                const std::string &key,
                                 int *val,
                                 const int defaultval = 0);
 
-    static void ConfigWriteInt( const string &subgroup,
-                                const string &key,
+    static void ConfigWriteInt( const std::string &subgroup,
+                                const std::string &key,
                                 const int val);
 
-    static void ConfigReadBool( const string &subgroup,
-                                const string &key,
+    static void ConfigReadBool( const std::string &subgroup,
+                                const std::string &key,
                                 bool *val,
                                 const bool defaultval = false);
 
-    static void ConfigWriteBool(const string &subgroup,
-                                const string &key,
+    static void ConfigWriteBool(const std::string &subgroup,
+                                const std::string &key,
                                 const bool val);
 
     // these are specialized for saving/recalling the location and size
@@ -92,12 +92,12 @@ public:
     // the client_size flag indicates whether the geometry we are dealing
     // with is of the window or the client.
     static void ConfigReadWinGeom(  wxWindow     *wxwin,
-                                    const string &subgroup,
+                                    const std::string &subgroup,
                                     wxRect       *default_geom = nullptr,
                                     bool          client_size = true );
 
     static void ConfigWriteWinGeom( wxWindow     *wxwin,
-                                    const string &subgroup,
+                                    const std::string &subgroup,
                                     bool          client_size = true );
 
     // ---- time functions ----
@@ -112,13 +112,13 @@ public:
 
     // classifies the supplied filename as being either relative (false)
     // or absolute (returns true).
-    static bool isAbsolutePath(const string &name);
+    static bool isAbsolutePath(const std::string &name);
 
     // make sure the name is put in normalized format
-    static string asAbsolutePath(const string &name);
+    static std::string asAbsolutePath(const std::string &name);
 
     // return the absolute path to the dir containing the app
-    static string getAppHome();
+    static std::string getAppHome();
 
     // ---- ask user to provide a file location ----
     // categories of separate file locations
@@ -134,8 +134,8 @@ public:
 
     // for a given category (FILEREQ_*), ask to select a file from
     // the default directory for that category.
-    static int fileReq(int requestor, string title,
-                       int readonly, string *fullpath);
+    static int fileReq(int requestor, std::string title,
+                       int readonly, std::string *fullpath);
 
 private:
     // initialize class members
@@ -148,16 +148,16 @@ private:
     // set up the object the first time it is used
     static bool m_initialized;
 
-    static string        m_app_home;    // path to application home directory
+    static std::string                   m_app_home;  // path to application home directory
     static std::unique_ptr<wxFileConfig> m_config;    // configuration file object
     static std::unique_ptr<wxStopWatch>  m_stopwatch; // real time since simulation started
 
     // remember where certain files are located
-    static string m_FileDir[FILEREQ_NUM];         // dir where files come from
-    static string m_Filename[FILEREQ_NUM];        // most recently chosen
-    static string m_FileFilter[FILEREQ_NUM];      // suffix filter string
-    static int    m_FileFilterIdx[FILEREQ_NUM];   // which filter was chosen
-    static string m_IniGroup[FILEREQ_NUM];        // name in .ini file
+    static std::string m_FileDir[FILEREQ_NUM];         // dir where files come from
+    static std::string m_Filename[FILEREQ_NUM];        // most recently chosen
+    static std::string m_FileFilter[FILEREQ_NUM];      // suffix filter string
+    static int         m_FileFilterIdx[FILEREQ_NUM];   // which filter was chosen
+    static std::string m_IniGroup[FILEREQ_NUM];        // name in .ini file
 };
 
 #endif _INCLUDE_HOST_H_

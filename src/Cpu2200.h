@@ -243,7 +243,7 @@ private:
     void tcb30msDone();
 
 #ifdef HAVE_FILE_DUMP
-    void dump_ram(const string &filename);
+    void dump_ram(const std::string &filename);
 #endif
 
     // ---- data members ----

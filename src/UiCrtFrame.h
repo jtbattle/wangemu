@@ -5,9 +5,6 @@
 #ifndef _INCLUDE_UI_CRT_FRAME_H_
 #define _INCLUDE_UI_CRT_FRAME_H_
 
-#include <vector>
-using std::vector;
-
 class Crt;
 class CrtStatusBar;
 
@@ -55,19 +52,19 @@ public:
     static void setSimSeconds(int secs, float relative_speed);
 
     // set CRT font style and size
-    static int    getNumFonts();
-    static int    getFontNumber(int idx);
-    static string getFontName(int idx);
+    static int         getNumFonts();
+    static int         getFontNumber(int idx);
+    static std::string getFontName(int idx);
 
     // set/get CRT font size
     void          setFontSize(int size);
     int           getFontSize() const;
 
     // pick one of N color schemes
-    static int    getNumColorSchemes();
-    static string getColorSchemeName(int idx);
-    void          setDisplayColorScheme(int n);
-    int           getDisplayColorScheme() const;
+    static int         getNumColorSchemes();
+    static std::string getColorSchemeName(int idx);
+    void               setDisplayColorScheme(int n);
+    int                getDisplayColorScheme() const;
 
     // values range from 0 to 100
     void setDisplayContrast(int n);
@@ -80,13 +77,13 @@ public:
 
     // mechanics of carrying out format for a given filename
     // must be public so statusbar can use it
-    void doFormat(const string &filename);
+    void doFormat(const std::string &filename);
 
     // inspect the named disk.  if it is mounted in a drive, disconnect the
     // filehandle before performing the operation so that when the emulator
     // resumes, it will be forced to reopen the file, picking up any changes
     // made to the disk metadata.
-    void doInspect(const string &filename);
+    void doInspect(const std::string &filename);
 
 // FIXME: hack so m_crt can access it
     const kbCallback m_kbHandler; // keystroke handler
@@ -210,7 +207,7 @@ private:
     int      m_blink_phase;
     int      m_fps;             // most recent frames/sec count
 
-    static vector<CrtFrame*> m_crtlist;     // list of crt's in the system
+    static std::vector<CrtFrame*> m_crtlist;     // list of crt's in the system
 
     DECLARE_EVENT_TABLE()
 };

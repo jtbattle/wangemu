@@ -7,6 +7,8 @@
 #include "Ui.h"
 #include "Wvd.h"
 
+#include <fstream>
+
 #ifdef _DEBUG
     #define DBG  (0)            // turn on some debug logging
 #else
@@ -79,15 +81,15 @@ Wvd::create(int disk_type, int platters, int sectors_per_platter)
 
 // open up an existing virtual disk file
 bool
-Wvd::open(const string &filename)
+Wvd::open(const std::string &filename)
 {
     assert(m_file == nullptr);
     assert(!m_hasPath);
     assert(!filename.empty());
 
     // set up a file handle
-    m_file = new fstream(filename.c_str(),
-                         fstream::in | fstream::out | fstream::binary );
+    m_file = new std::fstream(filename.c_str(),
+                              std::fstream::in | std::fstream::out | std::fstream::binary );
     if (!m_file) {
         return false;
     }
@@ -144,14 +146,14 @@ Wvd::setModified(bool modified)
     m_metaModified = modified;
 }
 
-string
+std::string
 Wvd::getPath() const
 {
     return m_path;
 }
 
 void
-Wvd::setPath(const string &filename)
+Wvd::setPath(const std::string &filename)
 {
     if (filename.empty()) {
         m_hasPath = false;
@@ -231,7 +233,7 @@ Wvd::setWriteProtect(bool wp)
     }
 }
 
-string
+std::string
 Wvd::getLabel()
 {
     refreshMetadata();
@@ -239,7 +241,7 @@ Wvd::getLabel()
 }
 
 void
-Wvd::setLabel(const string &newlabel)
+Wvd::setLabel(const std::string &newlabel)
 {
     refreshMetadata();
     if (m_label != newlabel) {
@@ -323,7 +325,7 @@ Wvd::save()
 // if the state was constructed following a call to create(), we need
 // to create the entire disk file from scratch.
 void
-Wvd::save(const string &filename)
+Wvd::save(const std::string &filename)
 {
     assert(!filename.empty());
     assert(!m_hasPath);
@@ -498,7 +500,7 @@ Wvd::reopen()
     if (m_metadataStale) {
         assert(!m_file->is_open()); // make sure we cached it properly
         // set up a file handle
-        m_file->open(m_path.c_str(), fstream::in | fstream::out | fstream::binary);
+        m_file->open(m_path.c_str(), std::fstream::in | std::fstream::out | std::fstream::binary);
         if (!m_file->good()) {
             UI_Error("Couldn't open file '%s'", m_path.c_str());
             delete m_file;
@@ -577,7 +579,7 @@ Wvd::readHeader()
                  "Is the disk image corrupt?");
         return false;
     }
-    string tmp_label( (const char*)&data[16] );
+    std::string tmp_label( (const char*)&data[16] );
 
     m_metaModified      = false;
     m_label             = tmp_label;
@@ -614,7 +616,7 @@ Wvd::format(const int platter)
 // write the header and then format all platters.
 // returns true on success.
 bool
-Wvd::createFile(const string &filename)
+Wvd::createFile(const std::string &filename)
 {
     assert(m_file == nullptr);
     assert(!m_hasPath);
@@ -624,8 +626,8 @@ Wvd::createFile(const string &filename)
     m_path = filename;
 
     // create the file if it doesn't exist; erase if it does
-    m_file = new fstream(filename.c_str(),
-                 fstream::in | fstream::out | fstream::trunc | fstream::binary);
+    m_file = new std::fstream(filename.c_str(),
+                 std::fstream::in | std::fstream::out | std::fstream::trunc | std::fstream::binary);
     if (!m_file) {
         return false;
     }

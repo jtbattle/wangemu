@@ -175,13 +175,13 @@ IoCardDisk::~IoCardDisk()
     }
 }
 
-const string
+const std::string
 IoCardDisk::getDescription() const
 {
     return "Disk Controller";
 }
 
-const string
+const std::string
 IoCardDisk::getName() const
 {
     return "6541";
@@ -190,10 +190,10 @@ IoCardDisk::getName() const
 // return a list of the various base addresses a card can map to.
 // list of common I/O addresses for this device taken from p. 2-5 of
 // 2200 service manual.  the default comes first.
-vector<int>
+std::vector<int>
 IoCardDisk::getBaseAddresses() const
 {
-    vector<int> v { 0x310, 0x320, 0x330 };
+    std::vector<int> v { 0x310, 0x320, 0x330 };
     return v;
 }
 
@@ -207,10 +207,10 @@ IoCardDisk::getBaseAddresses() const
 //    A7=0: address primary drive      (eg, /310)
 // These two bits are orthogonal and may be asserted, or not, in any
 // combination.
-vector<int>
+std::vector<int>
 IoCardDisk::getAddresses() const
 {
-    vector<int> v;
+    std::vector<int> v;
     v.push_back( m_baseaddr + 0x00 );   // primary drive
     v.push_back( m_baseaddr + 0x40 );   // secondary drive
     v.push_back( m_baseaddr + 0x80 );   // hogged primary drive
@@ -777,7 +777,7 @@ if (m_d[drive].tmr_sector == nullptr) {
 // parameters that are nullptr won't be returned.
 // returns true if nothing went wrong.
 bool
-IoCardDisk::wvdGetWriteProtect(const string &filename, bool *write_protect)
+IoCardDisk::wvdGetWriteProtect(const std::string &filename, bool *write_protect)
 {
     Wvd dsk;
     if (!dsk.open(filename)) {
@@ -814,7 +814,7 @@ IoCardDisk::wvdGetDiskType(const int slot, const int drive, int *disktype)
 bool
 IoCardDisk::wvdGetFilename(const int slot,
                            const int drive,
-                           string *filename)
+                           std::string *filename)
 {
     assert(slot  >= 0 && slot  <= NUM_IOSLOTS);
     assert(drive >= 0 && drive <= 3);
@@ -876,7 +876,7 @@ IoCardDisk::wvdDriveStatus(int slot, int drive)
 bool
 IoCardDisk::wvdInsertDisk(int slot,
                           int drive,
-                          const string &filename)
+                          const std::string &filename)
 {
     assert(slot >= 0 && slot <= NUM_IOSLOTS);
     assert(drive >= 0 || drive < 4);
@@ -927,7 +927,7 @@ IoCardDisk::wvdFlush(int slot, int drive)
 // format a disk by filename
 // returns true if successful
 bool
-IoCardDisk::wvdFormatFile(const string &filename)
+IoCardDisk::wvdFormatFile(const std::string &filename)
 {
     Wvd dsk;
     bool ok = dsk.open(filename);
@@ -969,7 +969,7 @@ IoCardDisk::iwvdIsDiskIdle(int drive) const
 // returns false if something went wrong, true otherwise
 bool
 IoCardDisk::iwvdInsertDisk(int drive,
-                           const string &filename)
+                           const std::string &filename)
 {
     assert(drive >= 0 && drive < numDrives());
     assert(m_d[drive].state == DRIVE_EMPTY);

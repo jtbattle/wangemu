@@ -20,7 +20,7 @@ public:
                    int baseaddr, int cardslot);
     ~IoCardKeyboard();
 
-    vector<int> getAddresses() const override;
+    std::vector<int> getAddresses() const override;
 
     void  reset(bool hard_reset=true) override;
     void  select() override;
@@ -36,7 +36,7 @@ public:
     static bool script_mode(int io_addr);
 
     // open up a script for keyboard input.  returns true on success.
-    static bool invoke_script(const int io_addr, const string &filename);
+    static bool invoke_script(const int io_addr, const std::string &filename);
 
     // this is called by UI when a key is entered by the user
     static void receiveKeystroke(int io_addr, int keycode);
@@ -49,9 +49,9 @@ public:
 
 private:
     // ---- card properties ----
-    const string getDescription() const override;
-    const string getName() const override;
-    vector<int> getBaseAddresses() const override;
+    const std::string getDescription() const override;
+    const std::string getName() const override;
+    std::vector<int> getBaseAddresses() const override;
 
     // timer callback function to put some required delay in script processing
     void tcbScript();
@@ -84,7 +84,7 @@ void core_sysKeystroke(int io_addr, int keycode);
 
 // this is how the UI opens a keyboard script file and feeds it to
 // the keyboard with the associated io_addr.
-bool core_invokeScript(const int io_addr, const string &filename);
+bool core_invokeScript(const int io_addr, const std::string &filename);
 
 // returns true if the keyboard at the specified io_addr is already
 // processing a script

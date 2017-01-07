@@ -38,7 +38,7 @@ public:
     // ------------------------ informative ------------------------
 
     // return the list of addresses that this specific card responds to
-    virtual vector<int> getAddresses() const = 0;
+    virtual std::vector<int> getAddresses() const = 0;
 
     // change card configuration
     virtual void setConfiguration(const CardCfgState &) { };
@@ -141,13 +141,13 @@ public:
 protected:  // these are used by the CardInfo class
 
     // return a string describing the card type
-    virtual const string getDescription() const = 0;
+    virtual const std::string getDescription() const = 0;
 
     // return a string of Wang card number for the device
-    virtual const string getName() const = 0;
+    virtual const std::string getName() const = 0;
 
     // return a list of the various base addresses a card can map to
-    virtual vector<int> getBaseAddresses() const = 0;
+    virtual std::vector<int> getBaseAddresses() const = 0;
 
     // is card configurable?  overridden by subclass if it is
     virtual bool isConfigurable() const { return false; }

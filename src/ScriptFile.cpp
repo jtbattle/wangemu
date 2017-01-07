@@ -14,7 +14,6 @@
 #include "tokens.h"             // predigested keyword tokens
 
 #include <sstream>
-using std::ostringstream;
 
 // =========================================================================
 // Open a script file.
@@ -22,7 +21,7 @@ using std::ostringstream;
 // "max_nesting_depth" indicates how deep include file nesting is allowed.
 // Use OpenedOK() to determine if the file was opened successfully.
 
-ScriptFile::ScriptFile(const string &filename,
+ScriptFile::ScriptFile(const std::string &filename,
                        int metaflags,
                        int max_nesting_depth,
                        int cur_nesting_depth) :
@@ -42,7 +41,7 @@ ScriptFile::ScriptFile(const string &filename,
 
     // attempt to open the file for reading; set m_opened_ok accordingly
     // if success, set m_curline=1, read first line, set pointers, set EOF state
-    m_ifs = new ifstream( m_filename.c_str(), ifstream::in );
+    m_ifs = new std::ifstream( m_filename.c_str(), std::ifstream::in );
 
     if (m_ifs && m_ifs->fail()) {
         delete m_ifs;
@@ -95,17 +94,17 @@ ScriptFile::isEof() const
 // or
 //    "somescript.txt:17, included from otherscript.txt:36"
 
-string
+std::string
 ScriptFile::getLineDescription() const
 {
-    string desc("");
+    std::string desc("");
 
     if (m_subscript) {
-        string desc2(m_subscript->getLineDescription());
+        std::string desc2(m_subscript->getLineDescription());
         desc = desc2 + ",\nincluded from ";
     }
 
-    ostringstream ostr;
+    std::ostringstream ostr;
     ostr << m_filename << ":" << m_cur_line;
     desc += ostr.str();
 
@@ -132,8 +131,8 @@ ScriptFile::m_prepare_next_line()
     // with some heroics, we could silently deal with this, but for now,
     // just complain.
     if (m_ifs->fail()) {
-        string location = getLineDescription();
-        string msg = "Very long line in script at " + location;
+        std::string location = getLineDescription();
+        std::string msg = "Very long line in script at " + location;
         UI_Warn( "%s", msg.c_str() );
         m_charbuf[MAX_EXPECTED_LINE_LENGTH] = '\0';  // make sure zero terminated
     }
@@ -462,17 +461,17 @@ ScriptFile::getNextByte(int *byte)
             }
             if (m_charbuf[end_char] == '>') {
                 m_charbuf[end_char] = '\0';  // terminate filename
-                string inc_fname( &m_charbuf[m_cur_char] );
+                std::string inc_fname( &m_charbuf[m_cur_char] );
                 m_cur_char = end_char+1;
 
                 // if the include file name isn't absolute, turn it to an
                 // absolute path, relative to the location of the current script
-                string abs_inc_fname;
+                std::string abs_inc_fname;
                 if (Host::isAbsolutePath(inc_fname)) {
                     abs_inc_fname = inc_fname;
                 } else {
                     // determine the path to the current script
-                    string tmp_fname;
+                    std::string tmp_fname;
 #if __WXMSW__
                     size_t last_sep = m_filename.find_last_of("/\\");
                     tmp_fname = m_filename.substr(0,last_sep+1) + inc_fname;
@@ -490,9 +489,9 @@ ScriptFile::getNextByte(int *byte)
 
                 if (!m_subscript->openedOk()) {
                     m_subscript = nullptr;
-                    string location = getLineDescription();
-                    string msg("Error opening file '" + abs_inc_fname +
-                               "',\nincluded from " + location);
+                    std::string location = getLineDescription();
+                    std::string msg("Error opening file '" + abs_inc_fname +
+                                    "',\nincluded from " + location);
                     UI_Error("%s", msg.c_str());
                     m_prepare_next_line();
                     continue;  // try next line of input

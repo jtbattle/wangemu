@@ -29,8 +29,8 @@ typedef struct {
 //    const char *dummy;      // unused
 //} errtable_t;
 
-extern const vector<errtable_t> errtable;
-extern const vector<errtable_t> errtable_vp;
+extern const std::vector<errtable_t> errtable;
+extern const std::vector<errtable_t> errtable_vp;
 
 #endif _INCLUDE_ERRTABLE_H_
 

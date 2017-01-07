@@ -52,13 +52,13 @@ CrtConfigDlg::CrtConfigDlg(wxFrame *parent, wxString title) :
     // FIXME: the encodings should come from the enum
     for(int i=0; i<pp->getNumFonts(); i++) {
         int    size  = pp->getFontNumber(i);
-        string label = pp->getFontName(i);
+        std::string label = pp->getFontName(i);
         m_FontChoice->Append(label, (void*)size);
     }
 
     m_ColorChoice = new wxChoice(this, ID_COLOR_CHOICE);
     for(int j=0; j<pp->getNumColorSchemes(); j++) {
-        string label = pp->getColorSchemeName(j);
+        std::string label = pp->getColorSchemeName(j);
         m_ColorChoice->Append(label, (void*)j);
     }
 
@@ -183,7 +183,7 @@ CrtConfigDlg::updateDlg()
 void
 CrtConfigDlg::saveDefaults()
 {
-    const string subgroup("ui/configscndlg");
+    const std::string subgroup("ui/configscndlg");
 
     // save position and size
     Host().ConfigWriteWinGeom(this, subgroup);
@@ -194,7 +194,7 @@ void
 CrtConfigDlg::getDefaults()
 {
     // see if we've established a favored location and size
-    const string subgroup("ui/configscndlg");
+    const std::string subgroup("ui/configscndlg");
     Host().ConfigReadWinGeom(this, subgroup);
 }
 

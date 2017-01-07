@@ -41,13 +41,13 @@ IoCardKeyboard::~IoCardKeyboard()
     }
 }
 
-const string
+const std::string
 IoCardKeyboard::getDescription() const
 {
     return "Keyboard Controller";
 }
 
-const string
+const std::string
 IoCardKeyboard::getName() const
 {
     return "6367";
@@ -55,18 +55,18 @@ IoCardKeyboard::getName() const
 
 // return a list of the various base addresses a card can map to.
 // the default comes first.
-vector<int>
+std::vector<int>
 IoCardKeyboard::getBaseAddresses() const
 {
-    vector<int> v { 0x001, 0x002, 0x003, 0x004 };
+    std::vector<int> v { 0x001, 0x002, 0x003, 0x004 };
     return v;
 }
 
 // return the list of addresses that this specific card responds to
-vector<int>
+std::vector<int>
 IoCardKeyboard::getAddresses() const
 {
-    vector<int> v;
+    std::vector<int> v;
     v.push_back( m_baseaddr );
     return v;
 }
@@ -200,7 +200,7 @@ IoCardKeyboard::script_mode(int io_addr)
 
 // open up a script for keyboard input.  returns true on success.
 bool
-IoCardKeyboard::invoke_script(const int io_addr, const string &filename)
+IoCardKeyboard::invoke_script(const int io_addr, const std::string &filename)
 {
     assert( (io_addr >= 0) && (io_addr <= 255) );
 
@@ -296,7 +296,7 @@ IoCardKeyboard::script_poll()
 // ====== redirector so callers don't need to drag in whole IoCard.h
 
 bool
-core_invokeScript(const int io_addr, const string &filename)
+core_invokeScript(const int io_addr, const std::string &filename)
 {
     return IoCardKeyboard::invoke_script(io_addr, filename);
 }

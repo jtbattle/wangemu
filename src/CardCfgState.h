@@ -27,8 +27,8 @@ public:
     virtual void setDefaults() = 0;
 
     // load/save a configuration from/to the .ini file
-    virtual void loadIni(const string &subgroup) = 0;
-    virtual void saveIni(const string &subgroup) const = 0;
+    virtual void loadIni(const std::string &subgroup) = 0;
+    virtual void saveIni(const std::string &subgroup) const = 0;
 
     // compare to configurations for equality
     virtual bool operator==(const CardCfgState &rhs) const = 0;

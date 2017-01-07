@@ -43,7 +43,7 @@ CrtErrorDlg::CrtErrorDlg( wxWindow *parent,
 
     // determine which entry matches
     bool vp_mode = (System2200().config().getCpuType() == Cpu2200::CPUTYPE_2200VP);
-    const vector<errtable_t> &pet = (vp_mode) ? errtable_vp : errtable;
+    const std::vector<errtable_t> &pet = (vp_mode) ? errtable_vp : errtable;
 
     bool found = false;
     auto err = pet.cbegin();
@@ -73,7 +73,7 @@ CrtErrorDlg::CrtErrorDlg( wxWindow *parent,
     wxFlexGridSizer *grid = new wxFlexGridSizer(0, 2, v_margin, h_margin);
 
     if (!found) {
-        string msg("Unknown error code");
+        std::string msg("Unknown error code");
         grid->Add(new MyStaticText(this, -1, "Error"),    0, L_style);
         grid->Add(new MyStaticText(this, -1, msg),        0, R_style);
     } else {
@@ -86,7 +86,7 @@ CrtErrorDlg::CrtErrorDlg( wxWindow *parent,
         }
 
         if (err->action != nullptr) {
-            string txt = (vp_mode) ? "Recovery" : "Action";
+            std::string txt = (vp_mode) ? "Recovery" : "Action";
             grid->Add(new MyStaticText(this, -1, txt),         0, L_style);
             grid->Add(new MyStaticText(this, -1, err->action), 0, R_style);
         }

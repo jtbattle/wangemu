@@ -20,16 +20,16 @@ class CardInfo  // is a friend of class IoCard
 {
 public:
     // utility function to map card name to cardtype index
-    static IoCard::card_t  getCardTypeFromName(const string &name);
+    static IoCard::card_t  getCardTypeFromName(const std::string &name);
 
     // returns info about a given card type.
     // attr is the attribute being requested, n an optional parameter,
     // and the returned value of that attribute is in void* value.
-    static string        getCardName(IoCard::card_t cardtype);
-    static string        getCardDesc(IoCard::card_t cardtype);
-    static vector<int>   getCardBaseAddresses(IoCard::card_t cardtype);
-    static bool          isCardConfigurable(IoCard::card_t cardtype);
-    static CardCfgState* getCardCfgState(IoCard::card_t cardtype);
+    static std::string      getCardName(IoCard::card_t cardtype);
+    static std::string      getCardDesc(IoCard::card_t cardtype);
+    static std::vector<int> getCardBaseAddresses(IoCard::card_t cardtype);
+    static bool             isCardConfigurable(IoCard::card_t cardtype);
+    static CardCfgState*    getCardCfgState(IoCard::card_t cardtype);
 };
 
 #endif  // _INCLUDE_CARDINFO_H_

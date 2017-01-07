@@ -17,7 +17,7 @@ public:
     IoCardXxx(Cpu2200 &cpu, int baseaddr, int cardslot);
     ~IoCardXxx();
 
-    vector<int> getAddresses() const override;
+    std::vector<int> getAddresses() const override;
 
     void  reset(bool hard_reset=true) override;
     void  select() override;
@@ -32,9 +32,9 @@ public:
 
 private:
     // ---- card properties ----
-    const string getDescription() const override;
-    const string getName() const override;
-    vector<int> getBaseAddresses() const override;
+    const std::string getDescription() const override;
+    const std::string getName() const override;
+    std::vector<int> getBaseAddresses() const override;
 
     // ...
     Cpu2200    &m_cpu;            // associated CPU

@@ -100,7 +100,7 @@ public:
 
     // find slot,drive of any disk controller with disk matching name.
     // returns true if successful.
-    bool findDisk(const string &filename, int *slot, int *drive, int *io_addr);
+    bool findDisk(const std::string &filename, int *slot, int *drive, int *io_addr);
 
 private:
     // returns true if the slot contains a disk controller, 0 otherwise

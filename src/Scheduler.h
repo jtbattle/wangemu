@@ -104,7 +104,7 @@ private:
     // any timer that has its own counter go <=0 will then
     // cause a callback to the supplied function using the
     // supplied parameters.
-    vector<std::shared_ptr<Timer>> m_timer;
+    std::vector<std::shared_ptr<Timer>> m_timer;
 
     // for sanity checking
     static const int MAX_TIMERS = 25;

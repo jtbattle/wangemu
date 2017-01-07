@@ -27,7 +27,7 @@ public:
                const CardCfgState *cfg);
     ~IoCardDisk();
 
-    vector<int> getAddresses() const override;
+    std::vector<int> getAddresses() const override;
 
     void  setConfiguration(const CardCfgState &cfg) override;
     void  editConfiguration(CardCfgState *cfg) override;
@@ -52,7 +52,7 @@ public:
     // return properties of the named disk.
     // parameters that are nullptr won't be returned.
     // returns true if nothing went wrong.
-    static bool wvdGetWriteProtect(const string &filename,
+    static bool wvdGetWriteProtect(const std::string &filename,
                                    bool *write_protect);
 
     // returns true and type of disk in given (slot,drive) if occupied,
@@ -63,7 +63,7 @@ public:
     // otherwise it returns false.
     static bool wvdGetFilename(const int slot,
                                const int drive,
-                               string *filename);
+                               std::string *filename);
 
     // given a slot and a drive number, return drive status
     // returns a bitwise 'or' of the WVD_STAT_DRIVE_* enums
@@ -72,7 +72,7 @@ public:
     // returns false if something went wrong, true otherwise
     static bool wvdInsertDisk(int slot,
                               int drive,
-                              const string &filename);
+                              const std::string &filename);
 
     // remove the disk from the specified drive
     // returns true if removed, or false if canceled.
@@ -84,7 +84,7 @@ public:
 
     // format a disk by filename
     // returns true if successful
-    static bool wvdFormatFile(const string &filename);
+    static bool wvdFormatFile(const std::string &filename);
 
     // get disk drive geometry from the disk type
     // return params are allowed to be nullptr
@@ -97,11 +97,11 @@ public:
 
 private:
     // ---- card properties ----
-    const string  getDescription() const override;
-    const string  getName() const override;
-    vector<int>   getBaseAddresses() const override;
-    bool          isConfigurable() const override { return true; }
-    CardCfgState *getCfgState() override;
+    const std::string  getDescription() const override;
+    const std::string  getName() const override;
+    std::vector<int>   getBaseAddresses() const override;
+    bool               isConfigurable() const override { return true; }
+    CardCfgState      *getCfgState() override;
 
     // ---- disk access functions, tied to an object ----
     // "iwvd" == internal wang virtual disk function
@@ -113,7 +113,7 @@ private:
 
     // returns false if something went wrong, true otherwise
     bool iwvdInsertDisk(int drive,
-                        const string &filename);
+                        const std::string &filename);
 
     // return false if action is carried out, else true
     bool iwvdRemoveDisk(int drive);
@@ -283,7 +283,7 @@ private:
         SPECIAL_FORMAT_TRACK             = 0x18    // *1,     *3
     };
 
-    string unsupportedExtendedCommandName(int cmd);
+    std::string unsupportedExtendedCommandName(int cmd);
 
     // indicates reason why advanceState() is being called
     enum disk_event_t {
@@ -317,7 +317,7 @@ private:
     void sendBytes(int count, disk_sm_t return_state);
 
     // for debugging
-    string statename(int state) const;
+    std::string statename(int state) const;
 
     // centralized function to handle updating sequencing state
     bool advanceState(disk_event_t event, const int val=0);

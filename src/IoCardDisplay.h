@@ -22,7 +22,7 @@ public:
                   int baseaddr, int cardslot, int size=UI_SCREEN_64x16);
     ~IoCardDisplay();
 
-    vector<int> getAddresses() const override;
+    std::vector<int> getAddresses() const override;
 
     void  reset(bool hard_reset=true) override;
     void  select() override;
@@ -34,9 +34,9 @@ public:
 
 private:
     // ---- card properties ----
-    const string getDescription() const override;
-    const string getName() const override;
-    vector<int>  getBaseAddresses() const override;
+    const std::string getDescription() const override;
+    const std::string getName() const override;
+    std::vector<int>  getBaseAddresses() const override;
 
     std::shared_ptr<Scheduler> m_scheduler; // shared system event scheduler
     std::shared_ptr<Cpu2200>   m_cpu;       // associated CPU

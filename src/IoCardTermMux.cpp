@@ -62,13 +62,13 @@ IoCardTermMux::~IoCardTermMux()
     }
 }
 
-const string
+const std::string
 IoCardTermMux::getDescription() const
 {
     return "Terminal Mux";
 }
 
-const string
+const std::string
 IoCardTermMux::getName() const
 {
     return "2236 MXD";
@@ -76,18 +76,18 @@ IoCardTermMux::getName() const
 
 // return a list of the various base addresses a card can map to
 // the default comes first.
-vector<int>
+std::vector<int>
 IoCardTermMux::getBaseAddresses() const
 {
-    vector<int> v { 0x000, 0x040, 0x080, 0x0c0 };
+    std::vector<int> v { 0x000, 0x040, 0x080, 0x0c0 };
     return v;
 }
 
 // return the list of addresses that this specific card responds to
-vector<int>
+std::vector<int>
 IoCardTermMux::getAddresses() const
 {
-    vector<int> v;
+    std::vector<int> v;
     for(int i=1; i<8; i++) {
         v.push_back( m_baseaddr + i );
     }

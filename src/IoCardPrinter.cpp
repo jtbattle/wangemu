@@ -39,13 +39,13 @@ IoCardPrinter::~IoCardPrinter()
     }
 }
 
-const string
+const std::string
 IoCardPrinter::getDescription() const
 {
     return "Printer Controller";
 }
 
-const string
+const std::string
 IoCardPrinter::getName() const
 {
     return "7079";
@@ -53,18 +53,18 @@ IoCardPrinter::getName() const
 
 // return a list of the various base addresses a card can map to
 // the default comes first.
-vector<int>
+std::vector<int>
 IoCardPrinter::getBaseAddresses() const
 {
-    vector<int> v { 0x215, 0x216 };
+    std::vector<int> v { 0x215, 0x216 };
     return v;
 }
 
 // return the list of addresses that this specific card responds to
-vector<int>
+std::vector<int>
 IoCardPrinter::getAddresses() const
 {
-    vector<int> v;
+    std::vector<int> v;
     v.push_back( m_baseaddr );
     return v;
 }

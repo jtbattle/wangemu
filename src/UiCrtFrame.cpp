@@ -17,15 +17,8 @@
 #include "UiPrinterFrame.h"
 
 #include <algorithm>
-
 #include <sstream>
-using std::ostringstream;
-
 #include <iomanip>
-using std::hex;
-using std::setw;
-using std::setfill;
-using std::uppercase;
 
 // ----------------------------------------------------------------------------
 // resources
@@ -101,8 +94,8 @@ enum
 // ========== Crt font styles ==========
 
 static const struct font_table_t {
-    int    size;        // encoding for font as it appears in .ini file
-    string name;        // descriptive string
+    int         size;   // encoding for font as it appears in .ini file
+    std::string name;   // descriptive string
 } font_table[] = {
     {  1, "Dot-matrix Font 1:1" },
     {  2, "Dot-matrix Font 1:2" },
@@ -122,7 +115,7 @@ const int num_fonts = (sizeof(font_table) / sizeof(font_table_t));
 static const struct colorscheme_t {
     unsigned char fg_r, fg_g, fg_b;     // foreground color
     unsigned char bg_r, bg_g, bg_b;     // background color
-    string menuHelp;                    // string as it appears on statusbar
+    std::string menuHelp;               // string as it appears on statusbar
 } colorscheme[] = {
     {
 #ifdef __WXMAC__
@@ -158,7 +151,7 @@ const int num_colorschemes = sizeof(colorscheme) / sizeof(colorscheme_t);
                            wxFULLSCREEN_NOSTATUSBAR )
 
 // CrtFrame static members
-vector<CrtFrame*> CrtFrame::m_crtlist;     // list of crt's in the system
+std::vector<CrtFrame*> CrtFrame::m_crtlist;     // list of crt's in the system
 
 // connect the wxWidgets events with the functions which process them
 BEGIN_EVENT_TABLE(CrtFrame, wxFrame)
@@ -560,7 +553,7 @@ CrtFrame::initToolBar(wxToolBar *tb)
     wxCoord textH, textW;
     memDC.GetTextExtent("SF15", &textW, &textH); // widest string in use
 #if BIG_BUTTONS
-    static const string sf_labels[17] = {
+    static const std::string sf_labels[17] = {
         "", "", "", "", // SF0-3
         "", "", "", "", // SF4-7
 #ifdef __WXMAC__
@@ -737,9 +730,9 @@ CrtFrame::saveDefaults()
 {
     Host hst;
 
-    ostringstream sg;
-    sg << "ui/CRT-" << setw(2) << setfill('0') << hex << m_crt_addr;
-    string subgroup(sg.str());
+    std::ostringstream sg;
+    sg << "ui/CRT-" << std::setw(2) << std::setfill('0') << std::hex << m_crt_addr;
+    std::string subgroup(sg.str());
 
     // save screen color
     hst.ConfigWriteInt(subgroup, "colorscheme", getDisplayColorScheme());
@@ -756,9 +749,9 @@ CrtFrame::saveDefaults()
     hst.ConfigWriteBool(subgroup, "keywordmode", getKeywordMode() );
 
     // save tied keyboard io address
-    ostringstream tfoo;
-    tfoo << "0x" << setw(2) << setfill('0') << uppercase << hex << m_assoc_kb_addr;
-    string foo(tfoo.str());
+    std::ostringstream tfoo;
+    tfoo << "0x" << std::setw(2) << std::setfill('0') << std::uppercase << std::hex << m_assoc_kb_addr;
+    std::string foo(tfoo.str());
     hst.ConfigWriteStr(subgroup, "tied_keyboard", foo);
 
     // save position and size
@@ -788,9 +781,9 @@ CrtFrame::getDefaults()
     bool b;
 
     // pick up screen color scheme
-    ostringstream sg;
-    sg << "ui/CRT-" << setw(2) << setfill('0') << hex << m_crt_addr;
-    string subgroup(sg.str());
+    std::ostringstream sg;
+    sg << "ui/CRT-" << std::setw(2) << std::setfill('0') << std::hex << m_crt_addr;
+    std::string subgroup(sg.str());
 
     // pick up keyword mode (A/a vs Keyword/A)
     hst.ConfigReadBool(subgroup, "keywordmode", &b, false);
@@ -893,7 +886,7 @@ CrtFrame::setSimSeconds(int secs, float relative_speed)
     str.Printf( format, secs, relative_speed );
 #endif
     if (pf->getShowStatistics()) {
-        pf->m_statBar->SetStatusMessage(string(str));
+        pf->m_statBar->SetStatusMessage(std::string(str));
     } else {
         pf->m_statBar->SetStatusMessage("");
     }
@@ -930,7 +923,7 @@ void
 CrtFrame::OnScript(wxCommandEvent& WXUNUSED(event))
 {
     Host hst;
-    string fullpath;
+    std::string fullpath;
     int r = hst.fileReq(Host::FILEREQ_SCRIPT, "Script to execute", 1, &fullpath);
     if (r == Host::FILEREQ_OK) {
         // tell the core emulator to redirect input for a while
@@ -945,7 +938,7 @@ CrtFrame::OnSnapshot(wxCommandEvent& WXUNUSED(event))
 {
     // get the name of a file to execute
     Host hst;
-    string fullpath;
+    std::string fullpath;
 
     int r = hst.fileReq(Host::FILEREQ_GRAB, "Filename of image", 0, &fullpath);
     if (r == Host::FILEREQ_OK) {
@@ -961,7 +954,7 @@ void
 CrtFrame::OnDump(wxCommandEvent& WXUNUSED(event))
 {
     // get the name of a file to execute
-    string fullpath;
+    std::string fullpath;
     int r = Host::fileReq(Host::FILEREQ_GRAB, "Name of file to save to", 0, &fullpath);
 
     if (r == Host::FILEREQ_OK) {
@@ -1007,7 +1000,7 @@ CrtFrame::OnCpuSpeed(wxCommandEvent &event)
 void
 CrtFrame::OnDiskFactory(wxCommandEvent &event)
 {
-    string filename("");
+    std::string filename("");
     if (event.GetId() == Disk_Inspect) {
         Host hst;
         if (hst.fileReq(Host::FILEREQ_DISK, "Virtual Disk Name", 1, &filename) !=
@@ -1024,7 +1017,7 @@ CrtFrame::OnDiskFactory(wxCommandEvent &event)
 // resumes, it will be forced to reopen the file, picking up any changes
 // made to the disk metadata.
 void
-CrtFrame::doInspect(const string &filename)
+CrtFrame::doInspect(const std::string &filename)
 {
     System2200 sys;
     sys.freezeEmu(true);    // halt emulation
@@ -1047,7 +1040,7 @@ void
 CrtFrame::OnDiskFormat(wxCommandEvent& WXUNUSED(event))
 {
     Host hst;
-    string filename;
+    std::string filename;
     if (hst.fileReq(Host::FILEREQ_DISK, "Virtual Disk Name", 1, &filename) !=
                     Host::FILEREQ_OK)
         return; // cancelled
@@ -1057,7 +1050,7 @@ CrtFrame::OnDiskFormat(wxCommandEvent& WXUNUSED(event))
 
 
 void
-CrtFrame::doFormat(const string &filename)
+CrtFrame::doFormat(const std::string &filename)
 {
     System2200 sys;
     sys.freezeEmu(true);    // halt emulation
@@ -1111,7 +1104,7 @@ CrtFrame::OnDisk(wxCommandEvent &event)
     switch (type) {
 
         case 0: // insert disk
-        {   string fullpath;
+        {   std::string fullpath;
             if (Host().fileReq(Host::FILEREQ_DISK, "Disk to load", 1, &fullpath) ==
                                Host::FILEREQ_OK) {
                 int drive2, io_addr2;
@@ -1339,11 +1332,11 @@ CrtFrame::getFontNumber(int idx)
 }
 
 // as idx ranges from 0 to n, return the font name string.
-string
+std::string
 CrtFrame::getFontName(int idx)
 {
     assert(idx >= 0 && idx < num_fonts);
-    return string(font_table[idx].name);
+    return std::string(font_table[idx].name);
 }
 
 // -------- allow discovery of possible color schemes --------
@@ -1355,7 +1348,7 @@ CrtFrame::getNumColorSchemes()
 }
 
 // as idx ranges from 0 to n, return the font name string.
-string
+std::string
 CrtFrame::getColorSchemeName(int idx)
 {
     assert(idx >= 0 && idx < num_colorschemes);

@@ -61,11 +61,7 @@
 #include "wx/paper.h"           // pick up paper database
                                 // (for translation of enums - see PaperSize)
 #include <sstream>
-using std::ostringstream;
 #include <iomanip>
-using std::hex;
-using std::setw;
-using std::setfill;
 
 // ----------------------------------------------------------------------------
 // constants
@@ -100,7 +96,7 @@ enum
 // not all are implemented. See exPaperSize in defs.h for a complete list/
 struct papersizemap_t {
     wxPaperSize papersizeval;
-    string papersizename;
+    std::string papersizename;
 } papersizemap[] = {
     {wxPAPER_NONE,       "NONE" },         /*  Use specific dimensions */
     {wxPAPER_LETTER,     "LETTER" },       /*  Letter, 8 1/2 by 11 inches */
@@ -117,7 +113,7 @@ const int PSMAX = sizeof(papersizemap)/sizeof(papersizemap_t);
 // map of enums for some of the paper bins (wxPrintBin). Used for load/save to config file
 struct paperbinmap_t {
     wxPrintBin paperbinval;
-    string paperbinname;
+    std::string paperbinname;
 } paperbinmap[] = {
     {wxPRINTBIN_DEFAULT,        "DEFAULT" },
     {wxPRINTBIN_ONLYONE,        "ONLYONE" },
@@ -326,9 +322,9 @@ PrinterFrame::saveDefaults()
 {
     Host hst;
 
-    ostringstream sg;
-    sg << "ui/Printer-" << setw(2) << setfill('0') << hex << m_printer_addr;
-    string subgroup(sg.str());
+    std::ostringstream sg;
+    sg << "ui/Printer-" << std::setw(2) << std::setfill('0') << std::hex << m_printer_addr;
+    std::string subgroup(sg.str());
 
     int left, right, top, bottom;
     m_printer->getMargins(left, right, top, bottom);
@@ -366,14 +362,14 @@ void
 PrinterFrame::getDefaults()
 {
     Host hst;
-    string valstr;
+    std::string valstr;
     int v;
     bool b;
 
     // pick up screen color scheme
-    ostringstream sg;
-    sg << "ui/Printer-" << setw(2) << setfill('0') << hex << m_printer_addr;
-    string subgroup(sg.str());
+    std::ostringstream sg;
+    sg << "ui/Printer-" << std::setw(2) << std::setfill('0') << std::hex << m_printer_addr;
+    std::string subgroup(sg.str());
 
     // pick up screen location and size
     wxRect default_geom(50,50,690,380);
@@ -406,7 +402,7 @@ PrinterFrame::getDefaults()
     m_printer->setPortdirect(b);
 
     // pick up portstring attribute
-    string portstring("LPT1");
+    std::string portstring("LPT1");
     b = hst.ConfigReadStr(subgroup, "portstring", &portstring);
     m_printer->setPortstring(portstring);
 
@@ -435,7 +431,7 @@ PrinterFrame::getDefaults()
     if (b) {
         paperid = PaperSize(valstr);
     }
-    string papername(PaperSize(paperid));
+    std::string papername(PaperSize(paperid));
     if (papername.empty()) {
         // we did not find a match. use none
         paperid = wxPAPER_NONE;
@@ -453,14 +449,14 @@ PrinterFrame::getDefaults()
     m_printer->setBin(paperbin);
 
     // pick up printer name
-    string printername("");
+    std::string printername("");
     b = hst.ConfigReadStr(subgroup, "realprintername", &printername);
     m_printer->setRealPrinterName(printername);
 }
 
 // translate a character pagesize to the appropriate enum value for wxPaperSize
 wxPaperSize
-PrinterFrame::PaperSize(string pagesizename)
+PrinterFrame::PaperSize(std::string pagesizename)
 {
     // translate char to wxPaperSize
 #if USEMYPAPER
@@ -477,7 +473,7 @@ PrinterFrame::PaperSize(string pagesizename)
 }
 
 // translate an enum pagesize to the appropriate string name
-string
+std::string
 PrinterFrame::PaperSize(wxPaperSize papersizeval) const
 {
     // translate char to wxPaperSize
@@ -490,13 +486,13 @@ PrinterFrame::PaperSize(wxPaperSize papersizeval) const
 
     return "LETTER"; // default
 #else
-    return string(wxThePrintPaperDatabase->ConvertIdToName(papersizeval));
+    return std::string(wxThePrintPaperDatabase->ConvertIdToName(papersizeval));
 #endif
 }
 
 // translate a character pagesize to the appropriate enum value for wxPaperSize
 wxPrintBin
-PrinterFrame::PaperBin(string paperbinname) const
+PrinterFrame::PaperBin(std::string paperbinname) const
 {
     // translate char to wxPrintBin
     for (int i=0; i< PBMAX; i++) {
@@ -509,7 +505,7 @@ PrinterFrame::PaperBin(string paperbinname) const
 }
 
 // translate an enum pagesize to the appropriate string name
-string
+std::string
 PrinterFrame::PaperBin(wxPrintBin paperbinval) const
 {
     // translate char to wxPaperSize
@@ -555,7 +551,7 @@ PrinterFrame::OnPrintClear(wxCommandEvent& WXUNUSED(event))
 void
 PrinterFrame::PP_OnClose(wxCloseEvent &event)
 {
-    const string subgroup("ui/printpreview");
+    const std::string subgroup("ui/printpreview");
     Host().ConfigWriteWinGeom(this, subgroup, false);
 
     wxPreviewControlBar *controlBar = ((wxPreviewFrame*)this)->GetControlBar();
@@ -586,7 +582,7 @@ PrinterFrame::OnPrintPreview(wxCommandEvent& WXUNUSED(event))
         return;
     }
 
-    string preview_title("Print Preview");
+    std::string preview_title("Print Preview");
     wxPreviewFrame *frame = new wxPreviewFrame(preview, this, preview_title,
                                     wxPoint(100, 100),  // default position
                                     wxSize(600, 650));  // default size
@@ -595,7 +591,7 @@ PrinterFrame::OnPrintPreview(wxCommandEvent& WXUNUSED(event))
     frame->Connect( wxID_ANY, wxEVT_CLOSE_WINDOW,
                     wxCloseEventHandler(PrinterFrame::PP_OnClose) );
 
-    const string subgroup("ui/printpreview");
+    const std::string subgroup("ui/printpreview");
     wxRect default_geom(100,100,600,650);
     Host().ConfigReadWinGeom(frame, subgroup, &default_geom, false);
 
@@ -680,7 +676,7 @@ PrinterFrame::OnPageSetup(wxCommandEvent& WXUNUSED(event))
     m_printer->setPaperId(m_printData->GetPaperId());
 
     // (re)set paper name
-    string papername(PaperSize(m_printer->getPaperId()));
+    std::string papername(PaperSize(m_printer->getPaperId()));
     if (papername.empty()) {
         // we did not find a match. use letter, and issue warning
         m_printer->setPaperId(wxPAPER_NONE);
@@ -693,7 +689,7 @@ PrinterFrame::OnPageSetup(wxCommandEvent& WXUNUSED(event))
     m_printer->setBin(m_printData->GetBin());
 
         // (re)set printer name
-    m_printer->setRealPrinterName(string(m_printData->GetPrinterName()));
+    m_printer->setRealPrinterName(std::string(m_printData->GetPrinterName()));
 
     // commit changes to config file
     saveDefaults();
@@ -768,14 +764,14 @@ PrinterFrame::OnConfigureDialog(wxCommandEvent& WXUNUSED(event))
         // 'OK' was pressed, so controls that have validators are
         // automatically transferred to the variables we specified
         // when we created the validators.
-        long longllength = std::stol(string(data->m_string_linelength));
-        long longplength = std::stol(string(data->m_string_pagelength));
+        long longllength = std::stol(std::string(data->m_string_linelength));
+        long longplength = std::stol(std::string(data->m_string_pagelength));
 
         m_printer->setPageAttributes(longllength, longplength);
         m_printer->setAutoshow(data->m_checkbox_autoshow);
         m_printer->setPrintasgo(data->m_checkbox_printasgo);
         m_printer->setPortdirect(data->m_checkbox_portdirect);
-        m_printer->setPortstring(string(data->m_choice_portstring));
+        m_printer->setPortstring(std::string(data->m_choice_portstring));
 
 #if 0
         // PHE: clear the printer log because any previous printing

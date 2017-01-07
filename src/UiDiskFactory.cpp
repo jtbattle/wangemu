@@ -31,7 +31,7 @@ enum
 
 
 static struct disk_choice_t {
-    string description;
+    std::string description;
     int    disk_type;
     int    platters;
     int    sectors_per_platter;
@@ -93,7 +93,7 @@ private:
     wxCheckBox   *m_write_prot; // write protect checkbox
 
     // data
-    shared_ptr<Wvd> m_diskdata;
+    std::shared_ptr<Wvd> m_diskdata;
 
     DECLARE_EVENT_TABLE()
 };
@@ -113,7 +113,7 @@ public:
 
     void refresh();
 
-    string LabelPanel::getLabelString();
+    std::string LabelPanel::getLabelString();
 
 private:
 
@@ -125,7 +125,7 @@ private:
     wxTextCtrl  *m_text;
 
     // data
-    shared_ptr<Wvd> m_diskdata;
+    std::shared_ptr<Wvd> m_diskdata;
 
     DECLARE_EVENT_TABLE()
 };
@@ -145,7 +145,7 @@ BEGIN_EVENT_TABLE(DiskFactory, wxDialog)
 END_EVENT_TABLE()
 
 
-DiskFactory::DiskFactory(wxFrame *parent, const string &filename) :
+DiskFactory::DiskFactory(wxFrame *parent, const std::string &filename) :
         wxDialog(parent, -1, "Disk Factory",
                  wxDefaultPosition, wxDefaultSize,
                  wxDEFAULT_DIALOG_STYLE | wxRESIZE_BORDER),
@@ -210,7 +210,7 @@ DiskFactory::DiskFactory(wxFrame *parent, const string &filename) :
     wxRect rc = GetRect();  // window size as declared by sizer
 
     // pick up screen location and size
-    const string subgroup("ui/disk_dialog");
+    const std::string subgroup("ui/disk_dialog");
     wxRect default_geom(rc.GetX(),rc.GetY(),rc.GetWidth(),rc.GetHeight());
     Host().ConfigReadWinGeom(this, subgroup, &default_geom);
 
@@ -220,7 +220,7 @@ DiskFactory::DiskFactory(wxFrame *parent, const string &filename) :
 
 DiskFactory::~DiskFactory()
 {
-    const string subgroup("ui/disk_dialog");
+    const std::string subgroup("ui/disk_dialog");
     Host().ConfigWriteWinGeom(this, subgroup);
 
     m_diskdata = nullptr;
@@ -256,7 +256,7 @@ DiskFactory::updateDlg()
 void
 DiskFactory::OnButton_Save(wxCommandEvent& WXUNUSED(event))
 {
-    string name( m_diskdata->getPath() );
+    std::string name( m_diskdata->getPath() );
     assert(!name.empty());
 
     m_diskdata->setLabel(m_tab2->getLabelString());
@@ -268,7 +268,7 @@ DiskFactory::OnButton_Save(wxCommandEvent& WXUNUSED(event))
 void
 DiskFactory::OnButton_SaveAs(wxCommandEvent& WXUNUSED(event))
 {
-    string name;
+    std::string name;
     if (Host().fileReq(Host::FILEREQ_DISK, "Virtual Disk Name", 0, &name) !=
                        Host::FILEREQ_OK)
         return;
@@ -467,7 +467,7 @@ PropPanel::refresh()
 
     // update path to disk
     if (!new_disk) {
-        string label = "Path: " + m_diskdata->getPath();
+        std::string label = "Path: " + m_diskdata->getPath();
         m_path->SetLabel(label);
     }
 
@@ -497,7 +497,7 @@ PropPanel::refresh()
         m_disktype->SetSelection(radio_sel);
     }
 
-    string type;
+    std::string type;
     switch (disk_type) {
         case Wvd::DISKTYPE_FD5:  type = "PCS 5.25\" floppy";  break;
         case Wvd::DISKTYPE_FD8:  type = "2270(A) 8\" floppy"; break;
@@ -507,12 +507,12 @@ PropPanel::refresh()
     }
     m_st_type->SetLabel(type);
 
-    string label;
+    std::string label;
     label = std::to_string(num_platters) + " platter" + ((num_platters>1) ? "s" : "");
     m_st_plats->SetLabel(label);
 
     int num_tracks = int( num_sectors / spt );
-    const string per_platter = (num_platters > 1) ? "/platter" : "";
+    const std::string per_platter = (num_platters > 1) ? "/platter" : "";
     label = std::to_string(num_tracks) + " tracks" + per_platter;
     m_st_tracks->SetLabel(label);
 
@@ -621,10 +621,10 @@ LabelPanel::refresh()
 }
 
 
-string
+std::string
 LabelPanel::getLabelString()
 {
-    return string(m_text->GetValue());
+    return std::string(m_text->GetValue());
 }
 
 

@@ -19,7 +19,7 @@ public:
     IoCardTermMux(std::shared_ptr<Cpu2200> cpu, int baseaddr, int cardslot);
     ~IoCardTermMux();
 
-    vector<int> getAddresses() const override;
+    std::vector<int> getAddresses() const override;
 
     void  reset(bool hard_reset=true) override;
     void  select() override;
@@ -66,9 +66,9 @@ private:
     };
 
     // ---- card properties ----
-    const string getDescription() const override;
-    const string getName() const override;
-    vector<int> getBaseAddresses() const override;
+    const std::string getDescription() const override;
+    const std::string getName() const override;
+    std::vector<int> getBaseAddresses() const override;
 
     void OBS_01(int val);
     void OBS_02(int val);

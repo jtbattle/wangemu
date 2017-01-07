@@ -140,7 +140,7 @@ Crt::intensityToColor(float f) const
 // we generate all 256 characters and not worry about manually underlining.
 // The 2236 also offers an alternate upper character set for 0x80-0xFF.
 
-wxFont Crt::pickFont(int pointsize, int bold, const string &facename)
+wxFont Crt::pickFont(int pointsize, int bold, const std::string &facename)
 {
     wxFont font;
     auto fontweight = (bold) ? wxFONTWEIGHT_BOLD : wxFONTWEIGHT_NORMAL;
@@ -162,7 +162,7 @@ wxFont Crt::pickFont(int pointsize, int bold, const string &facename)
         font = wxFont(pointsize, wxFONTFAMILY_MODERN,
                                  wxFONTSTYLE_NORMAL,
                                  fontweight);
-        string name = font.GetFaceName();
+        std::string name = font.GetFaceName();
         name = "";
     }
 
@@ -311,7 +311,7 @@ Crt::generateFontmap()
     const int img_w = m_charcell_w + 2*offset;
     const int img_h = m_charcell_h + 2*offset;
     wxBitmap char_bitmap(img_w, img_h, 32);
-    vector<vector<float>> char_intensity(img_h, vector<float>(img_w, 0.0f));
+    std::vector<std::vector<float>> char_intensity(img_h, std::vector<float>(img_w, 0.0f));
 
     charDC.SelectObject(char_bitmap);
     charDC.SetBackgroundMode(wxSOLID);

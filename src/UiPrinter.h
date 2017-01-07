@@ -30,14 +30,14 @@ public:
     void        setPaperId(wxPaperSize paperid);
     wxPaperSize getPaperId() const;
 
-    void   setPaperName(const string &papername);
-    string getPaperName() const;
+    void   setPaperName(const std::string &papername);
+    std::string getPaperName() const;
 
     void       setBin(wxPrintBin paperbin);
     wxPrintBin getBin() const;
 
-    void   setRealPrinterName(const string &name);
-    string getRealPrinterName() const;
+    void        setRealPrinterName(const std::string &name);
+    std::string getRealPrinterName() const;
 
     void setPageAttributes(int  linelength, int  pagelength);
     void getPageAttributes(int &linelength, int &pagelength) const;
@@ -53,8 +53,8 @@ public:
     void setPortdirect(bool b);
     bool getPortdirect() const;
 
-    void   setPortstring(const string &name);
-    string getPortstring() const;
+    void        setPortstring(const std::string &name);
+    std::string getPortstring() const;
 
     // ---- other functions ----
     // redraw entire screen
@@ -152,10 +152,10 @@ private:
     int         m_marginright;
     int         m_marginbottom;
 
-    string      m_realprintername;      // name of the real printer
+    std::string m_realprintername;      // name of the real printer
     wxPrintOrientation m_orientation;   // page orientation (wxPORTRAIT or wxLANDSCAPE)
     wxPaperSize m_paperid;              // paper id (wxPAPER_LETTER, etc.)
-    string      m_papername;            // the name of the paperid
+    std::string m_papername;            // the name of the paperid
     wxPrintBin  m_paperbin;             // paper bin (wxPRINTBIN_DEFAULT, etc.)
 
     int         m_linelength;           // the line length of the logical printer
@@ -164,7 +164,7 @@ private:
     bool        m_printasgo;            // indicates if each page of the stream should be printed automatically, then cleared, as it fills up
     bool        m_portdirect;           // indicates printing directly to parallel port (windows only). All other printing settings are ignored
                                         //   and output is dumped directly to the port
-    string      m_portstring;           // contains the name of the parallel port (windows only)
+    std::string m_portstring;           // contains the name of the parallel port (windows only)
     wxTimer     m_portTimer;            // control closing of LPT port
 
     // place to accumulate characters until we have a full line.
@@ -174,8 +174,8 @@ private:
     int         m_linebuf_len;          // number of characters in buffer
     char        m_linebuf[m_linebuf_maxlen+1];  // accumulates line to print
 
-    vector<string> m_printstream;       // represents the entire print stream
-    vector<string> m_printstream_copy;  // this is a copy that is used for printing purposes
+    std::vector<std::string> m_printstream;       // represents the entire print stream
+    std::vector<std::string> m_printstream_copy;  // this is a copy that is used for printing purposes
 
     DECLARE_EVENT_TABLE()
 };

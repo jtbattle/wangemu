@@ -351,7 +351,7 @@ Crt::OnLeftDClick(wxMouseEvent &event)
         }
         char *pp = p + 5;
 
-        string errcode;
+        std::string errcode;
 
         // check for optional initial letter or '='
         if ((*pp >= 'A' && *pp <= 'Z') || (*pp == '=')) {
@@ -370,7 +370,7 @@ Crt::OnLeftDClick(wxMouseEvent &event)
 
     #if 0
         // launch an HTML browser and look up the error code
-        string helpfile = "errors.html#Code-" + errcode;
+        std::string helpfile = "errors.html#Code-" + errcode;
         ::wxLaunchDefaultBrowser(helpfile);
     #else
         // pop open a dialog with the relevant information
@@ -436,7 +436,7 @@ Crt::OnLeftDClick(wxMouseEvent &event)
 
 // do the dialog part of the error message decoder
 void
-Crt::explainError(const string &errcode, const wxPoint &orig)
+Crt::explainError(const std::string &errcode, const wxPoint &orig)
 {
     // launch it as a popup
     CrtErrorDlg dlg(this, errcode, wxPoint(orig.x, orig.y));

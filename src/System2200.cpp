@@ -56,16 +56,15 @@ int64 System2200::m_adjsimtime;
 
 #include <cstdarg>      // for var args
 #include <fstream>
-using std::ofstream;
 
-static ofstream dbg_ofs;
+static std::ofstream dbg_ofs;
 
 #ifdef _DEBUG
 void
-dbglog_open(const string &filename)
+dbglog_open(const std::string &filename)
 {
     assert(!dbg_ofs.is_open());     // only one log at a time
-    dbg_ofs.open( filename.c_str(), ofstream::out | ofstream::trunc );
+    dbg_ofs.open( filename.c_str(), std::ofstream::out | std::ofstream::trunc );
     if (!dbg_ofs.good()) {
         UI_Error("Error opening '%s' for logging.\n", filename.c_str());
         exit(-1);
@@ -278,7 +277,7 @@ System2200::setConfig(const SysCfgState &newcfg)
             UI_Warn("Configuration problem: failure to create slot %d card instance", slot);
         } else {
             m_cardInSlot[slot] = inst;
-            vector<int> addresses = inst->getAddresses();
+            std::vector<int> addresses = inst->getAddresses();
             for(unsigned int n=0; n<addresses.size(); n++) {
                 m_IoMap[addresses[n]].inst = inst;
             }
@@ -747,7 +746,7 @@ System2200::findDiskController(const int n, int *slot) const
 // find slot,drive of any disk controller with disk matching name.
 // returns true if successful.
 bool
-System2200::findDisk(const string &filename,
+System2200::findDisk(const std::string &filename,
                      int *slot, int *drive, int *io_addr)
 {
     for(int controller=0; ; controller++) {
@@ -764,7 +763,7 @@ System2200::findDisk(const string &filename,
         for(int d=0; d<num_drives; d++) {
             int stat = IoCardDisk::wvdDriveStatus(slt, d);
             if (stat & IoCardDisk::WVD_STAT_DRIVE_OCCUPIED) {
-                string fname;
+                std::string fname;
                 bool ok = IoCardDisk::wvdGetFilename(slt, d, &fname);
                 assert(ok); ok=ok;
                 if (filename == fname) {
@@ -793,7 +792,6 @@ System2200::findDisk(const string &filename,
 // ========================================================================
 
 #include <sstream>
-using std::ostringstream;
 
 // for all disk drives, save what is mounted in them (or not)
 void
@@ -803,17 +801,17 @@ System2200::saveDiskMounts(void)
 
     for(int slot=0; slot<NUM_IOSLOTS; slot++) {
         if (isDiskController(slot)) {
-            ostringstream subgroup;
+            std::ostringstream subgroup;
             subgroup << "io/slot-" << slot;
-            string val;
+            std::string val;
             const CardCfgState *cfg = m_config->getCardConfig(slot);
             const DiskCtrlCfgState *dcfg = dynamic_cast<const DiskCtrlCfgState*>(cfg);
             assert(dcfg != nullptr);
             int num_drives = dcfg->getNumDrives();
             for(int drive=0; drive<num_drives; drive++) {
-                ostringstream item;
+                std::ostringstream item;
                 item << "filename-" << drive;
-                string filename("");
+                std::string filename("");
                 if (isDiskController(slot)) {
                     int stat = IoCardDisk::wvdDriveStatus(slot, drive);
                     if (stat & IoCardDisk::WVD_STAT_DRIVE_OCCUPIED) {
@@ -841,11 +839,11 @@ System2200::restoreDiskMounts(void)
             assert(dcfg != nullptr);
             int num_drives = dcfg->getNumDrives();
             for(int drive=0; drive<num_drives; drive++) {
-                ostringstream subgroup;
+                std::ostringstream subgroup;
                 subgroup << "io/slot-" << slot;
-                ostringstream item;
+                std::ostringstream item;
                 item << "filename-" << drive;
-                string filename;
+                std::string filename;
                 bool b = hst.ConfigReadStr(subgroup.str(), item.str(), &filename);
                 if (b && !filename.empty()) {
                     bool bs = IoCardDisk::wvdInsertDisk(slot, drive, filename.c_str());

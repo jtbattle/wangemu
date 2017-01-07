@@ -12,7 +12,7 @@ class DiskFactory : public wxDialog
 {
 public:
     CANT_ASSIGN_OR_COPY_CLASS(DiskFactory);
-     DiskFactory(wxFrame *parent, const string &filename);
+     DiskFactory(wxFrame *parent, const std::string &filename);
     ~DiskFactory();
 
     void updateButtons();  // so ugly -- only needed by subordinate notebook pages

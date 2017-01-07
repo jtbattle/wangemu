@@ -42,13 +42,13 @@ IoCardXxx::~IoCardXxx()
     }
 }
 
-const string
+const std::string
 IoCardXxx::getDescription() const
 {
     return "Card Description";
 }
 
-const string
+const std::string
 IoCardXxx::getName() const
 {
     return "Card Name (eg, 6541)";
@@ -59,7 +59,7 @@ IoCardXxx::getName() const
 vector<int>
 IoCardXxx:getBaseAddresses() const
 {
-    vector<int> v { 0x710, 0x720, 0x730 };  // e.g.
+    std::vector<int> v { 0x710, 0x720, 0x730 };  // e.g.
     return v;
 }
 
@@ -67,7 +67,7 @@ IoCardXxx:getBaseAddresses() const
 vector<int>
 IoCardXxx::getAddresses() const
 {
-    vector<int> v;
+    std::vector<int> v;
     v.push_back( m_baseaddr );
     return v;
 }

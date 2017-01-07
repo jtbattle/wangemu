@@ -119,7 +119,7 @@ TheApp::OnCmdLineParsed(wxCmdLineParser& parser)
         wxString filename;
         if (parser.Found("s", &filename)) {
             const int io_addr = 0x01;   // default keyboard device
-            string fn(filename.c_str());
+            std::string fn(filename.c_str());
             bool success = core_invokeScript(io_addr, fn);
             if (!success) {
                 UI_Warn("Failed to open script '%s'", filename.c_str());
@@ -212,12 +212,12 @@ TheApp::OnHelp_About(wxCommandEvent& WXUNUSED(event))
 
 // shared code
 static bool
-UI_AlertMsg(long style, string title, const char *fmt, va_list &args)
+UI_AlertMsg(long style, std::string title, const char *fmt, va_list &args)
 {
     char buff[1000];
     vsnprintf(buff, sizeof(buff), fmt, args);
 
-    string info(buff);
+    std::string info(buff);
     wxMessageDialog dialog(nullptr, info, title, style);
     int rv = dialog.ShowModal();
     return (rv == wxID_YES);

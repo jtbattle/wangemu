@@ -130,14 +130,14 @@ IoCardDisplay::~IoCardDisplay()
     }
 }
 
-const string
+const std::string
 IoCardDisplay::getDescription() const
 {
     return (m_size == UI_SCREEN_64x16) ? "64x16 CRT Controller"
                                        : "80x24 CRT Controller";
 }
 
-const string
+const std::string
 IoCardDisplay::getName() const
 {
     return (m_size == UI_SCREEN_64x16) ? "6312A" : "7011";
@@ -146,18 +146,18 @@ IoCardDisplay::getName() const
 // return a list of the various base addresses a card can map to
 // list of common I/O addresses for this device taken from p. 2-5 of
 // the default comes first.
-vector<int>
+std::vector<int>
 IoCardDisplay::getBaseAddresses() const
 {
-    vector<int> v {0x005, 0x006, 0x007 };
+    std::vector<int> v {0x005, 0x006, 0x007 };
     return v;
 }
 
 // return the list of addresses that this specific card responds to
-vector<int>
+std::vector<int>
 IoCardDisplay::getAddresses() const
 {
-    vector<int> v;
+    std::vector<int> v;
     v.push_back( m_baseaddr );
     return v;
 }

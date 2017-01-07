@@ -221,7 +221,7 @@ void Scheduler::TimerCredit(void)
     uint32 elapsed = (m_startcnt - m_countdown);
 
     // scan each active timer, moving expired ones to the retired list
-    vector<std::shared_ptr<Timer>> retired;
+    std::vector<std::shared_ptr<Timer>> retired;
     unsigned int active_before = m_timer.size();
     unsigned int active_after = 0;
     for(unsigned int s=0; s<active_before; s++) {

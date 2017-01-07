@@ -51,7 +51,6 @@
 //          called.
 
 #include <fstream>
-using std::fstream;
 
 #include "w2200.h"
 
@@ -65,7 +64,7 @@ public:
     // new blank disk with default values
     void create(int disk_type, int platters, int sectors_per_platter);
     // initialize from named file
-    bool open(const string &filename);
+    bool open(const std::string &filename);
     // forget about current file
     void close();
 
@@ -73,8 +72,8 @@ public:
     bool isModified() const;
     void setModified(bool modified=true);
 
-    string getPath() const;
-    void setPath(const string &filename);
+    std::string getPath() const;
+    void setPath(const std::string &filename);
 
     // the emulator supports three types of timing for disks.
     // this is the encoding which appears in the metadata disktype
@@ -99,13 +98,13 @@ public:
     bool getWriteProtect();
     void setWriteProtect(bool wp);
 
-    string getLabel();
-    void setLabel(const string &newlabel);
+    std::string getLabel();
+    void setLabel(const std::string &newlabel);
 
     // this saves modified state when open() was used to get it to begin with:
     void save();
     // create a new disk when create() was the original call:
-    void save(const string &filename);
+    void save(const std::string &filename);
 
     // logical sector data access.
     // returns true on success, false on failure.
@@ -147,23 +146,23 @@ private:
     // create a virtual disk file if it doesn't exist, erase it if does.
     // write the header and then format all platters.
     // returns true on success.
-    bool createFile(const string &filename);
+    bool createFile(const std::string &filename);
 
     // ----- data members -----
-    fstream *m_file;                // file handle
-    bool     m_metadataStale;       // is the metadata possibly out of date?
-    bool     m_metaModified;        // metadata has been modified
-    bool     m_hasPath;             // is m_path valid?
-    string   m_path;                // path to virtual disk
-    string   m_label;               // disk label
-    disktype_t m_diskType;          // disk type encoding
-    int      m_numPlatters;         // platters in the virtual disk image
-    int      m_numPlatterSectors;   // sectors per platter
-    bool     m_writeProtect;        // true=don't write
-//  int      m_numPlatterTracks;    // tracks per platter
-//  int      m_numTrackSectors;     // sectors per track
-//  int      m_rpm;                 // rotational speed
-//  int      m_stepTime;            // time to step one track, in ms
+    std::fstream *m_file;                // file handle
+    bool          m_metadataStale;       // is the metadata possibly out of date?
+    bool          m_metaModified;        // metadata has been modified
+    bool          m_hasPath;             // is m_path valid?
+    std::string   m_path;                // path to virtual disk
+    std::string   m_label;               // disk label
+    disktype_t    m_diskType;            // disk type encoding
+    int           m_numPlatters;         // platters in the virtual disk image
+    int           m_numPlatterSectors;   // sectors per platter
+    bool          m_writeProtect;        // true=don't write
+//  int           m_numPlatterTracks;    // tracks per platter
+//  int           m_numTrackSectors;     // sectors per track
+//  int           m_rpm;                 // rotational speed
+//  int           m_stepTime;            // time to step one track, in ms
 };
 
 #endif // _INCLUDE_WVD_H_

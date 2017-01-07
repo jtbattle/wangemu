@@ -3,13 +3,13 @@
 
 // utility function to map card name to cardtype index
 IoCard::card_t
-CardInfo::getCardTypeFromName(const string &name)
+CardInfo::getCardTypeFromName(const std::string &name)
 {
     for(int i=0; i<(int)IoCard::NUM_CARDTYPES; i++) {
         IoCard::card_t ii = static_cast<IoCard::card_t>(i);
         std::unique_ptr<IoCard> tmpcard(IoCard::makeTmpCard(ii));
         assert(tmpcard != nullptr);
-        string thisname = tmpcard->getName();
+        std::string thisname = tmpcard->getName();
         if (name == thisname) {
             return ii;
         }
@@ -19,35 +19,35 @@ CardInfo::getCardTypeFromName(const string &name)
 
 
 // return the name of the card type, eg, "2711b"
-string
+std::string
 CardInfo::getCardName(IoCard::card_t cardtype)
 {
     assert(cardtype == IoCard::card_t::none || IoCard::legal_card_t(cardtype));
     std::unique_ptr<IoCard> tmpcard(IoCard::makeTmpCard(cardtype));
-    string name = tmpcard->getName();
+    std::string name = tmpcard->getName();
     return name;
 }
 
 
 // return the description of the card type, eg, "64x16 CRT controller"
-string
+std::string
 CardInfo::getCardDesc(IoCard::card_t cardtype)
 {
     assert(cardtype == IoCard::card_t::none || IoCard::legal_card_t(cardtype));
     std::unique_ptr<IoCard> tmpcard(IoCard::makeTmpCard(cardtype));
-    string desc = tmpcard->getDescription();
+    std::string desc = tmpcard->getDescription();
     return desc;
 }
 
 
 // return a list of the base addresses the card type can be mapped to
-vector<int>
+std::vector<int>
 CardInfo::getCardBaseAddresses(IoCard::card_t cardtype)
 {
     assert(cardtype == IoCard::card_t::none || IoCard::legal_card_t(cardtype));
     std::unique_ptr<IoCard> tmpcard(IoCard::makeTmpCard(cardtype));
 
-    vector<int> addresses( tmpcard->getBaseAddresses() );
+    std::vector<int> addresses( tmpcard->getBaseAddresses() );
     return addresses;
 }
 

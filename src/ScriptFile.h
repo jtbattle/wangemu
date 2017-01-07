@@ -6,7 +6,6 @@
 
 #include <fstream>
 #include <memory>
-using std::ifstream;
 
 class ScriptFile
 {
@@ -23,7 +22,7 @@ public:
     // "metaflags" indicates what types of escapes to look for.
     // "max_nesting_depth" indicates how deep include file nesting is allowed.
     // Use OpenedOK() to determine if the file was opened successfully.
-    ScriptFile(const string &filename, int metaflags,
+    ScriptFile(const std::string &filename, int metaflags,
                int max_nesting_depth=1, int cur_nesting_depth=1);
 
     // OK to destruct with open files; they will be cleaned up
@@ -40,7 +39,7 @@ public:
     //    "somescript.txt:17"
     // or
     //    "somescript.txt:17, included from otherscript.txt:36"
-    string getLineDescription() const;
+    std::string getLineDescription() const;
 
     // fetch the next byte of the stream in "*byte".
     // return true if successful, and false if EOF before the read is attempted.
@@ -49,24 +48,24 @@ public:
 private:
     static const int MAX_EXPECTED_LINE_LENGTH=1024;  // getline() needs a char* buffer
 
-    ifstream   *m_ifs;          // input file stream
-    string      m_filename;     // name of opened script file
-    bool        m_opened_ok;    // residual state of attempt to open the script file
-    bool        m_eof;          // we've hit the end of file
+    std::ifstream  *m_ifs;          // input file stream
+    std::string     m_filename;     // name of opened script file
+    bool            m_opened_ok;    // residual state of attempt to open the script file
+    bool            m_eof;          // we've hit the end of file
 
-    int         m_metaflags;    // which escapes to recognize
+    int             m_metaflags;    // which escapes to recognize
 
-    int         m_cur_depth;    // now deeply nested we are (starting at 1)
-    int         m_max_depth;    // how deeply nesting is allowed
+    int             m_cur_depth;    // now deeply nested we are (starting at 1)
+    int             m_max_depth;    // how deeply nesting is allowed
 
-    int         m_cur_line;     // current line of file (starts at 1)
+    int             m_cur_line;     // current line of file (starts at 1)
 
     std::unique_ptr<ScriptFile> m_subscript;    // the file we are pending on (or 0 if none)
 
     // does necessary manipulations to read next line of text and sets flags
-    void        m_prepare_next_line();
-    char        m_charbuf[MAX_EXPECTED_LINE_LENGTH+1];  // +1 for termination
-    int         m_cur_char;     // which character to return next
+    void            m_prepare_next_line();
+    char            m_charbuf[MAX_EXPECTED_LINE_LENGTH+1];  // +1 for termination
+    int             m_cur_char;     // which character to return next
 
     // helpers
     bool ishexdigit(char ch) const;

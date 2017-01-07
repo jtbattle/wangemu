@@ -1624,18 +1624,13 @@ Cpu2200vp::tcb30msDone()
 
 #if HAVE_FILE_DUMP
 #include <fstream>
-using std::ofstream;
-using std::endl;
 #include <iomanip>
-using std::hex;
-using std::setw;
-using std::uppercase;
 
 void
-Cpu2200vp::dump_ram(const string &filename)
+Cpu2200vp::dump_ram(const std::string &filename)
 {
     // open the file, discarding contents of file if it already exists
-    ofstream ofs( filename.c_str(), ofstream::out | ofstream::trunc);
+    std::ofstream ofs( filename.c_str(), std::ofstream::out | std::ofstream::trunc);
     if (!ofs.is_open()) {
         UI_Error("Error writing to file '%s'", filename.c_str());
         return;
@@ -1643,15 +1638,15 @@ Cpu2200vp::dump_ram(const string &filename)
 
     ofs.fill('0');
     for(int addr=0; addr < (m_memsize_KB<<10); addr += 16) {
-        ofs << setw(4) << hex << uppercase << addr << ":";
+        ofs << std::setw(4) << std::hex << std::uppercase << addr << ":";
         for(int i=0; i<16; i++) {
-            ofs << " " << setw(2) << hex << uppercase << int(m_RAM[addr+i]);
+            ofs << " " << std::setw(2) << std::hex << std::uppercase << int(m_RAM[addr+i]);
         }
-        ofs << endl;
+        ofs << std::endl;
     }
 
-    ofs << endl << endl;
-    ofs << "===============================================" << endl << endl;
+    ofs << std::endl << std::endl;
+    ofs << "===============================================" << std::endl << std::endl;
     for(int addr=0; addr<0x8000; addr++) {
         char buff[200];
         (void)dasm_one_vp(buff, addr, m_ucode[addr].ucode);

@@ -77,7 +77,7 @@ private:
 
     // ---- utility functions ----
 
-    wxFont pickFont(int pointsize, int bold, const string &facename="");
+    wxFont pickFont(int pointsize, int bold, const std::string &facename="");
     int getFontSize() const;
 
     // rebuild m_fontmap
@@ -120,7 +120,7 @@ private:
     void setCursorY(int y);             // set vertical position
     void adjustCursorY(int delta);      // advance the cursor in y
     void adjustCursorX(int delta);      // move cursor left or right
-    void explainError(const string &errcode,
+    void explainError(const std::string &errcode,
                       const wxPoint &orig); // pop up error description
 
     CrtFrame * const m_parent;      // who owns us
@@ -195,7 +195,7 @@ private:
 
     // sound for beep
     void create_beep();
-    shared_ptr<wxSound> m_beep;
+    std::shared_ptr<wxSound> m_beep;
 
     DECLARE_EVENT_TABLE()
 };
