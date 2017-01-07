@@ -1051,6 +1051,17 @@ Cpu2200vp::exec_one_op()
                 //UI_Info("CPU:ABS when AB=%02X\n", m_cpu.ab);
                 m_sys.cpu_ABS(m_cpu.ab_sel);  // address bus strobe
                 break;
+            case 0x10: // CBS
+                if (m_dbg) {
+                    if (m_cpu.k < 32 || m_cpu.k > 128) {
+                        dbglog("-CBS when AB=%02X, K=%02X\n", m_cpu.ab_sel, m_cpu.k);
+                    } else {
+                        dbglog("-CBS when AB=%02X, K=%02X ('%c')\n", m_cpu.ab_sel, m_cpu.k, m_cpu.k);
+                    }
+                }
+                //UI_Info("CPU:CBS when AB=%02X, AB_SEL=%02X, K=%02X\n", m_cpu.ab, m_cpu.ab_sel, m_cpu.k);
+                m_sys.cpu_CBS(m_cpu.k);    // control bus strobe
+                break;
             case 0x20: // OBS
                 if (m_dbg) {
                     if (m_cpu.k < 32 || m_cpu.k > 128) {
@@ -1061,13 +1072,6 @@ Cpu2200vp::exec_one_op()
                 }
                 //UI_Info("CPU:OBS when AB=%02X, AB_SEL=%02X, K=%02X\n", m_cpu.ab, m_cpu.ab_sel, m_cpu.k);
                 m_sys.cpu_OBS(m_cpu.k);  // output data bus strobe
-                break;
-            case 0x10: // CBS
-                if (m_dbg) {
-                    dbglog("-CBS when AB=%02X\n", m_cpu.ab_sel);
-                }
-                //UI_Info("CPU:CBS when AB=%02X\n, AB_SEL=%02X", m_cpu.ab, m_cpu.ab_sel);
-                m_sys.cpu_CBS();    // control bus strobe
                 break;
             case 0x08: // empirical behavior
                 // the VP BASIC issues this operation in three places.

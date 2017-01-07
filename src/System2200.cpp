@@ -579,7 +579,7 @@ System2200::cpu_OBS(uint8 byte)
 
 // handles CBS strobes
 void
-System2200::cpu_CBS()
+System2200::cpu_CBS(uint8 byte)
 {
     // each card handles CBS in its own way.
     //   * many cards simply ignore it
@@ -587,7 +587,7 @@ System2200::cpu_CBS()
     //     of command word
     //   * some cards use it to trigger an IBS strobe
     if ((m_IoCurSelected > 0) && (m_IoMap[m_IoCurSelected].inst != nullptr)) {
-        (m_IoMap[m_IoCurSelected].inst)->CBS(0);
+        (m_IoMap[m_IoCurSelected].inst)->CBS(byte);
     }
 }
 

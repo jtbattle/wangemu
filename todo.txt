@@ -7,6 +7,13 @@ Emulator TODO list
    other things.  it didn't be a smart pointer, though, as the
    thing it points to is a singleton.
 
+   cpu calls these:
+        m_sys.cpu_poll_IB5()
+        m_sys.cpu_CPB(x)
+        m_sys.cpu_CBS()
+        m_sys.cpu_OBS(x)
+        m_sys.cpu_ABS(x)
+
 *) use smart pointers instead of raw pointers
    !! look for "delete" occurrences; if these were smart pointers,
    just setting the pointer to nullptr would automatically free the resource.
@@ -135,13 +142,35 @@ Emulator TODO list
    but it takes awhile.  Doing PRINT HEX(0707070707070707070707) sounds
    the same as PRINT HEX(07).  Is there something in the hardware which
    ensures a given HEX(07) takes at least a certain amount of time?
-   I would guess each HEX(07) triggers a one-shot which gates a 1KHz
-   oscillator, and subsequent HEX(07) will either retrigger the one-shot,
-   or are ignored.  check the schematic.  Then change the logic to match,
-   either by making the wav file play in a loop and then using a timer
-   event to schedule when to turn it off (perhaps canceling and rescheduling
-   if another hex 07 arrives), or by always letting it run to completion
-   and ignoring new hex(07) if one arrives while the previous is playing.
+
+   Each HEX(07) (re)triggers a one-shot which gates a 1KHz 555 oscillator.
+   Change the logic to match by making the wav file play in a loop
+   continuously until stopped, and using a timer event to schedule when
+   to turn it off.  if another hex(07) arrives, cancel the timer and
+   reschedule it for the new longer duration.
+
+   This means that the wav creation logic should not be as large as it
+   is, and instead it should be exactly one cycle with perfect begin/end
+   phase matching (no overlap).
+
+   7011.pdf shows that hex(07) causes a low to a 9602 retriggerable one-shot.
+   pin 11: active low trigger
+   pins 14/15: 10uF electrolytic
+   pin 14: 18K pullup
+   pulse width is 0.31*R*C ns, R in kohms, C in pF
+               == 0.3*18*10M = 97ms
+
+   that pulse lifts the reset pin of a 555.  The 555 is configured with
+      pin 7 pulled up to 5v by 1K
+      pin 6,8 with 0.1uF tantalum to ground
+      an 8.2K (maybe 6.2K) between pins 7 and 6/8
+   an online calculator says this should be 830Hz if R2 is 8.2K,
+                                         or 928Hz if R2 is 6.2K
+   A different calculator computed 1072 Hz for 6.2K.
+
+   The 7159 schematic (page 1, in the middle, at the bottom) is clearer.
+   The 9602 R=18K,C=18uF.  The 555 R1=1K, R2=8.2K, C=0.1uF.
+   That changes the timing a bit.
 
 *) None of the recent changes has been compiled on OSX, so most likely there
    will be problems.  Once the code is somewhat stable under windows,

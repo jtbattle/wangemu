@@ -1066,19 +1066,23 @@ Cpu2200t::exec_one_op()
 
             case 0x10: // generate -CBS
                 if (m_dbg) {
-                    dbglog("-CBS when AB=%02X\n", m_cpu.ab_sel);
-                    //UI_Info("CPU:CBS when AB=%02X\n, AB_SEL=%02X", m_cpu.ab, m_cpu.ab_sel);
+                    if (m_cpu.k < 32 || m_cpu.k > 128) {
+                        dbglog("-CBS when AB=%02X, K=%02X\n", m_cpu.ab_sel, m_cpu.k);
+                    } else {
+                        dbglog("-CBS when AB=%02X, K=%02X ('%c')\n", m_cpu.ab_sel, m_cpu.k, m_cpu.k);
+                    }
                 }
-                m_sys.cpu_CBS();  // control bus strobe
+                //UI_Info("CPU:CBS when AB=%02X, AB_SEL=%02X, K=%02X\n", m_cpu.ab, m_cpu.ab_sel, m_cpu.k);
+                m_sys.cpu_CBS(m_cpu.k);  // control bus strobe
                 break;
 
             case 0x20: // generate -OBS
                 if (m_dbg) {
-                    char buf[8];
-                    if (m_cpu.k >= 32 && m_cpu.k < 128) {
-                        sprintf(buf, " ('%c')", m_cpu.k);
+                    if (m_cpu.k < 32 || m_cpu.k > 128) {
+                        dbglog("-OBS when AB=%02X, K=%02X\n", m_cpu.ab_sel, m_cpu.k);
+                    } else {
+                        dbglog("-OBS when AB=%02X, K=%02X ('%c')\n", m_cpu.ab_sel, m_cpu.k, m_cpu.k);
                     }
-                    dbglog("-OBS when AB=%02X, K=%02X%s\n", m_cpu.ab_sel, m_cpu.k, buf);
                 }
                 //UI_Info("CPU:OBS when AB=%02X, AB_SEL=%02X, K=%02X\n", m_cpu.ab, m_cpu.ab_sel, m_cpu.k);
                 m_sys.cpu_OBS(m_cpu.k);  // output data bus strobe

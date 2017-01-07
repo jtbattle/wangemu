@@ -69,7 +69,7 @@ public:
 
     void cpu_ABS(uint8 byte);   // address byte strobe
     void cpu_OBS(uint8 byte);   // output byte strobe
-    void cpu_CBS();             // handles CBS strobes
+    void cpu_CBS(uint8 byte);   // control byte strobes
     void cpu_CPB(bool busy);    // notify selected card when CPB changes
     int  cpu_poll_IB5() const;  // the CPU can poll IB5 without any other strobe
 
