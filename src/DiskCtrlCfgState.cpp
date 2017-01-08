@@ -173,10 +173,10 @@ DiskCtrlCfgState::getWarnMismatch() const
 
 
 // return a copy of self
-DiskCtrlCfgState*
+std::shared_ptr<CardCfgState>
 DiskCtrlCfgState::clone() const
 {
-    return new DiskCtrlCfgState(*this);
+    return std::make_shared<DiskCtrlCfgState>(*this);
 }
 
 

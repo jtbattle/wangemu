@@ -41,18 +41,17 @@ ScriptFile::ScriptFile(const std::string &filename,
 
     // attempt to open the file for reading; set m_opened_ok accordingly
     // if success, set m_curline=1, read first line, set pointers, set EOF state
-    m_ifs = new std::ifstream( m_filename.c_str(), std::ifstream::in );
+    m_ifs = std::make_unique<std::ifstream>( m_filename.c_str(), std::ifstream::in );
 
     if (m_ifs && m_ifs->fail()) {
-        delete m_ifs;
         m_ifs = nullptr;
     }
 
-    if (!m_ifs) {
+    if (m_ifs == nullptr) {
         m_opened_ok = false;
         return;
     }
-        m_opened_ok = true;
+    m_opened_ok = true;
 
     // attempt to read the first line of the file
     m_prepare_next_line();
@@ -63,10 +62,7 @@ ScriptFile::ScriptFile(const std::string &filename,
 
 ScriptFile::~ScriptFile()
 {
-    if (m_ifs) {
-        delete m_ifs;
-        m_ifs = nullptr;
-    }
+    m_ifs = nullptr;
 }
 
 // =========================================================================

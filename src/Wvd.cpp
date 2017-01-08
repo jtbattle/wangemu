@@ -88,15 +88,15 @@ Wvd::open(const std::string &filename)
     assert(!filename.empty());
 
     // set up a file handle
-    m_file = new std::fstream(filename.c_str(),
-                              std::fstream::in | std::fstream::out | std::fstream::binary );
+    m_file = std::make_unique<std::fstream>(
+                                filename.c_str(),
+                                std::fstream::in | std::fstream::out | std::fstream::binary );
     if (!m_file) {
         return false;
     }
 
     if (!m_file->good()) {
         UI_Error("Couldn't open file '%s'", m_path.c_str());
-        delete m_file;
         m_file = nullptr;
         return false;
     }
@@ -123,7 +123,6 @@ Wvd::close()
         if (m_file->is_open()) {
             m_file->close();
         }
-        delete m_file;
         m_file = nullptr;
     }
     initMembers();
@@ -503,13 +502,11 @@ Wvd::reopen()
         m_file->open(m_path.c_str(), std::fstream::in | std::fstream::out | std::fstream::binary);
         if (!m_file->good()) {
             UI_Error("Couldn't open file '%s'", m_path.c_str());
-            delete m_file;
             m_file = nullptr;
             return;
         }
         bool ok = readHeader();
         if (!ok) {
-            delete m_file;
             m_file = nullptr;
             return;
         }
@@ -626,15 +623,15 @@ Wvd::createFile(const std::string &filename)
     m_path = filename;
 
     // create the file if it doesn't exist; erase if it does
-    m_file = new std::fstream(filename.c_str(),
-                 std::fstream::in | std::fstream::out | std::fstream::trunc | std::fstream::binary);
+    m_file = std::make_unique<std::fstream>(
+                filename.c_str(),
+                std::fstream::in | std::fstream::out | std::fstream::trunc | std::fstream::binary);
     if (!m_file) {
         return false;
     }
 
     if (!m_file->good()) {
         UI_Error("Couldn't create file '%s'", m_path.c_str());
-        delete m_file;
         m_file = nullptr;
         return false;
     }

@@ -101,7 +101,7 @@ private:
     const std::string  getName() const override;
     std::vector<int>   getBaseAddresses() const override;
     bool               isConfigurable() const override { return true; }
-    CardCfgState      *getCfgState() override;
+    std::shared_ptr<CardCfgState> getCfgState() override;
 
     // ---- disk access functions, tied to an object ----
     // "iwvd" == internal wang virtual disk function
@@ -175,29 +175,31 @@ private:
     bool                       m_cpb;                // cpb is asserted
     bool                       m_card_busy;          // the card isn't ready to accept a command or reply
     bool                       m_compare_err;        // compare status (true=miscompare)
-    std::shared_ptr<Timer>     m_tmr_motor_off;      // turn off both drives after a period of inactivity
     bool                       m_acting_intelligent; // what we told the host most recently
+    std::shared_ptr<Timer>     m_tmr_motor_off;      // turn off both drives after a period of inactivity
 
     enum state_t { DRIVE_EMPTY, DRIVE_IDLE, DRIVE_SPINNING };
-    struct {
-        state_t state;
-        Wvd    *wvd;            // virtual disk object
+    struct drive_t {
+        state_t              state;
+        std::unique_ptr<Wvd> wvd;   // virtual disk object
 
         // used for emulating timing behavior
-        int     tracks_per_platter;// disk property
-        int     sectors_per_track; // disk property
-        int     interleave;        // disk property
-        int     ticks_per_sector;  // derived: timer constant per sector
-        int     ticks_per_track;   // derived: timer constant per track step
+        int     tracks_per_platter; // disk property
+        int     sectors_per_track;  // disk property
+        int     interleave;         // disk property
+        int     ticks_per_sector;   // derived: timer constant per sector
+        int     ticks_per_track;    // derived: timer constant per track step
 
-        int     track;          // track counter
-        int     sector;         // physical sector counter
-        int     secwait;        // waiting for this sector (<0: not waiting)
+        int     track;              // track counter
+        int     sector;             // physical sector counter
+        int     secwait;            // waiting for this sector (<0: not waiting)
 
-        int     idle_cnt;       // number of operations done w/o this drive
+        int     idle_cnt;           // number of operations done w/o this drive
+
         std::shared_ptr<Timer> tmr_track;      // spin up + track seek timer
         std::shared_ptr<Timer> tmr_sector;     // sector timer
-    } m_d[4];   // drives: two primary, two secondary
+    };
+    drive_t m_d[4];   // drives: two primary, two secondary
 
     // ---- emulation sequencing logic ----
 

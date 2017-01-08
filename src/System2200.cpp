@@ -19,15 +19,14 @@ std::shared_ptr<Scheduler>   System2200::m_scheduler   = nullptr;
 std::shared_ptr<Cpu2200>     System2200::m_cpu         = nullptr;
 std::shared_ptr<SysCfgState> System2200::m_config      = nullptr;
 
-System2200::term_state_t
-            System2200::m_term_state  = RUNNING;
-bool        System2200::m_freeze_emu  = false;
-bool        System2200::m_do_reconfig = false;
+System2200::term_state_t     System2200::m_term_state  = RUNNING;
+bool                         System2200::m_freeze_emu  = false;
+bool                         System2200::m_do_reconfig = false;
 
 // mapping i/o addresses to devices
-System2200::iomap_t System2200::m_IoMap[256];
-IoCard*             System2200::m_cardInSlot[NUM_IOSLOTS];
-int                 System2200::m_IoCurSelected;
+std::array<System2200::iomap_t,256>              System2200::m_IoMap;
+std::array<std::unique_ptr<IoCard>, NUM_IOSLOTS> System2200::m_cardInSlot;
+int                                              System2200::m_IoCurSelected;
 
 // speed regulation
 int64   System2200::perf_real_ms[100];    // realtime at start of each slice
@@ -135,7 +134,7 @@ System2200::initialize()
 {
     // set up IO management
     for(int i=0; i<256; i++) {
-        m_IoMap[i].inst   = nullptr;
+        m_IoMap[i].slot   = -1;    // unoccupied
         m_IoMap[i].ignore = false;
     }
     for(int i=0; i<NUM_IOSLOTS; i++) {
@@ -165,6 +164,12 @@ System2200::initialize()
         ini_cfg.setDefaults();
     }
     setConfig(ini_cfg);
+
+#if 0
+    // intentional error, to see if the leak checker finds it
+    int *leaker = new int[100];
+    leaker[1] = 123;
+#endif
 }
 
 
@@ -175,11 +180,10 @@ System2200::breakdown_cards(void)
     // clean out associations that no longer exist.
     // if we find a video display, we must trash it.
     for(int i=0; i<256; i++) {
-        m_IoMap[i].inst   = 0;
+        m_IoMap[i].slot   = -1;      // unoccupied
         m_IoMap[i].ignore = false;   // restore bad I/O warning flags
     }
     for(int i=0; i<NUM_IOSLOTS; i++) {
-        delete m_cardInSlot[i];
         m_cardInSlot[i] = nullptr;
     }
 
@@ -207,8 +211,8 @@ System2200::setConfig(const SysCfgState &newcfg)
                 if (m_config->isSlotOccupied(slot)) {
                     IoCard::card_t ct = m_config->getSlotCardType(slot);
                     if (CardInfo::isCardConfigurable(ct)) {
-                        IoCard *card = getInstFromSlot(slot);
-                        const CardCfgState *cfg = m_config->getCardConfig(slot);
+                        auto cfg = m_config->getCardConfig(slot);
+                        auto card = getInstFromSlot(slot);
                         card->setConfiguration(*cfg);
                     }
                 }
@@ -270,21 +274,21 @@ System2200::setConfig(const SysCfgState &newcfg)
             continue;
         }
 
-        IoCard *inst = IoCard::makeCard(m_scheduler, m_cpu, cardtype, io_addr,
-                                        slot, m_config->getCardConfig(slot));
-        if (inst == 0) {
+        auto inst = IoCard::makeCard(m_scheduler, m_cpu, cardtype, io_addr,
+                                     slot, m_config->getCardConfig(slot).get());
+        if (inst == nullptr) {
             // failed to install
             UI_Warn("Configuration problem: failure to create slot %d card instance", slot);
         } else {
-            m_cardInSlot[slot] = inst;
             std::vector<int> addresses = inst->getAddresses();
             for(unsigned int n=0; n<addresses.size(); n++) {
-                m_IoMap[addresses[n]].inst = inst;
+                m_IoMap[addresses[n]].slot = slot;
             }
+            m_cardInSlot[slot] = std::move(inst);
         }
     }}
 
-    restoreDiskMounts();         // remount disks
+    restoreDiskMounts();    // remount disks
 }
 
 
@@ -529,15 +533,15 @@ System2200::cpu_ABS(uint8 byte)
         return;
     }
 
-    if ((m_IoCurSelected > 0) && (m_IoMap[m_IoCurSelected].inst != nullptr)) {
-        (m_IoMap[m_IoCurSelected].inst)->deselect();
+    if ((m_IoCurSelected > 0) && (m_IoMap[m_IoCurSelected].slot >= 0)) {
+        (m_cardInSlot[m_IoMap[m_IoCurSelected].slot])->deselect();
         m_IoCurSelected = -1;
     }
 
     m_cpu->setDevRdy(true); // nobody is driving, so it floats to 1
 
     m_IoCurSelected = byte;
-    if (m_IoMap[m_IoCurSelected].inst == nullptr) {
+    if (m_IoMap[m_IoCurSelected].slot < 0) {
         // ignore 0x00, which is used as a "deselect everything" address
         if ( (m_IoCurSelected != 0x00) &&
              !m_IoMap[m_IoCurSelected].ignore ) {
@@ -551,7 +555,7 @@ System2200::cpu_ABS(uint8 byte)
             }
         }
     } else {
-        (m_IoMap[m_IoCurSelected].inst)->select();
+        m_cardInSlot[m_IoMap[m_IoCurSelected].slot]->select();
     }
 }
 
@@ -569,8 +573,8 @@ System2200::cpu_OBS(uint8 byte)
 // being used will generate a Busy indicator after the I/O Bus (!OB1 - !OB8)
 // has been strobed by !OBS, the CPU output strobe.
     if (m_IoCurSelected > 0) {
-        if (m_IoMap[m_IoCurSelected].inst != nullptr) {
-            (m_IoMap[m_IoCurSelected].inst)->OBS(byte);
+        if (m_IoMap[m_IoCurSelected].slot >= 0) {
+            m_cardInSlot[m_IoMap[m_IoCurSelected].slot]->OBS(byte);
         }
     }
 }
@@ -585,8 +589,8 @@ System2200::cpu_CBS(uint8 byte)
     //   * some use it like another OBS strobe to capture some type
     //     of command word
     //   * some cards use it to trigger an IBS strobe
-    if ((m_IoCurSelected > 0) && (m_IoMap[m_IoCurSelected].inst != nullptr)) {
-        (m_IoMap[m_IoCurSelected].inst)->CBS(byte);
+    if ((m_IoCurSelected > 0) && (m_IoMap[m_IoCurSelected].slot >= 0)) {
+        m_cardInSlot[m_IoMap[m_IoCurSelected].slot]->CBS(byte);
     }
 }
 
@@ -595,9 +599,9 @@ System2200::cpu_CBS(uint8 byte)
 void
 System2200::cpu_CPB(bool busy)
 {
-    if ((m_IoCurSelected > 0) && (m_IoMap[m_IoCurSelected].inst != nullptr)) {
+    if ((m_IoCurSelected > 0) && (m_IoMap[m_IoCurSelected].slot >= 0)) {
         // signal that we want to get something
-        (m_IoMap[m_IoCurSelected].inst)->CPB(busy);
+        m_cardInSlot[m_IoMap[m_IoCurSelected].slot]->CPB(busy);
     }
 }
 
@@ -610,9 +614,9 @@ System2200::cpu_CPB(bool busy)
 int
 System2200::cpu_poll_IB5() const
 {
-    if  ((m_IoCurSelected > 0) && (m_IoMap[m_IoCurSelected].inst != nullptr)) {
+    if  ((m_IoCurSelected > 0) && (m_IoMap[m_IoCurSelected].slot >= 0)) {
         // signal that we want to get something
-        return (int)(m_IoMap[m_IoCurSelected].inst)->getIB5();
+        return (int)(m_cardInSlot[m_IoMap[m_IoCurSelected].slot]->getIB5());
     }
     return 0;
 }
@@ -685,15 +689,19 @@ System2200::getPrinterIoAddr(int n)
 
 
 // return the instance handle of the device at the specified IO address
+// JTB FIXME: returning a raw pointer -- does all this need to be
+//            converted to shared_ptr?
 IoCard*
 System2200::getInstFromIoAddr(int io_addr) const
 {
     assert( (io_addr >= 0) && (io_addr <= 0xFFF) );
-    return m_IoMap[io_addr & 0xFF].inst;
+    return m_cardInSlot[m_IoMap[io_addr & 0xFF].slot].get();
 }
 
 
 // given a slot, return the "this" element
+// JTB FIXME: returning a raw pointer -- does all this need to be
+//            converted to shared_ptr?
 IoCard*
 System2200::getInstFromSlot(int slot)
 {
@@ -704,7 +712,7 @@ System2200::getInstFromSlot(int slot)
         return 0;
     }
 
-    return m_IoMap[io_addr & 0xFF].inst;
+    return m_cardInSlot[m_IoMap[io_addr & 0xFF].slot].get();
 }
 
 
@@ -757,8 +765,8 @@ System2200::findDisk(const std::string &filename,
             break;
         }
 
-        const CardCfgState *cfg = m_config->getCardConfig(slt);
-        const DiskCtrlCfgState *dcfg = dynamic_cast<const DiskCtrlCfgState*>(cfg);
+        const auto cfg = m_config->getCardConfig(slt);
+        const auto dcfg = dynamic_cast<const DiskCtrlCfgState*>(cfg.get());
         assert(dcfg != nullptr);
         int num_drives = dcfg->getNumDrives();
         for(int d=0; d<num_drives; d++) {
@@ -805,8 +813,8 @@ System2200::saveDiskMounts(void)
             std::ostringstream subgroup;
             subgroup << "io/slot-" << slot;
             std::string val;
-            const CardCfgState *cfg = m_config->getCardConfig(slot);
-            const DiskCtrlCfgState *dcfg = dynamic_cast<const DiskCtrlCfgState*>(cfg);
+            const auto cfg = m_config->getCardConfig(slot);
+            const auto dcfg = dynamic_cast<const DiskCtrlCfgState*>(cfg.get());
             assert(dcfg != nullptr);
             int num_drives = dcfg->getNumDrives();
             for(int drive=0; drive<num_drives; drive++) {
@@ -835,8 +843,8 @@ System2200::restoreDiskMounts(void)
     // look for disk controllers and populate drives
     for(int slot=0; slot<NUM_IOSLOTS; slot++) {
         if (isDiskController(slot)) {
-            const CardCfgState *cfg = m_config->getCardConfig(slot);
-            const DiskCtrlCfgState *dcfg = dynamic_cast<const DiskCtrlCfgState*>(cfg);
+            const auto cfg = m_config->getCardConfig(slot);
+            const auto dcfg = dynamic_cast<const DiskCtrlCfgState*>(cfg.get());
             assert(dcfg != nullptr);
             int num_drives = dcfg->getNumDrives();
             for(int drive=0; drive<num_drives; drive++) {

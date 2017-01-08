@@ -129,14 +129,16 @@ public:
 
     // create an instance of the specified card; the card configuration,
     // if it has one, will come from the ini file
-    static IoCard *makeCard(std::shared_ptr<Scheduler> scheduler,
+    static std::unique_ptr<IoCard> makeCard(
+                            std::shared_ptr<Scheduler> scheduler,
                             std::shared_ptr<Cpu2200>   cpu,
                             card_t type, int baseaddr, int cardslot,
                             const CardCfgState *cfg);
 
     // make a temporary card in order to query its properties.
     // the IoCard* functions know to do only partial construction.
-    static IoCard *makeTmpCard(card_t type, int baseaddr=0x000);
+    static std::unique_ptr<IoCard> makeTmpCard( card_t type,
+                                                int baseaddr=0x000);
 
 protected:  // these are used by the CardInfo class
 
@@ -153,7 +155,7 @@ protected:  // these are used by the CardInfo class
     virtual bool isConfigurable() const { return false; }
 
     // subclass returns its own type of configuration object
-    virtual CardCfgState* getCfgState() { return nullptr; }
+    virtual std::shared_ptr<CardCfgState> getCfgState() { return nullptr; }
 
 private:
     // shared implementation the other make*Card function use.
@@ -162,7 +164,8 @@ private:
     // properties (ugly).  finally, if we provide real cardslot
     // information and existing_card is false, we return a new card
     // that has default state associated with it.
-    static IoCard *makeCardImpl(std::shared_ptr<Scheduler> scheduler,
+    static std::unique_ptr<IoCard> makeCardImpl(
+                                std::shared_ptr<Scheduler> scheduler,
                                 std::shared_ptr<Cpu2200>   cpu,
                                 card_t type, int baseaddr, int cardslot,
                                 const CardCfgState *cfg);

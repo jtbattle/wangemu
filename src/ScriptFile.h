@@ -48,7 +48,7 @@ public:
 private:
     static const int MAX_EXPECTED_LINE_LENGTH=1024;  // getline() needs a char* buffer
 
-    std::ifstream  *m_ifs;          // input file stream
+    std::unique_ptr<std::ifstream> m_ifs;  // input file stream
     std::string     m_filename;     // name of opened script file
     bool            m_opened_ok;    // residual state of attempt to open the script file
     bool            m_eof;          // we've hit the end of file

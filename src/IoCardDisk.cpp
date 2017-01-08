@@ -169,7 +169,6 @@ IoCardDisk::~IoCardDisk()
     if (m_slot >= 0) {
         reset();
         for(int drive=0; drive<numDrives(); drive++) {
-            delete m_d[drive].wvd;
             m_d[drive].wvd = nullptr;
         }
     }
@@ -223,10 +222,10 @@ IoCardDisk::getAddresses() const
 // -----------------------------------------------------
 
 // subclass returns its own type of configuration object
-CardCfgState*
+std::shared_ptr<CardCfgState>
 IoCardDisk::getCfgState()
 {
-    return new DiskCtrlCfgState();
+    return std::make_unique<DiskCtrlCfgState>();
 }
 
 
@@ -404,7 +403,8 @@ IoCardDisk::createDiskController()
     m_tmr_motor_off = nullptr;
 
     for(int drive=0; drive<4; drive++) {
-        m_d[drive].wvd = (drive < numDrives()) ? new Wvd : 0;
+        m_d[drive].wvd = (drive < numDrives()) ? std::make_unique<Wvd>()
+                                               : nullptr;
         m_d[drive].state = DRIVE_EMPTY;
         // timing emulation:
         m_d[drive].track      = 0;    // which track head is on
@@ -1025,7 +1025,7 @@ IoCardDisk::iwvdInsertDisk(int drive,
     }
 
     if (warn && !first_gen && !dumb_ctrl && !large_disk) {
-        bool bit_15 = diskHasBit15Problem(m_d[drive].wvd, false);
+        bool bit_15 = diskHasBit15Problem(m_d[drive].wvd.get(), false);
         if (bit_15) {
             bool do_it = UI_Confirm(
                 "This disk in drive %s has extraneous bits set on some sector\n"
@@ -1034,7 +1034,7 @@ IoCardDisk::iwvdInsertDisk(int drive,
                 "or click \"Yes\" below to automatically clear these bits.",
                 disk_loc);
             if (do_it) {
-                (void)diskHasBit15Problem(m_d[drive].wvd, true);
+                (void)diskHasBit15Problem(m_d[drive].wvd.get(), true);
             }
         }
     }

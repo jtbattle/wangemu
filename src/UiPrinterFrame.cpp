@@ -570,6 +570,7 @@ PrinterFrame::OnPrintPreview(wxCommandEvent& WXUNUSED(event))
 
     //Pass two printout objects: for preview, and possible printing
     wxPrintDialogData printDialogData(*m_printData);
+// JTB FIXME: it seems like a leak: who deletes *preview?
     wxPrintPreview *preview = new wxPrintPreview(
                                 new Printout (_T(""), m_printer),   // preview
                                 new Printout (_T(""), m_printer),   // printout
@@ -583,10 +584,13 @@ PrinterFrame::OnPrintPreview(wxCommandEvent& WXUNUSED(event))
     }
 
     std::string preview_title("Print Preview");
-    wxPreviewFrame *frame = new wxPreviewFrame(preview, this, preview_title,
+// JTB FIXME: it seems like a leak: who deletes *frame?
+    wxPreviewFrame *frame = new wxPreviewFrame(preview, this,
+                                    preview_title,
                                     wxPoint(100, 100),  // default position
                                     wxSize(600, 650));  // default size
 
+#if 1
     // works in 2.5.4 and subsequent releases
     frame->Connect( wxID_ANY, wxEVT_CLOSE_WINDOW,
                     wxCloseEventHandler(PrinterFrame::PP_OnClose) );
@@ -601,6 +605,13 @@ PrinterFrame::OnPrintPreview(wxCommandEvent& WXUNUSED(event))
     // automatically refresh the other
     frame->GetControlBar()->SetZoomControl(m_previewzoom);
     preview->SetZoom(m_previewzoom);
+#else
+    // FIXME: this is how the printing sample ends it -- study this to see
+    //        what all the code above is doing.
+    frame->Centre(wxBOTH);
+    frame->InitializeWithModality(wxPreviewFrame_AppModal);
+    frame->Show();
+#endif
 
     frame->Show();
 

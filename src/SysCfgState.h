@@ -71,7 +71,7 @@ public:
     bool getWarnIo() const;
 
     // retrieve the pointer to the per-card configuration state
-    const CardCfgState* getCardConfig(int slot) const;
+    const std::shared_ptr<CardCfgState> getCardConfig(int slot) const;
 
     // twiddle the state of the card in the given slot
     void editCardConfig(int slot);
@@ -96,9 +96,9 @@ private:
     // -------------- information about slots --------------
     // a list of which cards are plugged into each slot of the IO backplane
     struct {
-        IoCard::card_t type;    // what is plugged into the slot
-        int            addr;    // where it will be located (only 8 lsb matter on match)
-        CardCfgState  *cardCfg; // per-card configuration state, or nullptr
+        IoCard::card_t                type;    // what is plugged into the slot
+        int                           addr;    // where it will be located (only 8 lsb matter on match)
+        std::shared_ptr<CardCfgState> cardCfg; // per-card configuration state, or nullptr
     } m_slot[NUM_IOSLOTS];
 
     // -------------- misc information --------------

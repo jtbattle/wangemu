@@ -149,7 +149,7 @@ private:
     bool createFile(const std::string &filename);
 
     // ----- data members -----
-    std::fstream *m_file;                // file handle
+    std::unique_ptr<std::fstream> m_file;   // file handle
     bool          m_metadataStale;       // is the metadata possibly out of date?
     bool          m_metaModified;        // metadata has been modified
     bool          m_hasPath;             // is m_path valid?

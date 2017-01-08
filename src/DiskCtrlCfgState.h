@@ -25,7 +25,7 @@ public:
     void saveIni(const std::string &subgroup) const;
     bool operator==(const CardCfgState &rhs) const;
     bool operator!=(const CardCfgState &rhs) const;
-    DiskCtrlCfgState* clone() const;
+    std::shared_ptr<CardCfgState> clone() const;
     bool configOk(bool warn) const;
     bool needsReboot(const CardCfgState &other) const;
 

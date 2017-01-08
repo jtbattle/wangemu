@@ -223,7 +223,8 @@ CrtStatusBar::CrtStatusBar(CrtFrame *parent, bool shown) :
                 continue;
             }
 
-            m_diskicon[idx] = new MyStaticBitmap( this,
+            m_diskicon[idx] = std::make_unique<MyStaticBitmap>(
+                                    this,
                                     ID_Button_DiskCtrl0_FDrive + idx, // wxWindowID
                                     dummy,              // gets overridden later
                                     wxDefaultPosition,  // gets overridden later
@@ -366,7 +367,6 @@ CrtStatusBar::~CrtStatusBar()
         m_disklabel[2*ctrl+0] = nullptr;
         m_disklabel[2*ctrl+1] = nullptr;
         for(int drive=0; drive<m_num_drives[ctrl]; drive++) {
-            delete m_diskicon[4*ctrl+drive];
             m_diskicon[4*ctrl+drive] = nullptr;
         }
     }

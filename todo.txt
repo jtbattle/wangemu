@@ -2,17 +2,9 @@
 Emulator TODO list
 ============================================================================
 
-*) use smart pointers instead of raw pointers
-   !! look for "delete" occurrences; if these were smart pointers,
-   just setting the pointer to nullptr would automatically free the resource.
-   Convert these to unique_ptr or shared_ptr when it makes sense.
-
-    IoCardDisk.h
-        m_d[drive]
-    SysCfgState.h
-        m_slot[slot].cardCfg
-    System2200.h
-        m_cardInSlot[n]
+*) print preview crashes now.  I'm not sure when it started happening.
+    study F:\Jim\libs\wx-3.1.0\samples\printing
+   trying to print fails too
 
 *) the Scheduler class callback list should hold std::weak_ptr to
    the callback objects.  when the scheduling code needs to use such
@@ -159,11 +151,12 @@ Emulator TODO list
    The 9602 R=18K,C=18uF.  The 555 R1=1K, R2=8.2K, C=0.1uF.
    That changes the timing a bit.
 
-*) None of the recent changes has been compiled on OSX, so most likely there
-   will be problems.  Once the code is somewhat stable under windows,
-   build it on OSX and iron out the problems.
-
 *) add terminal mux emulation and terminal emulation so I can run MVP OS's
+
+   - I recently fixed a major bug -- CBS was always sending 00 instead of
+     the contents of the K register.  This didn't matter for other I/O cards,
+     but it is critical to the operation of the TermMux card.  Retest now
+     that this bug has been fixed.
 
    - disassemble MXD code to understand behavior better
         C:\Users\Jim\Documents\wang2200\boards\LVP box\7291_dasm\
@@ -306,6 +299,10 @@ independent address
       It is possible that the contents were R5, but the EPROMs were
       later erased and overwritten, making the handwritten note
       meaningless.
+
+*) None of the recent changes has been compiled on OSX, so most likely there
+   will be problems.  Once the code is somewhat stable under windows,
+   build it on OSX and iron out the problems.
 
 *) on toolbar, add superscript to some SF keys in (M)VP mode:
      SF4: END

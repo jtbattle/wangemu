@@ -32,6 +32,8 @@ public:
      System2200();
     ~System2200();
 
+    System2200* get() { return this; }
+
     // because everything is static, we have to be told when
     // the sim is really starting and ending.
     void initialize();  // T -0
@@ -131,13 +133,13 @@ private:
 
     // -------------- I/O dispatch --------------
     struct iomap_t {
-        IoCard *inst;       // pointer to card instance
-        bool    ignore;     // if false, access generates a warning message
-                            // if there is no device at that address
+        int  slot;      // pointer to card instance
+        bool ignore;    // if false, access generates a warning message
+                        // if there is no device at that address
     };
-    static struct iomap_t m_IoMap[256];         // pointer to card responding to given address
-    static IoCard* m_cardInSlot[NUM_IOSLOTS];   // pointer to card in a given slot
-    static int     m_IoCurSelected;             // address of most recent ABS
+    static std::array<std::unique_ptr<IoCard>, NUM_IOSLOTS> m_cardInSlot;   // pointer to card in a given slot
+    static std::array<iomap_t,256> m_IoMap;         // pointer to card responding to given address
+    static int                     m_IoCurSelected; // address of most recent ABS
 
     // stuff related to regulating simulation speed:
     static bool  m_regulated_speed; // 1=try to match real speed, 0=run full out

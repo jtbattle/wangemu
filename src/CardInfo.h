@@ -29,7 +29,7 @@ public:
     static std::string      getCardDesc(IoCard::card_t cardtype);
     static std::vector<int> getCardBaseAddresses(IoCard::card_t cardtype);
     static bool             isCardConfigurable(IoCard::card_t cardtype);
-    static CardCfgState*    getCardCfgState(IoCard::card_t cardtype);
+    static std::shared_ptr<CardCfgState> getCardCfgState(IoCard::card_t cardtype);
 };
 
 #endif  // _INCLUDE_CARDINFO_H_

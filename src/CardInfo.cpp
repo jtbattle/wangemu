@@ -64,13 +64,12 @@ CardInfo::isCardConfigurable(IoCard::card_t cardtype)
 
 
 // retrieve a pointer to a CardCfgState specific to a given kind of card
-CardCfgState*
+std::shared_ptr<CardCfgState>
 CardInfo::getCardCfgState(IoCard::card_t cardtype)
 {
     assert(cardtype == IoCard::card_t::none || IoCard::legal_card_t(cardtype));
     std::unique_ptr<IoCard> tmpcard(IoCard::makeTmpCard(cardtype));
-    CardCfgState *rv = tmpcard->getCfgState();
-    return rv;
+    return tmpcard->getCfgState();
 }
 
 // vim: ts=8:et:sw=4:smarttab

@@ -34,11 +34,9 @@ SysCfgState::SysCfgState() :
 
 SysCfgState::~SysCfgState()
 {
+    // drop all attached cards
     for(int slot=0; slot<NUM_IOSLOTS; slot++) {
-        if (m_slot[slot].cardCfg != nullptr) {
-            delete m_slot[slot].cardCfg;
-            m_slot[slot].cardCfg = nullptr;
-        }
+        m_slot[slot].cardCfg = nullptr;
     }
 }
 
@@ -59,10 +57,7 @@ SysCfgState::operator=(const SysCfgState &rhs)
         m_slot[slot].type = rhs.m_slot[slot].type;
         m_slot[slot].addr = rhs.m_slot[slot].addr;
         // here we must do a deep copy:
-        if (m_slot[slot].cardCfg != nullptr) {
-            delete m_slot[slot].cardCfg;
-            m_slot[slot].cardCfg = nullptr;
-        }
+        m_slot[slot].cardCfg = nullptr;
         if (rhs.m_slot[slot].cardCfg != nullptr) {
             m_slot[slot].cardCfg = rhs.m_slot[slot].cardCfg->clone();
         }
@@ -243,11 +238,7 @@ SysCfgState::loadIni()
             // and try to load it from the ini
             if (CardInfo::isCardConfigurable(cardtype)) {
                 std::string cardsubgroup("io/slot-" + std::to_string(slot) + "/cardcfg");
-                // dump any attached cardCfg state
-                if (m_slot[slot].cardCfg != nullptr) {
-                    delete m_slot[slot].cardCfg;
-                    m_slot[slot].cardCfg = nullptr;
-                }
+                m_slot[slot].cardCfg = nullptr;  // dump any existing cardCfg
                 m_slot[slot].cardCfg = CardInfo::getCardCfgState(cardtype);
                 m_slot[slot].cardCfg->loadIni(cardsubgroup);
             }
@@ -406,10 +397,7 @@ SysCfgState::setSlotCardType(int slot, IoCard::card_t type)
 
     // create a config state object if the card type needs one
     if ((type != IoCard::card_t::none) && (CardInfo::isCardConfigurable(type))) {
-        if (m_slot[slot].cardCfg != nullptr) {
-            delete m_slot[slot].cardCfg;
-            m_slot[slot].cardCfg = nullptr;
-        }
+        m_slot[slot].cardCfg = nullptr;  // kill any existing card
         m_slot[slot].cardCfg = CardInfo::getCardCfgState(type);
         m_slot[slot].cardCfg->setDefaults();
     }
@@ -457,7 +445,7 @@ SysCfgState::getSlotCardAddr(int slot) const
 
 
 // retrieve the pointer to the per-card configuration state
-const CardCfgState *
+const std::shared_ptr<CardCfgState>
 SysCfgState::getCardConfig(int slot) const
 {
     assert(isSlotOccupied(slot));
@@ -471,17 +459,19 @@ SysCfgState::editCardConfig(int slot)
 {
     assert(isSlotOccupied(slot));
 
-    CardCfgState *cardCfg = m_slot[slot].cardCfg;
+    auto cardCfg = m_slot[slot].cardCfg;
     if (cardCfg != nullptr) {
-        IoCard *inst = System2200().getInstFromSlot(slot);
+        // FIXME: this is a raw pointer from the m_cardInSlot[] unique_ptr
+        //        it is safe, but it feels dangerous to be using the raw ptr.
+        //        all calls of getInstFromSlot() should be reviewed too.
+        auto inst = System2200().getInstFromSlot(slot);
         if (inst == nullptr) {
             // this must be a newly created slot that hasn't been put into
             // the IoMap yet.  create a temp object so we can edit the cardCfg.
-            inst = IoCard::makeTmpCard(m_slot[slot].type);
-            inst->editConfiguration(cardCfg);
-            delete inst;
+            auto inst2 = IoCard::makeTmpCard(m_slot[slot].type);
+            inst2->editConfiguration(cardCfg.get());
         } else {
-            inst->editConfiguration(cardCfg);
+            inst->editConfiguration(cardCfg.get());
         }
     }
 }
@@ -525,10 +515,10 @@ SysCfgState::configOk(bool warn) const
              (m_slot[slot].addr & 0xFF) == 0x00)
             pri_crt_found = true;
 
-        IoCard *slotInst = IoCard::makeTmpCard(getSlotCardType(slot),
-                                               getSlotCardAddr(slot) & 0xFF);
+        auto slotInst = IoCard::makeTmpCard(getSlotCardType(slot),
+                                            getSlotCardAddr(slot) & 0xFF);
         std::vector<int> slotAddresses = slotInst->getAddresses();
-        delete slotInst;
+        slotInst = nullptr;
 
         // check for address conflicts
         for(int slot2=slot+1; slot2<NUM_IOSLOTS; slot2++) {
@@ -537,10 +527,10 @@ SysCfgState::configOk(bool warn) const
                 continue;
             }
 
-            IoCard *slot2Inst = IoCard::makeTmpCard(getSlotCardType(slot2),
-                                                    getSlotCardAddr(slot2) & 0xFF);
+            auto slot2Inst = IoCard::makeTmpCard(getSlotCardType(slot2),
+                                                 getSlotCardAddr(slot2) & 0xFF);
             std::vector<int> slot2Addresses = slot2Inst->getAddresses();
-            delete slot2Inst;
+            slot2Inst = nullptr;
 
             // sweep through all occupied addresses and look for collisions
             for(const int slot_addr : slotAddresses) {
@@ -606,7 +596,7 @@ SysCfgState::needsReboot(const SysCfgState &other) const
             return true;
         }
 
-        if ( (m_slot[slot].cardCfg) &&
+        if ( (m_slot[slot].cardCfg != nullptr) &&
               m_slot[slot].cardCfg->needsReboot(*other.m_slot[slot].cardCfg)) {
             return true;
         }

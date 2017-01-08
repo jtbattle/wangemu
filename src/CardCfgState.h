@@ -35,7 +35,7 @@ public:
     virtual bool operator!=(const CardCfgState &rhs) const = 0;
 
     // return a copy of self
-    virtual CardCfgState* clone() const = 0;
+    virtual std::shared_ptr<CardCfgState> clone() const = 0;
 
     // returns true if the current configuration is valid and consistent.
     // if warn is true, errors produce a UI_Alert() explanation

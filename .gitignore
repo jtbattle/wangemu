@@ -198,3 +198,4 @@ verify_multisectors.w22
 termtest/poll.py
 
 *.db
+dr_memory.bat
