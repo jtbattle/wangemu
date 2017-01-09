@@ -401,8 +401,9 @@ Printer::lptChar(uint8 byte)
     m_printing_flag = true;
     if ( (byte == 0x0A) ||   // line feed
          (byte == 0x0C) ||   // page feed
-         (byte == 0x0D))     // carriage return
+         (byte == 0x0D)) {   // carriage return
         (void)fflush(m_fp_port);
+    }
 }
 
 
@@ -886,107 +887,107 @@ bool
 Printout::OnPrintPage(int page)
 {
     wxDC *dc = GetDC();
-    if (dc) {
-        // for now I have two approaches.
-        // The first approach scales the virtual pageit to fit the real page.
-        // The second approach matches the fonts as close as possible and
-        // does not use margins.
+    if (!dc) {
+        return false;
+    }
 
-        // first, get some key parameters from Printer
-        size_t length;
-        int llen, plen;
-        m_printer->getPageAttributes(llen, plen);
-        int cell_w, cell_h;
-        m_printer->getCellAttributes(&cell_w, &cell_h);
-        length = llen;
+    // for now I have two approaches.
+    // The first approach scales the virtual pageit to fit the real page.
+    // The second approach matches the fonts as close as possible and
+    // does not use margins.
 
-        // device units margin
-        int marginleft, marginright, margintop, marginbottom;
-        m_printer->getMargins(marginleft, marginright, margintop, marginbottom);
+    // first, get some key parameters from Printer
+    size_t length;
+    int llen, plen;
+    m_printer->getPageAttributes(llen, plen);
+    int cell_w, cell_h;
+    m_printer->getCellAttributes(&cell_w, &cell_h);
+    length = llen;
+
+    // device units margin
+    int marginleft, marginright, margintop, marginbottom;
+    m_printer->getMargins(marginleft, marginright, margintop, marginbottom);
 
 #if 1
-        //approach 1
-        float maxX = llen*cell_w;
-        float maxY = plen*cell_h;
+    //approach 1
+    float maxX = llen*cell_w;
+    float maxY = plen*cell_h;
 
-        // Add the margin to the graphic size
-        maxX += (marginleft + marginright);
-        maxY += (margintop + marginbottom);
+    // Add the margin to the graphic size
+    maxX += (marginleft + marginright);
+    maxY += (margintop + marginbottom);
 
-        // Get the size of the DC in pixels
-        // The size varies. For printing, it will be the real printer. For preview, it will
-        // be the graphic area we see on the screen, based on the zoom factor.
-        int w, h;
-        dc->GetSize(&w, &h);
+    // Get the size of the DC in pixels
+    // The size varies. For printing, it will be the real printer. For preview, it will
+    // be the graphic area we see on the screen, based on the zoom factor.
+    int w, h;
+    dc->GetSize(&w, &h);
 
-        // Calculate a suitable scaling factor
-        float scaleX=(float)(w/maxX);
-        float scaleY=(float)(h/maxY);
+    // Calculate a suitable scaling factor
+    float scaleX=(float)(w/maxX);
+    float scaleY=(float)(h/maxY);
 
-        // use x or y scaling factor, whichever fits on the DC
+    // use x or y scaling factor, whichever fits on the DC
 //      float actualScale = std::min(scaleX, scaleY);
 
 #if 0 // this should be a configuration parameter
-        // calculate the position on the DC for centering the graphic
-        float posX = (float)((w - (maxX*actualScale))/2.0);
-        float posY = (float)((h - (maxY*actualScale))/2.0);
+    // calculate the position on the DC for centering the graphic
+    float posX = (float)((w - (maxX*actualScale))/2.0);
+    float posY = (float)((h - (maxY*actualScale))/2.0);
 #else
-        // no centering
-        float posX = marginleft;
-        float posY = margintop;
+    // no centering
+    float posX = marginleft;
+    float posY = margintop;
 #endif
 
-        //set the scale and origin
-        float vertAdjust;
+    //set the scale and origin
+    float vertAdjust;
 #if 0
-        dc->SetUserScale(actualScale, actualScale);
-        vertAdjust = 1.0;
+    dc->SetUserScale(actualScale, actualScale);
+    vertAdjust = 1.0;
 #else
-        // we want to set things up so that the width is correct, and then
-        // we will create a spacing factor for the vertical dimension
-        dc->SetUserScale(scaleX, scaleX);
-        vertAdjust = scaleY / scaleX;
+    // we want to set things up so that the width is correct, and then
+    // we will create a spacing factor for the vertical dimension
+    dc->SetUserScale(scaleX, scaleX);
+    vertAdjust = scaleY / scaleX;
 #endif
-        dc->SetDeviceOrigin((long)posX, (long)posY);
+    dc->SetDeviceOrigin((long)posX, (long)posY);
 
 #else
-        //approach 2
-        // This scales the DC so that the printout roughly represents the
-        // the screen scaling.
+    //approach 2
+    // This scales the DC so that the printout roughly represents the
+    // the screen scaling.
 
-        // Get the logical pixels per inch of screen and printer
-        int ppiScreenX, ppiScreenY;
-        GetPPIScreen(&ppiScreenX, &ppiScreenY);
-        int ppiPrinterX, ppiPrinterY;
-        GetPPIPrinter(&ppiPrinterX, &ppiPrinterY);
+    // Get the logical pixels per inch of screen and printer
+    int ppiScreenX, ppiScreenY;
+    GetPPIScreen(&ppiScreenX, &ppiScreenY);
+    int ppiPrinterX, ppiPrinterY;
+    GetPPIPrinter(&ppiPrinterX, &ppiPrinterY);
 
-        float scaleX = (float)((float)ppiPrinterX/(float)ppiScreenX);
-        float scaleY = (float)((float)ppiPrinterY/(float)ppiScreenY);
+    float scaleX = (float)((float)ppiPrinterX/(float)ppiScreenX);
+    float scaleY = (float)((float)ppiPrinterY/(float)ppiScreenY);
 
-        // Now we have to check in case our real page size is reduced
-        // (e.g. because we're drawing to a print preview memory DC)
-        int pageWidth, pageHeight;
-        int w, h;
-        dc->GetSize(&w, &h);
-        GetPageSizePixels(&pageWidth, &pageHeight);
+    // Now we have to check in case our real page size is reduced
+    // (e.g. because we're drawing to a print preview memory DC)
+    int pageWidth, pageHeight;
+    int w, h;
+    dc->GetSize(&w, &h);
+    GetPageSizePixels(&pageWidth, &pageHeight);
 
-        // If printer pageWidth == current DC width, then this doesn't
-        // change. But w might be the preview bitmap width, so scale down.
-        float overallScaleX = scaleX * (float)(w/(float)pageWidth);
-        float overallScaleY = scaleY * (float)(h/(float)pageHeight);
-        dc->SetUserScale(overallScaleX, overallScaleY);
-        // FIXME: Need to set device origin for approach 2 as well
-        // For now assume 0,0
-        dc->SetDeviceOrigin(0, 0);
+    // If printer pageWidth == current DC width, then this doesn't
+    // change. But w might be the preview bitmap width, so scale down.
+    float overallScaleX = scaleX * (float)(w/(float)pageWidth);
+    float overallScaleY = scaleY * (float)(h/(float)pageHeight);
+    dc->SetUserScale(overallScaleX, overallScaleY);
+    // FIXME: Need to set device origin for approach 2 as well
+    // For now assume 0,0
+    dc->SetDeviceOrigin(0, 0);
 #endif //approach 2
-        m_printer->generatePrintPage(dc, page, vertAdjust);
-        dc->SetDeviceOrigin(0,0);
-        dc->SetUserScale(1.0, 1.0);
+    m_printer->generatePrintPage(dc, page, vertAdjust);
+    dc->SetDeviceOrigin(0,0);
+    dc->SetUserScale(1.0, 1.0);
 
-        return true;
-    } else
-
-    return false;
+    return true;
 }
 
 bool

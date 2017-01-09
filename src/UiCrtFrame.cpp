@@ -1004,8 +1004,9 @@ CrtFrame::OnDiskFactory(wxCommandEvent &event)
     if (event.GetId() == Disk_Inspect) {
         Host hst;
         if (hst.fileReq(Host::FILEREQ_DISK, "Virtual Disk Name", 1, &filename) !=
-                        Host::FILEREQ_OK)
+                        Host::FILEREQ_OK) {
             return;     // canceled
+        }
     }
 
     doInspect(filename);
@@ -1042,8 +1043,9 @@ CrtFrame::OnDiskFormat(wxCommandEvent& WXUNUSED(event))
     Host hst;
     std::string filename;
     if (hst.fileReq(Host::FILEREQ_DISK, "Virtual Disk Name", 1, &filename) !=
-                    Host::FILEREQ_OK)
+                    Host::FILEREQ_OK) {
         return; // cancelled
+    }
 
     doFormat(filename);
 }
@@ -1112,8 +1114,9 @@ CrtFrame::OnDisk(wxCommandEvent &event)
                 if (b) {
                     UI_Warn("Disk already in drive %c /%03x", "FC"[drive2], io_addr2);
                     return;
-                } else
+                } else {
                     ok = IoCardDisk::wvdInsertDisk(slot, drive, fullpath);
+                }
             }
         }   break;
 

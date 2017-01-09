@@ -316,8 +316,9 @@ IoCardDisplay::tcbHsync(int arg)
             break;
 
         case busy_state::CLEAR1:
-            if (m_hsync_count == 1)      // vblank
+            if (m_hsync_count == 1) {    // vblank
                 m_busy_state = busy_state::CLEAR2;
+            }
             break;
         case busy_state::CLEAR2:
             if (m_hsync_count == 1) {    // vblank

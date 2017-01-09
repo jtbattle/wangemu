@@ -984,27 +984,27 @@ Cpu2200t::exec_one_op()
     case OP_BER_INC:    // branch if R[AAAA] == R[BBBB]
         NIBBLE_INC(m_cpu.pc, pcinc);
     case OP_BER:        // branch if R[AAAA] == R[BBBB]
-        if (a_op == b_op) m_cpu.ic = (uint16)(puop->p16);
-                     else m_cpu.ic++;
+        if (a_op == b_op) { m_cpu.ic = (uint16)(puop->p16); }
+                     else { m_cpu.ic++; }
         break;
 
     case OP_BNR_INC:    // branch if R[AAAA] != R[BBBB]
         NIBBLE_INC(m_cpu.pc, pcinc);
     case OP_BNR:        // branch if R[AAAA] != R[BBBB]
-        if (a_op != b_op) m_cpu.ic = (uint16)(puop->p16);
-                     else m_cpu.ic++;
+        if (a_op != b_op) { m_cpu.ic = (uint16)(puop->p16); }
+                     else { m_cpu.ic++; }
         break;
 
     case OP_BEQ:        // branch if == to mask (BEQ)
         a_op = IMM4(uop);
-        if (a_op == b_op) m_cpu.ic = (uint16)(puop->p16);
-                     else m_cpu.ic++;
+        if (a_op == b_op) { m_cpu.ic = (uint16)(puop->p16); }
+                     else { m_cpu.ic++; }
         break;
 
     case OP_BNE:        // branch if != to mask
         a_op = IMM4(uop);
-        if (a_op != b_op) m_cpu.ic = (uint16)(puop->p16);
-                     else m_cpu.ic++;
+        if (a_op != b_op) { m_cpu.ic = (uint16)(puop->p16); }
+                     else { m_cpu.ic++; }
         break;
 
     case OP_BT: // branch if true bittest
@@ -1012,8 +1012,8 @@ Cpu2200t::exec_one_op()
         // BT means the corresponding op_b bit must be 1
         // BF means the corresponding op_b bit must be 0
         a_op = IMM4(uop);
-        if ((a_op & b_op) == a_op) m_cpu.ic = (uint16)(puop->p16);
-                              else m_cpu.ic++;
+        if ((a_op & b_op) == a_op) { m_cpu.ic = (uint16)(puop->p16); }
+                              else { m_cpu.ic++; }
         break;
 
     case OP_BF: // branch if false bittest
@@ -1022,8 +1022,8 @@ Cpu2200t::exec_one_op()
         // BF means the corresponding op_b bit must be 0
         a_op = IMM4(uop);
         b_op ^= 0xF;
-        if ((a_op & b_op) == a_op) m_cpu.ic = (uint16)(puop->p16);
-                              else m_cpu.ic++;
+        if ((a_op & b_op) == a_op) { m_cpu.ic = (uint16)(puop->p16); }
+                              else { m_cpu.ic++; }
         break;
 
     case OP_SB: // subroutine branch

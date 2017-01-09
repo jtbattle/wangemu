@@ -355,8 +355,9 @@ System2200::onIdle()
                 // if we don't call sleep, we just get another onIdle event
                 // and end up pegging the host CPU
                 Host().sleep(10);
-            } else
+            } else {
                 emulateTimeslice(slice_duration);
+            }
             return true;        // want more idle events
         case TERMINATING:
             // we've been signaled to shut down the universe.

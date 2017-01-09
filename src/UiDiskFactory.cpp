@@ -270,8 +270,9 @@ DiskFactory::OnButton_SaveAs(wxCommandEvent& WXUNUSED(event))
 {
     std::string name;
     if (Host().fileReq(Host::FILEREQ_DISK, "Virtual Disk Name", 0, &name) !=
-                       Host::FILEREQ_OK)
+                       Host::FILEREQ_OK) {
         return;
+    }
     assert(!name.empty());
 
     // check if this disk is in a drive already

@@ -106,13 +106,15 @@ SysCfgState::operator==(const SysCfgState &rhs) const
         if ( (m_slot[slot].type    != rhs.m_slot[slot].type) ||
              (m_slot[slot].addr    != rhs.m_slot[slot].addr) ||
              ( (    m_slot[slot].cardCfg == nullptr) !=
-               (rhs.m_slot[slot].cardCfg == nullptr) ) )
+               (rhs.m_slot[slot].cardCfg == nullptr) ) ) {
             return false;
+        }
 
         if ( (    m_slot[slot].cardCfg != nullptr) &&
              (rhs.m_slot[slot].cardCfg != nullptr) &&
-             (*m_slot[slot].cardCfg != *rhs.m_slot[slot].cardCfg) )
+             (*m_slot[slot].cardCfg != *rhs.m_slot[slot].cardCfg) ) {
             return false;
+        }
     }
 
     return (getCpuType()          == rhs.getCpuType())          &&
@@ -175,9 +177,9 @@ SysCfgState::loadIni()
         setCpuType( Cpu2200::CPUTYPE_2200T );  // default
         bool b = hst.ConfigReadStr(subgroup, "cpu", &sval);
         if (b) {
-                 if (sval == "2200B")  setCpuType( Cpu2200::CPUTYPE_2200B );
-            else if (sval == "2200T")  setCpuType( Cpu2200::CPUTYPE_2200T );
-            else if (sval == "2200VP") setCpuType( Cpu2200::CPUTYPE_2200VP );
+                 if (sval == "2200B")  { setCpuType( Cpu2200::CPUTYPE_2200B );  }
+            else if (sval == "2200T")  { setCpuType( Cpu2200::CPUTYPE_2200T );  }
+            else if (sval == "2200VP") { setCpuType( Cpu2200::CPUTYPE_2200VP ); }
         }
 
         int dflt_ram = (getCpuType() == Cpu2200::CPUTYPE_2200VP) ? 64 : 32;
@@ -187,14 +189,16 @@ SysCfgState::loadIni()
                 case Cpu2200::CPUTYPE_2200B:
                 case Cpu2200::CPUTYPE_2200T:
                     if (ival ==  4 || ival ==  8 || ival == 12 ||
-                        ival == 16 || ival == 24 || ival == 32)
+                        ival == 16 || ival == 24 || ival == 32) {
                         setRamKB( ival );
+                    }
                     break;
                 case Cpu2200::CPUTYPE_2200VP:
                     if (ival ==  32 || ival ==  64 ||
                         ival == 128 || ival == 256 ||
-                        ival == 512 )
+                        ival == 512 ) {
                         setRamKB( ival );
+                    }
                     break;
                 default:
                     assert(false);

@@ -496,8 +496,9 @@ CrtStatusBar::OnDiskButton(wxMouseEvent &event)
                 if (b) {
                     UI_Warn("Disk already in drive %c /%03x", "FR"[drive2], io_addr);
                     return;
-                } else
+                } else {
                     ok = IoCardDisk::wvdInsertDisk(slot, drive, fullpath);
+                }
             } }
             break;
 

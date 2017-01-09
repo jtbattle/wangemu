@@ -99,9 +99,9 @@ DiskCtrlCfgState::loadIni(const std::string &subgroup)
     std::string sval;
     bool b = hst.ConfigReadStr(subgroup, "intelligence", &sval);
     if (b) {
-             if (sval == "dumb")  setIntelligence( DISK_CTRL_DUMB );
-        else if (sval == "smart") setIntelligence( DISK_CTRL_INTELLIGENT );
-        else if (sval == "auto")  setIntelligence( DISK_CTRL_AUTO );
+             if (sval == "dumb")  { setIntelligence( DISK_CTRL_DUMB ); }
+        else if (sval == "smart") { setIntelligence( DISK_CTRL_INTELLIGENT ); }
+        else if (sval == "auto")  { setIntelligence( DISK_CTRL_AUTO ); }
     }
 
     bool bval;

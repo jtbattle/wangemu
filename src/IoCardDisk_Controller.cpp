@@ -251,7 +251,7 @@ IoCardDisk::advanceStateInt(disk_event_t event, const int val)
 
     // init things on reset
     if (event == EVENT_RESET) {
-        if (DBG > 2) dbglog("Reset\n");
+        if (DBG > 2) { dbglog("Reset\n"); }
         m_state = CTRL_WAKEUP;
         m_selected = false;
         setBusyState(false);
@@ -802,8 +802,9 @@ disk operation
             // check incoming data against the sector data we read;
             // the 257th byte is an LRC on the host data
             if ((m_bufptr < 256) &&         // check just the data
-                (m_buffer[m_bufptr] != val))
+                (m_buffer[m_bufptr] != val)) {
                 m_compare_err = true;       // mismatch
+            }
             m_bufptr++;
             if (m_bufptr == 257) {
                 // finished receiving data and LRC, now send status byte

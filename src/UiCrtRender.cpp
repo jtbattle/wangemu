@@ -725,8 +725,9 @@ Crt::generateScreenOverlay(wxMemoryDC &memDC)
                 start = -1;
             }
             if (m_attr[off] & (char_attr_t::CHAR_ATTR_RIGHT)) {
-                if (start < 0)  // start of run
+                if (start < 0) { // start of run
                     start = col*m_charcell_w + (m_charcell_w >> 1);
+                }
             } else if (start >= 0) {
                 // end of run
                 int rgt = col * m_charcell_w + (m_charcell_w >> 1);
@@ -753,8 +754,9 @@ Crt::generateScreenOverlay(wxMemoryDC &memDC)
         int start = -1;
         for(int row=0; row < 25; ++row, off += 80) {
             if (m_attr[off] & (char_attr_t::CHAR_ATTR_VERT)) {
-                if (start < 0)  // start of run
+                if (start < 0) { // start of run
                     start = row * m_charcell_h;
+                }
             } else if (start >= 0) {
                 // end of run
                 int end = row * m_charcell_h;

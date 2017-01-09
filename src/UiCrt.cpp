@@ -63,7 +63,9 @@ Crt::Crt(CrtFrame *parent, int screen_type) :
     m_frame_count(0),
     m_beep(nullptr)
 {
-    if (0) g_logger = new wxLogWindow(m_parent, "Logging window", true, false);
+    if (0) {
+        g_logger = new wxLogWindow(m_parent, "Logging window", true, false);
+    }
 
     create_beep();
     if (!m_beep && false) {
@@ -262,14 +264,18 @@ Crt::OnPaint(wxPaintEvent &WXUNUSED(event))
         dc.SetBrush(wxBrush(bg, wxBRUSHSTYLE_SOLID));
         dc.SetPen(wxPen(bg, 1, wxPENSTYLE_SOLID));
 
-        if (top > 0)    // top border is required
+        if (top > 0) {  // top border is required
             dc.DrawRectangle(0,0, m_scrpix_w,top);
-        if (bottom_h > 0)       // bottom border is required
+        }
+        if (bottom_h > 0) {     // bottom border is required
             dc.DrawRectangle(0,bottom, m_scrpix_w,bottom_h);
-        if (left > 0)   // left border is required
+        }
+        if (left > 0) { // left border is required
             dc.DrawRectangle(0,top, left,bottom-top);
-        if (right_w)    // right border is required
+        }
+        if (right_w) {  // right border is required
             dc.DrawRectangle(right,top, right_w,bottom-top);
+        }
 
         dc.SetPen(wxNullPen);
         dc.SetBrush(wxNullBrush);
