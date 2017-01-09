@@ -195,12 +195,8 @@ void Scheduler::TimerKill(Timer* tmr)
 {
     // the fact that we have to do this lookup doesn't matter since
     // TimerKill is infrequently used.
-    for(unsigned int n=0; n<m_timer.size(); n++) {
-        if (m_timer[n].get() == tmr) {
-            m_timer.erase(m_timer.begin() + n);
-            return;
-        }
-    }
+    std::remove_if( begin(m_timer), end(m_timer),
+                    [&](auto q){ return (q.get() == tmr); } );
 #ifdef TMR_DEBUG
     UI_Error("Error: killing non-existent simulated timer");
 #endif
@@ -222,9 +218,9 @@ void Scheduler::TimerCredit(void)
 
     // scan each active timer, moving expired ones to the retired list
     std::vector<std::shared_ptr<Timer>> retired;
-    unsigned int active_before = m_timer.size();
-    unsigned int active_after = 0;
-    for(unsigned int s=0; s<active_before; s++) {
+    int active_before = m_timer.size();
+    int active_after = 0;
+    for(int s=0; s<active_before; s++) {
         if (m_timer[s].unique()) {
             // the timer was effectively killed by dropping the reference
             // to it; the only reference is the live timer list.  kill it.
@@ -244,7 +240,7 @@ void Scheduler::TimerCredit(void)
     if (active_after < active_before) {
         // shrink active list, but null out pointers so resize doesn't
         // free them, as they now live on the retired list
-        for(unsigned int i=active_after; i < active_before; i++) {
+        for(int i=active_after; i < active_before; i++) {
             m_timer[i] = nullptr;
         }
         m_timer.resize(active_after);  // delete any expired timers
@@ -253,11 +249,11 @@ void Scheduler::TimerCredit(void)
     // determine the minimum countdown value of the remaining active timers
     m_countdown = MAX_TICKS;
     for(auto &t : m_timer) {
-//#ifdef _DEBUG
+#ifdef _DEBUG
         if (t.use_count() != 2) {
             UI_Warn("Hey, retiring a timer with a use_count() of %d", t.use_count());
         }
-//#endif
+#endif
         m_countdown = std::min(m_countdown, t->ctr);
     }
     m_startcnt = m_countdown;

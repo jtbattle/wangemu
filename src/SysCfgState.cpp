@@ -26,8 +26,8 @@ SysCfgState::SysCfgState() :
     m_disk_realtime(true),
     m_warn_io(true)
 {
-    for(int slot=0; slot<NUM_IOSLOTS; slot++) {
-        m_slot[slot].cardCfg = nullptr;
+    for(auto &slot : m_slot) {
+        slot.cardCfg = nullptr;
     }
 }
 
@@ -35,8 +35,8 @@ SysCfgState::SysCfgState() :
 SysCfgState::~SysCfgState()
 {
     // drop all attached cards
-    for(int slot=0; slot<NUM_IOSLOTS; slot++) {
-        m_slot[slot].cardCfg = nullptr;
+    for(auto &slot : m_slot) {
+        slot.cardCfg = nullptr;
     }
 }
 

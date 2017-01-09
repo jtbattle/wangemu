@@ -133,12 +133,12 @@ void
 System2200::initialize()
 {
     // set up IO management
-    for(int i=0; i<256; i++) {
-        m_IoMap[i].slot   = -1;    // unoccupied
-        m_IoMap[i].ignore = false;
+    for(auto &mapentry : m_IoMap) {
+        mapentry.slot   = -1;    // unoccupied
+        mapentry.ignore = false;
     }
-    for(int i=0; i<NUM_IOSLOTS; i++) {
-        m_cardInSlot[i] = nullptr;
+    for(auto &card : m_cardInSlot) {
+        card = nullptr;
     }
     m_IoCurSelected = -1;
 
@@ -178,14 +178,14 @@ void
 System2200::breakdown_cards(void)
 {
     // destroy card instances
-    for(int i=0; i<NUM_IOSLOTS; i++) {
-        m_cardInSlot[i] = nullptr;
+    for(auto &card : m_cardInSlot) {
+        card = nullptr;
     }
 
     // clean up mappings
-    for(int i=0; i<256; i++) {
-        m_IoMap[i].slot   = -1;      // unoccupied
-        m_IoMap[i].ignore = false;   // restore bad I/O warning flags
+    for(auto &mapentry : m_IoMap) {
+        mapentry.slot   = -1;      // unoccupied
+        mapentry.ignore = false;   // restore bad I/O warning flags
     }
 
     if (m_cpu) {
