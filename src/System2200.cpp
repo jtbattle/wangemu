@@ -177,14 +177,15 @@ System2200::initialize()
 void
 System2200::breakdown_cards(void)
 {
-    // clean out associations that no longer exist.
-    // if we find a video display, we must trash it.
+    // destroy card instances
+    for(int i=0; i<NUM_IOSLOTS; i++) {
+        m_cardInSlot[i] = nullptr;
+    }
+
+    // clean up mappings
     for(int i=0; i<256; i++) {
         m_IoMap[i].slot   = -1;      // unoccupied
         m_IoMap[i].ignore = false;   // restore bad I/O warning flags
-    }
-    for(int i=0; i<NUM_IOSLOTS; i++) {
-        m_cardInSlot[i] = nullptr;
     }
 
     if (m_cpu) {

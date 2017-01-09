@@ -199,3 +199,4 @@ termtest/poll.py
 
 *.db
 dr_memory.bat
+*.opendb

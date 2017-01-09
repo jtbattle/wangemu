@@ -498,22 +498,26 @@ SysCfgState::configOk(bool warn) const
 
         // make sure we have a keyboard at 0x01
         if ( (m_slot[slot].type == IoCard::card_t::keyboard) &&
-             (m_slot[slot].addr & 0xFF) == 0x01)
+             (m_slot[slot].addr & 0xFF) == 0x01) {
             pri_kb_found = true;
+        }
 
         if ( (m_slot[slot].type == IoCard::card_t::term_mux) &&
-             (m_slot[slot].addr & 0xFF) == 0x00)
+             (m_slot[slot].addr & 0xFF) == 0x00) {
             pri_kb_found = true;
+        }
 
         // make sure we have a crt at 0x05
         if ( ((m_slot[slot].type == IoCard::card_t::disp_64x16) ||
               (m_slot[slot].type == IoCard::card_t::disp_80x24)) &&
-             (m_slot[slot].addr & 0xFF) == 0x05)
+             (m_slot[slot].addr & 0xFF) == 0x05) {
             pri_crt_found = true;
+        }
 
         if ( (m_slot[slot].type == IoCard::card_t::term_mux) &&
-             (m_slot[slot].addr & 0xFF) == 0x00)
+             (m_slot[slot].addr & 0xFF) == 0x00) {
             pri_crt_found = true;
+        }
 
         auto slotInst = IoCard::makeTmpCard(getSlotCardType(slot),
                                             getSlotCardAddr(slot) & 0xFF);

@@ -1033,7 +1033,7 @@ Cpu2200vp::exec_one_op()
             // in the MVP CPU schematic.  if bits 3:2 are both one, the
             // 30 ms one shot gets retriggered.
             m_cpu.sh |= SH_MASK_30MS;     // one shot output rises
-            if (m_tmr_30ms == nullptr) {
+            if (m_tmr_30ms != nullptr) {
                 // kill pending timer before starting a new one
                 m_tmr_30ms->Kill();
                 m_tmr_30ms = nullptr;
