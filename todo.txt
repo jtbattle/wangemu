@@ -2,6 +2,9 @@
 Emulator TODO list
 ============================================================================
 
+*) pressing the toolbar buttons does nothing now.  :-(
+   it was still working in a build from jan 16, 2016
+
 *) print preview crashes now.  I'm not sure when it started happening.
    study F:\Jim\libs\wx-3.1.0\samples\printing
    trying to print fails too
@@ -191,6 +194,10 @@ independent address
       later erased and overwritten, making the handwritten note
       meaningless.
 
+*) the read and write routines go to great lengths to inline things,
+   but they both have the expression (m_memsize_KB<<10).  That should
+   be precomputed as m_memsize.  or should I just get rid of m_memsize_KB?
+
 *) Thought for possibly easier code.
 
     TimerCreate() returns a std::shared_ptr<Timer>.  It is up to the
@@ -335,10 +342,6 @@ independent address
       with a CR and no LF.
     + if the program ends without filling the last page, you may need to send a
       HEX(0C) (page feed) to the printer to flush out the partial page.
-
-*) the read and write routines go to great lengths to inline things,
-   but they both have the expression (m_memsize_KB<<10).  That should
-   be precomputed as m_memsize.  or should I just get rid of m_memsize_KB?
 
 *) When changing configurations, currently I:
         - destroy current config

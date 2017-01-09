@@ -195,8 +195,10 @@ void Scheduler::TimerKill(Timer* tmr)
 {
     // the fact that we have to do this lookup doesn't matter since
     // TimerKill is infrequently used.
-    std::remove_if( begin(m_timer), end(m_timer),
-                    [&](auto q){ return (q.get() == tmr); } );
+    m_timer.erase(
+        std::remove_if( begin(m_timer), end(m_timer),
+                        [&tmr](auto q){ return (q.get() == tmr); }),
+        end(m_timer));
 #ifdef TMR_DEBUG
     UI_Error("Error: killing non-existent simulated timer");
 #endif
