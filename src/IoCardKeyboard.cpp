@@ -162,7 +162,10 @@ IoCardKeyboard::receiveKeystroke(int io_addr, int keycode)
     if (keycode & KEYCODE_HALT) {
         if (tthis->m_script_handle) {
             // cancel any script in progress
-            tthis->m_tmr_script    = nullptr;
+            if (tthis->m_tmr_script != nullptr) {
+                tthis->m_tmr_script->Kill();
+                tthis->m_tmr_script = nullptr;
+            }
             tthis->m_script_handle = nullptr;
             tthis->m_key_ready     = false;
         }
@@ -262,7 +265,7 @@ IoCardKeyboard::check_keyready()
         if (m_key_ready && !m_cpb) {
             // we can't return IBS right away -- apparently there
             // must be some delay otherwise the handshake breaks
-            if (!m_tmr_script) {
+            if (m_tmr_script == nullptr) {
                 m_tmr_script = m_scheduler->TimerCreate(
                         TIMER_US(50),     // 30 is OK, 20 is too little
                         [&](){ tcbScript(); } );

@@ -268,7 +268,10 @@ IoCardDisk::reset(bool hard_reset)
     m_acting_intelligent = false;
 
     // reset drive state
-    m_tmr_motor_off = nullptr;
+    if (m_tmr_motor_off != nullptr) {
+        m_tmr_motor_off->Kill();
+        m_tmr_motor_off = nullptr;
+    }
 
     for(int drive=0; drive<numDrives(); drive++) {
         stopMotor(drive);
@@ -389,8 +392,14 @@ IoCardDisk::stopMotor(int drive)
     m_d[drive].sector     = 0;    // which sector is being read
     m_d[drive].idle_cnt   = 0;    // number of operations done w/o this drive
     m_d[drive].secwait    = -1;
-    m_d[drive].tmr_track  = nullptr;
-    m_d[drive].tmr_sector = nullptr;
+    if (m_d[drive].tmr_track != nullptr) {
+        m_d[drive].tmr_track->Kill();
+        m_d[drive].tmr_track = nullptr;
+    }
+    if (m_d[drive].tmr_sector != nullptr) {
+        m_d[drive].tmr_sector->Kill();
+        m_d[drive].tmr_sector = nullptr;
+    }
 
     UI_diskEvent(m_slot, drive);        // let UI know things have changed
 }
@@ -614,7 +623,6 @@ IoCardDisk::wvdSeekTrack(int nominal_ticks)
         m_d[m_drive].tmr_sector = m_scheduler->TimerCreate(
                                     m_d[m_drive].ticks_per_sector,
                                     [&](){ tcbSector(m_drive); } );
-assert(m_d[m_drive].tmr_sector != nullptr);
     }
 
     if (ticks <= 0) {
@@ -682,6 +690,7 @@ IoCardDisk::tcbTrack(int arg)
         dbglog("TRACK SEEK timer fired\n");
     }
 
+    assert(m_d[m_drive].tmr_track != nullptr);
     m_d[m_drive].tmr_track = nullptr;
 
     if (m_d[m_drive].state == DRIVE_IDLE) {
@@ -738,10 +747,6 @@ IoCardDisk::tcbSector(int arg)
     int prev_sec;
 
     assert(drive >= 0 && drive < numDrives());
-if (m_d[drive].tmr_sector == nullptr) {
-    int foo = 1;
-    foo++;
-}
     assert(m_d[drive].tmr_sector != nullptr);
 
     if (0 && (NOISY > 2)) {

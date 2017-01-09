@@ -253,11 +253,11 @@ void Scheduler::TimerCredit(void)
     // determine the minimum countdown value of the remaining active timers
     m_countdown = MAX_TICKS;
     for(auto &t : m_timer) {
-#ifdef _DEBUG
+//#ifdef _DEBUG
         if (t.use_count() != 2) {
             UI_Warn("Hey, retiring a timer with a use_count() of %d", t.use_count());
         }
-#endif
+//#endif
         m_countdown = std::min(m_countdown, t->ctr);
     }
     m_startcnt = m_countdown;

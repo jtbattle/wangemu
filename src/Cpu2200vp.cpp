@@ -1033,6 +1033,11 @@ Cpu2200vp::exec_one_op()
             // in the MVP CPU schematic.  if bits 3:2 are both one, the
             // 30 ms one shot gets retriggered.
             m_cpu.sh |= SH_MASK_30MS;     // one shot output rises
+            if (m_tmr_30ms == nullptr) {
+                // kill pending timer before starting a new one
+                m_tmr_30ms->Kill();
+                m_tmr_30ms = nullptr;
+            }
             m_tmr_30ms = m_scheduler->TimerCreate( TIMER_MS(27),
                                                    [&](){ tcb30msDone(); } );
 // FIXME: if I set the timer to TIMER_MS(30), MVP Basic-2 2.6.2 reports
@@ -1461,7 +1466,7 @@ Cpu2200vp::Cpu2200vp(System2200 *const sys,
 // free any allocated resources at the end of time
 Cpu2200vp::~Cpu2200vp()
 {
-    // ...
+    reset(true);
 }
 
 
@@ -1516,7 +1521,10 @@ Cpu2200vp::reset(bool hard_reset)
 
         // actually, the one-shot isn't reset, but let's be safe
         m_cpu.sh &= ~SH_MASK_30MS;
-        m_tmr_30ms = nullptr;
+        if (m_tmr_30ms != nullptr) {
+            m_tmr_30ms->Kill();
+            m_tmr_30ms = nullptr;
+        }
     }
 
     m_status = CPU_RUNNING;

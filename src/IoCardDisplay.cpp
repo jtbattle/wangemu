@@ -72,7 +72,7 @@ static const int num_scanlines = 256;
 
 // the logic of the card busy status is as follows.
 //
-// (1) the m_thnd_hsync timer is always running, no matter whether the user
+// (1) the m_tmr_hsync timer is always running, no matter whether the user
 //     wants realtime operation or not.  having this timer fire every 65 uS
 //     hurts performance about 10% on my celeron 667 machine.  to minimize
 //     this cost, once per vblank the state of the "realtime or not" boolean
@@ -87,7 +87,7 @@ static const int num_scanlines = 256;
 //     are acted upon and clear the busy state.  otherwise, the character's
 //     effect is handled immediately and a small state machine is set up to
 //     determine when to clear the busy state.  this state is advanced by
-//     the m_thnd_hsync timer event.
+//     the m_tmr_hsync timer event.
 
 // instance constructor
 IoCardDisplay::IoCardDisplay(std::shared_ptr<Scheduler> scheduler,
@@ -101,7 +101,7 @@ IoCardDisplay::IoCardDisplay(std::shared_ptr<Scheduler> scheduler,
     m_card_busy(false),
     m_size(size),
     m_wndhnd(nullptr),
-    m_thnd_hsync(nullptr),
+    m_tmr_hsync(nullptr),
     m_realtime(true),
     m_hsync_count(0),
     m_busy_state(busy_state::IDLE)
@@ -125,7 +125,6 @@ IoCardDisplay::~IoCardDisplay()
 {
     if (m_slot >= 0) {
         reset(true);    // turns off handshakes in progress
-        m_thnd_hsync = nullptr;
         UI_destroyCrt(m_wndhnd);
     }
 }
@@ -171,7 +170,10 @@ IoCardDisplay::reset(bool hard_reset)
     m_card_busy  = false;
 
     // get the horizontal sync timer going
-    m_thnd_hsync = nullptr;
+    if (m_tmr_hsync != nullptr) {
+        m_tmr_hsync->Kill();
+    }
+    m_tmr_hsync = nullptr;
     m_hsync_count = 0;
     tcbHsync(0);
 
@@ -294,10 +296,10 @@ IoCardDisplay::tcbHsync(int arg)
 
     // retrigger the timer
 #if 0
-    m_thnd_hsync = m_scheduler->TimerCreate( new_period,
-                                             [&](){ tcbHsync(arg); } );
+    m_tmr_hsync = m_scheduler->TimerCreate( new_period,
+                                            [&](){ tcbHsync(arg); } );
 #else
-    m_thnd_hsync = m_scheduler->TimerCreate( new_period,
+    m_tmr_hsync = m_scheduler->TimerCreate( new_period,
                             std::bind(&IoCardDisplay::tcbHsync, this, arg) );
 #endif
 

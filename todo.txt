@@ -3,117 +3,8 @@ Emulator TODO list
 ============================================================================
 
 *) print preview crashes now.  I'm not sure when it started happening.
-    study F:\Jim\libs\wx-3.1.0\samples\printing
+   study F:\Jim\libs\wx-3.1.0\samples\printing
    trying to print fails too
-
-*) the Scheduler class callback list should hold std::weak_ptr to
-   the callback objects.  when the scheduling code needs to use such
-   a pointer, it should first test if it is .expired(), and if not,
-   then use .lock() to obtain a pointer to the object.
-
-   hmm, the problem is the callback isn't to a shared object; it is
-   typically a pointer to a member function of a shared object. this
-   would complicate the calling site.  there is the concept of a shared
-   pointer aliasing constructor, where the new pointer is to a member
-   of the shared object but uses the control block of the whole object.
-   but there doesn't seem to be a similar concept for weak pointers.
-
-   I asked for clarity on reddit and got these replies:
-      https://www.reddit.com/r/cpp/comments/5m037m/why_isnt_there_an_aliasing_constructor_for/
-
-   This exposes that things don't work in my own code as I claimed.
-   I thought that I explicitly Kill()'d all timers when I wanted to reconfigure
-   the world, but I don't.  System2200::breakdown_cards() just deletes the
-   objects.  That means that the objects aren't actually destroyed when I
-   think they are; they are destroyed when the scheduler is destroyed.
-
-*) I still have a lot of raw pointers around, eg IoCard.cpp has a factory
-   which creates and returns IoCard* values.  But after reading a bit more,
-   the general practice should be to use unique_ptr just about everywhere,
-   and that functions get get passed a pointer are receiving a reference
-   to that unique pointer, eg
-        void inc_baz( std::unique_ptr<foo> &p )
-        {
-            p->baz++;
-        }
-   somefunction can use that object without grabbing the pointer ownership.
-   Also, when a function creates a unique pointer and returns it, the
-   return automatically is treated as a move (as it makes no sense to
-   retain ownership inside the function).
-
-   In
-        https://herbsutter.com/2013/05/30/gotw-90-solution-factories/
-   Herb Sutter says factory functions should return a unique_ptr<foo>
-   if the factory doesn't maintain any bookeeping knowledge of the
-   created object, or a shared_ptr<foo> if the factory has to keep
-   track of it for some reason. My card factory certainly doesn't.
-
-   But in "smart pointer parameters":
-        https://herbsutter.com/2013/06/05/gotw-91-solution-smart-pointer-parameters/
-   he says that in general function paramters should accept raw pointers
-   or references.  Using std::unique_ptr<foo>& unnecessarily restricts the
-   routine to only accepting one type of pointer, and the subroutine
-   (in general) shouldn't care about the ownership type.  That seems to
-   contradict this talk by Sutter (which is 3 years more recent):
-        https://www.youtube.com/watch?v=JfmTagWcqoE
-   That same video (at around 38:00) says that to avoid cycles, lower
-   levels of an ownership hierarcy shouldn't hold pointers to a higher level,
-   which is exactly what I do.  He says th fix is to store a weak_ptr to
-   the higher level.  (same with timer callbacks, most likely)
-   ...
-   hmm, because of timer callback, then it seems like I really don't have
-   a unique_ptr situation with cards (in general).
-
-   http://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#a-namerr-smartptrparamar30-take-smart-pointers-as-parameters-only-to-explicitly-express-lifetime-semantics
-   which is dec 2016, so it should reflect latest thinking, is that
-   raw T* or T& should be used if the subroutine isn't changing ownership,
-   that is, it uses it but doesn't store a copy or need to reseat the
-   pointer.  Use std::shared_ptr<T> if the subroutine is going to keep
-   a copy, or std::unique_ptr<T> if it is going to take ownership.
-   http://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#a-namerr-sharedptrparam-ownerar34-take-a-sharedptrwidget-parameter-to-express-that-a-function-is-part-owner
-
-   THOUGHT:
-        TimerCreate() returns a std::shared_ptr<Timer>
-        what if the caller owned the pointer, and the scheduler had
-        a weak_ptr to it.  when the card is destroyed, it will call
-        the destructor for the Timer handle, and that way the
-        scheduler can automatically be notified as soon as cleanup
-        is needed.  There is no need for Kill() either -- the consumer
-        just sets the pointer to nullptr and all the magic happens.
-
-        Either that, or just let the timer object live until either
-        the scheduler is reset or destroyed, or until the queue is
-        swept and then remove all timers that are .expired().
-
-*) continuing the above theme, the card factory has a really ugly feature.
-   what is the right & clean way to do this?
-   UPDATE: I now create non-zero dummy pointers to pass in,
-           but it is still pretty heavy-handed
-        IoCard *
-        IoCard::makeTmpCard(card_t type)
-        {
-        // FIXME: this is sinful to pass 0 to a ref!
-            return makeCardImpl( *(Scheduler*)0, *(Cpu2200*)0, type, 0x000, -1,
-                                 (CardCfgState *)0 );
-        }
-   who uses makeTmpCard()?
-      CardInfo::getCardTypeFromName(const string &name)
-      CardInfo::getCardName(IoCard::card_t cardtype)
-      CardInfo::getCardDesc(IoCard::card_t cardtype)
-      CardInfo::getCardBaseAddresses(IoCard::card_t cardtype)
-      CardInfo::isCardConfigurable(IoCard::card_t cardtype)
-      CardInfo::isCardCfgState(IoCard::card_t cardtype)
-      SysCfgState::editCardConfig(int slot)
-      SysCfgState::configOk(bool warn)
-
-   We could require that each IoCardFoo have static class functions
-   to return the above info, then make CardInfo have a case statement
-   to call the right one for each function above, but that is violating
-   DRY principles.
-
-   Making the cards hold a weak_ptr to cpu and scheduler is a bit better
-   than the existing scheme of setting them up with a nullptr reference,
-   which is supposed to be illegal (refs are never null).
 
 *) 10 PRINT HEX(07);:GOTO 10
    RUN
@@ -300,6 +191,22 @@ independent address
       later erased and overwritten, making the handwritten note
       meaningless.
 
+*) Thought for possibly easier code.
+
+    TimerCreate() returns a std::shared_ptr<Timer>.  It is up to the
+    caller of TimerCreate() to remember to "tmr->Kill()" before resetting
+    the pointer to nullptr, say at reset or cleanup.  The pointer can just
+    be set to nullptr inside the callback routine because the scheduler has
+    already removed the pointer on its side.
+
+    What if the caller owned the pointer, and the scheduler had a weak_ptr
+    to it?  When the tmr handle is reset to nullptr, or if the card is
+    destroyed and its destructor kills off all non-nullptr shared_ptr objects,
+    the Timer::~Timer destructor inside scheduler will automatically be
+    notified.  At that point the scheduler can clean up the dead entry.
+    There is no need for Kill() either -- the consumer just sets the pointer
+    to nullptr and all the magic happens.
+
 *) None of the recent changes has been compiled on OSX, so most likely there
    will be problems.  Once the code is somewhat stable under windows,
    build it on OSX and iron out the problems.
@@ -389,7 +296,7 @@ independent address
       c) 2200MVP w/512KB RAM, printer, two disk drives, 2236 MXD, one term
       d) expert mode
 
-*) do a memory leak check towards the end of development
+*) do a memory leak check once in a while
 
     - installed Dr. Memory, seems easy to use, no source changes and does
       much more than just detecting leaks.  http://www.drmemory.org/
@@ -530,8 +437,6 @@ independent address
     http://www.litwindow.com/Knowhow/wxHowto/wxhowto.html
 
 *) emulate "CPU running" light on keyboard
-
-*) better BELL emulation.  and make it optional.
 
 *) add a debugger/monitor
     - the VP disassembler doesn't match the assembler syntax as specified
