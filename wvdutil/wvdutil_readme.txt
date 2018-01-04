@@ -1,10 +1,27 @@
 Jim Battle
-October, 2011
+January 1, 2018
 
-Version 1.4 of wvdutil was developed using python 2.7 under Windows 7.
-It should run on other platforms, but it hasn't been tested. wvdutil_1.4.zip
-contains the main program, wvdutil.py, and some library routines in wvdlib.py
-and wvfilelist.py.
+Version 1.5 of wvdutil was developed under Windows 7, and should be compatible
+with both Python 2.7 and Python 3.6.  It should run on other platforms, but it
+hasn't been tested.
+
+wvdutil_1.5.zip contains the main program, wvdutil.py, and some library
+routines in wvdlib.py and wvfilelist.py.
+
+New features in version 1.5:
+
+    - codebase modified to be bilingual: runs under either Python 2.7 or
+      Python (>)3.6
+
+    - PEP 484 type annotations were added to the code.  This was done to
+      make it easier to catch errors when I made the python2/3 change.
+      However, it requires that your python site library requires that the
+      "future" and "typing" modules be installed.
+      ("pip install future" / "pip install typing")
+
+    - many complaints of pylint were addressed, but some I don't want to
+      hear about are suppressed via the new file "pylintrc" which is in the
+      same directory as the other files.
 
 New features in version 1.4:
 
