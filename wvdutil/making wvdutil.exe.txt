@@ -1,0 +1,21 @@
+These are notes on how to turn the wvdutil python scripts into a windows
+executable.
+
+On my "work" windows xp virtual machine image, I installed python2.7
+so that the resulting .exe was a 32-bit executable. This way it works
+for win32 and win64 machines.
+
+Step 1: establish python environment
+    * installed python 2.7 from python.org website
+    * manually added c:\Python27;c:\Python27\Scripts to my %PATH%
+    * pip install future
+    * pip install typing
+    * pip install pyinstaller  (http://www.pyinstaller.org/)
+
+Step 2: build it
+    * mkdir jim\wvdutil
+    * copy (various .py to jim\wvdutil)
+    * cd C:\jim\wvdutil
+    * pyinstaller.exe -F wvdutil.py  (the -F says make single file bundle)
+    * executable appears as jim\wvdutil\dist\wvdutil.exe
+

@@ -8,6 +8,11 @@ hasn't been tested.
 wvdutil_1.5.zip contains the main program, wvdutil.py, and some library
 routines in wvdlib.py and wvfilelist.py.
 
+It also contains wvdutil.exe.  This is a single-file binary which contains
+a python interpreted and the wvdutil soure all bundled together.  This is
+useful if you don't have python already installed on your machine.  However,
+it is actually slower to start up than running the python script.
+
 New features in version 1.5:
 
     - codebase modified to be bilingual: runs under either Python 2.7 or
