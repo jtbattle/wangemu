@@ -16,6 +16,7 @@
 # Version: 1.6, 2018/08/24, JTB
 #     with python3, dumping data files contained "bytearray(...)" spew
 #     add command to list assembler source code files
+#     smarter program listing: expand tokens only in some contexts
 #     pylint cleanups
 
 from __future__ import print_function
@@ -324,10 +325,12 @@ def listSourceFileFromBlocks(blocks):
 
 ########################################################################
 # list the program from just one record, optionally prettyprinted
-# FIXME: do light parsing so tokens don't get expanded in these situations:
-#   - in a REM statement (up to a colon)
-#   - in an image (%) statement  (BASIC-2 doesn't terminate at colon)
-#   - inside double quotes  (BASIC-2 doesn't recognize single quotes)
+
+# ugly ENUM
+ST_ATOMIC    = 0   # somewhere in the line where we expand atoms
+ST_IN_QUOTES = 1   # inside "..."
+ST_IN_REM    = 2   # after REM but before ':' or eol
+ST_IN_IMAGE  = 3   # inside image (%) statement
 
 def listProgramRecord(secData, secnum, listd):
     # type: (bytearray, str, bool) -> List[str]
@@ -353,13 +356,18 @@ def listProgramRecord(secData, secnum, listd):
     # program body record
     cp = 1            # skip control byte
     line = ""
+    state = ST_ATOMIC
     while (cp < 255) and (secData[cp] != 0xFD) and (secData[cp] != 0xFE):
         c = secData[cp]
+
         if c == 0x0D:
-            cp += 2  # there are two 00 bytes after line end
             listing.append(line)
             line = ""
-        elif c < 128:
+            state = ST_ATOMIC
+            cp += 3  # 0x0D, then two 00 bytes after line end
+            continue
+
+        if c < 128:
             line += chr(c)
         elif c == 0xFF:
             # line number
@@ -369,10 +377,29 @@ def listProgramRecord(secData, secnum, listd):
                          1*(secData[cp+2]  % 16)
             cp += 2
             line += "%d" % linenum
-        elif token[c] == '':
+        elif (state != ST_ATOMIC) or token[c] == '':
             line += "\\x%02x" % c
         else:
             line += token[c]
+
+        # TODO: there are a few differences between Wang BASIC and BASIC-2.
+        #     - Wang BASIC didn't do smart parsing; tokens were expanded
+        #       in every state, not just "ST_ATOMIC" state
+        #     - in Wang BASIC, an image statement ends at an embedded colon,
+        #       but the logic below just follows BASIC-2 convention.
+        #     - in Wang BASIC, strings can be inside single quotes too,
+        #       but BASIC-2 doesn't allow it.
+        if (c == 0xA2) and (state == ST_ATOMIC):  # REM token
+            state = ST_IN_REM
+        elif (c == 0xD8) and (state == ST_ATOMIC):  # image (%) token
+            state = ST_IN_IMAGE
+        elif (c == ord('"')) and (state == ST_ATOMIC):
+            state = ST_IN_QUOTES
+        elif (c == ord('"')) and (state == ST_IN_QUOTES):
+            state = ST_ATOMIC
+        elif (c == ord(':')) and (state == ST_IN_REM):
+            state = ST_ATOMIC
+
         cp += 1
 
     if listd:

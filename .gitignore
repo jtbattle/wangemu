@@ -200,3 +200,8 @@ termtest/poll.py
 *.db
 dr_memory.bat
 *.opendb
+*.json
+wvdutil/games.wvd
+wvdutil/lint.bat
+NOTES.txt
+wvdutil/unscramble.py

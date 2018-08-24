@@ -32,6 +32,10 @@ New features in version 1.6:
     - added ability to list and unprotect program files which were saved
       in scrambled (SAVE !) format
 
+    - when listing programs, tokens are expanded only in some contexts,
+      ala BASIC-2. Tokens aren't expanded inside quotes, image statements,
+      and REMs.
+
     - fixed a bug where running "<somecommand> | more" would always crash
       when using python3.  it worked fine with python2.
 

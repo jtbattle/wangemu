@@ -1525,7 +1525,7 @@ def listArbitraryBlocks(blocks, listd, abs_sector):
 
 def listProgramFromBlocks(blocks, listd, abs_sector=None):
     # type: (List[bytearray], bool, int) -> List[str]
-    listing = []
+    listing = []  # type: List[str]
     relsector = -1  # sector number, relative to first block
 
     for secData in blocks:
@@ -1535,7 +1535,6 @@ def listProgramFromBlocks(blocks, listd, abs_sector=None):
             secnum = "Sector %d" % (relsector + abs_sector)
         else:
             secnum = "Relative sector %d" % relsector
-        #listing.append( "============== %s ==============" % secnum )
 
         # we are done if we hit a trailer record
         if (secData[0]) == 0xA0:

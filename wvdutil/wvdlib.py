@@ -877,7 +877,7 @@ class CatalogFile(object):
 
     # rewrite sectors of a file
     def setSectors(self, blocks):
-        # type: (List[bytearray]) -> ()
+        # type: (List[bytearray]) -> None
         assert self._index.getIndexState() == 'valid'
         assert self.getType() == 'P'
         start = self.getStart()
