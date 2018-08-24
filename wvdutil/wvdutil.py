@@ -1,6 +1,9 @@
+#!/usr/bin/env python3
+
 # Program: wvdutil.py
 # Purpose: read a .wvd (wang virtual disk file) and report what's in it
 # Author:  Jim Battle
+#
 # Version: 1.2, 2008/08/18, JTB
 # Version: 1.3, 2011/08/13, JTB
 #     added program prettyprinting, zip file reading
@@ -14,6 +17,10 @@
 #     made it python 2/3 compatible
 #     using bytearray data instead of character strings
 #     pylint cleanups, mypy type annotation
+# Version: 1.6, 2018/08/24, JTB
+#     add command to list assembler source code files
+#     fix crash when using "| more" redirection and python3
+#     pylint cleanups
 
 ########################################################################
 # there are any number of operations that could be provided by this
@@ -22,10 +29,15 @@
 
 # FIXME:
 #    see the scattered FIXME comments throughout
+#    very little testing has been done on disks with the newer indexing scheme
+#    overall the program structure is poor because it grew out of ad-hoc
+#       improvements and was not ever really designed
 #    make registerCmd() a decorator instead of an explicit call
 #       however, python2 doesn't allow class decorators.
 #    before any command that performs state change,
 #       warn if the disk is write protected (and suggest 'wp' command)
+#    MVP OS 3.0 and later support saving files in "wrap mode".
+#       this is completely unsupported and there is no guard to detect it.
 #    MVP OS 2.6 and later have files with names like "@PM010V1" which are
 #       printer control files.  they all start with 0x6911.
 #       add logic to allow check, scan, and perhaps list them.
@@ -44,14 +56,11 @@
 #        py -m mypy wvdutil.py
 #    pylint checker:
 #        py [-2] -m pylint -f msvs wvdutil.py
-#    pychecker checker:
-#        uncomment the "import pychecker" comment below, then run the program
 
 from __future__ import print_function
 from builtins import input                                     # pylint: disable=redefined-builtin
 from typing import List, Dict, Callable, Any, Optional, Tuple  # pylint: disable=unused-import
 
-#import pychecker.checker  # static lint tool
 import sys
 import os.path
 import re
@@ -64,10 +73,11 @@ except ImportError:
     from urllib import quote_plus, unquote_plus        # type: ignore
 
 from wvdlib import (WangVirtualDisk, WvdFilename, CatalogFile,   # pylint: disable=unused-import
-                    guessFiles, checkPlatter, checkFile,
+                    guessFiles, unscramble_one_sector,
+                    checkPlatter, checkFile,
                     checkProgramHeaderRecord, checkProgramBodyRecord)
 
-from wvfilelist import (listProgramFromBlocks, listDataFromOneRecord, listDataFromBlocks)
+from wvfilelist import (listSourceFileFromBlocks, listProgramRecord, listDataFromOneRecord, listDataFromBlocks)
 
 debug = False
 if debug:
@@ -132,7 +142,7 @@ def catalog(wvd, p, flags, wcList):
 
     # print header and disk information
     index_mark = " '&"[cat.getIndexType()]
-    print("INDEX SECTORS = %05d%c" % (cat.numIndexSectors(), index_mark))
+    print("INDEX SECTORS = %05d%s" % (cat.numIndexSectors(), index_mark))
     print("END CAT. AREA = %05d" % cat.endCatalogArea())
     print("CURRENT END   = %05d" % cat.currentEnd())
     print()
@@ -140,11 +150,11 @@ def catalog(wvd, p, flags, wcList):
 
     for name in filelist:
         curFile = cat.getFile(name)
-        if curFile != None:
+        if curFile is not None:
             # check file for extra information
             status = []
             saveMode = curFile.programSaveMode()
-            if saveMode != None and saveMode != "normal":
+            if saveMode is not None and saveMode != "normal":
                 status.append(saveMode)
 
             bad = checkFile(wvd, p, name, report=False)
@@ -187,20 +197,51 @@ def setProtection(wvd, p, protect, wcList=None):
     # type: (WangVirtualDisk, int, bool, List[str]) -> None
     wcList = wcList or ['*']
 
-    # FIXME: make sure disk isn't write protected
+    if wvd.getWriteProtect():
+        print("Not done: this disk image is write protected")
+        print("Use the command 'wp off' to turn off write protection")
+        return
 
     for name in wvd.catalog[p].expandWildcards(wcList):
         curFile = wvd.catalog[p].getFile(name)
-        assert curFile != None
+        fname = name.asStr()
+        if curFile is None:
+            print('Unable to read file "%s"' % fname)
+            continue
         if curFile.getType() != 'P':
-            print('"%s" is not a program file' % name.rstrip())
-        else:
-            saveMode = curFile.programSaveMode()
-            if saveMode == 'scrambled':
-                print('"%s" is a scrambled (SAVE !) file' % str(name).rstrip())
-                print("This program doesn't know how to crack such files")
-            else:
-                curFile.setProtection(protect)
+            print('"%s" is not a program file' % fname)
+            continue
+        saveMode = curFile.programSaveMode()
+        if saveMode == 'unknown':
+            print('"%s" is not a program file' % fname)
+            continue
+        if protect and (saveMode in ('protected','scrambled')):
+            continue
+        if not protect and (saveMode == 'normal'):
+            continue
+
+        if saveMode == 'scrambled':
+            print('"%s" is a scrambled (SAVE !) file' % fname)
+            inp = input("Do you really want to unprotect it (y/n)? ").strip().lower()
+            if inp not in ('y','yes'):
+                print('skipping "%s"' % fname)
+                continue
+            fileBlocks = curFile.getSectors()
+            newBlocks = []
+            for blk in fileBlocks:
+                # make doubly sure that each sector is a scrambled body block
+                if (blk[0] & 0xC0) == 0x00 and \
+                   (blk[0] & 0x10) == 0x10 and \
+                   (blk[1] & 0x80) == 0x00:
+                    newBlocks.append(unscramble_one_sector(blk))
+                else:
+                    newBlocks.append(blk)
+            # write back the modified file
+            curFile.setSectors(newBlocks)
+
+        newstate = "protected" if protect else "unprotected"
+        print("Changing '%s' to %s" % (fname, newstate))
+        curFile.setProtection(protect)
 
 ########################### compare disks/files ###########################
 # wvd>compare diskimage2.wvd [<wildcard list>]
@@ -319,13 +360,13 @@ def compareFiles(wvd, disk1_p, wvd2, disk2_p, verbose, args):
     for f in fileset1x: # pylint: disable=too-many-nested-blocks
 
         file1 = wvd.catalog[disk1_p].getFile(f)
-        assert file1 != None
+        assert file1 is not None
         file1Data = file1.getSectors()
 
         if f in fileset2x:
 
             file2 = wvd2.catalog[disk2_p].getFile(f)
-            assert file2 != None
+            assert file2 is not None
             file2Data = file2.getSectors()
 
             matching = False
@@ -409,9 +450,9 @@ def dumpSector(data):
 # LIST 100         (list sector 100)
 # LIST 100 200     (list sectors 100 to 200, inclusively)
 
+# pylint: disable=too-many-return-statements
 def listFile(wvd, p, args, listd):
     # type: (WangVirtualDisk, int, List[str], bool) -> List[str]
-    # pylint: disable=too-many-return-statements
 
     (theFile, start, end) = filenameOrSectorRange(wvd, p, args)
     if start is None:
@@ -431,11 +472,6 @@ def listFile(wvd, p, args, listd):
         if not theFile.fileControlRecordIsPlausible():
             print("The file control record is not sensible; no listing generated")
             return []
-        # make sure program isn't scrambled
-        mode = theFile.programSaveMode()
-        if mode == 'scrambled':
-            print("Program is scrambled (SAVE !) and can't be listed")
-            return []
         blocks = theFile.getSectors()
         listing = listProgramFromBlocks(blocks, listd, start)
     else:
@@ -446,6 +482,32 @@ def listFile(wvd, p, args, listd):
         #listing = listProgramFromBlocks(blocks, listd, start)
         listing = listArbitraryBlocks(blocks, listd, start)
 
+    return listing
+
+######################## list source code file ########################
+# given a file name, return a list containing one text line per item
+# SOURCE <FILENAME>
+# SOURCE <WILDCARD>  (but it must match just one file)
+
+# pylint: disable=too-many-return-statements
+def listSourceFile(wvd, p, args):
+    # type: (WangVirtualDisk, int, List[str]) -> List[str]
+
+    (theFile, start, _) = filenameOrSectorRange(wvd, p, args)
+    if start is None:
+        return []
+    if theFile is None:
+        print("This command requires a filename")
+        return []
+
+    # make sure it is a program or data file
+    fileType = theFile.getType()
+    if fileType != "D":
+        print("Source code files are 'D'ata type")
+        return []
+
+    blocks = theFile.getSectors()
+    listing = listSourceFileFromBlocks(blocks)
     return listing
 
 ############################# command parser #############################
@@ -516,9 +578,8 @@ def cmdUsage(cmdName=None):
             print("Command aliases:", ", ".join(names))
         return
 
-    else:
-        print('No command "' + cmdName + '"')
-        return
+    print('No command "' + cmdName + '"')
+    return
 
 # report all commands and optionally quit
 def usage(terminate=True):
@@ -544,21 +605,22 @@ def pickUsefulCatalog(wvd, platters):
                 print("Platter %d doesn't appear to have a catalog" % (p+1))
             return None
         return platters
-    else:  # multiplatter
-        new_platters = []
-        bad_platters = []  # ones without a catalog
-        for p in platters:
-            if wvd.catalog[platters[p]].hasCatalog():
-                new_platters.append(p)
-            else:
-                bad_platters.append(str(p+1))
-        if not new_platters:
-            print("At least one platter must have a catalog for this command")
-            return None
-        if bad_platters:
-            print("These platters have no catalog and will be skipped:", \
-                ", ".join(bad_platters))
-        return new_platters
+
+    # multiplatter
+    new_platters = []
+    bad_platters = []  # ones without a catalog
+    for p in platters:
+        if wvd.catalog[platters[p]].hasCatalog():
+            new_platters.append(p)
+        else:
+            bad_platters.append(str(p+1))
+    if not new_platters:
+        print("At least one platter must have a catalog for this command")
+        return None
+    if bad_platters:
+        print("These platters have no catalog and will be skipped:", \
+            ", ".join(bad_platters))
+    return new_platters
 
 
 # this wrapper makes it easier to clean up redirection after all commands
@@ -604,9 +666,10 @@ def cmdDispatch(wvd, cmd, args):
 # ----------------------------------------------------------------------
 
 # given a disk image and a command, perform the command (or bitch)
+# pylint: disable=too-many-branches, too-many-statements, too-many-locals
+# pylint: disable=too-many-return-statements
 def command(wvd, cmdString):
     # type: (WangVirtualDisk, str) -> None
-    # pylint: disable=too-many-branches, too-many-statements, too-many-locals
 
     # because filenames may contain a space, we need to handle quoting
     # only doublequote is supported since wang filenames may contain a single quote
@@ -635,31 +698,36 @@ def command(wvd, cmdString):
 
     # check for redirection
     origStdout = sys.stdout
+    redir_idx = [i for i, x in enumerate(words) if x in ['|', '>', '>>']]
+    redir = None
+    if redir_idx:
+        if len(redir_idx) > 1:
+            print("Too many redirection specifiers")
+            return
+        idx = redir_idx[0]
+        redir = words[idx]
+        if idx != len(words)-2:
+            print("Illegal redirection syntax")
+            return
+        redirFile = words[-1]
+        del words[idx:]  # strip off redir symbol and everything after
+
     pager_file = None
-    if '|' in words:
+    if redir == '|':
         # "| more" must be the final two words
-        idx = words.index("|")
-        if (idx != len(words)-2) or (words[idx+1] != "more"):
+        if redirFile != "more":
             print("Bad pipe command")
             return
-        del words[-2:]  # strip off "| more"
-        # using os.popen or subprocess.Popen didn't want to work, so just
-        # dump the output to a temp file and page it later
+        # os.popen and subprocess.Popen didn't want to work,
+        # so dump the output to a temp file and page it later
         import tempfile
         tmp_fd, pager_file = tempfile.mkstemp()
-        sys.stdout = os.fdopen(tmp_fd, 'w+b')
-    elif ('>' in words) or ('>>' in words):
-        if '>' in words:
-            idx = words.index(">")
+        sys.stdout = os.fdopen(tmp_fd, 'w+')
+    elif redir in ['>', '>>']:
+        if redir == '>':
             mode = 'w'   # write
-        else:
-            idx = words.index(">>")
+        else:  # redir == '>>'
             mode = 'a'   # append
-        if idx+2 != len(words):
-            print('Error: Redirection ">" or ">>" expects to be followed by a single filename')
-            return
-        redirFile = words[idx+1]
-        words = words[ :idx]     # chop off "> filename" part
         try:
             sys.stdout = open(redirFile, mode, 1)  # 1=buffered
         except IOError:
@@ -690,8 +758,8 @@ def command(wvd, cmdString):
 # ----------------------------------------------------------------------
 
 # this is an abstract class that all command objects should override
+# pylint: disable=no-self-use, useless-object-inheritance
 class cmdTemplate(object):
-    # pylint: disable=no-self-use
     def __init__(self):
         return
     def name(self):
@@ -743,6 +811,7 @@ class cmdCatalog(cmdTemplate):
                 args = args[1:]
             else:
                 break
+
         for p in platters:
             if len(platters) > 1:
                 if p != platters[0]:
@@ -752,7 +821,6 @@ class cmdCatalog(cmdTemplate):
                 catalog(wvd, p, flags, ['*'])  # list all
             else:
                 catalog(wvd, p, flags, args)   # wildcard version
-        return
 
 registerCmd(cmdCatalog())
 
@@ -812,9 +880,9 @@ scan -bad
     def needsCatalog(self):
         return False
 
+    # pylint: disable=too-many-branches
     def doCommand(self, wvd, platters, args):
         # type: (WangVirtualDisk, List[int], List[str]) -> None
-        # pylint: disable=too-many-branches
         flag_good = True
         flag_bad = False
         if args and (args[0] == '-all'):
@@ -843,7 +911,7 @@ scan -bad
                         print("Sector %5d to %5d: name='%s' [ program ]" \
                             % (fileinfo['first_record'],
                                fileinfo['last_record'],
-                               fileinfo['filename']))
+                               sanitize_filename(fileinfo['filename'])))
                     if flag_bad and (fileinfo['file_type'] == 'program_headless'):
                         print("Sector %5d to %5d: [ no header record ]" \
                             % (fileinfo['first_record'],
@@ -860,15 +928,28 @@ scan -bad
                         print("Sector %5d to %5d: name='%s' [ data ]" \
                             % (fileinfo['first_record'],
                                fileinfo['last_record'],
-                               fileinfo['filename']))
+                               sanitize_filename(fileinfo['filename'])))
                     if flag_bad and (fileinfo['file_type'] == 'data_fragment'):
                         print("Sector %5d to %5d: name='%s' [ data fragment ]" \
                             % (fileinfo['first_record'],
                                fileinfo['last_record'],
-                               fileinfo['filename']))
+                               sanitize_filename(fileinfo['filename'])))
         return
 
 registerCmd(cmdScan())
+
+# NB: disk headers pad names shorter than 8 characters with 0x20
+#     tape headers pad names shorter than 8 characters with 0xFF
+def sanitize_filename(rawname):
+    if isinstance(rawname, str):
+        return rawname
+    assert isinstance(rawname, bytearray)
+    while rawname:
+        if (rawname[-1] != 0xff) and (rawname[-1] != ord(' ')):
+            break
+        rawname = rawname[:-1]
+    name = [chr(byt) if (32 <= byt < 128) else ("\\x%02X" % byt) for byt in rawname]
+    return ''.join(name)
 
 # ----------------------------------------------------------------------
 
@@ -901,11 +982,11 @@ compare[/<platter>] disk2.wvd[/<platter>] [-v|-verbose] [<wildcard list>]
     def needsCatalog(self):
         return True
 
+    # pylint: disable=too-many-return-statements, too-many-branches
     def doCommand(self, wvd, platters, args):
         # type: (WangVirtualDisk, List[int], List[str]) -> None
-        # pylint: disable=too-many-return-statements, too-many-branches
         # FIXME: this needs an overhaul
-        if (len(args) < 1) or (len(platters) > 1):
+        if (not args) or (len(platters) > 1):
             cmdUsage('compare')
             return
 
@@ -1084,6 +1165,48 @@ registerCmd(cmdIndex())
 
 # ----------------------------------------------------------------------
 
+# display the specified source file in ascii
+# FIXME: this should be an option of LIST (list -source), but it
+#        opens a can of worms: should there be options for other
+#        file types?  Or should LIST have the intelligence to guess
+#        the file type (as it currently kind of does?
+#        for now this is an independent command.
+class cmdSource(cmdTemplate):
+
+    def name(self):
+        return "source"
+    def shortHelp(self):
+        return "show 2600 assembler source file as text"
+    def longHelp(self):
+        return \
+"""source <filename>
+    Produce a text listing of the named source code file."""
+    def needsCatalog(self):
+        return True
+
+    def doCommand(self, wvd, platters, args):
+        # type: (WangVirtualDisk, List[int], List[str]) -> None
+        if len(platters) > 1:
+            print("This command can only operate on a single platter")
+            return
+        if len(args) != 1:
+            print("This command expects a single filename as an argument")
+            cmdUsage('source')
+            return
+        listing = listSourceFile(wvd, platters[0], args)
+        for txt in listing:
+            if generate_html:
+                # must escape special characters
+                txt = re.sub('&', '&amp;', txt)
+                txt = re.sub('<', '&lt;', txt)
+                txt = re.sub('>', '&gt;', txt)
+            print(txt)
+        return
+
+registerCmd(cmdSource())
+
+# ----------------------------------------------------------------------
+
 # display the specified program file in ascii
 class cmdList(cmdTemplate):
 
@@ -1107,7 +1230,7 @@ class cmdList(cmdTemplate):
         if len(platters) > 1:
             print("This command can only operate on a single platter")
             return
-        if len(args) < 1 or len(args) > 2:
+        if (not args) or (len(args) > 2):
             print("This command expects a single filename as an argument, or two sector addresses")
             cmdUsage('list')
             return
@@ -1182,7 +1305,7 @@ class cmdProtect(cmdTemplate):
 
     def doCommand(self, wvd, platters, args):
         # type: (WangVirtualDisk, List[int], List[str]) -> None
-        if len(args) < 1:
+        if not args:
             print("This command expects a list of filenames and/or wildcards")
             return
         for p in platters:
@@ -1318,7 +1441,7 @@ class cmdPlatter(cmdTemplate):
         if len(args) > 1:
             cmdUsage('platter')
             return
-        elif not args:
+        if not args:
             print("default platter value is %d" % (default_platter+1))
         elif args[0].isdigit():
             val = int(args[0])
@@ -1397,6 +1520,39 @@ def listArbitraryBlocks(blocks, listd, abs_sector):
 
     return listing
 
+########################################################################
+# given a list of file blocks, return a program file listing
+
+def listProgramFromBlocks(blocks, listd, abs_sector=None):
+    # type: (List[bytearray], bool, int) -> List[str]
+    listing = []
+    relsector = -1  # sector number, relative to first block
+
+    for secData in blocks:
+
+        relsector = relsector + 1
+        if isinstance(abs_sector, int):
+            secnum = "Sector %d" % (relsector + abs_sector)
+        else:
+            secnum = "Relative sector %d" % relsector
+        #listing.append( "============== %s ==============" % secnum )
+
+        # we are done if we hit a trailer record
+        if (secData[0]) == 0xA0:
+            return listing
+
+        # 1. if (byte[0] & 0xC0) != 0x00, load error (header or data block)
+        # 2. if (byte[0] & 0x10) != 0x10, not protected at all
+        # 3. if (byte[1] & 0x80) == 0x80, SAVEP style
+        # 4. else                         SAVE! style
+        if (secData[0] & 0xc0) == 0x00 and \
+           (secData[0] & 0x10) == 0x10 and \
+           (secData[1] & 0x80) == 0x00:
+            secData = unscramble_one_sector(secData)
+        listing.extend(listProgramRecord(secData, secnum, listd))
+
+    # should have hit a trailer record, but return what we have anyway
+    return listing
 
 ############################ main program ############################
 # dumpFile() and listFile() have common parameter options:
@@ -1422,9 +1578,9 @@ def filenameOrSectorRange(wvd, p, args):
     if (len(args) == 1) and wvd.catalog[p].hasCatalog():
         # it might be a name or a wildcard
         filename = getOneFilename(wvd, p, args[0])
-        if filename != None:
+        if filename is not None:
             theFile = wvd.catalog[p].getFile(filename)
-            assert theFile != None
+            assert theFile is not None
             if not theFile.fileExtentIsPlausible():
                 print("The file extent doesn't make sense")
                 return badReturn
@@ -1475,9 +1631,9 @@ def getOneFilename(wvd, p, name):
 
 ############################ main program ############################
 
+# pylint: disable=too-many-branches, too-many-statements
 def mainloop():
     # type: () -> None
-    # pylint: disable=too-many-branches, too-many-statements
 
     if debug:
         pdb.set_trace()  # initiate debugging
@@ -1530,7 +1686,7 @@ def mainloop():
         command(wvd, commandStr)
         return
 
-    print(basename + ', version 1.5, 2018/01/01')
+    print(basename + ', version 1.6-pre, 2018/08/24')
     print('Type "help" to see all commands')
 
     # accept command lines from user interactively

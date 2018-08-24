@@ -13,6 +13,10 @@
 #     made it python 2/3 compatible
 #     using bytearray data instead of character strings
 #     pylint cleanups, mypy type annotation
+# Version: 1.6, 2018/08/24, JTB
+#     with python3, dumping data files contained "bytearray(...)" spew
+#     add command to list assembler source code files
+#     pylint cleanups
 
 from __future__ import print_function
 from typing import List  # pylint: disable=unused-import
@@ -20,146 +24,138 @@ import re
 
 ########################################################################
 # table of BASIC atoms
-token = []  # type: List[str]
+# not all entries are occupied
+token = [''] * 256
 
-def initBasicTokens():
-    # type: () -> None
-    global token
-    token = [None] * 256
-    token[0x80] = "LIST "
-    token[0x81] = "CLEAR "
-    token[0x82] = "RUN "
-    token[0x83] = "RENUMBER "
-    token[0x84] = "CONTINUE "
-    token[0x85] = "SAVE "
-    token[0x86] = "LIMITS "
-    token[0x87] = "COPY "
-    token[0x88] = "KEYIN "
-    token[0x89] = "DSKIP "
-    token[0x8A] = "AND "
-    token[0x8B] = "OR "
-    token[0x8C] = "XOR "
-    token[0x8D] = "TEMP"
-    token[0x8E] = "DISK "
-    token[0x8F] = "TAPE "
+token[0x80] = 'LIST '
+token[0x81] = 'CLEAR '
+token[0x82] = 'RUN '
+token[0x83] = 'RENUMBER '
+token[0x84] = 'CONTINUE '
+token[0x85] = 'SAVE '
+token[0x86] = 'LIMITS '
+token[0x87] = 'COPY '
+token[0x88] = 'KEYIN '
+token[0x89] = 'DSKIP '
+token[0x8A] = 'AND '
+token[0x8B] = 'OR '
+token[0x8C] = 'XOR '
+token[0x8D] = 'TEMP'
+token[0x8E] = 'DISK '
+token[0x8F] = 'TAPE '
 
-    token[0x90] = "TRACE "
-    token[0x91] = "LET "
-    token[0x92] = "FIX("        # BASIC-2
-    token[0x93] = "DIM "
-    token[0x94] = "ON "
-    token[0x95] = "STOP "
-    token[0x96] = "END "
-    token[0x97] = "DATA "
-    token[0x98] = "READ "
-    token[0x99] = "INPUT "
-    token[0x9A] = "GOSUB "
-    token[0x9B] = "RETURN "
-    token[0x9C] = "GOTO "
-    token[0x9D] = "NEXT "
-    token[0x9E] = "FOR "
-    token[0x9F] = "IF "
+token[0x90] = 'TRACE '
+token[0x91] = 'LET '
+token[0x92] = 'FIX('        # BASIC-2
+token[0x93] = 'DIM '
+token[0x94] = 'ON '
+token[0x95] = 'STOP '
+token[0x96] = 'END '
+token[0x97] = 'DATA '
+token[0x98] = 'READ '
+token[0x99] = 'INPUT '
+token[0x9A] = 'GOSUB '
+token[0x9B] = 'RETURN '
+token[0x9C] = 'GOTO '
+token[0x9D] = 'NEXT '
+token[0x9E] = 'FOR '
+token[0x9F] = 'IF '
 
-    token[0xA0] = "PRINT "
-    token[0xA1] = "LOAD "
-    token[0xA2] = "REM "
-    token[0xA3] = "RESTORE "
-    token[0xA4] = "PLOT "
-    token[0xA5] = "SELECT "
-    token[0xA6] = "COM "
-    token[0xA7] = "PRINTUSING "
-    token[0xA8] = "MAT "
-    token[0xA9] = "REWIND "
-    token[0xAA] = "SKIP "
-    token[0xAB] = "BACKSPACE "
-    token[0xAC] = "SCRATCH "
-    token[0xAD] = "MOVE "
-    token[0xAE] = "CONVERT "
-    token[0xAF] = "PLOT "       # [SELECT] PLOT
+token[0xA0] = 'PRINT '
+token[0xA1] = 'LOAD '
+token[0xA2] = 'REM '
+token[0xA3] = 'RESTORE '
+token[0xA4] = 'PLOT '
+token[0xA5] = 'SELECT '
+token[0xA6] = 'COM '
+token[0xA7] = 'PRINTUSING '
+token[0xA8] = 'MAT '
+token[0xA9] = 'REWIND '
+token[0xAA] = 'SKIP '
+token[0xAB] = 'BACKSPACE '
+token[0xAC] = 'SCRATCH '
+token[0xAD] = 'MOVE '
+token[0xAE] = 'CONVERT '
+token[0xAF] = 'PLOT '       # [SELECT] PLOT
 
-    token[0xB0] = "STEP "
-    token[0xB1] = "THEN "
-    token[0xB2] = "TO "
-    token[0xB3] = "BEG "
-    token[0xB4] = "OPEN "
-    token[0xB5] = "CI "         # [SELECT] CI
-    token[0xB6] = "R "          # [SELECT] R
-    token[0xB7] = "D "          # [SELECT] D
-    token[0xB8] = "CO "         # [SELECT] CO
-    token[0xB9] = "LGT("        # BASIC-2 only
-    token[0xBA] = "OFF "
-    token[0xBB] = "DBACKSPACE "
-    token[0xBC] = "VERIFY "
-    token[0xBD] = "DA "
-    token[0xBE] = "BA "
-    token[0xBF] = "DC "
+token[0xB0] = 'STEP '
+token[0xB1] = 'THEN '
+token[0xB2] = 'TO '
+token[0xB3] = 'BEG '
+token[0xB4] = 'OPEN '
+token[0xB5] = 'CI '         # [SELECT] CI
+token[0xB6] = 'R '          # [SELECT] R
+token[0xB7] = 'D '          # [SELECT] D
+token[0xB8] = 'CO '         # [SELECT] CO
+token[0xB9] = 'LGT('        # BASIC-2 only
+token[0xBA] = 'OFF '
+token[0xBB] = 'DBACKSPACE '
+token[0xBC] = 'VERIFY '
+token[0xBD] = 'DA '
+token[0xBE] = 'BA '
+token[0xBF] = 'DC '
 
-    token[0xC0] = "FN"
-    token[0xC1] = "ABS("
-    token[0xC2] = "SQR("
-    token[0xC3] = "COS("
-    token[0xC4] = "EXP("
-    token[0xC5] = "INT("
-    token[0xC6] = "LOG("
-    token[0xC7] = "SIN("
-    token[0xC8] = "SGN("
-    token[0xC9] = "RND("
-    token[0xCA] = "TAN("
-    token[0xCB] = "ARC"
-    token[0xCC] = "#PI"
-    token[0xCD] = "TAB("
-    token[0xCE] = "DEFFN"
-    token[0xCF] = "TAN("      # ARCTAN( gets encoded as CBCF sequence
+token[0xC0] = 'FN'
+token[0xC1] = 'ABS('
+token[0xC2] = 'SQR('
+token[0xC3] = 'COS('
+token[0xC4] = 'EXP('
+token[0xC5] = 'INT('
+token[0xC6] = 'LOG('
+token[0xC7] = 'SIN('
+token[0xC8] = 'SGN('
+token[0xC9] = 'RND('
+token[0xCA] = 'TAN('
+token[0xCB] = 'ARC'
+token[0xCC] = '#PI'
+token[0xCD] = 'TAB('
+token[0xCE] = 'DEFFN'
+token[0xCF] = 'TAN('      # ARCTAN( gets encoded as CBCF sequence
 
-    token[0xD0] = "SIN("      # ARCSIN( gets encoded as CBD0 sequence
-    token[0xD1] = "COS("      # ARCCOS( gets encoded as CBD1 sequence
-    token[0xD2] = "HEX("
-    token[0xD3] = "STR("
-    token[0xD4] = "ATN("
-    token[0xD5] = "LEN("
-    token[0xD6] = "RE"         # used by REDIM?
-    token[0xD7] = "#"          # [SELECT] #
-    token[0xD8] = "%"          # % [image]
-    token[0xD9] = "P"          # [SELECT] P
-    token[0xDA] = "BT"
-    token[0xDB] = "G"          # [SELECT] G
-    token[0xDC] = "VAL("
-    token[0xDD] = "NUM("
-    token[0xDE] = "BIN("
-    token[0xDF] = "POS("
+token[0xD0] = 'SIN('      # ARCSIN( gets encoded as CBD0 sequence
+token[0xD1] = 'COS('      # ARCCOS( gets encoded as CBD1 sequence
+token[0xD2] = 'HEX('
+token[0xD3] = 'STR('
+token[0xD4] = 'ATN('
+token[0xD5] = 'LEN('
+token[0xD6] = 'RE'         # used by REDIM?
+token[0xD7] = '#'          # [SELECT] #
+token[0xD8] = '%'          # % [image]
+token[0xD9] = 'P'          # [SELECT] P
+token[0xDA] = 'BT'
+token[0xDB] = 'G'          # [SELECT] G
+token[0xDC] = 'VAL('
+token[0xDD] = 'NUM('
+token[0xDE] = 'BIN('
+token[0xDF] = 'POS('
 
-    token[0xE0] = "LS="
-    token[0xE1] = "ALL"
-    token[0xE2] = "PACK"
-    token[0xE3] = "CLOSE"
-    token[0xE4] = "INIT"
-    token[0xE5] = "HEX"        # eg HEXPRINT, not HEX(
-    token[0xE6] = "UNPACK"
-    token[0xE7] = "BOOL"
-    token[0xE8] = "ADD"
-    token[0xE9] = "ROTATE"
-    token[0xEA] = "$"          # $[statement]
-    token[0xEB] = "ERROR"
-    token[0xEC] = "ERR"        # BASIC-2 only
-    token[0xED] = "DAC "       # BASIC-2 only
-    token[0xEE] = "DSC "       # BASIC-2 only
-    token[0xEF] = "SUB"        # BASIC-2 only
+token[0xE0] = 'LS='
+token[0xE1] = 'ALL'
+token[0xE2] = 'PACK'
+token[0xE3] = 'CLOSE'
+token[0xE4] = 'INIT'
+token[0xE5] = 'HEX'        # eg HEXPRINT, not HEX(
+token[0xE6] = 'UNPACK'
+token[0xE7] = 'BOOL'
+token[0xE8] = 'ADD'
+token[0xE9] = 'ROTATE'
+token[0xEA] = '$'          # $[statement]
+token[0xEB] = 'ERROR'
+token[0xEC] = 'ERR'        # BASIC-2 only
+token[0xED] = 'DAC '       # BASIC-2 only
+token[0xEE] = 'DSC '       # BASIC-2 only
+token[0xEF] = 'SUB'        # BASIC-2 only
 
-    token[0xF0] = "LINPUT "    # BASIC-2 only
-    token[0xF1] = "VER"        # BASIC-2 only
-    token[0xF2] = " ELSE "     # BASIC-2 only
-    token[0xF3] = "SPACE"      # BASIC-2 only
-    token[0xF4] = "ROUND("     # BASIC-2 only
-    token[0xF5] = "AT("        # BASIC-2 only
-    token[0xF6] = "HEXOF("     # BASIC-2 only
-    token[0xF7] = "MAX("       # BASIC-2 only
-    token[0xF8] = "MIN("       # BASIC-2 only
-    token[0xF9] = "MOD("       # BASIC-2 only
-
-    # all others are undefined
-    return
-
-initBasicTokens()
+token[0xF0] = 'LINPUT '    # BASIC-2 only
+token[0xF1] = 'VER'        # BASIC-2 only
+token[0xF2] = ' ELSE '     # BASIC-2 only
+token[0xF3] = 'SPACE'      # BASIC-2 only
+token[0xF4] = 'ROUND('     # BASIC-2 only
+token[0xF5] = 'AT('        # BASIC-2 only
+token[0xF6] = 'HEXOF('     # BASIC-2 only
+token[0xF7] = 'MAX('       # BASIC-2 only
+token[0xF8] = 'MIN('       # BASIC-2 only
+token[0xF9] = 'MOD('       # BASIC-2 only
 
 ########################################################################
 # given a header record, return the filename it contains.
@@ -168,62 +164,190 @@ initBasicTokens()
 
 def headerName(sector):
     # type: (bytearray) -> str
-    name = str(sector[1:9])
-    while name:
-        if (name[-1] != 0xff) and (name[-1] != ord(' ')):
+    rawname = sector[1:9]
+    while rawname:
+        if (rawname[-1] != 0xff) and (rawname[-1] != ord(' ')):
             break
-        name = name[:-1]
-    return name
+        rawname = rawname[:-1]
+    name = [chr(byt) if (32 <= byt < 128) else ("\\x%02X" % byt) for byt in rawname]
+    return ''.join(name)
 
 ########################################################################
 # given a list of file blocks, return a program file listing
 
-def listProgramFromBlocks(blocks, listd, abs_sector=None):
-    # type: (List[bytearray], bool, int) -> List[str]
+# pylint: disable=too-many-branches, too-many-statements, too-many-locals
+def listSourceFileFromBlocks(blocks):
+    # type: (List[bytearray]) -> List[str]
+
+# check that each sector contains the right header bytes
+# and that each sector contains four strings of 62 chars
+# and that the first block contains FILE = ........,
+#
+#     81 01 be <62 text bytes>
+#           be <62 text bytes>
+#           be <62 text bytes>
+#           be <62 text bytes> fd 00
+#
+# what do the bytes mean?
+#
+#   0x81=0x80 (data file) | 0x01 (last physical record of logical record)
+#   0x01=sequence number of logical record; it will always be 01 because the
+#        logical record never spans sectors
+#   0xbe=190; 0x80 bit means string; 190-128-62 = length of string
+#   0xfd: end of block
+#   0x00: unused padding byte
+#
+# any number of these blocks.  each line ends with a 1E.  after the last line,
+# an 03 appears followed by a bunch of 20 bytes padding out the rest, though
+# probably it doesn't really matter -- 03 is the end-of-file.  then there is a
+# trailer block.
+#     a0 01 be .. ..
+# but probably the contents after A0 doesn't matter.
+
+    filename = '        '  # pylint: disable=unused-variable
+    end_byte_seen = False
+    warning = False        # pylint: disable=unused-variable
     listing = []
-    relsector = -1  # sector number, relative to first block
+    curline = ''
 
-    for secData in blocks:
+    for secnum, secData in enumerate(blocks):
 
-        relsector = relsector + 1
-        if isinstance(abs_sector, int):
-            secnum = "sector %d" % (relsector + abs_sector)
-        else:
-            secnum = "relative sector %d" % relsector
-        #listing.append( "============== %s ==============" % secnum )
+        if secData[0] == 0xA0:
+            # trailer record
+            if secnum == 0:
+                print("Warning: first sector is a trailer record - null file")
+                warning = True
+            elif not end_byte_seen:
+                print("Warning: relative sector %d is a trailer record, but \\x03 byte not yet seen" % secnum)
+                warning = True
+            break
 
-        if (secData[0] & 0xc0) == 0x40:
-            # header record
-            name = headerName(secData)
-            listing.append("# Sector %s, program filename = '%s'" % (secnum, name))
-            continue
+        if end_byte_seen:
+            print("relative sector %d: end byte \\x03 byte seen; expected trailer record" % secnum)
+            warning = True
+            break
 
-        if (secData[0] & 0xc0) != 0x00:
-            # data record
-            listing.append("# %s doesn't look like a program record" % secnum)
-            continue
+        if secData[0] != 0x81:
+            print("relative sector %d: control byte 0x%02x (expected 0x81)" % (secnum, secData[0]))
+            warning = True
+            break
 
-        listing.extend(listProgramBodyRecord(secData, listd))
+        # each logical record spans a single sector
+        if secData[1] != 0x01:
+            print("relative sector %d: sequence byte 0x%02x (expected 0x01)" % (secnum, secData[1]))
+            warning = True
+            break
 
+        # verify that the block contains four strings of 62 bytes each
+        if (secData[2+0*63] != 0xbe or secData[2+1*63] != 0xbe  or
+                secData[2+2*63] != 0xbe or secData[2+3*63] != 0xbe):
+            print("relative sector %d: expected to see four strings of 62 bytes each" % secnum)
+            warning = True
+            break
+
+        # the last two bytes should be fd 00, but we check only 0xfd byte
+        # since the final byte shouldn't matter
+        if secData[0xfe] != 0xfd:
+            print("relative sector %d: end of block byte was 0x%02x (expected 0xfd)" % (secnum, secData[0xfe]))
+            warning = True
+            break
+
+        # grab the four strings
+        line0 = secData[3+0*63:2+1*63]
+        line1 = secData[3+1*63:2+2*63]
+        line2 = secData[3+2*63:2+3*63]
+        line3 = secData[3+3*63:2+4*63]
+
+        if secnum == 0:
+            # first sector should start with 0x02 0x01 {length},
+            # followed by some text.  the {length} byte indicates an offset
+            # to where the first asm source line begins.  that first
+            # bit of text doesn't end in a carriage return, so we add it.
+            # but if there is an expclit one there, we convert it to a space
+            # because that is what the EDIT program does.
+            if line0[0] != 0x02 or line0[1] != 0x01 or line0[2] not in range(0x16,0x1b):
+                print("relative sector 0: ",
+                      "first line of file started with 0x%02x 0x%02x 0x%02x " %
+                      (line0[0], line0[1], line0[2]),
+                      "(expected 0x02 0x01 (0x16..0x1a))")
+                warning = True
+                break
+            if line0[3:10] != b'FILE = ':
+                print("relative sector 0: first line didn't contain the filename")
+                warning = True
+                break
+            filename = line0[10:18].decode('latin_1')  # 8 characters
+            # OK, here is some hokey stuff that the EDIT program does for
+            # inexplicable reasons.  my guess is that an older version of edit
+            # used a slightly different format, and the later version would
+            # fix up files in that old format.
+            offset = line0[2]  # 0x16..0x1a
+            if line0[2+offset] == 0x1e:
+                line0[2+offset] = 0x20  # convert to space
+            # chomp of that weird three byte header, and split off
+            # the file description section from the first actual line
+            encoding = 'latin-1'
+            line0 = bytearray('* ', encoding) + line0[3:3+offset] + bytearray(chr(0x1E), encoding) + line0[3+offset:]
+
+        lines = []
+        for t in (line0, line1, line2, line3):
+            if 0x03 in t:
+                idx = t.index(0x03)
+                t = t[0:idx]  # chomp 0x03 and everything after it
+                end_byte_seen = True
+            lines.append(t)
+            if end_byte_seen:
+                break
+
+        # scan through all lines regardless of boundaries and assemble lines
+        for line in lines:
+            for byt in line:
+                if byt == 0x1E:
+                    # end of line
+                    listing.append(curline)
+                    curline = ''
+                elif byt == 0x09:
+                    # tab
+                    curline += "\t"
+                elif 32 <= byt <= 128:
+                    curline += chr(byt)
+                else:
+                    curline += "\\x%02x" % byt
+
+    # all blocks processed
+    if curline != '':
+        listing.append(curline)
+
+    # add filename
+    # listing.insert(0, "# FILENAME='%s'" % filename)
     return listing
 
 ########################################################################
 # list the program from just one record, optionally prettyprinted
+# FIXME: do light parsing so tokens don't get expanded in these situations:
+#   - in a REM statement (up to a colon)
+#   - in an image (%) statement  (BASIC-2 doesn't terminate at colon)
+#   - inside double quotes  (BASIC-2 doesn't recognize single quotes)
 
-def listProgramBodyRecord(secData, listd):
-    # type: (bytearray, bool) -> List[str]
+def listProgramRecord(secData, secnum, listd):
+    # type: (bytearray, str, bool) -> List[str]
 
     listing = []
 
     if (secData[0] & 0xc0) == 0x40:
         # header record
         name = headerName(secData)
-        listing.append("# Program filename = '%s'" % name)
+        if (secData[0] & 0x10) == 0x10:
+            ftype = ', protected file'
+        else:
+            ftype = ''
+        listing.append("# %s, program filename = '%s'%s" % (secnum, name, ftype))
         return listing
 
     if (secData[0] & 0xc0) != 0x00:
         # data record
-        listing.append("# this doesn't look like a program record")
+        # FIXME: maybe just do a hex dump?
+        listing.append("# %s doesn't look like a program record" % secnum)
         return listing
 
     # program body record
@@ -245,7 +369,7 @@ def listProgramBodyRecord(secData, listd):
                          1*(secData[cp+2]  % 16)
             cp += 2
             line += "%d" % linenum
-        elif token[c] is None:
+        elif token[c] == '':
             line += "\\x%02x" % c
         else:
             line += token[c]
@@ -275,6 +399,7 @@ def listProgramBodyRecord(secData, listd):
 # LISTD has a feature where "REM%" causes a page break and some
 # blank lines to be printed.  This function doesn't mimic that.
 
+# pylint: disable=too-many-branches, too-many-statements
 def prettyprint(origline, width=80, basic2=True):
     # type: (str, int, bool) -> List[str]
 
@@ -324,7 +449,10 @@ def prettyprint(origline, width=80, basic2=True):
                     stmt_end = len(line)
                 else:
                     tmatch = re.search(r'^(%[^:]*)', line)
-                    stmt_end = tmatch.end(1)
+                    if tmatch is None:
+                        stmt_end = len(line)
+                    else:
+                        stmt_end = tmatch.end(1)
                 break
 
             # scan until end of statement, watching out for quotes
@@ -475,9 +603,9 @@ def listDataFromOneRecord(secData):
             if cp+1+strlen > 254:  # 254 because we still need a terminator
                 listing.append("# SOV indicates string length that doesn't fit in sector")
                 return listing
-            strng = str(secData[cp+1 : cp+1+strlen])
+            dataobj = secData[cp+1 : cp+1+strlen]
             # expand non-ascii characters
-            tmp = [("\\x%02X" % ord(ch)) if (ord(ch) < 32 or ord(ch) >= 128) else ch for ch in strng]
+            tmp = [chr(byt) if (32 <= byt < 128) else ("\\x%02X" % byt) for byt in dataobj]
             strng = ''.join(tmp)
             listing.append('"' + strng + '"')
             cp += 1 + strlen

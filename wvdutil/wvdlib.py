@@ -12,6 +12,9 @@
 #     made it python 2/3 compatible
 #     using bytearray data instead of character strings
 #     pylint cleanups, mypy type annotation
+# Version: 1.6, 2018/08/24, JTB
+#     added function to handle unscrambling a scrambled sector
+#     pylint cleanups
 
 ########################################################################
 # technical notes
@@ -50,6 +53,7 @@ import re
 
 class ProgramError(Exception):
     def __init__(self, value):
+        Exception.__init__(self, value)
         self.value = value
     def __str__(self):
         return repr(self.value)
@@ -57,6 +61,7 @@ class ProgramError(Exception):
 ########################################################################
 # this represents top-level information about a wang virtual disk
 
+# pylint: disable=useless-object-inheritance
 class WangVirtualDisk(object):
 
     # creation always produces an invalid disk.
@@ -86,9 +91,9 @@ class WangVirtualDisk(object):
                 firstname = zipf.namelist()[0]
                 # python 2.5 doesn't allow opening as file object,
                 # and fatcow is using python 2.5.  deal with it.
-                #fh = zipf.open(firstname, 'r')
+                # fh = zipf.open(firstname, 'r')
                 fdata = bytearray(zipf.read(firstname))  # in python2 read returns a string
-            except Exception as e:   # pylint: disable=unused-variable
+            except Exception as e:  # pylint: disable=unused-variable, broad-except
                 traceback.print_exc()
                 print('Something went wrong opening zip file')
         else:
@@ -207,10 +212,11 @@ class WangVirtualDisk(object):
 
 ########################################################################
 # this is a very simple class which is exists mostly to give the mypy
-# type checker somethingn to do.  that is, the wvd filenames are passed
+# type checker something to do.  that is, the wvd filenames are passed
 # around as bytearray()s of length 8. but other bytearrays are being
 # passed around, so this allows us to tag which type we are dealing with.
 
+# pylint: disable=useless-object-inheritance
 class WvdFilename(object):
     def __init__(self, filename):
         # type: (bytearray) -> None
@@ -220,8 +226,8 @@ class WvdFilename(object):
         return self._filename
     def asStr(self): # type: () -> str
         '''Return the on-disk filename as a trimmed string.'''
-        trimmed = self._filename.rstrip()
-        return trimmed.decode('latin-1')
+        trimmed = self._filename.decode('latin-1').rstrip()
+        return trimmed
 
 ########################################################################
 # this object represents one slot in the index table of a particular platter.
@@ -256,6 +262,7 @@ class WvdFilename(object):
 #    _record   = the 16 byte index entry
 #    _dirty    = true if any fields have changed
 
+# pylint: disable=useless-object-inheritance
 class WvdIndex(object):
     def __init__(self, wvd, p, n, record):
         # type: (WangVirtualDisk, int, int, bytearray) -> None
@@ -324,29 +331,36 @@ class WvdIndex(object):
 
     # inspect a program file and determine if it is protected (and what kind)
     # or not returns "normal", "protected", or "scrambled".  if it isn't a
-    # program, then None is returned.
+    # program file or the control bytes aren't consistent, "unknown" is
+    # returned.
     def programSaveMode(self):
-        # type: () -> Optional[str]
+        # type: () -> str
         if self.getFileType() != 'P':
-            return None
+            return 'unknown'
         if not self.fileExtentIsPlausible():
-            return None
+            return 'unknown'
 
         start = self.getFileStart()
         secData = self._wvd.getRawSector(self._platter, start + 0)
         if (secData[0] & 0xF0) == 0x40:
             return 'normal'
         if (secData[0] & 0xF0) != 0x50:
-            return None
+            return 'unknown'
 
-        # so either it is protected or scrambled
-        # for non-scrambled programs, the first byte must be either 0x20 (space)
-        # or 0xFF (line number token).  scrambled programs appear to always be
-        # of the form 3x1y.
+        # either it is protected or scrambled.  for non-scrambled programs, the
+        # first byte must be either 0x20 (space) or 0xFF (line number token).
+        # scrambled programs appear to always use control bytes of the form
+        # 3x 1y.  however, I'll use the logic which MVP OS 3.5 uses
+        # (see BPMVP42D).
         secData = self._wvd.getRawSector(self._platter, start + 1)
-        if (secData[1] & 0xF0) == 0x10:
-            return 'scrambled'
-        return 'protected'
+        if (secData[0] & 0xC0) != 0x00:
+            return 'unknown'  # header or data block flags
+        if (secData[0] & 0x10) != 0x10:
+            # this says unprotected, but the header block said the file was
+            return 'unknown'
+        if (secData[1] & 0x80) == 0x80:
+            return 'protected'
+        return 'scrambled'
 
     # this combines the index state with the file type
     def getFileStatus(self):
@@ -383,8 +397,7 @@ class WvdIndex(object):
         # type: () -> bool
         start = self.getFileStart()
         end   = self.getFileEnd()
-        return (start < end) and \
-               (end < self._wvd.numSectors()) and \
+        return (start < end < self._wvd.numSectors()) and \
                (start >= self._wvd.catalog[self._platter].numIndexSectors())
 
     # unused
@@ -460,6 +473,7 @@ class WvdIndex(object):
 # through the wvd.catalog member, so that the wvd can make sure 'catalog'
 # is always up to date, even when the disk data is being modified.
 
+# pylint: disable=useless-object-inheritance
 class Catalog(object):
     # associate the disk and catalog
     def __init__(self, wvd, p):
@@ -500,8 +514,9 @@ class Catalog(object):
         allFiles = []
         for n in self.catalogIndices():
             indexEntry = self.getIndexEntryByNumber(n)
-            if indexEntry.getIndexState() in ['valid', 'scratched']:
-                allFiles.append(indexEntry.getFilename().get())
+            if indexEntry:
+                if indexEntry.getIndexState() in ['valid', 'scratched']:
+                    allFiles.append(indexEntry.getFilename().get())
 
         # check each entry in the wildcard list for an exact match,
         # then if that fails, see if it is a wildcard and then
@@ -523,10 +538,10 @@ class Catalog(object):
                 rePat += r' *$' # allow trailing spaces
                 rePat_bytes = bytes(bytearray(rePat, 'ascii'))   # bytearray() is not hashable, and python2 barfs on 'ascii': apparently bytes() is an alias for str()
                 # loop over all filenames and find any that match
-                matched = False
+                #matched = False
                 for f in allFiles:
                     if re.match(rePat_bytes, f):
-                        matched = True
+                        #matched = True
                         if f not in nameList:
                             nameList.append(f)
                 #if not matched:
@@ -559,7 +574,6 @@ class Catalog(object):
         secData = self._wvd.getRawSector(self._platter, 0)
         secData = bytearray([newType]) + secData[1:256]
         self._wvd.setRawSector(self._platter, 0, secData)
-        return
 
     # the first N sectors hold index information.  return N.
     def numIndexSectors(self):
@@ -616,7 +630,7 @@ class Catalog(object):
     # or return None, if not found
     def getIndexEntryByName(self, name):
         # type: (WvdFilename) -> Optional[WvdIndex]
-        if 0:
+        if False:  # pylint: disable=using-constant-test
             # brute force: don't bother with hash approach
             for n in self.catalogIndices():
                 idx = self.getIndexEntryByNumber(n)
@@ -625,24 +639,23 @@ class Catalog(object):
                     (idxState in ['valid', 'scratched']):
                     return idx
             return None # not found
-        else:
-            # use hash to speed up search; important for huge catalogs
-            secs = self.numIndexSectors()            # sectors for catalog
-            hsh = self.getFilenameHash(name)         # where to start search
-            sdir = [-1, 1, 1][self.getIndexType()]   # search direction search
-            for delta in range(secs):
-                secNum = (hsh + delta*sdir) % secs
-                # scan all entries of this sector; sector 0 has only 15 entries
-                for slot in range(16 - (secNum == 0)):
-                    absSlot = 16*secNum + slot - (secNum != 0)
-                    thisSlot = self.getIndexEntry(absSlot)
-                    idxState = thisSlot.getIndexState()
-                    if idxState == 'empty':
-                        return None  # not found
-                    if (thisSlot.getFilename().get() == name.get()) and \
-                       (idxState in ['valid', 'scratched']):
-                        return thisSlot
-            return None  # searched all entries, and not found
+        # use hash to speed up search; important for huge catalogs
+        secs = self.numIndexSectors()            # sectors for catalog
+        hsh = self.getFilenameHash(name)         # where to start search
+        sdir = [-1, 1, 1][self.getIndexType()]   # search direction search
+        for delta in range(secs):
+            secNum = (hsh + delta*sdir) % secs
+            # scan all entries of this sector; sector 0 has only 15 entries
+            for slot in range(16 - (secNum == 0)):
+                absSlot = 16*secNum + slot - (secNum != 0)
+                thisSlot = self.getIndexEntry(absSlot)
+                idxState = thisSlot.getIndexState()
+                if idxState == 'empty':
+                    return None  # not found
+                if (thisSlot.getFilename().get() == name.get()) and \
+                   (idxState in ['valid', 'scratched']):
+                    return thisSlot
+        return None  # searched all entries, and not found
 
     # raise an error if the index is too large
     def setIndexEntry(self, n, record):
@@ -657,7 +670,7 @@ class Catalog(object):
         self._wvd.setRawSector(self._platter, sec, secData)
 
     def getFile(self, name):
-        # type: (WvdFilename) -> CatalogFile
+        # type: (WvdFilename) -> Optional[CatalogFile]
         assert self.hasCatalog()
         if self.getIndexEntry(name) is None:
             return None
@@ -769,14 +782,15 @@ class Catalog(object):
 # these objects return status about a file in a catalog.
 # if the disk state is changed, the object may become stale.
 
+# pylint: disable=useless-object-inheritance
 class CatalogFile(object):
     # given a filename, return a CatalogFile object
     def __init__(self, cat, filename):
         # type: (Catalog, WvdFilename) -> None
         self._name    = filename
         self._cat     = cat
-        self._wvd     = cat._wvd      # this grubbing is pretty ugly
-        self._platter = cat._platter  # this grubbing is pretty ugly
+        self._wvd     = cat._wvd      # pylint: disable=protected-access; # this grubbing is pretty ugly
+        self._platter = cat._platter  # pylint: disable=protected-access; # this grubbing is pretty ugly
         self._index   = cat.getIndexEntry(filename)
         self._valid   = (self._index is not None)
 
@@ -853,12 +867,35 @@ class CatalogFile(object):
             return None
         used = self.getUsed()
         sectors = []
+        # TODO: really, assert? rather than crashing, report an error
         assert self.fileControlRecordIsPlausible()
         # used-1 because one sector is used for holding the used sector count
         for sec in range(start, start+used-1):
             secData = self._wvd.getRawSector(self._platter, sec)
             sectors.append(secData)
         return sectors
+
+    # rewrite sectors of a file
+    def setSectors(self, blocks):
+        # type: (List[bytearray]) -> ()
+        assert self._index.getIndexState() == 'valid'
+        assert self.getType() == 'P'
+        start = self.getStart()
+        end   = self.getEnd()
+        if end < start:
+            print("%s: bad file extent information" % self._name)
+            return
+        if end >= self._wvd.numSectors():
+            print("%s: bad file extent information" % self._name)
+            return
+        # TODO: really, assert? rather than crashing, report an error
+        assert self.fileControlRecordIsPlausible()
+        used = self.getUsed()
+        # used-1 because one sector is used for holding the used sector count
+        for sec in range(start, start+used-1):
+            if sec-start > len(blocks): break
+            self._wvd.setRawSector(self._platter, sec, blocks[sec-start])
+        return
 
 ############################## helpers ##############################
 
@@ -916,6 +953,7 @@ def checkPlatter(wvd, p, report):
 #       h. the file extent doesn't overlap that of any other file
 #
 # check that the catalog parameter block is sane
+# pylint: disable=too-many-statements, too-many-branches, too-many-locals
 def checkCatalogIndexes(wvd, p, report):
     # type: (WangVirtualDisk, int, bool) -> bool
     if wvd.numPlatters() > 1:
@@ -1081,7 +1119,7 @@ def checkCatalog(wvd, p, report):
     # step through each catalog entry
     for name in platter.allFilenames():
         indexEntry = platter.getIndexEntry(name)
-        if indexEntry is not None:
+        if indexEntry:
             bad = checkFile(wvd, p, name, report)
             if bad:
                 failures = True
@@ -1093,6 +1131,7 @@ def checkCatalog(wvd, p, report):
 # This is used both by the "check" command, and it gets called
 # by the "catalog" command to indicate after each entry whether
 # it appears to be valid.
+# pylint: disable=too-many-return-statements
 def checkFile(wvd, p, cat_fname, report):
     # type: (WangVirtualDisk, int, WvdFilename, bool) -> bool
 
@@ -1163,37 +1202,42 @@ def checkFile(wvd, p, cat_fname, report):
 #
 def checkProgramFile(wvd, p, cat_fname, indexEntry, report):
     # type: (WangVirtualDisk, int, WvdFilename, WvdIndex, bool) -> bool
+    # TODO: really, assert? rather than crashing, report an error
     assert indexEntry.fileControlRecordIsPlausible()  # because we use "used"
-    hdr_fname = indexEntry.getFilename()
     start = indexEntry.getFileStart()
     used  = indexEntry.getFileUsedSectors()
 
-    if indexEntry.programSaveMode() == 'scrambled':
-        return False  # assume it is OK
-
     str_fname = cat_fname.asStr()
+    protected = 0x00  # until proven otherwise
 
     # the used value includes the last sector of the allocated file,
     # so it shouldn't be counted (the -1 below)
     for s in range(used-1):
         sec = start + s
         secData = wvd.getRawSector(p, sec)
+
+        if (s > 0) and protected:
+            # if it is scrambled and not just SAVE"P",
+            # unscramble it so we can verify the contents
+            if (secData[1] & 0x80) == 0x00:
+                secData = unscramble_one_sector(secData)
+
         if s == 0:
             # first sector
             first_sector = True
             terminator_byte = 0xFD
             protected = (secData[0] & 0x10)  # 0x10 if "SAVE P" file
             expected = 0x40 | protected
-        elif s == (used-2):
-            # last sector
-            first_sector = False
-            terminator_byte = 0xFE
-            expected = 0x20 | protected
-        else:
+        elif s < (used-2):
             # middle sector
             first_sector = False
             terminator_byte = 0xFD
             expected = 0x00 | protected
+        else:
+            # last sector
+            first_sector = False
+            terminator_byte = 0xFE
+            expected = 0x20 | protected
 
         # the first byte of each sector identifies the type of data it contains
         if (secData[0] & 0xf0) != expected:
@@ -1235,12 +1279,13 @@ def checkProgramHeaderRecord(cat_fname, sec, secData, report):
 
 # check the body record of a program file.
 # return True on error, False if no errors.
+# pylint: disable=too-many-return-statements, too-many-branches
 def checkProgramBodyRecord(cat_fname, sec, secData, terminator_byte, report):
     # type: (WvdFilename, int, bytearray, int, bool) -> bool
     cat_str_fname = cat_fname.asStr()
 
     # each record must have a terminator byte (0xFD or 0xFE)
-    pos = secData.find(bytearray([terminator_byte]))
+    pos = secData.find(terminator_byte)
     if pos < 0:
         if report: print("%s (sector %d) does not contain a 0x%02X terminator byte" \
                             % (cat_str_fname, sec, terminator_byte))
@@ -1327,10 +1372,11 @@ def valid_bcd_byte(ch):
 #  last sector of allocated file: 0xa0 nnnn (nnnn = # of sectors in use)
 #
 # TODO: it shouldn't be too hard to parse the data fields to validate the contents
+# pylint: disable=too-many-return-statements, too-many-branches
 def checkDataFile(wvd, p, cat_fname, indexEntry, report):
     # type: (WangVirtualDisk, int, WvdFilename, WvdIndex, bool) -> bool
+    # TODO: really, assert? rather than crashing, report an error
     assert indexEntry.fileControlRecordIsPlausible()
-    hdr_fname = indexEntry.getFilename()
     start     = indexEntry.getFileStart()
     used      = indexEntry.getFileUsedSectors()
 
@@ -1398,6 +1444,7 @@ def checkDataFile(wvd, p, cat_fname, indexEntry, report):
 #    2) the data associated with the SOV byte is consistent
 #    3) there is a terminator byte immediately after some value
 # returns True on error, False if it is OK
+# pylint: disable=too-many-branches
 def checkDataRecord(cat_fname, secnum, secData, report):
     # type: (WvdFilename, int, bytearray, bool) -> bool
     str_fname = cat_fname.asStr()
@@ -1413,6 +1460,7 @@ def checkDataRecord(cat_fname, secnum, secData, report):
                 return True
             fp = secData[cp+1 : cp+9]
             # make sure all digits are BCD
+            # pylint: disable=too-many-boolean-expressions
             if not valid_bcd_byte(fp[1] & 0x0F) or \
                not valid_bcd_byte(fp[1]) or \
                not valid_bcd_byte(fp[2]) or \
@@ -1465,6 +1513,7 @@ def checkDataRecord(cat_fname, secnum, secData, report):
 #                          because there is no header record)
 #   "data_fragment"    -- a part of a data file
 
+# pylint: disable=too-many-locals, too-many-branches, too-many-statements
 def guessFiles(blocks, abs_sector):
     # type: (List[bytearray], int) -> List[Dict[str, Any]]
 
@@ -1653,7 +1702,7 @@ def guessFiles(blocks, abs_sector):
         if state == st_unknown:
             if valid_pgm_hdr:
                 fileinfo['first_record'] = secnum
-                fileinfo['filename'] = secData[1:9]
+                fileinfo['filename'] = secData[1:9]   # bytearray
                 state = st_pgm_hdr
                 if func_dbg: print("unknown: -> pgm_hdr")
                 continue  # on to next sector
@@ -1690,3 +1739,85 @@ def guessFiles(blocks, abs_sector):
             if func_dbg: print("unknown: at a loss; ignoring this sector")
 
     return files
+
+########################################################################
+# unscramble a single sector of data. if the incoming data isn't scrambled,
+# this routine will mess it up. the incoming data is unaffected and the
+# function returns a new block.
+#
+# the algorithm is extracted from the DCRYPT routine of Wang MVP OS 3.5.
+# this function doesn't implement the tweak for "wrap mode" files.
+
+def unscramble_one_sector(block):
+    # type: (bytearray) -> bytearray
+
+    assert len(block) == 256
+    sector = bytearray(block)  # make a copy
+
+    byte0 = sector[0]
+    byte1 = sector[1]
+
+    # The pass 1 key is in byte 5, 25, 45, or 65
+    # depending on the two middle coded bits of the 2nd byte
+    offset = (byte1 & 0x60) + 5
+    key = sector[offset]
+
+    sector[0] = (byte0 & 0xF0) | ((byte1 & 0xF0) >> 4)       # new control byte
+    sector[1] = key                                          # save key
+    sector[offset] = ((byte0 & 0x0F) << 4) | (byte1 & 0x0F)  # replace key byte
+
+    ### DECRYPT PASS 2
+
+    offset = 0x100-0x22     # point to pass 2 seed
+    endidx = offset         # terminate the loop at the seed location
+    pair = (sector[offset] << 8) | sector[offset + 1]  # pass 2 seed
+
+    # the starting location for loop
+    offset = (offset + 26)   # 248 = 0xF8
+
+    while offset != endidx:
+        # rotate previous pair left one bit, then swap the middle nibbles
+        seed = ((pair << 1) | (pair >> 15)) & 0xFFFF
+        nibs = (seed & 0xF00F) | ((seed & 0x00F0) << 4) | ((seed & 0x0F00) >> 4)
+
+        # fetch next pair of bytes
+        pair = (sector[offset] << 8) | sector[offset + 1]
+
+        # transform bytes and write them out
+        tmp = (pair + (0xffff ^ nibs))   # or tmp = (pair - nibs - 1)
+        sector[offset]     = (tmp >> 8) & 0xff
+        sector[offset + 1] = (tmp     ) & 0xff
+
+        # increment and wrap, skipping bytes 0 & 1
+        offset += 26
+        if offset >= 256:
+            offset = (offset + 2) & 0xff
+
+    ### DECRYPT PASS 1
+
+    offset = 0x22         # starting offset for loop
+    endidx = 0            # stop when we get here
+    pair   = sector[1]    # pass 1 seed
+
+    while offset != endidx:
+        # rotate previous pair left one bit, then swap the middle nibbles
+        seed = ((pair << 1) | (pair >> 15)) & 0xFFFF
+        nibs = (seed & 0xF00F) | ((seed & 0x00F0) << 4) | ((seed & 0x0F00) >> 4)
+
+        # fetch next pair of bytes
+        pair = (sector[offset] << 8) | sector[offset + 1]
+
+        # transform bytes and write them out
+        tmp = (pair + (0xffff ^ nibs))   # or tmp = (pair - nibs - 1)
+        sector[offset]     = (tmp >> 8) & 0xff
+        sector[offset + 1] = (tmp     ) & 0xff
+
+        # increment and wrap
+        offset = (offset + 34) & 0xFF
+
+    # reconstruct first two bytes
+    byte0 = sector[0]
+    sector[0] = byte0 & 0xF0            # high half only
+    sector[1] = 0xFE | (byte0 & 0x01)   # FE or FF
+
+    return sector

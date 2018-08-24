@@ -1,17 +1,46 @@
 Jim Battle
-January 1, 2018
+August 24, 2018
 
-Version 1.5 of wvdutil was developed under Windows 7, and should be compatible
-with both Python 2.7 and Python 3.6.  It should run on other platforms, but it
+Version 1.6 of wvdutil was developed under Windows 7, and should be compatible
+with both Python 2.7 and Python 3.7.  It should run on other platforms, but it
 hasn't been tested.
 
-wvdutil_1.5.zip contains the main program, wvdutil.py, and some library
+wvdutil_1.6.zip contains the main program, wvdutil.py, and some library
 routines in wvdlib.py and wvfilelist.py.
 
 It also contains wvdutil.exe.  This is a single-file binary which contains
-a python interpreted and the wvdutil soure all bundled together.  This is
+a python interpreted and the wvdutil source all bundled together.  This is
 useful if you don't have python already installed on your machine.  However,
 it is actually slower to start up than running the python script.
+
+Running linting tools:
+
+    There are a few tools you can run to get feedback on code quality.
+    Not all warnings have been quashed for various reasons, a big one
+    being py2/3 compatibility, and another being I'm OK with having
+    a larger number of lines per function than the linter does.
+
+    (1) pep8 wvdutil.py   (or wvdlib.py, or wvfilelist.py)
+    (2) pylint wvdutil.py (or wvdlib.py, or wvfilelist.py)
+    (3) mypy wvdutil.py   (or wvdlib.py, or wvfilelist.py)   (type checker)
+
+New features in version 1.6:
+
+    - added a new command "source <filename>" which can dump the contents
+      of source code saved by the internal Wang EDIT tool.
+
+    - added ability to list and unprotect program files which were saved
+      in scrambled (SAVE !) format
+
+    - fixed a bug where running "<somecommand> | more" would always crash
+      when using python3.  it worked fine with python2.
+
+    - with python3, dumping data files contained "bytearray(...)" spew
+
+    - after installing an updated version of python (3.7), pylint, and mypy,
+      some new warnings were addressed.  some were left to fester because
+      cleaning them up isn't worth it (eg, class(object) isn't necessary
+      in python3, but this code runs in python2 as well)
 
 New features in version 1.5:
 
