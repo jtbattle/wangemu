@@ -204,7 +204,7 @@ to /310.
 
 <h2><a name="initialize">Initialize a Disk</a></h2>
 
-<p class="code">SCRATCH DISK {F|R} [/<i>dev</i>] [LS=<i>m</i>,] END=<i>n</i></p>
+<p class="code">SCRATCH DISK {F|R} [/<i>dev</i>,] [LS=<i>m</i>,] END=<i>n</i></p>
 
 <p>
 After a new disk has been created or reformatted, all the sectors will
@@ -251,7 +251,7 @@ it is like that fewer files can be held, as there is a hash that maps which
 sector a given filename will be stored.
 </p>
 
-<p class="code">SCRATCH DISK F/320 LS=4, END=300</p>
+<p class="code">SCRATCH DISK F/320, LS=4, END=300</p>
 <p>
 This is like the last one, except it is the first drive of the disk controller
 at address /320.
@@ -351,7 +351,7 @@ You can't save a program using a name that is already on the disk.
 <h3>Examples:</h3>
 
 <p class="code">SAVE DC F "PRIMES"</p>
-<p class="code">SAVE DC F /320, "PRIMES"</p>
+<p class="code">SAVE DC F/320, "PRIMES"</p>
 <p class="code">SAVE DC R "PRIMES"</p>
 
 <h2><a name="erase">Erase a Program from the Disk</a></h2>
@@ -372,8 +372,8 @@ SCRATCH'd programs get removed via a MOVE operation.
 <h3>Examples:</h3>
 
 <p class="code">SCRATCH F "FOOTBALL"</p>
-<p class="code">SCRATCH F /320, "PRIMES"</p>
-<p class="code">SCRATCH R /330, "BACKUP"</p>
+<p class="code">SCRATCH F/320, "PRIMES"</p>
+<p class="code">SCRATCH R/330, "BACKUP"</p>
 
 <h2><a name="housekeeping">Housekeeping</a></h2>
 
@@ -420,7 +420,7 @@ to another disk in the second drive, issue the command
 </div>
 
 <div id="footer">
-    <p>Last update:December 12, 2008</p>
+    <p>Last update:June 2, 2018</p>
 </div>
 
 </div>
