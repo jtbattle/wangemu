@@ -744,7 +744,6 @@ void
 IoCardDisk::tcbSector(int arg)
 {
     int drive = arg;
-    int prev_sec;
 
     assert(drive >= 0 && drive < numDrives());
     assert(m_d[drive].tmr_sector != nullptr);
@@ -757,10 +756,10 @@ IoCardDisk::tcbSector(int arg)
     m_d[drive].tmr_sector = m_scheduler->TimerCreate(
                                     m_d[drive].ticks_per_sector,
                                     [&, drive](){ tcbSector(drive); } );
-    assert(m_d[m_drive].tmr_sector != nullptr);
+    assert(m_d[drive].tmr_sector != nullptr);
 
     // advance to next sector, mod sectors per track
-    prev_sec = m_d[drive].sector;
+    int prev_sec = m_d[drive].sector;
     m_d[drive].sector++;
     if (m_d[drive].sector >= m_d[drive].sectors_per_track) {
         m_d[drive].sector = 0;
