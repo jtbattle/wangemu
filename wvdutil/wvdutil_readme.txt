@@ -1,5 +1,5 @@
 Jim Battle
-August 24, 2018
+September 15, 2018
 
 Version 1.6 of wvdutil was developed under Windows 7, and should be compatible
 with both Python 2.7 and Python 3.7.  It should run on other platforms, but it
@@ -20,17 +20,16 @@ Running linting tools:
     being py2/3 compatibility, and another being I'm OK with having
     a larger number of lines per function than the linter does.
 
-    (1) pep8 wvdutil.py   (or wvdlib.py, or wvfilelist.py)
-    (2) pylint wvdutil.py (or wvdlib.py, or wvfilelist.py)
-    (3) mypy wvdutil.py   (or wvdlib.py, or wvfilelist.py)   (type checker)
+    (1) pep8 wvdutil.py
+    (2) pylint wvdutil.py
+    (3) mypy wvdutil.py     (type checker)
 
 New features in version 1.6:
 
-    - added a new command "source <filename>" which can dump the contents
-      of source code saved by the internal Wang EDIT tool.
-
     - added ability to list and unprotect program files which were saved
       in scrambled (SAVE !) format
+
+    - added the ability to list text files saved by the EDIT editor
 
     - when listing programs, tokens are expanded only in some contexts,
       ala BASIC-2. Tokens aren't expanded inside quotes, image statements,
@@ -42,9 +41,11 @@ New features in version 1.6:
     - with python3, dumping data files contained "bytearray(...)" spew
 
     - after installing an updated version of python (3.7), pylint, and mypy,
-      some new warnings were addressed.  some were left to fester because
-      cleaning them up isn't worth it (eg, class(object) isn't necessary
-      in python3, but this code runs in python2 as well)
+      some new warnings were addressed.
+
+    - the program was significantly restructured to make checking/listing
+      different file formats more regular.  there is still a lot of accreted
+      cruft.
 
 New features in version 1.5:
 

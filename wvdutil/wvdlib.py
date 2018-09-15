@@ -12,7 +12,7 @@
 #     made it python 2/3 compatible
 #     using bytearray data instead of character strings
 #     pylint cleanups, mypy type annotation
-# Version: 1.6, 2018/08/24, JTB
+# Version: 1.6, 2018/09/15, JTB
 #     added function to handle unscrambling a scrambled sector
 #     pylint cleanups
 
@@ -72,8 +72,9 @@ class WangVirtualDisk(object):
         self._dirty = False   # contents modified from on-disk version
         self._filename = None # type: str  # host filename of wvd file
         self.sector = []      # type: List[bytearray]
-        self.head_dat = []    # type: bytearray
-        self.catalog = []     # one entry per platter
+        self.head_dat = bytearray()
+        self.catalog = []     # TODO: ttype: List[Catalog] -- enabling this causes tons of warnings
+                              # one entry per platter
 
     # returns True if the in-memory disk image has been modified
     def isDirty(self):
@@ -211,10 +212,10 @@ class WangVirtualDisk(object):
         self._dirty = True
 
 ########################################################################
-# this is a very simple class which is exists mostly to give the mypy
-# type checker something to do.  that is, the wvd filenames are passed
-# around as bytearray()s of length 8. but other bytearrays are being
-# passed around, so this allows us to tag which type we are dealing with.
+# this is a very simple class which is exists mostly to give the mypy type
+# checker something to work with.  that is, the wvd filenames are passed
+# around as bytearray()s of length 8. other bytearrays are being passed
+# around, so this allows us to tag which type we are dealing with.
 
 # pylint: disable=useless-object-inheritance
 class WvdFilename(object):
@@ -292,6 +293,10 @@ class WvdIndex(object):
             return 'valid'
         if val == 0x11:
             return 'scratched'
+        # TODO: comletter october 1979 No. 8 has a small article called
+        # "2200 Disk Catalog Index Structure". it says 0x21 indicates a
+        # formerly scratched file has had its reserved sectors reclaimed.
+        # study this more and see how it affects this program.
         if val == 0x21:
             return 'invalid'
         return 'unknown'
@@ -333,6 +338,7 @@ class WvdIndex(object):
     # or not returns "normal", "protected", or "scrambled".  if it isn't a
     # program file or the control bytes aren't consistent, "unknown" is
     # returned.
+    # pylint: disable=too-many-return-statements
     def programSaveMode(self):
         # type: () -> str
         if self.getFileType() != 'P':
@@ -364,12 +370,12 @@ class WvdIndex(object):
 
     # this combines the index state with the file type
     def getFileStatus(self):
-        # type: () -> Optional[str]
+        # type: () -> str
         idxState = self.getIndexState()
-        if idxState == 'empty':
-            return  None # this index is unused
         if idxState == 'invalid':
-            return  None # this index was used, but is now invalid
+            return  'error' # this index is unused
+        if idxState == 'invalid':
+            return  'invalid' # this index was used, but is now invalid
         if idxState == 'valid':
             return ' ' + self.getFileType()  # append P or D
         if idxState == 'scratched':
@@ -397,6 +403,7 @@ class WvdIndex(object):
         # type: () -> bool
         start = self.getFileStart()
         end   = self.getFileEnd()
+        # pylint: disable=chained-comparison
         return (start < end < self._wvd.numSectors()) and \
                (start >= self._wvd.catalog[self._platter].numIndexSectors())
 
@@ -438,9 +445,9 @@ class WvdIndex(object):
         if filetype == 'P':
             valid_prefix = (0x20,)  # type: Tuple[int,...]
         elif filetype == 'D':
-            valid_prefix = (0xA0,)
+            valid_prefix = (0xa0,)
         else:
-            valid_prefix = (0x20, 0xA0)  # be generous and allow either
+            valid_prefix = (0x20, 0xa0)  # be generous and allow either
         secData = self._wvd.getRawSector(self._platter, end)
         return (used <= (end-start+1)) and \
                ((secData[0] & 0xF0) in valid_prefix)
@@ -608,14 +615,19 @@ class Catalog(object):
         # type: (Union[int,WvdFilename]) -> WvdIndex
         assert self.hasCatalog()
         if isinstance(n, WvdFilename):
-            return self.getIndexEntryByName(n)
+            rv = self.getIndexEntryByName(n)
+            if rv is not None:
+                return rv
         if isinstance(n, int):
-            return self.getIndexEntryByNumber(n)
+            rv = self.getIndexEntryByNumber(n)
+            if rv is not None:
+                return rv
         raise ProgramError
 
     # return an index object for the n-th catalog slot.
     # numbering starts at 0
     # return None if the index is too large.
+    # the first slot of sector 0 is disk metadata, which is why (n+1) is used.
     def getIndexEntryByNumber(self, n):
         # type: (int) -> Optional[WvdIndex]
         sec  = (n+1) // 16  # which index sector
@@ -725,7 +737,6 @@ class Catalog(object):
             sdir =  1  # new index overflows to next bucket
 
         # get which sector to try first
-# X2: bytearray
         hsh = self.getFilenameHash(entry.getFilename())
 
         # try to insert it into all sectors in the index until it fits in one
@@ -777,6 +788,21 @@ class Catalog(object):
             else:
                 hash_val += c
         return hash_val % 256
+
+    # return True if the given catalog index bucket is full for sector 'secnum'
+    # it is a bit fiddly because sector 0 has indexes 0..14, sec 1 has 15..30
+    def isIndexBucketFull(self, secnum):
+        # type: (int) -> bool
+        if secnum == 0:
+            first, last = 0, 14
+        else:
+            first, last = (16*secnum-1), (16*secnum + 14)
+        for n in range(first, last+1):
+            indexEntry = self.getIndexEntryByNumber(n)
+            if (indexEntry is not None) and \
+               (indexEntry.getIndexState() == 'empty'):
+                return False
+        return True
 
 ############################ CatalogFile Object ############################
 # these objects return status about a file in a catalog.
@@ -917,437 +943,6 @@ def intToBytes3(val):
     # type: (int) -> bytearray
     return bytearray([val // 65536, (val // 256) % 256, val % 256])
 
-def padName(name):
-    # type: (bytearray) -> bytearray
-    '''Takes a bytearray filename string and pads it to 8 spaces.'''
-    assert len(name) < 9
-    name += bytearray([ord(' ')]) * (8 - len(name))
-    return name
-
-############################ checkPlatter ############################
-# ad-hoc check of disk integrity
-# if report = 1, report warnings on stdout
-# return False if things are OK; return True if errors
-
-def checkPlatter(wvd, p, report):
-    # type: (WangVirtualDisk, int, bool) -> bool
-    x = checkCatalogIndexes(wvd, p, report)
-    if x: return x
-    if wvd.catalog[p].hasCatalog():
-        x = checkCatalog(wvd, p, report)
-        if x: return x
-    return False
-
-# check the catalog index for internal consistency.
-# the actual file contents are not checked.
-#   (1) check that there is an index at all
-#   (2) check that the disk parameter block is reasonable
-#   (3) check that the index entries are valid
-#       a. file status (unused, valid, scratched, or invalid),
-#       b. file type (program, data)
-#       c. check that the filename consists of reasonable characters
-#       d. check that there are no duplicate file names
-#       e. the file name is hashed into the right location
-#       f. check that there are no gaps in the sequence of indexes
-#       g. location of file extent makes sense
-#       h. the file extent doesn't overlap that of any other file
-#
-# check that the catalog parameter block is sane
-# pylint: disable=too-many-statements, too-many-branches, too-many-locals
-def checkCatalogIndexes(wvd, p, report):
-    # type: (WangVirtualDisk, int, bool) -> bool
-    if wvd.numPlatters() > 1:
-        desc = 'Platter %d' % (p+1)
-    else:
-        desc = 'The disk'
-
-    # -- (1) check that there is an index at all
-    platter = wvd.catalog[p]
-    if platter.numIndexSectors() == 0:
-        if report: print("%s has no catalog" % desc)
-        return False
-
-    # -- (2) check that the disk parameter block is reasonable
-    if platter.numIndexSectors() >= wvd.numSectors():
-        if report: print("%s reports an index that larger than the disk" % desc)
-        return True
-    if platter.endCatalogArea() >= wvd.numSectors():
-        if report: print("%s reports a last catalog sector that is larger than the disk size" % desc)
-        return True
-    if platter.endCatalogArea() <= platter.numIndexSectors():
-        if report: print("%s reports a last catalog sector that is inside the catalog index area" % desc)
-        return True
-    if platter.currentEnd() > platter.endCatalogArea():
-        if report: print("%s supposedly has more cataloged sectors in use than available" % desc)
-        return True
-
-    # record the extent of each file so we can check for overlap
-    # we could simply use an array with one entry for each sector,
-    # but that is wasteful for large disks.
-    # each entry is a hash of ('name', 'start', 'end'), containing the
-    # file name and its first and last sector extent.
-    extent_list = []  # type: List[Dict[str, Union[str,int]]]
-
-    # keep track of the valid and scratched file names
-    live_names = {}  # type: Dict[str, bool]
-
-    # note if any problems have been noted on this platter
-    any_problems = False
-
-    for secnum in range(platter.numIndexSectors()):
-
-        found_problems = False  # any problems on this sector
-        prev_slot_empty = False
-
-        for slot in range(16):
-            if secnum == 0 and slot == 0: continue  # first sector has 15, not 16 entries
-            index_slot = secnum*16 + slot - 1
-            indexEntry = platter.getIndexEntryByNumber(index_slot)
-            indexState = indexEntry.getIndexState()
-            fname = indexEntry.getFilename()
-            (file_start, file_end) = indexEntry.getFileExtent()
-            str_fname = fname.asStr()
-
-            # -- (3a) check file status (unused, valid, scratched, or invalid),
-            if indexState == 'unknown':
-                if report: print("Sector %d, entry %d has unknown file state %s, filename '%s'" \
-                                    % (secnum, slot, indexEntry.getIndexStateNumber(), str_fname))
-                found_problems = True
-                continue
-            if indexState == 'empty':
-                prev_slot_empty = True
-                continue
-
-            # -- (3b) check file type (program, data)
-            fileType = indexEntry.getFileType()
-            if fileType == '?':
-                if report: print("Sector %d, entry %d has unknown file type %s (should be 0x00 or 0x80)" \
-                                    % (secnum, slot, indexEntry.geFileTypeNumber()))
-                found_problems = True
-                continue
-
-            # -- (3c) check that the filename consists of reasonable characters
-            suspect_name = False
-            for ch in fname.get():
-                suspect_name = suspect_name or ch < 0x20 or ch >= 0x80
-            if suspect_name:
-                if report: print("(warning) suspect fileame '%s'" % str_fname)
-
-            # -- (3d) check for duplicate file names in the list of
-            #         valid and scratched files.
-            if indexState in ['valid', 'scratched']:
-                if str_fname in live_names:
-                    found_problems = True
-                    if report: print("Sector %d, entry %d has unknown file state %s, filename '%s'" \
-                                        % (secnum, slot, indexEntry.getIndexStateNumber(), str_fname))
-                    continue
-                live_names[str_fname] = True
-
-            # -- (3e) check the file name is hashed into the right location
-# X3: str
-            hsh = platter.getFilenameHash(fname) % platter.numIndexSectors()
-            if hsh != secnum:
-                if report: print("'%s' filed in index sector %d, but it should be in sector %d" \
-                                          % (str_fname, secnum, hsh))
-                found_problems = True
-                continue
-
-            # -- (3f) check that there are no gaps in the sequence of indexes.
-            #         entries are filled from the first slot to the last,
-            #         so once there is an empty slot, all remaining slots in
-            #         the current sector should be empty as well.
-            if prev_slot_empty:
-                if report: print("File '%s' has index at sector %d, entry %d, but it follows an empty index slot" % \
-                            (str_fname, secnum, slot))
-                found_problems = True
-                continue
-
-            # no further checks if this entry has been invalidated
-            if indexState == 'invalid':
-                continue
-
-            # -- (3g) check location of file extent makes sense
-            #print("Current: %s (%d,%d)" % (str_fname, file_start, file_end))
-            if file_start < platter.numIndexSectors():
-                if report: print("%s starts at sector %d, which is inside the catalog index" \
-                            % (str_fname, file_start))
-                found_problems = True
-                continue
-            if file_end < file_start:
-                if report: print("%s ends (%d) before it starts (%d)" % (str_fname, file_end, file_start))
-                found_problems = True
-                continue
-            if file_end >= wvd.numSectors():
-                if report: print("%s is off the end of the disk (%d > %d)" % (str_fname, file_end, wvd.numSectors()))
-                found_problems = True
-                continue
-
-            # -- (3h) check the file extent doesn't overlap that of any other file
-            current = { 'name' : str_fname, 'start' : file_start, 'end' : file_end }
-            #print("current: %s (%d,%d)" % (current['name'], current['start'], current['end']))
-            overlap = False
-            for old in extent_list:
-                #print("old:     %s (%d,%d)" % (old['name'], old['start'], old['end']))
-                if (old['start'] <= current['start'] <= old['end']) or \
-                   (old['start'] <= current['end']   <= old['end']):
-                    if report: print("file extent of %s (%d,%d) overlaps that of %s (%d,%d)" \
-                            % (current['name'], current['start'], current['end'], old['name'], old['start'], old['end']))
-                    overlap = True
-            extent_list.append(current)
-            if overlap:
-                found_problems = True
-                continue
-
-            # -- done with step 3
-
-        # end checking this sector of this platter
-        any_problems = any_problems or found_problems
-
-    # all catalog index sectors have been checked
-    return any_problems
-
-# step through and verify each entry of a catalog on the indicated platter.
-# returns True if there are errors.
-# this might return garbage if the catalog index isn't valid, so this
-# should be called only if checkCatalogIndexes() shows no problems.
-def checkCatalog(wvd, p, report):
-    # type: (WangVirtualDisk, int, bool) -> bool
-
-    platter = wvd.catalog[p]
-    failures = False
-
-    # step through each catalog entry
-    for name in platter.allFilenames():
-        indexEntry = platter.getIndexEntry(name)
-        if indexEntry:
-            bad = checkFile(wvd, p, name, report)
-            if bad:
-                failures = True
-
-    return failures
-
-# check the structure of an individual file.
-# returns True if there are errors.
-# This is used both by the "check" command, and it gets called
-# by the "catalog" command to indicate after each entry whether
-# it appears to be valid.
-# pylint: disable=too-many-return-statements
-def checkFile(wvd, p, cat_fname, report):
-    # type: (WangVirtualDisk, int, WvdFilename, bool) -> bool
-
-    indexEntry = wvd.catalog[p].getIndexEntry(cat_fname)
-    if indexEntry is None:
-        print("Platter %d: %s: not found" % (p, cat_fname))
-        return True
-
-    str_fname = cat_fname.asStr()
-
-    if not indexEntry.fileControlRecordIsPlausible():
-        if report: print("%s doesn't have a plausible file control record" % str_fname)
-        return True
-
-    # used must be fetched only after fileControlRecordIsPlausible() check
-    # as it is located in the last sector of the sectors allocated for the file
-    start = indexEntry.getFileStart()
-    end   = indexEntry.getFileEnd()
-    used  = indexEntry.getFileUsedSectors()
-
-    # both data and program files use the last sector to indicate
-    # how many sectors are used
-    if start+used-1 > end:
-        if report: print("%s's end block claims %d sectors used, but only %d allocated" % \
-            (str_fname, used, end-start+1))
-        return True
-
-    # do program or data file specific checks
-    fileType = indexEntry.getFileType()
-    if fileType == 'P':
-        x = checkProgramFile(wvd, p, cat_fname, indexEntry, report)
-        if x: return x
-    elif fileType == 'D':
-        x = checkDataFile(wvd, p, cat_fname, indexEntry, report)
-        if x: return x
-    else:
-        if report: print("%s has unknown file type" % str_fname)
-        return True
-
-    return False
-
-# inspect the sectors of a program file to make sure they are consistent
-# and look like a program.  return True on error, False if no errors.
-#
-# check that the control byte of each sector matches what is expected,
-# and that if the program is protected, that flag is consistent.
-# the first sector is 0x40, middle sectors are 0x00, final sector is 0x20
-#
-#    a) the first sector is the header.  the first byte is 0x40 if it is
-#       an ordinary file, or 0x50 if it is a protected file.  the next
-#       eight bytes are the filename, which should match what is stored
-#       in the catalog, if the catalog is in use.  the next byte must be
-#       0xFD (EOB, end of block).
-#    b) the middle sectors start with 0x00 if normal program files, or 0x10
-#       if protected.  there are some number of bytes encoding one or more
-#       program lines, but they are marked by a 0xFD (EOB).  we probably
-#       don't care to parse the program, but we can make a few checks:
-#          * the first few bytes are of the form FF ab cd, where 0xFF is the
-#            "line number" token, and abcd are BCD digits.
-#          * lines end with 0D 00 00, so check for 00 00 after any 0D
-#          * the end of block is 0xFD, and immediately follows 0D 00 00
-#       the middle sector type is optional; short programs will have only
-#       the header sector and a trailer sector.
-#    c) the trailer sector starts with 0x20 for normal programs, and 0x30
-#       if protected.  the constitution is the same as described as for
-#       intermediate sectors, except that rather than terminating with a
-#       0xFD (EOB), it is terminated with 0xFE (EOD, end of data)
-#
-def checkProgramFile(wvd, p, cat_fname, indexEntry, report):
-    # type: (WangVirtualDisk, int, WvdFilename, WvdIndex, bool) -> bool
-    # TODO: really, assert? rather than crashing, report an error
-    assert indexEntry.fileControlRecordIsPlausible()  # because we use "used"
-    start = indexEntry.getFileStart()
-    used  = indexEntry.getFileUsedSectors()
-
-    str_fname = cat_fname.asStr()
-    protected = 0x00  # until proven otherwise
-
-    # the used value includes the last sector of the allocated file,
-    # so it shouldn't be counted (the -1 below)
-    for s in range(used-1):
-        sec = start + s
-        secData = wvd.getRawSector(p, sec)
-
-        if (s > 0) and protected:
-            # if it is scrambled and not just SAVE"P",
-            # unscramble it so we can verify the contents
-            if (secData[1] & 0x80) == 0x00:
-                secData = unscramble_one_sector(secData)
-
-        if s == 0:
-            # first sector
-            first_sector = True
-            terminator_byte = 0xFD
-            protected = (secData[0] & 0x10)  # 0x10 if "SAVE P" file
-            expected = 0x40 | protected
-        elif s < (used-2):
-            # middle sector
-            first_sector = False
-            terminator_byte = 0xFD
-            expected = 0x00 | protected
-        else:
-            # last sector
-            first_sector = False
-            terminator_byte = 0xFE
-            expected = 0x20 | protected
-
-        # the first byte of each sector identifies the type of data it contains
-        if (secData[0] & 0xf0) != expected:
-            if report: print("%s sector %d has control byte of 0x%02x; 0x%02x expected" % \
-                (str_fname, sec, secData[0] & 0xf0, expected))
-            return True
-
-        if first_sector:
-            # header record
-            if checkProgramHeaderRecord(cat_fname, sec, secData, report):
-                return True
-        else:
-            # middle or trailer program record; these contain the actual program
-            if checkProgramBodyRecord(cat_fname, sec, secData, terminator_byte, report):
-                return True
-            # TODO: check that line numbers should only increase when advancing
-            #       through the file
-
-    return False
-
-# check the first record of a program file.
-# return True on error, False if no errors.
-def checkProgramHeaderRecord(cat_fname, sec, secData, report):
-    # type: (WvdFilename, int, bytearray, bool) -> bool
-    # check the filename embedded in the first sector matches the catalog filename
-    name = secData[1:9]
-    str_cat_fname = cat_fname.asStr()
-    str_name = WvdFilename(name).asStr()
-    if str_name != str_cat_fname:
-        # this is just a warning, not an error
-        if report: print("(warning) %s header block contains a different file name, '%s'" \
-                            % (str_cat_fname, str_name))
-    # the next byte after the filename should be 0xFD
-    if secData[9] != 0xFD:
-        if report: print("%s's header record (sector %d) must have a 0xFD terminator in the 10th byte" \
-                            % (str_cat_fname, sec))
-        return True
-    return False
-
-# check the body record of a program file.
-# return True on error, False if no errors.
-# pylint: disable=too-many-return-statements, too-many-branches
-def checkProgramBodyRecord(cat_fname, sec, secData, terminator_byte, report):
-    # type: (WvdFilename, int, bytearray, int, bool) -> bool
-    cat_str_fname = cat_fname.asStr()
-
-    # each record must have a terminator byte (0xFD or 0xFE)
-    pos = secData.find(terminator_byte)
-    if pos < 0:
-        if report: print("%s (sector %d) does not contain a 0x%02X terminator byte" \
-                            % (cat_str_fname, sec, terminator_byte))
-        return True
-
-    # the terminator shouldn't be too soon -- it must follow the SOB,
-    # 0xFF <2 line number bytes) 0x0D 0x00 0x00.
-    if pos < 7:
-        if report: print("%s (sector %d) contains a 0x%02X terminator byte, but it is too soon" \
-                            % (cat_str_fname, sec, terminator_byte))
-        return True
-
-    # now scan the active part of the record.  make sure it starts
-    # with a line number, that lines are terminated with 0D 00 00,
-    # that non-final line endings are followed by another line number,
-    # and that the final line ending is followed by the terminator
-    (expect_line_num, seek_cr) = (0, 1)
-    state = expect_line_num
-    cp = 1
-    while cp < pos:
-        #print("Inspecting offset=%d, state=%d" % (cp, state))
-        if state == expect_line_num:
-            # look for line number token
-            if secData[cp] != 0xFF:
-                if report: print("%s (sector %d) didn't find a line number token, 0xFF, where expected; 0x%02X found" \
-                                    % (cat_str_fname, sec, secData[cp]))
-                return True
-            # the next two bytes contain the line number in bcd
-            if (not valid_bcd_byte(secData[cp+1])) or \
-               (not valid_bcd_byte(secData[cp+2])):
-                if report: print("%s (sector %d) should begin with a bcd line number, but found 0x%02X%02X" \
-                                    % (cat_str_fname, sec, secData[cp+1], secData[cp+2]))
-                return True
-            # found a valid line number sequence
-            cp = cp+3
-            state = seek_cr
-            continue
-
-        elif state == seek_cr:
-            # looking for the end of line
-            if secData[cp] != 0x0D:
-                cp = cp+1
-                continue
-            # found the end of line; make sure it is followed by 00 00
-            if (secData[cp+1] != 0x00) or \
-               (secData[cp+2] != 0x00):
-                if report: print("%s (sector %d) contains an EOL (0x0D) which isn't followed by 0x0000; found 0x%02X%02X" \
-                                    % (cat_str_fname, sec, secData[cp+1], secData[cp+2]))
-                return True
-            cp = cp+3
-            state = expect_line_num
-            continue
-        # end while cp<pos
-
-    # check that an end of line immediately precedes the termination byte
-    if state == seek_cr:
-        if report: print("%s (sector %d) terminated with a partial program line at offset %d" \
-                            % (cat_str_fname, sec, cp))
-        return True
-
-    return False
-
 # return True if the two nibbles are bcd
 def valid_bcd_byte(ch):
     # type: (int) -> bool
@@ -1355,390 +950,34 @@ def valid_bcd_byte(ch):
     high = ch & 0xF0
     return (low <= 0x09) and (high <= 0x90)
 
-# a data file consists of a series of records, each of which is a series
-# of sectors.  this routine doesn't parse the value stream to see if it
-# makes sense, but does some simple checks on the control bytes.
-#
-#  1st sector of file: 0x81 01  (this contains the file name)
-#
-#  1st sector of a logical record: 0x82 01
-#  2nd sector of a logical record: 0x82 02
-#  3rd sector of a logical record: 0x82 03
-#  etc.
-#  last sector of a logical record: 0x81 nn (where nn is the sector # of record)
-#
-#  last sector of active file: 0xa0  (written by DATASAVE DC END)
-#
-#  last sector of allocated file: 0xa0 nnnn (nnnn = # of sectors in use)
-#
-# TODO: it shouldn't be too hard to parse the data fields to validate the contents
-# pylint: disable=too-many-return-statements, too-many-branches
-def checkDataFile(wvd, p, cat_fname, indexEntry, report):
-    # type: (WangVirtualDisk, int, WvdFilename, WvdIndex, bool) -> bool
-    # TODO: really, assert? rather than crashing, report an error
-    assert indexEntry.fileControlRecordIsPlausible()
-    start     = indexEntry.getFileStart()
-    used      = indexEntry.getFileUsedSectors()
-
-    str_fname = cat_fname.asStr()
-
-    # the used value includes the last sector of the allocated file,
-    # so it shouldn't be counted (the -1 below)
-    state = 0
-    for s in range(0, used-1):
-        secData = wvd.getRawSector(p, start + s)
-
-        if (s == 0) and (secData[0] == 0x6a):
-            # print("%s is some kind of raw binary file; assuming OK" % str_fname)
-            return False
-
-        if state == 0:
-            # looking for either end of data or start of record
-            if (secData[0] == 0xa0) or (secData[0] == 0xa1):
-                state = 2
-            elif (secData[0] == 0x81) and (secData[1] == 0x01):
-                # this is a single sector record
-                state = 0
-            elif (secData[0] == 0x82) and (secData[1] == 0x01):
-                # this starts a multisector record; expect another sector
-                expect = 0x02
-                state = 1
-            else:
-                if report: print("%s, sector %d has bad control bytes 0x%02x%02x" % \
-                    (str_fname, start+s, secData[0], secData[1]))
-                return True
-
-        elif state == 1:
-            # expect to see next (and possibly last) sector of record
-            if secData[1] != expect:
-                if report: print("%s, sector %d expected to have sequence number 0x%02x, got 0x%02x" % \
-                    (str_fname, start+s, expect, secData[1]))
-                return True
-            if secData[0] == 0x82:
-                # expect more sectors in this logical record
-                expect += 1
-                state = 1  # that is, no change
-            elif secData[0] == 0x81:
-                # this is the last one of this record
-                state = 0  # expect either end of data or new record
-            else:
-                if report: print("%s, sector %d has bad control bytes 0x%02x%02x" % \
-                    (str_fname, start+s, secData[0], secData[1]))
-                return True
-
-        elif state == 2:
-            # we've seen the end of data marker, so there shouldn't be more
-            if report: print("%s, end-of-data marker seen before final used sector" % str_fname)
-            return True
-
-        # the control bytes are OK; now check the contents
-        if checkDataRecord(cat_fname, start+s, secData, report):
-            return True
-
-    return False
-
-
-# check if the record contents, ignoring the control bytes, appear to
-# contain a valid data record.  specifically, check that
-#    1) it contains a sequence of valid SOV bytes,
-#    2) the data associated with the SOV byte is consistent
-#    3) there is a terminator byte immediately after some value
-# returns True on error, False if it is OK
-# pylint: disable=too-many-branches
-def checkDataRecord(cat_fname, secnum, secData, report):
-    # type: (WvdFilename, int, bytearray, bool) -> bool
-    str_fname = cat_fname.asStr()
-
-    cp = 2  # skip control bytes
-    while (cp < 255) and (secData[cp] < 0xFC):
-        c = secData[cp]
-
-        if c == 0x08:  # numeric
-            if cp+1+8 > 254:  # 254 because we still need a terminator
-                if report: print("%s, sector %d, SOV indicates a number, but there aren't enough bytes left in the sector" \
-                                    % (str_fname, secnum))
-                return True
-            fp = secData[cp+1 : cp+9]
-            # make sure all digits are BCD
-            # pylint: disable=too-many-boolean-expressions
-            if not valid_bcd_byte(fp[1] & 0x0F) or \
-               not valid_bcd_byte(fp[1]) or \
-               not valid_bcd_byte(fp[2]) or \
-               not valid_bcd_byte(fp[3]) or \
-               not valid_bcd_byte(fp[4]) or \
-               not valid_bcd_byte(fp[5]) or \
-               not valid_bcd_byte(fp[6]) or \
-               not valid_bcd_byte(fp[7]):
-                if report: print("%s, sector %d, fp value has non-BCD digits" \
-                                    % (str_fname, secnum))
-                return True
-            # TODO: check for denorms, negative zero, unexpected flag bits?
-            #expSign  = (fp[0] & 0x80) != 0
-            #mantSign = (fp[0] & 0x10) != 0
-            cp += 9
-
-        elif c < 128:
-            if report: print("%s, sector %d, unexpected SOV value of 0x%02X" % (str_fname, secnum, c))
-            return True
-
-        else:
-            strlen = c-128
-            if cp+1+strlen > 254:  # 254 because we still need a terminator
-                if report: print("%s, sector %d; SOV indicates string length that doesn't fit in sector" % (str_fname, secnum))
-                return True
-            cp += 1 + strlen
-
-    # check that we ended with a terminator
-    if secData[cp] != 0xFD:
-        if report: print("%s, sector %d doesn't contain 0xFD terminator" % (str_fname, secnum))
-        return True
-
-    return False
+def padName(name):
+    # type: (bytearray) -> bytearray
+    '''Takes a bytearray filename string and pads it to 8 spaces.'''
+    assert len(name) < 9
+    name += bytearray([ord(' ')]) * (8 - len(name))
+    return name
 
 ########################################################################
-# given a stream of sectors, try to identify coherent files, or even
-# fragments of files.   return a list of hashes containing these entries:
-#    ( "first_record" : int,
-#       "last_record" : int,
-#       "file_type" : str,
-#       "filename" : str  )
-# where file_type is one of
-#   "program"          -- a whole program
-#   "program_header"   -- just the header of a program
-#   "program_tailless" -- header plus some part of program, but no trailer
-#   "program_headless" -- some part of program plus trailer, but no header
-#   "program_fragment" -- program body with no header and no trailer
-#   "data"             -- an apparently complete data file
-#                         (it is hard to know if the start got truncated
-#                          because there is no header record)
-#   "data_fragment"    -- a part of a data file
+# given a header record, return the filename it contains.
+# NB: disk headers pad names shorter than 8 characters with 0x20
+#     tape headers pad names shorter than 8 characters with 0xFF
+def headerName(sector):
+    # type: (bytearray) -> str
+    rawname = sector[1:9]
+    return sanitize_filename(rawname)
 
-# pylint: disable=too-many-locals, too-many-branches, too-many-statements
-def guessFiles(blocks, abs_sector):
-    # type: (List[bytearray], int) -> List[Dict[str, Any]]
-
-    func_dbg = False
-
-    files = [] # holds the list of file bits
-
-    relsector = -1    # sector number, relative to first block
-
-    # encode what kind of fragment we are seeing
-    (  st_unknown,        # we're lost
-       st_pgm_hdr,        # we just saw a program header
-       st_pgm_hdr_body,   # we have seen a program header and some program body
-       st_pgm_body,       # we have seen program body, but no header
-       st_data_ok_whole,  # we're seen some number of complete logical data records
-       st_data_ok_part,   # we're seen some number of complete logical data records
-                          # and we have seen the start of another logical record
-    ) = list(range(6))
-    state = st_unknown
-    fileinfo = {}   # type: Dict[str, Any]
-
-    # logical records can span multiple physical records.  we track the sequence
-    # number across records to make sure things are ocnsistent
-    logical_data_record = 0
-    prev_data_phys_seq = -1
-
-    for secData in blocks:
-
-        relsector = relsector + 1
-        secnum = relsector + abs_sector
-
-        if func_dbg: print("# ============== sector %d ==============" % secnum)
-
-        # break out the SOB flag bits
-        data_file                = secData[0] & 0x80
-        header_record            = secData[0] & 0x40
-        trailer_record           = secData[0] & 0x20
-        protected_file           = secData[0] & 0x10
-        intermediate_phys_record = secData[0] & 0x02
-        last_phys_record         = secData[0] & 0x01
-
-        if func_dbg: print("# data=%d, header=%d, trailer=%d, prot=%d, last_phys=%d, middle_phys=%d" \
-                            % (data_file, header_record, trailer_record, protected_file, last_phys_record, intermediate_phys_record))
-
-        # these indicate if the sector contents, irrespective of the SOB byte,
-        # look like a given type of sector
-        dummyname = WvdFilename(bytearray(8))
-        possible_pgm_hdr = not checkProgramHeaderRecord(dummyname, secnum, secData, False)
-        possible_pgm_mid_body = not checkProgramBodyRecord(dummyname, secnum, secData, 0xFD, False)
-        possible_pgm_end_body = not checkProgramBodyRecord(dummyname, secnum, secData, 0xFE, False)
-        possible_data_record = not checkDataRecord(dummyname, secnum, secData, False)
-
-        valid_pgm_hdr = not data_file and header_record and possible_pgm_hdr
-        valid_pgm_mid = not data_file and not header_record and possible_pgm_mid_body
-        valid_pgm_end = not data_file and not header_record and possible_pgm_end_body
-        valid_data_start = data_file and \
-                           (intermediate_phys_record or last_phys_record) and \
-                           possible_data_record and \
-                           (secData[1] == 0x01)
-        valid_data_mid = data_file and \
-                         (intermediate_phys_record or last_phys_record) and \
-                         possible_data_record and \
-                         (secData[1] == (prev_data_phys_seq+1))
-        valid_data_trailer = data_file and trailer_record
-
-        if state == st_pgm_hdr:
-            # we've seen a program header so far
-            if valid_pgm_mid:
-                state = st_pgm_hdr_body
-                if func_dbg: print("pgm_hdr: got mid -> pgm_hdr_body")
-                continue  # on to next sector
-            if valid_pgm_end:
-                fileinfo['last_record'] = secnum
-                fileinfo['file_type'] = 'program'
-                files.append(fileinfo)
-                state = st_unknown
-                if func_dbg: print("pgm_hdr: got end -> unknown")
-                fileinfo = {}
-                continue  # on to next sector
-            # didn't get a logical continuation -- end with just the header
-            fileinfo['last_record'] = secnum-1
-            fileinfo['file_type'] = 'program_tailless'
-            files.append(fileinfo)
-            state = st_unknown
-            if func_dbg: print("pgm_hdr: got unexpected -> unknown")
-            fileinfo = {}
-
-        if state == st_pgm_hdr_body:
-            # we've seen a head and a partial body so far
-            if valid_pgm_mid:
-                state = st_pgm_hdr_body
-                if func_dbg: print("pgm_hdr_body: -> pgm_hdr_body")
-                continue  # on to next sector
-            if valid_pgm_end:
-                fileinfo['last_record'] = secnum
-                fileinfo['file_type'] = 'program'
-                files.append(fileinfo)
-                state = st_unknown
-                if func_dbg: print("pgm_hdr_body: got end -> unknown")
-                fileinfo = {}
-                continue  # on to next sector
-            # didn't get a logical continuation -- end with just the header
-            fileinfo['last_record'] = secnum-1
-            fileinfo['file_type'] = 'program_tailless'
-            files.append(fileinfo)
-            state = st_unknown
-            if func_dbg: print("pgm_hdr_body: got unexpected -> unknown")
-            fileinfo = {}
-
-        if state == st_pgm_body:
-            # we've seen a headless program body
-            if valid_pgm_mid:
-                if func_dbg: print("pgm_body: -> pgm_body")
-                continue  # on to next sector
-            if valid_pgm_end:
-                fileinfo['last_record'] = secnum
-                fileinfo['file_type'] = 'program_headless'
-                files.append(fileinfo)
-                state = st_unknown
-                fileinfo = {}
-                if func_dbg: print("pgm_body: got pgm end -> unknown")
-                continue  # on to next sector
-            # didn't get a logical continuation -- end with just the header
-            fileinfo['last_record'] = secnum-1
-            fileinfo['file_type'] = 'program_fragment'
-            files.append(fileinfo)
-            state = st_unknown
-            if func_dbg: print("pgm_body: got unexpected -> unknown")
-            fileinfo = {}
-
-        if state == st_data_ok_part:
-            if func_dbg and data_file and \
-                         (intermediate_phys_record or last_phys_record):
-                print("data_ok_part: physical record %d, expecting %d" \
-                            % (secData[1], prev_data_phys_seq+1))
-            if valid_data_mid and not last_phys_record and \
-                (secData[1] == prev_data_phys_seq+1):
-                state = st_data_ok_part
-                if func_dbg: print("data_ok_part: got more data -> data_ok_part")
-                prev_data_phys_seq = prev_data_phys_seq+1
-                continue  # on to next sector
-            if valid_data_mid and last_phys_record and \
-                (secData[1] == prev_data_phys_seq+1):
-                state = st_data_ok_whole
-                logical_data_record = logical_data_record+1
-                if func_dbg: print("data_ok_part: got data -> st_data_ok_whole (log record %d)" % logical_data_record)
-                continue  # on to next sector
-            # didn't get logical continuation -- end it here
-            fileinfo['last_record'] = secnum-1
-            fileinfo['file_type'] = 'data_fragment'
-            fileinfo['filename'] = 'DF_%05d' % fileinfo['first_record']
-            files.append(fileinfo)
-            state = st_unknown
-            if func_dbg: print("data_ok_part: got unexpected -> unknown")
-            fileinfo = {}
-
-        if state == st_data_ok_whole:
-            if valid_data_start and not last_phys_record:
-                state = st_data_ok_part
-                if func_dbg: print("data_ok_whole: got more data -> data_ok_part")
-                prev_data_phys_seq = 1
-                continue  # on to next sector
-            if valid_data_start and last_phys_record:
-                state = st_data_ok_whole
-                logical_data_record = logical_data_record+1
-                if func_dbg: print("data_ok_whole: got data -> st_data_ok_whole (log record %d)" % logical_data_record)
-                continue  # on to next sector
-            if valid_data_trailer:
-                fileinfo['last_record'] = secnum
-                fileinfo['file_type'] = 'data'
-                fileinfo['filename'] = 'DAT%05d' % fileinfo['first_record']
-                files.append(fileinfo)
-                state = st_unknown
-                if func_dbg: print("data_ok_whole: got trailer -> unknown")
-                fileinfo = {}
-                continue
-            # didn't get logical continuation -- end it here
-            fileinfo['last_record'] = secnum-1
-            fileinfo['file_type'] = 'data'
-            fileinfo['filename'] = 'DAT%05d' % fileinfo['first_record']
-            files.append(fileinfo)
-            state = st_unknown
-            if func_dbg: print("data_ok_whole: got unexpected -> unknown")
-            fileinfo = {}
-
-        if state == st_unknown:
-            if valid_pgm_hdr:
-                fileinfo['first_record'] = secnum
-                fileinfo['filename'] = secData[1:9]   # bytearray
-                state = st_pgm_hdr
-                if func_dbg: print("unknown: -> pgm_hdr")
-                continue  # on to next sector
-            if valid_pgm_mid:
-                fileinfo['first_record'] = secnum
-                fileinfo['filename'] = 'PF_%05d' % secnum  # Program Fragment
-                state = st_pgm_body
-                if func_dbg: print("unknown: -> pgm_body")
-                continue  # on to next sector
-            if valid_pgm_end:
-                fileinfo['first_record'] = secnum
-                fileinfo['last_record'] = secnum
-                fileinfo['file_type'] = 'program_headless'
-                fileinfo['filename'] = 'PF_%05d' % secnum  # Program Fragment
-                files.append(fileinfo)
-                state = st_unknown
-                if func_dbg: print("unknown: got prm end -> unknown")
-                fileinfo = {}
-                continue  # on to next sector
-            if valid_data_start and not last_phys_record:
-                fileinfo['first_record'] = secnum
-                state = st_data_ok_part
-                if func_dbg: print("unknown: got data -> data_ok_part")
-                logical_data_record = 0
-                prev_data_phys_seq = 1
-                continue  # on to next sector
-            if valid_data_start and last_phys_record:
-                fileinfo['first_record'] = secnum
-                state = st_data_ok_whole
-                logical_data_record = 1
-                if func_dbg: print("unknown: got data -> st_data_ok_whole (log record %d)" % logical_data_record)
-                continue
-            # don't know what it is
-            if func_dbg: print("unknown: at a loss; ignoring this sector")
-
-    return files
+# NB: disk headers pad names shorter than 8 characters with 0x20
+#     tape headers pad names shorter than 8 characters with 0xFF
+def sanitize_filename(rawname):
+    # type: (Any) -> str
+    if isinstance(rawname, str):
+        byts = bytearray(rawname.encode('latin-1'))
+    else:
+        byts = bytearray(rawname)
+    while byts and (byts[-1] in (0xff, ord(' '))):
+        byts = byts[:-1]
+    name = [chr(byt) if (32 <= byt < 128) else ("\\x%02X" % byt) for byt in byts]
+    return ''.join(name)
 
 ########################################################################
 # unscramble a single sector of data. if the incoming data isn't scrambled,

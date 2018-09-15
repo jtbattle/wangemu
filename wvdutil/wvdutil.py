@@ -17,9 +17,10 @@
 #     made it python 2/3 compatible
 #     using bytearray data instead of character strings
 #     pylint cleanups, mypy type annotation
-# Version: 1.6, 2018/08/24, JTB
-#     add command to list assembler source code files
-#     fix crash when using "| more" redirection and python3
+# Version: 1.6, 2018/09/15, JTB
+#     added ability to list EDIT text files
+#     fixed a number of crash scenarios, including using "| more" with py3
+#     significant code restructuring
 #     pylint cleanups
 
 ########################################################################
@@ -29,37 +30,38 @@
 
 # FIXME:
 #    see the scattered FIXME comments throughout
-#    very little testing has been done on disks with the newer indexing scheme
 #    overall the program structure is poor because it grew out of ad-hoc
 #       improvements and was not ever really designed
-#    make registerCmd() a decorator instead of an explicit call
-#       however, python2 doesn't allow class decorators.
+#    very little testing has been done on disks with the newer indexing scheme
 #    before any command that performs state change,
 #       warn if the disk is write protected (and suggest 'wp' command)
-#    MVP OS 3.0 and later support saving files in "wrap mode".
-#       this is completely unsupported and there is no guard to detect it.
 #    MVP OS 2.6 and later have files with names like "@PM010V1" which are
 #       printer control files.  they all start with 0x6911.
 #       add logic to allow check, scan, and perhaps list them.
 #       Basic2Release_2.6_SoftwareBullitin.715-0097A.5-85.pdf
 #       has some description of the generalized printer driver.
+#    MVP OS 3.0 and later support saving files in "wrap mode".
+#       this is completely unsupported and there is no guard to detect it.
 #    newsletter_no_5.pdf, page 5, describes via a program "TC" file format.
 #       what is this?  should I add disassembly of such files?
+#    make registerCmd() a decorator instead of an explicit call
+#       however, python2 doesn't allow class decorators.
 #
 # Syntax for possible new commands:
+#    wvd> check <filename>        currently the whole image is checked
 #    wvd> disk <filename>         resets the current disk being operated on
 #    wvd> extract <filename>      (as binary file)
 #    wvd> extract sector(s) a(,b) (as binary file)
 #
 # Reminders (so I don't need to figure these out again later):
 #    checking type annotations:
-#        py -m mypy wvdutil.py
+#        py -m mypy wvdutil.py  (or just mypy wvdutil.py)
 #    pylint checker:
 #        py [-2] -m pylint -f msvs wvdutil.py
 
 from __future__ import print_function
-from builtins import input                                     # pylint: disable=redefined-builtin
-from typing import List, Dict, Callable, Any, Optional, Tuple  # pylint: disable=unused-import
+from builtins import input                                            # pylint: disable=redefined-builtin
+from typing import List, Dict, Callable, Any, Union, Optional, Tuple  # pylint: disable=unused-import
 
 import sys
 import os.path
@@ -72,12 +74,22 @@ except ImportError:
     # python 2
     from urllib import quote_plus, unquote_plus        # type: ignore
 
-from wvdlib import (WangVirtualDisk, WvdFilename, CatalogFile,   # pylint: disable=unused-import
-                    guessFiles, unscramble_one_sector,
-                    checkPlatter, checkFile,
-                    checkProgramHeaderRecord, checkProgramBodyRecord)
+from wvdlib import (WangVirtualDisk,   # pylint: disable=unused-import
+                    WvdFilename,
+                    CatalogFile,
+                    unscramble_one_sector, sanitize_filename)
 
-from wvfilelist import (listSourceFileFromBlocks, listProgramRecord, listDataFromOneRecord, listDataFromBlocks)
+from wvdHandler_basic import WvdHandler_basic
+from wvdHandler_data  import WvdHandler_data
+from wvdHandler_edit  import WvdHandler_edit
+
+# pluggable handlers for interpreting different file formats
+# note: put the subtypes of data files in the list before the generic
+# data file handler to ensure they get priority.
+handlers = [ WvdHandler_basic(),
+             WvdHandler_edit(),
+             WvdHandler_data()
+           ]
 
 debug = False
 if debug:
@@ -153,13 +165,17 @@ def catalog(wvd, p, flags, wcList):
         if curFile is not None:
             # check file for extra information
             status = []
-            saveMode = curFile.programSaveMode()
-            if saveMode is not None and saveMode != "normal":
-                status.append(saveMode)
+            fileType = curFile.getType()
+            if fileType == 'P':
+                saveMode = curFile.programSaveMode()
+                if saveMode is not None and saveMode != 'normal':
+                    status.append(saveMode)
 
-            bad = checkFile(wvd, p, name, report=False)
+            bad, fmt = checkFile(wvd, p, name, report=False)
             if bad:
                 status.append("non-standard or bad format")
+            elif fmt:
+                status.append(fmt)
 
             extra = ""
             if status:
@@ -314,9 +330,9 @@ def compareFiles(wvd, disk1_p, wvd2, disk2_p, verbose, args):
     # python 2.2 doesn't have sets module nor set built-in
     # so this will be a little verbose
     fileset1x = wvd.catalog[disk1_p].expandWildcards(wildcardlist)
-    fileset1 = [f.asStr().rstrip() for f in fileset1x]
+    fileset1 = [f.asStr() for f in fileset1x]
     fileset2x = wvd2.catalog[disk2_p].expandWildcards(wildcardlist)
-    fileset2 = [f.asStr().rstrip() for f in fileset2x]
+    fileset2 = [f.asStr() for f in fileset2x]
     #print("fileset1: ", ["'%s', " % x for x in fileset1])
     #print("fileset2: ", ["'%s', " % x for x in fileset2])
 
@@ -419,7 +435,7 @@ def compareFiles(wvd, disk1_p, wvd2, disk2_p, verbose, args):
 def dumpFile(wvd, p, args):
     # type: (WangVirtualDisk, int, List[str]) -> None
     (theFile, start, end) = filenameOrSectorRange(wvd, p, args)  # pylint: disable=unused-variable
-    if start is None:
+    if start is None or end is None:
         return # invalid arguments
 
     for s in range(start, end+1):
@@ -455,60 +471,590 @@ def listFile(wvd, p, args, listd):
     # type: (WangVirtualDisk, int, List[str], bool) -> List[str]
 
     (theFile, start, end) = filenameOrSectorRange(wvd, p, args)
-    if start is None:
+    if start is None or end is None:
         return []  # invalid arguments
 
-    if theFile is not None:
-        # make sure it is a program or data file
-        fileType = theFile.getType()
-        if fileType == "D":
-            return listDataFromBlocks(theFile.getSectors())
-        if fileType != "P":
-            print("Not a program file")
-            return []
-        if not theFile.fileExtentIsPlausible():
-            print("The file extent is not sensible; no listing generated")
-            return []
-        if not theFile.fileControlRecordIsPlausible():
-            print("The file control record is not sensible; no listing generated")
-            return []
-        blocks = theFile.getSectors()
-        listing = listProgramFromBlocks(blocks, listd, start)
-    else:
-        # start,end range given
-        blocks = []
-        for n in range(start, end+1):
-            blocks.append(wvd.getRawSector(p, n))
-        #listing = listProgramFromBlocks(blocks, listd, start)
-        listing = listArbitraryBlocks(blocks, listd, start)
-
-    return listing
-
-######################## list source code file ########################
-# given a file name, return a list containing one text line per item
-# SOURCE <FILENAME>
-# SOURCE <WILDCARD>  (but it must match just one file)
-
-# pylint: disable=too-many-return-statements
-def listSourceFile(wvd, p, args):
-    # type: (WangVirtualDisk, int, List[str]) -> List[str]
-
-    (theFile, start, _) = filenameOrSectorRange(wvd, p, args)
-    if start is None:
-        return []
     if theFile is None:
-        print("This command requires a filename")
+        # start,end range given instead of a filename
+        # TODO: first check if the range is a legal file type, and if so, list it,
+        #       and only if they all fail, resort to listing block by block.
+        rawblocks = []
+        for n in range(start, end+1):
+            rawblocks.append(wvd.getRawSector(p, n))
+        return listArbitraryBlocks(rawblocks, listd, start)
+
+    if not theFile.fileExtentIsPlausible():
+        print("The file extent is not sensible; no listing generated")
+        return []
+    if not theFile.fileControlRecordIsPlausible():
+        print("The file control record is not sensible; no listing generated")
         return []
 
     # make sure it is a program or data file
-    fileType = theFile.getType()
-    if fileType != "D":
-        print("Source code files are 'D'ata type")
+    blocks = theFile.getSectors()
+    if blocks is None:
         return []
 
-    blocks = theFile.getSectors()
-    listing = listSourceFileFromBlocks(blocks)
-    return listing
+    options = { 'sector' : start, 'prettyprint' : listd }
+
+    fileType = theFile.getType()
+    if fileType == "P":
+        return handlers[0].listBlocks(blocks, options)
+    if fileType == "D":
+        # TODO: iterate over all (data) handlers, instead of this hard-coded approach
+        rv = handlers[1].checkBlocks(blocks, options)
+        if not rv['errors']:
+            return handlers[1].listBlocks(blocks, options)
+        rv = handlers[2].checkBlocks(blocks, options)
+        if not rv['errors']:
+            return handlers[2].listBlocks(blocks, options)
+
+    print("unknown file type")
+    return []
+
+############################ checkPlatter ############################
+# ad-hoc check of disk integrity
+# if report = 1, report warnings on stdout
+# return False if things are OK; return True if errors
+
+def checkPlatter(wvd, p, report):
+    # type: (WangVirtualDisk, int, bool) -> bool
+    x = checkCatalogIndexes(wvd, p, report)
+    if x: return x
+    if wvd.catalog[p].hasCatalog():
+        x = checkCatalog(wvd, p, report)
+        if x: return x
+    return False
+
+# check the catalog index for internal consistency.
+# the actual file contents are not checked.
+#   (1) check that there is an index at all
+#   (2) check that the disk parameter block is reasonable
+#   (3) check that the index entries are valid
+#       a. file status (unused, valid, scratched, or invalid),
+#       b. file type (program, data)
+#       c. check that the filename consists of reasonable characters
+#       d. check that there are no duplicate file names
+#       e. the file name is hashed into the right location
+#       f. check that there are no gaps in the sequence of indexes
+#       g. location of file extent makes sense
+#       h. the file extent doesn't overlap that of any other file
+#
+# check that the catalog parameter block is sane
+# pylint: disable=too-many-statements, too-many-branches, too-many-locals
+def checkCatalogIndexes(wvd, p, report):
+    # type: (WangVirtualDisk, int, bool) -> bool
+    if wvd.numPlatters() > 1:
+        desc = 'Platter %d' % (p+1)
+    else:
+        desc = 'The disk'
+
+    # -- (1) check that there is an index at all
+    platter = wvd.catalog[p]
+    if platter.numIndexSectors() == 0:
+        if report: print("%s has no catalog" % desc)
+        return False
+
+    # -- (2) check that the disk parameter block is reasonable
+    if platter.numIndexSectors() >= wvd.numSectors():
+        if report: print("%s reports an index that larger than the disk" % desc)
+        return True
+    if platter.endCatalogArea() >= wvd.numSectors():
+        if report: print("%s reports a last catalog sector that is larger than the disk size" % desc)
+        return True
+    if platter.endCatalogArea() <= platter.numIndexSectors():
+        if report: print("%s reports a last catalog sector that is inside the catalog index area" % desc)
+        return True
+    if platter.currentEnd() > platter.endCatalogArea():
+        if report: print("%s supposedly has more cataloged sectors in use than available" % desc)
+        return True
+
+    # record the extent of each file so we can check for overlap
+    # we could simply use an array with one entry for each sector,
+    # but that is wasteful for large disks.
+    # each entry is a hash of ('name', 'start', 'end'), containing the
+    # file name and its first and last sector extent.
+    # Any because 'name' is str, others int
+    extent_list = []  # type: List[Dict[str, Any]]
+
+    # keep track of the valid and scratched file names
+    live_names = {}  # type: Dict[str, bool]
+
+    # note if any problems have been noted on this platter
+    any_problems = False
+
+    for secnum in range(platter.numIndexSectors()):
+
+        found_problems = False  # any problems on this sector
+        prev_slot_empty = False
+
+        for slot in range(16):
+            if secnum == 0 and slot == 0: continue  # first sector has 15, not 16 entries
+            index_slot = secnum*16 + slot - 1
+            indexEntry = platter.getIndexEntryByNumber(index_slot)
+            indexState = indexEntry.getIndexState()
+            fname = indexEntry.getFilename()
+            (file_start, file_end) = indexEntry.getFileExtent()
+            str_fname = fname.asStr()
+
+            # -- (3a) check file status (unused, valid, scratched, or invalid),
+            if indexState == 'unknown':
+                if report: print("Sector %d, entry %d has unknown file state %s, filename '%s'" \
+                                    % (secnum, slot, indexEntry.getIndexStateNumber(), str_fname))
+                found_problems = True
+                continue
+            if indexState == 'empty':
+                prev_slot_empty = True
+                continue
+
+            # -- (3b) check file type (program, data)
+            fileType = indexEntry.getFileType()
+            if fileType == '?':
+                if report: print("Sector %d, entry %d has unknown file type %s (should be 0x00 or 0x80)" \
+                                    % (secnum, slot, indexEntry.geFileTypeNumber()))
+                found_problems = True
+                continue
+
+            # -- (3c) check that the filename consists of reasonable characters
+            suspect_name = False
+            for ch in fname.get():
+                suspect_name = suspect_name or ch < 0x20 or ch >= 0x80
+            if suspect_name:
+                if report: print("(warning) suspect fileame '%s'" % str_fname)
+
+            # -- (3d) check for duplicate file names in the list of
+            #         valid and scratched files.
+            if indexState in ['valid', 'scratched']:
+                if str_fname in live_names:
+                    found_problems = True
+                    if report: print("Sector %d, entry %d has unknown file state %s, filename '%s'" \
+                                        % (secnum, slot, indexEntry.getIndexStateNumber(), str_fname))
+                    continue
+                live_names[str_fname] = True
+
+            # -- (3e) check the file name is hashed into the right location
+            # ignore it if the original bucket is full, because the file
+            # spills to the next sector.  a more complete check would be to
+            # test that not only is the original bucket full, but all
+            # intermediate buckets in case it spilled more than once.
+            hsh = platter.getFilenameHash(fname) % platter.numIndexSectors()
+            if hsh != secnum:
+                if not platter.isIndexBucketFull(hsh):
+                    if report: print("'%s' filed in index sector %d, but it should be in sector %d" \
+                                              % (str_fname, secnum, hsh))
+                    found_problems = True
+                    continue
+
+            # -- (3f) check that there are no gaps in the sequence of indexes.
+            #         entries are filled from the first slot to the last,
+            #         so once there is an empty slot, all remaining slots in
+            #         the current sector should be empty as well.
+            if prev_slot_empty:
+                if report: print("File '%s' has index at sector %d, entry %d, but it follows an empty index slot" % \
+                            (str_fname, secnum, slot))
+                found_problems = True
+                continue
+
+            # no further checks if this entry has been invalidated
+            if indexState == 'invalid':
+                continue
+
+            # -- (3g) check location of file extent makes sense
+            #print("Current: %s (%d,%d)" % (str_fname, file_start, file_end))
+            if file_start < platter.numIndexSectors():
+                if report: print("%s starts at sector %d, which is inside the catalog index" \
+                            % (str_fname, file_start))
+                found_problems = True
+                continue
+            if file_end < file_start:
+                if report: print("%s ends (%d) before it starts (%d)" % (str_fname, file_end, file_start))
+                found_problems = True
+                continue
+            if file_end >= wvd.numSectors():
+                if report: print("%s is off the end of the disk (%d > %d)" % (str_fname, file_end, wvd.numSectors()))
+                found_problems = True
+                continue
+
+            # -- (3h) check the file extent doesn't overlap that of any other file
+            current = { 'name' : str_fname, 'start' : file_start, 'end' : file_end }
+            #print("current: %s (%d,%d)" % (current['name'], current['start'], current['end']))
+            overlap = False
+            for old in extent_list:
+                #print("old:     %s (%d,%d)" % (old['name'], old['start'], old['end']))
+                if (old['start'] <= current['start'] <= old['end']) or \
+                   (old['start'] <= current['end']   <= old['end']):
+                    # TODO: type annotation is failing me here because current & old
+                    #       are Dict[str, Union[str,int]] because the dict has both int and str,
+                    #       but the really 'name' is always str and the others are always int.
+                    if report: print("file extent of %s (%d,%d) overlaps that of %s (%d,%d)" \
+                            % (current['name'], current['start'], current['end'], old['name'], old['start'], old['end']))
+                    overlap = True
+            extent_list.append(current)
+            if overlap:
+                found_problems = True
+                continue
+
+            # -- done with step 3
+
+        # end checking this sector of this platter
+        any_problems = any_problems or found_problems
+
+    # all catalog index sectors have been checked
+    return any_problems
+
+# step through and verify each entry of a catalog on the indicated platter.
+# returns True if there are errors.
+# this might return garbage if the catalog index isn't valid, so this
+# should be called only if checkCatalogIndexes() shows no problems.
+def checkCatalog(wvd, p, report):
+    # type: (WangVirtualDisk, int, bool) -> bool
+
+    platter = wvd.catalog[p]
+    failures = False
+
+    # step through each catalog entry
+    for name in platter.allFilenames():
+        indexEntry = platter.getIndexEntry(name)
+        if indexEntry:
+            bad, _ = checkFile(wvd, p, name, report)
+            if bad:
+                failures = True
+
+    return failures
+
+# check the structure of an individual file.
+# returns True if there are errors.
+# This is used both by the "check" command, and it gets called by the "catalog"
+# command to indicate after each entry whether it appears to be valid.
+def checkFile(wvd, p, cat_fname, report):
+    # type: (WangVirtualDisk, int, WvdFilename, bool) -> Tuple[bool, str]
+
+    indexEntry = wvd.catalog[p].getIndexEntry(cat_fname)
+    if indexEntry is None:
+        print("Platter %d: %s: not found" % (p, cat_fname))
+        return (True, '')
+
+    str_fname = cat_fname.asStr()
+
+    if not indexEntry.fileControlRecordIsPlausible():
+        if report: print("%s doesn't have a plausible file control record" % str_fname)
+        return (True, '')
+
+    # used must be fetched only after fileControlRecordIsPlausible() check
+    # as it is located in the last sector of the sectors allocated for the file
+    start = indexEntry.getFileStart()
+    end   = indexEntry.getFileEnd()
+    used  = indexEntry.getFileUsedSectors()
+
+    # both data and program files use the last sector to indicate
+    # how many sectors are used
+    if start+used-1 > end:
+        if report: print("%s's end block claims %d sectors used, but only %d allocated" % \
+            (str_fname, used, end-start+1))
+        return (True, '')
+
+    # do program or data file specific checks
+    blocks = []
+    start = indexEntry.getFileStart()
+    used  = indexEntry.getFileUsedSectors()
+    for sec in range(start, start+used-1):
+        secData = wvd.getRawSector(p, sec)
+        blocks.append(secData)
+
+    options = { 'sector': start, 'used': used }
+
+    fmt = ''
+    fileType = indexEntry.getFileType()
+    if fileType not in ['P','D']:
+        if report: print("%s has unknown file type" % str_fname)
+        return (True, '')
+    for h in handlers:
+        if fileType == h.fileType():
+            file_status = h.checkBlocks(blocks, options)
+            if not file_status['errors']:
+                if h.name() == 'edit':
+                    fmt = 'edit'
+                break
+    else:
+        # no handler recognized it as valid
+        fmt = 'unknown'
+
+    # report errors and warnings if requested
+    if report and file_status['failed']:
+        if file_status['errors']:
+            print("%s errors: " % str_fname)
+            for err in file_status['errors']:
+                print('    ', err)
+        if file_status['warnings']:
+            print("%s warnings: " % str_fname)
+            for warn in file_status['warnings']:
+                print('    ', warn)
+
+    return (file_status['failed'], fmt)
+
+########################################################################
+# given a stream of sectors, try to identify coherent files, or even
+# fragments of files.   return a list of hashes containing these entries:
+#    { "first_record" : int,
+#       "last_record" : int,
+#       "file_type" : str,
+#       "filename" : str  }
+# where file_type is one of
+#   "program"          -- a whole program
+#   "program_header"   -- just the header of a program
+#   "program_tailless" -- header plus some part of program, but no trailer
+#   "program_headless" -- some part of program plus trailer, but no header
+#   "program_fragment" -- program body with no header and no trailer
+#   "data"             -- an apparently complete data file
+#                         (it is hard to know if the start got truncated
+#                          because there is no header record)
+#   "data_fragment"    -- a part of a data file
+
+# FIXME: when I rearranged the code to have a separate class for each file type,
+# the intent was for this block to present all of the sectors to each handler,
+# and each handler would return a count of the number of legal blocks in a row
+# it could find.  if none succeeded, then one block would be stripped, and we'd
+# try again. if one succeeded, then those N blocks would be classified as a file,
+# the blocks would be stripped, and the remaining blocks resubmitted, etc.
+# but for now, I just hacked up the old FSM logic as it was the quickest way to
+# get something working again.  this approach recognizes only program and data
+# files, which in theory is enough, but by switching to the specialized decoders,
+# it would be possible to recover more information, eg, EDIT can figure out the
+# name of the file (although currently there is no way for the checker to
+# return that information).
+#
+# FIXME: this fails to detect SAVEP and SAVE! files
+def guessFiles(blocks, abs_sector):
+    # type: (List[bytearray], int) -> List[Dict[str, Any]]
+
+    func_dbg = False
+
+    files = [] # holds the list of file bits
+
+    # encode what kind of fragment we are seeing
+    (  st_unknown,        # we're lost
+       st_pgm_hdr,        # we just saw a program header
+       st_pgm_hdr_body,   # we have seen a program header and some program body
+       st_pgm_body,       # we have seen program body, but no header
+       st_data_ok_whole,  # we're seen some number of complete logical data records
+       st_data_ok_part,   # we're seen some number of complete logical data records
+                          # and we have seen the start of another logical record
+    ) = list(range(6))
+    state = st_unknown
+    fileinfo = {}   # type: Dict[str, Any]
+
+    # logical records can span multiple physical records.  we track the sequence
+    # number across records to make sure things are ocnsistent
+    logical_data_record = 0
+    prev_data_phys_seq = -1
+
+    for offset, secData in enumerate(blocks):
+        secnum = abs_sector + offset
+        options = { 'sector' : secnum }
+
+        if func_dbg: print("# ============== sector %d ==============" % secnum)
+
+        # break out the SOB flag bits
+        data_file                = secData[0] & 0x80
+        header_record            = secData[0] & 0x40
+        trailer_record           = secData[0] & 0x20
+        protected_file           = secData[0] & 0x10
+        intermediate_phys_record = secData[0] & 0x02
+        last_phys_record         = secData[0] & 0x01
+
+        if func_dbg: print("# data=%d, header=%d, trailer=%d, prot=%d, last_phys=%d, middle_phys=%d" \
+                            % (data_file != 0,
+                               header_record != 0, trailer_record != 0,
+                               protected_file != 0,
+                               last_phys_record != 0, intermediate_phys_record != 0))
+
+        # these indicate if the sector contents, irrespective of the SOB byte,
+        # look like a given type of sector
+        dummyname = WvdFilename(bytearray(8))
+
+        rv = handlers[0].checkBlocks([secData], options)
+        pgm_ok = not rv['errors'] and not rv['warnings']
+        if False and secnum == 11:
+            for m in rv['errors']:
+                print("err:  ", m)
+            for m in rv['warnings']:
+                print("warn: ", m)
+        valid_pgm_hdr = pgm_ok and not data_file and header_record
+        valid_pgm_mid = pgm_ok and not data_file and not header_record and not trailer_record and 0xFD in secData
+        valid_pgm_end = pgm_ok and not data_file and not header_record and     trailer_record and 0xFE in secData
+        if func_dbg: print("# pgm_ok=%d, pgm_hdr=%d, pgm_mid=%d, pgm_end=%d" \
+                           % (pgm_ok, valid_pgm_hdr != 0, valid_pgm_mid != 0, valid_pgm_end != 0) )
+
+        rv = handlers[2].checkBlocks([secData], options)
+        data_blk_ok = not rv['errors'] and not rv['warnings']
+        valid_data_start = data_file and data_blk_ok and \
+                           (intermediate_phys_record or last_phys_record) and \
+                           (secData[1] == 0x01)
+        valid_data_mid = data_file and data_blk_ok and \
+                         (intermediate_phys_record or last_phys_record) and \
+                         (secData[1] == (prev_data_phys_seq+1))
+        valid_data_trailer = data_file and trailer_record
+
+        if state == st_pgm_hdr:
+            # we've seen a program header so far
+            if valid_pgm_mid:
+                state = st_pgm_hdr_body
+                if func_dbg: print("pgm_hdr: got mid -> pgm_hdr_body")
+                continue  # on to next sector
+            if valid_pgm_end:
+                fileinfo['last_record'] = secnum
+                fileinfo['file_type'] = 'program'
+                files.append(fileinfo)
+                state = st_unknown
+                if func_dbg: print("pgm_hdr: got end -> unknown")
+                fileinfo = {}
+                continue  # on to next sector
+            # didn't get a logical continuation -- end with just the header
+            fileinfo['last_record'] = secnum-1
+            fileinfo['file_type'] = 'program_tailless'
+            files.append(fileinfo)
+            state = st_unknown
+            if func_dbg: print("pgm_hdr: got unexpected -> unknown")
+            fileinfo = {}
+
+        if state == st_pgm_hdr_body:
+            # we've seen a head and a partial body so far
+            if valid_pgm_mid:
+                state = st_pgm_hdr_body
+                if func_dbg: print("pgm_hdr_body: -> pgm_hdr_body")
+                continue  # on to next sector
+            if valid_pgm_end:
+                fileinfo['last_record'] = secnum
+                fileinfo['file_type'] = 'program'
+                files.append(fileinfo)
+                state = st_unknown
+                if func_dbg: print("pgm_hdr_body: got end -> unknown")
+                fileinfo = {}
+                continue  # on to next sector
+            # didn't get a logical continuation -- end with just the header
+            fileinfo['last_record'] = secnum-1
+            fileinfo['file_type'] = 'program_tailless'
+            files.append(fileinfo)
+            state = st_unknown
+            if func_dbg: print("pgm_hdr_body: got unexpected -> unknown")
+            fileinfo = {}
+
+        if state == st_pgm_body:
+            # we've seen a headless program body
+            if valid_pgm_mid:
+                if func_dbg: print("pgm_body: -> pgm_body")
+                continue  # on to next sector
+            if valid_pgm_end:
+                fileinfo['last_record'] = secnum
+                fileinfo['file_type'] = 'program_headless'
+                files.append(fileinfo)
+                state = st_unknown
+                fileinfo = {}
+                if func_dbg: print("pgm_body: got pgm end -> unknown")
+                continue  # on to next sector
+            # didn't get a logical continuation -- end with just the header
+            fileinfo['last_record'] = secnum-1
+            fileinfo['file_type'] = 'program_fragment'
+            files.append(fileinfo)
+            state = st_unknown
+            if func_dbg: print("pgm_body: got unexpected -> unknown")
+            fileinfo = {}
+
+        if state == st_data_ok_part:
+            if func_dbg and data_file and \
+                         (intermediate_phys_record or last_phys_record):
+                print("data_ok_part: physical record %d, expecting %d" \
+                            % (secData[1], prev_data_phys_seq+1))
+            if valid_data_mid and not last_phys_record and \
+                (secData[1] == prev_data_phys_seq+1):
+                state = st_data_ok_part
+                if func_dbg: print("data_ok_part: got more data -> data_ok_part")
+                prev_data_phys_seq = prev_data_phys_seq+1
+                continue  # on to next sector
+            if valid_data_mid and last_phys_record and \
+                (secData[1] == prev_data_phys_seq+1):
+                state = st_data_ok_whole
+                logical_data_record = logical_data_record+1
+                if func_dbg: print("data_ok_part: got data -> st_data_ok_whole (log record %d)" % logical_data_record)
+                continue  # on to next sector
+            # didn't get logical continuation -- end it here
+            fileinfo['last_record'] = secnum-1
+            fileinfo['file_type'] = 'data_fragment'
+            fileinfo['filename'] = 'DF_%05d' % fileinfo['first_record']
+            files.append(fileinfo)
+            state = st_unknown
+            if func_dbg: print("data_ok_part: got unexpected -> unknown")
+            fileinfo = {}
+
+        if state == st_data_ok_whole:
+            if valid_data_start and not last_phys_record:
+                state = st_data_ok_part
+                if func_dbg: print("data_ok_whole: got more data -> data_ok_part")
+                prev_data_phys_seq = 1
+                continue  # on to next sector
+            if valid_data_start and last_phys_record:
+                state = st_data_ok_whole
+                logical_data_record = logical_data_record+1
+                if func_dbg: print("data_ok_whole: got data -> st_data_ok_whole (log record %d)" % logical_data_record)
+                continue  # on to next sector
+            if valid_data_trailer:
+                fileinfo['last_record'] = secnum
+                fileinfo['file_type'] = 'data'
+                fileinfo['filename'] = 'DAT%05d' % fileinfo['first_record']
+                files.append(fileinfo)
+                state = st_unknown
+                if func_dbg: print("data_ok_whole: got trailer -> unknown")
+                fileinfo = {}
+                continue
+            # didn't get logical continuation -- end it here
+            fileinfo['last_record'] = secnum-1
+            fileinfo['file_type'] = 'data'
+            fileinfo['filename'] = 'DAT%05d' % fileinfo['first_record']
+            files.append(fileinfo)
+            state = st_unknown
+            if func_dbg: print("data_ok_whole: got unexpected -> unknown")
+            fileinfo = {}
+
+        if state == st_unknown:
+            if valid_pgm_hdr:
+                fileinfo['first_record'] = secnum
+                fileinfo['filename'] = secData[1:9]   # bytearray
+                state = st_pgm_hdr
+                if func_dbg: print("unknown: -> pgm_hdr, filename=%s" % sanitize_filename(secData[1:9]))
+                continue  # on to next sector
+            if valid_pgm_mid:
+                fileinfo['first_record'] = secnum
+                fileinfo['filename'] = 'PF_%05d' % secnum  # Program Fragment
+                state = st_pgm_body
+                if func_dbg: print("unknown: -> pgm_body")
+                continue  # on to next sector
+            if valid_pgm_end:
+                fileinfo['first_record'] = secnum
+                fileinfo['last_record'] = secnum
+                fileinfo['file_type'] = 'program_headless'
+                fileinfo['filename'] = 'PF_%05d' % secnum  # Program Fragment
+                files.append(fileinfo)
+                state = st_unknown
+                if func_dbg: print("unknown: got prm end -> unknown")
+                fileinfo = {}
+                continue  # on to next sector
+            if valid_data_start and not last_phys_record:
+                fileinfo['first_record'] = secnum
+                state = st_data_ok_part
+                if func_dbg: print("unknown: got data -> data_ok_part")
+                logical_data_record = 0
+                prev_data_phys_seq = 1
+                continue  # on to next sector
+            if valid_data_start and last_phys_record:
+                fileinfo['first_record'] = secnum
+                state = st_data_ok_whole
+                logical_data_record = 1
+                if func_dbg: print("unknown: got data -> st_data_ok_whole (log record %d)" % logical_data_record)
+                continue
+            # don't know what it is
+            if func_dbg: print("unknown: at a loss; ignoring this sector")
+
+    return files
 
 ############################# command parser #############################
 
@@ -645,7 +1191,7 @@ def cmdDispatch(wvd, cmd, args):
             print("Bad platter specification '%s'" % mo.group(2))
             return
 
-    # try and find a command handler
+    # try to find a command handler
     if cmd in cmdSet:
         action = cmdSet[cmd]
     elif cmd in cmdSetAliases:
@@ -656,8 +1202,8 @@ def cmdDispatch(wvd, cmd, args):
         return
 
     if action.needsCatalog():
-        platters = pickUsefulCatalog(wvd, platters)
-        if not platters:
+        useable_platters = pickUsefulCatalog(wvd, platters)
+        if useable_platters is None or not useable_platters:
             return
 
     # perform the command
@@ -666,8 +1212,6 @@ def cmdDispatch(wvd, cmd, args):
 # ----------------------------------------------------------------------
 
 # given a disk image and a command, perform the command (or bitch)
-# pylint: disable=too-many-branches, too-many-statements, too-many-locals
-# pylint: disable=too-many-return-statements
 def command(wvd, cmdString):
     # type: (WangVirtualDisk, str) -> None
 
@@ -697,7 +1241,6 @@ def command(wvd, cmdString):
     cmd = words[0].lower()  # the command words is case insensitive
 
     # check for redirection
-    origStdout = sys.stdout
     redir_idx = [i for i, x in enumerate(words) if x in ['|', '>', '>>']]
     redir = None
     if redir_idx:
@@ -712,6 +1255,7 @@ def command(wvd, cmdString):
         redirFile = words[-1]
         del words[idx:]  # strip off redir symbol and everything after
 
+    origStdout = sys.stdout
     pager_file = None
     if redir == '|':
         # "| more" must be the final two words
@@ -724,12 +1268,12 @@ def command(wvd, cmdString):
         tmp_fd, pager_file = tempfile.mkstemp()
         sys.stdout = os.fdopen(tmp_fd, 'w+')
     elif redir in ['>', '>>']:
-        if redir == '>':
-            mode = 'w'   # write
-        else:  # redir == '>>'
-            mode = 'a'   # append
         try:
-            sys.stdout = open(redirFile, mode, 1)  # 1=buffered
+            buffered = 1
+            if redir == '>':
+                sys.stdout = open(redirFile, 'w', buffered)
+            else:
+                sys.stdout = open(redirFile, 'a', buffered)
         except IOError:
             sys.stdout = origStdout
             print("Couldn't open" + '"' + redirFile + '" for redirection')
@@ -843,6 +1387,8 @@ class cmdCheck(cmdTemplate):
     def doCommand(self, wvd, platters, args):
         # type: (WangVirtualDisk, List[int], List[str]) -> None
         if args:
+            # TODO: allow checking a specified file or wildcard
+            #       e.g., "check FOOTBALL" or "CHECK DIAG*"
             cmdUsage('check')
             return
         fail = False
@@ -880,7 +1426,6 @@ scan -bad
     def needsCatalog(self):
         return False
 
-    # pylint: disable=too-many-branches
     def doCommand(self, wvd, platters, args):
         # type: (WangVirtualDisk, List[int], List[str]) -> None
         flag_good = True
@@ -906,7 +1451,10 @@ scan -bad
             if not files:
                 print("Didn't identify any program files")
             else:
+                fragmentary_files = 0
                 for fileinfo in files:
+                    if fileinfo['file_type'] in ('program_headless', 'program_tailless', 'program_fragment', 'data_fragment'):
+                        fragmentary_files += 1
                     if flag_good and (fileinfo['file_type'] == 'program'):
                         print("Sector %5d to %5d: name='%s' [ program ]" \
                             % (fileinfo['first_record'],
@@ -934,22 +1482,11 @@ scan -bad
                             % (fileinfo['first_record'],
                                fileinfo['last_record'],
                                sanitize_filename(fileinfo['filename'])))
+                if not flag_bad and fragmentary_files:
+                    print("(%d fragmentary files not shown. use 'scan -all' to see everything." % fragmentary_files)
         return
 
 registerCmd(cmdScan())
-
-# NB: disk headers pad names shorter than 8 characters with 0x20
-#     tape headers pad names shorter than 8 characters with 0xFF
-def sanitize_filename(rawname):
-    if isinstance(rawname, str):
-        return rawname
-    assert isinstance(rawname, bytearray)
-    while rawname:
-        if (rawname[-1] != 0xff) and (rawname[-1] != ord(' ')):
-            break
-        rawname = rawname[:-1]
-    name = [chr(byt) if (32 <= byt < 128) else ("\\x%02X" % byt) for byt in rawname]
-    return ''.join(name)
 
 # ----------------------------------------------------------------------
 
@@ -982,7 +1519,6 @@ compare[/<platter>] disk2.wvd[/<platter>] [-v|-verbose] [<wildcard list>]
     def needsCatalog(self):
         return True
 
-    # pylint: disable=too-many-return-statements, too-many-branches
     def doCommand(self, wvd, platters, args):
         # type: (WangVirtualDisk, List[int], List[str]) -> None
         # FIXME: this needs an overhaul
@@ -1162,48 +1698,6 @@ class cmdIndex(cmdTemplate):
         return
 
 registerCmd(cmdIndex())
-
-# ----------------------------------------------------------------------
-
-# display the specified source file in ascii
-# FIXME: this should be an option of LIST (list -source), but it
-#        opens a can of worms: should there be options for other
-#        file types?  Or should LIST have the intelligence to guess
-#        the file type (as it currently kind of does?
-#        for now this is an independent command.
-class cmdSource(cmdTemplate):
-
-    def name(self):
-        return "source"
-    def shortHelp(self):
-        return "show 2600 assembler source file as text"
-    def longHelp(self):
-        return \
-"""source <filename>
-    Produce a text listing of the named source code file."""
-    def needsCatalog(self):
-        return True
-
-    def doCommand(self, wvd, platters, args):
-        # type: (WangVirtualDisk, List[int], List[str]) -> None
-        if len(platters) > 1:
-            print("This command can only operate on a single platter")
-            return
-        if len(args) != 1:
-            print("This command expects a single filename as an argument")
-            cmdUsage('source')
-            return
-        listing = listSourceFile(wvd, platters[0], args)
-        for txt in listing:
-            if generate_html:
-                # must escape special characters
-                txt = re.sub('&', '&amp;', txt)
-                txt = re.sub('<', '&lt;', txt)
-                txt = re.sub('>', '&gt;', txt)
-            print(txt)
-        return
-
-registerCmd(cmdSource())
 
 # ----------------------------------------------------------------------
 
@@ -1458,100 +1952,56 @@ registerCmd(cmdPlatter())
 ########################################################################
 # given a set of arbitrary sectors, which may or may not contain
 # coherent program and data listings, attempt to list its contents
-# sensibly.
+# sensibly. each block is listed independently.
 
 def listArbitraryBlocks(blocks, listd, abs_sector):
     # type: (List[bytearray], bool, int) -> List[str]
 
     listing = []
-    relsector = -1  # sector number, relative to first block
 
-    for secData in blocks:
-
-        relsector = relsector + 1
-        secnum = relsector + abs_sector
+    for offset, secData in enumerate(blocks):
+        secnum = abs_sector + offset
 
         listing.append("============== sector %d ==============" % secnum)
 
-        # break out the SOB flag bits
-        data_file      = secData[0] & 0x80
-        header_record  = secData[0] & 0x40
-        trailer_record = secData[0] & 0x20
-        #protected_file = secData[0] & 0x10
-        #last_phys_record = secData[0] & 0x02
-        #intermediate_phys_record = secData[0] & 0x01
-
-        dummyname = WvdFilename(bytearray(8))
-        if not data_file and header_record and \
-            not checkProgramHeaderRecord(dummyname, secnum, secData, False):
-            listing.extend(listProgramFromBlocks([secData], listd, secnum))
-            continue
-        if not data_file and not trailer_record and \
-           not checkProgramBodyRecord(dummyname, secnum, secData, 0xFD, False):
-            listing.extend(listProgramFromBlocks([secData], listd, secnum))
-            continue
-        if not data_file and trailer_record and \
-           not checkProgramBodyRecord(dummyname, secnum, secData, 0xFE, False):
-            listing.extend(listProgramFromBlocks([secData], listd, secnum))
-            continue
-        if data_file and not trailer_record:
-            listing.extend(listDataFromOneRecord(secData))
-            continue
-        if data_file and trailer_record:
-            listing.append("Data file trailer record")
-            continue
-
-        # don't know what it is -- just dump it
-        # FIXME: this is lifted from wvdutil.ph's dumpSector() routine
-        #        these should be factored into a common routine
-        for line in range(16):
-            txt = "%02x:" % (line*16)
-            for off in range(16):
-                x = 16*line + off
-                txt += " %02x" % secData[x]
-            txt += "  "
-            for off in range(16):
-                x = 16*line + off
-                if (secData[x] >= ord(' ')) and (secData[x] < 128):
-                    txt += chr(secData[x])
-                else:
-                    txt += "."
-            listing.append(txt)
+        # find if any handlers think this is legal.
+        # we stop at the first match to ensure subtypes of data file match
+        # before the generic data file handler does.
+        options = { 'sector' : secnum, 'prettyprint': listd }
+        for h in handlers:
+            rv = h.checkBlocks([secData], options)
+            if not rv['errors'] and not rv['warnings']:
+                _, text = h.listOneBlock(secData, options)
+                # listing.append("# type: " + h.name())
+                listing.extend(text)
+                break
+        else:
+            # don't know what it is -- just dump it
+            # FIXME: this is lifted from wvdutil.py's dumpSector() routine
+            #        these should be factored into a common routine
+            for line in range(16):
+                txt = "%02x:" % (line*16)
+                for off in range(16):
+                    x = 16*line + off
+                    txt += " %02x" % secData[x]
+                txt += "  "
+                for off in range(16):
+                    x = 16*line + off
+                    if (secData[x] >= ord(' ')) and (secData[x] < 128):
+                        txt += chr(secData[x])
+                    else:
+                        txt += "."
+                listing.append(txt)
 
     return listing
 
 ########################################################################
 # given a list of file blocks, return a program file listing
 
-def listProgramFromBlocks(blocks, listd, abs_sector=None):
+def listProgramFromBlocks(blocks, listd, abs_sector):
     # type: (List[bytearray], bool, int) -> List[str]
-    listing = []  # type: List[str]
-    relsector = -1  # sector number, relative to first block
-
-    for secData in blocks:
-
-        relsector = relsector + 1
-        if isinstance(abs_sector, int):
-            secnum = "Sector %d" % (relsector + abs_sector)
-        else:
-            secnum = "Relative sector %d" % relsector
-
-        # we are done if we hit a trailer record
-        if (secData[0]) == 0xA0:
-            return listing
-
-        # 1. if (byte[0] & 0xC0) != 0x00, load error (header or data block)
-        # 2. if (byte[0] & 0x10) != 0x10, not protected at all
-        # 3. if (byte[1] & 0x80) == 0x80, SAVEP style
-        # 4. else                         SAVE! style
-        if (secData[0] & 0xc0) == 0x00 and \
-           (secData[0] & 0x10) == 0x10 and \
-           (secData[1] & 0x80) == 0x00:
-            secData = unscramble_one_sector(secData)
-        listing.extend(listProgramRecord(secData, secnum, listd))
-
-    # should have hit a trailer record, but return what we have anyway
-    return listing
+    options = { 'sector' : abs_sector, 'prettyprint' : listd }
+    return handlers[0].listBlocks(blocks, options)
 
 ############################ main program ############################
 # dumpFile() and listFile() have common parameter options:
@@ -1585,7 +2035,7 @@ def filenameOrSectorRange(wvd, p, args):
                 return badReturn
             start = theFile.getStart()  # all allocated sectors
             used  = theFile.getUsed()
-            end   = start+used-1        # all meaningful sectors
+            end   = start+used-1-1      # all meaningful sectors; extra -1 for control record
             return (theFile, start, end)
 
     if (len(args) == 1) and (args[0].isdigit()):
@@ -1624,13 +2074,12 @@ def getOneFilename(wvd, p, name):
         return None
     if len(outlist) > 1:
         print("This command accepts a single filename, and more than one matched:")
-        print([str(x).rstrip() for x in outlist])
+        print([cat.getFile(x).getFilename().asStr() for x in outlist])
         return None
     return outlist[0]
 
 ############################ main program ############################
 
-# pylint: disable=too-many-branches, too-many-statements
 def mainloop():
     # type: () -> None
 
@@ -1685,7 +2134,7 @@ def mainloop():
         command(wvd, commandStr)
         return
 
-    print(basename + ', version 1.6-pre, 2018/08/24')
+    print(basename + ', version 1.6, 2018/09/15')
     print('Type "help" to see all commands')
 
     # accept command lines from user interactively
