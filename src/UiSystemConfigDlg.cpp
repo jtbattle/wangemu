@@ -171,7 +171,7 @@ SystemConfigDlg::SystemConfigDlg(wxFrame *parent) :
         m_cardDesc[slot]->Append("(vacant)", (void*)(-2));
 
         for(int ctype=0; ctype<IoCard::NUM_CARDTYPES; ctype++) {
-            IoCard::card_t ct = static_cast<IoCard::card_t>(ctype);
+            IoCard::card_t ct = IoCard::card_types[ctype];
             std::string cardname = CardInfo::getCardName(ct);
             std::string carddesc = CardInfo::getCardDesc(ct);
             std::string str( cardname + " (" + carddesc + ")" );
@@ -533,12 +533,12 @@ SystemConfigDlg::setValidIoChoices(int slot, int cardtype_idx)
 {
     wxChoice *hAddrCtl = m_cardAddr[slot];
     wxButton *hCfgCtl  = m_cardCfg[slot];
+    IoCard::card_t ct = static_cast<IoCard::card_t>(cardtype_idx);
     hAddrCtl->Clear();      // wipe out any previous list
 
     bool occupied = m_cfg.isSlotOccupied(slot);
     hAddrCtl->Enable(occupied);
 
-    IoCard::card_t ct = static_cast<IoCard::card_t>(cardtype_idx);
     if (occupied) {
         std::vector<int> base_addresses = CardInfo::getCardBaseAddresses(ct);
 
@@ -554,7 +554,7 @@ SystemConfigDlg::setValidIoChoices(int slot, int cardtype_idx)
         }
         //assert(addr_mtch_idx > -1);
         // if the card changes and the old io address isn't valid for the
-        // new card, we left -1 ride and it causes the choice to be blanked.
+        // new card, we let -1 ride and it causes the choice to be blanked.
         hAddrCtl->SetSelection(addr_mtch_idx);
     } else {
         // although disabled, we assign some text to this control, otherwise

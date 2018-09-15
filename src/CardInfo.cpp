@@ -5,13 +5,12 @@
 IoCard::card_t
 CardInfo::getCardTypeFromName(const std::string &name)
 {
-    for(int i=0; i<(int)IoCard::NUM_CARDTYPES; i++) {
-        IoCard::card_t ii = static_cast<IoCard::card_t>(i);
-        std::unique_ptr<IoCard> tmpcard(IoCard::makeTmpCard(ii));
+    for(auto &ct : IoCard::card_types) {
+        std::unique_ptr<IoCard> tmpcard(IoCard::makeTmpCard(ct));
         assert(tmpcard != nullptr);
         std::string thisname = tmpcard->getName();
         if (name == thisname) {
-            return ii;
+            return ct;
         }
     }
     return IoCard::card_t::none;

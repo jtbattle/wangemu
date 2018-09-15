@@ -113,10 +113,19 @@ public:
         disp_80x24,
         term_mux,
         printer,
-        disk,
-        LAST,
+        disk
     };
-    static const int NUM_CARDTYPES = static_cast<int>(card_t::LAST);
+
+    // initialized after the class declaration:
+    static const int NUM_CARDTYPES = 6;
+    constexpr static card_t card_types[NUM_CARDTYPES] = {
+        IoCard::card_t::keyboard,
+        IoCard::card_t::disp_64x16,
+        IoCard::card_t::disp_80x24,
+        IoCard::card_t::term_mux,
+        IoCard::card_t::printer,
+        IoCard::card_t::disk
+    };
 
     static bool legal_card_t(card_t c) {
         return (c == card_t::keyboard)

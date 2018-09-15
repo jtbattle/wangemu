@@ -133,7 +133,7 @@ private:
 
     // -------------- I/O dispatch --------------
     struct iomap_t {
-        int  slot;      // pointer to card instance
+        int  slot;      // slot number of the device which "owns" this address
         bool ignore;    // if false, access generates a warning message
                         // if there is no device at that address
     };

@@ -224,7 +224,7 @@ SysCfgState::loadIni()
         IoCard::card_t cardtype = IoCard::card_t::none;
 
         int io_addr;
-        (void)hst.ConfigReadInt(subgroup, "addr", &io_addr, -1);
+        (void)hst.ConfigReadInt(subgroup, "addr", &io_addr, -1);  // -1 if not found
         b =   hst.ConfigReadStr(subgroup, "type", &sval);
         if (b) {
             cardtype = CardInfo::getCardTypeFromName(sval);
@@ -465,7 +465,7 @@ SysCfgState::editCardConfig(int slot)
 
     auto cardCfg = m_slot[slot].cardCfg;
     if (cardCfg != nullptr) {
-        // FIXME: this is a raw pointer from the m_cardInSlot[] unique_ptr
+        // FIXME: this is a raw pointer from the m_cardInSlot[] unique_ptr.
         //        it is safe, but it feels dangerous to be using the raw ptr.
         //        all calls of getInstFromSlot() should be reviewed too.
         auto inst = System2200().getInstFromSlot(slot);
