@@ -43,8 +43,9 @@ private:
     // there are other commands for MXE, which is not currently emulated.
     // these commands arrive on 2200 I/O address 06 using a CBS strobe.
     // commands which supply further bytes send them via OBS strobes.
+    // (2236MXE_Documentation.8-83.pdf, page 6)
     enum class mux_cmd_t {
-        CMD_SELECT               = 0xFF,
+        CMD_SELECT               = 0xFF,   // FIXME: why this AND CMD_SELECT_TERMINAL?  this one isn't used by code elsewhere, but is in the table on page 6
         CMD_NULL                 = 0x00,
         CMD_POWERON              = 0x01,
         CMD_INIT_CURRENT_TERM    = 0x02,
@@ -86,6 +87,10 @@ private:
     void CBS_06(int val);
     void CBS_07(int val);
 
+    void IBS_01();
+    void IBS_02();
+    void IBS_06();
+
     // test if any key is ready to accept
     void check_keyready();
 
@@ -100,6 +105,7 @@ private:
     bool        m_cpb;            // the cpu is busy
     bool        m_card_busy;      // the card is busy doing something
     int         m_io_offset;      // (selected io addr & 7), for convenience
+    int         m_ibs_seq;        // which byte to send next when port 2 is active
 
     // these are the size of various MXD buffers, as noted in
     // 2236MXE_Documentation.8-83.pdf, p. 5
@@ -127,7 +133,7 @@ private:
         std::deque<uint8>  crt_buf;
         std::deque<uint8>  printer_buf;
         std::deque<uint8>  line_req_buf;
-        std::deque<uint8>  keyboard_buf;
+        std::deque<uint8>  keyboard_buf;  // FIXME: how to queue SF keycodes? need uint16 I think
         std::vector<uint8> command_buf;
     } m_terms[MAX_TERMINALS];
     m_term_t              &m_term;         // ref to current term
