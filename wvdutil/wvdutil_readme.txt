@@ -5,13 +5,8 @@ Version 1.6 of wvdutil was developed under Windows 7, and should be compatible
 with both Python 2.7 and Python 3.7.  It should run on other platforms, but it
 hasn't been tested.
 
-wvdutil_1.6.zip contains the main program, wvdutil.py, and some library
-routines in wvdlib.py and wvfilelist.py.
-
-It also contains wvdutil.exe.  This is a single-file binary which contains
-a python interpreted and the wvdutil source all bundled together.  This is
-useful if you don't have python already installed on your machine.  However,
-it is actually slower to start up than running the python script.
+wvdutil_1.6.zip contains the main program, wvdutil.py, and its supporting
+modules.
 
 Running linting tools:
 
