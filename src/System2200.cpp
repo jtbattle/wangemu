@@ -703,13 +703,7 @@ IoCard*
 System2200::getInstFromSlot(int slot)
 {
     assert(slot >=0 && slot < NUM_IOSLOTS);
-
-    int io_addr = m_config->getSlotCardAddr(slot);
-    if (io_addr < 0) {
-        return 0;
-    }
-
-    return m_cardInSlot[m_IoMap[io_addr & 0xFF].slot].get();
+    return m_cardInSlot[slot].get();
 }
 
 
