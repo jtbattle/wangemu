@@ -58,7 +58,6 @@ int64 System2200::m_adjsimtime;
 
 static std::ofstream dbg_ofs;
 
-#ifdef _DEBUG
 void
 dbglog_open(const std::string &filename)
 {
@@ -77,12 +76,10 @@ dbglog_close()
         dbg_ofs.close();
     }
 }
-#endif // _DEBUG
 
 void
 dbglog(const char *fmt, ...)
 {
-#ifdef _DEBUG
     char buff[1000];
     va_list args;
 
@@ -96,9 +93,6 @@ dbglog(const char *fmt, ...)
         // the last buffered block to not appear in the log.
         dbg_ofs.flush();
     }
-#else
-    bool foo = (fmt != 0); foo = foo;   // keep lint happy
-#endif
 }
 
 // ------------------------------------------------------------------------
@@ -112,7 +106,7 @@ System2200::System2200()
         // must set this early, otherwise during ramp up, places that
         // invoke System2200 will cause recursion
         m_initialized = true;
-#ifdef _DEBUG
+#if 0 || defined(_DEBUG)
         dbglog_open("w2200dbg.log");
 #endif
         initialize();

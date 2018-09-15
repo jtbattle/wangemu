@@ -1538,14 +1538,13 @@ Cpu2200vp::run(int ticks)
     int op_ticks = 0;
 
     do {
-#ifdef _DEBUG
+#if 0 || defined(_DEBUG)
         static int m_num_ops = 0;
         if (g_dbg_trace) {
             char buff[200];
-            int illegal;
             if (++m_num_ops >= 0*127000) {
                 dump_state( 1 );
-                illegal = dasm_one_vp(buff, m_cpu.ic, m_ucode[m_cpu.ic].ucode);
+                int illegal = dasm_one_vp(buff, m_cpu.ic, m_ucode[m_cpu.ic].ucode);
                 dbglog("cycle %5d: %s", m_num_ops, buff);
                 if (illegal) {
                     break;
@@ -1666,7 +1665,6 @@ Cpu2200vp::dump_ram(const std::string &filename)
 #endif
 
 
-#ifdef _DEBUG
 // dump the most important contents of the uP state
 void
 Cpu2200vp::dump_state(int fulldump)
@@ -1714,6 +1712,5 @@ Cpu2200vp::dump_state(int fulldump)
     }
     dbglog("---------------------------------------------\n");
 }
-#endif
 
 // vim: ts=8:et:sw=4:smarttab
