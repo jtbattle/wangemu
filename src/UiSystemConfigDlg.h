@@ -28,7 +28,7 @@ private:
     void OnDiskRealtime( wxCommandEvent& WXUNUSED(event) );
     void OnWarnIo( wxCommandEvent& WXUNUSED(event) );
 
-    wxChoice *m_cpuType;                // 2200 (+VP in future?)
+    wxChoice *m_cpuType;                // B/T/VP/MVP/VLSI
     wxChoice *m_memSize;                // main memory size
     wxChoice *m_kbType;                 // keyboard type
     wxChoice *m_cardDesc[NUM_IOSLOTS];  // io slot card types

@@ -257,9 +257,10 @@ SystemConfigDlg::setMemsizeStrings()
         case Cpu2200::CPUTYPE_2200VP:
             m_memSize->Append("32 KB", (void*)32);
             m_memSize->Append("64 KB", (void*)64);
-            m_memSize->Append("128 KB", (void*)128);
-            m_memSize->Append("256 KB", (void*)256);
-            m_memSize->Append("512 KB", (void*)512);
+// MVP supports these, but not VP:
+//          m_memSize->Append("128 KB", (void*)128);
+//          m_memSize->Append("256 KB", (void*)256);
+//          m_memSize->Append("512 KB", (void*)512);
             break;
         default:
             assert(false);
