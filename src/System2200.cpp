@@ -262,8 +262,9 @@ System2200::setConfig(const SysCfgState &newcfg)
         IoCard::card_t cardtype = m_config->getSlotCardType(slot);
         int io_addr             = m_config->getSlotCardAddr(slot) & 0xFF;
 
-        bool display = (cardtype == IoCard::card_t::disp_64x16) ||
-                       (cardtype == IoCard::card_t::disp_80x24) ;
+        bool display = (cardtype == IoCard::card_t::disp_64x16)
+                    || (cardtype == IoCard::card_t::disp_80x24)
+                    || (cardtype == IoCard::card_t::term_mux) ;
 
         if ((pass==0 && display) || (pass==1 && !display)) {
             continue;
