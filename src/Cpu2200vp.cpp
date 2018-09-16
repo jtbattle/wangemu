@@ -1538,7 +1538,7 @@ Cpu2200vp::run(int ticks)
     int op_ticks = 0;
 
     do {
-#if 0 || defined(_DEBUG)
+#if 0 && defined(_DEBUG)
         static int m_num_ops = 0;
         if (g_dbg_trace) {
             char buff[200];
@@ -1594,9 +1594,10 @@ Cpu2200vp::halt()
 }
 
 
-// this signal is called by the currently active I/O card
-// when its busy/ready status changes.  If no card is selected,
-// it floats to one (it is an open collector bus signal).
+// this signal is called by the currently active I/O card when its
+// busy/ready status changes.  If no card is selected, it floats to zero
+// (it is an open collector bus signal, but the polarity on the bus is
+//  inverted, so that floating 1 becomes a zero to microcode).
 void
 Cpu2200vp::setDevRdy(bool ready)
 {
