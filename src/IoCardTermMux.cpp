@@ -3,8 +3,8 @@
 // the chip level, it is a functional emulation, based on the description
 // of the card in 2236MXE_Documentation.8-83.pdf
 //
-// Also, look at my partial disassembly of the MUXD eproms here:
-// C:\Users\Jim\Documents\wang2200\boards\LVP box\7291_dasm\asm\mxd.asm
+// Also, look at my partial, guess-filled disassembly of the MUXD eproms here:
+// C:/Users/Jim/Documents/wang2200/boards/LVP\ box/7291_dasm/asm/mxd.asm
 
 #include "Ui.h"
 #include "IoCardTermMux.h"
@@ -17,7 +17,7 @@
 #pragma warning( disable: 4127 )  // conditional expression is constant
 #endif
 
-const bool foo = false; // temporary debugging hack
+const bool dbg = false; // temporary debugging hack
 
 // instance constructor
 IoCardTermMux::IoCardTermMux(std::shared_ptr<Cpu2200> cpu,
@@ -131,6 +131,7 @@ IoCardTermMux::select()
     if (NOISY) {
         UI_Info("TermMux ABS %02x+%1x", m_baseaddr, m_io_offset);
     }
+if (dbg) dbglog("TermMux ABS %02x+%1x\n", m_baseaddr, m_io_offset);
 
     // if the card is ever addressed at 01 or 05, the controller drops back
     // into vp mode.  likewise, if the card is addressed at 02, 06, or 07,
@@ -184,6 +185,7 @@ IoCardTermMux::deselect()
     if (NOISY) {
         UI_Info("TermMux -ABS %02x+%1x", m_baseaddr, m_io_offset);
     }
+if (dbg) dbglog("TermMux -ABS %02x+%1x\n", m_baseaddr, m_io_offset);
 
     m_selected = false;
     m_cpb      = true;
@@ -432,7 +434,7 @@ IoCardTermMux::OBS_06(int val)
                 if ((val < 0 || val > 3) && NOISY) {
                     UI_Warn("unexpected TermMux command sequence FF %02X", val);
                 } else {
-if (foo) UI_Warn("TermMux OBS 06: selected terminal %d", val+1);
+if (dbg) dbglog("TermMux OBS 06: selected terminal %d\n", val+1);
                     m_port = val;
                     m_term = m_terms[m_port];
                 }
@@ -476,7 +478,7 @@ if (foo) UI_Warn("TermMux OBS 06: selected terminal %d", val+1);
                     m_term.io6_field_size = 480;
                 }
                 m_term.line_req_buf.clear();
-if (foo) UI_Warn("TermMux OBS 06: CMD_LINE_REQ: field_size=%d, underline=%d, edit=%d",
+if (dbg) dbglog("TermMux OBS 06: CMD_LINE_REQ: field_size=%d, underline=%d, edit=%d\n",
         m_term.io6_field_size, m_term.io6_underline, m_term.io6_edit);
             }
             break;
@@ -490,7 +492,7 @@ if (foo) UI_Warn("TermMux OBS 06: CMD_LINE_REQ: field_size=%d, underline=%d, edi
             // END-OF-LINE-REQUEST CBS(0A).
             if (m_term.line_req_buf.size() < m_term.io6_field_size) {
                 m_term.line_req_buf.push_back(static_cast<uint8>(val));
-if (foo) UI_Warn("TermMux OBS 06: CMD_PREFILL_LINE_REQ got %02x", val);
+if (dbg) dbglog("TermMux OBS 06: CMD_PREFILL_LINE_REQ got %02x\n", val);
             }
             break;
 
@@ -502,7 +504,7 @@ if (foo) UI_Warn("TermMux OBS 06: CMD_PREFILL_LINE_REQ got %02x", val);
             // END-OF-LINE-REQUEST CBS(0A) or a TERMINATE-LINE-REQUEST CBS(10).
             if (m_term.line_req_buf.size() < m_term.io6_field_size) {
                 m_term.line_req_buf.push_back(static_cast<uint8>(val));
-if (foo) UI_Warn("TermMux OBS 06: CMD_REFILL_LINE_REQ got %02x", val);
+if (dbg) dbglog("TermMux OBS 06: CMD_REFILL_LINE_REQ got %02x\n", val);
             }
             break;
 
@@ -612,7 +614,7 @@ IoCardTermMux::CBS_06(int val)
 
         case mux_cmd_t::CMD_NULL:  // CBS(00)
             // do nothing
-if (foo) UI_Warn("TermMux OBS 06: CMD_NULL");
+if (dbg) dbglog("TermMux OBS 06: CMD_NULL\n");
             break;
 
         case mux_cmd_t::CMD_POWERON:  // CBS(01)
@@ -620,7 +622,7 @@ if (foo) UI_Warn("TermMux OBS 06: CMD_NULL");
             // is set to the way it is at power on.  All buffers are cleared,
             // all pointers are reset, all flags cleared. The mode becomes VP
             // mode.
-if (foo) UI_Warn("TermMux OBS 06: CMD_POWERON");
+if (dbg) dbglog("TermMux OBS 06: CMD_POWERON\n");
             reset();
             break;
 
@@ -635,7 +637,7 @@ if (foo) UI_Warn("TermMux OBS 06: CMD_POWERON");
             m_term.printer_buf.clear();
             m_term.line_req_buf.clear();
             m_term.keyboard_buf.clear();
-if (foo) UI_Warn("TermMux OBS 06: CMD_INIT_CURRENT_TERM");
+if (dbg) dbglog("TermMux OBS 06: CMD_INIT_CURRENT_TERM\n");
             break;
 
         case mux_cmd_t::CMD_DELETE_LINE_REQ:  // CBS(03)
@@ -645,12 +647,12 @@ if (foo) UI_Warn("TermMux OBS 06: CMD_INIT_CURRENT_TERM");
             m_term.io1_key_ready = false;
             m_term.line_req_buf.clear();
             m_term.keyboard_buf.clear();
-if (foo) UI_Warn("TermMux OBS 06: CMD_DELETE_LINE_REQ");
+if (dbg) dbglog("TermMux OBS 06: CMD_DELETE_LINE_REQ\n");
             break;
 
         case mux_cmd_t::CMD_END_OF_LINE_REQ:  // CBS(0A)
             // TODO
-if (foo) UI_Warn("TermMux OBS 06: CMD_END_OF_LINE_REQ");
+if (dbg) dbglog("TermMux OBS 06: CMD_END_OF_LINE_REQ\n");
             perform_end_of_line_req();
             break;
 
@@ -688,7 +690,7 @@ if (foo) UI_Warn("TermMux OBS 06: CMD_END_OF_LINE_REQ");
             //        the line request.
             //     6. Ask for data.
             // TODO
-if (foo) UI_Warn("TermMux OBS 06: CMD_QUERY_LINE_REQ");
+if (dbg) dbglog("TermMux OBS 06: CMD_QUERY_LINE_REQ\n");
             break;
 
         case mux_cmd_t::CMD_ACCEPT_LINE_REQ_DATA:  // CBS(0C)
@@ -700,7 +702,7 @@ if (foo) UI_Warn("TermMux OBS 06: CMD_QUERY_LINE_REQ");
             // If the ENDI is zero, the line request is complete; if 01h, the
             // controller needs more time to finish updating the screen.
             // TODO
-if (foo) UI_Warn("TermMux OBS 06: CMD_ACCEPT_LINE_REQ_DATA");
+if (dbg) dbglog("TermMux OBS 06: CMD_ACCEPT_LINE_REQ_DATA\n");
             break;
 
         case mux_cmd_t::CMD_REQ_CRT_BUFFER:  // CBS(0D)
@@ -710,14 +712,14 @@ if (foo) UI_Warn("TermMux OBS 06: CMD_ACCEPT_LINE_REQ_DATA");
             // then the controller will set the bit when the buffer does go
             // empty.
             // TODO
-if (foo) UI_Warn("TermMux OBS 06: CMD_REQ_CRT_BUFFER");
+if (dbg) dbglog("TermMux OBS 06: CMD_REQ_CRT_BUFFER\n");
             break;
 
         case mux_cmd_t::CMD_REQ_PRINT_BUFFER:  // CBS(0E)
             // This is just like the previous, except is refers to the current
             // terminal's PRINT buffer not CRT buffer.
             // TODO
-if (foo) UI_Warn("TermMux OBS 06: CMD_REQ_PRINT_BUFFER");
+if (dbg) dbglog("TermMux OBS 06: CMD_REQ_PRINT_BUFFER\n");
             break;
 
         case mux_cmd_t::CMD_ERROR_LINE_REQ:  // CBS(0F)
@@ -726,7 +728,7 @@ if (foo) UI_Warn("TermMux OBS 06: CMD_REQ_PRINT_BUFFER");
             // in conjunction with PREFILL or REFILL.  It is normally used for
             // undefined function keys.
             // TODO
-if (foo) UI_Warn("TermMux OBS 06: CMD_ERROR_LINE_REQ");
+if (dbg) dbglog("TermMux OBS 06: CMD_ERROR_LINE_REQ\n");
             break;
 
         case mux_cmd_t::CMD_TERMINATE_LINE_REQ:  // CBS(10)
@@ -734,7 +736,7 @@ if (foo) UI_Warn("TermMux OBS 06: CMD_ERROR_LINE_REQ");
             // cause all the same actions as the operator pressing EXEC.
             // It is normally used for the BASIC statement DEFFN' HEX(0D).
             // TODO
-if (foo) UI_Warn("TermMux OBS 06: CMD_TERMINATE_LINE_REQ");
+if (dbg) dbglog("TermMux OBS 06: CMD_TERMINATE_LINE_REQ\n");
             break;
 
         // the following commands take arguments via subsequent OBS 06 strobes.
@@ -851,7 +853,7 @@ IoCardTermMux::IBS_02()
             for(int n=0; n<MAX_TERMINALS; n++) {
                 retval = (0 << n);  // FIXME: '1' if term is RESET
             }
-if (foo) UI_Warn("IBS 02, seq=%d, returning %02x", m_ibs_seq, retval);
+if (dbg) dbglog("IBS 02, seq=%d, returning %02x\n", m_ibs_seq, retval);
             m_cpu->IoCardCbIbs(retval);
             break;
 
@@ -859,14 +861,14 @@ if (foo) UI_Warn("IBS 02, seq=%d, returning %02x", m_ibs_seq, retval);
             for(int n=0; n<MAX_TERMINALS; n++) {
                 retval = (0 << n);  // FIXME: '1' if term is halt/step
             }
-if (foo) UI_Warn("IBS 02, seq=%d, returning %02x", m_ibs_seq, retval);
+if (dbg) dbglog("IBS 02, seq=%d, returning %02x\n", m_ibs_seq, retval);
             m_cpu->IoCardCbIbs(retval);
             break;
 
         case 2: // one second clock tick (MXE/triple controller only)
 // FIXME: the muxd rom in the lvp returns the uart DSR flags
 retval = 0x01;  // indicate port 1 data set ready
-if (foo) UI_Warn("IBS 02, seq=%d, returning %02x", m_ibs_seq, retval);
+if (dbg) dbglog("IBS 02, seq=%d, returning %02x\n", m_ibs_seq, retval);
             m_cpu->IoCardCbIbs(retval);
             break;
 
@@ -893,7 +895,7 @@ if (foo) UI_Warn("IBS 02, seq=%d, returning %02x", m_ibs_seq, retval);
                 // FIXME: "line request complete" not implemented yet
                 retval |= 0x04;
             }
-if (foo) UI_Warn("IBS 02, seq=%d, returning %02x", m_ibs_seq, retval);
+if (dbg) dbglog("IBS 02, seq=%d, returning %02x\n", m_ibs_seq, retval);
             m_cpu->IoCardCbIbs(retval);
             break;
         }
@@ -902,7 +904,7 @@ if (foo) UI_Warn("IBS 02, seq=%d, returning %02x", m_ibs_seq, retval);
             // the documentation doesn't say what value to send, but the muxd
             // ROM sends 0xF0 w/endi
             retval = 0x1F0;  // note bit 8 is ENDI
-if (foo) UI_Warn("IBS 02, seq=%d, returning %03x", m_ibs_seq, retval);
+if (dbg) dbglog("IBS 02, seq=%d, returning %03x\n", m_ibs_seq, retval);
             m_cpu->IoCardCbIbs(retval);
             break;
 
