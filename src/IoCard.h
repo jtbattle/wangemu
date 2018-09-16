@@ -127,13 +127,13 @@ public:
         IoCard::card_t::disk
     };
 
+    // return true if the argument is a legal card enum
     static bool legal_card_t(card_t c) {
-        return (c == card_t::keyboard)
-            || (c == card_t::disp_64x16)
-            || (c == card_t::disp_80x24)
-            || (c == card_t::term_mux)
-            || (c == card_t::printer)
-            || (c == card_t::disk);
+        for(auto &ct : card_types) {
+            if (c == ct)
+                return true;
+        }
+        return false;
     }
 
     // create an instance of the specified card; the card configuration,

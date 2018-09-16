@@ -552,7 +552,8 @@ System2200::cpu_ABS(uint8 byte)
             }
         }
     } else {
-        m_cardInSlot[m_IoMap[m_IoCurSelected].slot]->select();
+        int slot = m_IoMap[m_IoCurSelected].slot;
+        m_cardInSlot[slot]->select();
     }
 }
 

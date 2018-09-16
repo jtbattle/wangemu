@@ -220,12 +220,11 @@ SysCfgState::loadIni()
         osf << "io/slot-" << slot;
         std::string subgroup(osf.str());
         std::string sval;
-        int b;
         IoCard::card_t cardtype = IoCard::card_t::none;
 
         int io_addr;
         (void)hst.ConfigReadInt(subgroup, "addr", &io_addr, -1);  // -1 if not found
-        b =   hst.ConfigReadStr(subgroup, "type", &sval);
+        int b = hst.ConfigReadStr(subgroup, "type", &sval);
         if (b) {
             cardtype = CardInfo::getCardTypeFromName(sval);
         }

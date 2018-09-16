@@ -917,10 +917,6 @@ dasm_one_vp(char *buff, uint32 ic, uint32 ucode)
     char dasmtext[100];
     int illegal;
 
-    if (ic==0x807B) {
-        printf("FLAG\n");
-    }
-
     illegal = dasm_op_vp(dasmtext, ic, ucode);
     sprintf(buff, "%04X: %06X : %s%s\n", ic, ucode & 0x00FFFFFF, dasmtext,
             illegal ? " (ILLEGAL)" : "");
