@@ -19,6 +19,13 @@
 
 const bool dbg = false; // temporary debugging hack
 
+char asciify(int v)
+{
+    if (v <  32) return '.';
+    if (v > 127) return '.';
+    return (char)v;
+}
+
 // instance constructor
 IoCardTermMux::IoCardTermMux(std::shared_ptr<Cpu2200> cpu,
                              int baseaddr, int cardslot) :
@@ -129,9 +136,9 @@ IoCardTermMux::select()
     m_io_offset = (m_cpu->getAB() & 7);
 
     if (NOISY) {
-        UI_Info("TermMux ABS %02x+%1x", m_baseaddr, m_io_offset);
+        UI_Info("TermMux ABS %02x", m_baseaddr+m_io_offset);
     }
-if (dbg) dbglog("TermMux ABS %02x+%1x\n", m_baseaddr, m_io_offset);
+if (dbg) dbglog("TermMux ABS %02x\n", m_baseaddr+m_io_offset);
 
     // if the card is ever addressed at 01 or 05, the controller drops back
     // into vp mode.  likewise, if the card is addressed at 02, 06, or 07,
@@ -167,6 +174,8 @@ if (dbg) dbglog("TermMux ABS %02x+%1x\n", m_baseaddr, m_io_offset);
             m_card_busy = (m_term.printer_buf.size() >= PrinterBufferSize-3);
             break;
         case 5:  // vp mode display
+            // FIXME: in real life this goes through the same output buffer
+            // logic as MVP mode, so it needs to simulate serial port timing.
             m_card_busy = false;  // FIXME
             break;
         case 6:  // send command sequence; some commands return status here
@@ -183,9 +192,9 @@ void
 IoCardTermMux::deselect()
 {
     if (NOISY) {
-        UI_Info("TermMux -ABS %02x+%1x", m_baseaddr, m_io_offset);
+        UI_Info("TermMux -ABS %02x", m_baseaddr+m_io_offset);
     }
-if (dbg) dbglog("TermMux -ABS %02x+%1x\n", m_baseaddr, m_io_offset);
+if (dbg) dbglog("TermMux -ABS %02x\n", m_baseaddr+m_io_offset);
     m_cpu->setDevRdy(false);
 
     m_selected = false;
@@ -199,6 +208,7 @@ IoCardTermMux::OBS(int val)
     if (NOISY) {
         UI_Info("TermMux OBS: byte 0x%02x", val);
     }
+if (dbg) dbglog("TermMux OBS: byte 0x%02x (%c)\n", val, asciify(val));
 
     // NOTE: the hardware latches m_io_offset into another latch now.
     // I believe the reason is that say the board is addressed at offset 6.
@@ -228,6 +238,7 @@ IoCardTermMux::CBS(int val)
     if (NOISY) {
         UI_Info("TermMux CBS: 0x%02x", val);
     }
+if (dbg) dbglog("TermMux CBS: byte 0x%02x\n", val);
 
     // some commands expect an ibs return sequence;
     // this state tracks how far in the response sequence
@@ -245,6 +256,8 @@ IoCardTermMux::CBS(int val)
         case 6: CBS_06(val); break;
         case 7: CBS_07(val); break;
     }
+
+    m_cpu->setDevRdy(!m_card_busy);
 }
 
 // weird hack Wang used to signal the attached display is 64x16 (false)
@@ -266,6 +279,7 @@ IoCardTermMux::CPB(bool busy)
     if (NOISY) {
         UI_Info("TermMux CPB%c", busy ? '+' : '-');
     }
+if (dbg) dbglog("TermMux CPB%c\n", busy ? '+' : '-');
 
     m_cpb = busy;
     m_cpu->setDevRdy(!m_card_busy);
@@ -522,11 +536,16 @@ if (dbg) dbglog("TermMux OBS 06: CMD_REFILL_LINE_REQ got %02x\n", val);
 void
 IoCardTermMux::OBS_07(int val)
 {
+#if 0
     if (m_term.crt_buf.size() < CrtBufferSize) {
         m_term.crt_buf.push_back(static_cast<uint8>(val));
     } else if (NOISY) {
         UI_Warn("TermMux OBS 07: 0x%02x, but the CRT buffer is full", val);
     }
+#else
+    // FIXME: use a timer to send a character every 0.52 ms
+    UI_displayChar(m_term.wndhnd, (uint8)val);
+#endif
 
     // The device should be ready any time there is at least three bytes of
     // space available [in the output buffer].
@@ -796,7 +815,6 @@ IoCardTermMux::CBS_07(int val)
     // space available [in the output buffer].
     // (2236MXE_Documentation.8-83.pdf, p16)
     m_card_busy = (m_term.crt_buf.size() >= CrtBufferSize-3);
-    m_cpu->setDevRdy(!m_card_busy);
 }
 
 
@@ -867,8 +885,10 @@ if (dbg) dbglog("IBS 02, seq=%d, returning %02x\n", m_ibs_seq, retval);
             break;
 
         case 2: // one second clock tick (MXE/triple controller only)
-// FIXME: the muxd rom in the lvp returns the uart DSR flags
-retval = 0x01;  // indicate port 1 data set ready
+            // FIXME: the muxd rom in the lvp returns the uart DSR flags
+            // the MVP 3.5 OS code (JLMVP32A, label MXDSTAT4) ignores
+            // the timer byte if the msb is zero.
+            retval = 0x01;  // indicate port 1 data set ready
 if (dbg) dbglog("IBS 02, seq=%d, returning %02x\n", m_ibs_seq, retval);
             m_cpu->IoCardCbIbs(retval);
             break;
