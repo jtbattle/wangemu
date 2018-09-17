@@ -96,6 +96,7 @@ IoCardPrinter::deselect()
     if (NOISY) {
         UI_Info("printer -ABS");
     }
+    m_cpu->setDevRdy(false);
 
     // ...
 

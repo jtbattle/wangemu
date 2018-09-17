@@ -197,6 +197,7 @@ IoCardDisplay::deselect()
     if (NOISY) {
         UI_Info("display -ABS");
     }
+    m_cpu->setDevRdy(false);
 
     m_selected = false;
 }

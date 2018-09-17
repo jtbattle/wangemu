@@ -183,7 +183,7 @@ System2200::breakdown_cards(void)
     }
 
     if (m_cpu) {
-        m_cpu->setDevRdy(true); // nobody is driving, so it floats to 1
+        m_cpu->setDevRdy(false); // nobody is driving, so it floats to 0
     }
 }
 
@@ -530,30 +530,46 @@ System2200::cpu_ABS(uint8 byte)
         return;
     }
 
+    // deselect old card
     if ((m_IoCurSelected > 0) && (m_IoMap[m_IoCurSelected].slot >= 0)) {
         (m_cardInSlot[m_IoMap[m_IoCurSelected].slot])->deselect();
-        m_IoCurSelected = -1;
     }
-
-    m_cpu->setDevRdy(true); // nobody is driving, so it floats to 1
-
     m_IoCurSelected = byte;
-    if (m_IoMap[m_IoCurSelected].slot < 0) {
-        // ignore 0x00, which is used as a "deselect everything" address
-        if ( (m_IoCurSelected != 0x00) &&
-             !m_IoMap[m_IoCurSelected].ignore ) {
-            if (m_config->getWarnIo()) {
-                bool response = UI_Confirm(
-                            "Warning: selected non-existent I/O device %02X\n"
-                            "Should I warn you of further accesses to this device?",
-                            m_IoCurSelected );
-                // suppress further warnings
-                m_IoMap[m_IoCurSelected].ignore = !response;
-            }
-        }
-    } else {
+
+    bool vp_mode = (m_cpu->getCpuType() == Cpu2200::CPUTYPE_2200VP);
+
+    // by default, assume the device is not ready.
+    // the addressed card will turn it back below if appropriate
+    if (m_IoCurSelected == 0x00 && vp_mode) {
+        // the (M)VP CPU special cases address 00 and forces ready true
+        m_cpu->setDevRdy(true);
+        return;
+    }
+    // nobody is driving, so it defaults to 0
+    m_cpu->setDevRdy(false);
+
+    // let the selected card know it has been chosen
+    if (m_IoMap[m_IoCurSelected].slot >= 0) {
         int slot = m_IoMap[m_IoCurSelected].slot;
         m_cardInSlot[slot]->select();
+        return;
+    }
+
+    // MVP OS probes addr 80 to test for the bank select register (BSR).
+    // for non-VSLI CPUs, it would be annoying to get warned about it.
+    if (vp_mode && (m_IoCurSelected == 0x80)) {
+        return;
+    }
+
+    // warn the user that a non-existant device has been selected
+    if (!m_IoMap[m_IoCurSelected].ignore && m_config->getWarnIo() &&
+        (m_IoCurSelected != 0x00)) {
+        bool response = UI_Confirm(
+                    "Warning: selected non-existent I/O device %02X\n"
+                    "Should I warn you of further accesses to this device?",
+                    m_IoCurSelected );
+        // suppress further warnings
+        m_IoMap[m_IoCurSelected].ignore = !response;
     }
 }
 

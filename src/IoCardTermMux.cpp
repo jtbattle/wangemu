@@ -186,6 +186,7 @@ IoCardTermMux::deselect()
         UI_Info("TermMux -ABS %02x+%1x", m_baseaddr, m_io_offset);
     }
 if (dbg) dbglog("TermMux -ABS %02x+%1x\n", m_baseaddr, m_io_offset);
+    m_cpu->setDevRdy(false);
 
     m_selected = false;
     m_cpb      = true;

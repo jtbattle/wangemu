@@ -100,6 +100,7 @@ IoCardXxx::deselect()
     if (NOISY) {
         UI_Info("xxx -ABS");
     }
+    m_cpu->setDevRdy(false);
 
     m_selected = false;
     m_cpb      = true;

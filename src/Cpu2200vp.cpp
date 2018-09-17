@@ -1065,6 +1065,7 @@ Cpu2200vp::exec_one_op()
                     }
                 }
                 //UI_Info("CPU:CBS when AB=%02X, AB_SEL=%02X, K=%02X", m_cpu.ab, m_cpu.ab_sel, m_cpu.k);
+                setDevRdy(false);  // (M)VP cpus do this, but not 2200T
                 m_sys->cpu_CBS(m_cpu.k);    // control bus strobe
                 break;
             case 0x20: // OBS
@@ -1076,6 +1077,7 @@ Cpu2200vp::exec_one_op()
                     }
                 }
                 //UI_Info("CPU:OBS when AB=%02X, AB_SEL=%02X, K=%02X", m_cpu.ab, m_cpu.ab_sel, m_cpu.k);
+                setDevRdy(false);  // (M)VP cpus do this, but not 2200T
                 m_sys->cpu_OBS(m_cpu.k);  // output data bus strobe
                 break;
             case 0x08: // empirical behavior
