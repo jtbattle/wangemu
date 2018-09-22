@@ -596,24 +596,34 @@ Crt::processChar(uint8 byte)
     }
     //wxLogMessage("processChar(0x%02x)", byte);
 
-    if (m_raw_cnt > 0) {
-        // keep accumulating
-        assert(m_raw_cnt < sizeof(m_raw_buf));
-        m_raw_buf[m_raw_cnt++] = byte;
-    } else if (byte == 0xFB) {
+    if ((m_raw_cnt == 0) && (byte == 0xFB)) {
         // start a FB ... sequence
         m_raw_buf[0] = 0xFB;
         m_raw_cnt = 1;
         return;
-    } else {
+    }
+    if (m_raw_cnt == 0) {
         // pass it through
         processChar2(byte);
         return;
     }
+    // keep accumulating command bytes
+    assert(m_raw_cnt < sizeof(m_raw_buf));
+    m_raw_buf[m_raw_cnt++] = byte;
 
     // check for literal 0xFB byte
     if (m_raw_cnt == 2 && m_raw_buf[1] == 0xD0) {
         processChar2(0xFB);
+        m_raw_cnt = 0;
+        return;
+    }
+
+    // FB nn, where nn >= 0x60 represents (nn-0x60) spaces in a row
+    if ((m_raw_cnt == 2) && (m_raw_buf[0] == 0xFB) &&
+        (0x60 <= m_raw_buf[1]) && (m_raw_buf[1] <= 0xBF)) {
+        for(int i=0; i<m_raw_buf[1]; i++) {
+            processChar2(0x20);
+        }
         m_raw_cnt = 0;
         return;
     }
@@ -628,22 +638,23 @@ Crt::processChar(uint8 byte)
         return;
     }
 
-    // TODO: what should happen with illegal sequences?
-    //       for now, I'm just going to pass them through
-    if (m_raw_cnt == 2 && m_raw_buf[1] >= 0x60) {
-        processChar2(m_raw_buf[0]);
-        processChar2(m_raw_buf[1]);
-        m_raw_cnt = 0;
-        return;
-    }
-
     // what is left is a run count: FB nn cc
     // where nn is the repetition count, and cc is the character
-    if (m_raw_cnt == 3 && m_raw_buf[0] == 0xFB && m_raw_buf[1] < 0x60) {
+    if (m_raw_cnt == 3) {
 //UI_Info("Decompress: cnt=%d, chr=0x%02x", m_raw_buf[1], m_raw_buf[2]);
         for(int i=0; i<m_raw_buf[1]; i++) {
             processChar2(m_raw_buf[2]);
         }
+        m_raw_cnt = 0;
+        return;
+    }
+
+    // TODO: what should happen with illegal sequences?
+    if ( (m_raw_cnt == 2) &&
+         ((m_raw_buf[1] < 0x01) || (m_raw_buf[1] >= 0xD0)) ) {
+        // for now, I'm passing them through
+        processChar2(m_raw_buf[0]);
+        processChar2(m_raw_buf[1]);
         m_raw_cnt = 0;
         return;
     }
