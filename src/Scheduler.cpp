@@ -20,23 +20,14 @@
 //         2007: rewritten in c++ oo style for the wang 3300 emulator
 //         2008: adapted for a new revision of the wang 2200 emulator
 //         2015: replaced Callback.h with std::function/std::bind
+//         2018: switched to a ns resolution, 64b absolute time model
 // All revisions, Jim Battle.
 
-// In theory, on each TimerTick() we deduct the specified number of ticks
-// from all the timers.  All expiring timers are put on a retirement list.
-// Once all active timers are swept like this, all retired timers perform
-// their callbacks.  This retirement list is to prevent confusing reentrancy
-// issues, as a callback may result in a call to TimerCreate().
-//
-// In practice, we just keep track of the time left on the timer with the
-// fewest ticks remaining.  once it retires (or dies), only then are all
-// the other outstanding timers debited the cumulative tick count since the
-// last such accounting.
-//
-// The timer is only a 32 bit integer, but only 30 bits should be used as
-// things might get squirrelly near 2^31.  With a tick resolution of 10MHz,
-// this allows setting a timer event up to 107 seconds into the future.
-// This is more than enough range.
+// When m_time_ns has incremented past the threashold of the earliest timer,
+// all timers are checked as more than one might expire. All expiring timers
+// are put on a retirement list, then all retired timers perform their
+// callbacks. This retirement list is to prevent confusing reentrancy issues,
+// as a callback may result in a call to TimerCreate().
 
 #include "Scheduler.h"
 #include "Ui.h"         // needed for UI_Error()
@@ -110,9 +101,11 @@ TimerTest(void)
 // Scheduler implementation
 // ======================================================================
 
+const int64 MAX_TIME = ((int64)1 << 62);
+
 Scheduler::Scheduler() :
-    m_countdown(0),
-    m_startcnt(0)
+    m_time_ns(0),
+    m_trigger_ns(MAX_TIME)
 {
 #if TEST_TIMER
     if (this == &test_scheduler) {
@@ -132,57 +125,37 @@ Scheduler::~Scheduler()
 
 // return a timer object; the caller doesn't destroy this object,
 // but calls Kill() if it wants to terminate it.
-// 'ticks' is the number of clock ticks before the callback fires.
+// 'ns' is the number of nanoseconds in the future when the callback fires.
 std::shared_ptr<Timer>
-Scheduler::TimerCreate(int ticks, const sched_callback_t &fcn)
+Scheduler::TimerCreate(int64 ns, const sched_callback_t &fcn)
 {
-    // funny things happen if we try to time intervals that are too big
-    assert(ticks <= MAX_TICKS);
-    assert(ticks >= 1);
+    // catch dumb bugs
+    assert(ns >= 1);
+    assert(ns <= 12E9);      // 12 seconds
 
     // make sure we don't leak timers
     assert(m_timer.size() < MAX_TIMERS);
 
-    auto tmr = std::make_shared<Timer>(this, ticks, fcn);
-
-    if (m_timer.empty()) {
-        // this is the only timer
-        m_startcnt = m_countdown = ticks;
-    } else if (ticks < m_countdown) {
-        // the new timer expires before current target, so make this timer
-        // the new expiration count.
-#if 1
-        // we have to twiddle startcnt to make sure we end up with the proper
-        // timer credits for those that have already been running.
-        int32 diff = (m_countdown - ticks);
-        m_startcnt  -= diff;
-        m_countdown -= diff;    // == ticks
-#else
-        // do it the slow way, but it has the advantage that when this timer
-        // expires, it won't look like we overshot by a ton of cycles
-        int32 elapsed = (m_startcnt - m_countdown);
-        for(auto &t : m_timer) {
-            t->ctr -= elapsed;
-            assert(t->ctr > 0);
-        }
-        m_startcnt = m_countdown = ticks;
-#endif
-    } else {
-        // the timer state might be that we already have credits lined up
-        // for other timers.  rather than doling out the elapsed time to
-        // each timer, we just add the current credit to the new timer.
-        // that is, if N cycles have gone by since the last time we
-        // evaluated who to trigger next, we pretend that the new event
-        // which is to trigger in M cycles was actually scheduled for M+N
-        // ticks N cycles ago.
-        int elapsed = (m_startcnt - m_countdown);
-        tmr->ctr += elapsed;
-    }
+    int64 event_ns = m_time_ns + ns;
+    auto tmr = std::make_shared<Timer>(this, event_ns, fcn);
 
     m_timer.push_back(tmr);
+    m_trigger_ns = FirstEvent();
 
     // return timer handle
     return tmr;
+}
+
+int64
+Scheduler::FirstEvent()
+{
+    int64 rv = MAX_TIME;
+    for(auto &t : m_timer) {
+        if (t->expires_ns < rv) {
+            rv = t->expires_ns;
+        }
+    }
+    return rv;
 }
 
 // kill a timer.  the timer number passed to this function
@@ -204,19 +177,16 @@ void Scheduler::TimerKill(Timer* tmr)
 #endif
 }
 
-// transfer accumulated timer deficit to each active timer.
-// n is added to the already elapsed time.
+// the m_trigger_ns threshold has been exceeded.  check all timers and invoke
+// callback all those which have expired.
 // this shouldn't need to be called very frequently.
 void Scheduler::TimerCredit(void)
 {
     if (m_timer.empty()) {
-        // don't trigger this fcn again until there is real work to do,
-        // or a long time has passed.
-        m_countdown = MAX_TICKS;
+        // don't trigger this fcn again until there is real work to do
+        m_trigger_ns = MAX_TIME;
         return; // no timers
     }
-
-    uint32 elapsed = (m_startcnt - m_countdown);
 
     // scan each active timer, moving expired ones to the retired list
     std::vector<std::shared_ptr<Timer>> retired;
@@ -224,12 +194,11 @@ void Scheduler::TimerCredit(void)
     int active_after = 0;
     for(int s=0; s<active_before; s++) {
         if (m_timer[s].unique()) {
-            // the timer was effectively killed by dropping the reference
-            // to it; the only reference is the live timer list.  kill it.
+            // the timer is killed because the scheduler holds the only
+            // reference to it.
             ;
         } else {
-            m_timer[s]->ctr -= elapsed;
-            if (m_timer[s]->ctr <= 0) {
+            if (m_timer[s]->expires_ns <= m_time_ns) {
                 // a timer has expired; move it to the retired list
                 retired.push_back(m_timer[s]);
             } else {
@@ -248,23 +217,16 @@ void Scheduler::TimerCredit(void)
         m_timer.resize(active_after);  // delete any expired timers
     }
 
-    // determine the minimum countdown value of the remaining active timers
-    m_countdown = MAX_TICKS;
-    for(auto &t : m_timer) {
-#ifdef _DEBUG
-        if (t.use_count() != 2) {
-            UI_Warn("Hey, retiring a timer with a use_count() of %d", t.use_count());
-        }
-#endif
-        m_countdown = std::min(m_countdown, t->ctr);
-    }
-    m_startcnt = m_countdown;
+    // find the next event
+    m_trigger_ns = FirstEvent();
 
     // sort retired events in order they expired
     std::sort(begin(retired), end(retired),
               [](const std::shared_ptr<Timer> &a,
-                 const std::shared_ptr<Timer> &b) { return (a->ctr < b->ctr); }
-             );
+                 const std::shared_ptr<Timer> &b) {
+                    return (a->expires_ns < b->expires_ns);
+               });
+
     // scan through the retired list and perform callbacks
     for(auto &t : retired) {
         (t->callback)();

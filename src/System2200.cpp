@@ -461,17 +461,18 @@ System2200::emulateTimeslice(int ts_ms)
         }
 
         // simulate one timeslice's worth of instructions
-        int ticks = ts_ms*10000;  // 10 MHz = 10,000 clks/ms
-        if (false && num_devices == 1) {
-            int op_ticks = 0;
+        int slice_ns = ts_ms*1000000;
+        if (true && num_devices == 1) {
+            int op_ns = 0;
             auto cb = m_clocked_devices[0].callback_fn;
-// FIXME: convert from ticks to ns. requires changes to scheduler too
-            while (ticks > 0) {
-                op_ticks = cb();
-                ticks -= op_ticks;
-                if (op_ticks < 100) {
+            while (slice_ns > 0) {
+                op_ns = cb();
+                if (op_ns > 10000) {
+                    slice_ns = 0; // finish the timeslice
+                } else  {
                     // the guard is to skip this if the device signals error
-                    m_scheduler->TimerTick(op_ticks);
+                    slice_ns -= op_ns;
+                    m_scheduler->TimerTick(op_ns);
                 }
             }
         } else {
@@ -489,15 +490,21 @@ System2200::emulateTimeslice(int ts_ms)
             // each device has a nanosecond counter. the list of devices is
             // kept in sorted order of increasing time. we call entry 0, adjust
             // its time, then move it to the right place in the list.
-            while (ticks > 0) {
+            while (slice_ns > 0) {
                 auto cb = m_clocked_devices[0].callback_fn;
-                int op_ticks = cb();
-                ticks -= op_ticks;
-                if (op_ticks > 1000000) {
-                    ticks = 0; // finish the timeslice
+                int op_ns = cb();
+                if (op_ns > 10000) {
+                    slice_ns = 0; // finish the timeslice
                 } else {
-                    m_scheduler->TimerTick(op_ticks);
-                    m_clocked_devices[0].ns += ticks;
+// FIXME: if there are multiple devices,
+// the slice_ns and Timer tick should advance only incrementally.
+// eg, if there are two cpus, one might go forward 600ns and the other
+// goes forward by 400ns, but the logic below probably advances time 1000ns.
+// it should advance it by only min(op_ns, (device[1].ns - device[0].ns)),
+// because after device[0] runs, device[1] will run starting at its base time.
+                    slice_ns -= op_ns;
+                    m_scheduler->TimerTick(op_ns);
+                    m_clocked_devices[0].ns += slice_ns;
                     auto entry0 = m_clocked_devices[0];
                     uint32 new_ns = entry0.ns;
                     int i=0;

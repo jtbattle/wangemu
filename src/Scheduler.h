@@ -12,7 +12,7 @@
 typedef std::function<void()> sched_callback_t;
 
 // ======================================================================
-// This is just a handle that Scheduler can pass back on timer creation,
+// A Timer is just a handle that Scheduler can pass back on timer creation,
 // making it more natural for the recipient to manipulate the timer later.
 
 // fwd reference
@@ -26,17 +26,18 @@ class Timer
     friend class Scheduler;
 
 public:
-    Timer(Scheduler *sched, int ticks, sched_callback_t cb) :
-        s(sched), ctr(ticks), callback(cb) { };
+    // ticks is at what absolute time, in ns, to invoke the callback
+    Timer(Scheduler *sched, int64 time_ns, sched_callback_t cb) :
+        s(sched), expires_ns(time_ns), callback(cb) { };
     ~Timer() { };
 
     // kill off this timer
     void Kill();
 
 private:
-    Scheduler       * const s;  // pointer to owning scheduler
-    int32             ctr;      // tick count until expiration
-    sched_callback_t  callback; // registered callback function
+    Scheduler       * const s;      // pointer to owning scheduler
+    int64             expires_ns;   // tick count until expiration
+    sched_callback_t  callback;     // registered callback function
 };
 
 // ======================================================================
@@ -64,20 +65,16 @@ public:
     //                           std::bind(&TimerTestFoo:report, &foo, 33) );
     //
     // After 100 clocks, foo.report(33) is called.
-    std::shared_ptr<Timer> TimerCreate(int ticks, const sched_callback_t &fcn);
+    std::shared_ptr<Timer> TimerCreate(int64 ns, const sched_callback_t &fcn);
 
-    // let 'n' cpu cycles of simulated time go past
-    inline void TimerTick(int n)
+    // let 'ns' nanoseconds of simulated time go past
+    inline void TimerTick(int ns)
     {
-        m_countdown -= n;
-        if (m_countdown <= 0) {
+        m_time_ns += ns;
+        if (m_time_ns >= m_trigger_ns) {
             TimerCredit();
         }
     }
-
-    // when computing time deltas, we don't want to get confused
-    // my negative numbers and wrapping
-    const static int MAX_TICKS = (1 << 30)-1;
 
 private:
     // transfer accumulated timer deficit to each active timer.
@@ -91,19 +88,14 @@ private:
     // to the timer is the active timer list, it will be treated as dead.
     void TimerKill(Timer* tmr);
 
-    // rather than updating all N counters every instruction, we instead
-    // find the one which will expire first, and transfer that into
-    // countdown and startcnt.  as simulated time ticks by, we decrement
-    // countdown.
-    //
-    // when countdown goes <=0, all timers have (startcnt-countdown)
-    // ticks removed from their own counter.
-    int32 m_countdown;
-    int32 m_startcnt;
+    // returns, in absolute ns, the time of the soonest event on the timer list
+    int64 FirstEvent();
 
-    // any timer that has its own counter go <=0 will then
-    // cause a callback to the supplied function using the
-    // supplied parameters.
+    int64 m_time_ns;        // simulated absolute time (in ns)
+    int64 m_trigger_ns;     // time next event expires
+
+    // list of callbacks to invoke when m_time_ns exceeds the expiration time
+    // embedded in the timer.
     std::vector<std::shared_ptr<Timer>> m_timer;
 
     // not strictly necesssary to place a limit, but it is useful to
@@ -111,10 +103,9 @@ private:
     static const int MAX_TIMERS = 30;
 };
 
-// scale a floating point time in microseconds to be an
-// argument appropriate for the TimerCreate() function.
-inline int TIMER_US(double f) { return int(   10.0*f+0.5); }
-inline int TIMER_MS(double f) { return int(10000.0*f+0.5); }
+// scale us/ms to ns, which is what TimerCreate() expects
+inline int64 TIMER_US(double f) { return int64(   1000.0*f+0.5); }
+inline int64 TIMER_MS(double f) { return int64(1000000.0*f+0.5); }
 
 #endif // _INCLUDE_SCHEDULER_H_
 

@@ -919,10 +919,8 @@ Cpu2200vp::tcb30msDone()
 }
 
 
-// perform one instruction and return.
-// returns the number of ticks the instruction took.
-// on an error, ticks is set to a huge value EXEC_ERR to ensure an immediate
-// end to the timeslice.
+// perform one instruction and return the number of ns the instruction took.
+// returns EXEC_ERR if we hit an illegal op.
 #define EXEC_ERR (1<<30)
 int
 Cpu2200vp::execOneOp()
@@ -930,7 +928,7 @@ Cpu2200vp::execOneOp()
     ucode_t *puop = &m_ucode[m_cpu.ic];
     const uint32 uop = puop->ucode;
 
-    int ticks = 6;      // almost all instructions take 6 cycles (600 ns)
+    int ns = 600;      // almost all instructions take 600 ns
 
     int a_field, b_field, c_field, s_field, t_field, HbHa;
     int a_op, b_op, a_op2, b_op2, imm, rslt, rslt2;
@@ -1146,7 +1144,7 @@ Cpu2200vp::execOneOp()
                                         //    of PC is seen by R and W
         perform_dd_op(uop, 0x00);       // force B field to pick 0
         m_cpu.ic++;
-        ticks = 11;
+        ns = 1100;  // 1.1us
         break;
 
     case OP_TAP:
@@ -1195,7 +1193,7 @@ Cpu2200vp::execOneOp()
         // perform subroutine return
         INC_ICSP;
         m_cpu.ic = m_cpu.icstack[m_cpu.icsp];
-        ticks = 16;     // 16 ticks (1.6 us)
+        ns = 1600;      // 1.6 us
         break;
 
     case OP_WCM:
@@ -1211,7 +1209,7 @@ Cpu2200vp::execOneOp()
         // perform subroutine return
         INC_ICSP;
         m_cpu.ic = m_cpu.icstack[m_cpu.icsp];
-        ticks = 16;     // 16 ticks (1.6 us)
+        ns = 1600;      // 1.6 us
         break;
 
     case OP_SR:
@@ -1219,7 +1217,7 @@ Cpu2200vp::execOneOp()
         perform_dd_op(uop, b_op);
         INC_ICSP;
         m_cpu.ic = m_cpu.icstack[m_cpu.icsp];
-        ticks = 8;      // 8 ticks (800 ns)
+        ns = 800;
         break;
 
     case OP_CIO:
@@ -1566,7 +1564,7 @@ Cpu2200vp::execOneOp()
         b_op = (b_op2<<8) | b_op;
         if (a_op < b_op) { m_cpu.ic = puop->p16; }
                     else { m_cpu.ic++; }
-        ticks = 8;      // 8 ticks (800 ns)
+        ns = 800;
         break;
 
     case OP_BLER:       // BLER: branch if R[AAAA] <= R[BBBB]
@@ -1580,7 +1578,7 @@ Cpu2200vp::execOneOp()
         b_op = (b_op2<<8) | b_op;
         if (a_op <= b_op) { m_cpu.ic = puop->p16; }
                      else { m_cpu.ic++; }
-        ticks = 8;      // 8 ticks (800 ns)
+        ns = 800;
         break;
 
     case OP_BER:        // BEQ: branch if R[AAAA] == R[BBBB]
@@ -1612,7 +1610,7 @@ Cpu2200vp::execOneOp()
     } // op
 
     // at this point we know how long each instruction is
-    return ticks;
+    return ns;
 }
 
 

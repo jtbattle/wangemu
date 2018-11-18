@@ -964,12 +964,9 @@ Cpu2200t::getAB() const
 }
 
 
-// perform one instruction and return.
-// returns EXEC_ERR if we hit an illegal op, otherwise return # of ticks
-// in the case of EXEC_ERR, the returned tick count is so big it forces
-// the timeslice to end immediately.
+// perform one instruction and return the number of ns the instruction took.
+// returns EXEC_ERR if we hit an illegal op.
 #define EXEC_ERR (1<<30)
-#define EXEC_OK  (0)
 int
 Cpu2200t::execOneOp()
 {
@@ -1424,7 +1421,7 @@ Cpu2200t::execOneOp()
     }
 
     // instruction ended normally
-    return 16;  // all operations take 16 100ns ticks
+    return 1600;  // all operations take 1.6us ticks
 }
 
 

@@ -136,10 +136,10 @@ private:
 
     void wvdTickleMotorOffTimer();
 
-    long wvdGetTicksToTrack(int track); // calc timing to step to target track
-    void wvdSeekSector();               // do interleave computation
-    void wvdStepToTrack();              // step to track specified by command
-    void wvdSeekTrack(int nominal_ticks); // machinery to actually wait for track
+    int64 wvdGetNsToTrack(int track);    // calc timing to step to target track
+    void wvdSeekSector();                // do interleave computation
+    void wvdStepToTrack();               // step to track specified by command
+    void wvdSeekTrack(int64 nominal_ns); // machinery to actually wait for track
 
     // timer callback functions
     void tcbTrack(int arg);
@@ -187,8 +187,8 @@ private:
         int     tracks_per_platter; // disk property
         int     sectors_per_track;  // disk property
         int     interleave;         // disk property
-        int     ticks_per_sector;   // derived: timer constant per sector
-        int     ticks_per_track;    // derived: timer constant per track step
+        int64   ns_per_sector;      // derived: timer constant per sector
+        int64   ns_per_track;       // derived: timer constant per track step
 
         int     track;              // track counter
         int     sector;             // physical sector counter

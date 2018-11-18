@@ -130,7 +130,7 @@
 #endif
 
 // the minimum number of ticks for a callback event
-const int DISK_MIN_TICKS = TIMER_US( 20 );
+const int64 DISK_MIN_TICKS = TIMER_US( 20 );
 
 // =====================================================
 //   public interface
@@ -454,10 +454,8 @@ IoCardDisk::checkDiskReady()
 // ==========================================================
 
 // timer constants
-#define TICK_ONE_SEC (TIMER_MS( 1 * 1000))      // one second
-#define TICK_TEN_SEC (TIMER_MS(10 * 1000))      // ten seconds
-
-#define ABS(a) ( ((a)<0) ? (-(a)) : (a) )
+#define ONE_SECOND  (TIMER_MS( 1 * 1000))
+#define TEN_SECONDS (TIMER_MS(10 * 1000))
 
 // update the card's busy/idle state and notify the CPU
 void
@@ -493,28 +491,28 @@ IoCardDisk::wvdTickleMotorOffTimer()
 
     int disktype = m_d[m_drive].wvd->getDiskType();
     if ((disktype == Wvd::DISKTYPE_FD5) || (disktype == Wvd::DISKTYPE_FD8)) {
-        m_tmr_motor_off = m_scheduler->TimerCreate( TICK_TEN_SEC,
+        m_tmr_motor_off = m_scheduler->TimerCreate( TEN_SECONDS,
                                                     [&](){ tcbMotorOff(m_drive); } );
     }
 }
 
 
-// return the number of ticks to get from the current disk position to the
+// return the number of ns to get from the current disk position to the
 // new disk position.  the position isn't actually updated.
-long
-IoCardDisk::wvdGetTicksToTrack(int track)
+int64
+IoCardDisk::wvdGetNsToTrack(int track)
 {
     assert(m_drive >= 0 && m_drive < numDrives());
 
-    const int track_diff = ABS(track - (m_d[m_drive].track));
+    const int track_diff = std::abs(track - m_d[m_drive].track);
 
-    int ticks = 0;
+    int64 time_ns = 0;
     switch (m_d[m_drive].wvd->getDiskType()) {
 
         // assume a fixed stepping rate per track
         case Wvd::DISKTYPE_FD5:
         case Wvd::DISKTYPE_FD8:
-            ticks = m_d[m_drive].ticks_per_track * track_diff;
+            time_ns = m_d[m_drive].ns_per_track * track_diff;
             break;
 
         // The 2280 literature says that it takes 6 ms to do a single track
@@ -527,7 +525,7 @@ IoCardDisk::wvdGetTicksToTrack(int track)
         // similar to, but a little worse than, the 2280 timing.
         case Wvd::DISKTYPE_HD60:
         case Wvd::DISKTYPE_HD80:
-            ticks = TIMER_MS((track_diff ? 6.0 : 0) + 0.06f*track_diff);
+            time_ns = TIMER_MS((track_diff ? 6.0 : 0) + 0.06f*track_diff);
             break;
 
         default:
@@ -535,7 +533,7 @@ IoCardDisk::wvdGetTicksToTrack(int track)
             break;
     }
 
-    return ticks;
+    return time_ns;
 }
 
 
@@ -554,10 +552,10 @@ IoCardDisk::wvdStepToTrack()
     const int sec_per_trk = m_d[m_drive].sectors_per_track;
     const int to_track = m_secaddr / sec_per_trk;
 
-    const int ticks = (empty) ? 0 : wvdGetTicksToTrack(to_track);
+    const int64 ns = (empty) ? 0 : wvdGetNsToTrack(to_track);
 
     m_d[m_drive].track = to_track;  // update head position
-    wvdSeekTrack(ticks);
+    wvdSeekTrack(ns);
 }
 
 
@@ -575,7 +573,7 @@ IoCardDisk::wvdStepToTrack()
 //     fire off the timer event
 //
 void
-IoCardDisk::wvdSeekTrack(int nominal_ticks)
+IoCardDisk::wvdSeekTrack(int64 nominal_ns)
 {
     assert(m_drive >= 0 && m_drive < numDrives());
 
@@ -606,13 +604,13 @@ IoCardDisk::wvdSeekTrack(int nominal_ticks)
     bool hard_disk = (disktype == Wvd::DISKTYPE_HD60) ||
                      (disktype == Wvd::DISKTYPE_HD80);
 
-    int ticks = nominal_ticks;
+    int64 ns = nominal_ns;
     if (!hard_disk) { // hard disks are always running
         switch (m_d[m_drive].state) {
             case DRIVE_EMPTY:
             case DRIVE_IDLE:
                 assert(m_d[m_drive].tmr_sector == nullptr);
-                ticks += TICK_ONE_SEC;
+                ns += ONE_SECOND;
                 break;
             case DRIVE_SPINNING:
                 break;
@@ -624,19 +622,19 @@ IoCardDisk::wvdSeekTrack(int nominal_ticks)
     // start sector timer
     if (!empty && (m_d[m_drive].tmr_sector == nullptr)) {
         m_d[m_drive].tmr_sector = m_scheduler->TimerCreate(
-                                    m_d[m_drive].ticks_per_sector,
+                                    m_d[m_drive].ns_per_sector,
                                     [&](){ tcbSector(m_drive); } );
     }
 
-    if (ticks <= 0) {
-        ticks = DISK_MIN_TICKS;
+    if (ns <= 0) {
+        ns = DISK_MIN_TICKS;
     }
     if (!realtime_disk()) {
-        ticks = DISK_MIN_TICKS;
+        ns = DISK_MIN_TICKS;
     }
 
     m_d[m_drive].tmr_track =
-        m_scheduler->TimerCreate( ticks,
+        m_scheduler->TimerCreate( ns,
                                   [&](){ tcbTrack(m_drive); } );
 }
 
@@ -757,7 +755,7 @@ IoCardDisk::tcbSector(int arg)
 
     // retrigger the timer
     m_d[drive].tmr_sector = m_scheduler->TimerCreate(
-                                    m_d[drive].ticks_per_sector,
+                                    m_d[drive].ns_per_sector,
                                     [&, drive](){ tcbSector(drive); } );
     assert(m_d[drive].tmr_sector != nullptr);
 
@@ -1063,8 +1061,8 @@ IoCardDisk::iwvdInsertDisk(int drive,
     m_d[drive].tracks_per_platter =
         int( (num_sectors + m_d[drive].sectors_per_track - 1) /
                             m_d[drive].sectors_per_track      ) ;
-    m_d[drive].ticks_per_track    = TIMER_MS(track_seek_ms);
-    m_d[drive].ticks_per_sector   =
+    m_d[drive].ns_per_track  = TIMER_MS(track_seek_ms);
+    m_d[drive].ns_per_sector =
                 TIMER_MS( (60 * 1000.0) // ms per minute
                         / (float)(disk_rpm * m_d[drive].sectors_per_track) );
 

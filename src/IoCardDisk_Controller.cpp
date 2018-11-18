@@ -991,19 +991,19 @@ disk operation
             // plus the delay of stepping to the destination track.
             // this isn't right if the src and dst platters have a different
             // number of sectors/track.
-            int src_ticks_per_trk = m_d[m_range_drive].ticks_per_sector
-                                  * m_d[m_range_drive].sectors_per_track;
+            int64 src_ns_per_trk = m_d[m_range_drive].ns_per_sector
+                                 * m_d[m_range_drive].sectors_per_track;
             int dst_cur_track = m_dest_start
                               / m_d[m_dest_drive].sectors_per_track;
 
-            // wvdGetTicksToTrack() and wvdSeekTrack() need m_drive set
+            // wvdGetNsToTrack() and wvdSeekTrack() need m_drive set
             m_drive = m_dest_drive;
             for(int d=0; d<numDrives(); d++) {
                 UI_diskEvent(m_slot, d);
             }
 
-            int delay = src_ticks_per_trk  // time reading source track
-                      + wvdGetTicksToTrack(dst_cur_track);  // seeking dst track
+            int64 delay = src_ns_per_trk  // time reading source track
+                        + wvdGetNsToTrack(dst_cur_track);  // seeking dst track
             m_d[m_dest_drive].track = dst_cur_track;
 
             m_state = CTRL_COPY6;
@@ -1022,7 +1022,7 @@ disk operation
             int src_cur_track      = m_range_start / src_sec_per_trk;
             int first_sec_of_track = src_cur_track * src_sec_per_trk;
             int last_sec_of_track  = first_sec_of_track + src_sec_per_trk - 1;
-            int dst_ticks_per_trk  = m_d[m_dest_drive].ticks_per_sector
+            int64 dst_ns_per_trk   = m_d[m_dest_drive].ns_per_sector
                                    * m_d[m_dest_drive].sectors_per_track;
             int first = std::max(m_range_start, first_sec_of_track);
             int last  = std::min(m_range_end,    last_sec_of_track);
@@ -1063,8 +1063,8 @@ disk operation
                     UI_diskEvent(m_slot, d);
                 }
                 m_drive = m_range_drive;
-                int delay = dst_ticks_per_trk
-                          + wvdGetTicksToTrack(src_cur_track+1);
+                int64 delay = dst_ns_per_trk
+                            + wvdGetNsToTrack(src_cur_track+1);
                 m_d[m_drive].track = src_cur_track+1;
                 wvdTickleMotorOffTimer();  // make sure motor keeps going
                 wvdSeekTrack(delay);
@@ -1140,9 +1140,9 @@ disk operation
     // write to all the sectors of the current track
     case CTRL_FORMAT2:
         if (event == EVENT_DISK) {
-            const int tracks        = m_d[m_drive].tracks_per_platter;
-            const int sec_per_trk   = m_d[m_drive].sectors_per_track;
-            const int ticks_per_trk = m_d[m_drive].ticks_per_sector
+            const int   tracks      = m_d[m_drive].tracks_per_platter;
+            const int   sec_per_trk = m_d[m_drive].sectors_per_track;
+            const int64 ns_per_trk  = m_d[m_drive].ns_per_sector
                                     * sec_per_trk;
             bool ok = true;
             m_byte_to_send = 0x00;
@@ -1168,7 +1168,7 @@ disk operation
             if (ok && (next_track < tracks)) {
                 m_state = CTRL_FORMAT2; // stay
                 // account for one rotation of disk, plus step time
-                int delay = ticks_per_trk + wvdGetTicksToTrack(next_track);
+                int64 delay = ns_per_trk + wvdGetNsToTrack(next_track);
                 m_d[m_drive].track = next_track;
                 wvdTickleMotorOffTimer();  // make sure motor keeps going
                 wvdSeekTrack(delay);
@@ -1367,7 +1367,7 @@ disk operation
         {
             int cur_track     = m_d[m_drive].track;
             int sec_per_trk   = m_d[m_drive].sectors_per_track;
-            int ticks_per_trk = m_d[m_drive].ticks_per_sector * sec_per_trk;
+            int64 ns_per_trk  = m_d[m_drive].ns_per_sector * sec_per_trk;
             int last_track    = m_range_end / sec_per_trk;
             int first_sec_of_track = cur_track * sec_per_trk;
             int last_sec_of_track  = first_sec_of_track + sec_per_trk - 1;
@@ -1389,7 +1389,7 @@ disk operation
             if (ok && (next_track <= last_track)) {
                 m_state = CTRL_VERIFY_RANGE4; // stay
                 // account for one rotation of disk, plus step time
-                int delay = ticks_per_trk + wvdGetTicksToTrack(next_track);
+                int64 delay = ns_per_trk + wvdGetNsToTrack(next_track);
                 m_d[m_drive].track = next_track;
                 wvdTickleMotorOffTimer();  // make sure motor keeps going
                 wvdSeekTrack(delay);

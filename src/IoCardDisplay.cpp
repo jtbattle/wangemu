@@ -285,7 +285,7 @@ IoCardDisplay::tcbHsync(int arg)
 
     m_hsync_count++;
 
-    int new_period;
+    int64 new_period;
     if (regulated && (m_hsync_count < num_scanlines)) {
         // end of horizontal sweep; do another
         new_period = HSYNC_PERIOD;
