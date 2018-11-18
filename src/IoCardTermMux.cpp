@@ -2,9 +2,6 @@
 // along with four RS-232 ports.  Rather than emulating this card at
 // the chip level, it is a functional emulation, based on the description
 // of the card in 2236MXE_Documentation.8-83.pdf
-//
-// Also, look at my partial, guess-filled disassembly of the MUXD eproms here:
-// C:/Users/Jim/Documents/wang2200/boards/LVP\ box/7291_dasm/asm/mxd.asm
 
 #include "Ui.h"
 #include "IoCardTermMux.h"
@@ -476,25 +473,30 @@ if (dbg) dbglog("TermMux OBS 06: selected terminal %d\n", val+1);
             // back to the CRT nor entered into the line request buffer.
             // ZZ specifies current column of CRT cursor (the 2200 should have
             // already positioned the cursor at this position).
-            if (m_term.command_buf.size() == 5) {
+            if (m_term.command_buf.size() == 1) {
+                m_term.line_req_buf.clear();
+                // TODO: do I need to keep some kind of state so that if the
+                // terminal happens to send a character while we are waiting
+                // for the rest of the command to arrive, we will know to
+                // let it sit in the input buffer?
+            } else if (m_term.command_buf.size() == 5) {
                 m_term.io6_field_size = 256*m_term.command_buf[1]
                                       +     m_term.command_buf[2];
                 m_term.io6_underline = !!(m_term.command_buf[3] & 0x80);
-                m_term.io6_edit      = !!(m_term.command_buf[3] & 0x04);
+                m_term.io6_edit_mode = !!(m_term.command_buf[3] & 0x04);
                 if (!!(m_term.command_buf[3] & 0x01)) {
                     // empty out any pending keystrokes
                     m_term.keyboard_buf.clear();
                 }
-                // FIXME: ZZ byte isn't used yet
+                m_term.io6_curcolumn = m_term.command_buf[4];  // FIXME: not used yet
                 if (m_term.io6_field_size > 480) {
                     UI_Warn("TermMux REQUEST-LINE command has bad size %d (>480)",
                             m_term.io6_field_size);
                     // I'm not sure if it is better to limit or abandon
                     m_term.io6_field_size = 480;
                 }
-                m_term.line_req_buf.clear();
 if (dbg) dbglog("TermMux OBS 06: CMD_LINE_REQ: field_size=%d, underline=%d, edit=%d\n",
-        m_term.io6_field_size, m_term.io6_underline, m_term.io6_edit);
+        m_term.io6_field_size, m_term.io6_underline, m_term.io6_edit_mode);
             }
             break;
 
@@ -502,9 +504,14 @@ if (dbg) dbglog("TermMux OBS 06: CMD_LINE_REQ: field_size=%d, underline=%d, edit
             // This optional command code of CBS(08) can be sent after a line
             // request command CBS(07) to prefill the desired line with the
             // supplied characters YYYY...  starting with the leftmost position.
-            // The characters are treated as keystrokes.  The cursor is
-            // terminated by the next CBS, which will normally be an
-            // END-OF-LINE-REQUEST CBS(0A).
+            // The characters are treated as keystrokes.  The cursor is left at
+            // the leftmost position.  The string of characters is terminated by
+            // the next CBS, which will normally be an END-OF-LINE-REQUEST CBS(0A).
+            // Note: All characters are legal in a prefill, but when codes 00h-0Fh
+            // are being displayed at the terminal, they are changed to periods.
+            // Codes 80h-8Fh are also legal.
+// TODO: clear the buffer first?  or do we just move the edit point back to the
+//       first character and then overwrite existing characters?
             if (m_term.line_req_buf.size() < m_term.io6_field_size) {
                 m_term.line_req_buf.push_back(static_cast<uint8>(val));
 if (dbg) dbglog("TermMux OBS 06: CMD_PREFILL_LINE_REQ got %02x\n", val);
@@ -794,7 +801,7 @@ if (dbg) dbglog("TermMux OBS 06: CMD_TERMINATE_LINE_REQ\n");
 // service other partitions until a buffer-empty interrupt occurs.  In addition
 // to OBS with data to be displayed, this address also supports CBS's at this
 // address.  When the controller receives CBS(xx) at address 07h it should
-// place a FBh before itin the buffer.  This will cause the terminal to accept
+// place a FBh before it in the buffer.  This will cause the terminal to accept
 // this string as a command.  The following are the three possible commands to
 // the terminal:
 //    FB <count> <character>   blah blah
@@ -923,7 +930,7 @@ if (dbg) dbglog("IBS 02, seq=%d, returning %02x\n", m_ibs_seq, retval);
 
         case 7: // ENDI terminator byte
             // the documentation doesn't say what value to send, but the muxd
-            // ROM sends 0xF0 w/endi
+            // ROM sends 0xF0 w/endi (see STATUS_RESPONSE: section)
             retval = 0x1F0;  // note bit 8 is ENDI
 if (dbg) dbglog("IBS 02, seq=%d, returning %03x\n", m_ibs_seq, retval);
             m_cpu->IoCardCbIbs(retval);

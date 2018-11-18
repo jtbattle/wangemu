@@ -586,7 +586,9 @@ Crt::scr_scroll()
 // a command sequence or more complex behavior.  At the top level there
 // is the unpacking of compressed character sequence (run length encoded).
 
-// first level: decompress
+// first level: FD-escape sequences (mostly char run decompression)
+// some of the escape sequence information was gleaned from this document:
+//     2536DWTerminalAndTerminalControllerProtocol.pdf
 void
 Crt::processChar(uint8 byte)
 {
@@ -611,12 +613,19 @@ Crt::processChar(uint8 byte)
     assert(m_raw_cnt < sizeof(m_raw_buf));
     m_raw_buf[m_raw_cnt++] = byte;
 
-    // check for literal 0xFB byte
-    if (m_raw_cnt == 2 && m_raw_buf[1] == 0xD0) {
-        processChar2(0xFB);
+    // it is a character run sequence: FB nn cc
+    // where nn is the repetition count, and cc is the character
+    if (m_raw_cnt == 3) {
+//UI_Info("Decompress: cnt=%d, chr=0x%02x", m_raw_buf[1], m_raw_buf[2]);
+        for(int i=0; i<m_raw_buf[1]; i++) {
+            processChar2(m_raw_buf[2]);
+        }
         m_raw_cnt = 0;
         return;
     }
+
+    // this must be the case we are considering at this point
+    assert(m_raw_cnt == 2);
 
     // FB nn, where nn >= 0x60 represents (nn-0x60) spaces in a row
     if ((m_raw_cnt == 2) && (m_raw_buf[0] == 0xFB) &&
@@ -628,8 +637,8 @@ Crt::processChar(uint8 byte)
         return;
     }
 
-    // check for delay sequence
-    if (m_raw_cnt == 2 && m_raw_buf[1] >= 0xC1 && m_raw_buf[1] <= 0xC9) {
+    // check for delay sequence: FB Cn
+    if ((0xC1 <= m_raw_buf[1]) && (m_raw_buf[1] <= 0xC9)) {
         int delay_ms = 1000 * ((int)m_raw_buf[1] - 0xC0) / 6;
         // FIXME: doing this requires creating a flow control mechanism
         // to block further input, and creating a timer to expire N/6 seconds
@@ -638,28 +647,47 @@ Crt::processChar(uint8 byte)
         return;
     }
 
-    // what is left is a run count: FB nn cc
-    // where nn is the repetition count, and cc is the character
-    if (m_raw_cnt == 3) {
-//UI_Info("Decompress: cnt=%d, chr=0x%02x", m_raw_buf[1], m_raw_buf[2]);
-        for(int i=0; i<m_raw_buf[1]; i++) {
-            processChar2(m_raw_buf[2]);
+    // check for literal 0xFB byte: FB D0
+    if (m_raw_buf[1] == 0xD0) {
+        processChar2(0xFB);
+        m_raw_cnt = 0;
+        return;
+    }
+
+    // disable cursor blink
+    // TODO: if the cursor is off, does blink off re-enable the cursor?
+    //       that is, do I need the qualifying conditional below?
+    if (m_raw_buf[1] == 0xF8) {
+        if (m_curs_attr == cursor_attr_t::CURSOR_BLINK) {
+            m_curs_attr = cursor_attr_t::CURSOR_ON;
         }
         m_raw_cnt = 0;
         return;
     }
 
-    // TODO: what should happen with illegal sequences?
-    if ( (m_raw_cnt == 2) &&
-         ((m_raw_buf[1] < 0x01) || (m_raw_buf[1] >= 0xD0)) ) {
-        // for now, I'm passing them through
-        processChar2(m_raw_buf[0]);
-        processChar2(m_raw_buf[1]);
+    // enable cursor blink
+    if (m_raw_buf[1] == 0xFC) {
+        m_curs_attr = cursor_attr_t::CURSOR_BLINK;
         m_raw_cnt = 0;
         return;
     }
 
-    // else keep accumulating
+    // FIXME: immediate commands
+    // FB F0: route subsequent data to CRT
+    // FB F1: route subsequent data to Printer
+    // FB F2: restart terminal (see pdf page 3)
+    // FB F6: reset CRT only
+    // holy cow: "Immediate commands may even be transmitted in the middle
+    //            of a non-immediate command sequence"
+    //           <escape><count> (normally the repeat char arrives next)
+    //           <escape><switch to printer><printer data...><escape><switch to CRT>
+    //           <repeat character>
+
+    // TODO: what should happen with illegal sequences?
+    // for now, I'm passing them through
+    processChar2(m_raw_buf[0]);
+    processChar2(m_raw_buf[1]);
+    m_raw_cnt = 0;
 }
 
 

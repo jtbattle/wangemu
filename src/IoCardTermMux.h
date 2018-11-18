@@ -127,7 +127,7 @@ private:
         // related to offset 6:
         unsigned int      io6_field_size;  // CBS(07) XXXX argument
         bool              io6_underline;   // CBS(07) YY argument
-        bool              io6_edit;        // CBS(07) YY argument
+        bool              io6_edit_mode;   // CBS(07) YY argument
         int               io6_curcolumn;   // CBS(07) ZZ argument
         // controller related:
         std::deque<uint8>  crt_buf;
