@@ -340,6 +340,7 @@ IoCardDisk::CBS(int val)
         UI_Warn("unexpected disk CBS: Output of byte 0x%02x", val);
     }
 
+    // TODO:
 #if 0
     // later disk controllers allowed controlling disk hog mode via
     // sending a CBS with data bit OB8 set.  For example see the 6543
@@ -352,6 +353,7 @@ IoCardDisk::CBS(int val)
     hogged = !!(val & 0x80);
 #endif
 
+    // FIXME:
 #if 0
     // according to Paul Szudzik, CBS with the ls data bit high is
     // hardwired to cause a hard reset of the disk controller.
