@@ -29,9 +29,6 @@ public:
     // true=hard reset, false=soft reset
     virtual void reset(bool hard_reset) = 0;
 
-    // run for ticks*100ns
-    virtual void run(int ticks) = 0;
-
     // indicates if cpu is running or halted
     enum { CPU_RUNNING=0, CPU_HALTED=1 };
     int status() const { return m_status; }
@@ -51,15 +48,18 @@ public:
     //        new command (and perhaps has data ready from an earlier command)
     virtual void setDevRdy(bool ready) = 0;
 
-    // this is a signal that in theory any card could use to set a
-    // particular status flag in a cpu register, but the only role
-    // I know it is used for is when the keyboard HALT key is pressed.
-    virtual void halt() = 0;
-
     // when a card gets an IOhdlr_getbyte and it decides to return the data
     // request, this function is called to return that data.  it also takes
     // care of the necessary low-level handshake emulation.
     virtual void IoCardCbIbs(int data) = 0;
+
+    // run for ticks*100ns
+    virtual int execOneOp() = 0;
+
+    // this is a signal that in theory any card could use to set a
+    // particular status flag in a cpu register, but the only role
+    // I know it is used for is when the keyboard HALT key is pressed.
+    virtual void halt() = 0;
 
 protected:
     int m_status;  // whether the cpu is running or halted
@@ -81,11 +81,11 @@ public:
     int   getCpuType() const;
     int   getRamSize() const;
     void  reset(bool hard_reset);
-    void  run(int ticks);
     uint8 getAB() const;
     void  setDevRdy(bool ready);
-    void  halt();
     void  IoCardCbIbs(int data);
+    int   execOneOp();            // simulate one instruction
+    void  halt();
 
 private:
     // ---- member functions ----
@@ -121,9 +121,6 @@ private:
 
     // subtract two BCD nibbles
     uint8 decimal_sub(uint4 a_op, uint4 b_op, int ci) const;
-
-    // simulate one instruction
-    int exec_one_op();
 
     // ---- data members ----
 
@@ -165,7 +162,6 @@ private:
 
     // this contains the CPU state
     struct cpu2200_t {
-        bool    wolf_trap;      // coldstart flag
         uint16  pc;             // working address ("pc register")
         uint16  aux[16];        // PC scratchpad
         uint8   reg[8];         // eight 4b file registers
@@ -201,11 +197,11 @@ public:
     int   getCpuType() const;
     int   getRamSize() const;
     void  reset(bool hard_reset);
-    void  run(int ticks);
     uint8 getAB() const;
     void  setDevRdy(bool ready);
-    void  halt();
     void  IoCardCbIbs(int data);
+    int   execOneOp();            // simulate one instruction
+    void  halt();
 
     // ---- class-specific members: ----
 
@@ -235,9 +231,6 @@ private:
     // return the chosen bits of B and A, returns with the bits
     // of b in [7:4] and the bits of A in [3:0]
     uint8 get_HbHa(int HbHa, int a_op, int b_op) const;
-
-    // simulate one instruction
-    int exec_one_op();
 
     // this callback occurs when the 30 ms timeslicing one-shot times out.
     void tcb30msDone();

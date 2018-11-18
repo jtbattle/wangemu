@@ -732,16 +732,200 @@ Cpu2200vp::get_HbHa(int HbHa, int a_op, int b_op) const
 #endif
 
 
-// ------------------------------------------------------------------------
-//  private functions
-// ------------------------------------------------------------------------
+// =======================================================
+// externally visible CPU module interface
+// =======================================================
+
+// constructor
+// ramsize should be a multiple of 4.
+// subtype *must* be 2200VP, at least presently
+Cpu2200vp::Cpu2200vp(System2200 *const sys,
+                     std::shared_ptr<Scheduler> scheduler,
+                     int ramsize, int cpu_subtype) :
+    Cpu2200(),  // init base class
+    m_sys(sys),
+    m_scheduler(scheduler),
+    m_tmr_30ms(nullptr),
+    m_memsize_KB(ramsize),
+    m_dbg(false)
+{
+    assert(cpu_subtype == CPUTYPE_2200VP);
+    cpu_subtype = cpu_subtype;  // suppress 'unused' warning
+
+    assert(ramsize ==  32 || ramsize == 64 || ramsize == 128 ||
+           ramsize == 256 || ramsize == 512 );
+    assert((ramsize&0xF) == 0);         // multiple of 15
+
+    // init microcode
+    for(int i=0; i<MAX_RAM; i++) {
+        write_ucode((uint16)i, 0);
+    }
+    for(int i=0; i<1024; i++) {
+        write_ucode((uint16)(0x8000+i), ucode_2200vp[i]);
+    }
+
+    // register for clock callback
+    clkCallback cb = std::bind(&Cpu2200vp::execOneOp, this);
+    m_sys->registerClockedDevice(cb);
+
+#if 0
+    // disassemble boot ROM
+    {
+        char buff[200];
+        uint16 pc;
+        for(pc=0x8000; pc<0x8400; pc++) {
+            (void)dasm_one_vp(buff, pc, m_ucode[pc].ucode);
+            dbglog(buff);
+        }
+    }
+#endif
+
+    reset(true);
+}
+
+
+// free any allocated resources at the end of time
+Cpu2200vp::~Cpu2200vp()
+{
+    clkCallback cb = std::bind(&Cpu2200vp::execOneOp, this);
+    m_sys->unregisterClockedDevice(cb);
+
+    reset(true);
+}
+
+
+// report CPU type
+int
+Cpu2200vp::getCpuType() const
+{
+    return CPUTYPE_2200VP;
+}
+
+
+// report how much memory the CPU has, in KB
+int
+Cpu2200vp::getRamSize() const
+{
+    return m_memsize_KB;
+}
+
+
+// true=hard reset, false=soft reset
+void
+Cpu2200vp::reset(bool hard_reset)
+{
+    m_cpu.ic   = (uint16)((hard_reset) ? TRAP_POWER : TRAP_RESET);
+    m_cpu.icsp = STACKSIZE-1;
+
+    if (hard_reset) {
+        int i;
+        for(i=0; i<(m_memsize_KB<<10); i++) {
+            m_RAM[i] = 0xFF;
+        }
+#if 0
+        m_cpu.pc = 0;
+        m_cpu.orig_pc;
+        for(i=0; i<32; i++) {
+            m_cpu.aux[32];
+        }
+        for(i=0; i<8; i++) {
+            m_cpu.reg[i];
+        }
+        for(i=0; i<STACKSIZE; i++) {
+            m_cpu.icstack[i] = 0;
+        }
+        m_cpu.ch = 0;
+        m_cpu.cl = 0;
+        m_cpu.k = 0;
+        m_cpu.ab = 0;
+        m_cpu.ab_sel = 0;
+#endif
+        set_sl(0);  // make sure bank select is 0
+        m_cpu.sh &= ~0x80;        // only SH7 one bit is affected
+
+        // actually, the one-shot isn't reset, but let's be safe
+        m_cpu.sh &= ~SH_MASK_30MS;
+        if (m_tmr_30ms != nullptr) {
+            m_tmr_30ms->Kill();
+            m_tmr_30ms = nullptr;
+        }
+    }
+
+    m_status = CPU_RUNNING;
+}
+
+
+// this function is called by a device to return requested data.
+// in the real hardware, the selected IO device drives the IBS signal active
+// for 7 uS via a one-shot.  In the emulator, the strobe is effectively
+// instantaneous.
+void
+Cpu2200vp::IoCardCbIbs(int data)
+{
+    // we shouldn't receive an IBS while the cpu is busy
+    assert( (m_cpu.sh & SH_MASK_CPB) == 0 );
+    m_cpu.k = (uint8)(data & 0xFF);
+    m_cpu.sh |= SH_MASK_CPB;            // CPU busy; inhibit IBS
+    m_sys->cpu_CPB( true );             // we are busy now
+
+    // return special status if it is a special function key
+    if (data & IoCardKeyboard::KEYCODE_SF) {
+        m_cpu.sh |= SH_MASK_SF;         // special function key
+    }
+}
+
+
+// when a card is selected, or its status changes, it uses this function
+// to notify the core emulator about the new status.
+// I'm not sure what the names should be in general, but these are based
+// on what the keyboard uses them for.
+void
+Cpu2200vp::halt()
+{
+    // set the halt/step key notification
+    m_cpu.sh = (uint8)(m_cpu.sh | SH_MASK_HALT);
+}
+
+
+// this signal is called by the currently active I/O card when its
+// busy/ready status changes.  If no card is selected, it floats to zero
+// (it is an open collector bus signal, but the polarity on the bus is
+//  inverted, so that floating 1 becomes a zero to microcode).
+void
+Cpu2200vp::setDevRdy(bool ready)
+{
+    m_cpu.sh = (uint8)
+             ( (ready) ? (m_cpu.sh |  SH_MASK_DEVRDY)      /* set */
+                       : (m_cpu.sh & ~SH_MASK_DEVRDY) );   /* clear */
+}
+
+
+// the disk controller is odd in that it uses the AB bus to signal some
+// information after the card has been selected.  this lets it peek into
+// that part of the cpu state.
+uint8
+Cpu2200vp::getAB() const
+{
+    return m_cpu.ab;
+}
+
+
+// this callback occurs when the 30 ms timeslicing one-shot times out.
+void
+Cpu2200vp::tcb30msDone()
+{
+    m_cpu.sh &= ~SH_MASK_30MS;    // one shot output falls
+    m_tmr_30ms = nullptr;         // dead timer
+}
+
 
 // perform one instruction and return.
 // returns the number of ticks the instruction took.
-// on an error, ticks is set to a huge value EXEC_ERR.
+// on an error, ticks is set to a huge value EXEC_ERR to ensure an immediate
+// end to the timeslice.
 #define EXEC_ERR (1<<30)
 int
-Cpu2200vp::exec_one_op()
+Cpu2200vp::execOneOp()
 {
     ucode_t *puop = &m_ucode[m_cpu.ic];
     const uint32 uop = puop->ucode;
@@ -752,6 +936,21 @@ Cpu2200vp::exec_one_op()
     int a_op, b_op, a_op2, b_op2, imm, rslt, rslt2;
     int idx;
     uint16 tmp16;
+
+#if 0 && defined(_DEBUG)
+    static int m_num_ops = 0;
+    if (g_dbg_trace) {
+        char buff[200];
+        if (++m_num_ops >= 0*127000) {
+            dump_state( 1 );
+            int illegal = dasm_one_vp(buff, m_cpu.ic, m_ucode[m_cpu.ic].ucode);
+            dbglog("cycle %5d: %s", m_num_ops, buff);
+            if (illegal) {
+                break;
+            }
+        }
+    }
+#endif
 
     // internally, the umachine makes a copy of the start PC value
     // since memory read and write are done relative to that state
@@ -938,6 +1137,7 @@ Cpu2200vp::exec_one_op()
             (void)dasm_one_vp(buff, m_cpu.ic, m_ucode[m_cpu.ic].ucode);
             UI_Error("%s\nIllegal op at ic=%04X", buff, m_cpu.ic);
         }
+        m_status = CPU_HALTED;
         return EXEC_ERR;
 
     case OP_LPI:
@@ -1412,219 +1612,7 @@ Cpu2200vp::exec_one_op()
     } // op
 
     // at this point we know how long each instruction is
-    m_scheduler->TimerTick(ticks);  // tell the scheduler that time has passed
     return ticks;
-}
-
-
-// =======================================================
-// externally visible CPU module interface
-// =======================================================
-
-// constructor
-// ramsize should be a multiple of 4.
-// subtype *must* be 2200VP, at least presently
-Cpu2200vp::Cpu2200vp(System2200 *const sys,
-                     std::shared_ptr<Scheduler> scheduler,
-                     int ramsize, int cpu_subtype) :
-    Cpu2200(),  // init base class
-    m_sys(sys),
-    m_scheduler(scheduler),
-    m_tmr_30ms(nullptr),
-    m_memsize_KB(ramsize),
-    m_dbg(false)
-{
-    assert(cpu_subtype == CPUTYPE_2200VP);
-    cpu_subtype = cpu_subtype;  // suppress 'unused' warning
-
-    assert(ramsize ==  32 || ramsize == 64 || ramsize == 128 ||
-           ramsize == 256 || ramsize == 512 );
-    assert((ramsize&0xF) == 0);         // multiple of 15
-
-    // init microcode
-    for(int i=0; i<MAX_RAM; i++) {
-        write_ucode((uint16)i, 0);
-    }
-    for(int i=0; i<1024; i++) {
-        write_ucode((uint16)(0x8000+i), ucode_2200vp[i]);
-    }
-
-#if 0
-    // disassemble boot ROM
-    {
-        char buff[200];
-        uint16 pc;
-        for(pc=0x8000; pc<0x8400; pc++) {
-            (void)dasm_one_vp(buff, pc, m_ucode[pc].ucode);
-            dbglog(buff);
-        }
-    }
-#endif
-
-    reset(true);
-}
-
-
-// free any allocated resources at the end of time
-Cpu2200vp::~Cpu2200vp()
-{
-    reset(true);
-}
-
-
-// report CPU type
-int
-Cpu2200vp::getCpuType() const
-{
-    return CPUTYPE_2200VP;
-}
-
-
-// report how much memory the CPU has, in KB
-int
-Cpu2200vp::getRamSize() const
-{
-    return m_memsize_KB;
-}
-
-
-// true=hard reset, false=soft reset
-void
-Cpu2200vp::reset(bool hard_reset)
-{
-    m_cpu.ic   = (uint16)((hard_reset) ? TRAP_POWER : TRAP_RESET);
-    m_cpu.icsp = STACKSIZE-1;
-
-    if (hard_reset) {
-        int i;
-        for(i=0; i<(m_memsize_KB<<10); i++) {
-            m_RAM[i] = 0xFF;
-        }
-#if 0
-        m_cpu.pc = 0;
-        m_cpu.orig_pc;
-        for(i=0; i<32; i++) {
-            m_cpu.aux[32];
-        }
-        for(i=0; i<8; i++) {
-            m_cpu.reg[i];
-        }
-        for(i=0; i<STACKSIZE; i++) {
-            m_cpu.icstack[i] = 0;
-        }
-        m_cpu.ch = 0;
-        m_cpu.cl = 0;
-        m_cpu.k = 0;
-        m_cpu.ab = 0;
-        m_cpu.ab_sel = 0;
-#endif
-        set_sl(0);  // make sure bank select is 0
-        m_cpu.sh &= ~0x80;        // only SH7 one bit is affected
-
-        // actually, the one-shot isn't reset, but let's be safe
-        m_cpu.sh &= ~SH_MASK_30MS;
-        if (m_tmr_30ms != nullptr) {
-            m_tmr_30ms->Kill();
-            m_tmr_30ms = nullptr;
-        }
-    }
-
-    m_status = CPU_RUNNING;
-}
-
-
-// run for ticks*100ns
-void
-Cpu2200vp::run(int ticks)
-{
-    int op_ticks = 0;
-
-    do {
-#if 0 && defined(_DEBUG)
-        static int m_num_ops = 0;
-        if (g_dbg_trace) {
-            char buff[200];
-            if (++m_num_ops >= 0*127000) {
-                dump_state( 1 );
-                int illegal = dasm_one_vp(buff, m_cpu.ic, m_ucode[m_cpu.ic].ucode);
-                dbglog("cycle %5d: %s", m_num_ops, buff);
-                if (illegal) {
-                    break;
-                }
-            }
-        }
-#endif
-
-        op_ticks = exec_one_op();
-        ticks -= op_ticks;
-
-    } while (ticks > 0);
-
-    m_status = (op_ticks == EXEC_ERR) ? CPU_HALTED : CPU_RUNNING;
-}
-
-
-// this function is called by a device to return requested data.
-// in the real hardware, the selected IO device drives the IBS signal active
-// for 7 uS via a one-shot.  In the emulator, the strobe is effectively
-// instantaneous.
-void
-Cpu2200vp::IoCardCbIbs(int data)
-{
-    // we shouldn't receive an IBS while the cpu is busy
-    assert( (m_cpu.sh & SH_MASK_CPB) == 0 );
-    m_cpu.k = (uint8)(data & 0xFF);
-    m_cpu.sh |= SH_MASK_CPB;            // CPU busy; inhibit IBS
-    m_sys->cpu_CPB( true );             // we are busy now
-
-    // return special status if it is a special function key
-    if (data & IoCardKeyboard::KEYCODE_SF) {
-        m_cpu.sh |= SH_MASK_SF;         // special function key
-    }
-}
-
-
-// when a card is selected, or its status changes, it uses this function
-// to notify the core emulator about the new status.
-// I'm not sure what the names should be in general, but these are based
-// on what the keyboard uses them for.
-void
-Cpu2200vp::halt()
-{
-    // set the halt/step key notification
-    m_cpu.sh = (uint8)(m_cpu.sh | SH_MASK_HALT);
-}
-
-
-// this signal is called by the currently active I/O card when its
-// busy/ready status changes.  If no card is selected, it floats to zero
-// (it is an open collector bus signal, but the polarity on the bus is
-//  inverted, so that floating 1 becomes a zero to microcode).
-void
-Cpu2200vp::setDevRdy(bool ready)
-{
-    m_cpu.sh = (uint8)
-             ( (ready) ? (m_cpu.sh |  SH_MASK_DEVRDY)      /* set */
-                       : (m_cpu.sh & ~SH_MASK_DEVRDY) );   /* clear */
-}
-
-
-// the disk controller is odd in that it uses the AB bus to signal some
-// information after the card has been selected.  this lets it peek into
-// that part of the cpu state.
-uint8
-Cpu2200vp::getAB() const
-{
-    return m_cpu.ab;
-}
-
-
-// this callback occurs when the 30 ms timeslicing one-shot times out.
-void
-Cpu2200vp::tcb30msDone()
-{
-    m_cpu.sh &= ~SH_MASK_30MS;    // one shot output falls
-    m_tmr_30ms = nullptr;         // dead timer
 }
 
 

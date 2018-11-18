@@ -34,9 +34,9 @@
 // last such accounting.
 //
 // The timer is only a 32 bit integer, but only 30 bits should be used as
-// things might get squirrelly near 2^31.  At the nominal 625 KHz base
-// frequency (1.6 uS cycle time), this allows setting a timer event for
-// about 57 minutes into the future.  This is more than enough range.
+// things might get squirrelly near 2^31.  With a tick resolution of 10MHz,
+// this allows setting a timer event up to 107 seconds into the future.
+// This is more than enough range.
 
 #include "Scheduler.h"
 #include "Ui.h"         // needed for UI_Error()
@@ -125,7 +125,7 @@ Scheduler::Scheduler() :
 // free allocated data
 Scheduler::~Scheduler()
 {
-    // TODO: s this necessary? won't the vector container destroy all members?
+    // TODO: unnecessary? won't the vector container destroy all members?
     m_timer.clear();
 };
 

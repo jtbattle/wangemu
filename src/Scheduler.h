@@ -106,8 +106,9 @@ private:
     // supplied parameters.
     std::vector<std::shared_ptr<Timer>> m_timer;
 
-    // for sanity checking
-    static const int MAX_TIMERS = 25;
+    // not strictly necesssary to place a limit, but it is useful to
+    // detect runaway conditions
+    static const int MAX_TIMERS = 30;
 };
 
 // scale a floating point time in microseconds to be an

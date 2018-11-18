@@ -24,6 +24,9 @@ class IoCard;
 class SysCfgState;
 class Scheduler;
 
+// used for registerClockedDevice()
+typedef std::function<int()> clkCallback;
+
 // this is a singleton
 class System2200
 {
@@ -41,6 +44,10 @@ public:
 
     // give access to components
     const SysCfgState& config() { return *m_config; }
+
+    // (un)register a callback function which advances with the clock
+    void registerClockedDevice(clkCallback cb);
+    void unregisterClockedDevice(clkCallback cb);
 
     // called whenever there is free time.  it returns true
     // if it wants to be called back later when idle again
@@ -148,6 +155,17 @@ private:
     static int   m_real_seconds;    // real time elapsed
 
     static unsigned long m_simsecs; // number of actual seconds simulated time elapsed
+
+    // things which get called as time advances. it is used by the
+    // core 2200 CPU and any peripheral which uses a microprocessor.
+    // each device has a ns resolution counter, but we keep rebasing
+    // the count so the counter doesn't overflow.  all we care is the
+    // difference between the devices' sense of time.
+    typedef struct {
+        clkCallback callback_fn;
+        uint32      ns;          // nanoseconds
+    } clocked_device_t;
+    static std::vector<clocked_device_t> m_clocked_devices;
 
     // amount of actual simulated time elapsed, in ms
     static int64 m_simtime;

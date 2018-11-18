@@ -9,6 +9,8 @@
 #include "SysCfgState.h"
 #include "Ui.h"
 
+#include <algorithm>
+
 // ----------------------------------------------------------------------------
 // initialize static class members
 // ----------------------------------------------------------------------------
@@ -38,6 +40,8 @@ int64   System2200::m_realtimestart;      // wall time of when sim started
 int     System2200::m_real_seconds;       // real time elapsed
 
 unsigned long System2200::m_simsecs; // number of actual seconds simulated time elapsed
+
+std::vector<System2200::clocked_device_t> System2200::m_clocked_devices;
 
 // amount of actual simulated time elapsed, in ms
 int64 System2200::m_simtime;
@@ -325,6 +329,34 @@ System2200::reset(bool cold_reset)
 }
 
 
+// unregister a callback function which advances with the clock
+void
+System2200::registerClockedDevice(clkCallback cb)
+{
+    clocked_device_t cd = { cb, 0 };
+    m_clocked_devices.push_back(cd);
+}
+
+// unregister a callback function which advances with the clock
+void
+System2200::unregisterClockedDevice(clkCallback cb)
+{
+#if 0
+// FIXME: it is not possible to compare bound functions, so a different
+// approach is needed
+    for(auto it=begin(m_clocked_devices); it != end(m_clocked_devices); ++it) {
+        if (it->callback_fn == cb) {
+            m_clocked_devices.erase(it);
+            break;
+        }
+    }
+#else
+    // if one board is unregistering, we are going to unregister everything.
+    // big hammer, but it works.  FIXME find a nicer solution.
+    m_clocked_devices.clear();
+#endif
+}
+
 // called whenever there is free time
 bool
 System2200::onIdle()
@@ -378,6 +410,7 @@ void
 System2200::emulateTimeslice(int ts_ms)
 {
     Host hst;
+    int num_devices = m_clocked_devices.size();
 
     // try to stae reatime within this window
     const int64 adj_window = 10*ts_ms;  // look at the last 10 timeslices
@@ -428,7 +461,57 @@ System2200::emulateTimeslice(int ts_ms)
         }
 
         // simulate one timeslice's worth of instructions
-        m_cpu->run(ts_ms*10000);  // 10 MHz = 10,000 clks/ms
+        int ticks = ts_ms*10000;  // 10 MHz = 10,000 clks/ms
+        if (false && num_devices == 1) {
+            int op_ticks = 0;
+            auto cb = m_clocked_devices[0].callback_fn;
+// FIXME: convert from ticks to ns. requires changes to scheduler too
+            while (ticks > 0) {
+                op_ticks = cb();
+                ticks -= op_ticks;
+                if (op_ticks < 100) {
+                    // the guard is to skip this if the device signals error
+                    m_scheduler->TimerTick(op_ticks);
+                }
+            }
+        } else {
+            // there are multiple devices
+
+            // at the start of a timeslice, shift time for all cards towards
+            // zero to prevent overflowing the 32b nanosecond counters
+            uint32 rebase = m_clocked_devices[0].ns;
+            for(auto &dev : m_clocked_devices) {
+                assert(dev.ns >= rebase);
+                dev.ns -= rebase;
+            }
+
+            // we try to keep the devices in time lockstep as much as we can.
+            // each device has a nanosecond counter. the list of devices is
+            // kept in sorted order of increasing time. we call entry 0, adjust
+            // its time, then move it to the right place in the list.
+            while (ticks > 0) {
+                auto cb = m_clocked_devices[0].callback_fn;
+                int op_ticks = cb();
+                ticks -= op_ticks;
+                if (op_ticks > 1000000) {
+                    ticks = 0; // finish the timeslice
+                } else {
+                    m_scheduler->TimerTick(op_ticks);
+                    m_clocked_devices[0].ns += ticks;
+                    auto entry0 = m_clocked_devices[0];
+                    uint32 new_ns = entry0.ns;
+                    int i=0;
+                    for( ; i < num_devices-1; ++i) {
+                        if (m_clocked_devices[i+1].ns < new_ns) {
+                            m_clocked_devices[i] = m_clocked_devices[i+1];
+                        } else {
+                            break;
+                        }
+                    }
+                    m_clocked_devices[i] = entry0;
+                }
+            }
+        }
         m_simtime    += ts_ms;
         m_adjsimtime += ts_ms;
 

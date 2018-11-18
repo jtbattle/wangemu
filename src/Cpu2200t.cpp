@@ -732,15 +732,249 @@ Cpu2200t::decimal_sub(uint4 a_op, uint4 b_op, int ci) const
 
 #define IMM4(uop) ((uint4)((uop >> 4) & 0xF))
 
+// =======================================================
+// externally visible CPU module interface
+// =======================================================
+
+// create a CPU instance.
+// ramsize should be a multiple of 4.
+// subtype selects between the flavors of the cpu
+Cpu2200t::Cpu2200t(System2200 *const sys,
+                   std::shared_ptr<Scheduler> scheduler,
+                   int ramsize, int cpu_subtype) :
+    Cpu2200(),  // init base class
+    m_sys(sys),
+    m_scheduler(scheduler),  // unused by 2200t
+    m_cpuType(cpu_subtype),
+    m_ucode_size( (m_cpuType == CPUTYPE_2200B) ? UCODE_WORDS_2200B
+                                               : UCODE_WORDS_2200T ),
+    m_krom_size(  (m_cpuType == CPUTYPE_2200B) ?  KROM_WORDS_2200B
+                                               :  KROM_WORDS_2200T ),
+    m_memsize_KB(ramsize),
+    m_dbg(false)
+{
+    assert(ramsize >= 4 && ramsize <= 32);
+    assert((ramsize&3) == 0);           // multiple of 4
+
+    // initialize ucode store from built-in image
+    switch (m_cpuType) {
+        int i;
+        case CPUTYPE_2200B:
+            for(i=0; i<m_ucode_size; i++) {
+                write_ucode(i, ucode_2200B[i]);
+            }
+            for(i=0; i<UCODE_WORDS_2200BX; i++) {
+                write_ucode(0x7E00+i, ucode_2200BX[i]);
+            }
+            for(i=0; i<m_krom_size; i++) {
+                m_kROM[i] = kROM_2200B[i];
+            }
+            break;
+        case CPUTYPE_2200T:
+            for(i=0; i<m_ucode_size; i++) {
+                write_ucode(i, ucode_2200T[i]);
+            }
+            for(i=0; i<m_krom_size; i++) {
+                m_kROM[i] = kROM_2200T[i];
+            }
+            break;
+        default:
+            assert(false);
+    }
+
+    // register for clock callback
+    clkCallback cb = std::bind(&Cpu2200t::execOneOp, this);
+    m_sys->registerClockedDevice(cb);
+
+#if 0
+    // disassemble all microcode
+    {
+        char buff[200];
+        uint16 pc;
+        for(pc=0x0000; pc<m_ucode_size; pc++) {
+            (void)dasm_one(buff, pc, m_ucode[pc].ucode & 0x000FFFFF);
+            dbglog(buff);
+        }
+        if (m_cpuType == CPUTYPE_2200B) {
+            // disassemble the patch ROM
+            for(pc=0x7E00; pc<0x7E00+UCODE_WORDS_2200BX; pc++) {
+                (void)dasm_one(buff, pc, m_ucode[pc].ucode & 0x000FFFFF);
+                dbglog(buff);
+            }
+        }
+    }
+#endif
+
+    reset(true);
+}
+
+
+// frees any allocated resources at the end of the simulation
+Cpu2200t::~Cpu2200t()
+{
+    clkCallback cb = std::bind(&Cpu2200t::execOneOp, this);
+    m_sys->unregisterClockedDevice(cb);
+}
+
+
+// report CPU type
+int
+Cpu2200t::getCpuType() const
+{
+    return m_cpuType;
+}
+
+
+// report how much memory the CPU has, in KB
+int
+Cpu2200t::getRamSize() const
+{
+    return m_memsize_KB;
+}
+
+
+// true=cold boot (power cycle), false=warm restart
+void
+Cpu2200t::reset(bool hard_reset)
+{
+    int i;
+
+    m_cpu.ic        = 0x0000;
+    m_cpu.icsp      = ICSTACK_TOP;
+    m_cpu.prev_sr   = false;
+
+    // in the real hardware, wolftrap sets TRAP, and that
+    // causes IC to get reset
+    if (hard_reset) {
+        m_cpu.ic = 0x0001;
+    }
+
+#if 0
+    // the real HW doesn't reset these, but do it anyway for purity
+    m_cpu.pc = 0;
+#if 0 // interestingly, this must not be reset, or warm reset doesn't work
+    for(int i=0; i<16; i++) {
+        m_cpu.aux[i] = 0x0000;
+    }
+#endif
+    for(int i=0; i<8; i++) {
+        m_cpu.reg[i] = 0x0;
+    }
+    for(int i=0; i<ICSTACK_SIZE; i++) {
+        m_cpu.icstack[i] = 0x0000;
+    }
+    m_cpu.c = 0x00;
+    m_cpu.k = 0x00;
+    m_cpu.ab = 0x00;
+    m_cpu.ab_sel = 0x00;
+    m_cpu.st1 = 0x0;
+    m_cpu.st2 = 0x0;
+    m_cpu.st3 = 0x0;
+    m_cpu.st4 = 0x0;
+#endif
+
+    // real hardware doesn't reset memory, but the emulator does
+    if (hard_reset) {
+        for(i=0; i<(m_memsize_KB<<10); i++) {
+            m_RAM[i] = 0xFF;
+            // it appears that either bit 0 or bit 4 must be set
+            // otherwise bad things happen.
+            // 0x00 causes "SYSTEM ERROR!"
+            // 0x01 is OK
+            // 0x02 causes some type of weird crash that resolves OK
+            // 0x04 causes some type of weird crash that fills the screen with "@"
+            // 0x08 causes some type of weird crash that fills the screen with "LIST "
+            // 0x10 is OK
+            // 0x11 is OK
+            // 0x20 causes "SYSTEM ERROR!"
+            // 0x21 is OK
+            // 0x40 causes "SYSTEM ERROR!"
+            // 0x41 is OK
+            // 0x80 causes "SYSTEM ERROR!"
+            // 0x81 is OK
+            // 0xE0 causes "SYSTEM ERROR!"
+            // 0xE1 is OK
+            // 0xE8 fills the screen with "DISK "
+            // 0xEC fills the screen with "DEFFN"
+            // 0xEE fills the screen with "?"
+            // 0xCD is OK
+            // 0xFE is OK
+            // 0xFE is a bad crash
+            // 0xFF is OK
+        }
+    }
+
+    m_status = CPU_RUNNING;
+}
+
+
+// this function is called by a device to return requested data.
+// in the real hardware, the selected IO device drives the IBS signal active
+// for 7 uS via a one-shot.  In the emulator, the strobe is effectively
+// instantaneous.
+void
+Cpu2200t::IoCardCbIbs(int data)
+{
+    // we shouldn't receive an IBS while the cpu is busy
+    assert( (m_cpu.st1 & ST1_MASK_CPB) == 0 );
+    m_cpu.k = (uint8)(data & 0xFF);
+    m_cpu.st1 |= ST1_MASK_CPB;      // CPU busy; inhibit IBS
+    m_sys->cpu_CPB( true );         // the cpu is busy now
+
+    // return special status if it is a special function key
+    if (data & IoCardKeyboard::KEYCODE_SF) {
+        m_cpu.st1 |= ST1_MASK_SF;   // special function key
+    }
+}
+
+
+// when a card is selected, or its status changes, it uses this function
+// to notify the core emulator about the new status.
+// I'm not sure what the names should be in general, but these are based
+// on what the keyboard uses them for.  data_avail shows up at
+// haltstep: st3 bit 2 and is used to indicate the halt/step key is pressed.
+//   (perhaps this is always connected and doesn't depend on device selection)
+//    ready: st3 bit 0 and is used to indicate the device has data ready.
+void
+Cpu2200t::halt()
+{
+    // set the halt/step key notification
+    m_cpu.st3 = (uint4)(m_cpu.st3 | ST3_MASK_HALT);
+}
+
+
+// this signal is called by the currently active I/O card
+// when its busy/ready status changes.  If no card is selected,
+// it floats to one (it is an open collector bus signal).
+void
+Cpu2200t::setDevRdy(bool ready)
+{
+    m_cpu.st3 = (uint4)( (m_cpu.st3 & ~ST3_MASK_DEVRDY) |
+                         (ready ? ST3_MASK_DEVRDY : 0) );
+}
+
+
+// the disk controller is odd in that it uses the AB bus to signal some
+// information after the card has been selected.  this lets it peek into
+// that part of the cpu state.
+uint8
+Cpu2200t::getAB() const
+{
+    return m_cpu.ab;
+}
+
+
 // perform one instruction and return.
 // returns EXEC_ERR if we hit an illegal op, otherwise return # of ticks
+// in the case of EXEC_ERR, the returned tick count is so big it forces
+// the timeslice to end immediately.
 #define EXEC_ERR (1<<30)
 #define EXEC_OK  (0)
 int
-Cpu2200t::exec_one_op()
+Cpu2200t::execOneOp()
 {
     const ucode_t *puop = &m_ucode[m_cpu.ic];
-    const uint32 uop  = puop->ucode;
+    const uint32 uop = puop->ucode;
     int r_field;
     uint16 tmp_pc;
     uint4 a_op, b_op;
@@ -748,7 +982,20 @@ Cpu2200t::exec_one_op()
     uint16 newic;
     int pcinc;
 
-    // ==================== NEW CODE ============================
+#if 0
+    if (m_dbg) {
+        static int g_num_ops = 0;
+        char buff[200];
+        int illegal;
+        dump_state( 1 );
+        illegal = dasm_one(buff, m_cpu.ic, m_ucode[m_cpu.ic].ucode & 0x000FFFFF);
+        dbglog("cycle %5d: %s", g_num_ops, buff);
+        g_num_ops++;
+        if (illegal) {
+            break;
+        }
+    }
+#endif
 
     if (uop & FETCH_A) {
         const int field = ((uop >> 4) & 0xF);
@@ -836,6 +1083,7 @@ Cpu2200t::exec_one_op()
             (void)dasm_one(buff, m_cpu.ic, m_ucode[m_cpu.ic].ucode);
             UI_Error("%s\nIllegal op at ic=%04X", buff, m_cpu.ic);
         }
+        m_status = CPU_HALTED;
         return EXEC_ERR;
 
     // register instructions:
@@ -1171,276 +1419,13 @@ Cpu2200t::exec_one_op()
 
     default:
         assert(false);
+        m_status = CPU_HALTED;
         return EXEC_ERR;
     }
 
     // instruction ended normally
-    m_scheduler->TimerTick(16);  // all operations take 16 100ns ticks
-    return 16;                   // let event loop know
+    return 16;  // all operations take 16 100ns ticks
 }
 
-
-// =======================================================
-// externally visible CPU module interface
-// =======================================================
-
-// create a CPU instance.
-// ramsize should be a multiple of 4.
-// subtype selects between the flavors of the cpu
-Cpu2200t::Cpu2200t(System2200 *const sys,
-                   std::shared_ptr<Scheduler> scheduler,
-                   int ramsize, int cpu_subtype) :
-    Cpu2200(),  // init base class
-    m_sys(sys),
-    m_scheduler(scheduler),
-    m_cpuType(cpu_subtype),
-    m_ucode_size( (m_cpuType == CPUTYPE_2200B) ? UCODE_WORDS_2200B
-                                               : UCODE_WORDS_2200T ),
-    m_krom_size(  (m_cpuType == CPUTYPE_2200B) ?  KROM_WORDS_2200B
-                                               :  KROM_WORDS_2200T ),
-    m_memsize_KB(ramsize),
-    m_dbg(false)
-{
-    assert(ramsize >= 4 && ramsize <= 32);
-    assert((ramsize&3) == 0);           // multiple of 4
-
-    // initialize ucode store from built-in image
-    switch (m_cpuType) {
-        int i;
-        case CPUTYPE_2200B:
-            for(i=0; i<m_ucode_size; i++) {
-                write_ucode(i, ucode_2200B[i]);
-            }
-            for(i=0; i<UCODE_WORDS_2200BX; i++) {
-                write_ucode(0x7E00+i, ucode_2200BX[i]);
-            }
-            for(i=0; i<m_krom_size; i++) {
-                m_kROM[i] = kROM_2200B[i];
-            }
-            break;
-        case CPUTYPE_2200T:
-            for(i=0; i<m_ucode_size; i++) {
-                write_ucode(i, ucode_2200T[i]);
-            }
-            for(i=0; i<m_krom_size; i++) {
-                m_kROM[i] = kROM_2200T[i];
-            }
-            break;
-        default:
-            assert(false);
-    }
-
-#if 0
-    // disassemble all microcode
-    {
-        char buff[200];
-        uint16 pc;
-        for(pc=0x0000; pc<m_ucode_size; pc++) {
-            (void)dasm_one(buff, pc, m_ucode[pc].ucode & 0x000FFFFF);
-            dbglog(buff);
-        }
-        if (m_cpuType == CPUTYPE_2200B) {
-            // disassemble the patch ROM
-            for(pc=0x7E00; pc<0x7E00+UCODE_WORDS_2200BX; pc++) {
-                (void)dasm_one(buff, pc, m_ucode[pc].ucode & 0x000FFFFF);
-                dbglog(buff);
-            }
-        }
-    }
-#endif
-
-    reset(true);
-}
-
-
-// frees any allocated resources at the end of the simulation
-Cpu2200t::~Cpu2200t()
-{
-    // ...
-}
-
-
-// report CPU type
-int
-Cpu2200t::getCpuType() const
-{
-    return m_cpuType;
-}
-
-
-// report how much memory the CPU has, in KB
-int
-Cpu2200t::getRamSize() const
-{
-    return m_memsize_KB;
-}
-
-
-// true=cold boot (power cycle), false=warm restart
-void
-Cpu2200t::reset(bool hard_reset)
-{
-    int i;
-
-    m_cpu.ic        = 0x0000;
-    m_cpu.icsp      = ICSTACK_TOP;
-    m_cpu.prev_sr   = false;
-    m_cpu.wolf_trap = hard_reset;
-
-#if 0
-    // the real HW doesn't reset these, but do it anyway for purity
-    m_cpu.pc = 0;
-#if 0 // interestingly, this must not be reset, or warm reset doesn't work
-    for(int i=0; i<16; i++) {
-        m_cpu.aux[i] = 0x0000;
-    }
-#endif
-    for(int i=0; i<8; i++) {
-        m_cpu.reg[i] = 0x0;
-    }
-    for(int i=0; i<ICSTACK_SIZE; i++) {
-        m_cpu.icstack[i] = 0x0000;
-    }
-    m_cpu.c = 0x00;
-    m_cpu.k = 0x00;
-    m_cpu.ab = 0x00;
-    m_cpu.ab_sel = 0x00;
-    m_cpu.st1 = 0x0;
-    m_cpu.st2 = 0x0;
-    m_cpu.st3 = 0x0;
-    m_cpu.st4 = 0x0;
-#endif
-
-    if (hard_reset) {
-        for(i=0; i<(m_memsize_KB<<10); i++) {
-            m_RAM[i] = 0xFF;
-            // it appears that either bit 0 or bit 4 must be set
-            // otherwise bad things happen.
-            // 0x00 causes "SYSTEM ERROR!"
-            // 0x01 is OK
-            // 0x02 causes some type of weird crash that resolves OK
-            // 0x04 causes some type of weird crash that fills the screen with "@"
-            // 0x08 causes some type of weird crash that fills the screen with "LIST "
-            // 0x10 is OK
-            // 0x11 is OK
-            // 0x20 causes "SYSTEM ERROR!"
-            // 0x21 is OK
-            // 0x40 causes "SYSTEM ERROR!"
-            // 0x41 is OK
-            // 0x80 causes "SYSTEM ERROR!"
-            // 0x81 is OK
-            // 0xE0 causes "SYSTEM ERROR!"
-            // 0xE1 is OK
-            // 0xE8 fills the screen with "DISK "
-            // 0xEC fills the screen with "DEFFN"
-            // 0xEE fills the screen with "?"
-            // 0xCD is OK
-            // 0xFE is OK
-            // 0xFE is a bad crash
-            // 0xFF is OK
-        }
-    }
-
-    m_status = CPU_RUNNING;
-}
-
-
-// this function is called by a device to return requested data.
-// in the real hardware, the selected IO device drives the IBS signal active
-// for 7 uS via a one-shot.  In the emulator, the strobe is effectively
-// instantaneous.
-void
-Cpu2200t::IoCardCbIbs(int data)
-{
-    // we shouldn't receive an IBS while the cpu is busy
-    assert( (m_cpu.st1 & ST1_MASK_CPB) == 0 );
-    m_cpu.k = (uint8)(data & 0xFF);
-    m_cpu.st1 |= ST1_MASK_CPB;      // CPU busy; inhibit IBS
-    m_sys->cpu_CPB( true );         // the cpu is busy now
-
-    // return special status if it is a special function key
-    if (data & IoCardKeyboard::KEYCODE_SF) {
-        m_cpu.st1 |= ST1_MASK_SF;   // special function key
-    }
-}
-
-
-// when a card is selected, or its status changes, it uses this function
-// to notify the core emulator about the new status.
-// I'm not sure what the names should be in general, but these are based
-// on what the keyboard uses them for.  data_avail shows up at
-// haltstep: st3 bit 2 and is used to indicate the halt/step key is pressed.
-//   (perhaps this is always connected and doesn't depend on device selection)
-//    ready: st3 bit 0 and is used to indicate the device has data ready.
-void
-Cpu2200t::halt()
-{
-    // set the halt/step key notification
-    m_cpu.st3 = (uint4)(m_cpu.st3 | ST3_MASK_HALT);
-}
-
-
-// this signal is called by the currently active I/O card
-// when its busy/ready status changes.  If no card is selected,
-// it floats to one (it is an open collector bus signal).
-void
-Cpu2200t::setDevRdy(bool ready)
-{
-    m_cpu.st3 = (uint4)( (m_cpu.st3 & ~ST3_MASK_DEVRDY) |
-                         (ready ? ST3_MASK_DEVRDY : 0) );
-}
-
-
-// the disk controller is odd in that it uses the AB bus to signal some
-// information after the card has been selected.  this lets it peek into
-// that part of the cpu state.
-uint8
-Cpu2200t::getAB() const
-{
-    return m_cpu.ab;
-}
-
-
-// run for ticks*100ns
-void
-Cpu2200t::run(int ticks)
-{
-    int op_ticks = 0;
-
-    // special behavior on a cold start.
-    // this could be done inside the loop below, but it robs performance
-    // and only happens once after reset.  this approach works only
-    // because reset can't appear during the middle of a time slice,
-    // only between them.
-    if (m_cpu.wolf_trap) {
-        op_ticks = exec_one_op();
-        ticks -= op_ticks;
-        if (ticks > 0) {
-            m_cpu.ic = 0x0001;
-            m_cpu.wolf_trap = 0;
-        }
-    }
-
-    while (ticks > 0) {
-#if 0
-        if (m_dbg) {
-            static int g_num_ops = 0;
-            char buff[200];
-            int illegal;
-            dump_state( 1 );
-            illegal = dasm_one(buff, m_cpu.ic, m_ucode[m_cpu.ic].ucode & 0x000FFFFF);
-            dbglog("cycle %5d: %s", g_num_ops, buff);
-            g_num_ops++;
-            if (illegal) {
-                break;
-            }
-        }
-#endif
-        op_ticks = exec_one_op();
-        ticks -= op_ticks;
-    }
-
-    m_status = (op_ticks == EXEC_ERR) ? CPU_HALTED : CPU_RUNNING;
-}
 
 // vim: ts=8:et:sw=4:smarttab
