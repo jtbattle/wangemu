@@ -1,6 +1,6 @@
 ============================================================================
 		   Wang 2200 emulator release notes, v2.2-pre
-				January 2, 2017
+                               November 18, 2018
 ============================================================================
 
 
@@ -16,6 +16,7 @@ and a number of periperhals:
 
     * 6312 (64x16) and 7011 (80x24) CRT controllers
     * 6367 keyboard controller
+    * MXD terminal mux
     * either dumb or intelligent disk controller, capable of modeling any
       2270 floppy disk, 2260 hard disk, and 2280 large hard disk subsystems
     * configurable printer controller
@@ -24,7 +25,7 @@ The emulator is primarily written under Windows 7, but it should also run
 under Windows Vista, Windows 8, and Windows 10 as well.  This emulator
 does not run under Windows XP.
 
-Due to the contribution of Paul Heller, the emulator now runs natively on Mac
+Due to the contribution of Paul Heller, the emulator runs natively on Mac
 OS X (10.4.2 at least) as well.  Starting with version 2.1, the OSX version
 is distributed as a universal binary.
 

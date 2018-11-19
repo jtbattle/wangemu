@@ -1,6 +1,6 @@
 ============================================================================
 		      Wang 2200 emulator build notes, v2.2
-				January 2, 2017
+                               November 18, 2018
 ============================================================================
 
 The typical user of wangmu has no need to know any of this.  However, if you
@@ -15,16 +15,16 @@ an explicit mouse-click-by-mouse-click cookbook.
 
 1) Set up a modern C++ compiler
 
-   Install Microsoft Visual Studio Community Edition 2015.  It is free,
+   Install Microsoft Visual Studio Community Edition 2017.  It is free,
    it works well, it has a great debugger.  I will completely ignore the
    steps of downloading it and getting it installed.
 
-   Other compilers may work just fine, but Visual Studio Community 2015
+   Other compilers may work just fine, but Visual Studio Community 2017
    is what I use, and I know it works for this project.
 
 2) Get the wxWidgets library source code
 
-   Version 2.2 of WangEmu was built using wx version 3.1.0.  If you download
+   Version 2.2 of WangEmu was built using wx version 3.1.1.  If you download
    a later version of wxWidgets, there may be issues, as the wx developers
    do tend to make a few backward-incompatible changes each release.
 
@@ -33,9 +33,9 @@ an explicit mouse-click-by-mouse-click cookbook.
 3) Unpack the wxWidgets source code
 
    Personally, I override the default install location and instead unpack
-   it into C:\libs\wx-3.1.0 (for release 3.1.0).  This isn't strictly
+   it into C:\libs\wx-3.1.1 (for release 3.1.1).  This isn't strictly
    necessary, but future examples in this document assumes things were
-   installed into C:\libs\wx-3.1.0.  Adjust future comments if you install
+   installed into C:\libs\wx-3.1.1.  Adjust future comments if you install
    somewhere else.
 
 4) Tweak setup.h (strictly optional)
@@ -44,7 +44,7 @@ an explicit mouse-click-by-mouse-click cookbook.
    the wx build features, like additional malloc debugging, now is the time
    to do it.
 
-   cd C:\libs\wx-3.1.0\include\wx\msw
+   cd C:\libs\wx-3.1.1\include\wx\msw
 
    Edit the file "setup.h" to tweak whatever options you need.  Only do
    this if you know your way around wxWidgets.  The stock setup.h will
@@ -53,17 +53,16 @@ an explicit mouse-click-by-mouse-click cookbook.
 5) Build the wxWidgets library
 
    The wxWidgets library may be built many different ways.  I'll describe
-   only the way I do it.  This worked for MSVC 2015 Community Edition:
+   only the way I do it.  This worked for MSVC 2017 Community Edition:
 
-   5a) Fire up the compiler
-   5b) Launch a command line shell from MSVC compiler
-   5c) type "set WXWIN=c:\libs\wx-3.1.0"  (change to your appropriate path)
-   5d) type "cd %WXWIN\build\msw"
-   5e) type "nmake -f makefile.vc"
+   5a) Launch a command line shell from MSVC compiler
+   5b) type "set WXWIN=c:\libs\wx-3.1.1"  (change to your appropriate path)
+   5c) type "cd %WXWIN\build\msw"
+   5d) type "nmake -f makefile.vc"
        and wait 10 minutes
-   5f) type "nmake -f makefile.vc BUILD=release"
+   5e) type "nmake -f makefile.vc BUILD=release"
        and wait 10 minutes
-   5g) Bonus points if you want to build and run any of the demo or sample
+   5f) Bonus points if you want to build and run any of the demo or sample
        applications.  Note that most specify linking against a wide range
        of wx libs, although not all are necessarily needed for a given
        application.  This is worth the effort to gain confidence that the
@@ -73,10 +72,10 @@ an explicit mouse-click-by-mouse-click cookbook.
             nmake -f makefile.vc BUILD=release
        then cd into the vc_mswu/ (or whatever) subdirecotyr and run the .exe
        located there.
-   5h) Quit the compiler.
+   5g) Quit the shell.
 
    If you have difficulties doing this, try visiting the wxWidgets wiki.
-   As of January 2017, the right URL to start is this one:
+   As of November 2018, the right URL to start is this one:
 
         https://wiki.wxwidgets.org/Install
 
@@ -86,8 +85,8 @@ an explicit mouse-click-by-mouse-click cookbook.
    For the sake of explantion, let's say you put it in C:\wang2200.
    You should see the visual express project files:
 
-        emu.sln
-        emu.vcproj
+        wangemu.sln
+        wangemu.vcxproj
 
    I don't know much about the the compiler -- maybe you can hand edit these
    files to configure it for your own purposes, but I always use the compiler
@@ -107,7 +106,7 @@ an explicit mouse-click-by-mouse-click cookbook.
    7a) set the shell environment variable WXWIN to point to wherever you
        installed the wxwindows library.  This should be the path up to the
        root of that tree.  In my case, it is
-            set WXWIN="C:\libs\wx-3.1.0"
+            set WXWIN="C:\libs\wx-3.1.1"
    7b) Fire up the compiler
    7c) Select File -> Open -> Project/Solution ...
    7d) You are facing a file dialog box.  Navigate over to wangemu.sln,
@@ -168,7 +167,7 @@ an explicit mouse-click-by-mouse-click cookbook.
       that the project is set to build the Debug version.  There is a control
       on the toolbar to select it.
 
-   8b) Select the top level menu Build -> Build emu  (or hit F7)
+   8b) Select the top level menu Build -> Build Solution  (or Ctrl+Shift+B)
        It should grind away for one or two minutes and not produce any
        warnings or errors.  If you do ... uh, I don't have any good advice.
        I've tried to make it clear here, but the entire chain of things
@@ -183,6 +182,7 @@ an explicit mouse-click-by-mouse-click cookbook.
 --------------------------------------------------------------
 -------------------------- OSX Port --------------------------
 --------------------------------------------------------------
+(This section is out of date; the OSX version was last built 8 years ago)
 
 I'm not a Mac person.  I bought a Mac Mini for the sole purpose of porting
 the emulator to OSX.  98% of all development on is is done on a Windows XP

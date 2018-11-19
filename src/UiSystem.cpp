@@ -122,7 +122,8 @@ TheApp::OnCmdLineParsed(wxCmdLineParser& parser)
             std::string fn(filename.c_str());
             bool success = core_invokeScript(io_addr, fn);
             if (!success) {
-                UI_Warn("Failed to open script '%s'", filename.c_str());
+                const char *s = filename.c_str();
+                UI_Warn("Failed to open script '%s'", s);
             }
         }
     }

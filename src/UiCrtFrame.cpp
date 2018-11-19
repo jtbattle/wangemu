@@ -542,7 +542,7 @@ CrtFrame::initToolBar(wxToolBar *tb)
     int font_size = 8;
 #endif
 
-    wxFont key_font(font_size, wxDEFAULT, wxNORMAL, wxNORMAL);
+    wxFont key_font(font_size, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL);
     assert(key_font != wxNullFont);
     //key_font.SetNoAntiAliasing();
 
@@ -609,8 +609,8 @@ CrtFrame::initToolBar(wxToolBar *tb)
     bg = wxSystemSettings::GetColour(wxSYS_COLOUR_BTNFACE);
 
     wxBitmap img(buttonW, buttonH, -1);
-    wxPen fgPen(fg, 1, wxSOLID);
-    wxPen bgPen(bg, 1, wxSOLID);
+    wxPen fgPen(fg, 1, wxPENSTYLE_SOLID);
+    wxPen bgPen(bg, 1, wxPENSTYLE_SOLID);
 
     memDC.SelectObject(img);
     memDC.SetBrush(wxBrush(bg, wxBRUSHSTYLE_SOLID));
@@ -669,7 +669,7 @@ CrtFrame::initToolBar(wxToolBar *tb)
                 break;
         }
         if (shaft_ticks > 0) {
-            wxPen dashPen(fg, 1, wxSOLID);
+            wxPen dashPen(fg, 1, wxPENSTYLE_SOLID);
             wxDash dashes[] = { 4, 2 };
             int shaft_len = buttonW/5;
             if (shaft_ticks > 1) {

@@ -726,7 +726,7 @@ Printer::generateScreen(int startCol, int startRow)
     // draw page breaks
     if (1) {
         wxColor gray = wxColour(0x80, 0x80, 0x80);
-        wxPen breakpen(gray, 1, wxUSER_DASH);
+        wxPen breakpen(gray, 1, wxPENSTYLE_USER_DASH);
         wxDash dashArray[] = { 2, 5 };  // pixels on, pixels off
         breakpen.SetDashes(2, dashArray);
         imgDC.SetPen(breakpen);
