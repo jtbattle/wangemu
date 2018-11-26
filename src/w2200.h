@@ -12,9 +12,7 @@
 #include <vector>
 #include <array>
 #include <memory>
-
 #include <functional>
-typedef std::function<void(int)> kbCallback;
 
 // types used globally in the wang emulator
 

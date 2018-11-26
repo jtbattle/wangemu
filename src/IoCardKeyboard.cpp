@@ -4,7 +4,6 @@
 #include "IoCardKeyboard.h"
 #include "Cpu2200.h"
 #include "Scheduler.h"
-#include "ScriptFile.h"
 #include "System2200.h"
 
 #define NOISY  0        // turn on some debugging messages
@@ -25,11 +24,14 @@ IoCardKeyboard::IoCardKeyboard(std::shared_ptr<Scheduler> scheduler,
     m_selected(false),
     m_cpb(true),
     m_key_ready(false),
-    m_key_code(0),
-    m_script_handle(nullptr)
+    m_key_code(0)
 {
     if (m_slot >= 0) {
         reset();
+        System2200().kb_register(
+            m_baseaddr, 0,
+            bind(&IoCardKeyboard::receiveKeystroke, this, std::placeholders::_1)
+        );
     }
 }
 
@@ -38,6 +40,7 @@ IoCardKeyboard::~IoCardKeyboard()
 {
     if (m_slot >= 0) {
         reset();        // turns off handshakes in progress
+        System2200().kb_unregister(m_baseaddr, 0);
     }
 }
 
@@ -75,7 +78,6 @@ void
 IoCardKeyboard::reset(bool hard_reset)
 {
     m_tmr_script = nullptr;
-    m_script_handle = nullptr;
 
     // reset card state
     m_selected  = false;
@@ -121,8 +123,6 @@ IoCardKeyboard::CBS(int val)
     val &= 0xFF;
 
 #if 0
-    // handle it if card uses it instead of the message here
-#else
     // unexpected -- the real hardware ignores this byte
     if (NOISY) {
         UI_Warn("unexpected keyboard CBS: Output of byte 0x%02x", val);
@@ -147,91 +147,26 @@ IoCardKeyboard::CPB(bool busy)
 
 // ================== keyboard specific public functions =================
 
-// this is called by UI when a key is entered by the user
 void
-IoCardKeyboard::receiveKeystroke(int io_addr, int keycode)
+IoCardKeyboard::receiveKeystroke(int keycode)
 {
-    assert( (io_addr >= 0) && (io_addr <= 255) );
     assert( (keycode >= 0) );
 
-    IoCardKeyboard *tthis = static_cast<IoCardKeyboard*>
-                                (System2200().getInstFromIoAddr(io_addr));
-    assert(tthis != nullptr);
-
-    // halt apparently acts independently of addressing
     if (keycode & KEYCODE_HALT) {
-        if (tthis->m_script_handle) {
-            // cancel any script in progress
-            if (tthis->m_tmr_script != nullptr) {
-                tthis->m_tmr_script->Kill();
-                tthis->m_tmr_script = nullptr;
-            }
-            tthis->m_script_handle = nullptr;
-            tthis->m_key_ready     = false;
-        }
-        tthis->m_cpu->halt();
-        return;
+        m_key_ready = false;
+        m_cpu->halt();
+    } else {
+        m_key_code  = keycode;
+        m_key_ready = true;
     }
 
-    if (tthis->m_script_handle) {
-        return;         // ignore any other keyboard if script is in progress
-    }
-
-    tthis->m_key_code  = keycode;
-    tthis->m_key_ready = true;
-
-    tthis->check_keyready();
+    check_keyready();
 }
-
-
-// returns 1 if the keyboard at the specified io_addr
-// is already processing a script
-bool
-IoCardKeyboard::script_mode(int io_addr)
-{
-    assert( (io_addr >= 0) && (io_addr <= 255) );
-
-    IoCardKeyboard *tthis = static_cast<IoCardKeyboard*>
-                                (System2200().getInstFromIoAddr(io_addr));
-    if (tthis == nullptr) {
-        // this can happen during initialization when there are two keyboards
-        return false;
-    }
-    return (!!tthis->m_script_handle);
-}
-
-
-// open up a script for keyboard input.  returns true on success.
-bool
-IoCardKeyboard::invoke_script(const int io_addr, const std::string &filename)
-{
-    assert( (io_addr >= 0) && (io_addr <= 255) );
-
-    IoCardKeyboard *tthis = static_cast<IoCardKeyboard*>
-                                (System2200().getInstFromIoAddr(io_addr));
-    assert(tthis != nullptr);
-    assert(!tthis->m_script_handle);  // can't have two scripts to one kb
-
-    int flags = ScriptFile::SCRIPT_META_INC |
-                ScriptFile::SCRIPT_META_HEX |
-                ScriptFile::SCRIPT_META_KEY ;
-    tthis->m_script_handle = std::make_unique<ScriptFile>(
-                                filename, flags, 3 /*max nesting*/);
-
-    if (!tthis->m_script_handle->openedOk()) {
-        tthis->m_script_handle = nullptr;
-        return false;
-    }
-
-    // possibly get the first character
-    tthis->check_keyready();
-
-    return true;
-}
-
 
 // =================== private functions ===================
 
+// FIXME: if nothing else, the name is bad because IoCardKeyboard
+// no longer knows about scripts -- System2200 takes care of it.
 void
 IoCardKeyboard::tcbScript()
 {
@@ -260,7 +195,13 @@ IoCardKeyboard::tcbScript()
 void
 IoCardKeyboard::check_keyready()
 {
-    script_poll();
+    if (!m_key_ready) {
+        System2200().kb_keyReady(m_baseaddr, 0);
+    }
+// FIXME: keyReady doesn't change m_selected, so the above call can't affect
+// it this cycle.  maybe the thing to do is after m_key_ready is set to
+// false (no matter the reason) a timer to tcbScript is invoked.  or something.
+// think it through.
     if (m_selected) {
         if (m_key_ready && !m_cpb) {
             // we can't return IBS right away -- apparently there
@@ -273,47 +214,6 @@ IoCardKeyboard::check_keyready()
         }
         m_cpu->setDevRdy(m_key_ready);
     }
-}
-
-
-// poll the script buffer to fetch another character if
-// one is available and there isn't already a key ready.
-void
-IoCardKeyboard::script_poll()
-{
-    if (m_script_handle && !m_key_ready) {
-        int ch;
-        bool rc = m_script_handle->getNextByte(&ch);
-        if (rc) {
-            // OK
-            m_key_code  = ch;
-            m_key_ready = true;
-        } else {
-            // EOF
-            m_script_handle = nullptr;
-            m_key_ready     = false;
-        }
-    }
-}
-
-// ====== redirector so callers don't need to drag in whole IoCard.h
-
-bool
-core_invokeScript(const int io_addr, const std::string &filename)
-{
-    return IoCardKeyboard::invoke_script(io_addr, filename);
-}
-
-bool
-core_isKbInScriptMode(int io_addr)
-{
-    return IoCardKeyboard::script_mode(io_addr);
-}
-
-void
-core_sysKeystroke(int io_addr, int keycode)
-{
-    IoCardKeyboard::receiveKeystroke(io_addr, keycode);
 }
 
 // vim: ts=8:et:sw=4:smarttab

@@ -208,11 +208,9 @@ END_EVENT_TABLE()
 CrtFrame::CrtFrame( const wxString& title,
                     const int screen_type,
                     const int io_addr,
-                    const int term_num,
-                    const kbCallback &kbHandler) :
+                    const int term_num) :
        wxFrame((wxFrame *)nullptr, -1, title, wxDefaultPosition, wxDefaultSize,
                wxDEFAULT_FRAME_STYLE | wxNO_FULL_REPAINT_ON_RESIZE),
-    m_kbHandler(kbHandler),
     m_menuBar(nullptr),
     m_statBar(nullptr),
     m_toolBar(nullptr),
@@ -422,7 +420,7 @@ CrtFrame::setMenuChecks(const wxMenu *menu)
 
     // ----- file --------------------------------------
     if (isPrimaryCrt()) {
-        bool script_running = core_isKbInScriptMode(m_assoc_kb_addr);
+        bool script_running = System2200().kb_scriptModeActive(m_assoc_kb_addr, m_term_num);
         m_menuBar->Enable(File_Script, !script_running);
     }
 
@@ -927,7 +925,7 @@ CrtFrame::OnScript(wxCommandEvent& WXUNUSED(event))
     int r = hst.fileReq(Host::FILEREQ_SCRIPT, "Script to execute", 1, &fullpath);
     if (r == Host::FILEREQ_OK) {
         // tell the core emulator to redirect input for a while
-        (void)core_invokeScript(m_assoc_kb_addr, fullpath);
+        System2200().kb_invokeScript(m_assoc_kb_addr, m_term_num, fullpath);
     }
 }
 
@@ -1306,7 +1304,8 @@ CrtFrame::OnToolBarButton(wxCommandEvent &event)
     int keycode = (id == TB_EDIT) ? (sf | IoCardKeyboard::KEYCODE_EDIT)
                 : (shift)         ? (sf | (id - TB_SF0 + 16))
                                   : (sf | (id - TB_SF0));
-    core_sysKeystroke(getTiedAddr(), keycode);
+
+    System2200().kb_keystroke(getTiedAddr(), m_term_num, keycode);
 }
 
 
@@ -1462,6 +1461,11 @@ CrtFrame::getTiedAddr() const
     return m_assoc_kb_addr;
 }
 
+int
+CrtFrame::getTermNum() const
+{
+    return m_term_num;
+}
 
 // ----------------------------------------------------------------------------
 //   Crt frame management functions

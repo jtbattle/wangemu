@@ -17,8 +17,7 @@ public:
     CrtFrame(   const wxString &title,
                 const int screen_type,
                 const int io_addr,
-                const int term_num,     // -1 if dumb, 1-4 if term mux
-                const kbCallback &kbHandler
+                const int term_num      // 0 if dumb, 1-4 if term mux
             );
 
     // destructor
@@ -35,6 +34,7 @@ public:
 
     // the io address of the emulated keyboard associated with this window
     int getTiedAddr() const;
+    int getTermNum() const;
 
     // emit a character to the display
     void processChar(uint8 byte);
@@ -84,9 +84,6 @@ public:
     // resumes, it will be forced to reopen the file, picking up any changes
     // made to the disk metadata.
     void doInspect(const std::string &filename);
-
-// FIXME: hack so m_crt can access it
-    const kbCallback m_kbHandler; // keystroke handler
 
 private:
     // ---- event handlers ----

@@ -2,87 +2,47 @@
 Emulator TODO list
 ============================================================================
 
-*) pressing the toolbar buttons does nothing now.  :-(
-   it was still working in a build from jan 16, 2016
+*) keyboard event routing issues
 
-*) print preview crashes now.  I'm not sure when it started happening.
-   study F:\Jim\libs\wx-3.1.0\samples\printing
-   trying to print fails too
+    + script mode doesn't quite work in mxd mode.  don't worry too much
+      about it until it gets rewritten for 8080 operation.
 
-*) 10 PRINT HEX(07);:GOTO 10
-   RUN
-   doesn't make any sound and kind of hands. CTRL-C eventually stops it,
-   but it takes awhile.  Doing PRINT HEX(0707070707070707070707) sounds
-   the same as PRINT HEX(07).  Is there something in the hardware which
-   ensures a given HEX(07) takes at least a certain amount of time?
+    + the 2236 terminals send HALT and RESET to the MXD via serial codes
+      of 0x13 and 0x12, respectively, and the MXD remaps those before
+      sending them on to the host CPU. The current UiCrt_Keyboard code
+      doesn't do that. there might be other such keys that need such handling.
 
-   Each HEX(07) (re)triggers a one-shot which gates a 1KHz 555 oscillator.
-   Change the logic to match by making the wav file play in a loop
-   continuously until stopped, and using a timer event to schedule when
-   to turn it off.  if another hex(07) arrives, cancel the timer and
-   reschedule it for the new longer duration.
+    + the tied_keyboard setting is read during getDefaults() in UiCrtFrame
+        but tied_keyboard doesn't make sense for term mux because it is not
+        an independent address
 
-   This means that the wav creation logic should not be as large as it
-   is, and instead it should be exactly one cycle with perfect begin/end
-   phase matching (no overlap).
+    + in a few places, term_num is hardwired to 1
 
-   7011.pdf shows that hex(07) causes a low to a 9602 retriggerable one-shot.
-   pin 11: active low trigger
-   pins 14/15: 10uF electrolytic
-   pin 14: 18K pullup
-   pulse width is 0.31*R*C ns, R in kohms, C in pF
-               == 0.3*18*10M = 97ms
+*) useful resources for MXD emulation:
+   MXD 8080 code partial disasembly:
+        C:/Users/Jim/Documents/wang2200/boards/LVP\ box/7291_dasm/asm/mxd.asm
+   MVP mxd-related microcode, especially
+        C:/Users/Jim/Documents/wang2200/disk_images/unreleased/kryoflux/MVP_3.5_Source_Aug_91/mvp_3.5_source_code/JLMVP32A
+   MXC,D,E notes:
+        C:/users/jim/documents/wang2200/boards/terminal_mux_notes.txt
+   https://wang2200.org/docs/system/2200MVP_MaintenanceManual.729-0584-A.1-84.pdf
+       section F has schematics for many MVP cards, including MXD (7290-1, 7291-1)
+       (pdf page 336, ...)
 
-   that pulse lifts the reset pin of a 555.  The 555 is configured with
-      pin 7 pulled up to 5v by 1K
-      pin 6,8 with 0.1uF tantalum to ground
-      an 8.2K (maybe 6.2K) between pins 7 and 6/8
-   an online calculator says this should be 830Hz if R2 is 8.2K,
-                                         or 928Hz if R2 is 6.2K
-   A different calculator computed 1072 Hz for 6.2K.
-
-   The 7159 schematic (page 1, in the middle, at the bottom) is clearer.
-   The 9602 R=18K,C=18uF.  The 555 R1=1K, R2=8.2K, C=0.1uF.
-   That changes the timing a bit.
+*) IoCardTermMux doesn't send bytes from crt_buf to terminal!
+   For now I poke it to the display immediately, but in the long term,
+   there must be a timer which sends a character every
+        (10 bits/char) * (1 sec / 19200 bits) = 0.52 ms
+   with the usual complications, eg
+        kill the timer cleanly on exit/reconfig
+        kill the timer on reset
+        if the card indicates !ready because the output buffer is full,
+           then when the timer drains a character, be sure to set ready
+           iff ABS=07 still.
+   Also, the 05 port (VP /005) also does a direct poke and needs to route
+   things through the serial port emulation.
 
 *) add terminal mux emulation and terminal emulation so I can run MVP OS's
-
-   - I recently fixed a major bug -- CBS was always sending 00 instead of
-     the contents of the K register.  This didn't matter for other I/O cards,
-     but it is critical to the operation of the TermMux card.  Retest now
-     that this bug has been fixed.
-
-   - disassemble MXD code to understand behavior better
-        C:\Users\Jim\Documents\wang2200\boards\LVP box\7291_dasm\
-
-   - MXC,D,E notes: c:/users/jim/documents/wang2200/boards/terminal_mux_notes.txt
-
-   - immediate code changes
-      - route keyboard input when the focus is on a given window to the
-        associated keyboard port when there is a MXD too
-	+ IoCardKeyboard.cpp contans core_sysKeystroke() function.
-          this dispatches it to the IoCardKeyboard::receiveKeystroke(),
-          which isn't able to route keys to IoCardTermMux.
-          This needs to be generalized.  Perhaps the keyboard or TermMux
-          should pass a keystroke handler callback to CrtFrame, which does
-          the dispatching.  This would use <function> to do the callback.
-        + the problem is that at the the frame is created in IoCardDisplay
-          by calling UI_initCrt() (which then calls new Crt), but at that
-	  point we don't know what the associated keyboard is. on each
-	  keystroke, Crt::OnKeyDown (in UiCrt_Keyboard.cpp) calls
-	  m_parent->GetTiedAddr(), which returns UiCrtFrame->m_assoc_kb_addr.
-	  that association is set in these cases:
-	    . from the .ini file on start up
-	    . defaults to 0x01 if the .ini isn't valid
-	    . user manually changes if if there are multiple KB devices
-	  that association is found 
-        + the tied_keyboard setting is read during getDefaults() in UiCrtFrame
-but tied_keyboard doesn't make sense for term mux because it is not an
-independent address
-        + the TermMux type does know the mapping at creation time.
-          perhaps we should mandate that the mapping must be known at
-          creation time, and for old display types it is always 0x01 and
-          remove the possibility (at least for now) of unusual mappings.
 
    - the hardware has an 8b "RBI" register (ready/busy), one bit for each
      logical port.  Software maintains the logical readiness of each
@@ -93,7 +53,7 @@ independent address
      and it also clears the RBI[7:1] latch (== not ready), thus the Z80
      must write the latch to indicate ready again.
 
-     does it makes sense for the the emulation to do something similar?
+     does it makes sense for the emulation to do something similar?
      m_cpu.setDevRdy() is how it currently returns ready status.
 
      This is what tells ucode that the device is ready to accept another
@@ -108,7 +68,7 @@ independent address
                 1: keyboard (in vp mode), doesn't accept CBS/OBS
                 2: read status
                 3: MXD: unused; MXE: read bytes from screen dump
-            OK, so OBS/CBS aren't used in this range, but then && AB3 
+            OK, so OBS/CBS aren't used in this range, but then && AB3
             is a don't care, no?
 
      Cards drive:   RBI, IBS, IB1-9
@@ -128,7 +88,7 @@ independent address
             + UiCrt
                 + UiCrt_Charset.h
                 + UiCrtErrorDlg
-		+ UiCrt_Keyboard
+                + UiCrt_Keyboard
      IoCardKeyboard.cpp has a fair amount of script processing logic in it,
         and I don't want to duplicate this for dumb & smart terminal modes
      UiCrtFrame constructor takes title, screen_size, io_addr.
@@ -163,6 +123,8 @@ independent address
 
     - interesting: when in mvp mode, port 01 appears as always busy
       (p10 of 2236MXE_Documentation.8-83.pdf)
+      see p78 too: Addresses 07, 03, and 02 remain busy in VP mode.
+      p80 has a description of MVP mode.
 
     - allow term MUX to connect to a real serial port
         - a mac/linux/win lib: http://sigrok.org/wiki/Libserialport
@@ -193,6 +155,56 @@ independent address
       It is possible that the contents were R5, but the EPROMs were
       later erased and overwritten, making the handwritten note
       meaningless.
+
+*) File/Script is now greyed out when term_mux is chosen because
+    UiCrtFrame.cpp doesn't set m_primary_crt when term_mux is in use.
+    this will need to get reworked when there is more than one terminal.
+
+*) ?? do this or not ??
+    vimgrep '!= nullptr' *.cpp
+    then replace with simple boolean tests, eg
+        assert(inst != nullptr);
+    becomes
+        assert(inst);
+
+*) review my naming convention. I haven't been consistent.
+   eg, some_are_like_this, someAreCamelCase.
+   review some c++ style guides and pick a convention.
+
+*) add i8080.c credits to UiMyAboutDlg.cpp
+
+*) add support for MVP and VLSI type CPUs
+   - MVP adds the 30ms timer, and up to 512KB of data RAM via the SL register.
+   - VLSI-2 puts an 8b register at output port 80 called BSR (bank select reg);
+     bit [7] of that register indicates if extended addressing should use the
+     SL register of if [6:0] provided 7b of extended addressing. See MVP source
+     code file BPMVP00.
+     Were there other differences?  Scan the internal notes and PR releases for
+     clues.  I vaguely recall reading that the VLSI CPU offered a slight speed
+     advantage.
+
+*) Add 64K words of control memory, so BASIC-3/COBOL can run
+   OptionC.pdf in the jim/wang2200/docs/system/2200MVP_MaintenanceManual
+   directory describes the upgrade to give 64KB of control ram and
+   512KB of RAM.  0x8000 to 0x8FFF is a hole where the bootstram PROM lives.
+   Don't make it configurable -- just give it all 64K to reduce UI clutter.
+
+*) code quality
+    look for old-style static casts and replace with modern
+        (int)foo --> static_cast<int>(foo)
+
+    I have code like this in multiple places:
+        IoCardDisk *tthis = static_cast<IoCardDisk*>
+                                    (System2200().getInstFromSlot(slot));
+    but should it be reinterpret_cast<>()?
+
+*) notes on disk protocol and unimplemented commands:
+    C:/Users/Jim/Documents/wang2200/disk_protocol/notes.txt
+
+*) print preview crashes now.  I'm not sure when it started happening.
+   study F:\Jim\libs\wx-3.1.0\samples\printing
+   trying to print fails too.
+   maybe wait to debug this after updating to the latest wxwidgets.
 
 *) the read and write routines go to great lengths to inline things,
    but they both have the expression (m_memsize_KB<<10).  That should
@@ -242,7 +254,7 @@ independent address
        This is called the constant poll."
       The emulated terminal doesn't.  Should it?  Is this just to compensate
       for the fact that the serial link wasn't perfect, so this avoided
-      accidently dropping a XON character and freezing the handshake?
+      accidentally dropping a XON character and freezing the handshake?
 
     - 742-0903.MNL.IntegratedTerminal2236DW.85-02-27.pdf, pdf page 68 says
           2236DW and 2236DW have mostly the same character generators,
@@ -275,7 +287,7 @@ independent address
 
     - pre-blurring the char set to a glyph map, then blitting to the display
       works OK, except the cursor isn't blurred because it is dynamic, and
-      edges of block graphic characters are noticable because the blurring
+      edges of block graphic characters are noticeable because the blurring
       kernel needs to span across characters.  it also interacts poorly
       with the box line graphics overlay.
 
@@ -291,17 +303,120 @@ independent address
         - running via sockets, allowing local or remote connection
         - perhaps as a javascript app, with multiple terminals as tabs?
 
-*) Add 64K words of control memory, so BASIC-3/COBOL can run
-   OptionC.pdf in the jim/wang2200/docs/system/2200MVP_MaintenanceManual
-   directory describes the upgrade to give 64KB of control ram and
-   512KB of RAM.  0x8000 to 0x8FFF is a hole where the bootstram PROM lives.
-   Don't make it configurable -- just give it all 64K to reduce UI clutter.
+*) 10 PRINT HEX(07);:GOTO 10
+   RUN
+   doesn't make any sound and kind of hangs. CTRL-C eventually stops it,
+   but it takes a while.  Doing PRINT HEX(0707070707070707070707) sounds
+   the same as PRINT HEX(07).  Is there something in the hardware which
+   ensures a given HEX(07) takes at least a certain amount of time?
 
-*) Maybe have an easy config mode and an expert mode:
-      a) 2200T   w/ 32KB RAM, printer, two disk drives, KB + 64x16 screen
-      b) 2200VP  w/ 64KB RAM, printer, two disk drives, KB + 80x24 screen
-      c) 2200MVP w/512KB RAM, printer, two disk drives, 2236 MXD, one term
-      d) expert mode
+   Each HEX(07) (re)triggers a one-shot which gates a 1KHz 555 oscillator.
+   Change the logic to match by making the wav file play in a loop
+   continuously until stopped, and using a timer event to schedule when
+   to turn it off.  if another hex(07) arrives, cancel the timer and
+   reschedule it for the new longer duration.  (see UiCrt.cpp)
+
+   This means that the wav creation logic should not be as large as it
+   is, and instead it should be exactly one cycle with perfect begin/end
+   phase matching (no overlap).
+
+   7011.pdf shows that hex(07) causes a low to a 9602 retriggerable one-shot.
+   pin 11: active low trigger
+   pins 14/15: 10uF electrolytic
+   pin 14: 18K pullup
+   pulse width is 0.31*R*C ns, R in kohms, C in pF
+               == 0.3*18*10M = 97ms
+
+   that pulse lifts the reset pin of a 555.  The 555 is configured with
+      pin 7 pulled up to 5v by 1K
+      pin 6,8 with 0.1uF tantalum to ground
+      an 8.2K (maybe 6.2K) between pins 7 and 6/8
+   an online calculator says this should be 830Hz if R2 is 8.2K,
+                                         or 928Hz if R2 is 6.2K
+   A different calculator computed 1072 Hz for 6.2K.
+
+   The 7159 schematic (page 1, in the middle, at the bottom) is clearer.
+   The 9602 R=18K,C=18uF.  The 555 R1=1K, R2=8.2K, C=0.1uF.
+   That changes the timing a bit.
+
+   https://wang2200.org/docs/system/2200_SystemsMaintenanceManual.03-0025-0.1975.pdf
+   page 6-11 (pdf page 207) describes how long the bell lasts for the original CRT
+   controller, but it isn't clear without the corresponding schematic exactly
+   what it means.
+
+*) add disk unit addressing cheatsheet?  I have forgotten the ins and outs.
+    3xx
+    Bxx
+    Dxx
+    F vs R vs T
+
+    page 12-18 of MultiuserBasic2RefManual.700-4080F.3-91.pdf says this:
+      platter specification: T indicates that the disk address itself specifies
+      which disk in the disk unit is to be used.  T must be used whenever device
+      type Dxx is used to access a disk.  In most statements, platter
+      specifications F and R are supported for compatibility with older
+      versions of BASIC-2 and Wang BASIC when using device type 3xx or Bxx.
+
+    page 1-2 etc of WangBasic2DiskRefManual.700-3081G.6-81.pdf has a table
+
+        MODEL      PLATTER       DEVICE ADDRESS
+        ---------  -----------   ---------------
+        2280-1     Removable     D10 (or B10)*
+                   Fixed         D11 (or 310)
+
+        2280-2     Removable     D10 (or B10)
+                   First Fixed   D11 (or 310)
+                   Second Fixed  D12
+                   Third  Fixed  D13
+
+        2280-3     Removable     D10 (or B10)
+                   First Fixed   D11 (or 310)
+                   Second Fixed  D12
+                   Third  Fixed  D13
+                   Fourth Fixed  D14
+                   Fifth  Fixed  D15
+
+    page 1-5 of the same manual says
+
+        The slave drive in a Model 2260C-2, 2260BC-2 or 2280 dual drive system
+        is treated much the same as the third drive in the Model 2270-3.
+        Although it is functionally an extention of the Master drive, it is
+        assigned a separate address which is always HEX(40) greater than the
+        address of the Master disk.  If the Master drive's default address is
+        310, the address of the Slave drive would be 350; if the address of the
+        Master drive is 320, the address of the Slave drive is 360, etc.
+        As an example, for the 2260C-2 or 2260BC-2, statement 10 below accesses
+        the fixed platter in the Slave drive assuming that the primary address
+        in the Master drive is the default address, 310.
+            10 SAVE F/350, "FILE4"
+        The statement 10 below accesses the first platter of the Slave drive in
+        a 2280 dual drive system.
+            10 SAVE T/D51, "FILE6"
+
+    via experimenting of LIST DCT/blah
+
+        LIST DCT/310  ==  LIST DCF/310
+        LIST DCT/B10  ==  LIST DCR/310
+        LIST DCT/320  ==  LIST DCF/320
+        LIST DCT/B20  ==  LIST DCR/320
+
+        LIST DCT/D10  ==  LIST DCR/310
+        LIST DCT/D11  ==  LIST DCF/310
+        LIST DCT/D20  ==  LIST DCR/320
+        LIST DCT/D21  ==  LIST DCF/320  ? hmm crashes emulator
+
+*) this is kind of obscure, but the #ID function returns a "unique" ID per system.
+   it comes from locations 8004 and 8005 of the boot PROM (so says BPMVP0E).
+   The boot prom of my emulator happens to return 4136.  Make it a config option?
+
+*) Maybe have an easy config mode and an expert mode.
+   The config dialog would have two tabs.  The "simple" tab would have
+   these configuration options:
+      a) 2200T    w/ 32KB RAM, printer, two disk drives, KB + 64x16 screen
+      b) 2200VP   w/ 64KB RAM, printer, two disk drives, KB + 80x24 screen
+      c) 2200MVP  w/512KB RAM, printer, two disk drives, 2236 MXD, one term
+      d) 2200VLSI w/4MB   RAM, printer, two disk drives, 2236 MXD, one term
+   Expert mode would have the existing configuration dialog.
 
 *) do a memory leak check once in a while
 
@@ -351,9 +466,6 @@ independent address
         - on success, swap to new world, then destroy old world
         - on failure, report problem, and old world is still usable
 
-*) notes on disk protocol and unimplemented commands:
-    f:/jim/documents/wang2200/disk_protocol/notes.txt
-
 *) when I run diags, say control mem tests, the test will often hang if
    I run the emulator in realtime mode, but runs OK if I am unregulated.
    what gives?  break during the apparent hang and see what the execution
@@ -393,10 +505,20 @@ independent address
             decode them and see if they use wang proprietary format or not
             or perhaps these are communicating to the tape controller,
             and the tape controller them maps these to teac-native SCSI
-            commands, in which case maybe I can't tell
+            commands, in which case maybe I can't tell.  (almost certainly
+            the GIO$ commands are being interpreted by a uprocessor in the
+            controller, and aren't the low level commands sent to the tape
+            drive itself).
         A-2 specifications:
             8000 bpi, 90 ips, 9 physical tracks
             elsehwere: 8 tracks for data, 9th track for directory
+            data is written in 512 byte blocks.  there is a 128 block buffer
+            where write data is accumulated then written all together either
+            when the buffer gets full or a WRITE FILE MARK command is issued.
+        p 7-3 (60): To write data to the tape, the tape must first be
+            positioned beyond the current end of data.  ...
+            ... Note: Data cam be a[[emded pmtp a ta[e. bit data cannot be
+                successfully overwritten without first erasing the entire tape.
       jan van de veen has two DS cabinets
       http://mcbx.netne.net/computers/media/teac/index.htm says:
         This unit is communicating with a proprietary interface similar to
@@ -407,7 +529,8 @@ independent address
         some which are QIC-02.  Perhaps his statement is true for the model
         which he has.
     - adaptec AHA-2930LP scsi interface cards apparently work with win/7
-        and are $15 on ebay
+        and are $15 on ebay.  many are for macs, but even the ones for
+        windows probably can't talk to the wang because it isn't native scsi.
 
 *) finally got a wang PC keyboard.  there are some extra keys, but the guess
    I made how they'd be expressed was wrong (see UiCrt_Keyboard.cpp).
@@ -476,10 +599,183 @@ independent address
    some information about it:
       http://www.wang2200.org/docs/internal/2200_TapeDriveSpecifications.2-73.pdf
       http://www.wang2200.org/docs/internal/2200_IO_Specifications.6-72.pdf
+   see also
+     c:\users\jim\documents\wang2200\io-notes.txt
+
+============================================================================
+--- wvdutil issues ---
+============================================================================
+
+*) crashes the program
+   wvdutil.py bahia/older_2275/2275_D12.wvd
+   list DTEST
+
+*) see 1990 document describing program disk formats:
+     https://wang2200.org/docs/internal/CS-2200-386_DiskCatalogAndFileStructure.pdf
+   it describes how MVP vs MVP wrap mode works, as well as 386 "new" mode.
+   the bahia/older_2275/2275_D11.wvd disk has some examples, eg
+      BOOTREC (386, non-wrap)
+      WRAP (mvp wrap mode) vs WRAP2 (386 new mode, wrap)
+      UNWRAP (386 new)
+
+*) pyinstaller results in a very slow to start program.  investigate
+   using nuitka.net to speed it up.
+
+*) identify (and list?) printer control files. from wvdutil.py comments:
+        MVP OS 2.6 and later have files with names like "@PM010V1" which
+        are printer control files.  they all start with 0x6911.
+        add logic to allow check, scan, and perhaps list them.
+        Basic2Release_2.6_SoftwareBullitin.715-0097A.5-85.pdf
+        has some description of the generalized printer driver.
+
+*) identify (and list?) microcode.
+   does WvdHandler need a different hook to advertise file formats which can
+   be recognized but not listed?  or does the lister defer to a generic dump
+   format or data format as the case may be?
+
+*) the compare command in wvdutil.pl doesn't allow compare two files with
+   different names.  it would be useful to allow it.
+
+*) wvdutil.py guessFiles()
+
+    - is a hacked up version of the old FSM.  see the big comment block there.
+      try rewriting it to use the checkBlocks functions and see if that works
+      without being too slow.
+      note: the checkers will probably need to receive a new option val,
+            maybe "speculative".  They should stop when they detect an error,
+            but not return an error, and instead just return the number of
+            sectors which were valid before seeing the error.
+            q: in this speculative mode, do data and program need to be well-
+               formed, or allow fragmentary programs and data files?
+
+*) dir currently shows program, data, edit file type.  programs also show
+   protected or scrambled. consider adding a mechanism to indicate if the
+   program is specifically BASIC-2 or Wang BASIC (if it is compatible with
+   both don't say anything special).
+
+   - stuff.wvd: MSTRMIND has a few lines which are preceded by a space.
+     Wang BASIC reads it fine; BASIC-2 (as of vp-2.4) silently drops the
+     sector entirely.
+
+   - check if any BASIC-2 specific tokens are used. other checks we could
+     make might require real parsing.
+
+     "$" command prefix is 0xEA, so maybe do a simple grep search for 0xEA
+     followed by BASIC-2 specific commands.
+      BASIC-2 only that can't be detected just by token:
+          IF A>0 THEN PRINT A  (THEN token followed by something other than space or line number token)
+          HEXUNPACK         ('HEX' token then 'UNPACK' token)
+          NEXT I,J          heuristic: "," after NEXT and before ":"
+          ADDC(A$,B$) --> A$ = ADDC B$ or A$ = A$ ADDC B$  (same token, xEA 'ADD', used in both situations)
+                             heuristic: ADD/BOOL/etc token after "=" and before ":"
+          PRINTUSING TO ...
+          ON <expr> SELECT ...
+          SELECT @PART      (SELECT is a token, @PART are individual ascii letters)
+          SELECT ERROR
+          BOX(              (individual letters)
+          $PACK             ($(xEA) and PACK are tokens)
+          $UNPACK           ($(xEA) and UNPACK are tokens)
+          $OPEN             ($(xEA) and OPEN are tokens)
+          $CLOSE            ($(xEA) and CLOSE are tokens)
+          $FORMAT           ($(xEA) then individual letters)
+          $BREAK            ($(xEA) then individual letters)
+          $MSG              ($(xEA) then individual letters)
+          $PSTAT            ($(xEA) then individual letters)
+          $RELEASE PART     ($(xEA) then individual letters)
+          $RELEASE TERMINAL ($(xEA) then individual letters)
+          $ALERT
+          SPACE
+          SPACEK
+          TIME
+          ERR function
+          ERR$ function
+          PRINT HEXOF(...)
+          HEXPACK
+          HEXUNPACK
+          #ID
+
+      BASIC-2 only that can't be detected just by token, but parsing is tougher
+          VAL(A$,2) or worse, VAL(STR(A$,<expr>,<expr>),<expr>)
+          @A, @$A, etc global vars
+
+      Maybe have a function to strip out REM, and remove everything between
+      quotes, and squish out extra spaces.  Then do the pattern matching for
+      $BREAK and such.  If so, maybe these checks could be incorporated into
+      the listBlock logic, and simply drop the resulting list.
+
+   - Related to the previous point, the following might be a useful heuristic
+     to know whether a program was written in Wang BASIC or BASIC-2.
+   
+     Entering "10 PRINT A/3" in Wang BASIC, the space between the line number
+     and PRINT is saved in the file.  "10PRINT A/3" will show up just like
+     that.  But on BASIC-2, there is always a space printed after a line
+     number, even if one wasn't entered.  If one is entered, but only the first
+     one, it is removed before tokenizing the rest of the line.
 
 ============================================================================
 Misc
 ============================================================================
+
+*) Microcode assembler notes
+
+   For each source file FOO, the assembler creates two symbol files:
+        FOO$ = local symbols from FOO
+        FOO& = external symbols from FOO
+
+   These output file seems to be much like a source file, except the first
+   sector starts
+       81 01 fc <124 bytes, space padded> fd <128 dontcare bytes>
+   The subsequent sectors are like edit: four 62 byte strings, but with their
+   contents packed. The sector always ends ff fd 00.
+
+    The FOO$ stream contains a sequence of
+       <A       > 00 0a 03 11 db   line 180 = 00B4. 0311db=201179 = module 2, file 01, line 179
+       <ABS     > 00 c0 03 11 e4   line 189 = 00BD
+       <C       > 00 0c 03 11 dd   line 182 = 00B6
+       <CA      > 00 01 03 11 fe   line 215 = 00D7
+       <CBS     > 00 10 03 11 e6   line 191 = 00BF
+       <D       > 00 0d 03 11 de   line 183 = 00B7
+    Those trailing five bytes are pondered on elsewhere, but I can't find it now.
+    That speculation and the following should be consolidated to reduce confusion.
+    However, I have cracked the meaning by studying the assembler code.
+    Each entry is 13 bytes, packed with
+        byte 1-8:   S1$(K) -> symbol name, 8 letters
+        byte 9-10:  S3$(K) -> value, 16b
+        byte 11-13: S4$(K) -> def. location, 24b (MMMFFLLL in base 10)
+     MMMFFLLL, MMM=module, FF=file of module, LLL=line of file
+
+    2600ASMS
+        line 1000, has a description of the variables used.
+    2600ASM2
+        line 2050: FOO$ file is written (local symbol table)
+        line 2080: FOO& file is written (external symbol table)
+        line 7340: three byte U1$ value is generated: I1=F*100000+F2*1000+L
+        line 1100: "NEW FILE ENTRY POINT" and F2 is incremented each time
+                   (each CONT I assume)
+
+    The FOO& stream is also packed like an EDIT file, but the stream has 10-byte
+    entries:
+        <8 char name> <msb> <lsb>
+    There is no source location as in FOO$.  It seems that it lists the symbols
+    that FOO referenced which were not defined locally.
+
+    Looking at 2600_BASBOL_DevelopmentTools.3-81.pdf, a few notes:
+    2600 Assembler manual, Jan 31, 1978
+        EDITOR is for 2200C/T and was written by Dave Angel
+        EDIT26 is for 2200VP and was written by Dave Angel
+    And of course EDIT/EDIT.{2,3,4,5} was an even later rewrite.
+    Line 8400 of d14.2600ASM2 indicates there are two EDIT file formats in use.
+    The old format starts with "*FILE"; the new format starts with HEX(0201).
+
+    https://wang2200.org/docs/system/2200MVP_ComputerArchitecture.11-79.pdf, p 73
+          "2600ASMS" contains the start-up program
+          "2600ASM2" contains the assembler program
+          "2600ASMB" contains the block allocating program
+          "2600ASMG" contains the data file generating program
+          "2600ASMD" contains the data file produced by "2600ASMG"
+          "SCROSS" contains the master cross reference program
+          "READTB" contains the 9-track tape to printer program.
+          (followed by directions on how to use the programs)
 
 *) holy crap, read the message from Richard L Lockley, 8/20/2003 in the
    wang folder.  I never replied, until just now (10/8/08).  He claimed
@@ -584,6 +880,109 @@ Misc
         On the VP-based CPUs, the extra spaces are preserved;
         on the CS/386, the extra spaces are lost.
 
+*) experiments:
+    save a multi-sector program to disk.  make these unexpected file images on
+    disk.  try loading in Wang BASIC and BASIC-2 to see if they are accepted.
+
+    NOMID:  8DAMEN, with the wrong name
+        10 DIM A$(16)16
+        20 DATA LOAD BA R(171) A$()
+        30 STR(A$(1),2,8)="BADNAME "
+        40 DATA SAVE BA R(171) A$()
+    Result: DIR shows the name in the catalog, not the file header (as expected)
+    
+    NOHEAD: 8DAMEN, with the header block removed (other sectors moved back)
+        10 DIM A$(16)16
+        20 DATA LOAD BA R(164) A$()
+        30 DATA SAVE BA R(163) A$()
+        40 DATA LOAD BA R(165) A$()
+        50 DATA SAVE BA R(164) A$()
+        CLEAR
+        LOAD R"NOHEAD"
+    Result: ERR D88 (Wrong Record Type)
+
+    RATTE2: RATTE, but with the control record with the wrong info
+        real one: "20 00 0c ..."
+        10 DIM A$(16)16
+        20 DATA LOAD BA R(186) A$()
+        30 STR(A$(1),3,1) = HEX(03)
+        40 DATA SAVE BA R(186) A$()
+    Result:
+        LIST DCR shows only 3 records used, 9 free
+        LOAD R"RATTE2" loads the whole program fine
+
+        10 DIM A$(16)16
+        20 DATA LOAD BA R(186) A$()
+        30 STR(A$(1),3,1) = HEX(10)
+        40 DATA SAVE BA R(186) A$()
+    Result:
+        LIST DCR shows only 16 records used, 65532 free
+        LOAD R"RATTE2" loads the whole program fine
+
+    SAVE R(3)"RATTE3"  (RATTE but with three spare sectors)
+    Then write a program to put an empty sector in the middle.
+    The "empty" sector is just "00FD...", that is, the control
+    byte 00 is correct, and FD is an end of block byte.
+        10 DIM A$(16)16
+        20 FOR S=198 TO 194 STEP -1:REM 201 is the control sector
+        30 DATA LOAD BA R(S) A$()
+        40 DATA SAVE BA R(S+1) A$()
+        50 NEXT S
+        60 A$()=ALL(00)
+        70 STR(A$(1),1,2)=HEX(00FD)
+        80 DATA SAVE BA R(194) A$()
+     Sector 194 is lines 530 to 630
+     Result: no problems
+
+     SWAPPED: RATTE but with two sectors swapped
+        10 DIM A$(16)16, B$(16)16
+        20 DATA LOAD BA R(204) A$()  lines 80-150
+        30 DATA LOAD BA R(206) B$()  lines 250-320
+        40 DATA SAVE BA R(206) A$()
+        50 DATA SAVE BA R(204) B$()
+     BASIC is happy, but when wvdutil.py does LIST of that file,
+     the lines show up out of order.
+
+     DUP: PRIMES but with line 40 renamed to 30, which should overwrite
+          the existing line 30
+        10 DIM A$(16)16
+        20 DATA LOAD BA R(215) A$()
+        30 STR(A$(8),1,2)=HEX(0030)
+        40 DATA LOAD BA R(215) A$()
+     Result: line 30 disappeared, and 40 took its place
+
+     Looking at the MVP 3.5 source code, each line is decoded from the
+     input buffer.  A check is made, either "fast threading" or "slow threading".
+     In the first case, a two-way link is made between the old highest line
+     and the new highest line. Otherwise it has to do a slow search to see
+     where the new line fits and link it in there (possibly overwriting an old
+     line).  This has to be robust to allow overlays to work.
+
+    1) change the USED value in the last sector to something too short or too long
+       it shows USED as whatever was written, and FREE is correspondingly wrong,
+       even perhaps wrapping negative and appearing as 65532.  But loading the
+       program is just fine.
+    2) rewrite the header record to have the wrong filename.
+       no problem; the dir listing shows the catalog name, not the header name
+    3) shift all the sectors back by one, destroying the header record
+       ERR D88 (Wrong Record Type)
+    4) replace one of the middle sectors with no valid lines, just an End-Of-Block.
+       no problems: loaded fine
+    5) create a file where the lines are not saved in ascending order
+       easiest to just swap two sectors.
+       Result: it dealt with it fine
+    5b) modified a program containing lines 30 and 40 such that line 40 was
+        renamed to line 30.  it loaded OK and the renamed 40 replaced 30.
+
+    These will inform whether wvdutil should tolerate these errors too.
+    Create a disk with a small test program, "TEST".  Then write a program
+    to read each block and write out a new file, but with various errors.
+
+*) note, not that it mattters, but "SAVE DAR (600)" which used direct address
+   mode to save a program, saves a header sector with an all-blank name.
+   The last sector written is the trailer block, and of course there is
+   no control record after the program.
+
 ============================================================================
 wxBitmap vs wxImage refresher
 ============================================================================
@@ -618,14 +1017,14 @@ additionally alpha channel).
 Implemented on Windows, GTK+ and OS X:
 
     wxNativePixelData: Class to access to wxBitmap's internal data without
-		       alpha channel (RGB).
+                       alpha channel (RGB).
     wxAlphaPixelData: Class to access to wxBitmap's internal data with
-		      alpha channel (RGBA).
+                      alpha channel (RGBA).
 
 Implemented everywhere:
 
     wxImagePixelData: Class to access to wxImage's internal data with
-		      alpha channel (RGBA).
+                      alpha channel (RGBA).
 
 wxMSW note: efficient access is only possible to the bits of the so called
 device independent bitmaps (DIB) under MSW. To ensure that wxBitmap uses a

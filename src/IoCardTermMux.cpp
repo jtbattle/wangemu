@@ -5,8 +5,9 @@
 
 #include "Ui.h"
 #include "IoCardTermMux.h"
-#include "System2200.h"
 #include "Cpu2200.h"
+#include "Scheduler.h"
+#include "System2200.h"
 
 #define NOISY  0        // turn on some debugging messages
 
@@ -24,8 +25,11 @@ char asciify(int v)
 }
 
 // instance constructor
-IoCardTermMux::IoCardTermMux(std::shared_ptr<Cpu2200> cpu,
+IoCardTermMux::IoCardTermMux(std::shared_ptr<Scheduler> scheduler,
+                             std::shared_ptr<Cpu2200> cpu,
                              int baseaddr, int cardslot) :
+    m_scheduler(scheduler),
+    m_tmr_script(nullptr),
     m_cpu(cpu),
     m_baseaddr(baseaddr),
     m_slot(cardslot),
@@ -49,8 +53,16 @@ IoCardTermMux::IoCardTermMux(std::shared_ptr<Cpu2200> cpu,
     }
 
     // FIXME: just one for now
-    m_terms[0].wndhnd = UI_initCrt(UI_SCREEN_2236DE, io_addr, 1,
-        bind(&IoCardTermMux::receiveKeystroke, this, std::placeholders::_1));
+    m_terms[0].wndhnd = UI_initCrt(UI_SCREEN_2236DE, io_addr, 1);
+
+    System2200().kb_register(
+        // FIXME: need 0x01 because elsewhere m_assoc_kb_addr defaults to 0x01;
+        //        a later System2200().kb_foo(m_assoc_kb_addr,...) call fails
+        //        fix the m_assoc_kb_addr logic instead of this hack
+        m_baseaddr + 0x01,
+        1, /* FIXME: term 1 is hardwired here */
+        bind(&IoCardTermMux::receiveKeystroke, this, std::placeholders::_1)
+    );
 
     reset(true);
 }
@@ -61,6 +73,8 @@ IoCardTermMux::~IoCardTermMux()
     if (m_slot >= 0) {
         // not just a temp object, so clean up
         reset(true);        // turns off handshakes in progress
+        System2200().kb_unregister(m_baseaddr + 0x01, /* see the hack comment in kb_register() */
+                                   1 /* FIXME: term 1 is hardwired here */);
         for(auto &t : m_terms) {
             if (t.wndhnd != nullptr) {
                 UI_destroyCrt(t.wndhnd);
@@ -105,6 +119,8 @@ IoCardTermMux::getAddresses() const
 void
 IoCardTermMux::reset(bool hard_reset)
 {
+    m_tmr_script = nullptr;
+
     // reset card state
     m_selected   = false;
     m_cpb        = true;   // CPU busy
@@ -290,42 +306,58 @@ if (dbg) dbglog("TermMux CPB%c\n", busy ? '+' : '-');
             default:          break;
         }
     }
+
+#if 1
+    if (!m_tmr_script) {
+        m_tmr_script = m_scheduler->TimerCreate(
+                TIMER_US(50),     // 30 is OK, 20 is too little
+                [&](){ tcbScript(); } );
+    }
+#endif
 }
 
 // FIXME: warmed over from IoCardKeyboard
 void
 IoCardTermMux::check_keyready()
 {
-//  script_poll();
+//  System2200().kb_keyReady(m_baseaddr, 1 /*FIXME: term1 */);
+
     if (m_selected) {
-//      if (m_term.key_ready && !m_cpb) {
-//          // we can't return IBS right away -- apparently there
-//          // must be some delay otherwise the handshake breaks
-//          if (!m_tmr_script) {
-//              m_tmr_script = m_scheduler->TimerCreate(
-//                      TIMER_US(50),     // 30 is OK, 20 is too little
-//                      [&](){ tcbScript(); } );
-//          }
-//      }
+#if 0
+        if (m_term.io1_key_ready && !m_cpb) {
+            // we can't return IBS right away -- apparently there
+            // must be some delay otherwise the handshake breaks
+            if (!m_tmr_script) {
+                m_tmr_script = m_scheduler->TimerCreate(
+                        TIMER_US(50),     // 30 is OK, 20 is too little
+                        [&](){ tcbScript(); } );
+            }
+        }
+#endif
         m_cpu->setDevRdy(m_term.io1_key_ready);
     }
 }
 
+
+// FIXME: if nothing else, the name is bad because IoCardKeyboard
+// no longer knows about scripts -- System2200 takes care of it.
+void
+IoCardTermMux::tcbScript()
+{
+    System2200().kb_keyReady(m_baseaddr + 0x01, 1 /*FIXME: assumed term 1*/);
+
+    m_tmr_script = nullptr;
+}
+
+
 void
 IoCardTermMux::receiveKeystroke(int keycode)
 {
-    // FIXME: warmed over from IoCardKeyboard
     assert( (keycode >= 0) );
 
     // halt acts independently of addressing in vp mode
     // in mvp mode, the halt status is reported via port 02
     if ((keycode & KEYCODE_HALT) && m_vp_mode) {
-//      if (tthis->m_script_handle) {
-//          // cancel any script in progress
-//          tthis->m_tmr_script = nullptr;
-//          tthis->m_script_handle = nullptr;
-//          tthis->m_01_key_ready  = false;
-//      }
         m_cpu->halt();
         return;
     }
@@ -334,10 +366,6 @@ IoCardTermMux::receiveKeystroke(int keycode)
     if (m_vp_mode && m_term.io1_key_ready) {
         return;
     }
-
-//  if (tthis->m_script_handle) {
-//      return;         // ignore any other keyboard if script is in progress
-//  }
 
     if (m_io_offset == 1) {
         // let CPU know we have a key
@@ -352,6 +380,12 @@ IoCardTermMux::receiveKeystroke(int keycode)
         // cpu is waiting for input, so send it now
         m_cpu->IoCardCbIbs(keycode);
         m_term.io1_key_ready = false;
+#if 0
+        /* FIXME: add time-delayed call to System2200().kb_keyReady, like IoCardKeyboard does */
+        /* FIXME: better yet, the call to CPB should trigger the call to
+         * kb_keyReady() instead of assuming 50uS delay is always OK */
+        System2200().kb_keyReady(m_baseaddr + 0x01, 1 /*FIXME*/);
+#endif
     }
 }
 

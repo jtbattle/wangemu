@@ -8,6 +8,7 @@
 
 #include "Ui.h"                 // emulator interface
 #include "IoCardKeyboard.h"     // to pick up core_* keyboard functions
+#include "System2200.h"
 #include "UiSystem.h"           // sharing info between UI_wxgui modules
 #include "UiCrtFrame.h"         // emulated terminal
 #include "UiCrt.h"              // just the display part
@@ -315,16 +316,9 @@ Crt::OnKeyDown(wxKeyEvent &event)
 #endif
 
     if (foundmap) {
-        // FIXME: unify this instead of this hackery
-        // it seems like the best way to get rid of this is to avoid
-        // unusual configurations, and require that old style keyboard and CRT
-        // are a pair, perhaps allowing only one: KB/01 + CRT/05
-        if (m_parent->m_kbHandler == nullptr) {
-            // dumb term
-            core_sysKeystroke(m_parent->getTiedAddr(), key);
-        } else {
-            m_parent->m_kbHandler(key);
-        }
+        System2200().kb_keystroke(m_parent->getTiedAddr(),
+                                  m_parent->getTermNum(),
+                                  key);
         // if we call skip, the menubar & etc logic of the frame will
         // process it.
         // event.Skip();
@@ -365,13 +359,9 @@ Crt::OnChar(wxKeyEvent &event)
     }
 
     if (foundmap) {
-        // FIXME: unify this instead of this hackery
-        if (m_parent->m_kbHandler == nullptr) {
-            // dumb term
-            core_sysKeystroke(m_parent->getTiedAddr(), key);
-        } else {
-            m_parent->m_kbHandler(key);
-        }
+        System2200().kb_keystroke(m_parent->getTiedAddr(),
+                                  m_parent->getTermNum(),
+                                  key);
         // calling skip causes the menubar & etc logic to process it
         // event.Skip();
     } else {

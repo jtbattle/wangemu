@@ -4,7 +4,9 @@
 #include "Cpu2200.h"
 #include "Host.h"
 #include "IoCardDisk.h"
+#include "IoCardKeyboard.h"  // for KEYCODE_HALT
 #include "Scheduler.h"
+#include "ScriptFile.h"
 #include "System2200.h"
 #include "SysCfgState.h"
 #include "Ui.h"
@@ -41,7 +43,11 @@ int     System2200::m_real_seconds;       // real time elapsed
 
 unsigned long System2200::m_simsecs; // number of actual seconds simulated time elapsed
 
-std::vector<System2200::clocked_device_t> System2200::m_clocked_devices;
+std::vector<System2200::clocked_device_t>
+        System2200::m_clocked_devices;  // clocked device callback list
+
+std::vector<System2200::kb_route_t>
+        System2200::m_kb_routes;  // keyboard event routing table
 
 // amount of actual simulated time elapsed, in ms
 int64 System2200::m_simtime;
@@ -727,6 +733,138 @@ System2200::cpu_poll_IB5() const
 
 
 // ========================================================================
+// keyboard input routing
+// ========================================================================
+
+// register a handler for a key event to a given keyboard terminal
+void
+System2200::kb_register(int io_addr, int term_num, kbCallback cb)
+{
+    assert(cb);
+
+    // check that it isn't already registered
+    for(auto &kb : m_kb_routes) {
+        if (io_addr == kb.io_addr && term_num == kb.term_num) {
+            UI_Warn("Attempt to register kb handler at io_addr=0x%02x, term_num=%d twice",
+                    io_addr, term_num);
+            return;
+        }
+    }
+    kb_route_t kb = { io_addr, term_num, cb, nullptr };
+    m_kb_routes.push_back(kb);
+}
+
+void
+System2200::kb_unregister(int io_addr, int term_num)
+{
+    for(auto it = begin(m_kb_routes); it != end(m_kb_routes); ++it) {
+        if (io_addr == it->io_addr && term_num == it->term_num) {
+            m_kb_routes.erase(it);
+            return;
+        }
+    }
+    UI_Warn("Attempt to unregister unknown kb handler at io_addr=0x%02x, term_num=%d",
+            io_addr, term_num);
+}
+
+// send a key event to the specified keyboard/terminal
+void
+System2200::kb_keystroke(int io_addr, int term_num, int keyvalue)
+{
+    for(auto &kb : m_kb_routes) {
+        if (io_addr == kb.io_addr && term_num == kb.term_num) {
+            if (kb.script_handle) {
+                // a script is running; ignore everything but HALT
+                // (on pc, ctrl-C or pause/break key)
+                if (keyvalue & IoCardKeyboard::KEYCODE_HALT) {
+                    kb.script_handle = nullptr;
+                }
+                return;
+            }
+            auto cb = kb.callback_fn;
+            cb(keyvalue);
+            return;
+        }
+    }
+    UI_Warn("Attempt to route key to unknown kb handler at io_addr=0x%02x, term_num=%d",
+            io_addr, term_num);
+}
+
+// request the contents of a file to be fed in as a keyboard stream
+void
+System2200::kb_invokeScript(int io_addr, int term_num,
+                     const std::string &filename)
+{
+    if (kb_scriptModeActive(io_addr, term_num)) {
+        UI_Warn("Attempt to invoke a script while one already active, io_addr=0x%02x, term_num=%d",
+                io_addr, term_num);
+        return;
+    }
+
+    for(auto &kb : m_kb_routes) {
+        if (io_addr == kb.io_addr && term_num == kb.term_num) {
+            int flags = ScriptFile::SCRIPT_META_INC |
+                        ScriptFile::SCRIPT_META_HEX |
+                        ScriptFile::SCRIPT_META_KEY ;
+#if 0
+    // FIXME: make corresponding change in System2200.h
+            kb.script_handle = std::make_unique<ScriptFile>(
+                                   filename, flags, 3 /*max nesting*/
+                               );
+#else
+            kb.script_handle = new ScriptFile(filename, flags, 3);
+#endif
+            if (!kb.script_handle->openedOk()) {
+                kb.script_handle = nullptr;
+            } else {
+                // possibly get the first character
+                kb_keyReady(io_addr, term_num);
+            }
+            return;
+        }
+    }
+    UI_Warn("Attempt to invoke script on unknown kb handler at io_addr=0x%02x, term_num=%d",
+            io_addr, term_num);
+}
+
+// indicates if a script is currently active on a given terminal
+bool
+System2200::kb_scriptModeActive(int io_addr, int term_num)
+{
+    for(auto &kb : m_kb_routes) {
+        if (io_addr == kb.io_addr && term_num == kb.term_num) {
+            return (kb.script_handle != nullptr);
+        }
+    }
+    UI_Warn("Attempt to query script status on unknown kb handler at io_addr=0x%02x, term_num=%d",
+            io_addr, term_num);
+    return false;
+}
+
+// when invoked on a terminal in script mode, causes key callback to be
+// invoked with the next character from the script
+void
+System2200::kb_keyReady(int io_addr, int term_num)
+{
+    for(auto &kb : m_kb_routes) {
+        if (io_addr == kb.io_addr && term_num == kb.term_num) {
+            if (!kb.script_handle) {
+                return;
+            }
+            int ch;
+            if (kb.script_handle->getNextByte(&ch)) {
+                // yes, a key is available
+                auto cb = kb.callback_fn;
+                cb(ch);
+            } else {
+                // EOF
+                kb.script_handle = nullptr;
+            }
+        }
+    }
+}
+
+// ========================================================================
 // external interface to the slot manager
 // ========================================================================
 
@@ -865,7 +1003,7 @@ System2200::findDisk(const std::string &filename,
 
         const auto cfg = m_config->getCardConfig(slt);
         const auto dcfg = dynamic_cast<const DiskCtrlCfgState*>(cfg.get());
-        assert(dcfg != nullptr);
+        assert(dcfg);
         int num_drives = dcfg->getNumDrives();
         for(int d=0; d<num_drives; d++) {
             int stat = IoCardDisk::wvdDriveStatus(slt, d);
@@ -874,13 +1012,13 @@ System2200::findDisk(const std::string &filename,
                 bool ok = IoCardDisk::wvdGetFilename(slt, d, &fname);
                 assert(ok); ok=ok;
                 if (filename == fname) {
-                    if (slot != nullptr) {
+                    if (slot) {
                         *slot = slt;
                     }
-                    if (drive != nullptr) {
+                    if (drive) {
                         *drive = d;
                     }
-                    if (io_addr != nullptr) {
+                    if (io_addr) {
                         ok = System2200().getSlotInfo(slt, 0, io_addr);
                         assert(ok); ok = ok;
                     }
@@ -913,7 +1051,7 @@ System2200::saveDiskMounts(void)
             std::string val;
             const auto cfg = m_config->getCardConfig(slot);
             const auto dcfg = dynamic_cast<const DiskCtrlCfgState*>(cfg.get());
-            assert(dcfg != nullptr);
+            assert(dcfg);
             int num_drives = dcfg->getNumDrives();
             for(int drive=0; drive<num_drives; drive++) {
                 std::ostringstream item;
@@ -943,7 +1081,7 @@ System2200::restoreDiskMounts(void)
         if (isDiskController(slot)) {
             const auto cfg = m_config->getCardConfig(slot);
             const auto dcfg = dynamic_cast<const DiskCtrlCfgState*>(cfg.get());
-            assert(dcfg != nullptr);
+            assert(dcfg);
             int num_drives = dcfg->getNumDrives();
             for(int drive=0; drive<num_drives; drive++) {
                 std::ostringstream subgroup;

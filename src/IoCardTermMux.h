@@ -8,6 +8,8 @@
 #include <deque>
 
 class Cpu2200;
+class Scheduler;
+class Timer;
 
 class IoCardTermMux : public IoCard
 {
@@ -16,7 +18,9 @@ public:
     CANT_ASSIGN_OR_COPY_CLASS(IoCardTermMux);
 
     // ----- common IoCard functions -----
-    IoCardTermMux(std::shared_ptr<Cpu2200> cpu, int baseaddr, int cardslot);
+    IoCardTermMux(std::shared_ptr<Scheduler> scheduler,
+                  std::shared_ptr<Cpu2200> cpu,
+                  int baseaddr, int cardslot);
     ~IoCardTermMux();
 
     std::vector<int> getAddresses() const override;
@@ -93,12 +97,15 @@ private:
 
     // test if any key is ready to accept
     void check_keyready();
+    void tcbScript();
 
     // process pending line request command
     void perform_end_of_line_req();
 
     // state
-    std::shared_ptr<Cpu2200> m_cpu;  // associated CPU
+    std::shared_ptr<Scheduler> m_scheduler;  // shared event scheduler
+    std::shared_ptr<Cpu2200>   m_cpu;        // associated CPU
+    std::shared_ptr<Timer>     m_tmr_script; // keystrokes are sent a few 10s of uS after !CPB
     const int   m_baseaddr;       // the address the card is mapped to
     const int   m_slot;           // which slot the card is plugged into
     bool        m_selected;       // the card is currently selected

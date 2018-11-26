@@ -24,8 +24,8 @@ enum ui_screen_t {
     UI_SCREEN_80x24,
     UI_SCREEN_2236DE
 };
-CrtFrame* UI_initCrt(const int screen_type, const int io_addr,
-                     const int term_num, const kbCallback &kbHandler);
+CrtFrame* UI_initCrt(const int screen_type,
+                     const int io_addr, const int term_num);
 
 // called before the display gets shut down
 void UI_destroyCrt(CrtFrame *wnd);

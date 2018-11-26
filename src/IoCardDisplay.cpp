@@ -114,8 +114,7 @@ IoCardDisplay::IoCardDisplay(std::shared_ptr<Scheduler> scheduler,
     int io_addr;
     bool ok = System2200().getSlotInfo(cardslot, 0, &io_addr);
     assert(ok); ok=ok;
-// FIXME: somehow unify passing of keyboard handler
-    m_wndhnd = UI_initCrt(m_size, io_addr, 0, nullptr);
+    m_wndhnd = UI_initCrt(m_size, io_addr, 0);
 
     reset(true);
 }

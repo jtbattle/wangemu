@@ -23,9 +23,10 @@ class Cpu2200;
 class IoCard;
 class SysCfgState;
 class Scheduler;
+class ScriptFile;
 
-// used for registerClockedDevice()
 typedef std::function<int()> clkCallback;
+typedef std::function<void(int)> kbCallback;
 
 // this is a singleton
 class System2200
@@ -81,6 +82,26 @@ public:
     void cpu_CBS(uint8 byte);   // control byte strobes
     void cpu_CPB(bool busy);    // notify selected card when CPB changes
     int  cpu_poll_IB5() const;  // the CPU can poll IB5 without any other strobe
+
+    // ---- keyboard input routing ----
+
+    // register a handler for a key event to a given keyboard terminal
+    void kb_register(int io_addr, int term_num, kbCallback cb);
+    void kb_unregister(int io_addr, int term_num);
+
+    // send a key event to the specified keyboard/terminal
+    void kb_keystroke(int io_addr, int term_num, int keyvalue);
+
+    // request the contents of a file to be fed in as a keyboard stream
+    void kb_invokeScript(int io_addr, int term_num,
+                         const std::string &filename);
+
+    // indicates if a script is currently active on a given terminal
+    bool kb_scriptModeActive(int io_addr, int term_num);
+
+    // when invoked on a terminal in script mode, causes key callback to be
+    // invoked with the next character from the script
+    void kb_keyReady(int io_addr, int term_num);
 
     // ---- slot manager ----
 
@@ -185,6 +206,23 @@ private:
     static     int64 perf_real_ms[100];         // realtime at start of each slice
     static       int perf_hist_len;             // number of entries written
     static       int perf_hist_ptr;             // next entry to write
+
+    // ---- state for keyboard input routing ----
+
+    typedef struct {
+        int         io_addr;
+        int         term_num;
+        kbCallback  callback_fn;
+#if 0
+    // FIXME: make corresponding change in System2200.cpp
+    // figure out why this doesn't compile - complains about invoking deleted function
+        std::unique_ptr<ScriptFile>
+                    script_handle;  // ID of which script stream we're processing
+#else
+        ScriptFile *script_handle;
+#endif
+    } kb_route_t;
+    static std::vector<kb_route_t> m_kb_routes;
 };
 
 

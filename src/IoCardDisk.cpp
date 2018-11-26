@@ -129,6 +129,9 @@
     #pragma warning( disable: 4127 )  // conditional expression is constant
 #endif
 
+#define ASSERT_VALID_SLOT(s) assert((s) >= 0 && (s) < NUM_IOSLOTS)
+#define ASSERT_VALID_DRIVE(d) assert((d) >= 0 && (d) < 4)
+
 // the minimum number of ticks for a callback event
 const int64 DISK_MIN_TICKS = TIMER_US( 20 );
 
@@ -387,7 +390,7 @@ IoCardDisk::CPB(bool val)
 void
 IoCardDisk::stopMotor(int drive)
 {
-    assert(drive >= 0 && drive < 4);
+    ASSERT_VALID_DRIVE(drive);
 
     if (m_d[drive].state != DRIVE_EMPTY) {
         m_d[drive].state = DRIVE_IDLE;
@@ -800,8 +803,8 @@ IoCardDisk::wvdGetWriteProtect(const std::string &filename, bool *write_protect)
 bool
 IoCardDisk::wvdGetDiskType(const int slot, const int drive, int *disktype)
 {
-    assert(slot  >= 0 && slot  <= NUM_IOSLOTS);
-    assert(drive >= 0 && drive <= 3);
+    ASSERT_VALID_SLOT(slot);
+    ASSERT_VALID_DRIVE(drive);
 
     IoCardDisk *tthis = static_cast<IoCardDisk*>
                                 (System2200().getInstFromSlot(slot));
@@ -821,8 +824,8 @@ IoCardDisk::wvdGetFilename(const int slot,
                            const int drive,
                            std::string *filename)
 {
-    assert(slot  >= 0 && slot  <= NUM_IOSLOTS);
-    assert(drive >= 0 && drive <= 3);
+    ASSERT_VALID_SLOT(slot);
+    ASSERT_VALID_DRIVE(drive);
 
     IoCardDisk *tthis = static_cast<IoCardDisk*>
                                 (System2200().getInstFromSlot(slot));
@@ -840,8 +843,8 @@ IoCardDisk::wvdGetFilename(const int slot,
 int
 IoCardDisk::wvdDriveStatus(int slot, int drive)
 {
-    assert(slot >=0 && slot < NUM_IOSLOTS);
-    assert(drive >=0 && drive < 4);
+    ASSERT_VALID_SLOT(slot);
+    ASSERT_VALID_DRIVE(drive);
 
     IoCardDisk *tthis = static_cast<IoCardDisk*>
                                 (System2200().getInstFromSlot(slot));
@@ -883,8 +886,8 @@ IoCardDisk::wvdInsertDisk(int slot,
                           int drive,
                           const std::string &filename)
 {
-    assert(slot >= 0 && slot <= NUM_IOSLOTS);
-    assert(drive >= 0 || drive < 4);
+    ASSERT_VALID_SLOT(slot);
+    ASSERT_VALID_DRIVE(drive);
 
     IoCardDisk *tthis = static_cast<IoCardDisk*>
                                 (System2200().getInstFromSlot(slot));
@@ -901,8 +904,8 @@ IoCardDisk::wvdInsertDisk(int slot,
 bool
 IoCardDisk::wvdRemoveDisk(int slot, int drive)
 {
-    assert(slot >= 0 && slot <= NUM_IOSLOTS);
-    assert(drive >= 0 || drive < 4);
+    ASSERT_VALID_SLOT(slot);
+    ASSERT_VALID_DRIVE(drive);
 
     IoCardDisk *tthis = static_cast<IoCardDisk*>
                                 (System2200().getInstFromSlot(slot));
@@ -918,8 +921,8 @@ IoCardDisk::wvdRemoveDisk(int slot, int drive)
 void
 IoCardDisk::wvdFlush(int slot, int drive)
 {
-    assert(slot >= 0 && slot <= NUM_IOSLOTS);
-    assert(drive >= 0 && drive < 4);
+    ASSERT_VALID_SLOT(slot);
+    ASSERT_VALID_DRIVE(drive);
 
     IoCardDisk *tthis = static_cast<IoCardDisk*>
                                 (System2200().getInstFromSlot(slot));

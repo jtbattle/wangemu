@@ -24,7 +24,6 @@
 #include "UiDiskCtrlCfgDlg.h"
 #include "UiMyAboutDlg.h"
 #include "UiPrinterFrame.h"
-#include "IoCardKeyboard.h"     // to pick up core_invokeScript()
 
 #include "wx/cmdline.h"         // req'd by wxCmdLineParser
 #include "wx/filename.h"
@@ -120,7 +119,8 @@ TheApp::OnCmdLineParsed(wxCmdLineParser& parser)
         if (parser.Found("s", &filename)) {
             const int io_addr = 0x01;   // default keyboard device
             std::string fn(filename.c_str());
-            bool success = core_invokeScript(io_addr, fn);
+            System2200().kb_invokeScript(io_addr, -1, fn);
+            bool success = true;  // FIXME: old invokeScript returned a boolean -- change new i/f to match?
             if (!success) {
                 const char *s = filename.c_str();
                 UI_Warn("Failed to open script '%s'", s);
@@ -281,8 +281,7 @@ UI_Confirm(const char *fmt, ...)
 
 // called at the start of time to create the actual display
 CrtFrame*
-UI_initCrt(const int screen_type, const int io_addr,
-           const int term_num, const kbCallback &kbHandler)
+UI_initCrt(const int screen_type, const int io_addr, const int term_num)
 {
     int cputype = System2200().config().getCpuType();
     const char *cpustr = (cputype == Cpu2200::CPUTYPE_2200B) ? "2200B" :
@@ -307,7 +306,7 @@ UI_initCrt(const int screen_type, const int io_addr,
     }
 
     // Create the main application window
-    return new CrtFrame( title, screen_type, io_addr, term_num, kbHandler );
+    return new CrtFrame(title, screen_type, io_addr, term_num);
 }
 
 
