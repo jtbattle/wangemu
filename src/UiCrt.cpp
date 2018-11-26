@@ -46,6 +46,7 @@ Crt::Crt(CrtFrame *parent, int screen_type) :
     m_chars_w((m_screen_type == UI_SCREEN_64x16) ? 64 : 80),
     m_chars_h((m_screen_type == UI_SCREEN_64x16) ? 16 : 24),
     m_chars_h2((m_screen_type == UI_SCREEN_2236DE) ? 25 : m_chars_h),
+m_display{0},
     m_fontsize(FONT_MATRIX12),
     m_fontdirty(true),          // must be regenerated
     m_charcell_w(1),            // until SetFontSize overrides.  this prevents
@@ -60,7 +61,18 @@ Crt::Crt(CrtFrame *parent, int screen_type) :
     m_scrpix_w(0),
     m_scrpix_h(0),
     m_RCscreen(wxRect(0,0,0,0)),
+    m_curs_x(0),
+    m_curs_y(0),
     m_frame_count(0),
+    m_dirty(true),
+    m_attr{0},
+    m_raw_cnt(0),
+    m_raw_buf{0},
+    m_box_bottom{false},
+    m_attrs(0),
+    m_attr_on(false),
+    m_attr_temp(false),
+    m_attr_under(false),
     m_beep(nullptr)
 {
     if (0) {
@@ -1138,7 +1150,7 @@ Crt::create_beep()
         s = (s >  clip) ?  clip
           : (s < -clip) ? -clip
                         : s;
-        int sample = int(128.0 + amplitude * s);
+        int sample = int(128.0f + amplitude * s);
         *wp++ = sample;
     }
 

@@ -29,15 +29,18 @@ IoCardTermMux::IoCardTermMux(std::shared_ptr<Scheduler> scheduler,
                              std::shared_ptr<Cpu2200> cpu,
                              int baseaddr, int cardslot) :
     m_scheduler(scheduler),
-    m_tmr_script(nullptr),
     m_cpu(cpu),
+    m_tmr_script(nullptr),
     m_baseaddr(baseaddr),
     m_slot(cardslot),
     m_selected(false),
     m_cpb(true),
     m_card_busy(false),
+    m_io_offset(0),
+    m_ibs_seq(0),
+    m_vp_mode(false),
     m_port(0),
-    m_term(m_terms[0])
+    m_term(m_terms[0]) // FIXME: this is goofy and was probably done for lint reasons
 {
     if (m_slot < 0) {
         // this is just a probe to query properties, so don't make a window

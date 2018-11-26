@@ -746,6 +746,7 @@ Cpu2200vp::Cpu2200vp(System2200 *const sys,
     m_sys(sys),
     m_scheduler(scheduler),
     m_tmr_30ms(nullptr),
+    m_ucode{{0,0,0,0}},
     m_memsize_KB(ramsize),
     m_dbg(false)
 {

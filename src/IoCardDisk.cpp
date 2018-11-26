@@ -457,8 +457,8 @@ IoCardDisk::checkDiskReady()
 // ==========================================================
 
 // timer constants
-#define ONE_SECOND  (TIMER_MS( 1 * 1000))
-#define TEN_SECONDS (TIMER_MS(10 * 1000))
+const int64 ONE_SECOND  = TIMER_MS( 1000.0);
+const int64 TEN_SECONDS = TIMER_MS(10000.0);
 
 // update the card's busy/idle state and notify the CPU
 void
@@ -528,7 +528,7 @@ IoCardDisk::wvdGetNsToTrack(int track)
         // similar to, but a little worse than, the 2280 timing.
         case Wvd::DISKTYPE_HD60:
         case Wvd::DISKTYPE_HD80:
-            time_ns = TIMER_MS((track_diff ? 6.0 : 0) + 0.06f*track_diff);
+            time_ns = TIMER_MS((track_diff ? 6.0 : 0.0) + 0.06*track_diff);
             break;
 
         default:
@@ -1066,8 +1066,8 @@ IoCardDisk::iwvdInsertDisk(int drive,
                             m_d[drive].sectors_per_track      ) ;
     m_d[drive].ns_per_track  = TIMER_MS(track_seek_ms);
     m_d[drive].ns_per_sector =
-                TIMER_MS( (60 * 1000.0) // ms per minute
-                        / (float)(disk_rpm * m_d[drive].sectors_per_track) );
+                TIMER_MS(  60000.0 // ms per minute
+                         / (double)((int64)disk_rpm * m_d[drive].sectors_per_track) );
 
     return true;
 }

@@ -79,6 +79,8 @@ PrinterConfigDlg::PrinterConfigDlg( wxWindow *parent, const wxString& title,
 
     portsizer->Add(portstring, 1, wxGROW | wxALL);
     checksizer->Add(portsizer, 1, wxGROW | wxALL);
+#else
+    data->m_checkbox_portdirect = false;
 #endif
     mainsizer->Add(checksizer, 1, wxGROW | wxALL);
 

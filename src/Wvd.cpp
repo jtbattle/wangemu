@@ -365,7 +365,7 @@ Wvd::rawWriteSector(const int sector, const uint8 *data)
     }
 
     // go to the start of the Nth sector
-    m_file->seekp( 256*sector );
+    m_file->seekp( 256LL*sector );
     if (!m_file->good()) {
         UI_Error("Error seeking to write sector %d of '%s'",
                  sector, m_path.c_str());
@@ -400,7 +400,7 @@ Wvd::rawReadSector(const int sector, const uint8 *data)
     assert(m_file->is_open());
 
     // go to the start of the Nth sector
-    m_file->seekg( 256*sector);
+    m_file->seekg( 256LL*sector);
     if (!m_file->good()) {
         UI_Error("Error seeking to read sector %d of '%s'",
                  sector, m_path.c_str());

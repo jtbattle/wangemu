@@ -129,8 +129,14 @@ CrtStatusBar::CrtStatusBar(CrtFrame *parent, bool shown) :
         wxStatusBar(parent, -1),
         m_parent(parent),
         m_keyword_ctl(nullptr),
+        m_disklabel{nullptr},
+        m_diskicon{nullptr},
+        m_disklabel_xoff{0},
+        m_diskicon_xoff{0},
+        m_diskstate{-1},
         m_icon_set(nullptr),
         m_num_disk_controllers(0),
+        m_num_drives{0},
         m_shown(shown),
         m_popup_action(unknown)
 {

@@ -34,6 +34,7 @@ ScriptFile::ScriptFile(const std::string &filename,
         m_max_depth(max_nesting_depth),
         m_cur_line(0),
         m_subscript(nullptr),
+        m_charbuf{0x00},
         m_cur_char(0)
 {
     // put in canonical format

@@ -1,8 +1,6 @@
 
 #include "DiskCtrlCfgState.h"
 #include "Host.h"
-//#include "IoCard.h"
-//#include "System2200.h"
 #include "Ui.h"                 // for UI_Alert
 
 #include <sstream>
@@ -30,9 +28,10 @@ DiskCtrlCfgState::operator=(const DiskCtrlCfgState &rhs)
 
     // check for self-assignment
     if (this != &rhs) {
-        setNumDrives( rhs.getNumDrives() );
-        setIntelligence( rhs.getIntelligence() );
-        setWarnMismatch( rhs.getWarnMismatch() );
+        m_num_drives    = rhs.m_num_drives;
+        m_intelligence  = rhs.m_intelligence;
+        m_warn_mismatch = rhs.m_warn_mismatch;
+        m_initialized   = true;
     }
 
     return *this;
@@ -44,10 +43,10 @@ DiskCtrlCfgState::DiskCtrlCfgState(const DiskCtrlCfgState &obj)
     : CardCfgState()  // good hygiene, although base class is empty
 {
     assert(obj.m_initialized);
-
-    setNumDrives( obj.getNumDrives() );
-    setIntelligence( obj.getIntelligence() );
-    setWarnMismatch( obj.getWarnMismatch() );
+    m_num_drives    = obj.m_num_drives;
+    m_intelligence  = obj.m_intelligence;
+    m_warn_mismatch = obj.m_warn_mismatch;
+    m_initialized   = true;
 }
 
 

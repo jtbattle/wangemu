@@ -66,7 +66,8 @@ Printer::Printer(PrinterFrame *parent) :
         m_printasgo(true),                  // default
         m_portdirect(false),                // default
         m_portstring("LPT1"),               // default
-        m_linebuf_len(0)
+        m_linebuf_len(0),
+        m_linebuf{0}
 {
     // the means don't perform a screen-to-screen blit to effect
     // the scroll.  just let the app redraw everything.

@@ -746,6 +746,7 @@ Cpu2200t::Cpu2200t(System2200 *const sys,
     m_sys(sys),
     m_scheduler(scheduler),  // unused by 2200t
     m_cpuType(cpu_subtype),
+    m_ucode{0x00},
     m_ucode_size( (m_cpuType == CPUTYPE_2200B) ? UCODE_WORDS_2200B
                                                : UCODE_WORDS_2200T ),
     m_krom_size(  (m_cpuType == CPUTYPE_2200B) ?  KROM_WORDS_2200B

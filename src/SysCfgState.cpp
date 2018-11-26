@@ -76,6 +76,8 @@ SysCfgState::operator=(const SysCfgState &rhs)
 // copy constructor
 SysCfgState::SysCfgState(const SysCfgState &obj)
 {
+    assert(obj.m_initialized);
+
     for(int slot=0; slot<NUM_IOSLOTS; slot++) {
         m_slot[slot].type = obj.m_slot[slot].type;
         m_slot[slot].addr = obj.m_slot[slot].addr;
@@ -87,11 +89,12 @@ SysCfgState::SysCfgState(const SysCfgState &obj)
         }
     }
 
-    setCpuType( obj.getCpuType() );
-    setRamKB( obj.getRamKB() );
-    regulateCpuSpeed( obj.isCpuSpeedRegulated() );
-    setDiskRealtime( obj.getDiskRealtime() );
-    setWarnIo( obj.getWarnIo() );
+    m_cputype         = obj.m_cputype;
+    m_ramsize         = obj.m_ramsize;
+    m_speed_regulated = obj.m_speed_regulated;
+    m_disk_realtime   = obj.m_disk_realtime;
+    m_warn_io         = obj.m_warn_io;
+    m_initialized     = true;
 }
 
 
@@ -117,11 +120,11 @@ SysCfgState::operator==(const SysCfgState &rhs) const
         }
     }
 
-    return (getCpuType()          == rhs.getCpuType())          &&
-           (getRamKB()            == rhs.getRamKB())            &&
-           (isCpuSpeedRegulated() == rhs.isCpuSpeedRegulated()) &&
-           (getDiskRealtime()     == rhs.getDiskRealtime())     &&
-           (getWarnIo()           == rhs.getWarnIo())           ;
+    return (m_cputype         == rhs.m_cputype)         &&
+           (m_ramsize         == rhs.m_ramsize)         &&
+           (m_speed_regulated == rhs.m_speed_regulated) &&
+           (m_disk_realtime   == rhs.m_disk_realtime)   &&
+           (m_warn_io         == rhs.m_warn_io)         ;
 }
 
 bool

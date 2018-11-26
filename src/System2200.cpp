@@ -419,7 +419,7 @@ System2200::emulateTimeslice(int ts_ms)
     int num_devices = m_clocked_devices.size();
 
     // try to stae reatime within this window
-    const int64 adj_window = 10*ts_ms;  // look at the last 10 timeslices
+    const int64 adj_window = 10LL*ts_ms;  // look at the last 10 timeslices
 
     if (m_cpu->status() != Cpu2200::CPU_RUNNING) {
         return;

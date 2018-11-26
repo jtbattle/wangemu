@@ -2,6 +2,11 @@
 Emulator TODO list
 ============================================================================
 
+iocarddisk.cpp(143):      C26495: Variable 'IoCardDisk::m_host_type' is uninitialized. Always initialize a member variable (type.6).
+iocarddisk.h(201):        C26495: Variable 'IoCardDisk::drive_t::state' is uninitialized. Always initialize a member variable (type.6).
+iocardtermmux.h(145):     C26495: Variable 'IoCardTermMux::m_term_t::wndhnd' is uninitialized. Always initialize a member variable (type.6).
+syscfgstate.h(102):       C26495: Variable 'SysCfgState::<unnamed-type-m_slot>::type' is uninitialized. Always initialize a member variable (type.6).
+
 *) keyboard event routing issues
 
     + script mode doesn't quite work in mxd mode.  don't worry too much
