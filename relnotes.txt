@@ -1,8 +1,7 @@
 ============================================================================
-		   Wang 2200 emulator release notes, v2.2-pre
-                               November 18, 2018
+		   Wang 2200 emulator release notes, v3.0-pre
+                               December 04, 2018
 ============================================================================
-
 
 ---- What is It? ----
 
@@ -12,37 +11,42 @@ This emulates a Wang 2200 system with a choice of three CPU architectures:
     * 2200T CPU  (the highest end of the first generation 2200's)
     * 2200VP CPU (2nd generation 2200 CPU architecture)
 
-and a number of periperhals:
+and a number of peripherals:
 
     * 6312 (64x16) and 7011 (80x24) CRT controllers
     * 6367 keyboard controller
-    * MXD terminal mux
+    * MXD terminal mux, connected to a 2236 terminal
     * either dumb or intelligent disk controller, capable of modeling any
       2270 floppy disk, 2260 hard disk, and 2280 large hard disk subsystems
     * configurable printer controller
 
 The emulator is primarily written under Windows 7, but it should also run
 under Windows Vista, Windows 8, and Windows 10 as well.  This emulator
-does not run under Windows XP.
+is untested under Windows XP and probably does not run.
 
 Due to the contribution of Paul Heller, the emulator runs natively on Mac
-OS X (10.4.2 at least) as well.  Starting with version 2.1, the OSX version
-is distributed as a universal binary.
+OS X (10.4.2 at least) as well.
+[ this is surely broken in the prerelease; it will be rectified when the
+  emulator makes it to release status ]
 
 The emulator very well might run on Linux via Wine, but it hasn't been tested.
 
-
 ---- User-visible Changes ----
 
-*) (M)VP systems can be configured to have 128 KB, 256 KB, or 512 KB,
-   in addition to the previously supported 32 KB and 64 KB.  VP OS's
-   can't make use of any memory above 64 KB, though.
+*) Added emulation of a MXD terminal mux and 2236DE terminal.
+   Why MXD and not MXE? One good reason is that OS's before 2.4 would
+   not run with an MXE terminal mux.
 
-*) previously, printing HEX(07) produced a default bell-like sound.
+   When not emulating a smart terminal, the host computer's TAB key maps
+   to the Wang BASIC "NEXT STMT" key, which in Wang BASIC inserts the next
+   highest unused line number (rounded up to the next 10).  For smart
+   terminals, TAB maps to the TAB or FN key (depending if DW or DE terminal).
+
+*) It is now possible to run MVP OS's, but of course the system configuration
+   must have at least one MXD terminal mux.
+
+*) Previously, printing HEX(07) produced a default bell-like sound.
    now the emulator emits a sound very much like a real Wang terminal.
-
-*) added emulation of a 2236DE terminal, although it isn't exposed yet,
-   pending addition of 2236MUXD terminal mux emulation.
 
 ---- Bugs Fixed in this Release ----
 
@@ -71,7 +75,7 @@ The emulator very well might run on Linux via Wine, but it hasn't been tested.
    so that the microcode can detect it and abort the command.
 
 *) The disk controller would assert if it received an unexpected value for
-   the first byte of the command sequence.  Because GIO programs can send
+   the first byte of the command sequence.  Because $GIO programs can send
    anything at all, the assert was removed and the other values get mapped
    to assume a VP or MVP host if the first byte isn't 0x00.
 
@@ -83,7 +87,6 @@ The emulator very well might run on Linux via Wine, but it hasn't been tested.
 *) attempting to configuring a VP with 16 KB or 48 KB of RAM would trigger
    an assertion.  Now those sizes are disallowed.
 
-
 ---- Minor Tweaks and Implementation Changes ----
 
 *) compiled with the latest wxWidgets library release, 3.1.0,
@@ -94,10 +97,11 @@ The emulator very well might run on Linux via Wine, but it hasn't been tested.
 
 *) get rid of unnecessary wx-isms; use modern c++11 features when it helps
 
-
 ---- Known Bugs ----
 
-*) In the 2200T CPU mode, the real 2200T has a dummy microinstruction
-   cycle that performs refresh.  This isn't modelled in the emulator,
-   so the emulator is about 3% faster than realtime.
+*) The real 2200 cpus occasionally insert dummy microinstruction cycles
+   to performs memory refresh.  This isn't modeled in the emulator,
+   so the emulator is about 3% faster than real-time.
 
+*) the prerelease is full of ugly code, incomplete features, and outright
+   bugs that are on the FIXME/TODO list

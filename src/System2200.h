@@ -81,7 +81,7 @@ public:
     void cpu_OBS(uint8 byte);   // output byte strobe
     void cpu_CBS(uint8 byte);   // control byte strobes
     void cpu_CPB(bool busy);    // notify selected card when CPB changes
-    int  cpu_poll_IB5() const;  // the CPU can poll IB5 without any other strobe
+    int  cpu_poll_IB() const;   // the CPU can poll IB without any other strobe
 
     // ---- keyboard input routing ----
 

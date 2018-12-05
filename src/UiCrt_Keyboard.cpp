@@ -319,9 +319,6 @@ Crt::OnKeyDown(wxKeyEvent &event)
         System2200().kb_keystroke(m_parent->getTiedAddr(),
                                   m_parent->getTermNum(),
                                   key);
-        // if we call skip, the menubar & etc logic of the frame will
-        // process it.
-        // event.Skip();
     } else {
         // let the OnChar routine handle it
         event.Skip();
@@ -332,6 +329,8 @@ Crt::OnKeyDown(wxKeyEvent &event)
 void
 Crt::OnChar(wxKeyEvent &event)
 {
+    bool smart_term = (m_screen_type == UI_SCREEN_2236DE);
+
     // don't swallow keystrokes that we can't handle
     if (event.AltDown() || event.ControlDown()) {
         event.Skip();
@@ -343,12 +342,22 @@ Crt::OnChar(wxKeyEvent &event)
 
     bool foundmap = false;
     bool keyword_mode = m_parent->getKeywordMode();
-    for(auto const &kkey : onchar_keymap_table) {
-        if (kkey.wxKey == wxKey) {
-            key = (keyword_mode) ? kkey.wangKey_KW_mode
-                                 : kkey.wangKey_Aa_mode;
+    if (smart_term) {
+        // the 2236 doesn't support keyword mode, just caps lock
+        if (keyword_mode && ('a' <= wxKey && wxKey <= 'z')) {
+            key = wxKey - 'a' + 'A';  // force to uppercase
             foundmap = true;
-            break;
+        }
+    } else {
+        // the first generation keyboards had a keyword associated with
+        // each letter A-Z
+        for(auto const &kkey : onchar_keymap_table) {
+            if (kkey.wxKey == wxKey) {
+                key = (keyword_mode) ? kkey.wangKey_KW_mode
+                                     : kkey.wangKey_Aa_mode;
+                foundmap = true;
+                break;
+            }
         }
     }
 
@@ -362,9 +371,8 @@ Crt::OnChar(wxKeyEvent &event)
         System2200().kb_keystroke(m_parent->getTiedAddr(),
                                   m_parent->getTermNum(),
                                   key);
-        // calling skip causes the menubar & etc logic to process it
-        // event.Skip();
     } else {
+        // calling skip causes the menubar & etc logic to process it
         event.Skip();
     }
 }

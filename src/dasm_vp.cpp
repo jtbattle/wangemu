@@ -736,6 +736,9 @@ dasm_op_vp(char *buf, uint32 ic, uint32 uop)
                         strcpy(&buf[len], "CBS");
                         len += 3;
                         break;
+                    case 0x08: // SRS (status request strobe)
+                        strcpy(&buf[len], "SRS");
+                        len += 3;
                     case 0x00: // no strobe
                         break;
                     default:

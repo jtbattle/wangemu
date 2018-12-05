@@ -151,6 +151,8 @@
     <ClCompile Include="src\DiskCtrlCfgState.cpp" />
     <ClCompile Include="src\errtable.cpp" />
     <ClCompile Include="src\Host.cpp" />
+    <ClCompile Include="src\i8080.c" />
+    <ClCompile Include="src\i8080_dasm.c" />
     <ClCompile Include="src\IoCard.cpp" />
     <ClCompile Include="src\IoCardDisk.cpp" />
     <ClCompile Include="src\IoCardDisk_Controller.cpp" />

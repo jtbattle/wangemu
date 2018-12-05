@@ -248,14 +248,14 @@ IoCardDisplay::CBS(int val)
 }
 
 int
-IoCardDisplay::getIB5() const
+IoCardDisplay::getIB() const
 {
     // the system uses this to determine screen size so effectively either
     //    SELECT PRINT 005(64), CO 005(64), LIST 005(64)
     // or
     //    SELECT PRINT 005(80), CO 005(80), LIST 005(80)
     // is performed on reset.
-    return (m_size == UI_SCREEN_80x24);
+    return (m_size == UI_SCREEN_80x24) ? 0x10 : 0x00;
 }
 
 // change of CPU Busy state

@@ -4,12 +4,15 @@
 #define _INCLUDE_IOCARD_TERM_MUX_H_
 
 #include "IoCard.h"
-
-#include <deque>
+#include <queue>
 
 class Cpu2200;
 class Scheduler;
 class Timer;
+
+//extern "C" {
+//struct i8080;
+//}
 
 class IoCardTermMux : public IoCard
 {
@@ -30,11 +33,11 @@ public:
     void  deselect() override;
     void  OBS(int val) override;
     void  CBS(int val) override;
-    int   getIB5() const override;
+    int   getIB() const override;
     void  CPB(bool busy) override;
 
     // ----- IoCardTermMux specific functions -----
-    void receiveKeystroke(int keycode);
+    void receiveKeystroke(int term_num, int keycode);
     // ...
 
     enum { KEYCODE_SF   = 0x0100,  // special function key flag
@@ -43,110 +46,77 @@ public:
     };
 
 private:
-    // command byte from 2200 to mux controller.
-    // there are other commands for MXE, which is not currently emulated.
-    // these commands arrive on 2200 I/O address 06 using a CBS strobe.
-    // commands which supply further bytes send them via OBS strobes.
-    // (2236MXE_Documentation.8-83.pdf, page 6)
-    enum class mux_cmd_t {
-        CMD_SELECT               = 0xFF,   // FIXME: why this AND CMD_SELECT_TERMINAL?  this one isn't used by code elsewhere, but is in the table on page 6
-        CMD_NULL                 = 0x00,
-        CMD_POWERON              = 0x01,
-        CMD_INIT_CURRENT_TERM    = 0x02,
-        CMD_DELETE_LINE_REQ      = 0x03,
-        CMD_KEYBOARD_READY_CHECK = 0x04,
-        CMD_KEYIN_POLL_REQ       = 0x05,
-        CMD_KEYIN_LINE_REQ       = 0x06,
-        CMD_LINE_REQ             = 0x07,
-        CMD_PREFILL_LINE_REQ     = 0x08,
-        CMD_REFILL_LINE_REQ      = 0x09,
-        CMD_END_OF_LINE_REQ      = 0x0A,
-        CMD_QUERY_LINE_REQ       = 0x0B,
-        CMD_ACCEPT_LINE_REQ_DATA = 0x0C,
-        CMD_REQ_CRT_BUFFER       = 0x0D,
-        CMD_REQ_PRINT_BUFFER     = 0x0E,
-        CMD_ERROR_LINE_REQ       = 0x0F,
-        CMD_TERMINATE_LINE_REQ   = 0x10,
-        CMD_SELECT_TERMINAL      = 0xFF,
-    };
 
     // ---- card properties ----
     const std::string getDescription() const override;
     const std::string getName() const override;
     std::vector<int> getBaseAddresses() const override;
 
-    void OBS_01(int val);
-    void OBS_02(int val);
-    void OBS_03(int val);
-    void OBS_04(int val);
-    void OBS_05(int val);
-    void OBS_06(int val);
-    void OBS_07(int val);
+    // i8080 hal interface
+    static int  i8080_rd_func(int addr, void *user_data);
+    static void i8080_wr_func(int addr, int byte, void *user_data);
+    static int  i8080_in_func(int addr, void *user_data);
+    static void i8080_out_func(int addr, int byte, void *user_data);
 
-    void CBS_01(int val);
-    void CBS_02(int val);
-    void CBS_03(int val);
-    void CBS_04(int val);
-    void CBS_05(int val);
-    void CBS_06(int val);
-    void CBS_07(int val);
+    // perform one i8080 instruction
+    int execOneOp();
 
-    void IBS_01();
-    void IBS_02();
-    void IBS_06();
+    // update the board's !ready/busy status (if selected)
+    void update_rbi();
 
-    // test if any key is ready to accept
-    void check_keyready();
-    void tcbScript();
+    // raise an interrupt if any uart has an rx char ready
+    void update_interrupt();
 
-    // process pending line request command
-    void perform_end_of_line_req();
+    // send an init sequence from emulated terminal shortly after reset
+    void SendInitSeq();
 
-    // state
-    std::shared_ptr<Scheduler> m_scheduler;  // shared event scheduler
-    std::shared_ptr<Cpu2200>   m_cpu;        // associated CPU
-    std::shared_ptr<Timer>     m_tmr_script; // keystrokes are sent a few 10s of uS after !CPB
-    const int   m_baseaddr;       // the address the card is mapped to
-    const int   m_slot;           // which slot the card is plugged into
-    bool        m_selected;       // the card is currently selected
-    bool        m_cpb;            // the cpu is busy
-    bool        m_card_busy;      // the card is busy doing something
-    int         m_io_offset;      // (selected io addr & 7), for convenience
-    int         m_ibs_seq;        // which byte to send next when port 2 is active
+    static const unsigned int MAX_TERMINALS =  4;
+    static const unsigned int KB_BUFF_MAX   = 64;
+    void CheckKbBuffer(int term_num);
+    void UartTxTimerCallback(int term_num);
 
-    // these are the size of various MXD buffers, as noted in
-    // 2236MXE_Documentation.8-83.pdf, p. 5
-    static const int CrtBufferSize      = 250;
-    static const int PrinterBufferSize  = 160;
-    static const int LineReqBufferSize  = 480;
-    static const int KeyboardBufferSize =  36;
+    // board state
+    std::shared_ptr<Scheduler> m_scheduler; // shared event scheduler
+    std::shared_ptr<Cpu2200>   m_cpu;       // associated CPU
+//  struct i8080              *m_i8080;     // control processor
+    void                      *m_i8080;     // control processor
+    uint8                      m_ram[4096]; // i8080 RAM
+    const int                  m_baseaddr;  // the address the card is mapped to
+    const int                  m_slot;      // which slot the card is plugged into
+    bool                       m_selected;  // the card is currently selected
+    bool                       m_cpb;       // the cpu is busy
+    int                        m_io_offset; // (selected io addr & 7), for convenience
+    bool                       m_prime_seen; // !PRMS (reset) strobe received
+    bool                       m_obs_seen;  // OBS strobe received
+    bool                       m_cbs_seen;  // CBS strobe received
+    int                        m_obscbs_offset;
+    int                        m_obscbs_data;
+    int                        m_rbi;       // 0=ready, 1=busy
+    int                        m_uart_sel;  // one hot encoding of selected uart
+    bool                       m_interrupt_pending;  // one of the uarts has an rx byte
+    std::shared_ptr<Timer>     m_init_tmr;  // send init sequence from terminal
 
-    static const int MAX_TERMINALS = 4;
-
-    bool        m_vp_mode;        // true in vp mode, false in mvp mode
-
+    // per terminal state
     struct m_term_t {
         // display related:
-        CrtFrame         *wndhnd;      // opaque handle to UI window
-        // related to offset 1:
-        bool              io1_key_ready;   // io1_key_code is valid
-        int               io1_key_code;    // keycode of most recently received keystroke
-        // related to offset 6:
-        unsigned int      io6_field_size;  // CBS(07) XXXX argument
-        bool              io6_underline;   // CBS(07) YY argument
-        bool              io6_edit_mode;   // CBS(07) YY argument
-        int               io6_curcolumn;   // CBS(07) ZZ argument
-        // controller related:
-        std::deque<uint8>  crt_buf;
-        std::deque<uint8>  printer_buf;
-        std::deque<uint8>  line_req_buf;
-        std::deque<uint8>  keyboard_buf;  // FIXME: how to queue SF keycodes? need uint16 I think
-        std::vector<uint8> command_buf;
+        CrtFrame              *wndhnd;      // opaque handle to UI window
+	// the transport baud rate is emulated here, as is the terminal keyboard buffer
+	std::queue<uint8>      remote_kb_buff;
+	std::shared_ptr<Timer> remote_baud_tmr;
+        // uart receive state
+        bool                   rx_ready;    // received a byte
+        int                    rx_byte;     // value of received byte
+        // uart transmit state
+        bool                   tx_ready;    // room to accept a byte (1 deep FIFO)
+        int                    tx_byte;     // value of tx byte
+        std::shared_ptr<Timer> tx_tmr;      // model uart xfer rate
     } m_terms[MAX_TERMINALS];
-    m_term_t              &m_term;         // ref to current term
-    int                    m_port;         // currently selected terminal (1-4)
 };
 
 #endif // _INCLUDE_IOCARD_TERM_MUX_H_
 
 // vim: ts=8:et:sw=4:smarttab
+
+
+
+

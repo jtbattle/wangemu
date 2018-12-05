@@ -937,17 +937,13 @@ Cpu2200vp::execOneOp()
     uint16 tmp16;
 
 #if 0 && defined(_DEBUG)
-    static int m_num_ops = 0;
+    static int g_num_ops = 0;
     if (g_dbg_trace) {
+        g_num_ops++;
         char buff[200];
-        if (++m_num_ops >= 0*127000) {
-            dump_state( 1 );
-            int illegal = dasm_one_vp(buff, m_cpu.ic, m_ucode[m_cpu.ic].ucode);
-            dbglog("cycle %5d: %s", m_num_ops, buff);
-            if (illegal) {
-                break;
-            }
-        }
+        dump_state( 1 );
+        int illegal = dasm_one_vp(buff, m_cpu.ic, m_ucode[m_cpu.ic].ucode);
+        dbglog("cycle %5d: %s", g_num_ops, buff);
     }
 #endif
 
@@ -1222,31 +1218,21 @@ Cpu2200vp::execOneOp()
         break;
 
     case OP_CIO:
+// FIXME: this is overly messy.  why break out the s_field and t_field?
+//
         s_field = (uop >> 11) & 0x1;
         t_field = (uop >>  4) & 0x7F;
+
         if (s_field) {
             m_cpu.ab = m_cpu.k;     // I/O address bus register takes K reg value
         }
-        if ((uop & 0xC) == 0xC) {
-            // this is not documented in the arch manual, but it appears
-            // in the MVP CPU schematic.  if bits 3:2 are both one, the
-            // 30 ms one shot gets retriggered.
-            m_cpu.sh |= SH_MASK_30MS;     // one shot output rises
-            if (m_tmr_30ms != nullptr) {
-                // kill pending timer before starting a new one
-                m_tmr_30ms->Kill();
-                m_tmr_30ms = nullptr;
-            }
-            m_tmr_30ms = m_scheduler->TimerCreate( TIMER_MS(27),
-                                                   [&](){ tcb30msDone(); } );
-// FIXME: if I set the timer to TIMER_MS(30), MVP Basic-2 2.6.2 reports
-//        the timeslice as being 36 ms.  what gives?
-//        TIMER_MS(29) reports "35 MS TICK".
-//        TIMER_MS(28) downto TIMER_MS(22) don't generate any warning.
-//        TIMER_MS(17) reports "18 MS TICK" warning.
-//        TIMER_MS(15) reports "15/17/18 MS TICK" warning.
-        }
+
         switch (t_field) {
+            case 0x80: // IOBS
+                // undocumented, but the MVP source code mentions it
+                // TODO: if anything ever triggers this
+                UI_Info("doing CIO IOBS, AB=%02x, IC=%04X", m_cpu.ab, m_cpu.ic);
+                break;
             case 0x40: // ABS
                 m_cpu.ab_sel = m_cpu.ab;
                 if (m_dbg) {
@@ -1254,18 +1240,6 @@ Cpu2200vp::execOneOp()
                 }
                 //UI_Info("CPU:ABS when AB=%02X", m_cpu.ab);
                 m_sys->cpu_ABS(m_cpu.ab_sel);  // address bus strobe
-                break;
-            case 0x10: // CBS
-                if (m_dbg) {
-                    if (m_cpu.k < 32 || m_cpu.k > 128) {
-                        dbglog("-CBS when AB=%02X, K=%02X\n", m_cpu.ab_sel, m_cpu.k);
-                    } else {
-                        dbglog("-CBS when AB=%02X, K=%02X ('%c')\n", m_cpu.ab_sel, m_cpu.k, m_cpu.k);
-                    }
-                }
-                //UI_Info("CPU:CBS when AB=%02X, AB_SEL=%02X, K=%02X", m_cpu.ab, m_cpu.ab_sel, m_cpu.k);
-                setDevRdy(false);  // (M)VP cpus do this, but not 2200T
-                m_sys->cpu_CBS(m_cpu.k);    // control bus strobe
                 break;
             case 0x20: // OBS
                 if (m_dbg) {
@@ -1279,36 +1253,65 @@ Cpu2200vp::execOneOp()
                 setDevRdy(false);  // (M)VP cpus do this, but not 2200T
                 m_sys->cpu_OBS(m_cpu.k);  // output data bus strobe
                 break;
-            case 0x08: // empirical behavior
-                // the VP BASIC issues this operation in three places.
-                //     978080 : CIO       ??? (ILLEGAL)
-                // this corresponds to a mask of 0x08.  it would appear
-                // that this causes the IN bus to be sampled into K, with
-                // no other side effect.  it is use to sample the IN bus
-                // with the display board selected in order to determine
-                // if it is a 64x16 or 80x24 display (bit 5 indicates it).
-                // FIXME: I'm not sure if other mask values produce similar
-                //        results, but this is what the BASIC code uses.
-                {
-                    // This is just a hack to fix the specific known case
-                    int ib5 = m_sys->cpu_poll_IB5();
-                    m_cpu.k = (uint8)(ib5 << 4);
+            case 0x10: // CBS
+                if (m_dbg) {
+                    if (m_cpu.k < 32 || m_cpu.k > 128) {
+                        dbglog("-CBS when AB=%02X, K=%02X\n", m_cpu.ab_sel, m_cpu.k);
+                    } else {
+                        dbglog("-CBS when AB=%02X, K=%02X ('%c')\n", m_cpu.ab_sel, m_cpu.k, m_cpu.k);
+                    }
                 }
+                //UI_Info("CPU:CBS when AB=%02X, AB_SEL=%02X, K=%02X", m_cpu.ab, m_cpu.ab_sel, m_cpu.k);
+                setDevRdy(false);  // (M)VP cpus do this, but not 2200T
+                m_sys->cpu_CBS(m_cpu.k);    // control bus strobe
+                break;
+            case 0x08: // status request
+                // although the 2600 arch manual doesn't describe this op,
+                // the 6793 schematic shows it.  It causes the input bus
+                // to be sampled into the K register.
+                // It is used by the $GIO 760r command (STATUS REQUEST).
+                // VP BASIC issues this operation in three places.
+                //     978080 : CIO       ??? (ILLEGAL)
+                // this corresponds to a mask of 0x08.
+//UI_Info("doing CIO STATUS_REQUEST, AB=%02x, IC=%04X", m_cpu.ab, m_cpu.ic);
+                m_cpu.k = static_cast<uint8>(m_sys->cpu_poll_IB());
+                // Paul Szudzik's SDS_Wang2200.pdf arch manual says
+                //    Fire internal IBS one shot (SRS).  Sets CPB.  Basically
+                //    used for Status Requests from MUXD.
+                m_cpu.sh |= SH_MASK_CPB;    // CPU busy; inhibit IBS
+                m_sys->cpu_CPB( true );     // we are busy now
                 break;
             case 0x00: // no strobe
                 break;
             default:
-                // looking at the 6793 schematic (MVP registers & IO) the
-                // 30 ms timeslice one shot is triggered by a CIO operation
-                // with (R2&R3), i.e. (((ucode >> 2) & 3) == 0x3), bits that
-                // are normally don't care.
-            #if 0
-                UI_Error("Bad CIO strobe: tt=0x%02X, ic=0x%04X", t_field, m_cpu.ic);
-            #else
-                // ignore it
-            #endif
+                // the one-shot timer falls into this bucket, but it was
+                // handled earlier.
+                if (((uop & 0xC) != 0xC) || (t_field != 0x00)) {
+                    UI_Info("unknown CIO %02x, AB=%02x, IC=%04X",
+                             t_field, m_cpu.ab, m_cpu.ic);
+                }
                 break;
         } // t_field
+
+        if ((uop & 0xC) == 0xC) {
+            // this is not documented in the arch manual, but it appears
+            // in the MVP CPU schematic.  if ucode bits 3:2 are both one,
+            // the 30 ms one shot gets retriggered.
+            m_cpu.sh |= SH_MASK_30MS;     // one shot output rises
+            if (m_tmr_30ms != nullptr) {
+                // kill pending timer before starting a new one
+                m_tmr_30ms->Kill();
+                m_tmr_30ms = nullptr;
+            }
+            // BPMVP14A says
+            //    CLOCK SPECIFICATIONS:
+            //         20 MS. MIN.
+            //         27 MS. AVE.
+            //         35 MS. MAX.
+            m_tmr_30ms = m_scheduler->TimerCreate( TIMER_MS(27),
+                                                   [&](){ tcb30msDone(); } );
+        }
+
         m_cpu.ic++;
         break;
 

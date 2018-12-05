@@ -11,6 +11,7 @@
 #include "UiCrt.h"              // this module's defines
 #include "UiCrtErrorDlg.h"      // error code decoder
 #include "UiCrtFrame.h"         // this module's owner
+//#include "System2200.h"       // needed if dbglog() is in use
 
 #include <wx/sound.h>           // "beep!"
 
@@ -38,15 +39,11 @@ wxLog *g_logger = nullptr;
 Crt::Crt(CrtFrame *parent, int screen_type) :
     wxWindow(parent, -1, wxDefaultPosition, wxDefaultSize),
     m_parent(parent),
-#if 0
-    m_screen_type(UI_SCREEN_2236DE),  // FIXME: just a hack to test 2236 emulation behavior
-#else
     m_screen_type(screen_type),
-#endif
     m_chars_w((m_screen_type == UI_SCREEN_64x16) ? 64 : 80),
     m_chars_h((m_screen_type == UI_SCREEN_64x16) ? 16 : 24),
     m_chars_h2((m_screen_type == UI_SCREEN_2236DE) ? 25 : m_chars_h),
-m_display{0},
+    m_display{0x00},
     m_fontsize(FONT_MATRIX12),
     m_fontdirty(true),          // must be regenerated
     m_charcell_w(1),            // until SetFontSize overrides.  this prevents
@@ -598,12 +595,13 @@ Crt::scr_scroll()
 // a command sequence or more complex behavior.  At the top level there
 // is the unpacking of compressed character sequence (run length encoded).
 
-// first level: FD-escape sequences (mostly char run decompression)
+// first level: FB-escape sequences (mostly char run decompression)
 // some of the escape sequence information was gleaned from this document:
 //     2536DWTerminalAndTerminalControllerProtocol.pdf
 void
 Crt::processChar(uint8 byte)
 {
+//dbglog("Crt::processChar(0x%02x), m_raw_cnt=%d\n", byte, m_raw_cnt);
     if (m_screen_type != UI_SCREEN_2236DE) {
         processChar3(byte);
         return;
@@ -628,7 +626,7 @@ Crt::processChar(uint8 byte)
     // it is a character run sequence: FB nn cc
     // where nn is the repetition count, and cc is the character
     if (m_raw_cnt == 3) {
-//UI_Info("Decompress: cnt=%d, chr=0x%02x", m_raw_buf[1], m_raw_buf[2]);
+//dbglog("Decompress run: cnt=%d, chr=0x%02x\n", m_raw_buf[1], m_raw_buf[2]);
         for(int i=0; i<m_raw_buf[1]; i++) {
             processChar2(m_raw_buf[2]);
         }
@@ -639,10 +637,15 @@ Crt::processChar(uint8 byte)
     // this must be the case we are considering at this point
     assert(m_raw_cnt == 2);
 
+    // FB nn, where 0x02 < count < 0x60, is a three byte sequence
+    if ((0x02 < m_raw_buf[1]) && (m_raw_buf[1] < 0x60)) {
+        return;
+    }
+
     // FB nn, where nn >= 0x60 represents (nn-0x60) spaces in a row
-    if ((m_raw_cnt == 2) && (m_raw_buf[0] == 0xFB) &&
-        (0x60 <= m_raw_buf[1]) && (m_raw_buf[1] <= 0xBF)) {
-        for(int i=0; i<m_raw_buf[1]; i++) {
+    if ((0x60 <= m_raw_buf[1]) && (m_raw_buf[1] <= 0xBF)) {
+//dbglog("Decompress spaces: cnt=%d\n", m_raw_buf[1]-0x60);
+        for(int i=0; i<m_raw_buf[1]-0x60; i++) {
             processChar2(0x20);
         }
         m_raw_cnt = 0;
@@ -654,6 +657,7 @@ Crt::processChar(uint8 byte)
         int delay_ms = 1000 * ((int)m_raw_buf[1] - 0xC0) / 6;
         // FIXME: doing this requires creating a flow control mechanism
         // to block further input, and creating a timer to expire N/6 seconds
+//dbglog("Delay sequence: cnt=%d\n", m_raw_buf[1]);
         delay_ms = delay_ms;  // defeat linter
         m_raw_cnt = 0;
         return;
@@ -661,14 +665,14 @@ Crt::processChar(uint8 byte)
 
     // check for literal 0xFB byte: FB D0
     if (m_raw_buf[1] == 0xD0) {
+//dbglog("Literal 0xFB byte\n");
         processChar2(0xFB);
         m_raw_cnt = 0;
         return;
     }
 
-    // disable cursor blink
-    // TODO: if the cursor is off, does blink off re-enable the cursor?
-    //       that is, do I need the qualifying conditional below?
+    // disable cursor blink (FB F8)
+    // turning off blink does not re-enable the cursor
     if (m_raw_buf[1] == 0xF8) {
         if (m_curs_attr == cursor_attr_t::CURSOR_BLINK) {
             m_curs_attr = cursor_attr_t::CURSOR_ON;
@@ -677,9 +681,12 @@ Crt::processChar(uint8 byte)
         return;
     }
 
-    // enable cursor blink
+    // enable cursor blink (FB FC)
+    // if the cursor was off to begin with, it remains off
     if (m_raw_buf[1] == 0xFC) {
-        m_curs_attr = cursor_attr_t::CURSOR_BLINK;
+        if (m_curs_attr == cursor_attr_t::CURSOR_ON) {
+            m_curs_attr = cursor_attr_t::CURSOR_BLINK;
+        }
         m_raw_cnt = 0;
         return;
     }
@@ -697,6 +704,7 @@ Crt::processChar(uint8 byte)
 
     // TODO: what should happen with illegal sequences?
     // for now, I'm passing them through
+//dbglog("Unexpected sequence: 0x%02x 0x%02x\n", m_raw_buf[0], m_raw_buf[1]);
     processChar2(m_raw_buf[0]);
     processChar2(m_raw_buf[1]);
     m_raw_cnt = 0;
@@ -835,6 +843,7 @@ Crt::processChar2(uint8 byte)
                          && m_input_buf[3] == 0x0F) {
         m_input_cnt = 0;
         // FIXME: implement this, using id_string
+        UI_Info("terminal self-ID query not yet emulated");
         return;
     }
     // 02 08 xx yy is otherwise undefined

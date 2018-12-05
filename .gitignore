@@ -205,3 +205,4 @@ wvdutil/games.wvd
 wvdutil/lint.bat
 NOTES.txt
 wvdutil/unscramble.py
+termtest/catch_kb.py

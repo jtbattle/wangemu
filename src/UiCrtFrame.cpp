@@ -237,7 +237,8 @@ CrtFrame::CrtFrame( const wxString& title,
     makeMenubar(isPrimaryCrt()); // create menubar
 
     // create a status bar with two panes
-    m_statBar = new CrtStatusBar(this, isPrimaryCrt());
+    bool smart_term = (screen_type == UI_SCREEN_2236DE);
+    m_statBar = new CrtStatusBar(this, smart_term, isPrimaryCrt());
     SetStatusBar(m_statBar);
     SetStatusBarPane(1);        // use second pane for menu help strings
 

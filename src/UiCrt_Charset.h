@@ -5,7 +5,7 @@
 #include "wx/wx.h"
 
 // these arrays are defined in UiCrt_Charset.cpp
-// and contain the bitmap images of the 2226 character generator ROM.
+// and contain the bitmap images of the 2236 character generator ROM.
 
 extern uint8 chargen[];          // font character generator
 extern uint8 chargen_2236_alt[]; // 2236 alternate character set

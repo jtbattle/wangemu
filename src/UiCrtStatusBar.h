@@ -53,7 +53,7 @@ class CrtStatusBar : public wxStatusBar
 {
 public:
     CANT_ASSIGN_OR_COPY_CLASS(CrtStatusBar);
-    CrtStatusBar(CrtFrame *parent, bool shown);
+    CrtStatusBar(CrtFrame *parent, bool smart_term, bool shown);
     ~CrtStatusBar();
 
     void SetStatusMessage(const std::string &text);

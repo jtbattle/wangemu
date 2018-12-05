@@ -29,7 +29,7 @@ public:
     void  deselect() override;
     void  OBS(int val) override;
     void  CBS(int val) override;
-    int   getIB5() const override;
+    int   getIB() const override;
     void  CPB(bool busy) override;
 
 private:

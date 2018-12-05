@@ -30,7 +30,7 @@ IoCardKeyboard::IoCardKeyboard(std::shared_ptr<Scheduler> scheduler,
         reset();
         System2200().kb_register(
             m_baseaddr, 0,
-            bind(&IoCardKeyboard::receiveKeystroke, this, std::placeholders::_1)
+            std::bind(&IoCardKeyboard::receiveKeystroke, this, std::placeholders::_1)
         );
     }
 }

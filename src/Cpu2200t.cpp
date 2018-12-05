@@ -583,7 +583,9 @@ Cpu2200t::mem_write(uint16 addr, uint4 wr_value, int write2)
 uint4
 Cpu2200t::read_st3() const
 {
-    int ib5 = m_sys->cpu_poll_IB5();
+    int k = m_sys->cpu_poll_IB();
+    int ib5 = (k >> 5) & 1;  // isolate bit 5
+
     return (uint4)(  (m_cpu.st3 & 0x8)  // 1=horizontal RAM addressing
                    | (m_cpu.st3 & 0x4)  // 1=halt/step is pressed
                    | (ib5 << 1)         // wr: nop, rd: (I/O data bus & 0x10)

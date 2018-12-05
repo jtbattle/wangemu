@@ -230,6 +230,7 @@ System2200::setConfig(const SysCfgState &newcfg)
 
         // remember which virtual disks are installed
         saveDiskMounts();
+
         // throw away all existing devices
         breakdown_cards();
     }
@@ -468,11 +469,10 @@ System2200::emulateTimeslice(int ts_ms)
 
         // simulate one timeslice's worth of instructions
         int slice_ns = ts_ms*1000000;
-        if (true && num_devices == 1) {
-            int op_ns = 0;
+        if (num_devices == 1) {
             auto cb = m_clocked_devices[0].callback_fn;
             while (slice_ns > 0) {
-                op_ns = cb();
+                int op_ns = cb();
                 if (op_ns > 10000) {
                     slice_ns = 0; // finish the timeslice
                 } else  {
@@ -484,12 +484,34 @@ System2200::emulateTimeslice(int ts_ms)
         } else {
             // there are multiple devices
 
+            // moving m_clocked_devices entries around it expensive,
+            // so this array is used to maintain the order of the devices
+            // where [0] is the one most behind in time.
+            std::vector<int> order;
+            for(int n=0; n<num_devices; n++) {
+                order.push_back(n);
+            }
+            // bubble sort in time order
+            for(int n=0; n<num_devices; n++) {
+                for(int k=0; k<num_devices-1; k++) {
+                    if (m_clocked_devices[order[k]].ns >
+                        m_clocked_devices[order[k+1]].ns) {
+                        std::swap(order[k], order[k+1]);
+                    }
+                }
+            }
+            // double check they are sorted in time order
+            for(int k=0; k<num_devices-1; k++) {
+                assert (m_clocked_devices[order[k]].ns <=
+                        m_clocked_devices[order[k+1]].ns);
+            }
+
             // at the start of a timeslice, shift time for all cards towards
             // zero to prevent overflowing the 32b nanosecond counters
-            uint32 rebase = m_clocked_devices[0].ns;
-            for(auto &dev : m_clocked_devices) {
-                assert(dev.ns >= rebase);
-                dev.ns -= rebase;
+            uint32 rebase = m_clocked_devices[order[0]].ns;
+            for(auto idx : order) {
+                assert(m_clocked_devices[idx].ns >= rebase);
+                m_clocked_devices[idx].ns -= rebase;
             }
 
             // we try to keep the devices in time lockstep as much as we can.
@@ -497,34 +519,38 @@ System2200::emulateTimeslice(int ts_ms)
             // kept in sorted order of increasing time. we call entry 0, adjust
             // its time, then move it to the right place in the list.
             while (slice_ns > 0) {
-                auto cb = m_clocked_devices[0].callback_fn;
-                int op_ns = cb();
-                if (op_ns > 10000) {
+                auto cb = m_clocked_devices[order[0]].callback_fn;
+                int op_ns_signed = cb();
+                uint32 op_ns = static_cast<uint32>(op_ns_signed);
+                if (op_ns > 50000) {
                     slice_ns = 0; // finish the timeslice
                 } else {
-// FIXME: if there are multiple devices,
-// the slice_ns and Timer tick should advance only incrementally.
-// eg, if there are two cpus, one might go forward 600ns and the other
-// goes forward by 400ns, but the logic below probably advances time 1000ns.
-// it should advance it by only min(op_ns, (device[1].ns - device[0].ns)),
-// because after device[0] runs, device[1] will run starting at its base time.
-                    slice_ns -= op_ns;
-                    m_scheduler->TimerTick(op_ns);
-                    m_clocked_devices[0].ns += slice_ns;
-                    auto entry0 = m_clocked_devices[0];
-                    uint32 new_ns = entry0.ns;
-                    int i=0;
-                    for( ; i < num_devices-1; ++i) {
-                        if (m_clocked_devices[i+1].ns < new_ns) {
-                            m_clocked_devices[i] = m_clocked_devices[i+1];
+                    // we can't advance world time by op_ns if the next most
+                    // oldest device would conceptually start before time
+                    // gets to where device[0] ended up after op_ns.
+                    // TODO: investigate a more efficient way to do all
+                    // of this vs min() and then later sorting the clocked devices.
+                    // at the very least, special case having two devices,
+                    // rather than all this generalized sorting for N devices.
+                    uint32 clamp_ns = m_clocked_devices[order[1]].ns - m_clocked_devices[order[0]].ns;
+                    uint32 delta_ns = std::min(op_ns, clamp_ns);
+                    slice_ns -= delta_ns;
+                    m_scheduler->TimerTick(delta_ns);
+                    uint32 new_ns = (m_clocked_devices[order[0]].ns += op_ns);
+                    auto entry0 = order[0];
+                    int i;
+                    for(i=0; i<num_devices-1; ++i) {
+                        if (m_clocked_devices[order[i+1]].ns < new_ns) {
+                            order[i] = order[i+1];
                         } else {
                             break;
                         }
                     }
-                    m_clocked_devices[i] = entry0;
+                    order[i] = entry0;
                 }
             }
         }
+
         m_simtime    += ts_ms;
         m_adjsimtime += ts_ms;
 
@@ -658,8 +684,12 @@ System2200::cpu_ABS(uint8 byte)
     }
 
     // warn the user that a non-existant device has been selected
-    if (!m_IoMap[m_IoCurSelected].ignore && m_config->getWarnIo() &&
-        (m_IoCurSelected != 0x00)) {
+    if (!m_IoMap[m_IoCurSelected].ignore && m_config->getWarnIo()
+        && (m_IoCurSelected != 0x00)  // intentionally select nothing
+        && (m_IoCurSelected != 0x46)  // testing for mxd at 0x4n
+        && (m_IoCurSelected != 0x86)  // testing for mxd at 0x8n
+        && (m_IoCurSelected != 0xC6)  // testing for mxd at 0xCn
+       ) {
         bool response = UI_Confirm(
                     "Warning: selected non-existent I/O device %02X\n"
                     "Should I warn you of further accesses to this device?",
@@ -717,16 +747,12 @@ System2200::cpu_CPB(bool busy)
 
 
 // the CPU can poll IB5 without any other strobe.  return that bit.
-// FIXME: on the VP cpu, the entire I bus is strobed into K, not
-//        just bit 5.  I don't know of any IO cards that use more
-//        than bit 5, but generalize this anyway for the day that
-//        I run into such a card.
 int
-System2200::cpu_poll_IB5() const
+System2200::cpu_poll_IB() const
 {
     if  ((m_IoCurSelected > 0) && (m_IoMap[m_IoCurSelected].slot >= 0)) {
         // signal that we want to get something
-        return (int)(m_cardInSlot[m_IoMap[m_IoCurSelected].slot]->getIB5());
+        return (int)(m_cardInSlot[m_IoMap[m_IoCurSelected].slot]->getIB());
     }
     return 0;
 }
@@ -931,8 +957,8 @@ System2200::getPrinterIoAddr(int n)
 
 
 // return the instance handle of the device at the specified IO address
-// JTB FIXME: returning a raw pointer -- does all this need to be
-//            converted to shared_ptr?
+// FIXME: returning a raw pointer -- does all this need to be
+//        converted to shared_ptr?
 IoCard*
 System2200::getInstFromIoAddr(int io_addr) const
 {
@@ -942,8 +968,8 @@ System2200::getInstFromIoAddr(int io_addr) const
 
 
 // given a slot, return the "this" element
-// JTB FIXME: returning a raw pointer -- does all this need to be
-//            converted to shared_ptr?
+// FIXME: returning a raw pointer -- does all this need to be
+//        converted to shared_ptr?
 IoCard*
 System2200::getInstFromSlot(int slot)
 {

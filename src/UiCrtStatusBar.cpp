@@ -125,7 +125,7 @@ END_EVENT_TABLE()
 #define DISK_ICON_HEIGHT 13     // in pixels
 #define DISK_ICON_GAP    1      // space between icons in pair, in pixels
 
-CrtStatusBar::CrtStatusBar(CrtFrame *parent, bool shown) :
+CrtStatusBar::CrtStatusBar(CrtFrame *parent, bool smart_term, bool shown) :
         wxStatusBar(parent, -1),
         m_parent(parent),
         m_keyword_ctl(nullptr),
@@ -289,8 +289,9 @@ CrtStatusBar::CrtStatusBar(CrtFrame *parent, bool shown) :
     // keywords or cap characters.  the OnSize handler will size it and
     // move it into position later.  this member should be set last as
     // some methods test it to know if initialization is done yet.
+    std::string label = (smart_term) ? "A/A" : "Keyword";
     m_keyword_ctl = std::make_unique<wxCheckBox>(
-                            this, ID_Keyword_Mode, "Keyword");
+                            this, ID_Keyword_Mode, label);
 
     Show(shown);
 

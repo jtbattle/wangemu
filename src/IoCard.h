@@ -49,7 +49,8 @@ public:
 
     // ------------------------ operational ------------------------
 
-    // this is called when the machine is reset
+    // this is called when the machine is reset.
+    // hard_reset is true on cold boot, and false on warm reset.
     virtual void reset(bool hard_reset=true) = 0;
 
     // this is called when a card is addressed via an -ABS strobe.
@@ -89,7 +90,7 @@ public:
     // This bit is polled in a number of other places in the ucode,
     // but their use is so far undetermined.  I do know that if one
     // does a LOAD or SAVE on a tape device, the bit is somehow used.
-    virtual int getIB5() const { return 0; };
+    virtual int getIB() const { return 0; };
 
     // a request to return data.
     // when the CPU ST1.2 (CPB, "CPU Busy") is set low, it signals

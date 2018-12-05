@@ -1,13 +1,21 @@
 // The MXD Terminal Mux card contains an 8080, some EPROM and some RAM,
-// along with four RS-232 ports.  Rather than emulating this card at
-// the chip level, it is a functional emulation, based on the description
-// of the card in 2236MXE_Documentation.8-83.pdf
+// along with four RS-232 ports.  The function is emulated at the chip level,
+// meaning and embedded i8080 microprocessor emulates the actual ROM image
+// from a real MXD card.
+//
+// These documents were especially useful in reverse engineering the card:
+// https://wang2200.org/docs/system/2200MVP_MaintenanceManual.729-0584-A.1-84.pdf
+//     section F, page 336..., has schematics for the MXD board (7290-1, 7291-1)
+// https://wang2200.org/docs/internal/2236MXE_Documentation.8-83.pdf
+// Hand disassembly of MXD ROM image (not yet online ... FIXME)
 
 #include "Ui.h"
 #include "IoCardTermMux.h"
+#include "IoCardKeyboard.h"   // for key encodings
 #include "Cpu2200.h"
 #include "Scheduler.h"
 #include "System2200.h"
+#include "i8080.h"
 
 #define NOISY  0        // turn on some debugging messages
 
@@ -17,12 +25,54 @@
 
 const bool dbg = false; // temporary debugging hack
 
-char asciify(int v)
-{
-    if (v <  32) return '.';
-    if (v > 127) return '.';
-    return (char)v;
-}
+// the i8080 runs at 1.78 MHz
+const int ns_per_tick = 561;
+
+// character transmission time, in nanoseconds
+const int64 serial_char_delay =
+            TIMER_US(  11.0              /* bits per character */
+                     * 1.0E6 / 19200.0   /* microseconds per bit */
+                    );
+
+// mxd eprom image
+#include "IoCardTermMux_eprom.h"
+
+// input port defines
+static const int IN_UART_TXRDY  = 0x00; // parallel poll of which UARTs have room in their tx fifo
+static const int IN_2200_STATUS = 0x01; // various status bits
+        //   0x01 = OBS strobe seen
+        //   0x02 = CBS strobe seen
+        //   0x04 = PRIME (reset) strobe seen (cleared by OUT 0)
+        //   0x08 = high means we are selected and the CPU is waiting for input
+        //   0x10 = board selected at time of ABS
+        //   0x20 = AB1 when ABS strobed
+        //   0x40 = AB2 when ABS strobed
+        //   0x80 = AB3 when ABS strobed
+static const int IN_OBUS_N      = 0x02; // read !OB bus, and clear obs/cbs strobe status
+static const int IN_OBSCBS_ADDR = 0x03; // [7:5] = [AB3:AB1] at time of cbs/obs strobe (active low?)
+static const int IN_UART_RXRDY  = 0x04; // parallel poll of which UARTs have received a byte
+static const int IN_UART_DATA   = 0x06;
+static const int IN_UART_STATUS = 0x0E;
+        //   0x80 = DSR       (data set ready)
+        //   0x40 = BRKDET    (break detect)
+        //   0x20 = FE        (framing error)
+        //   0x10 = OE        (overrun error)
+        //   0x08 = PE        (parity error)
+        //   0x04 = TxEMPTY   (the tx fifo is empty and the serializer is done)
+        //   0x02 = RxRDY     (a byte has been received)
+        //   0x01 = TxRDY     (the tx fifo buffer has room for a character)
+
+// output port defines
+static const int OUT_CLR_PRIME = 0x00;  // clears reset latch
+static const int OUT_IB_N      = 0x01;  // drive !IB1-!IB8, pulse IBS
+static const int OUT_IB9_N     = 0x11;  // same as OUT_IB_N, plus drive IB9
+static const int OUT_PRIME     = 0x02;  // fires the !PRIME strobe
+static const int OUT_HALT_STEP = 0x03;  // one shot strobe
+static const int OUT_UART_SEL  = 0x05;  // uart chip select
+static const int OUT_UART_DATA = 0x06;  // write to selected uart data reg
+static const int OUT_RBI       = 0x07;  // 0=ready/1=busy; bit n=addr (n+1); bit 7=n/c
+                                        // 01=1(kb),02=2(status),04=3(n/c),08=4(prt),10=5(vpcrt),20=6(cmd),40=7(crt)
+static const int OUT_UART_CMD  = 0x0E;  // write to selected uart command reg
 
 // instance constructor
 IoCardTermMux::IoCardTermMux(std::shared_ptr<Scheduler> scheduler,
@@ -30,44 +80,142 @@ IoCardTermMux::IoCardTermMux(std::shared_ptr<Scheduler> scheduler,
                              int baseaddr, int cardslot) :
     m_scheduler(scheduler),
     m_cpu(cpu),
-    m_tmr_script(nullptr),
+//  m_i8080(nullptr),
     m_baseaddr(baseaddr),
     m_slot(cardslot),
     m_selected(false),
     m_cpb(true),
-    m_card_busy(false),
     m_io_offset(0),
-    m_ibs_seq(0),
-    m_vp_mode(false),
-    m_port(0),
-    m_term(m_terms[0]) // FIXME: this is goofy and was probably done for lint reasons
+    m_prime_seen(true),
+    m_cbs_seen(false),
+    m_obs_seen(false),
+    m_obscbs_offset(0),
+    m_obscbs_data(0x00),
+    m_rbi(0xff),                // not ready
+    m_uart_sel(0),
+    m_interrupt_pending(false),
+    m_init_tmr(nullptr)
 {
     if (m_slot < 0) {
         // this is just a probe to query properties, so don't make a window
         return;
     }
 
+    for(auto &t : m_terms) {
+        t.wndhnd = nullptr;
+
+        t.remote_baud_tmr = nullptr;
+
+        t.rx_ready = false;
+        t.rx_byte  = 0x00;
+
+        t.tx_ready = false;
+        t.tx_byte  = 0x00;
+        t.tx_tmr   = nullptr;
+    }
+
     int io_addr;
     bool ok = System2200().getSlotInfo(cardslot, 0, &io_addr);
     assert(ok); ok=ok;
 
-    for(auto &t : m_terms) {
-        t.wndhnd = nullptr;
-    }
+    m_i8080 = i8080_new(IoCardTermMux::i8080_rd_func,
+                        IoCardTermMux::i8080_wr_func,
+                        IoCardTermMux::i8080_in_func,
+                        IoCardTermMux::i8080_out_func,
+                        static_cast<void*>(this));
+    assert(m_i8080);
+    i8080_reset(static_cast<i8080*>(m_i8080));
+
+    // register the i8080 for clock callback
+    clkCallback cb = std::bind(&IoCardTermMux::execOneOp, this);
+    System2200().registerClockedDevice(cb);
 
     // FIXME: just one for now
     m_terms[0].wndhnd = UI_initCrt(UI_SCREEN_2236DE, io_addr, 1);
+    m_terms[0].tx_ready = true;
 
-    System2200().kb_register(
-        // FIXME: need 0x01 because elsewhere m_assoc_kb_addr defaults to 0x01;
-        //        a later System2200().kb_foo(m_assoc_kb_addr,...) call fails
-        //        fix the m_assoc_kb_addr logic instead of this hack
-        m_baseaddr + 0x01,
-        1, /* FIXME: term 1 is hardwired here */
-        bind(&IoCardTermMux::receiveKeystroke, this, std::placeholders::_1)
-    );
+    {
+        int term_num = 0; /* FIXME: term 1 is hardwired here */
+        System2200().kb_register(
+            // FIXME: need 0x01 because elsewhere m_assoc_kb_addr defaults to 0x01;
+            //        a later System2200().kb_foo(m_assoc_kb_addr,...) call fails
+            //        fix the m_assoc_kb_addr logic instead of this hack
+            m_baseaddr + 0x01,
+            term_num+1,
+            std::bind(&IoCardTermMux::receiveKeystroke,
+                      this, term_num, std::placeholders::_1)
+        );
+    }
 
-    reset(true);
+    // the 2336 sends an init sequence on reset.  wait a fraction of
+    // a second to give the 8080 time to wake up before sending it.
+// FIXME: this is a hack ... perhaps the terminal side should send it
+//        then again, some of that processing is done here...
+    m_init_tmr = m_scheduler->TimerCreate(
+                   TIMER_MS(500),
+                   std::bind(&IoCardTermMux::SendInitSeq, this)
+                 );
+}
+
+// the 2336 sends an init sequence of E4 F8 on power up.
+// the 2336 sends an init sequence of 12 F8 E4 on reset.
+void
+IoCardTermMux::SendInitSeq()
+{
+    m_init_tmr = nullptr;
+
+    bool por = false;  // FIXME: how to know which case to invoke?
+    for(int term_num=0; term_num<MAX_TERMINALS; term_num++) {
+        if (m_terms[term_num].wndhnd) {
+            if (!por) {
+#if 1
+// FIXME: overrun debug case. get rid of reset, which might be a long duration.
+// or schedule a 2nd init call to do the F8/E4 part of it.
+// it is possible that DTR/DSR type hardware handhshaking is involved in the
+// real hardware, but which isn't emulated at all.
+// it could be modeled by making CheckKbBuffer() not drain a byte if
+// the uart isn't in the DTR state yet.
+//              m_terms[term_num].remote_kb_buff.push(static_cast<uint8>(0x12));
+// OK, it seems to be due to 0x12, as we get 7 warnings (one less than the
+// number of bytes below.  but if 0x12 above is commented out, there are no
+// overrun warnings.
+                m_terms[term_num].remote_kb_buff.push(static_cast<uint8>(0xF8));
+                m_terms[term_num].remote_kb_buff.push(static_cast<uint8>(0xE4));
+//              m_terms[term_num].remote_kb_buff.push(static_cast<uint8>('!'));
+//              m_terms[term_num].remote_kb_buff.push(static_cast<uint8>('!'));
+//              m_terms[term_num].remote_kb_buff.push(static_cast<uint8>('!'));
+//              m_terms[term_num].remote_kb_buff.push(static_cast<uint8>('!'));
+//              m_terms[term_num].remote_kb_buff.push(static_cast<uint8>('!'));
+//              m_terms[term_num].remote_kb_buff.push(static_cast<uint8>('!'));
+#else
+                m_terms[term_num].remote_kb_buff.push(static_cast<uint8>(0x12));
+                m_terms[term_num].remote_kb_buff.push(static_cast<uint8>(0xF8));
+                m_terms[term_num].remote_kb_buff.push(static_cast<uint8>(0xE4));
+#endif
+            } else {
+                m_terms[term_num].remote_kb_buff.push(static_cast<uint8>(0xE4));
+                m_terms[term_num].remote_kb_buff.push(static_cast<uint8>(0xF8));
+            }
+            CheckKbBuffer(term_num);
+        }
+    }
+}
+
+// perform on instruction and return the number of ns of elapsed time.
+int
+IoCardTermMux::execOneOp()
+{
+    if (m_interrupt_pending) {
+        // vector to 0x0038 (rst 7)
+        i8080_interrupt(static_cast<i8080*>(m_i8080), 0xFF);
+    }
+
+    int ticks = i8080_exec_one_op(static_cast<i8080*>(m_i8080));
+    if (ticks > 30) {
+        // it is in an error state
+        return 4 * ns_per_tick;
+    }
+    return ticks * ns_per_tick;
 }
 
 // instance destructor
@@ -75,9 +223,12 @@ IoCardTermMux::~IoCardTermMux()
 {
     if (m_slot >= 0) {
         // not just a temp object, so clean up
-        reset(true);        // turns off handshakes in progress
         System2200().kb_unregister(m_baseaddr + 0x01, /* see the hack comment in kb_register() */
                                    1 /* FIXME: term 1 is hardwired here */);
+
+        i8080_destroy(static_cast<i8080*>(m_i8080));
+        m_i8080 = nullptr;
+
         for(auto &t : m_terms) {
             if (t.wndhnd != nullptr) {
                 UI_destroyCrt(t.wndhnd);
@@ -119,30 +270,13 @@ IoCardTermMux::getAddresses() const
     return v;
 }
 
+// the MXD card has its own power-on-reset circuit. all !PRMS (prime reset)
+// does is set a latch that the 8080 can sample.  the latch is cleared
+// via "OUT 0".
 void
 IoCardTermMux::reset(bool hard_reset)
 {
-    m_tmr_script = nullptr;
-
-    // reset card state
-    m_selected   = false;
-    m_cpb        = true;   // CPU busy
-    m_card_busy  = false;
-    m_vp_mode    = true;
-    m_port       = 0;      // 0=default selected terminal (logical term #1)
-    m_term       = m_terms[m_port];
-
-// FIXME: I don't want to duplicate all the logic from IoCardKeyboard.cpp.
-//        Restructure things so that logic can be shared.
-    for(auto &t : m_terms) {
-        t.io1_key_ready = false;   // no pending keys
-        t.crt_buf.clear();
-        t.printer_buf.clear();
-        t.line_req_buf.clear();
-        t.keyboard_buf.clear();
-        t.command_buf.clear();
-    }
-
+    m_prime_seen = true;
     hard_reset = hard_reset;    // silence lint
 }
 
@@ -154,54 +288,14 @@ IoCardTermMux::select()
     if (NOISY) {
         UI_Info("TermMux ABS %02x", m_baseaddr+m_io_offset);
     }
-if (dbg) dbglog("TermMux ABS %02x\n", m_baseaddr+m_io_offset);
 
-    // if the card is ever addressed at 01 or 05, the controller drops back
-    // into vp mode.  likewise, if the card is addressed at 02, 06, or 07,
-    // the controller is in mvp mode. (2236MXE_Documentation.8-83.pdf, p4)
-    // Addressing 04 (printer port) doesn't change vp/mvp mode.
-    bool vp_mode_next = (m_io_offset == 1) || (m_io_offset == 5)
-                     || (m_io_offset == 4 && m_vp_mode);
-    if (!m_vp_mode && !vp_mode_next) {
-        // leaving mvp mode for vp mode; reset various state
-        reset(false);
+    // offset 0 is not handled
+    if (m_io_offset == 0) {
+        return;
     }
-    m_vp_mode = vp_mode_next;
-
     m_selected = true;
 
-// FIXME: the busy state depends on which IO address we have!
-// in the actual controller card, there is a 7b latch, one bit corresponding
-// to ready/busy of each I/O address.  hardware muxes out the bit corresponding
-// to the current address.  perhaps emulation should do the same.
-    switch (m_io_offset) {
-        case 1:  // vp mode keyboard
-            check_keyready();
-            m_card_busy = !m_term.io1_key_ready;
-            break;
-        case 2:  // status of all terminals (input only)
-            m_ibs_seq = 0;
-            m_card_busy = false;
-            break;
-        case 3:  // mxd: unused; mxe: receive remote screen dump from terminal
-            m_card_busy = false;  // FIXME
-            break;
-        case 4: // send chars to current terminal's remote printer
-            m_card_busy = (m_term.printer_buf.size() >= PrinterBufferSize-3);
-            break;
-        case 5:  // vp mode display
-            // FIXME: in real life this goes through the same output buffer
-            // logic as MVP mode, so it needs to simulate serial port timing.
-            m_card_busy = false;  // FIXME
-            break;
-        case 6:  // send command sequence; some commands return status here
-            m_card_busy = false;  // FIXME
-            break;
-        case 7:  // send chars to current terminal's CRT
-            m_card_busy = (m_term.crt_buf.size() >= CrtBufferSize-3);
-            break;
-    }
-    m_cpu->setDevRdy(!m_card_busy);
+    update_rbi();
 }
 
 void
@@ -210,7 +304,6 @@ IoCardTermMux::deselect()
     if (NOISY) {
         UI_Info("TermMux -ABS %02x", m_baseaddr+m_io_offset);
     }
-if (dbg) dbglog("TermMux -ABS %02x\n", m_baseaddr+m_io_offset);
     m_cpu->setDevRdy(false);
 
     m_selected = false;
@@ -224,27 +317,20 @@ IoCardTermMux::OBS(int val)
     if (NOISY) {
         UI_Info("TermMux OBS: byte 0x%02x", val);
     }
-if (dbg) dbglog("TermMux OBS: byte 0x%02x (%c)\n", val, asciify(val));
 
-    // NOTE: the hardware latches m_io_offset into another latch now.
-    // I believe the reason is that say the board is addressed at offset 6.
-    // Then it does an OBS(0Xwhatever) in some fire and forget command.
-    // It may take a while to process that OBS, but in the mean time,
-    // the host computer may readdress the board at, say, offset 2.
-    //
-    // I'm not sure if the emulation needs that yet.
+    // any previous obs or cbs should have been serviced before we see another
+    assert(!m_obs_seen && !m_cbs_seen);
 
-    switch (m_io_offset) {
-        case 1: OBS_01(val); break;
-        case 2: OBS_02(val); break;
-        case 3: OBS_03(val); break;
-        case 4: OBS_04(val); break;
-        case 5: OBS_05(val); break;
-        case 6: OBS_06(val); break;
-        case 7: OBS_07(val); break;
-    }
+    // the hardware latches m_io_offset into another latch on the falling
+    // edge of !CBS or !OBS.  I believe the reason is that say the board is
+    // addressed at offset 6.  Then it does an OBS(0Xwhatever) in some fire and
+    // forget command.  It may take a while to process that OBS, but in the
+    // meantime, the host computer may re-address the board at, say, offset 2.
+    m_obs_seen = true;
+    m_obscbs_offset = m_io_offset;
+    m_obscbs_data = val;
 
-    m_cpu->setDevRdy(!m_card_busy);
+    update_rbi();
 }
 
 void
@@ -254,26 +340,15 @@ IoCardTermMux::CBS(int val)
     if (NOISY) {
         UI_Info("TermMux CBS: 0x%02x", val);
     }
-if (dbg) dbglog("TermMux CBS: byte 0x%02x\n", val);
 
-    // some commands expect an ibs return sequence;
-    // this state tracks how far in the response sequence
-    m_ibs_seq = 0;
+    // any previous obs or cbs should have been serviced before we see another
+    assert(!m_obs_seen && !m_cbs_seen);
 
-    // NOTE: the hardware latches m_io_offset into another latch now.
-    // see the explanation in ::OBS()
+    m_cbs_seen = true;
+    m_obscbs_offset = m_io_offset;  // secondary address offset latch
+    m_obscbs_data = val;
 
-    switch (m_io_offset) {
-        case 1: CBS_01(val); break;
-        case 2: CBS_02(val); break;
-        case 3: CBS_03(val); break;
-        case 4: CBS_04(val); break;
-        case 5: CBS_05(val); break;
-        case 6: CBS_06(val); break;
-        case 7: CBS_07(val); break;
-    }
-
-    m_cpu->setDevRdy(!m_card_busy);
+    update_rbi();
 }
 
 // weird hack Wang used to signal the attached display is 64x16 (false)
@@ -281,9 +356,16 @@ if (dbg) dbglog("TermMux CBS: byte 0x%02x\n", val);
 // the term mux looks like a dumb terminal at 05, so it drives this to let
 // the ucode know it is 80x24.
 int
-IoCardTermMux::getIB5() const
+IoCardTermMux::getIB() const
 {
-    return (m_io_offset == 5);
+    // FIXME: do we need to give more status than this?
+    // In the real 6793 hardware, IB is driven by the most recent
+    // OUT_IB_N data any time the board is selected.  In addition,
+    // any time the address offset is 5 or 7, a gate forcibly drives
+    // !IB5 low (logically, the byte is or'd with 0x10). Looking at
+    // the MVP microcode, it only ever looks at bit 5.  However, the
+    // "CIO SRS" command is exposed via $GIO 760r (Status Request Strobe).
+    return (m_io_offset == 5) ? 0x10 : 0x00;
 }
 
 // change of CPU Busy state
@@ -295,768 +377,306 @@ IoCardTermMux::CPB(bool busy)
     if (NOISY) {
         UI_Info("TermMux CPB%c", busy ? '+' : '-');
     }
-if (dbg) dbglog("TermMux CPB%c\n", busy ? '+' : '-');
-
     m_cpb = busy;
-    m_cpu->setDevRdy(!m_card_busy);
-
-    if (!busy) {
-        // the CPU is waiting for an IBS (input byte strobe)
-        switch (m_io_offset) {
-            case 1: IBS_01(); break;
-            case 2: IBS_02(); break;
-            case 6: IBS_06(); break;
-            default:          break;
-        }
-    }
-
-#if 1
-    if (!m_tmr_script) {
-        m_tmr_script = m_scheduler->TimerCreate(
-                TIMER_US(50),     // 30 is OK, 20 is too little
-                [&](){ tcbScript(); } );
-    }
-#endif
 }
 
-// FIXME: warmed over from IoCardKeyboard
+// update the board's !ready/busy status (if selected)
 void
-IoCardTermMux::check_keyready()
+IoCardTermMux::update_rbi()
 {
-//  System2200().kb_keyReady(m_baseaddr, 1 /*FIXME: term1 */);
-
-    if (m_selected) {
-#if 0
-        if (m_term.io1_key_ready && !m_cpb) {
-            // we can't return IBS right away -- apparently there
-            // must be some delay otherwise the handshake breaks
-            if (!m_tmr_script) {
-                m_tmr_script = m_scheduler->TimerCreate(
-                        TIMER_US(50),     // 30 is OK, 20 is too little
-                        [&](){ tcbScript(); } );
-            }
-        }
-#endif
-        m_cpu->setDevRdy(m_term.io1_key_ready);
-    }
-}
-
-
-// FIXME: if nothing else, the name is bad because IoCardKeyboard
-// no longer knows about scripts -- System2200 takes care of it.
-void
-IoCardTermMux::tcbScript()
-{
-    System2200().kb_keyReady(m_baseaddr + 0x01, 1 /*FIXME: assumed term 1*/);
-
-    m_tmr_script = nullptr;
-}
-
-
-void
-IoCardTermMux::receiveKeystroke(int keycode)
-{
-    assert( (keycode >= 0) );
-
-    // halt acts independently of addressing in vp mode
-    // in mvp mode, the halt status is reported via port 02
-    if ((keycode & KEYCODE_HALT) && m_vp_mode) {
-        m_cpu->halt();
+    // don't drive !rbi if the board isn't selected
+    if (m_io_offset == 0 || !m_selected) {
         return;
     }
 
-    // ignore subsequent keys if one is already pending
-    if (m_vp_mode && m_term.io1_key_ready) {
+    bool busy = ((m_obs_seen || m_cbs_seen) && (m_io_offset >= 4))
+             || !!((m_rbi >> (m_io_offset-1)) & 1);
+
+    m_cpu->setDevRdy(!busy);
+}
+
+void
+IoCardTermMux::update_interrupt()
+{
+    m_interrupt_pending = m_terms[0].rx_ready
+                       || m_terms[1].rx_ready
+                       || m_terms[2].rx_ready
+                       || m_terms[3].rx_ready;
+}
+
+// the received keyval is appropriate for the first generation keyboards,
+// but the smart terminals:
+//   (a) couldn't send an IB9 (9th bit) per key, and
+//   (b) certain keys were coded differently, including as a pair of bytes
+// as smart terminals were connected via 19200 baud serial lines, we
+// model the transport delay by firing a timer for that long which disallows
+// sending any more keys for that long.  if any key arrives while the timer is
+// active, store it in a fifo and send the next one when the timer expires.
+void
+IoCardTermMux::receiveKeystroke(int term_num, int keycode)
+{
+    assert((0 <= term_num) && (term_num < MAX_TERMINALS));
+    m_term_t &term = m_terms[term_num];
+
+    if (term.remote_kb_buff.size() >= KB_BUFF_MAX) {
+        UI_Warn("the terminal keyboard buffer dropped a character");
         return;
     }
 
-    if (m_io_offset == 1) {
-        // let CPU know we have a key
-        m_card_busy = false;
-        m_cpu->setDevRdy(!m_card_busy);
-    }
-    if (m_cpb) {
-        // store it until CPU is ready for it
-        m_term.io1_key_code  = keycode;
-        m_term.io1_key_ready = true;
+    // remap certain keycodes from first-generation encoding to what is
+    // send over the serial line
+    if (keycode == IoCardKeyboard::KEYCODE_HALT) {
+        // halt/step
+        term.remote_kb_buff.push(static_cast<uint8>(0x13));
+    } else if (keycode == (IoCardKeyboard::KEYCODE_SF | IoCardKeyboard::KEYCODE_EDIT)) {
+        // edit
+        term.remote_kb_buff.push(static_cast<uint8>(0xBD));
+    } else if (keycode & IoCardKeyboard::KEYCODE_SF) {
+        // special function
+        term.remote_kb_buff.push(static_cast<uint8>(0xFD));
+        term.remote_kb_buff.push(static_cast<uint8>(keycode & 0xff));
+    } else if (keycode == 0xE6) {
+        // the pc TAB key maps to "STMT" in 2200T mode,
+        // but it maps to "FN" (function) in 2336 mode
+        term.remote_kb_buff.push(static_cast<uint8>(0xFD));
+        term.remote_kb_buff.push(static_cast<uint8>(0x7E));
+    } else if (keycode == 0xE5) {
+        // erase
+        term.remote_kb_buff.push(static_cast<uint8>(0xE5));
+    } else if (0x80 <= keycode && keycode < 0xE5) {
+        // it is an atom; add prefix
+        term.remote_kb_buff.push(static_cast<uint8>(0xFD));
+        term.remote_kb_buff.push(static_cast<uint8>(keycode & 0xff));
     } else {
-        // cpu is waiting for input, so send it now
-        m_cpu->IoCardCbIbs(keycode);
-        m_term.io1_key_ready = false;
-#if 0
-        /* FIXME: add time-delayed call to System2200().kb_keyReady, like IoCardKeyboard does */
-        /* FIXME: better yet, the call to CPB should trigger the call to
-         * kb_keyReady() instead of assuming 50uS delay is always OK */
-        System2200().kb_keyReady(m_baseaddr + 0x01, 1 /*FIXME*/);
-#endif
+        // the mapping is unchanged
+        assert(keycode == (keycode & 0xff));
+        term.remote_kb_buff.push(static_cast<uint8>(keycode));
     }
+
+    CheckKbBuffer(term_num);
 }
 
-// ============================================================================
-// there is a separate OBS handler routine for each port
-// ============================================================================
-
+// process the next entry in kb event queue and schedule a timer to check
+// for the next one
 void
-IoCardTermMux::OBS_01(int val)
+IoCardTermMux::CheckKbBuffer(int term_num)
 {
-    if (NOISY) {
-        UI_Warn("unexpected TermMux OBS 01: 0x%02x", val);
-    }
-}
+    assert((0 <= term_num) && (term_num < MAX_TERMINALS));
+    m_term_t &term = m_terms[term_num];
 
-void
-IoCardTermMux::OBS_02(int val)
-{
-    if (NOISY) {
-        UI_Warn("unexpected TermMux OBS 02: 0x%02x; this is a status port", val);
-    }
-    return;
-}
-
-void
-IoCardTermMux::OBS_03(int val)
-{
-    if (NOISY) {
-        UI_Warn("unexpected TermMux OBS 03: 0x%02x (MXE only)", val);
-    }
-}
-
-// send bytes to printer attached to the currently selected terminal
-void
-IoCardTermMux::OBS_04(int val)
-{
-    if (m_term.printer_buf.size() < PrinterBufferSize) {
-        m_term.printer_buf.push_back(static_cast<uint8>(val));
-    } else if (NOISY) {
-        UI_Warn("TermMux OBS 04: 0x%02x, but the print buffer is full", val);
-    }
-}
-
-// addressing this register causes vp_mode to be set.
-// any bytes sent to this address get sent to the CRT display.
-void
-IoCardTermMux::OBS_05(int val)
-{
-    if (NOISY) {
-        UI_Info("TermMux vp_mode OBS 05: byte 0x%02x", val);
-    }
-
-    // FIXME: these should probably go into keyboard_buf (if not full)
-    // and then some timer-based mechansim would be used to drain them
-    // at baud rate
-    UI_displayChar(m_term.wndhnd, (uint8)val);
-    m_cpu->setDevRdy(!m_card_busy);
-}
-
-void
-IoCardTermMux::OBS_06(int val)
-{
-    auto cmd_len = m_term.command_buf.size();
-
-    if (cmd_len == 0) {
-        // there was no initial CBS_06 command byte
-        if (val != 0x00 && NOISY) {
-            // complain if we get command argument bytes either without an initial
-            // command byte, or because it is an extra byte following a successfully
-            // decoded command.
-            // 2236MXE_Documentation.8-83.pdf, p8, says that sometimes an extra 00
-            // byte is sent after the normal command, perhaps for timing reasons.
-            UI_Warn("unexpected TermMux OBS 06: 0x%02x without preceding command byte", val);
-            return;
-        }
-        if (val == 0x00) {
-            // some commands end with an extra 0x00
-            return;
-        }
-    }
-
-    // append byte to current command
-    m_term.command_buf.push_back(static_cast<uint8>(val));
-
-    // commands don't take any extra arguments, so should be processed immediately
-    uint8 cmd_byte = m_term.command_buf[0];
-    switch (static_cast<mux_cmd_t>(cmd_byte)) {
-
-        case mux_cmd_t::CMD_SELECT_TERMINAL:  // CBS(FF) OBS(xx)
-            if (cmd_len == 2) {
-                val &= 0x7;     // this is what the mxd ucode does
-                if ((val < 0 || val > 3) && NOISY) {
-                    UI_Warn("unexpected TermMux command sequence FF %02X", val);
-                } else {
-if (dbg) dbglog("TermMux OBS 06: selected terminal %d\n", val+1);
-                    m_port = val;
-                    m_term = m_terms[m_port];
-                }
-                m_term.command_buf.clear();
-                return;
-            }
-            break;
-
-        case mux_cmd_t::CMD_LINE_REQ: // CBS(07) OBS(XXXXYYZZ)
-            // A command code of 07h will cause the controller to setup to
-            // receive a field of up to XXXX characters (a hexadecimal
-            // representation of the count, not to exceed 480 (01E0h)) starting
-            // from the current CRT cursor position for the currently selected
-            // terminal.  All field entries will be forced to stay within the
-            // field limits set.  A line request is active until either a
-            // carriage return or a special function key is entered, or until
-            // a delete line request command is issued (RESET, HALT, etc).
-            // YY specifies three parameters as follows: The 80-bit specifies
-            // underline.  The 04-bit specifies EDIT mode.  The 01-bit
-            // specifies that characters previously entered in the keyboard
-            // buffer should be flushed.  (In other words, keystrokes received
-            // prior to a line request being set, can be either received as
-            // part of the line or deleted).  If deleted they are never echoed
-            // back to the CRT nor entered into the line request buffer.
-            // ZZ specifies current column of CRT cursor (the 2200 should have
-            // already positioned the cursor at this position).
-            if (m_term.command_buf.size() == 1) {
-                m_term.line_req_buf.clear();
-                // TODO: do I need to keep some kind of state so that if the
-                // terminal happens to send a character while we are waiting
-                // for the rest of the command to arrive, we will know to
-                // let it sit in the input buffer?
-            } else if (m_term.command_buf.size() == 5) {
-                m_term.io6_field_size = 256*m_term.command_buf[1]
-                                      +     m_term.command_buf[2];
-                m_term.io6_underline = !!(m_term.command_buf[3] & 0x80);
-                m_term.io6_edit_mode = !!(m_term.command_buf[3] & 0x04);
-                if (!!(m_term.command_buf[3] & 0x01)) {
-                    // empty out any pending keystrokes
-                    m_term.keyboard_buf.clear();
-                }
-                m_term.io6_curcolumn = m_term.command_buf[4];  // FIXME: not used yet
-                if (m_term.io6_field_size > 480) {
-                    UI_Warn("TermMux REQUEST-LINE command has bad size %d (>480)",
-                            m_term.io6_field_size);
-                    // I'm not sure if it is better to limit or abandon
-                    m_term.io6_field_size = 480;
-                }
-if (dbg) dbglog("TermMux OBS 06: CMD_LINE_REQ: field_size=%d, underline=%d, edit=%d\n",
-        m_term.io6_field_size, m_term.io6_underline, m_term.io6_edit_mode);
-            }
-            break;
-
-        case mux_cmd_t::CMD_PREFILL_LINE_REQ:  // CBS(08) OBS(YYYY...)
-            // This optional command code of CBS(08) can be sent after a line
-            // request command CBS(07) to prefill the desired line with the
-            // supplied characters YYYY...  starting with the leftmost position.
-            // The characters are treated as keystrokes.  The cursor is left at
-            // the leftmost position.  The string of characters is terminated by
-            // the next CBS, which will normally be an END-OF-LINE-REQUEST CBS(0A).
-            // Note: All characters are legal in a prefill, but when codes 00h-0Fh
-            // are being displayed at the terminal, they are changed to periods.
-            // Codes 80h-8Fh are also legal.
-// TODO: clear the buffer first?  or do we just move the edit point back to the
-//       first character and then overwrite existing characters?
-            if (m_term.line_req_buf.size() < m_term.io6_field_size) {
-                m_term.line_req_buf.push_back(static_cast<uint8>(val));
-if (dbg) dbglog("TermMux OBS 06: CMD_PREFILL_LINE_REQ got %02x\n", val);
-            }
-            break;
-
-        case mux_cmd_t::CMD_REFILL_LINE_REQ:  // CBS(09) OBS(XXXX...)
-            // The refill command is identical to a prefill except that it does
-            // not cause repositioning of the cursor to the beginning.  Thus
-            // the characters are treated as keystrokes.  It is normally used
-            // for RECALL and DEFFN' quotes.  It is generally followed by an
-            // END-OF-LINE-REQUEST CBS(0A) or a TERMINATE-LINE-REQUEST CBS(10).
-            if (m_term.line_req_buf.size() < m_term.io6_field_size) {
-                m_term.line_req_buf.push_back(static_cast<uint8>(val));
-if (dbg) dbglog("TermMux OBS 06: CMD_REFILL_LINE_REQ got %02x\n", val);
-            }
-            break;
-
-        default:
-            // unexpected -- the real hardware ignores this byte
-            if (NOISY) {
-                UI_Warn("unexpected TermMux CBS: 0x%02x", val);
-            }
-            break;
-    }
-}
-
-// sending display data to the current selected terminal's CRT
-void
-IoCardTermMux::OBS_07(int val)
-{
-#if 0
-    if (m_term.crt_buf.size() < CrtBufferSize) {
-        m_term.crt_buf.push_back(static_cast<uint8>(val));
-    } else if (NOISY) {
-        UI_Warn("TermMux OBS 07: 0x%02x, but the CRT buffer is full", val);
-    }
-#else
-    // FIXME: use a timer to send a character every 0.52 ms
-    UI_displayChar(m_term.wndhnd, (uint8)val);
-#endif
-
-    // The device should be ready any time there is at least three bytes of
-    // space available [in the output buffer].
-    // (2236MXE_Documentation.8-83.pdf, p16)
-    m_card_busy = (m_term.crt_buf.size() >= CrtBufferSize-3);
-    m_cpu->setDevRdy(!m_card_busy);
-}
-
-// ============================================================================
-// there is a separate CBS handler routine for each port
-// ============================================================================
-
-void
-IoCardTermMux::CBS_01(int val)
-{
-    // unexpected -- the real hardware ignores this byte
-    if (NOISY) {
-        UI_Warn("unexpected TermMux CBS 01: 0x%02x", val);
-    }
-}
-
-void
-IoCardTermMux::CBS_02(int val)
-{
-    if (NOISY) {
-        UI_Warn("unexpected TermMux CBS 02: 0x%02x; this is a status port", val);
-    }
-}
-
-void
-IoCardTermMux::CBS_03(int val)
-{
-    if (NOISY) {
-        UI_Warn("unexpected TermMux CBS 03: 0x%02x (MXE only)", val);
-    }
-}
-
-void
-IoCardTermMux::CBS_04(int val)
-{
-    // unexpected -- the real hardware ignores this byte
-    if (NOISY) {
-        UI_Warn("unexpected TermMux CBS 04: 0x%02x", val);
-    }
-}
-
-void
-IoCardTermMux::CBS_05(int val)
-{
-    // unexpected -- the real hardware ignores this byte
-    if (NOISY) {
-        UI_Warn("unexpected TermMux CBS 05: 0x%02x", val);
-    }
-}
-
-// CBS to port 6 begins a control command sequence.
-// command descriptions are taken from 2236MXE_Documentation.8-83.pdf,
-// page 8 or so.
-//
-// FIXME: not really a fixme, but at the bottom of page 7, CPB  is described as:
-//        "The 2200 sets the CPU Busy signal active on the 2200 bus.
-//        This signals its readiness to receive bytes from the controller."
-void
-IoCardTermMux::CBS_06(int val)
-{
-    if (!m_term.command_buf.empty()) {
-        // re: CMD_END_OF_LINE_REQ
-        // "The 2200 will sometimes skip this command when it knows it will
-        //  read in the data from the controller on the next command.  This is
-        //  a violation of protocol but the controllers live with it.  Should
-        //  the 2200 skip this command and go directly to CBS(0C) the
-        //  controller should update the screen before allowing another Line
-        //  Request to be started."
-        auto cmd = static_cast<mux_cmd_t>(m_term.command_buf.front());
-        if (cmd == mux_cmd_t::CMD_ACCEPT_LINE_REQ_DATA &&
-            !m_term.command_buf.empty()) {
-            perform_end_of_line_req();
-        }
-    }
-
-    // we are starting a new command, so kill the last one
-    m_term.command_buf.clear();
-
-    // commands don't take any extra arguments, so should be processed immediately
-    switch (static_cast<mux_cmd_t>(val)) {
-
-        case mux_cmd_t::CMD_NULL:  // CBS(00)
-            // do nothing
-if (dbg) dbglog("TermMux OBS 06: CMD_NULL\n");
-            break;
-
-        case mux_cmd_t::CMD_POWERON:  // CBS(01)
-            // The MXD reininitalizes itself to VP/Bootstrap mode.  Everything
-            // is set to the way it is at power on.  All buffers are cleared,
-            // all pointers are reset, all flags cleared. The mode becomes VP
-            // mode.
-if (dbg) dbglog("TermMux OBS 06: CMD_POWERON\n");
-            reset();
-            break;
-
-        case mux_cmd_t::CMD_INIT_CURRENT_TERM:  // CBS(02)
-            // This command will cause the CRT screen, pending line request CRT
-            // buffer, print buffer, and input buffer of the current terminal
-            // to be cleared (used at RESET).
-// FIXME: the SVP muxd code always looks for an OBS following CBS(02).
-// and interestingly, the init sequence is different if the OBS is 00 or not.
-            m_term.io1_key_ready = false;
-            m_term.crt_buf.clear();
-            m_term.printer_buf.clear();
-            m_term.line_req_buf.clear();
-            m_term.keyboard_buf.clear();
-if (dbg) dbglog("TermMux OBS 06: CMD_INIT_CURRENT_TERM\n");
-            break;
-
-        case mux_cmd_t::CMD_DELETE_LINE_REQ:  // CBS(03)
-            // this command causes a pending line request and input buffers
-            // of the current terminal to be cleared
-            // (used at HALT with special function keys)
-            m_term.io1_key_ready = false;
-            m_term.line_req_buf.clear();
-            m_term.keyboard_buf.clear();
-if (dbg) dbglog("TermMux OBS 06: CMD_DELETE_LINE_REQ\n");
-            break;
-
-        case mux_cmd_t::CMD_END_OF_LINE_REQ:  // CBS(0A)
-            // TODO
-if (dbg) dbglog("TermMux OBS 06: CMD_END_OF_LINE_REQ\n");
-            perform_end_of_line_req();
-            break;
-
-        case mux_cmd_t::CMD_QUERY_LINE_REQ:  // CBS(0B)
-            // When a CBS(0B) command is received, the controller responds with
-            // one of the following IBS values.
-            //       00h -- No line request in progress.
-            //       01h -- line request still in progress.
-            //       0Dh -- line request terminated by CR.
-            //       FFh -- Recall key pressed (see note).
-            //  ENDI(XX) -- S.F. key pressed.
-            //
-            // Note on recall:
-            //     After the FFh, the controller may send one more more bytes
-            //     to the MVP.  Each time the MVP sets CPB ready, th controller
-            //     will send one more data byte with IBS.  These are the
-            //     characters from the entered text, read from right to left,
-            //     beginning with the cursor position.  The beginning of the
-            //     buffer is indicated by ENDI.  This sequence ends whenever
-            //     the MVP stops setting CPB ready, sends OBS or CBS, or
-            //     switches address.  The controller should not clear the
-            //     buffer when the 2200 has read all the bytes contained
-            //     therein.  Unfortunately, the 2200 takes some shortcuts for
-            //     expediency and may reread the buffer later.
-            //
-            // Following the query, the MVP may do one of the following:
-            //     1. Nothing another query later).
-            //     2. Delete line request
-            //        (usually for HALT, and SF keys without parameters).
-            //     3. Refill -- this is more data to be merged into the present
-            //        line request, as though the operator typed it (used for
-            //        recall and DEFFN' quotes).  Then End Line Request.
-            //     4. Terminate Line Request -- used to implement DEFFN' HEX(0D).
-            //     5. Error Line Request -- this beeps an error and continues
-            //        the line request.
-            //     6. Ask for data.
-            // TODO
-if (dbg) dbglog("TermMux OBS 06: CMD_QUERY_LINE_REQ\n");
-            break;
-
-        case mux_cmd_t::CMD_ACCEPT_LINE_REQ_DATA:  // CBS(0C)
-            // When an CBS(0C) is received after a line request has been
-            // completed, the controller will send the data.  It should only be
-            // issued after a query has shown that the line is complete.
-            //
-            // The controller sends the data if any, then an ENDI as terminator.
-            // If the ENDI is zero, the line request is complete; if 01h, the
-            // controller needs more time to finish updating the screen.
-            // TODO
-if (dbg) dbglog("TermMux OBS 06: CMD_ACCEPT_LINE_REQ_DATA\n");
-            break;
-
-        case mux_cmd_t::CMD_REQ_CRT_BUFFER:  // CBS(0D)
-            // This command causes the controller to check the CRT buffer of
-            // the current terminal.  If it is empty, the appropriate status
-            // bit is set (address 02h = ready) to signal the fact.  If not,
-            // then the controller will set the bit when the buffer does go
-            // empty.
-            // TODO
-if (dbg) dbglog("TermMux OBS 06: CMD_REQ_CRT_BUFFER\n");
-            break;
-
-        case mux_cmd_t::CMD_REQ_PRINT_BUFFER:  // CBS(0E)
-            // This is just like the previous, except is refers to the current
-            // terminal's PRINT buffer not CRT buffer.
-            // TODO
-if (dbg) dbglog("TermMux OBS 06: CMD_REQ_PRINT_BUFFER\n");
-            break;
-
-        case mux_cmd_t::CMD_ERROR_LINE_REQ:  // CBS(0F)
-            // This command causes the line request to resume, just like
-            // END-LINE-REQUEST, except it beeps first.  It should not be used
-            // in conjunction with PREFILL or REFILL.  It is normally used for
-            // undefined function keys.
-            // TODO
-if (dbg) dbglog("TermMux OBS 06: CMD_ERROR_LINE_REQ\n");
-            break;
-
-        case mux_cmd_t::CMD_TERMINATE_LINE_REQ:  // CBS(10)
-            // This command is used (after optional PREFILL or REFILL) to
-            // cause all the same actions as the operator pressing EXEC.
-            // It is normally used for the BASIC statement DEFFN' HEX(0D).
-            // TODO
-if (dbg) dbglog("TermMux OBS 06: CMD_TERMINATE_LINE_REQ\n");
-            break;
-
-        // the following commands take arguments via subsequent OBS 06 strobes.
-        // just start a command string and it will be handled when the command
-        // string is complete.
-        case mux_cmd_t::CMD_SELECT_TERMINAL:
-        case mux_cmd_t::CMD_LINE_REQ:
-        case mux_cmd_t::CMD_PREFILL_LINE_REQ:
-        case mux_cmd_t::CMD_REFILL_LINE_REQ:
-            m_term.command_buf.push_back(static_cast<uint8>(val));
-            break;
-
-        // the following commands are followed by an IBS request, so we have to
-        // leave the command byte so the IBS routine knows what is supposed to
-        // returned.
-        case mux_cmd_t::CMD_KEYBOARD_READY_CHECK:
-        case mux_cmd_t::CMD_KEYIN_POLL_REQ:
-        case mux_cmd_t::CMD_KEYIN_LINE_REQ:
-            m_term.command_buf.push_back(static_cast<uint8>(val));
-            break;
-
-        // unknown/unsupported by MXD mux
-        default:
-            if (NOISY) {
-                UI_Warn("unexpected TermMux CBS: 0x%02x", val);
-            }
-            break;
-    }
-}
-
-// page 16 of the doc:
-// Address 07h is used to transmit characters onto the CRT of the current
-// terminal.  It should be ready whenever there is at least three bytes of space
-// available.  When it goes busy the CPU will time out (one milliscond) and
-// service other partitions until a buffer-empty interrupt occurs.  In addition
-// to OBS with data to be displayed, this address also supports CBS's at this
-// address.  When the controller receives CBS(xx) at address 07h it should
-// place a FBh before it in the buffer.  This will cause the terminal to accept
-// this string as a command.  The following are the three possible commands to
-// the terminal:
-//    FB <count> <character>   blah blah
-//    FB <delay>               where delay is CBS(C0) to CBS(C9)
-//    FB D0h                   literal character FB
-// (it seems like that is not important to the mux, just the terminal emulation)
-void
-IoCardTermMux::CBS_07(int val)
-{
-    if (m_term.crt_buf.size() < CrtBufferSize-1) {
-        m_term.crt_buf.push_back(static_cast<uint8>(0xFB));
-        m_term.crt_buf.push_back(static_cast<uint8>(val));
-    } else if (NOISY) {
-        UI_Warn("TermMux CBS 07: 0x%02x, but the CRT buffer is full", val);
-    }
-
-    // The device should be ready any time there is at least three bytes of
-    // space available [in the output buffer].
-    // (2236MXE_Documentation.8-83.pdf, p16)
-    m_card_busy = (m_term.crt_buf.size() >= CrtBufferSize-3);
-}
-
-
-// A special command must be supplied to signal the end of a line request
-// sequence which consists of the setup and prefill if desired.  The last
-// command sent, however, must be a CBS(0A), to signal the microcode to invoke
-// the line request.  Nothing is sent to the CRT until the CBS(0A) is issued.
-//
-// This command is also used after successful RECALL or DEFFN' text entry to
-// signal the controller to resume proceessing the line request.
-void
-IoCardTermMux::perform_end_of_line_req()
-{
-    // FIXME: actually, the first thing to do is send the (p)refill
-    // bytes, then worry about pending keys as if they were being typed
-    // for the first time.
-    // TODO
-
-    // transfer pending keystrokes into the buffer, I guess
-    while (!m_term.keyboard_buf.empty() &&
-            m_term.line_req_buf.size() < m_term.io6_field_size) {
-        m_term.line_req_buf.push_back( m_term.keyboard_buf.front() );
-        m_term.keyboard_buf.pop_front();
-    }
-}
-
-// ============================================================================
-// when CPB drops (cpu not busy), it means the CPU is waiting for a byte from
-// the addressed card.  The card supplies the byte by driving the IBS strobe
-// when it is ready.
-// ============================================================================
-
-void
-IoCardTermMux::IBS_01()
-{
-    check_keyready();
-    if (m_term.io1_key_ready) {
-        m_cpu->IoCardCbIbs(m_term.io1_key_code);
-        m_term.io1_key_ready = false;
-    }
-}
-
-// see 2236MXE_Documentation.8-83.pdf, page 17. also check out
-//   C:\Users\Jim\Documents\wang2200\disk_images\kryoflux\MVP_3.5_Source_Aug_91\JLMVP32A.txt
-// for the ucode on the 2200 CPU side of the handshake.
-// we response with 7 bytes indicating various status.
-void
-IoCardTermMux::IBS_02()
-{
-    int retval = 0x00;
-
-    switch (m_ibs_seq) {
-
-        case 0: // RESET flags, 1 bit per terminal
-            for(int n=0; n<MAX_TERMINALS; n++) {
-                retval = (0 << n);  // FIXME: '1' if term is RESET
-            }
-if (dbg) dbglog("IBS 02, seq=%d, returning %02x\n", m_ibs_seq, retval);
-            m_cpu->IoCardCbIbs(retval);
-            break;
-
-        case 1: // Halt/step flags, 1 bit per terminal
-            for(int n=0; n<MAX_TERMINALS; n++) {
-                retval = (0 << n);  // FIXME: '1' if term is halt/step
-            }
-if (dbg) dbglog("IBS 02, seq=%d, returning %02x\n", m_ibs_seq, retval);
-            m_cpu->IoCardCbIbs(retval);
-            break;
-
-        case 2: // one second clock tick (MXE/triple controller only)
-            // FIXME: the muxd rom in the lvp returns the uart DSR flags
-            // the MVP 3.5 OS code (JLMVP32A, label MXDSTAT4) ignores
-            // the timer byte if the msb is zero.
-            retval = 0x01;  // indicate port 1 data set ready
-if (dbg) dbglog("IBS 02, seq=%d, returning %02x\n", m_ibs_seq, retval);
-            m_cpu->IoCardCbIbs(retval);
-            break;
-
-        case 3: // terminal 1 status
-        case 4: // terminal 2 status
-        case 5: // terminal 3 status
-        case 6: // terminal 4 status
-        {
-            // bit 0: printer buffer became empty (requested)
-            // bit 1: CRT buffer became empty (requested)
-            // bit 2: keyboard buffer not empty or line request complete
-            // bit 3: RSD buffer almost full  (MXE only)
-            // bits 4-7: muxd doesn't use these
-            int off = (m_ibs_seq - 3);
-            if (m_terms[off].printer_buf.empty()) {
-                // FIXME: what is this "requested" qualifier?
-                retval |= 0x01;
-            }
-            if (m_terms[off].crt_buf.empty()) {
-                // FIXME: what is this "requested" qualifier?
-                retval |= 0x02;
-            }
-            if (!m_terms[off].keyboard_buf.empty()) {
-                // FIXME: "line request complete" not implemented yet
-                retval |= 0x04;
-            }
-if (dbg) dbglog("IBS 02, seq=%d, returning %02x\n", m_ibs_seq, retval);
-            m_cpu->IoCardCbIbs(retval);
-            break;
-        }
-
-        case 7: // ENDI terminator byte
-            // the documentation doesn't say what value to send, but the muxd
-            // ROM sends 0xF0 w/endi (see STATUS_RESPONSE: section)
-            retval = 0x1F0;  // note bit 8 is ENDI
-if (dbg) dbglog("IBS 02, seq=%d, returning %03x\n", m_ibs_seq, retval);
-            m_cpu->IoCardCbIbs(retval);
-            break;
-
-        default:
-            if (NOISY) {
-                UI_Info("TermMux IBS %02x call not expected", m_io_offset);
-            }
-            break;
-    }
-    m_ibs_seq++;
-}
-
-void
-IoCardTermMux::IBS_06()
-{
-    if (m_term.command_buf.empty()) {
-        if (NOISY) {
-            UI_Warn("unexpected TermMux IBS 06: empty command buffer");
-        }
+    if (term.remote_kb_buff.empty() ||  // nothing to do
+        term.remote_baud_tmr            // modeling transport delay
+       ) {
+        term.remote_baud_tmr = nullptr;
         return;
     }
 
-    uint8 cmd_byte = m_term.command_buf[0];
+    uint8 key = term.remote_kb_buff.front();
+    term.remote_kb_buff.pop();
 
-    int retval = 0x00;
-    switch (static_cast<mux_cmd_t>(cmd_byte)) {
+    if (term.rx_ready) {
+        UI_Warn("terminal received char too fast");
+        // TODO: set uart overrun status bit
+        // then fall through because the old char is overwritten
+    }
 
-    case mux_cmd_t::CMD_KEYBOARD_READY_CHECK: // CBS(04) IBS(xx)
-        // Whenever a command code of 04h is received, the controller
-        // checks the keyboard buffer of the selected terminal.  An IBS(00)
-        // is sent if it is empty, and non zero if there is a character
-        // (the non zero byte is of no particular value).
-        retval = (m_term.keyboard_buf.empty()) ? 0x00 : 0xff;
-        m_cpu->IoCardCbIbs(retval);
-        m_term.command_buf.clear();
+    term.rx_ready = true;
+    term.rx_byte  = key;
+    update_interrupt();
+
+    term.remote_baud_tmr = m_scheduler->TimerCreate(
+                                serial_char_delay,
+                                std::bind(&IoCardTermMux::UartTxTimerCallback, this, term_num)
+                           );
+}
+
+// callback after a character has finished transmission
+void
+IoCardTermMux::UartTxTimerCallback(int term_num)
+{
+    assert((0 <= term_num) && (term_num < MAX_TERMINALS));
+    m_term_t &term = m_terms[term_num];
+    term.remote_baud_tmr = nullptr;
+
+    // see if anything is pending
+    CheckKbBuffer(term_num);
+}
+
+// ============================================================================
+// i8080 CPU modeling
+// ============================================================================
+
+int
+IoCardTermMux::i8080_rd_func(int addr, void *user_data)
+{
+    if (addr < 0x1000) {
+        // read 4K eprom
+        return mxd_eprom[addr & 0x0FFF];
+    }
+
+    if ((0x2000 <= addr) && (addr < 0x3000)) {
+        // read 4KB ram
+        IoCardTermMux *tthis = static_cast<IoCardTermMux*>(user_data);
+        return tthis->m_ram[addr & 0x0FFF];
+    }
+
+    assert(false);
+    return 0x00;
+}
+
+void
+IoCardTermMux::i8080_wr_func(int addr, int byte, void *user_data)
+{
+    assert(byte == (byte & 0xff));
+
+    if ((0x2000 <= addr) && (addr < 0x3000)) {
+        // write 4KB ram
+        IoCardTermMux *tthis = static_cast<IoCardTermMux*>(user_data);
+        tthis->m_ram[addr & 0x0FFF] = static_cast<uint8>(byte);
+        return;
+    }
+    assert(false);
+}
+
+int
+IoCardTermMux::i8080_in_func(int addr, void *user_data)
+{
+    IoCardTermMux *tthis = static_cast<IoCardTermMux*>(user_data);
+
+    int rv = 0x00;
+    switch (addr) {
+
+    case IN_UART_TXRDY:
+        // the hardware inverts the status
+        rv = (tthis->m_terms[3].tx_ready ? 0x00 : 0x08)
+           | (tthis->m_terms[2].tx_ready ? 0x00 : 0x04)
+           | (tthis->m_terms[1].tx_ready ? 0x00 : 0x02)
+           | (tthis->m_terms[0].tx_ready ? 0x00 : 0x01);
         break;
 
-    case mux_cmd_t::CMD_KEYIN_POLL_REQ: // CBS(05) IBS(xx) IBS(yy)
-        // Whenever a command code of 05h is received, the controller
-        // checks the keyboard buffer.  If there is no character an IBS(00)
-        // is returned.  Otherwise, a non zero byte is returned followed by
-        // an IBS of the byte (with ENDI if it is a Special Function key).
-        switch (m_ibs_seq) {
-
-            case 0: // return 00 or non-00 to indicate if there is something ready
-                if (m_term.keyboard_buf.empty()) {
-                    retval = 0x00;
-                    m_ibs_seq = 2;
-                    m_term.command_buf.clear();
-                } else {
-                    retval = 0xff;
-                    m_ibs_seq = 1;
-                }
-                m_cpu->IoCardCbIbs(retval);
-                break;
-
-            case 1: // return the keystroke (w/ possible ENDI)
-                retval = m_term.keyboard_buf.front();
-                m_term.keyboard_buf.pop_front();
-                m_cpu->IoCardCbIbs(retval);
-                m_ibs_seq++;
-                m_term.command_buf.clear();
-                break;
-
-            default:
-                if (NOISY) {
-                    UI_Info("TermMux command 05 IBS %02x call not expected", m_io_offset);
-                }
-                break;
+    case IN_2200_STATUS:
+        {
+        bool cpu_waiting = tthis->m_selected && !tthis->m_cpb;  // CPU waiting for input
+        rv = (tthis->m_obs_seen   ? 0x01 : 0x00)  // [0]
+           | (tthis->m_cbs_seen   ? 0x02 : 0x00)  // [1]
+           | (tthis->m_prime_seen ? 0x04 : 0x00)  // [2]
+           | (cpu_waiting         ? 0x08 : 0x00)  // [3]
+           | (tthis->m_selected   ? 0x10 : 0x00)  // [4]
+           | (tthis->m_io_offset << 5);           // [7:5]
         }
         break;
 
-    case mux_cmd_t::CMD_KEYIN_LINE_REQ: // CBS(06) IBS(xx)
-        // Whenever a command code of 06h is received, the controller checks
-        // the keyboard buffer.  If there is a byte in it, this command is
-        // treated exactly as the command 05h.  If not, a IBS(00) is sent, and
-        // a special Keyin Line Request is set up.  An interrupt (completed
-        // line request) will be generated at address 02h when a character is
-        // later received.
-        // FIXME: unimplemented
+    // the 8080 sees the inverted bus polarity
+    case IN_OBUS_N:
+        tthis->m_obs_seen = false;
+        tthis->m_cbs_seen = false;
+        tthis->update_rbi();
+        rv = (~tthis->m_obscbs_data) & 0xff;
+        break;
+
+    case IN_OBSCBS_ADDR:
+        rv = (tthis->m_obscbs_offset << 5);  // bits [7:5]
+        break;
+
+    case IN_UART_RXRDY:
+        rv = (tthis->m_terms[3].rx_ready ? 0x08 : 0x00)
+           | (tthis->m_terms[2].rx_ready ? 0x04 : 0x00)
+           | (tthis->m_terms[1].rx_ready ? 0x02 : 0x00)
+           | (tthis->m_terms[0].rx_ready ? 0x01 : 0x00);
+        break;
+
+    case IN_UART_DATA:
+        rv = tthis->m_terms[tthis->m_uart_sel].rx_byte;
+        // reading the data has the side effect of clearing the rxrdy status
+        tthis->m_terms[tthis->m_uart_sel].rx_ready = false;
+        tthis->update_interrupt();
+        break;
+
+    case IN_UART_STATUS:
+        {
+        bool tx_empty = tthis->m_terms[0].tx_ready && !tthis->m_terms[0].tx_tmr;
+        rv = (tthis->m_terms[0].tx_ready ? 0x01 : 0x00)  // [0] = tx fifo empty
+           | (tthis->m_terms[0].rx_ready ? 0x02 : 0x00)  // [1] = rx fifo has a byte
+           | (tx_empty                   ? 0x04 : 0x00)  // [2] = tx serializer and fifo empty
+           | (false                      ? 0x08 : 0x00)  // [3] = parity error
+           | (false                      ? 0x10 : 0x00)  // [4] = overrun error
+           | (false                      ? 0x20 : 0x00)  // [5] = framing error
+           | (false                      ? 0x40 : 0x00)  // [6] = break detect
+           | (true                       ? 0x80 : 0x00); // [7] = data set ready
+        }
         break;
 
     default:
-        UI_Warn("IBS_06: Got unexpected IBS following command byte %02x", cmd_byte);
+        assert(false);
+    }
+
+    return rv;
+}
+
+void
+IoCardTermMux::i8080_out_func(int addr, int byte, void *user_data)
+{
+    assert(byte == (byte & 0xff));
+    IoCardTermMux *tthis = static_cast<IoCardTermMux*>(user_data);
+
+    switch (addr) {
+
+    case OUT_CLR_PRIME:
+        tthis->m_prime_seen = false;
         break;
 
-    } // switch
+    case OUT_IB_N:
+        byte = (~byte & 0xff);
+        tthis->m_cpu->IoCardCbIbs(byte);
+        break;
+
+    case OUT_IB9_N:
+        byte = (~byte & 0xff);
+        tthis->m_cpu->IoCardCbIbs(0x100 | byte);
+        break;
+
+    case OUT_PRIME:
+        // issue (warm) reset
+        System2200().reset(false);
+        break;
+
+    case OUT_HALT_STEP:
+        tthis->m_cpu->halt();
+        break;
+
+    case OUT_UART_SEL:
+        assert(byte == 0x00 || byte == 0x01 || byte == 0x02 || byte == 0x04 || byte == 0x08);
+        tthis->m_uart_sel = (byte == 0x01) ? 0
+                          : (byte == 0x02) ? 1
+                          : (byte == 0x04) ? 2
+                          : (byte == 0x08) ? 3
+                                           : 0;
+        break;
+
+    case OUT_UART_DATA:
+// FIXME: this should clear the txrdy status for (11/baudrate) seconds.
+// but it is more complicated than that because there is a serialization
+// buffer and a one byte fifo I believe.
+        if (tthis->m_uart_sel == 0) {
+            // FIXME: only one term is supported
+            UI_displayChar(tthis->m_terms[0].wndhnd, (uint8)byte);
+        }
+        break;
+
+    case OUT_UART_CMD:
+        // this code emulates only those bits of 8251 functionality which the
+        // MXD actually uses, and everything else is assumed to be configured
+        // as the MXD configures the UARTs. nobody reading this should use this
+        // code as a reference for 8251 behavior!
+        // FIXME: it might be good to model overrun, in which case this code
+        //        must reset the overrun bit when the clear command is given
+        break;
+
+    case OUT_RBI:
+        tthis->m_rbi = byte;
+        tthis->update_rbi();
+        break;
+    }
 }
 
 // vim: ts=8:et:sw=4:smarttab

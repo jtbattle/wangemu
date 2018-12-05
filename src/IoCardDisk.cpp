@@ -340,7 +340,8 @@ IoCardDisk::CBS(int val)
 
     // unexpected -- the real hardware ignores this byte
     if (NOISY > 0) {
-        UI_Warn("unexpected disk CBS: Output of byte 0x%02x", val);
+        // FIXME: MVP spews these two a lot. what do they mean?
+        // UI_Warn("unexpected disk CBS: Output of byte 0x%02x", val);
     }
 
     // TODO:

@@ -2,87 +2,82 @@
 Emulator TODO list
 ============================================================================
 
-iocarddisk.cpp(143):      C26495: Variable 'IoCardDisk::m_host_type' is uninitialized. Always initialize a member variable (type.6).
-iocarddisk.h(201):        C26495: Variable 'IoCardDisk::drive_t::state' is uninitialized. Always initialize a member variable (type.6).
-iocardtermmux.h(145):     C26495: Variable 'IoCardTermMux::m_term_t::wndhnd' is uninitialized. Always initialize a member variable (type.6).
-syscfgstate.h(102):       C26495: Variable 'SysCfgState::<unnamed-type-m_slot>::type' is uninitialized. Always initialize a member variable (type.6).
+*) master list of priorities:
+   clean up reset key handling; submit
+   clean up flow control; submit
+   clean up mxd script flow control; submit
+   add mvp/vlsi cpu and memory options; submit
+   system2200 namespace cleanup; submit
+   get rid of tied keyboard thing -- unnecessary generalization
+   decide on a consistent set of naming conventions and stick to them
 
-*) keyboard event routing issues
+*) why am I getting character overruns? when the buffer is not full?
+   it could happen if there is a slow command, say reset, but it happens
+   even on simple text input.  upping the 8080 speed to 2+ MHz and it
+   still happens.
 
-    + script mode doesn't quite work in mxd mode.  don't worry too much
-      about it until it gets rewritten for 8080 operation.
+   the 8080 should do about 170 instructions per character time.
+   (1780000 clks/sec)*(11 bits/char)*(1 sec/19200) = 1019 clocks / char
+   assuming 6 clks/instruction average, that is 170 instrctions.
 
-    + the 2236 terminals send HALT and RESET to the MXD via serial codes
-      of 0x13 and 0x12, respectively, and the MXD remaps those before
-      sending them on to the host CPU. The current UiCrt_Keyboard code
-      doesn't do that. there might be other such keys that need such handling.
+   on solution would be to check for rx_ready in the callback, and if it
+   is still set, schedule another callback for 20% of a character time, say,
+   vs dropping the character.  but that seems to be sweeping the problem
+   under the rug.
 
-    + the tied_keyboard setting is read during getDefaults() in UiCrtFrame
-        but tied_keyboard doesn't make sense for term mux because it is not
-        an independent address
+*) terminal protocol issues:
+   1. how does the script injection prevent from swamping the mxd?
+      does it need to obey flow control bytes or is there a better way?
+      A: TBD
+   2. On RESET, the 2236 sends 12 F8 E4. should the emulated terminal?
+       actually, I think the terminal sends 12 to MXD, MXD sends FB F6
+       (reset CRT); the terminal does a reset sequence (clear screen,
+       reset memory, whatever) and then sends E4 F8 (F8=flow control).
+       not sure what E4 does. See this comment in
+       IoCardTermMux::IoCardTermMux()
+// the MXD initializes the CRT buffer with FB F6 (crt reset) and
+// 16 0x01 (clear screen) characters.  these are sent unconditionally
+// (no flow control) after reset (see INIT_CRT_BUF).  The terminal
+// emulation code in UiCrt.cpp should not send anything after reset.
+// when it sees FB F6 from the MXD, it replies with a cold or warm
+// reset response, which includes the E4 F8 on power up. If the user
+// hits RESET at the terminal, it sends 12 (reset to MXD).
+// The MXD will send the FB F6 reset sequence again, I believe.
+   3. the 2236 doesn't send CRT-GO (after the init sequence) until after
+      it does a CRT-STOP. Thereafter it sends CRT-GO every four seconds
+      even if things are hunky dory. does this need modeling?
+      A: TBD
 
-    + in a few places, term_num is hardwired to 1
+    - Fasstcom Terminal Specs v1.0.pdf, pdf page 8 says
+      "... the terminal must always transmit a HEX(F8F9) every 3 to 5 seconds
+       whenever it is ready to receive new data during idle time.
+       This is called the constant poll."
+      The emulated terminal doesn't.  Should it?  Is this just to compensate
+      for the fact that the serial link wasn't perfect, so this avoided
+      accidentally dropping a XON character and freezing the handshake?
 
-*) useful resources for MXD emulation:
-   MXD 8080 code partial disasembly:
-        C:/Users/Jim/Documents/wang2200/boards/LVP\ box/7291_dasm/asm/mxd.asm
-   MVP mxd-related microcode, especially
-        C:/Users/Jim/Documents/wang2200/disk_images/unreleased/kryoflux/MVP_3.5_Source_Aug_91/mvp_3.5_source_code/JLMVP32A
-   MXC,D,E notes:
-        C:/users/jim/documents/wang2200/boards/terminal_mux_notes.txt
-   https://wang2200.org/docs/system/2200MVP_MaintenanceManual.729-0584-A.1-84.pdf
-       section F has schematics for many MVP cards, including MXD (7290-1, 7291-1)
-       (pdf page 336, ...)
+    HOLD ON.  The above is speculation. But the capture from my python
+    from the actual terminal shows the terminal independently sends the
+    three byte power on sequence.
 
-*) IoCardTermMux doesn't send bytes from crt_buf to terminal!
-   For now I poke it to the display immediately, but in the long term,
-   there must be a timer which sends a character every
-        (10 bits/char) * (1 sec / 19200 bits) = 0.52 ms
-   with the usual complications, eg
-        kill the timer cleanly on exit/reconfig
-        kill the timer on reset
-        if the card indicates !ready because the output buffer is full,
-           then when the timer drains a character, be sure to set ready
-           iff ABS=07 still.
-   Also, the 05 port (VP /005) also does a direct poke and needs to route
-   things through the serial port emulation.
+*) reset key handling is goofy.  UiCrtFrame.cpp handles Alt-R and Alt-W
+   via a menu option, and then calls sys.reset() right there.  that was
+   ok before, but now it needs to route through the terminal handler
+   because the MXD conditionally filters such events. we also want to
+   trigger the post-reset init byte sequence from 2236 to mxd.
+
+*) the tied_keyboard setting is read during getDefaults() in UiCrtFrame
+   but tied_keyboard doesn't make sense for term mux because it is not
+   an independent address
+
+*) I'm seeing new strobes to the disk controller in MVP OS.
+   IoCardDisk::CBS() handler has comments saying OB8 and OB1
+   were used for various things.
+
+*) in a few places, term_num is hardwired to 1
+   don't worry about generalizing to N terminals until one term is working
 
 *) add terminal mux emulation and terminal emulation so I can run MVP OS's
-
-   - the hardware has an 8b "RBI" register (ready/busy), one bit for each
-     logical port.  Software maintains the logical readiness of each
-     port, but hardware takes care of muxing out the appropriate bit to the
-     RBI bus signal.  note that the flop with these bits is cleared on reset
-     but also any time the OB1-8 bus is read from the latch; that is, after
-     OBS or CBS, reading the data latch clears the OBS/CBS strobe latches
-     and it also clears the RBI[7:1] latch (== not ready), thus the Z80
-     must write the latch to indicate ready again.
-
-     does it makes sense for the emulation to do something similar?
-     m_cpu.setDevRdy() is how it currently returns ready status.
-
-     This is what tells ucode that the device is ready to accept another
-     OBS or CBS strobe.
-        Understand this better:
-            on the MXE schematic, if there is no OBS or CBS input pending
-            and the card is selected, the !RBI mux "!STB" input is low,
-            then it lets the mux drive !RBI.  But if (OBS or CBS) is pending
-            AND latched AB3=1 then !RBI is driven high (not ready).
-            why "&& AB3"?
-                0: not mapped
-                1: keyboard (in vp mode), doesn't accept CBS/OBS
-                2: read status
-                3: MXD: unused; MXE: read bytes from screen dump
-            OK, so OBS/CBS aren't used in this range, but then && AB3
-            is a don't care, no?
-
-     Cards drive:   RBI, IBS, IB1-9
-     Cards receive: ABS, AB1-8, CBS, OBS, OB1-8, CPB
-            CPB indicates when the host is waiting for input
-                ucode only ever sets this to "!busy"
-                when a card drives IBS, it resets CBP back to the busy state
-            RBI indicates when the card is ready for OBS/CBS input
-                !RBI=0 is ready, !RBI=1 is busy
 
    - currently the division is
         + IoCardKeyboard
@@ -94,11 +89,6 @@ syscfgstate.h(102):       C26495: Variable 'SysCfgState::<unnamed-type-m_slot>::
                 + UiCrt_Charset.h
                 + UiCrtErrorDlg
                 + UiCrt_Keyboard
-     IoCardKeyboard.cpp has a fair amount of script processing logic in it,
-        and I don't want to duplicate this for dumb & smart terminal modes
-     UiCrtFrame constructor takes title, screen_size, io_addr.
-        To reuse this, it needs a more generic attachment than io_addr;
-        it needs to either me an io_addr port N of term mux at io_addr nn.
      Crt state is saved in the .ini file by ui/CRT-nn, where nn is the addr;
         this needs to be generalized
      The CrtFrame displays disk icons and activity, but in mux mode,
@@ -107,35 +97,6 @@ syscfgstate.h(102):       C26495: Variable 'SysCfgState::<unnamed-type-m_slot>::
      The CrtFrame logic enables some config options only on the "primary" crt,
         which historically has been the one at io_addr=05.  Rethink this.
      Config dialog needs to allow term mux configurations.
-     UiCrt_Keyboard is really part of UiCrt, and provides the OnChar/OnKeyDown
-        handling.  When it recognizes a key, it calls
-            core_sysKeystroke(tied io_addr, key)
-        which then routes it to the associated IoCardKeyboard function.
-        The three related functions are
-            core_sysKeystroke(io_addr, key)
-            core_invokeScript(io_addr, filename)
-            core_isKbInScriptMode(io_addr)  // used to disable some fcns while processing the script
-        IoCardKeyboard::check_keyready() is a private function, and one of
-            the things it does is poll the script.  To move this into the
-            UiCrt logic would require IOCardKeyboard to move that script
-            logic into UiCrt and have check_keyready() poll it there.
-        Huh -- the logic grabs the next char from the script file only
-            after the keystroke buffer is empty, but then waits 50ms before
-            reporting it because something breaks in the ucode without it.
-            (50ms of simulated time, not realtime)
-
-    - emulating MXD, not MXE, because MXE runs only >= OS ver 2.4
-
-    - interesting: when in mvp mode, port 01 appears as always busy
-      (p10 of 2236MXE_Documentation.8-83.pdf)
-      see p78 too: Addresses 07, 03, and 02 remain busy in VP mode.
-      p80 has a description of MVP mode.
-
-    - allow term MUX to connect to a real serial port
-        - a mac/linux/win lib: http://sigrok.org/wiki/Libserialport
-        - http://wjwwood.io/serial/
-        - https://iftools.com/opensource/ctb.en.php
-        - windows+linux only: http://www.teuniz.net/RS-232/
 
     - section 8 of 2200MVP_MaintenanceManual.729-0584-A.1-84.pdf lists
       what is involved to upgrade a VP to an MVP.  part of it requires
@@ -161,22 +122,27 @@ syscfgstate.h(102):       C26495: Variable 'SysCfgState::<unnamed-type-m_slot>::
       later erased and overwritten, making the handwritten note
       meaningless.
 
-*) File/Script is now greyed out when term_mux is chosen because
-    UiCrtFrame.cpp doesn't set m_primary_crt when term_mux is in use.
-    this will need to get reworked when there is more than one terminal.
-
-*) ?? do this or not ??
-    vimgrep '!= nullptr' *.cpp
-    then replace with simple boolean tests, eg
-        assert(inst != nullptr);
-    becomes
-        assert(inst);
-
-*) review my naming convention. I haven't been consistent.
-   eg, some_are_like_this, someAreCamelCase.
-   review some c++ style guides and pick a convention.
-
-*) add i8080.c credits to UiMyAboutDlg.cpp
+*) review coding convention
+    - System2200 is a singleton.  it is better to instead use a namespace with
+      all the state and functions inside it, so System2200().foo would be
+      System2200::foo. I admit the current scheme is tacky.
+    - do this or not?
+        vimgrep '!= nullptr' *.cpp
+        then replace with simple boolean tests, eg
+            assert(inst != nullptr);
+        becomes
+            assert(inst);
+    - look for old-style static casts and replace with modern
+        (int)foo --> static_cast<int>(foo)
+    - I have code like this in multiple places:
+          IoCardDisk *tthis = static_cast<IoCardDisk*>
+                                      (System2200().getInstFromSlot(slot));
+      but should it be reinterpret_cast<>()?
+    - review my naming convention. I haven't been consistent.
+      eg, some_are_like_this, someAreCamelCase.
+      review some c++ style guides and pick a convention.
+              Google: https://google.github.io/styleguide/cppguide.html
+   Sutter/Stroustrup: https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines
 
 *) add support for MVP and VLSI type CPUs
    - MVP adds the 30ms timer, and up to 512KB of data RAM via the SL register.
@@ -193,15 +159,13 @@ syscfgstate.h(102):       C26495: Variable 'SysCfgState::<unnamed-type-m_slot>::
    directory describes the upgrade to give 64KB of control ram and
    512KB of RAM.  0x8000 to 0x8FFF is a hole where the bootstram PROM lives.
    Don't make it configurable -- just give it all 64K to reduce UI clutter.
+   Or tie it to the configuration: VP gets 32K, MVP/VLSI get 64K.
 
-*) code quality
-    look for old-style static casts and replace with modern
-        (int)foo --> static_cast<int>(foo)
-
-    I have code like this in multiple places:
-        IoCardDisk *tthis = static_cast<IoCardDisk*>
-                                    (System2200().getInstFromSlot(slot));
-    but should it be reinterpret_cast<>()?
+*) allow term MUX to connect to a real serial port
+        - a mac/linux/win lib: http://sigrok.org/wiki/Libserialport
+        - http://wjwwood.io/serial/
+        - https://iftools.com/opensource/ctb.en.php
+        - windows+linux only: http://www.teuniz.net/RS-232/
 
 *) notes on disk protocol and unimplemented commands:
     C:/Users/Jim/Documents/wang2200/disk_protocol/notes.txt
@@ -235,6 +199,9 @@ syscfgstate.h(102):       C26495: Variable 'SysCfgState::<unnamed-type-m_slot>::
    will be problems.  Once the code is somewhat stable under windows,
    build it on OSX and iron out the problems.
 
+*) In MXD mode, TAB means TAB (2236DW) or FN (2236DE) (instead of STMT).
+   The help page should be updated to indicate this.
+
 *) on toolbar, add superscript to some SF keys in (M)VP mode:
      SF4: END
      SF5: down arrow  (useful when the edited line wraps)
@@ -244,22 +211,9 @@ syscfgstate.h(102):       C26495: Variable 'SysCfgState::<unnamed-type-m_slot>::
 
 *) improved 2236 terminal emulation
 
-    - add smart terminal commands that I've skipped
-        - make it so FB Cx actually causes a x/6 second delay
-        - add command to return terminal ID
-        - screen input (capture)
-
     - test some corner case on the real terminal
       what happens if there is an incorrect escape sequence:
       at what point are the bytes swallowed, or are they passed through?
-
-    - Fasstcom Terminal Specs v1.0.pdf, pdf page 8 says
-      "... the terminal must always transmit a HEX(F8F9) every 3 to 5 seconds
-       whenever it is ready to receive new data during idle time.
-       This is called the constant poll."
-      The emulated terminal doesn't.  Should it?  Is this just to compensate
-      for the fact that the serial link wasn't perfect, so this avoided
-      accidentally dropping a XON character and freezing the handshake?
 
     - 742-0903.MNL.IntegratedTerminal2236DW.85-02-27.pdf, pdf page 68 says
           2236DW and 2236DW have mostly the same character generators,
@@ -471,15 +425,6 @@ syscfgstate.h(102):       C26495: Variable 'SysCfgState::<unnamed-type-m_slot>::
         - on success, swap to new world, then destroy old world
         - on failure, report problem, and old world is still usable
 
-*) when I run diags, say control mem tests, the test will often hang if
-   I run the emulator in realtime mode, but runs OK if I am unregulated.
-   what gives?  break during the apparent hang and see what the execution
-   loop is doing.  enable trace dumping, I guess.
-   A: it turns out it is polling (SH & 2), which is the "CRB" status bit,
-      which indicates if the selected device is busy.  Hitting the keyboard
-      a few times gets it past that log jam.  I'm not sure why that is
-      required and why it only happens in speed regulated mode.
-
 *) update the website (and build notes) with directions on how to make
    the thing such that it doesn't have DLL dependencies.  What a mess.
       1) declare "_BIND_TO_CURRENT_CRT_VERSION=1" in the wx libs that
@@ -567,7 +512,7 @@ syscfgstate.h(102):       C26495: Variable 'SysCfgState::<unnamed-type-m_slot>::
 *) check out these tips on using wxWidgets under visual studio:
     http://www.litwindow.com/Knowhow/wxHowto/wxhowto.html
 
-*) emulate "CPU running" light on keyboard
+*) emulate "CPU running" light on keyboard (first-gen only)
 
 *) add a debugger/monitor
     - the VP disassembler doesn't match the assembler syntax as specified
@@ -606,6 +551,18 @@ syscfgstate.h(102):       C26495: Variable 'SysCfgState::<unnamed-type-m_slot>::
       http://www.wang2200.org/docs/internal/2200_IO_Specifications.6-72.pdf
    see also
      c:\users\jim\documents\wang2200\io-notes.txt
+
+*) useful resources for MXD emulation:
+   (save for later after I forget this stuff)
+   MXD 8080 code partial disasembly:
+        C:/Users/Jim/Documents/wang2200/boards/LVP\ box/7291_dasm/asm/mxd.asm
+   MVP mxd-related microcode, especially
+        C:/Users/Jim/Documents/wang2200/disk_images/unreleased/kryoflux/MVP_3.5_Source_Aug_91/mvp_3.5_source_code/JLMVP32A
+   MXC,D,E notes:
+        C:/users/jim/documents/wang2200/boards/terminal_mux_notes.txt
+   https://wang2200.org/docs/system/2200MVP_MaintenanceManual.729-0584-A.1-84.pdf
+       section F has schematics for many MVP cards, including MXD (7290-1, 7291-1)
+       (pdf page 336, ...)
 
 ============================================================================
 --- wvdutil issues ---
