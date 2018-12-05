@@ -1,8 +1,8 @@
-from Term_2336 import *
+from Term_2236 import *
 import time
 
 # main
-term = Term_2336(port='COM13', baudrate=19200)
+term = Term_2236(port='COM13', baudrate=19200)
 
 term.clear().charset1().cursor('on')
 term.attrSet(bright=True).attrOff()
@@ -67,7 +67,7 @@ if 0:
     time.sleep(2)
     term.sendline()
 
-if 1:
+if 0:
     # attribute test
     term.attrUse()
     term.sendline("Normal")
@@ -267,6 +267,40 @@ if 0:
     term.at(12,35).attrUse(inv=False).sendhex('FFFF41FFFF').sendline()
     term.at(16,0)
 
+if 1:
+    term.clear()
+    term.sendline("Testing cursor escape codes")
+    time.sleep(5)
+
+    if 1:
+        term.sendline("Cursor is on")
+        term.cursor("on")
+        time.sleep(5)
+
+    if 1:
+        term.sendline("Cursor is off")
+        term.cursor("off")
+        time.sleep(5)
+
+    if 1:
+        term.sendline("Turn on blink")
+        term.cursor("blinkon")
+        time.sleep(5)
+
+    if 0:
+        term.sendline("Turn off blink")
+        term.cursor("blinkoff")
+        time.sleep(5)
+
+    if 1:
+        term.sendline("Cursor is on again")
+        term.cursor("on")
+        time.sleep(5)
+
+    # conclusion after trying various combinations:
+    #  1: turning blink on and off attribute while the cursor is off
+    #     doens't turn the cursor back on
+    #  2: turning the cursor on forces blink off
 
 term.cursor('on').charset1().attrOff()
 term.sendline("done!")

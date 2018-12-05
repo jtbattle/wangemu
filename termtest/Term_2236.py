@@ -1,6 +1,6 @@
 import serial
 
-class Term_2336:
+class Term_2236:
     """A wrapper around pyserial to enact Wang flow controlled serial I/O"""
     # FIXME: this doesn't compress the input stream, nor does it
     #        allow the caller to manually send a FB ... sequence.
@@ -59,8 +59,8 @@ class Term_2336:
             return chr(0)
         s = ''
         for n in range(0, len(str), 2):
-            s += chr(  16*Term_2336._hex_to_int(str[n]) +
-                          Term_2336._hex_to_int(str[n+1]) )
+            s += chr(  16*Term_2236._hex_to_int(str[n]) +
+                          Term_2236._hex_to_int(str[n+1]) )
         return s
     _to_h = staticmethod(_to_h)
 
@@ -144,6 +144,13 @@ class Term_2336:
             else:
                 self.ser.write(ch)
         return self
+
+    # raw; no escape
+    def sendraw(self, s):
+        for ch in s:
+            self._wait_to_write()
+            self.ser.write(ch)
+        return self
     
     # send n null bytes
     def pad(self,n):
@@ -160,7 +167,7 @@ class Term_2336:
 
     # send a string of bytes expressed a hex literal string
     def sendhex(self,s):
-        self.send(Term_2336._to_h(s))
+        self.send(Term_2236._to_h(s))
         return self
 
     # enable main character set
@@ -186,11 +193,31 @@ class Term_2336:
     # for the VP that sucks, but the MVP/mux solution compresses repeated
     # characters, so typically moving the cursor would end up on the wire
     # as 01 (FB nn 0A) (FB nn 09), or 7 characters.
-    def at(self, row, col):
+    def at_dumb(self, row, col):
         if (0 <= col <= 79) and (0 <= row <= 23):
             self.home()
             for n in xrange(0,row): self.send(chr(0x0a))
             for n in xrange(0,col): self.send(chr(0x09))
+        else:
+            print "at(%d,%d) is not on screen" % (col,row)
+        return self
+
+    # cursor addressing with compression codes
+    def at(self, row, col):
+        if (0 <= col <= 79) and (0 <= row <= 23):
+            self.home()
+            if row < 3:
+                for n in xrange(0,row): self.sendraw(chr(0x0a))
+            else:
+                self.sendraw(chr(0xFB))
+                self.sendraw(chr(row))
+                self.sendraw(chr(0x0A))
+            if col < 3:
+                for n in xrange(0,col): self.sendraw(chr(0x09))
+            else:
+                self.sendraw(chr(0xFB))
+                self.sendraw(chr(col))
+                self.sendraw(chr(0x09))
         else:
             print "at(%d,%d) is not on screen" % (col,row)
         return self
@@ -201,8 +228,16 @@ class Term_2336:
             self.send(chr(0x05))
         elif s == 'off':
             self.send(chr(0x06))
-        elif s == 'blink':
+        elif s == 'blink':  # enable cursor and make it blink
             self.sendhex('02050F')
+        elif s == 'blinkon':  # use FB-escape to set blink state on
+            self.sendraw(chr(0xFB))
+            self.sendraw(chr(0xFC))
+        elif s == 'blinkoff':  # use FB-escape to set blink state off
+            self.sendraw(chr(0xFB))
+            self.sendraw(chr(0xF8))
+        else:
+            print "Warning: bad cursor() argument"
         return self
 
     # pause terminal for N sixths of a second, 1-9 inclusive
