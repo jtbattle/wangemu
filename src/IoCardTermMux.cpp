@@ -115,7 +115,7 @@ IoCardTermMux::IoCardTermMux(std::shared_ptr<Scheduler> scheduler,
     }
 
     int io_addr;
-    bool ok = System2200().getSlotInfo(cardslot, 0, &io_addr);
+    bool ok = System2200::getSlotInfo(cardslot, 0, &io_addr);
     assert(ok); ok=ok;
 
     m_i8080 = i8080_new(IoCardTermMux::i8080_rd_func,
@@ -128,7 +128,7 @@ IoCardTermMux::IoCardTermMux(std::shared_ptr<Scheduler> scheduler,
 
     // register the i8080 for clock callback
     clkCallback cb = std::bind(&IoCardTermMux::execOneOp, this);
-    System2200().registerClockedDevice(cb);
+    System2200::registerClockedDevice(cb);
 
     // FIXME: just one for now
     m_terms[0].wndhnd = UI_initCrt(UI_SCREEN_2236DE, io_addr, 1);
@@ -136,9 +136,9 @@ IoCardTermMux::IoCardTermMux(std::shared_ptr<Scheduler> scheduler,
 
     {
         int term_num = 0; /* FIXME: term 1 is hardwired here */
-        System2200().kb_register(
+        System2200::kb_register(
             // FIXME: need 0x01 because elsewhere m_assoc_kb_addr defaults to 0x01;
-            //        a later System2200().kb_foo(m_assoc_kb_addr,...) call fails
+            //        a later System2200::kb_foo(m_assoc_kb_addr,...) call fails
             //        fix the m_assoc_kb_addr logic instead of this hack
             m_baseaddr + 0x01,
             term_num+1,
@@ -223,7 +223,7 @@ IoCardTermMux::~IoCardTermMux()
 {
     if (m_slot >= 0) {
         // not just a temp object, so clean up
-        System2200().kb_unregister(m_baseaddr + 0x01, /* see the hack comment in kb_register() */
+        System2200::kb_unregister(m_baseaddr + 0x01, /* see the hack comment in kb_register() */
                                    1 /* FIXME: term 1 is hardwired here */);
 
         i8080_destroy(static_cast<i8080*>(m_i8080));
@@ -637,7 +637,7 @@ IoCardTermMux::i8080_out_func(int addr, int byte, void *user_data)
 
     case OUT_PRIME:
         // issue (warm) reset
-        System2200().reset(false);
+        System2200::reset(false);
         break;
 
     case OUT_HALT_STEP:

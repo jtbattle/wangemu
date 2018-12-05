@@ -7,20 +7,19 @@ Emulator TODO list
    clean up flow control; submit
    clean up mxd script flow control; submit
    add mvp/vlsi cpu and memory options; submit
-   system2200 namespace cleanup; submit
    get rid of tied keyboard thing -- unnecessary generalization
    decide on a consistent set of naming conventions and stick to them
 
-*) why am I getting character overruns? when the buffer is not full?
+*) why am I getting character overruns?
    it could happen if there is a slow command, say reset, but it happens
    even on simple text input.  upping the 8080 speed to 2+ MHz and it
-   still happens.
+   still happens, so it isn't slightly marginal timing.
 
    the 8080 should do about 170 instructions per character time.
-   (1780000 clks/sec)*(11 bits/char)*(1 sec/19200) = 1019 clocks / char
-   assuming 6 clks/instruction average, that is 170 instrctions.
+   (1780000 clks/sec)*(11 bits/char)*(1 sec/19200 bits) = 1019 clocks/char
+   assuming 6 clks/instruction average, that is 170 instructions.
 
-   on solution would be to check for rx_ready in the callback, and if it
+   one solution would be to check for rx_ready in the callback, and if it
    is still set, schedule another callback for 20% of a character time, say,
    vs dropping the character.  but that seems to be sweeping the problem
    under the rug.
@@ -74,8 +73,10 @@ Emulator TODO list
    IoCardDisk::CBS() handler has comments saying OB8 and OB1
    were used for various things.
 
-*) in a few places, term_num is hardwired to 1
-   don't worry about generalizing to N terminals until one term is working
+*) in a few places, term_num is hardwired to 1.
+   don't worry about generalizing to N terminals until one term is working.
+   in fact, maybe keep it to one terminal just to keep the user interface
+   reasonable.
 
 *) add terminal mux emulation and terminal emulation so I can run MVP OS's
 
@@ -554,7 +555,7 @@ Emulator TODO list
 
 *) useful resources for MXD emulation:
    (save for later after I forget this stuff)
-   MXD 8080 code partial disasembly:
+   MXD 8080 code partial disassembly:
         C:/Users/Jim/Documents/wang2200/boards/LVP\ box/7291_dasm/asm/mxd.asm
    MVP mxd-related microcode, especially
         C:/Users/Jim/Documents/wang2200/disk_images/unreleased/kryoflux/MVP_3.5_Source_Aug_91/mvp_3.5_source_code/JLMVP32A

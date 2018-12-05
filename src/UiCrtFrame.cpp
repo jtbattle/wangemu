@@ -313,8 +313,6 @@ CrtFrame::isPrimaryCrt() const
 void
 CrtFrame::makeMenubar(int primary_crt)
 {
-    System2200 sys;
-
     wxMenu *menuFile = new wxMenu;
     if (primary_crt) {
         menuFile->Append(File_Script,   "&Script...", "Redirect keyboard from a file");
@@ -345,11 +343,11 @@ CrtFrame::makeMenubar(int primary_crt)
 
     // printer view
     wxMenu *menuPrinter = nullptr;
-    if (primary_crt && (sys.getPrinterIoAddr(0) >= 0)) {
+    if (primary_crt && (System2200::getPrinterIoAddr(0) >= 0)) {
         // there is at least one printer
         menuPrinter = new wxMenu;
         for(int i=0; ;i++) {
-            int io_addr = sys.getPrinterIoAddr(i);
+            int io_addr = System2200::getPrinterIoAddr(i);
             if (io_addr < 0) {
                 break;
             }
@@ -373,11 +371,11 @@ CrtFrame::makeMenubar(int primary_crt)
     if (primary_crt) {
         menuConfig->Append(Configure_Stats,      "Statistics",                "Toggle statistics on statusbar",      wxITEM_CHECK);
     }
-    if (sys.getKbIoAddr(1) >= 0) {
+    if (System2200::getKbIoAddr(1) >= 0) {
         // there is more than one keyboard
         menuConfig->AppendSeparator();
         for(int i=0; ;i++) {
-            int addr = sys.getKbIoAddr(i);
+            int addr = System2200::getKbIoAddr(i);
             if (addr < 0) {
                 break;
             }
@@ -419,17 +417,15 @@ CrtFrame::makeMenubar(int primary_crt)
 void
 CrtFrame::setMenuChecks(const wxMenu *menu)
 {
-    System2200 sys;
-
     // ----- file --------------------------------------
     if (isPrimaryCrt()) {
-        bool script_running = System2200().kb_scriptModeActive(m_assoc_kb_addr, m_term_num);
+        bool script_running = System2200::kb_scriptModeActive(m_assoc_kb_addr, m_term_num);
         m_menuBar->Enable(File_Script, !script_running);
     }
 
     // ----- cpu ---------------------------------------
     if (isPrimaryCrt()) {
-        bool regulated = sys.isCpuSpeedRegulated();
+        bool regulated = System2200::isCpuSpeedRegulated();
         m_menuBar->Check( CPU_ActualSpeed,       regulated );
         m_menuBar->Check( CPU_UnregulatedSpeed, !regulated );
     }
@@ -454,10 +450,10 @@ CrtFrame::setMenuChecks(const wxMenu *menu)
         // see if there are any disk controllers
         for(int controller=0; ; controller++) {
             int slot, io_addr;
-            if (!System2200().findDiskController(controller, &slot)) {
+            if (!System2200::findDiskController(controller, &slot)) {
                 break;
             }
-            bool ok = sys.getSlotInfo(slot, 0, &io_addr);
+            bool ok = System2200::getSlotInfo(slot, 0, &io_addr);
             assert(ok); ok=ok;
             for(int d=0; d<2; d++) {
                 int stat = IoCardDisk::wvdDriveStatus(slot, d);
@@ -488,10 +484,10 @@ CrtFrame::setMenuChecks(const wxMenu *menu)
         if (isPrimaryCrt()) {
             m_menuBar->Check( Configure_Stats,   getShowStatistics() );
         }
-        if (sys.getKbIoAddr(1) >= 0) {
+        if (System2200::getKbIoAddr(1) >= 0) {
             // there is more than one keyboard
             for(int i=0; ;i++) {
-                int addr = sys.getKbIoAddr(i);
+                int addr = System2200::getKbIoAddr(i);
                 if (addr < 0) {
                     break;
                 }
@@ -798,11 +794,10 @@ CrtFrame::getDefaults()
         m_assoc_kb_addr = 0x01; // default
     }
     // make sure that old mapping still makes sense
-    System2200 sys;
     int found = 0;
 // FIXME: why 10?  why not NUM_IOSLOTS?
     for(int i=0; i<10; i++) {
-        if (sys.getKbIoAddr(i) == m_assoc_kb_addr) {
+        if (System2200::getKbIoAddr(i) == m_assoc_kb_addr) {
             found = 1;
             break;
         }
@@ -928,7 +923,7 @@ CrtFrame::OnScript(wxCommandEvent& WXUNUSED(event))
     int r = hst.fileReq(Host::FILEREQ_SCRIPT, "Script to execute", 1, &fullpath);
     if (r == Host::FILEREQ_OK) {
         // tell the core emulator to redirect input for a while
-        System2200().kb_invokeScript(m_assoc_kb_addr, m_term_num, fullpath);
+        System2200::kb_invokeScript(m_assoc_kb_addr, m_term_num, fullpath);
     }
 }
 
@@ -969,23 +964,21 @@ CrtFrame::OnDump(wxCommandEvent& WXUNUSED(event))
 void
 CrtFrame::OnQuit(wxCommandEvent& WXUNUSED(event))
 {
-    System2200().terminate(); // shut down all windows and exit
+    System2200::terminate(); // shut down all windows and exit
 }
 
 
 void
 CrtFrame::OnReset(wxCommandEvent &event)
 {
-    System2200 sys;
-
     switch (event.GetId()) {
         default:
             assert(false);
         case CPU_HardReset:
-            sys.reset(true);      // hard reset
+            System2200::reset(true);      // hard reset
             break;
         case CPU_WarmReset:
-            sys.reset(false);      // warm restart
+            System2200::reset(false);      // warm restart
             break;
     }
 }
@@ -994,7 +987,7 @@ CrtFrame::OnReset(wxCommandEvent &event)
 void
 CrtFrame::OnCpuSpeed(wxCommandEvent &event)
 {
-    System2200().regulateCpuSpeed( (event.GetId() == CPU_ActualSpeed) );
+    System2200::regulateCpuSpeed( (event.GetId() == CPU_ActualSpeed) );
 }
 
 
@@ -1021,11 +1014,10 @@ CrtFrame::OnDiskFactory(wxCommandEvent &event)
 void
 CrtFrame::doInspect(const std::string &filename)
 {
-    System2200 sys;
-    sys.freezeEmu(true);    // halt emulation
+    System2200::freezeEmu(true);    // halt emulation
 
     int slot, drive;
-    bool in_use = sys.findDisk(filename, &slot, &drive, nullptr);
+    bool in_use = System2200::findDisk(filename, &slot, &drive, nullptr);
     if (in_use) {
         // close filehandles to the specified drive
         IoCardDisk::wvdFlush(slot, drive);
@@ -1034,7 +1026,7 @@ CrtFrame::doInspect(const std::string &filename)
     DiskFactory *factory = new DiskFactory(this, filename);
     factory->ShowModal();
 
-    sys.freezeEmu(false);   // run emulation
+    System2200::freezeEmu(false);   // run emulation
 }
 
 
@@ -1055,14 +1047,13 @@ CrtFrame::OnDiskFormat(wxCommandEvent& WXUNUSED(event))
 void
 CrtFrame::doFormat(const std::string &filename)
 {
-    System2200 sys;
-    sys.freezeEmu(true);    // halt emulation
+    System2200::freezeEmu(true);    // halt emulation
 
     bool wp;
     bool ok = IoCardDisk::wvdGetWriteProtect(filename, &wp);
     if (ok) {
         int slot, drive, io_addr;
-        bool in_use = sys.findDisk(filename, &slot, &drive, &io_addr);
+        bool in_use = System2200::findDisk(filename, &slot, &drive, &io_addr);
 
         wxString prompt = "";
         if (in_use) {
@@ -1089,7 +1080,7 @@ CrtFrame::doFormat(const std::string &filename)
         UI_Error("Error: operation failed");
     }
 
-    sys.freezeEmu(false);   // run emulation
+    System2200::freezeEmu(false);   // run emulation
 }
 
 
@@ -1111,7 +1102,7 @@ CrtFrame::OnDisk(wxCommandEvent &event)
             if (Host().fileReq(Host::FILEREQ_DISK, "Disk to load", 1, &fullpath) ==
                                Host::FILEREQ_OK) {
                 int drive2, io_addr2;
-                bool b = System2200().findDisk(fullpath, nullptr, &drive2, &io_addr2);
+                bool b = System2200::findDisk(fullpath, nullptr, &drive2, &io_addr2);
                 if (b) {
                     UI_Warn("Disk already in drive %c /%03x", "FC"[drive2], io_addr2);
                     return;
@@ -1158,9 +1149,8 @@ CrtFrame::OnDisplayFullscreen(wxCommandEvent& WXUNUSED(event))
 void
 CrtFrame::OnClose(wxCloseEvent& WXUNUSED(event))
 {
-    System2200 sys;
-    sys.freezeEmu(true);
-    sys.terminate(); // shut down all windows and exit
+    System2200::freezeEmu(true);
+    System2200::terminate(); // shut down all windows and exit
 }
 
 
@@ -1185,7 +1175,7 @@ CrtFrame::OnTimer(wxTimerEvent &event)
 void
 CrtFrame::OnConfigureDialog(wxCommandEvent& WXUNUSED(event))
 {
-    System2200().reconfigure();
+    System2200::reconfigure();
 }
 
 void
@@ -1194,13 +1184,12 @@ CrtFrame::OnConfigureScreenDialog(wxCommandEvent& WXUNUSED(event))
     wxString title;
     title.Printf( "Display /%03X Configuration", m_crt_addr);
 
-    System2200 sys;
-    sys.freezeEmu(true);    // halt emulation
+    System2200::freezeEmu(true);    // halt emulation
 
     CrtConfigDlg dlg(this, title);
     (void)dlg.ShowModal();
 
-    sys.freezeEmu(false);   // run emulation
+    System2200::freezeEmu(false);   // run emulation
 }
 
 
@@ -1238,7 +1227,7 @@ CrtFrame::OnConfigureKbTie(wxCommandEvent &event)
     assert( (id >= Configure_KB_Tie0) && (id <= Configure_KB_TieN) );
 
     int idx = id - Configure_KB_Tie0;
-    int new_addr = System2200().getKbIoAddr(idx);
+    int new_addr = System2200::getKbIoAddr(idx);
     assert(new_addr >= 0);
 
     m_assoc_kb_addr = new_addr;
@@ -1252,10 +1241,9 @@ CrtFrame::OnPrinter(wxCommandEvent &event)
     assert( (id >= Printer_0) && (id <= Printer_N) );
 
     // map chosen device to an I/O address
-    System2200 sys;
     int idx = id - Printer_0;
-    int io_addr = sys.getPrinterIoAddr(idx);
-    IoCard *inst = sys.getInstFromIoAddr(io_addr);
+    int io_addr = System2200::getPrinterIoAddr(idx);
+    IoCard *inst = System2200::getInstFromIoAddr(io_addr);
     assert(inst != nullptr);
 
     // get the printer controller card handle
@@ -1273,18 +1261,17 @@ CrtFrame::OnPrintAndClear(wxCommandEvent& WXUNUSED(event))
     // loop through each printer and ask it to print and clear its contents.
     // the clear should only be invoked if the print was successful,
     // otherwise a warning message should be displayed.
-    System2200 sys;
-    if (sys.getPrinterIoAddr(0) >= 0) {
+    if (System2200::getPrinterIoAddr(0) >= 0) {
 
         // there is at least one printer
         for(int i=0; ;i++) {
-            int io_addr = sys.getPrinterIoAddr(i);
+            int io_addr = System2200::getPrinterIoAddr(i);
             if (io_addr < 0) {
                 break; // no more printers
             }
 
             // map device I/O address to card handle
-            IoCard *inst = sys.getInstFromIoAddr(io_addr);
+            IoCard *inst = System2200::getInstFromIoAddr(io_addr);
             assert(inst != nullptr);
             IoCardPrinter *card = static_cast<IoCardPrinter*>(inst);
 
@@ -1308,7 +1295,7 @@ CrtFrame::OnToolBarButton(wxCommandEvent &event)
                 : (shift)         ? (sf | (id - TB_SF0 + 16))
                                   : (sf | (id - TB_SF0));
 
-    System2200().kb_keystroke(getTiedAddr(), m_term_num, keycode);
+    System2200::kb_keystroke(getTiedAddr(), m_term_num, keycode);
 }
 
 

@@ -313,8 +313,7 @@ SysCfgState::saveIni() const
 
         hst.ConfigWriteInt(subgroup, "memsize", getRamKB());
 
-        System2200 sys;
-        foo = (sys.isCpuSpeedRegulated()) ? "regulated" : "unregulated";
+        foo = (System2200::isCpuSpeedRegulated()) ? "regulated" : "unregulated";
         hst.ConfigWriteStr(subgroup, "speed", foo);
     }
 
@@ -470,7 +469,7 @@ SysCfgState::editCardConfig(int slot)
         // FIXME: this is a raw pointer from the m_cardInSlot[] unique_ptr.
         //        it is safe, but it feels dangerous to be using the raw ptr.
         //        all calls of getInstFromSlot() should be reviewed too.
-        auto inst = System2200().getInstFromSlot(slot);
+        auto inst = System2200::getInstFromSlot(slot);
         if (inst == nullptr) {
             // this must be a newly created slot that hasn't been put into
             // the IoMap yet.  create a temp object so we can edit the cardCfg.

@@ -23,7 +23,7 @@ IoCardPrinter::IoCardPrinter(std::shared_ptr<Cpu2200> cpu,
 {
     if (m_slot >= 0) {
         int io_addr;
-        bool ok = System2200().getSlotInfo(cardslot, 0, &io_addr);
+        bool ok = System2200::getSlotInfo(cardslot, 0, &io_addr);
         assert(ok); ok=ok;
         m_wndhnd = UI_initPrinter(io_addr);
         reset();

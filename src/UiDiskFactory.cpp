@@ -277,7 +277,7 @@ DiskFactory::OnButton_SaveAs(wxCommandEvent& WXUNUSED(event))
 
     // check if this disk is in a drive already
     int drive, io_addr;
-    bool in_use = System2200().findDisk(name, nullptr, &drive, &io_addr);
+    bool in_use = System2200::findDisk(name, nullptr, &drive, &io_addr);
     if (in_use) {
         UI_Warn("This disk is in use at /%03X, drive %d.\n\n"
                 "Either save to a new name or eject the disk first.",

@@ -316,9 +316,9 @@ Crt::OnKeyDown(wxKeyEvent &event)
 #endif
 
     if (foundmap) {
-        System2200().kb_keystroke(m_parent->getTiedAddr(),
-                                  m_parent->getTermNum(),
-                                  key);
+        System2200::kb_keystroke(m_parent->getTiedAddr(),
+                                 m_parent->getTermNum(),
+                                 key);
     } else {
         // let the OnChar routine handle it
         event.Skip();
@@ -368,9 +368,9 @@ Crt::OnChar(wxKeyEvent &event)
     }
 
     if (foundmap) {
-        System2200().kb_keystroke(m_parent->getTiedAddr(),
-                                  m_parent->getTermNum(),
-                                  key);
+        System2200::kb_keystroke(m_parent->getTiedAddr(),
+                                 m_parent->getTermNum(),
+                                 key);
     } else {
         // calling skip causes the menubar & etc logic to process it
         event.Skip();

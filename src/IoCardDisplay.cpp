@@ -112,7 +112,7 @@ IoCardDisplay::IoCardDisplay(std::shared_ptr<Scheduler> scheduler,
     }
 
     int io_addr;
-    bool ok = System2200().getSlotInfo(cardslot, 0, &io_addr);
+    bool ok = System2200::getSlotInfo(cardslot, 0, &io_addr);
     assert(ok); ok=ok;
     m_wndhnd = UI_initCrt(m_size, io_addr, 0);
 
@@ -214,7 +214,7 @@ IoCardDisplay::OBS(int val)
 
     UI_displayChar(m_wndhnd, (uint8)val);
 
-    if (System2200().isCpuSpeedRegulated()) {
+    if (System2200::isCpuSpeedRegulated()) {
         if (val == 0x03) {
             m_busy_state = busy_state::CLEAR1;
             m_card_busy = true;
@@ -280,7 +280,7 @@ IoCardDisplay::CPB(bool busy)
 void
 IoCardDisplay::tcbHsync(int arg)
 {
-    const bool regulated = System2200().isCpuSpeedRegulated();
+    const bool regulated = System2200::isCpuSpeedRegulated();
 
     m_hsync_count++;
 

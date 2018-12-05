@@ -12,52 +12,219 @@
 #include "Ui.h"
 
 #include <algorithm>
+#include <sstream>
 
 // ----------------------------------------------------------------------------
-// initialize static class members
+// this is the "private" state of the System2200 namespace,
+// invisible to anyone importing System2200.h
 // ----------------------------------------------------------------------------
 
-// declare the system singleton members
-bool                         System2200::m_initialized = false;
-std::shared_ptr<Scheduler>   System2200::m_scheduler   = nullptr;
-std::shared_ptr<Cpu2200>     System2200::m_cpu         = nullptr;
-std::shared_ptr<SysCfgState> System2200::m_config      = nullptr;
+// for coordinating events in the emulator
+static std::shared_ptr<Scheduler> scheduler = nullptr;
 
-System2200::term_state_t     System2200::m_term_state  = RUNNING;
-bool                         System2200::m_freeze_emu  = false;
-bool                         System2200::m_do_reconfig = false;
+// the central processing unit
+static std::shared_ptr<Cpu2200> cpu = nullptr;
+
+// active system configuration
+static std::shared_ptr<SysCfgState> current_cfg = nullptr;
+
+// ------------------------------- I/O dispatch -------------------------------
 
 // mapping i/o addresses to devices
-std::array<System2200::iomap_t,256>              System2200::m_IoMap;
-std::array<std::unique_ptr<IoCard>, NUM_IOSLOTS> System2200::m_cardInSlot;
-int                                              System2200::m_IoCurSelected;
+struct iomap_t {
+    int  slot;      // slot number of the device which "owns" this address
+    bool ignore;    // if false, access generates a warning message
+                    // if there is no device at that address
+};
+static std::array<std::unique_ptr<IoCard>, NUM_IOSLOTS> cardInSlot; // pointer to card in a given slot
+static std::array<iomap_t,256> IoMap;         // pointer to card responding to given address
+static int                     IoCurSelected; // address of most recent ABS
 
-// speed regulation
-int64   System2200::perf_real_ms[100];    // realtime at start of each slice
-int     System2200::perf_hist_len;        // number of entries written
-int     System2200::perf_hist_ptr;        // next entry to write
-bool    System2200::m_regulated_speed;    // try to match speed of real system
-bool    System2200::m_firstslice;         // has m_realtimestart been initialized?
-int64   System2200::m_realtimestart;      // wall time of when sim started
-int     System2200::m_real_seconds;       // real time elapsed
+// ----------------------------- speed regulation -----------------------------
 
-unsigned long System2200::m_simsecs; // number of actual seconds simulated time elapsed
+static bool  firstslice    = false; // has realtimestart been initialized?
+static int64 realtimestart = 0;     // relative wall time of when sim started
+static int   real_seconds  = 0;     // real time elapsed
 
-std::vector<System2200::clocked_device_t>
-        System2200::m_clocked_devices;  // clocked device callback list
-
-std::vector<System2200::kb_route_t>
-        System2200::m_kb_routes;  // keyboard event routing table
+static uint32 m_simsecs = 0; // number of actual seconds simulated time elapsed
 
 // amount of actual simulated time elapsed, in ms
-int64 System2200::m_simtime;
+static int64 m_simtime;
 
 // amount of adjusted simulated time elapsed, in ms because of user events
 // (eg, menu selection), sim time is often interrupted and we don't
 // actually desire to catch up.  m_simtime is the actual number of
 // simulated slices, while this var has been fudged to account for those
 // violations of realtime.
-int64 System2200::m_adjsimtime;
+static int64 m_adjsimtime;
+
+// keep a rolling average of how fast we are running in case it is reported.
+// we want to report the running average over the last second of realtime
+// to prevent the average from updating like crazy when running many times
+// realtime.
+static const int perf_hist_size = 100;  // # of timeslices to track
+static       int perf_hist_len  = 0;    // number of entries written
+static       int perf_hist_ptr  = 0;    // next entry to write
+static     int64 perf_real_ms[100];     // realtime at start of each slice
+
+// things which get called as time advances. it is used by the
+// core 2200 CPU and any peripheral which uses a microprocessor.
+// each device has a ns resolution counter, but we keep rebasing
+// the count so the counter doesn't overflow.  all we care is the
+// difference between the devices' sense of time.
+typedef struct {
+    clkCallback callback_fn;
+    uint32      ns;          // nanoseconds
+} clocked_device_t;
+static std::vector<clocked_device_t> m_clocked_devices;
+
+// ----------------------- keyboard input routing table -----------------------
+
+typedef struct {
+    int         io_addr;
+    int         term_num;
+    kbCallback  callback_fn;
+#if 0
+// FIXME: make corresponding change in System2200.cpp
+// figure out why this doesn't compile - complains about invoking deleted function
+    std::unique_ptr<ScriptFile>
+                script_handle;  // ID of which script stream we're processing
+#else
+    ScriptFile *script_handle;
+#endif
+} kb_route_t;
+
+std::vector<kb_route_t> m_kb_routes;
+
+// ----------------------------------------------------------------------------
+// initialize static class members
+// ----------------------------------------------------------------------------
+
+// help ensure an orderly shutdown
+typedef enum { RUNNING,
+               TERMINATING,
+               TERMINATED
+             } term_state_t;
+static term_state_t m_termination_state  = RUNNING;
+
+static bool m_freeze_emu  = false;  // toggle to prevent time advancing
+static bool m_do_reconfig = false;  // deferred request to reconfigure
+
+static void
+setTerminationState(term_state_t newstate)
+{
+    m_termination_state = newstate;
+}
+
+static term_state_t
+getTerminationState()
+{
+    return m_termination_state;
+}
+
+// ----------------------------------------------------------------------------
+// save/restore state to/from ini file
+// ----------------------------------------------------------------------------
+
+// returns true if the slot contains a disk controller, 0 otherwise
+static bool
+isDiskController(int slot)
+{
+    assert(slot >= 0 && slot < NUM_IOSLOTS);
+
+    int cardtype_idx;
+    bool ok = System2200::getSlotInfo(slot, &cardtype_idx, 0);
+
+    return ok && (cardtype_idx == static_cast<int>(IoCard::card_t::disk));
+}
+
+// for all disk drives, save what is mounted in them (or not)
+static void
+saveDiskMounts(void)
+{
+    Host hst;
+
+    for(int slot=0; slot<NUM_IOSLOTS; slot++) {
+        if (isDiskController(slot)) {
+            std::ostringstream subgroup;
+            subgroup << "io/slot-" << slot;
+            std::string val;
+            const auto cfg = current_cfg->getCardConfig(slot);
+            const auto dcfg = dynamic_cast<const DiskCtrlCfgState*>(cfg.get());
+            assert(dcfg);
+            int num_drives = dcfg->getNumDrives();
+            for(int drive=0; drive<num_drives; drive++) {
+                std::ostringstream item;
+                item << "filename-" << drive;
+                std::string filename("");
+                if (isDiskController(slot)) {
+                    int stat = IoCardDisk::wvdDriveStatus(slot, drive);
+                    if (stat & IoCardDisk::WVD_STAT_DRIVE_OCCUPIED) {
+                        bool ok = IoCardDisk::wvdGetFilename(slot, drive, &filename);
+                        assert(ok); ok=ok;
+                    }
+                }
+                hst.ConfigWriteStr(subgroup.str(), item.str(), filename);
+            } // drive
+        } // if (isDiskController)
+    } // slot
+}
+
+// remount all disks
+static void
+restoreDiskMounts(void)
+{
+    Host hst;
+
+    // look for disk controllers and populate drives
+    for(int slot=0; slot<NUM_IOSLOTS; slot++) {
+        if (isDiskController(slot)) {
+            const auto cfg = current_cfg->getCardConfig(slot);
+            const auto dcfg = dynamic_cast<const DiskCtrlCfgState*>(cfg.get());
+            assert(dcfg);
+            int num_drives = dcfg->getNumDrives();
+            for(int drive=0; drive<num_drives; drive++) {
+                std::ostringstream subgroup;
+                subgroup << "io/slot-" << slot;
+                std::ostringstream item;
+                item << "filename-" << drive;
+                std::string filename;
+                bool b = hst.ConfigReadStr(subgroup.str(), item.str(), &filename);
+                if (b && !filename.empty()) {
+                    bool bs = IoCardDisk::wvdInsertDisk(slot, drive, filename.c_str());
+            #if 0 // wvdInsertDisk() already generated a warning
+                    if (!bs) {
+                        UI_Warn("Problem loading '%s' into slot %d, drive %d",
+                                filename, slot, drive);
+                    }
+            #else
+                    bs = bs; // keep lint happy
+            #endif
+                }
+            } // for(drive)
+        } // if (isDiskController)
+    } // for(slot)
+}
+
+// break down any resources currently committed
+static void
+breakdown_cards(void)
+{
+    // destroy card instances
+    for(auto &card : cardInSlot) {
+        card = nullptr;
+    }
+
+    // clean up mappings
+    for(auto &mapentry : IoMap) {
+        mapentry.slot   = -1;      // unoccupied
+        mapentry.ignore = false;   // restore bad I/O warning flags
+    }
+
+    if (cpu) {
+        cpu->setDevRdy(false);  // nobody is driving, so it floats to 0
+    }
+}
 
 // ------------------------------------------------------------------------
 //  a small logging facility
@@ -68,7 +235,7 @@ int64 System2200::m_adjsimtime;
 
 static std::ofstream dbg_ofs;
 
-void
+static void
 dbglog_open(const std::string &filename)
 {
     assert(!dbg_ofs.is_open());     // only one log at a time
@@ -79,7 +246,7 @@ dbglog_open(const std::string &filename)
     }
 }
 
-void
+static void
 dbglog_close()
 {
     if (dbg_ofs.is_open()) {
@@ -109,56 +276,37 @@ dbglog(const char *fmt, ...)
 // public members
 // ------------------------------------------------------------------------
 
-// constructor
-System2200::System2200()
-{
-    if (!m_initialized) {
-        // must set this early, otherwise during ramp up, places that
-        // invoke System2200 will cause recursion
-        m_initialized = true;
-#if 0 || defined(_DEBUG)
-        dbglog_open("w2200dbg.log");
-#endif
-        initialize();
-    }
-}
-
-
-// destructor
-System2200::~System2200()
-{
-    // this singleton is torn down all the time, but it doesn't mean we can
-    // release any state.  cleanup() is the function that cleans house.
-}
-
-
-// initialize singleton
+// build the world
 void
 System2200::initialize()
 {
+#if 0 || defined(_DEBUG)
+    dbglog_open("w2200dbg.log");
+#endif
+
     // set up IO management
-    for(auto &mapentry : m_IoMap) {
+    for(auto &mapentry : IoMap) {
         mapentry.slot   = -1;    // unoccupied
         mapentry.ignore = false;
     }
-    for(auto &card : m_cardInSlot) {
+    for(auto &card : cardInSlot) {
         card = nullptr;
     }
-    m_IoCurSelected = -1;
+    IoCurSelected = -1;
 
     // CPU speed regulation
-    m_firstslice = true;
+    firstslice = true;
     m_simtime    = m_adjsimtime = Host().getTimeMs();
     m_simsecs    = 0;
 
-    m_realtimestart = 0;    // wall time of when sim started
-    m_real_seconds  = 0;    // real time elapsed
+    realtimestart = 0;    // wall time of when sim started
+    real_seconds  = 0;    // real time elapsed
 
     m_do_reconfig = false;
     freezeEmu(false);
     setTerminationState(RUNNING);
 
-    m_scheduler = std::make_shared<Scheduler>();
+    scheduler = std::make_shared<Scheduler>();
 
     // attempt to load configuration from saved state
     SysCfgState ini_cfg;
@@ -177,128 +325,6 @@ System2200::initialize()
 }
 
 
-// break down any resources currently committed
-void
-System2200::breakdown_cards(void)
-{
-    // destroy card instances
-    for(auto &card : m_cardInSlot) {
-        card = nullptr;
-    }
-
-    // clean up mappings
-    for(auto &mapentry : m_IoMap) {
-        mapentry.slot   = -1;      // unoccupied
-        mapentry.ignore = false;   // restore bad I/O warning flags
-    }
-
-    if (m_cpu) {
-        m_cpu->setDevRdy(false); // nobody is driving, so it floats to 0
-    }
-}
-
-
-// build a system according to the spec.
-// if a system already exists, tear it down and rebuild it.
-void
-System2200::setConfig(const SysCfgState &newcfg)
-{
-    if (!m_config) {
-        // first time we don't need to tear anything down
-        m_config = std::make_shared<SysCfgState>();
-    } else {
-        // check if the change is minor, not requiring a teardown
-        bool rebuild_required = m_config->needsReboot(newcfg);
-        if (!rebuild_required) {
-            *m_config = newcfg;  // make new config permanent
-            // notify all configured cards about possible new configuration
-            for(int slot=0; slot < NUM_IOSLOTS; slot++) {
-                if (m_config->isSlotOccupied(slot)) {
-                    IoCard::card_t ct = m_config->getSlotCardType(slot);
-                    if (CardInfo::isCardConfigurable(ct)) {
-                        auto cfg = m_config->getCardConfig(slot);
-                        auto card = getInstFromSlot(slot);
-                        card->setConfiguration(*cfg);
-                    }
-                }
-            }
-            return;
-        }
-
-        // the change was major, so delete existing resources
-        m_cpu = nullptr;
-
-        // remember which virtual disks are installed
-        saveDiskMounts();
-
-        // throw away all existing devices
-        breakdown_cards();
-    }
-
-    // save the new system configuration state
-    *m_config = newcfg;
-
-    // (re)build the CPU
-    int ramsize = m_config->getRamKB();
-    switch (m_config->getCpuType()) {
-        default:
-            assert(false);
-            // fall through in non-debug build if config type is invalid
-        case Cpu2200::CPUTYPE_2200T:
-            m_cpu = std::make_shared<Cpu2200t>( this, m_scheduler, ramsize, Cpu2200::CPUTYPE_2200T );
-            break;
-        case Cpu2200::CPUTYPE_2200B:
-            m_cpu = std::make_shared<Cpu2200t>( this, m_scheduler, ramsize, Cpu2200::CPUTYPE_2200B );
-            break;
-        case Cpu2200::CPUTYPE_2200VP:
-            m_cpu = std::make_shared<Cpu2200vp>( this, m_scheduler, ramsize, Cpu2200::CPUTYPE_2200VP );
-            break;
-    }
-    assert(m_cpu);
-
-    // build cards that go into each slot.
-    // a hack -- when a display card is made, the crtframe status bar queries
-    // to find out how many disk drives are associated with each drive.
-    // if the display card is built before the disk controllers, the status
-    // bar will be misconfigured.  the hack is to sweep the list twice,
-    // skipping CRT's the first time, then doing only CRTs the second time.
-
-    for(int pass=0; pass<2; pass++) {
-    for(int slot=0; slot<NUM_IOSLOTS; slot++) {
-
-        if (!m_config->isSlotOccupied(slot)) {
-            continue;
-        }
-
-        IoCard::card_t cardtype = m_config->getSlotCardType(slot);
-        int io_addr             = m_config->getSlotCardAddr(slot) & 0xFF;
-
-        bool display = (cardtype == IoCard::card_t::disp_64x16)
-                    || (cardtype == IoCard::card_t::disp_80x24)
-                    || (cardtype == IoCard::card_t::term_mux) ;
-
-        if ((pass==0 && display) || (pass==1 && !display)) {
-            continue;
-        }
-
-        auto inst = IoCard::makeCard(m_scheduler, m_cpu, cardtype, io_addr,
-                                     slot, m_config->getCardConfig(slot).get());
-        if (inst == nullptr) {
-            // failed to install
-            UI_Warn("Configuration problem: failure to create slot %d card instance", slot);
-        } else {
-            std::vector<int> addresses = inst->getAddresses();
-            for(unsigned int n=0; n<addresses.size(); n++) {
-                m_IoMap[addresses[n]].slot = slot;
-            }
-            m_cardInSlot[slot] = std::move(inst);
-        }
-    }}
-
-    restoreDiskMounts();    // remount disks
-}
-
-
 // because everything is static, the destructor does nothing, so we
 // need this function to know when the real Armageddon has arrived.
 void
@@ -309,11 +335,11 @@ System2200::cleanup()
 
     breakdown_cards();
 
-    m_cpu       = nullptr;
-    m_scheduler = nullptr;
+    cpu       = nullptr;
+    scheduler = nullptr;
 
-    m_config->saveIni();  // save state to ini file
-    m_config = nullptr;
+    current_cfg->saveIni();  // save state to ini file
+    current_cfg = nullptr;
 
 #ifdef _DEBUG
     dbglog_close();       // turn off logging
@@ -321,18 +347,13 @@ System2200::cleanup()
 }
 
 
-// reset the cpu
+// called from CrtFrame to signal we want to end things.
+// as such, at this point nothing has been shut down.
+// after all windows have been shut down, we receive OnExit().
 void
-System2200::reset(bool cold_reset)
+System2200::terminate()
 {
-    m_cpu->reset(cold_reset);
-
-    // reset all I/O devices
-    for(int slot=0; slot<NUM_IOSLOTS; slot++) {
-        if (m_config->isSlotOccupied(slot)) {
-            m_cardInSlot[slot]->reset(cold_reset);
-        }
-    }
+    setTerminationState(TERMINATING);
 }
 
 
@@ -343,6 +364,7 @@ System2200::registerClockedDevice(clkCallback cb)
     clocked_device_t cd = { cb, 0 };
     m_clocked_devices.push_back(cd);
 }
+
 
 // unregister a callback function which advances with the clock
 void
@@ -362,6 +384,174 @@ System2200::unregisterClockedDevice(clkCallback cb)
     // big hammer, but it works.  FIXME find a nicer solution.
     m_clocked_devices.clear();
 #endif
+}
+
+
+// build a system according to the spec.
+// if a system already exists, tear it down and rebuild it.
+void
+System2200::setConfig(const SysCfgState &newcfg)
+{
+    if (!current_cfg) {
+        // first time we don't need to tear anything down
+        current_cfg = std::make_shared<SysCfgState>();
+    } else {
+        // check if the change is minor, not requiring a teardown
+        bool rebuild_required = current_cfg->needsReboot(newcfg);
+        if (!rebuild_required) {
+            *current_cfg = newcfg;  // make new config permanent
+            // notify all configured cards about possible new configuration
+            for(int slot=0; slot < NUM_IOSLOTS; slot++) {
+                if (current_cfg->isSlotOccupied(slot)) {
+                    IoCard::card_t ct = current_cfg->getSlotCardType(slot);
+                    if (CardInfo::isCardConfigurable(ct)) {
+                        auto cfg = current_cfg->getCardConfig(slot);
+                        auto card = getInstFromSlot(slot);
+                        card->setConfiguration(*cfg);
+                    }
+                }
+            }
+            return;
+        }
+
+        // the change was major, so delete existing resources
+        cpu = nullptr;
+
+        // remember which virtual disks are installed
+        saveDiskMounts();
+
+        // throw away all existing devices
+        breakdown_cards();
+    }
+
+    // save the new system configuration state
+    *current_cfg = newcfg;
+
+    // (re)build the CPU
+    int ramsize = current_cfg->getRamKB();
+    switch (current_cfg->getCpuType()) {
+        default:
+            assert(false);
+            // fall through in non-debug build if config type is invalid
+        case Cpu2200::CPUTYPE_2200T:
+            cpu = std::make_shared<Cpu2200t>( scheduler, ramsize, Cpu2200::CPUTYPE_2200T );
+            break;
+        case Cpu2200::CPUTYPE_2200B:
+            cpu = std::make_shared<Cpu2200t>( scheduler, ramsize, Cpu2200::CPUTYPE_2200B );
+            break;
+        case Cpu2200::CPUTYPE_2200VP:
+            cpu = std::make_shared<Cpu2200vp>( scheduler, ramsize, Cpu2200::CPUTYPE_2200VP );
+            break;
+    }
+    assert(cpu);
+
+    // build cards that go into each slot.
+    // a hack -- when a display card is made, the crtframe status bar queries
+    // to find out how many disk drives are associated with each drive.
+    // if the display card is built before the disk controllers, the status
+    // bar will be misconfigured.  the hack is to sweep the list twice,
+    // skipping CRT's the first time, then doing only CRTs the second time.
+
+    for(int pass=0; pass<2; pass++) {
+    for(int slot=0; slot<NUM_IOSLOTS; slot++) {
+
+        if (!current_cfg->isSlotOccupied(slot)) {
+            continue;
+        }
+
+        IoCard::card_t cardtype = current_cfg->getSlotCardType(slot);
+        int io_addr             = current_cfg->getSlotCardAddr(slot) & 0xFF;
+
+        bool display = (cardtype == IoCard::card_t::disp_64x16)
+                    || (cardtype == IoCard::card_t::disp_80x24)
+                    || (cardtype == IoCard::card_t::term_mux) ;
+
+        if ((pass==0 && display) || (pass==1 && !display)) {
+            continue;
+        }
+
+        auto inst = IoCard::makeCard(scheduler, cpu, cardtype, io_addr,
+                                     slot, current_cfg->getCardConfig(slot).get());
+        if (inst == nullptr) {
+            // failed to install
+            UI_Warn("Configuration problem: failure to create slot %d card instance", slot);
+        } else {
+            std::vector<int> addresses = inst->getAddresses();
+            for(unsigned int n=0; n<addresses.size(); n++) {
+                IoMap[addresses[n]].slot = slot;
+            }
+            cardInSlot[slot] = std::move(inst);
+        }
+    }}
+
+    restoreDiskMounts();    // remount disks
+}
+
+
+// give access to components
+const SysCfgState&
+System2200::config()
+{
+    return *current_cfg;
+}
+
+
+// the user requests a change in configuration from the UiFrontPanel.
+// however, doing so often requires a tear down and rebuild of all the
+// components.  destroying the frontpanel instance and then returning
+// to it is uncouth.  instead, when the user wants to reconfigure, this
+// function is called and that desire is noted, and we return immediately.
+// later on, in the onIdle code, this flag is checked and the reconfiguration
+// happens then.
+void
+System2200::reconfigure()
+{
+    m_do_reconfig = true;
+}
+
+
+// reset the cpu
+void
+System2200::reset(bool cold_reset)
+{
+    cpu->reset(cold_reset);
+
+    // reset all I/O devices
+    for(int slot=0; slot<NUM_IOSLOTS; slot++) {
+        if (current_cfg->isSlotOccupied(slot)) {
+            cardInSlot[slot]->reset(cold_reset);
+        }
+    }
+}
+
+
+// turn cpu speed regulation on (true) or off (false)
+// this is a convenience function
+void
+System2200::regulateCpuSpeed(bool regulated)
+{
+    current_cfg->regulateCpuSpeed(regulated);
+
+    // reset the performance monitor history
+    perf_hist_len = 0;
+    perf_hist_ptr = 0;
+}
+
+
+// indicate if the CPU is throttled or not
+// this is a convenience function
+bool
+System2200::isCpuSpeedRegulated()
+{
+    return current_cfg->isCpuSpeedRegulated();
+}
+
+
+// halt emulation
+void
+System2200::freezeEmu(bool freeze)
+{
+    m_freeze_emu = freeze;
 }
 
 // called whenever there is free time
@@ -422,7 +612,7 @@ System2200::emulateTimeslice(int ts_ms)
     // try to stae reatime within this window
     const int64 adj_window = 10LL*ts_ms;  // look at the last 10 timeslices
 
-    if (m_cpu->status() != Cpu2200::CPU_RUNNING) {
+    if (cpu->status() != Cpu2200::CPU_RUNNING) {
         return;
     }
 
@@ -430,11 +620,11 @@ System2200::emulateTimeslice(int ts_ms)
     int64 realtime_elapsed;
     int64 offset;
 
-    if (m_firstslice) {
-        m_firstslice = false;
-        m_realtimestart = now_ms;
+    if (firstslice) {
+        firstslice = false;
+        realtimestart = now_ms;
     }
-    realtime_elapsed = now_ms - m_realtimestart;
+    realtime_elapsed = now_ms - realtimestart;
     offset = m_adjsimtime - realtime_elapsed;
 
     if (offset > adj_window) {
@@ -478,7 +668,7 @@ System2200::emulateTimeslice(int ts_ms)
                 } else  {
                     // the guard is to skip this if the device signals error
                     slice_ns -= op_ns;
-                    m_scheduler->TimerTick(op_ns);
+                    scheduler->TimerTick(op_ns);
                 }
             }
         } else {
@@ -535,7 +725,7 @@ System2200::emulateTimeslice(int ts_ms)
                     uint32 clamp_ns = m_clocked_devices[order[1]].ns - m_clocked_devices[order[0]].ns;
                     uint32 delta_ns = std::min(op_ns, clamp_ns);
                     slice_ns -= delta_ns;
-                    m_scheduler->TimerTick(delta_ns);
+                    scheduler->TimerTick(delta_ns);
                     uint32 new_ns = (m_clocked_devices[order[0]].ns += op_ns);
                     auto entry0 = order[0];
                     int i;
@@ -554,17 +744,17 @@ System2200::emulateTimeslice(int ts_ms)
         m_simtime    += ts_ms;
         m_adjsimtime += ts_ms;
 
-        if (m_cpu->status() != Cpu2200::CPU_RUNNING) {
+        if (cpu->status() != Cpu2200::CPU_RUNNING) {
             UI_Warn("CPU halted -- must reset");
-            m_cpu->reset(true);  // hard reset
+            cpu->reset(true);  // hard reset
             return;
         }
 
         m_simsecs = (unsigned long)((m_simtime/1000) & 0xFFFFFFFF);
 
         int real_seconds_now = (int)(realtime_elapsed/1000);
-        if (m_real_seconds != real_seconds_now) {
-            m_real_seconds = real_seconds_now;
+        if (real_seconds != real_seconds_now) {
+            real_seconds = real_seconds_now;
             if (perf_hist_len > 10) {
                 // compute running performance average over the
                 // last real second or so
@@ -593,52 +783,6 @@ System2200::emulateTimeslice(int ts_ms)
 }
 
 
-// called from EmCRTframe to signal we want to end things.
-// as such, at this point nothing has been shut down.
-// after all windows have been shut down, we receive OnExit().
-void
-System2200::terminate()
-{
-    setTerminationState(TERMINATING);
-}
-
-
-// the user requests a change in configuration from the UiFrontPanel.
-// however, doing so often requires a tear down and rebuild of all the
-// components.  destroying the frontpanel instance and then returning
-// to it is uncouth.  instead, when the user wants to reconfigure, this
-// function is called and that desire is noted, and we return immediately.
-// later on, in the onIdle code, this flag is checked and the reconfiguration
-// happens then.
-void
-System2200::reconfigure()
-{
-    m_do_reconfig = true;
-}
-
-
-// turn cpu speed regulation on (true) or off (false)
-// this is a convenience function
-void
-System2200::regulateCpuSpeed(bool regulated)
-{
-    m_config->regulateCpuSpeed(regulated);
-
-    // reset the performance monitor history
-    perf_hist_len = 0;
-    perf_hist_ptr = 0;
-}
-
-
-// indicate if the CPU is throttled or not
-// this is a convenience function
-bool
-System2200::isCpuSpeedRegulated() const
-{
-    return m_config->isCpuSpeedRegulated();
-}
-
-
 // ========================================================================
 //    io dispatch functions (used by core sim)
 // ========================================================================
@@ -648,54 +792,54 @@ void
 System2200::cpu_ABS(uint8 byte)
 {
     // done if reselecting same device
-    if (byte == m_IoCurSelected) {
+    if (byte == IoCurSelected) {
         return;
     }
 
     // deselect old card
-    if ((m_IoCurSelected > 0) && (m_IoMap[m_IoCurSelected].slot >= 0)) {
-        (m_cardInSlot[m_IoMap[m_IoCurSelected].slot])->deselect();
+    if ((IoCurSelected > 0) && (IoMap[IoCurSelected].slot >= 0)) {
+        (cardInSlot[IoMap[IoCurSelected].slot])->deselect();
     }
-    m_IoCurSelected = byte;
+    IoCurSelected = byte;
 
-    bool vp_mode = (m_cpu->getCpuType() == Cpu2200::CPUTYPE_2200VP);
+    bool vp_mode = (cpu->getCpuType() == Cpu2200::CPUTYPE_2200VP);
 
     // by default, assume the device is not ready.
     // the addressed card will turn it back below if appropriate
-    if (m_IoCurSelected == 0x00 && vp_mode) {
+    if (IoCurSelected == 0x00 && vp_mode) {
         // the (M)VP CPU special cases address 00 and forces ready true
-        m_cpu->setDevRdy(true);
+        cpu->setDevRdy(true);
         return;
     }
     // nobody is driving, so it defaults to 0
-    m_cpu->setDevRdy(false);
+    cpu->setDevRdy(false);
 
     // let the selected card know it has been chosen
-    if (m_IoMap[m_IoCurSelected].slot >= 0) {
-        int slot = m_IoMap[m_IoCurSelected].slot;
-        m_cardInSlot[slot]->select();
+    if (IoMap[IoCurSelected].slot >= 0) {
+        int slot = IoMap[IoCurSelected].slot;
+        cardInSlot[slot]->select();
         return;
     }
 
     // MVP OS probes addr 80 to test for the bank select register (BSR).
     // for non-VSLI CPUs, it would be annoying to get warned about it.
-    if (vp_mode && (m_IoCurSelected == 0x80)) {
+    if (vp_mode && (IoCurSelected == 0x80)) {
         return;
     }
 
     // warn the user that a non-existant device has been selected
-    if (!m_IoMap[m_IoCurSelected].ignore && m_config->getWarnIo()
-        && (m_IoCurSelected != 0x00)  // intentionally select nothing
-        && (m_IoCurSelected != 0x46)  // testing for mxd at 0x4n
-        && (m_IoCurSelected != 0x86)  // testing for mxd at 0x8n
-        && (m_IoCurSelected != 0xC6)  // testing for mxd at 0xCn
+    if (!IoMap[IoCurSelected].ignore && current_cfg->getWarnIo()
+        && (IoCurSelected != 0x00)  // intentionally select nothing
+        && (IoCurSelected != 0x46)  // testing for mxd at 0x4n
+        && (IoCurSelected != 0x86)  // testing for mxd at 0x8n
+        && (IoCurSelected != 0xC6)  // testing for mxd at 0xCn
        ) {
         bool response = UI_Confirm(
                     "Warning: selected non-existent I/O device %02X\n"
                     "Should I warn you of further accesses to this device?",
-                    m_IoCurSelected );
+                    IoCurSelected );
         // suppress further warnings
-        m_IoMap[m_IoCurSelected].ignore = !response;
+        IoMap[IoCurSelected].ignore = !response;
     }
 }
 
@@ -712,9 +856,9 @@ System2200::cpu_OBS(uint8 byte)
 // allowing the CPU to do another I/O operation.  Normally, the device
 // being used will generate a Busy indicator after the I/O Bus (!OB1 - !OB8)
 // has been strobed by !OBS, the CPU output strobe.
-    if (m_IoCurSelected > 0) {
-        if (m_IoMap[m_IoCurSelected].slot >= 0) {
-            m_cardInSlot[m_IoMap[m_IoCurSelected].slot]->OBS(byte);
+    if (IoCurSelected > 0) {
+        if (IoMap[IoCurSelected].slot >= 0) {
+            cardInSlot[IoMap[IoCurSelected].slot]->OBS(byte);
         }
     }
 }
@@ -729,8 +873,8 @@ System2200::cpu_CBS(uint8 byte)
     //   * some use it like another OBS strobe to capture some type
     //     of command word
     //   * some cards use it to trigger an IBS strobe
-    if ((m_IoCurSelected > 0) && (m_IoMap[m_IoCurSelected].slot >= 0)) {
-        m_cardInSlot[m_IoMap[m_IoCurSelected].slot]->CBS(byte);
+    if ((IoCurSelected > 0) && (IoMap[IoCurSelected].slot >= 0)) {
+        cardInSlot[IoMap[IoCurSelected].slot]->CBS(byte);
     }
 }
 
@@ -739,20 +883,20 @@ System2200::cpu_CBS(uint8 byte)
 void
 System2200::cpu_CPB(bool busy)
 {
-    if ((m_IoCurSelected > 0) && (m_IoMap[m_IoCurSelected].slot >= 0)) {
+    if ((IoCurSelected > 0) && (IoMap[IoCurSelected].slot >= 0)) {
         // signal that we want to get something
-        m_cardInSlot[m_IoMap[m_IoCurSelected].slot]->CPB(busy);
+        cardInSlot[IoMap[IoCurSelected].slot]->CPB(busy);
     }
 }
 
 
 // the CPU can poll IB5 without any other strobe.  return that bit.
 int
-System2200::cpu_poll_IB() const
+System2200::cpu_poll_IB()
 {
-    if  ((m_IoCurSelected > 0) && (m_IoMap[m_IoCurSelected].slot >= 0)) {
+    if  ((IoCurSelected > 0) && (IoMap[IoCurSelected].slot >= 0)) {
         // signal that we want to get something
-        return (int)(m_cardInSlot[m_IoMap[m_IoCurSelected].slot]->getIB());
+        return (int)(cardInSlot[IoMap[IoCurSelected].slot]->getIB());
     }
     return 0;
 }
@@ -900,16 +1044,16 @@ bool
 System2200::getSlotInfo(int slot, int *cardtype_idx, int *addr)
 {
     assert(0 <= slot && slot < NUM_IOSLOTS);
-    if (!m_config->isSlotOccupied(slot)) {
+    if (!current_cfg->isSlotOccupied(slot)) {
         return false;
     }
 
     if (cardtype_idx != 0) {
-        *cardtype_idx = (int)m_config->getSlotCardType(slot);
+        *cardtype_idx = (int)current_cfg->getSlotCardType(slot);
     }
 
     if (addr != 0) {
-        *addr = m_config->getSlotCardAddr(slot);
+        *addr = current_cfg->getSlotCardAddr(slot);
     }
 
     return true;
@@ -924,9 +1068,9 @@ System2200::getKbIoAddr(int n)
     int num = 0;
 
     for(int slot=0; slot<NUM_IOSLOTS; slot++) {
-        if (m_config->getSlotCardType(slot) == IoCard::card_t::keyboard) {
+        if (current_cfg->getSlotCardType(slot) == IoCard::card_t::keyboard) {
             if (num == n) {
-                return m_config->getSlotCardAddr(slot);
+                return current_cfg->getSlotCardAddr(slot);
             }
             num++;
         }
@@ -944,9 +1088,9 @@ System2200::getPrinterIoAddr(int n)
     int num = 0;
 
     for(int slot=0; slot<NUM_IOSLOTS; slot++) {
-        if (m_config->getSlotCardType(slot) == IoCard::card_t::printer) {
+        if (current_cfg->getSlotCardType(slot) == IoCard::card_t::printer) {
             if (num == n) {
-                return m_config->getSlotCardAddr(slot);
+                return current_cfg->getSlotCardAddr(slot);
             }
             num++;
         }
@@ -960,10 +1104,10 @@ System2200::getPrinterIoAddr(int n)
 // FIXME: returning a raw pointer -- does all this need to be
 //        converted to shared_ptr?
 IoCard*
-System2200::getInstFromIoAddr(int io_addr) const
+System2200::getInstFromIoAddr(int io_addr)
 {
     assert( (io_addr >= 0) && (io_addr <= 0xFFF) );
-    return m_cardInSlot[m_IoMap[io_addr & 0xFF].slot].get();
+    return cardInSlot[IoMap[io_addr & 0xFF].slot].get();
 }
 
 
@@ -974,27 +1118,14 @@ IoCard*
 System2200::getInstFromSlot(int slot)
 {
     assert(slot >=0 && slot < NUM_IOSLOTS);
-    return m_cardInSlot[slot].get();
-}
-
-
-// returns true if the slot contains a disk controller, 0 otherwise
-bool
-System2200::isDiskController(int slot) const
-{
-    assert(slot >= 0 && slot < NUM_IOSLOTS);
-
-    int cardtype_idx;
-    bool ok = System2200().getSlotInfo(slot, &cardtype_idx, 0);
-
-    return ok && (cardtype_idx == static_cast<int>(IoCard::card_t::disk));
+    return cardInSlot[slot].get();
 }
 
 
 // find slot number of disk controller #n.
 // returns true if successful.
 bool
-System2200::findDiskController(const int n, int *slot) const
+System2200::findDiskController(const int n, int *slot)
 {
     int num_ioslots = NUM_IOSLOTS;
     int numfound = 0;
@@ -1027,7 +1158,7 @@ System2200::findDisk(const std::string &filename,
             break;
         }
 
-        const auto cfg = m_config->getCardConfig(slt);
+        const auto cfg = current_cfg->getCardConfig(slt);
         const auto dcfg = dynamic_cast<const DiskCtrlCfgState*>(cfg.get());
         assert(dcfg);
         int num_drives = dcfg->getNumDrives();
@@ -1045,7 +1176,7 @@ System2200::findDisk(const std::string &filename,
                         *drive = d;
                     }
                     if (io_addr) {
-                        ok = System2200().getSlotInfo(slt, 0, io_addr);
+                        ok = getSlotInfo(slt, 0, io_addr);
                         assert(ok); ok = ok;
                     }
                     return true;
@@ -1055,81 +1186,6 @@ System2200::findDisk(const std::string &filename,
     } // for(controller)
 
     return false;
-}
-
-
-// ========================================================================
-//     save and restore state
-// ========================================================================
-
-#include <sstream>
-
-// for all disk drives, save what is mounted in them (or not)
-void
-System2200::saveDiskMounts(void)
-{
-    Host hst;
-
-    for(int slot=0; slot<NUM_IOSLOTS; slot++) {
-        if (isDiskController(slot)) {
-            std::ostringstream subgroup;
-            subgroup << "io/slot-" << slot;
-            std::string val;
-            const auto cfg = m_config->getCardConfig(slot);
-            const auto dcfg = dynamic_cast<const DiskCtrlCfgState*>(cfg.get());
-            assert(dcfg);
-            int num_drives = dcfg->getNumDrives();
-            for(int drive=0; drive<num_drives; drive++) {
-                std::ostringstream item;
-                item << "filename-" << drive;
-                std::string filename("");
-                if (isDiskController(slot)) {
-                    int stat = IoCardDisk::wvdDriveStatus(slot, drive);
-                    if (stat & IoCardDisk::WVD_STAT_DRIVE_OCCUPIED) {
-                        bool ok = IoCardDisk::wvdGetFilename(slot, drive, &filename);
-                        assert(ok); ok=ok;
-                    }
-                }
-                hst.ConfigWriteStr(subgroup.str(), item.str(), filename);
-            } // drive
-        } // if (isDiskController)
-    } // slot
-}
-
-// remount all disks
-void
-System2200::restoreDiskMounts(void)
-{
-    Host hst;
-
-    // look for disk controllers and populate drives
-    for(int slot=0; slot<NUM_IOSLOTS; slot++) {
-        if (isDiskController(slot)) {
-            const auto cfg = m_config->getCardConfig(slot);
-            const auto dcfg = dynamic_cast<const DiskCtrlCfgState*>(cfg.get());
-            assert(dcfg);
-            int num_drives = dcfg->getNumDrives();
-            for(int drive=0; drive<num_drives; drive++) {
-                std::ostringstream subgroup;
-                subgroup << "io/slot-" << slot;
-                std::ostringstream item;
-                item << "filename-" << drive;
-                std::string filename;
-                bool b = hst.ConfigReadStr(subgroup.str(), item.str(), &filename);
-                if (b && !filename.empty()) {
-                    bool bs = IoCardDisk::wvdInsertDisk(slot, drive, filename.c_str());
-            #if 0 // wvdInsertDisk() already generated a warning
-                    if (!bs) {
-                        UI_Warn("Problem loading '%s' into slot %d, drive %d",
-                                filename, slot, drive);
-                    }
-            #else
-                    bs = bs; // keep lint happy
-            #endif
-                }
-            } // for(drive)
-        } // if (isDiskController)
-    } // for(slot)
 }
 
 // vim: ts=8:et:sw=4:smarttab

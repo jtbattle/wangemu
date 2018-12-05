@@ -6,7 +6,6 @@
 #include "w2200.h"
 
 class Scheduler;
-class System2200;
 class Timer;
 
 // ============================= base class =============================
@@ -74,8 +73,7 @@ class Cpu2200t: public Cpu2200
 public:
     CANT_ASSIGN_OR_COPY_CLASS(Cpu2200t);
     // ---- see base class for description of these members: ----
-    Cpu2200t(System2200 *const sys,
-             std::shared_ptr<Scheduler> scheduler,
+    Cpu2200t(std::shared_ptr<Scheduler> scheduler,
              int ramsize, int subtype);
     ~Cpu2200t();
     int   getCpuType() const;
@@ -124,7 +122,6 @@ private:
 
     // ---- data members ----
 
-    System2200                 *const m_sys;  // pointer back to system services
     std::shared_ptr<Scheduler>  m_scheduler;  // shared system event scheduler
     const int                   m_cpuType;    // type cpu flavor, eg CPUTYPE_2200T
 
@@ -190,8 +187,7 @@ class Cpu2200vp: public Cpu2200
 public:
     CANT_ASSIGN_OR_COPY_CLASS(Cpu2200vp);
     // ---- see base class for description of these members: ----
-    Cpu2200vp(System2200 *const sys,
-              std::shared_ptr<Scheduler> scheduler,
+    Cpu2200vp(std::shared_ptr<Scheduler> scheduler,
               int ramsize, int subtype);
     ~Cpu2200vp();
     int   getCpuType() const;
@@ -241,7 +237,6 @@ private:
 
     // ---- data members ----
 
-    System2200                 *const m_sys;  // pointer back to system services
     std::shared_ptr<Scheduler>  m_scheduler;  // shared system timing scheduler object
     std::shared_ptr<Timer>      m_tmr_30ms;   // time slice 30 ms one shot
 

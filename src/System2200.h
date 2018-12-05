@@ -19,61 +19,52 @@
 
 #include "w2200.h"
 
-class Cpu2200;
 class IoCard;
 class SysCfgState;
-class Scheduler;
-class ScriptFile;
 
-typedef std::function<int()> clkCallback;
+typedef std::function<int()>     clkCallback;
 typedef std::function<void(int)> kbCallback;
 
 // this is a singleton
-class System2200
+namespace System2200
 {
-public:
-    CANT_ASSIGN_OR_COPY_CLASS(System2200);
-     System2200();
-    ~System2200();
-
-    System2200* get() { return this; }
-
     // because everything is static, we have to be told when
     // the sim is really starting and ending.
-    void initialize();  // T -0
+    void initialize();  // Time=0
     void cleanup();     // Armageddon
 
-    // give access to components
-    const SysCfgState& config() { return *m_config; }
+    // shut down the application
+    void terminate();
 
     // (un)register a callback function which advances with the clock
     void registerClockedDevice(clkCallback cb);
     void unregisterClockedDevice(clkCallback cb);
 
-    // called whenever there is free time.  it returns true
-    // if it wants to be called back later when idle again
-    bool onIdle();
-
     // set current system configuration -- may cause reset
     void setConfig(const SysCfgState &newcfg);
+
+    // give access to components
+    const SysCfgState& config();
+
+    // indicate that user wants to reconfigure the system
+    void reconfigure();
 
     // reset the whole system
     void reset(bool cold_reset);
 
+    // change/query the simulation speed
+    void regulateCpuSpeed(bool regulated);
+    bool isCpuSpeedRegulated();
+
+    // temporarily halt emulation
+    void freezeEmu(bool freeze);
+
+    // called whenever there is free time.  it returns true
+    // if it wants to be called back later when idle again
+    bool onIdle();
+
     // simulate a few ms worth of instructions
     void emulateTimeslice(int ts_ms);  // timeslice in ms
-
-    void regulateCpuSpeed(bool regulated);
-    bool isCpuSpeedRegulated() const;
-
-    // halt emulation
-    static void freezeEmu(bool freeze) { m_freeze_emu = freeze; }
-
-    // shut down the application
-    static void terminate();
-
-    // indicate that user wants to reconfigure the system
-    static void reconfigure();
 
     // ---- I/O dispatch logic ----
 
@@ -81,7 +72,7 @@ public:
     void cpu_OBS(uint8 byte);   // output byte strobe
     void cpu_CBS(uint8 byte);   // control byte strobes
     void cpu_CPB(bool busy);    // notify selected card when CPB changes
-    int  cpu_poll_IB() const;   // the CPU can poll IB without any other strobe
+    int  cpu_poll_IB();         // the CPU can poll IB without any other strobe
 
     // ---- keyboard input routing ----
 
@@ -119,110 +110,18 @@ public:
 
     // return the instance handle of the device at the specified IO address
     // used by IoCardKeyboard.c
-    IoCard* getInstFromIoAddr(int io_addr) const;
+    IoCard* getInstFromIoAddr(int io_addr);
 
     // given a slot, return the "this" element
     IoCard* getInstFromSlot(int slot);
 
     // find slot number of disk controller #n (starting with 0).
     // returns true if successful.
-    bool findDiskController(const int n, int *slot) const;
+    bool findDiskController(const int n, int *slot);
 
     // find slot,drive of any disk controller with disk matching name.
     // returns true if successful.
     bool findDisk(const std::string &filename, int *slot, int *drive, int *io_addr);
-
-private:
-    // returns true if the slot contains a disk controller, 0 otherwise
-    bool isDiskController(int slot) const;
-
-    // save/restore mounted disks to/from ini file
-    void saveDiskMounts(void);
-    void restoreDiskMounts(void);
-
-    // break down any resources currently committed
-    void breakdown_cards(void);
-
-    // singleton members, and a flag to know when to know first time
-    static bool                         m_initialized;
-    static std::shared_ptr<SysCfgState> m_config;       // active system config
-    static std::shared_ptr<Scheduler>   m_scheduler;    // for coordinating events in the emulator
-    static std::shared_ptr<Cpu2200>     m_cpu;          // the central processing unit
-    static bool                         m_freeze_emu;   // toggle to prevent time advancing
-    static bool                         m_do_reconfig;  // deferred request to reconfigure
-
-    // help ensure an orderly shutdown
-    static enum term_state_t
-        { RUNNING, TERMINATING, TERMINATED } m_term_state;
-    static void setTerminationState(term_state_t newstate)
-        { m_term_state = newstate; }
-    static term_state_t getTerminationState()
-        { return m_term_state; }
-
-    // -------------- I/O dispatch --------------
-    struct iomap_t {
-        int  slot;      // slot number of the device which "owns" this address
-        bool ignore;    // if false, access generates a warning message
-                        // if there is no device at that address
-    };
-    static std::array<std::unique_ptr<IoCard>, NUM_IOSLOTS> m_cardInSlot;   // pointer to card in a given slot
-    static std::array<iomap_t,256> m_IoMap;         // pointer to card responding to given address
-    static int                     m_IoCurSelected; // address of most recent ABS
-
-    // stuff related to regulating simulation speed:
-    static bool  m_regulated_speed; // 1=try to match real speed, 0=run full out
-    static bool  m_firstslice;      // has m_realtimestart been initialized?
-    static int64 m_realtimestart;   // wall time of when sim started
-    static int   m_real_seconds;    // real time elapsed
-
-    static unsigned long m_simsecs; // number of actual seconds simulated time elapsed
-
-    // things which get called as time advances. it is used by the
-    // core 2200 CPU and any peripheral which uses a microprocessor.
-    // each device has a ns resolution counter, but we keep rebasing
-    // the count so the counter doesn't overflow.  all we care is the
-    // difference between the devices' sense of time.
-    typedef struct {
-        clkCallback callback_fn;
-        uint32      ns;          // nanoseconds
-    } clocked_device_t;
-    static std::vector<clocked_device_t> m_clocked_devices;
-
-    // amount of actual simulated time elapsed, in ms
-    static int64 m_simtime;
-
-    // amount of adjusted simulated time elapsed, in ms because of user events
-    // (eg, menu selection), sim time is often interrupted and we don't
-    // actually desire to catch up.  m_simtime is the actual number of
-    // simulated slices, while this var has been fudged to account for those
-    // violations of realtime.
-    static int64 m_adjsimtime;
-
-    // keep a rolling average of how fast we are running in case it is reported.
-    // we want to report the running average over the last second of realtime
-    // to prevent the average from updating like crazy when running many times
-    // realtime.
-    static const int perf_hist_size = 100;      // # of timeslices to track
-    static     int64 perf_real_ms[100];         // realtime at start of each slice
-    static       int perf_hist_len;             // number of entries written
-    static       int perf_hist_ptr;             // next entry to write
-
-    // ---- state for keyboard input routing ----
-
-    typedef struct {
-        int         io_addr;
-        int         term_num;
-        kbCallback  callback_fn;
-#if 0
-    // FIXME: make corresponding change in System2200.cpp
-    // figure out why this doesn't compile - complains about invoking deleted function
-        std::unique_ptr<ScriptFile>
-                    script_handle;  // ID of which script stream we're processing
-#else
-        ScriptFile *script_handle;
-#endif
-    } kb_route_t;
-    static std::vector<kb_route_t> m_kb_routes;
 };
 
 

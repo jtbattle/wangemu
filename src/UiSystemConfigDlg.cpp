@@ -93,8 +93,8 @@ SystemConfigDlg::SystemConfigDlg(wxFrame *parent) :
         m_btnRevert(nullptr),
         m_btnOk(nullptr),
         m_btnCancel(nullptr),
-        m_oldcfg( System2200().config() ),  // the existing configuration
-        m_cfg   ( System2200().config() )   // the one we will be editing
+        m_oldcfg( System2200::config() ),  // the existing configuration
+        m_cfg   ( System2200::config() )   // the one we will be editing
 {
     const int v_text_margin = 4;
     const int h_text_margin = 8;
@@ -482,7 +482,7 @@ SystemConfigDlg::OnButton(wxCommandEvent &event)
         case wxID_OK:
             if (configStateOk(true)) {
                 saveDefaults();         // save location & size of dlg
-                System2200().setConfig(m_cfg);
+                System2200::setConfig(m_cfg);
                 EndModal(0);
             }
             break;

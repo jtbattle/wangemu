@@ -200,7 +200,7 @@ PrinterFrame::PrinterFrame(const wxString& title, const int io_addr) :
 
     setupRealPrinter();
 
-    System2200().freezeEmu(false);
+    System2200::freezeEmu(false);
 }
 
 
@@ -531,19 +531,17 @@ PrinterFrame::OnFileClose(wxCommandEvent& WXUNUSED(event))
 void
 PrinterFrame::OnFileSaveAs(wxCommandEvent& WXUNUSED(event))
 {
-    System2200 sys;
-    sys.freezeEmu(true);
+    System2200::freezeEmu(true);
     m_printer->saveToFile();
-    sys.freezeEmu(false);
+    System2200::freezeEmu(false);
 }
 
 void
 PrinterFrame::OnPrintClear(wxCommandEvent& WXUNUSED(event))
 {
-    System2200 sys;
-    sys.freezeEmu(true);
+    System2200::freezeEmu(true);
     m_printer->printClear();
-    sys.freezeEmu(false);
+    System2200::freezeEmu(false);
 }
 
 
@@ -565,8 +563,7 @@ PrinterFrame::PP_OnClose(wxCloseEvent &event)
 void
 PrinterFrame::OnPrintPreview(wxCommandEvent& WXUNUSED(event))
 {
-    System2200 sys;
-    sys.freezeEmu(true);
+    System2200::freezeEmu(true);
 
     //Pass two printout objects: for preview, and possible printing
     wxPrintDialogData printDialogData(*m_printData);
@@ -615,15 +612,14 @@ PrinterFrame::OnPrintPreview(wxCommandEvent& WXUNUSED(event))
 
     frame->Show();
 
-    sys.freezeEmu(false);
+    System2200::freezeEmu(false);
 }
 
 
 void
 PrinterFrame::OnPrint(wxCommandEvent& WXUNUSED(event))
 {
-    System2200 sys;
-    sys.freezeEmu(true);
+    System2200::freezeEmu(true);
 
     wxPrintDialogData printDialogData(*m_printData);
     wxPrinter printer(& printDialogData);
@@ -641,15 +637,14 @@ PrinterFrame::OnPrint(wxCommandEvent& WXUNUSED(event))
         (*m_printData) = printer.GetPrintDialogData().GetPrintData();
     }
 
-    sys.freezeEmu(false);
+    System2200::freezeEmu(false);
 }
 
 
 void
 PrinterFrame::OnPrintSetup(wxCommandEvent& WXUNUSED(event))
 {
-    System2200 sys;
-    sys.freezeEmu(true);
+    System2200::freezeEmu(true);
 
     wxPrintDialogData printDialogData(*m_printData);
     wxPrintDialog printerDialog(this, &printDialogData);
@@ -660,7 +655,7 @@ PrinterFrame::OnPrintSetup(wxCommandEvent& WXUNUSED(event))
 
     (*m_printData) = printerDialog.GetPrintDialogData().GetPrintData();
 
-    sys.freezeEmu(false);
+    System2200::freezeEmu(false);
 }
 
 
@@ -751,8 +746,7 @@ PrinterFrame::OnConfigureDialog(wxCommandEvent& WXUNUSED(event))
     // and variables together. Values are transferred between them behind
     // the scenes, so here we don't have to query the controls for their
     // values.
-    System2200 sys;
-    sys.freezeEmu(true);    // halt emulation
+    System2200::freezeEmu(true);    // halt emulation
 
     PrinterDialogDataTransfer *data = new PrinterDialogDataTransfer();
 
@@ -796,7 +790,7 @@ PrinterFrame::OnConfigureDialog(wxCommandEvent& WXUNUSED(event))
 
     delete data;
 
-    sys.freezeEmu(false);   // run emulation
+    System2200::freezeEmu(false);   // run emulation
 }
 
 
@@ -835,8 +829,7 @@ PrinterFrame::printAndClear()
         return;
     }
 
-    System2200 sys;
-    sys.freezeEmu(true);
+    System2200::freezeEmu(true);
 
     // remember where the focus was so we can restore it
     wxWindow *winHasFocus = FindFocus();
@@ -863,7 +856,7 @@ PrinterFrame::printAndClear()
     winHasFocus->SetFocus();
     winHasFocus = nullptr;
 
-    sys.freezeEmu(false);
+    System2200::freezeEmu(false);
 }
 
 // vim: ts=8:et:sw=4:smarttab

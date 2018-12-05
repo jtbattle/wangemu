@@ -493,7 +493,7 @@ Cpu2200vp::set_sh(uint8 value)
                         | ( mask & m_cpu.sh) );
 
     if (cpb_changed) {
-        m_sys->cpu_CPB( !!(m_cpu.sh & SH_MASK_CPB) );
+        System2200::cpu_CPB( !!(m_cpu.sh & SH_MASK_CPB) );
     }
 }
 
@@ -739,11 +739,9 @@ Cpu2200vp::get_HbHa(int HbHa, int a_op, int b_op) const
 // constructor
 // ramsize should be a multiple of 4.
 // subtype *must* be 2200VP, at least presently
-Cpu2200vp::Cpu2200vp(System2200 *const sys,
-                     std::shared_ptr<Scheduler> scheduler,
+Cpu2200vp::Cpu2200vp(std::shared_ptr<Scheduler> scheduler,
                      int ramsize, int cpu_subtype) :
     Cpu2200(),  // init base class
-    m_sys(sys),
     m_scheduler(scheduler),
     m_tmr_30ms(nullptr),
     m_ucode{{0,0,0,0}},
@@ -767,7 +765,7 @@ Cpu2200vp::Cpu2200vp(System2200 *const sys,
 
     // register for clock callback
     clkCallback cb = std::bind(&Cpu2200vp::execOneOp, this);
-    m_sys->registerClockedDevice(cb);
+    System2200::registerClockedDevice(cb);
 
 #if 0
     // disassemble boot ROM
@@ -789,7 +787,7 @@ Cpu2200vp::Cpu2200vp(System2200 *const sys,
 Cpu2200vp::~Cpu2200vp()
 {
     clkCallback cb = std::bind(&Cpu2200vp::execOneOp, this);
-    m_sys->unregisterClockedDevice(cb);
+    System2200::unregisterClockedDevice(cb);
 
     reset(true);
 }
@@ -867,7 +865,7 @@ Cpu2200vp::IoCardCbIbs(int data)
     assert( (m_cpu.sh & SH_MASK_CPB) == 0 );
     m_cpu.k = (uint8)(data & 0xFF);
     m_cpu.sh |= SH_MASK_CPB;            // CPU busy; inhibit IBS
-    m_sys->cpu_CPB( true );             // we are busy now
+    System2200::cpu_CPB( true );        // we are busy now
 
     // return special status if it is a special function key
     if (data & IoCardKeyboard::KEYCODE_SF) {
@@ -1239,7 +1237,7 @@ Cpu2200vp::execOneOp()
                     dbglog("-ABS with AB=%02X, ic=0x%04X\n", m_cpu.ab_sel, m_cpu.ic);
                 }
                 //UI_Info("CPU:ABS when AB=%02X", m_cpu.ab);
-                m_sys->cpu_ABS(m_cpu.ab_sel);  // address bus strobe
+                System2200::cpu_ABS(m_cpu.ab_sel);  // address bus strobe
                 break;
             case 0x20: // OBS
                 if (m_dbg) {
@@ -1251,7 +1249,7 @@ Cpu2200vp::execOneOp()
                 }
                 //UI_Info("CPU:OBS when AB=%02X, AB_SEL=%02X, K=%02X", m_cpu.ab, m_cpu.ab_sel, m_cpu.k);
                 setDevRdy(false);  // (M)VP cpus do this, but not 2200T
-                m_sys->cpu_OBS(m_cpu.k);  // output data bus strobe
+                System2200::cpu_OBS(m_cpu.k);  // output data bus strobe
                 break;
             case 0x10: // CBS
                 if (m_dbg) {
@@ -1263,7 +1261,7 @@ Cpu2200vp::execOneOp()
                 }
                 //UI_Info("CPU:CBS when AB=%02X, AB_SEL=%02X, K=%02X", m_cpu.ab, m_cpu.ab_sel, m_cpu.k);
                 setDevRdy(false);  // (M)VP cpus do this, but not 2200T
-                m_sys->cpu_CBS(m_cpu.k);    // control bus strobe
+                System2200::cpu_CBS(m_cpu.k);    // control bus strobe
                 break;
             case 0x08: // status request
                 // although the 2600 arch manual doesn't describe this op,
@@ -1274,12 +1272,12 @@ Cpu2200vp::execOneOp()
                 //     978080 : CIO       ??? (ILLEGAL)
                 // this corresponds to a mask of 0x08.
 //UI_Info("doing CIO STATUS_REQUEST, AB=%02x, IC=%04X", m_cpu.ab, m_cpu.ic);
-                m_cpu.k = static_cast<uint8>(m_sys->cpu_poll_IB());
+                m_cpu.k = static_cast<uint8>(System2200::cpu_poll_IB());
                 // Paul Szudzik's SDS_Wang2200.pdf arch manual says
                 //    Fire internal IBS one shot (SRS).  Sets CPB.  Basically
                 //    used for Status Requests from MUXD.
                 m_cpu.sh |= SH_MASK_CPB;    // CPU busy; inhibit IBS
-                m_sys->cpu_CPB( true );     // we are busy now
+                System2200::cpu_CPB(true);  // we are busy now
                 break;
             case 0x00: // no strobe
                 break;

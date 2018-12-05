@@ -583,7 +583,7 @@ Cpu2200t::mem_write(uint16 addr, uint4 wr_value, int write2)
 uint4
 Cpu2200t::read_st3() const
 {
-    int k = m_sys->cpu_poll_IB();
+    int k = System2200::cpu_poll_IB();
     int ib5 = (k >> 5) & 1;  // isolate bit 5
 
     return (uint4)(  (m_cpu.st3 & 0x8)  // 1=horizontal RAM addressing
@@ -602,7 +602,7 @@ Cpu2200t::set_st1(uint4 value)
     m_cpu.st1 = value;
 
     if (cpb_changed) {
-        m_sys->cpu_CPB( !!(m_cpu.st1 & ST1_MASK_CPB) );
+        System2200::cpu_CPB( !!(m_cpu.st1 & ST1_MASK_CPB) );
     }
 }
 
@@ -741,11 +741,9 @@ Cpu2200t::decimal_sub(uint4 a_op, uint4 b_op, int ci) const
 // create a CPU instance.
 // ramsize should be a multiple of 4.
 // subtype selects between the flavors of the cpu
-Cpu2200t::Cpu2200t(System2200 *const sys,
-                   std::shared_ptr<Scheduler> scheduler,
+Cpu2200t::Cpu2200t(std::shared_ptr<Scheduler> scheduler,
                    int ramsize, int cpu_subtype) :
     Cpu2200(),  // init base class
-    m_sys(sys),
     m_scheduler(scheduler),  // unused by 2200t
     m_cpuType(cpu_subtype),
     m_ucode{0x00},
@@ -787,7 +785,7 @@ Cpu2200t::Cpu2200t(System2200 *const sys,
 
     // register for clock callback
     clkCallback cb = std::bind(&Cpu2200t::execOneOp, this);
-    m_sys->registerClockedDevice(cb);
+    System2200::registerClockedDevice(cb);
 
 #if 0
     // disassemble all microcode
@@ -816,7 +814,7 @@ Cpu2200t::Cpu2200t(System2200 *const sys,
 Cpu2200t::~Cpu2200t()
 {
     clkCallback cb = std::bind(&Cpu2200t::execOneOp, this);
-    m_sys->unregisterClockedDevice(cb);
+    System2200::unregisterClockedDevice(cb);
 }
 
 
@@ -922,7 +920,7 @@ Cpu2200t::IoCardCbIbs(int data)
     assert( (m_cpu.st1 & ST1_MASK_CPB) == 0 );
     m_cpu.k = (uint8)(data & 0xFF);
     m_cpu.st1 |= ST1_MASK_CPB;      // CPU busy; inhibit IBS
-    m_sys->cpu_CPB( true );         // the cpu is busy now
+    System2200::cpu_CPB( true );    // the cpu is busy now
 
     // return special status if it is a special function key
     if (data & IoCardKeyboard::KEYCODE_SF) {
@@ -1320,7 +1318,7 @@ Cpu2200t::execOneOp()
                     }
                 }
                 //UI_Info("CPU:CBS when AB=%02X, AB_SEL=%02X, K=%02X", m_cpu.ab, m_cpu.ab_sel, m_cpu.k);
-                m_sys->cpu_CBS(m_cpu.k);  // control bus strobe
+                System2200::cpu_CBS(m_cpu.k);  // control bus strobe
                 break;
 
             case 0x20: // generate -OBS
@@ -1332,7 +1330,7 @@ Cpu2200t::execOneOp()
                     }
                 }
                 //UI_Info("CPU:OBS when AB=%02X, AB_SEL=%02X, K=%02X", m_cpu.ab, m_cpu.ab_sel, m_cpu.k);
-                m_sys->cpu_OBS(m_cpu.k);  // output data bus strobe
+                System2200::cpu_OBS(m_cpu.k);  // output data bus strobe
                 break;
 
             case 0x40: // generate -ABS
@@ -1341,7 +1339,7 @@ Cpu2200t::execOneOp()
                     dbglog("-ABS with AB=%02X\n", m_cpu.ab_sel);
                 }
                 //UI_Info("CPU:ABS when AB=%02X", m_cpu.ab);
-                m_sys->cpu_ABS(m_cpu.ab_sel);  // address bus strobe
+                System2200::cpu_ABS(m_cpu.ab_sel);  // address bus strobe
                 break;
 
             default:

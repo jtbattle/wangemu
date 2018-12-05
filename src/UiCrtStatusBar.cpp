@@ -147,9 +147,8 @@ CrtStatusBar::CrtStatusBar(CrtFrame *parent, bool smart_term, bool shown) :
     m_icon_set = std::make_unique<wxBitmap>(icons_xpm);
 
     // determine how many disk controllers there are
-    System2200 sys;
     int slt;
-    while (sys.findDiskController(m_num_disk_controllers, &slt)) {
+    while (System2200::findDiskController(m_num_disk_controllers, &slt)) {
         m_num_disk_controllers++;
     }
 
@@ -180,9 +179,9 @@ CrtStatusBar::CrtStatusBar(CrtFrame *parent, bool smart_term, bool shown) :
 
         // gather info about this controller
         int slot;
-        (void)sys.findDiskController(ctrl, &slot); // where is it plugged in?
+        (void)System2200::findDiskController(ctrl, &slot); // where is it plugged in?
         int io;
-        bool ok = sys.getSlotInfo(slot, 0, &io);   // address it is mapped to
+        bool ok = System2200::getSlotInfo(slot, 0, &io);   // address it is mapped to
         assert(ok); ok = ok;
 
         // figure out how many drives are attached to this controller
@@ -302,9 +301,8 @@ CrtStatusBar::CrtStatusBar(CrtFrame *parent, bool smart_term, bool shown) :
 void
 CrtStatusBar::SetDiskIcon(const int slot, const int drive)
 {
-    System2200 sys;
     int io_addr;        // address of this slot
-    bool ok = sys.getSlotInfo(slot, 0, &io_addr);
+    bool ok = System2200::getSlotInfo(slot, 0, &io_addr);
     assert(ok); ok=ok;
 
     // figure out if disk is empty, idle, or running
@@ -317,7 +315,7 @@ CrtStatusBar::SetDiskIcon(const int slot, const int drive)
     int controller;
     for(controller=0; ; controller++) {
         int thisslot;
-        ok = sys.findDiskController(controller, &thisslot);
+        ok = System2200::findDiskController(controller, &thisslot);
         assert(ok); ok = ok;
         if (thisslot == slot) {
             break;
@@ -461,9 +459,8 @@ CrtStatusBar::OnDiskButton(wxMouseEvent &event)
     bool right_click = event.RightDown();
     bool cmd_down    = event.CmdDown(); // control key on PC, CMD key on Mac
 
-    System2200 sys;
     int slot;
-    bool ok = sys.findDiskController(controller, &slot);
+    bool ok = System2200::findDiskController(controller, &slot);
     assert(ok); ok=ok;
     int stat = IoCardDisk::wvdDriveStatus(slot, drive);
     bool drive_occupied = !!(stat & IoCardDisk::WVD_STAT_DRIVE_OCCUPIED);
@@ -499,7 +496,7 @@ CrtStatusBar::OnDiskButton(wxMouseEvent &event)
             if (Host().fileReq(Host::FILEREQ_DISK, "Disk to load", 1, &fullpath) ==
                                Host::FILEREQ_OK) {
                 int drive2, io_addr;
-                bool b = sys.findDisk(fullpath, nullptr, &drive2, &io_addr);
+                bool b = System2200::findDisk(fullpath, nullptr, &drive2, &io_addr);
                 if (b) {
                     UI_Warn("Disk already in drive %c /%03x", "FR"[drive2], io_addr);
                     return;

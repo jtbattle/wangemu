@@ -58,8 +58,8 @@ TheApp::OnInit()
     }
 #endif
 
-    System2200 sys;     // invoke it to build the world
-    sys.reset(true);    // cold start
+    System2200::initialize();  // build the world
+    System2200::reset(true);   // cold start
 
     // must call base class version to get command line processing
     // if false, the app terminates
@@ -72,7 +72,7 @@ TheApp::OnInit()
 void
 TheApp::OnIdle(wxIdleEvent &event)
 {
-    if (System2200().onIdle()) {
+    if (System2200::onIdle()) {
         event.RequestMore(true);            // give more idle events
     }
 }
@@ -119,7 +119,7 @@ TheApp::OnCmdLineParsed(wxCmdLineParser& parser)
         if (parser.Found("s", &filename)) {
             const int io_addr = 0x01;   // default keyboard device
             std::string fn(filename.c_str());
-            System2200().kb_invokeScript(io_addr, -1, fn);
+            System2200::kb_invokeScript(io_addr, -1, fn);
             bool success = true;  // FIXME: old invokeScript returned a boolean -- change new i/f to match?
             if (!success) {
                 const char *s = filename.c_str();
@@ -283,7 +283,7 @@ UI_Confirm(const char *fmt, ...)
 CrtFrame*
 UI_initCrt(const int screen_type, const int io_addr, const int term_num)
 {
-    int cputype = System2200().config().getCpuType();
+    int cputype = System2200::config().getCpuType();
     const char *cpustr = (cputype == Cpu2200::CPUTYPE_2200B) ? "2200B" :
                          (cputype == Cpu2200::CPUTYPE_2200T) ? "2200T" :
                                                                "2200VP";

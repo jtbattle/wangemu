@@ -28,7 +28,7 @@ IoCardKeyboard::IoCardKeyboard(std::shared_ptr<Scheduler> scheduler,
 {
     if (m_slot >= 0) {
         reset();
-        System2200().kb_register(
+        System2200::kb_register(
             m_baseaddr, 0,
             std::bind(&IoCardKeyboard::receiveKeystroke, this, std::placeholders::_1)
         );
@@ -40,7 +40,7 @@ IoCardKeyboard::~IoCardKeyboard()
 {
     if (m_slot >= 0) {
         reset();        // turns off handshakes in progress
-        System2200().kb_unregister(m_baseaddr, 0);
+        System2200::kb_unregister(m_baseaddr, 0);
     }
 }
 
@@ -196,7 +196,7 @@ void
 IoCardKeyboard::check_keyready()
 {
     if (!m_key_ready) {
-        System2200().kb_keyReady(m_baseaddr, 0);
+        System2200::kb_keyReady(m_baseaddr, 0);
     }
 // FIXME: keyReady doesn't change m_selected, so the above call can't affect
 // it this cycle.  maybe the thing to do is after m_key_ready is set to

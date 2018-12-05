@@ -479,7 +479,7 @@ IoCardDisk::setBusyState(bool busy)
 bool
 IoCardDisk::realtime_disk()
 {
-    return System2200().config().getDiskRealtime();
+    return System2200::config().getDiskRealtime();
 }
 
 
@@ -808,7 +808,7 @@ IoCardDisk::wvdGetDiskType(const int slot, const int drive, int *disktype)
     ASSERT_VALID_DRIVE(drive);
 
     IoCardDisk *tthis = static_cast<IoCardDisk*>
-                                (System2200().getInstFromSlot(slot));
+                                (System2200::getInstFromSlot(slot));
     if (tthis->m_d[drive].state == DRIVE_EMPTY) {
         return false;
     }
@@ -829,7 +829,7 @@ IoCardDisk::wvdGetFilename(const int slot,
     ASSERT_VALID_DRIVE(drive);
 
     IoCardDisk *tthis = static_cast<IoCardDisk*>
-                                (System2200().getInstFromSlot(slot));
+                                (System2200::getInstFromSlot(slot));
     if (tthis->m_d[drive].state == DRIVE_EMPTY) {
         return false;
     }
@@ -848,7 +848,7 @@ IoCardDisk::wvdDriveStatus(int slot, int drive)
     ASSERT_VALID_DRIVE(drive);
 
     IoCardDisk *tthis = static_cast<IoCardDisk*>
-                                (System2200().getInstFromSlot(slot));
+                                (System2200::getInstFromSlot(slot));
     if (tthis == nullptr) {
         // can happen at init time -- this routine is called when the
         // CRT is init'd before the disk controllers
@@ -891,7 +891,7 @@ IoCardDisk::wvdInsertDisk(int slot,
     ASSERT_VALID_DRIVE(drive);
 
     IoCardDisk *tthis = static_cast<IoCardDisk*>
-                                (System2200().getInstFromSlot(slot));
+                                (System2200::getInstFromSlot(slot));
     assert(tthis != nullptr);
 
     bool ok = tthis->iwvdInsertDisk(drive, filename);
@@ -909,7 +909,7 @@ IoCardDisk::wvdRemoveDisk(int slot, int drive)
     ASSERT_VALID_DRIVE(drive);
 
     IoCardDisk *tthis = static_cast<IoCardDisk*>
-                                (System2200().getInstFromSlot(slot));
+                                (System2200::getInstFromSlot(slot));
     assert(tthis != nullptr);
 
     bool ok = tthis->iwvdRemoveDisk(drive);
@@ -926,7 +926,7 @@ IoCardDisk::wvdFlush(int slot, int drive)
     ASSERT_VALID_DRIVE(drive);
 
     IoCardDisk *tthis = static_cast<IoCardDisk*>
-                                (System2200().getInstFromSlot(slot));
+                                (System2200::getInstFromSlot(slot));
     assert(tthis != nullptr);
 
     tthis->m_d[drive].wvd->flush();
@@ -1012,7 +1012,7 @@ IoCardDisk::iwvdInsertDisk(int drive,
     int  num_sectors  = m_d[drive].wvd->getNumSectors();
     int  num_platters = m_d[drive].wvd->getNumPlatters();
     bool large_disk   = (num_sectors > max_sectors) || (num_platters > 1);
-    bool first_gen    = (System2200().config().getCpuType() != Cpu2200::CPUTYPE_2200VP);
+    bool first_gen    = (System2200::config().getCpuType() != Cpu2200::CPUTYPE_2200VP);
     bool dumb_ctrl    = (intelligence() == DiskCtrlCfgState::DISK_CTRL_DUMB);
     bool warn         = warnMismatch();
 
