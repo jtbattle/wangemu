@@ -38,7 +38,7 @@ time, I realized that C++ wasn't just a fad and could even be useful, so all
 the core files were converted from .c to .cpp.  Most code remained most
 assuredly C in spirit, though.  Only the IoCard stuff took advantage of C++.
 
-Wangemu 2.1 came out in December 2008.  The new user visible features was
+Wangemu 2.1 came out in December 2008.  The new user visible features were
 support for the intelligent disk controller mode, better disk configuration
 options, and support for large disk drives.  Emulation of the 2200B CPU came
 via the work of Eilert Brinkmeyer by dumping the ROMs on his 2200B machine.
@@ -132,7 +132,7 @@ Another principle is to try and keep as much system-independent program
 logic in the core emulator as possible.  For instance, earlier versions
 of the emulator had the CPU speed regulation done in the GUI code.
 Starting with wangemu 2.1, the GUI code is responsible for generating
-an a call to a certain core function any time it is otherwise idle,
+a call to a certain core function any time it is otherwise idle,
 and it exposes a function where the core can call and get the elapsed
 real-time.  With these two things, the simulation scheduling and speed
 regulation can live in the core emulation logic.  Likewise, the emulation
@@ -235,10 +235,15 @@ to a particular kind of card.
 
 ---- System2200 ----
 
-System2200 is the owner of the emulated computer system.  It contains the
-objects for the Cpu, Scheduler, and the set of IoCards that are plugged in.
-It also holds a SysCfgState object; this object represents the current
-system configuration from which the system can be built up with real objects.
+System2200 is the owner of the emulated computer system.  Before the 3.0
+release, it was a "borg" singleton class, but in 3.0 it was converted to
+just be a namespace.  TheApp::OnInit() function is what calls
+System2200::initialized() to get the ball rolling.
+
+This namespace contains the objects for the Cpu, Scheduler, and the set of
+IoCards that are plugged in.  It also holds a SysCfgState object; this object
+represents the current system configuration from which the system can be built
+up with real objects.
 
 System2200 as owner of the I/O cards also holds the mapping of I/O address
 to card.  When the CPU performs, say, an OBS (output byte strobe), System2200
@@ -247,6 +252,14 @@ routes the OBS information to the currently selected I/O card.  If there is
 no card at that address, an alert box pops up warning the user of the
 situation, and offers to give or suppress warnings of accesses to this
 address in the future.
+
+System2200 also contains a keystroke router, which allows decoupling the
+GUI code from the card which ultimately handles the information.  Each
+keyboard (either standalone or as part of a smart terminal) registers
+a callback function to let system2200 know which device is associated
+with each logical keyboard address.  Just knowing the slot isn't enough
+because, in theory, one MXD terminal mux can handle four different keyboard
+streams.
 
 One interesting feature is the freezeEmu(bool) function.  Emulated time
 is simulated as the result of an OnIdle event, and OnIdle events occur even
@@ -265,8 +278,8 @@ window.  In implementation, CrtFrame manages the menu and status bar, but
 everything else, such as receiving keyboard input and drawing characters in
 the emulated CRT, are done in the component Crt (described next).  The Crt
 class is not exposed outside of CrtFrame.  Instead, CrtFrame just proxies
-requests down to Crt.  I could have been done differently, but I did it this
-way.
+requests down to Crt.  It could have been done differently, but it was done
+this way.
 
 ---- Crt ----
 
@@ -297,7 +310,7 @@ Crt also in that this wxArrayString can get longer than the display length,
 such that a scrollbar (managed by PrinterFrame) is usually required.
 
 When the user prefers the output be sent directly to an line printer connected
-to the host computer, the bytes are streamed out ot the LPT port (windows
+to the host computer, the bytes are streamed out to the LPT port (windows
 only).  The port is opened on demand, but if the stream of activity stops
 for more than half a second, the port is closed.  This ensures both that
 the emulator doesn't hog the port (so other applications can use the LPT
@@ -332,7 +345,7 @@ part of TheApp class.
 
 SystemConfigDlg is the interface that is used to manipulate the System2200's
 SysCfgState.  This allows a user to add or remove devices, or in the case of
-a IoCardDisk device, bring up a dilog to edit the state specific to the
+a IoCardDisk device, bring up a dialog to edit the state specific to the
 particular card.
 
 
@@ -379,10 +392,11 @@ system, using the same code that builds the system when the emulator is
 first launched.
 
 One complication is that individual card types are allowed to have their
-own configuration state.  Curently the only one that does is the IoCardDisk,
+own configuration state.  Currently the only one that does is the IoCardDisk,
 which uses a DiskCtrlCfgState object, derived from the abstract CardCfgState
 type, to perform the same kind of copy state/modify state/compare state/
 accept or reject state change paradigm that is used at the system level.
+
 
 ----------------------------------------------------------------------------
 Start Up
@@ -393,9 +407,9 @@ Instead it is hidden behind a macro called IMPLEMENT_APP(), found inside
 UiSystem.cpp.  This dives into wx library code, and control resurfaces back
 to the user code in the TheApp::OnInit() function.
 
-TheApp::OnInit() is where the System2200 object is created.  System2200
-then takes care of setting up the rest of the emulator, including building
-the SysCfgState object from the .ini file, described earlier.
+TheApp::OnInit() calls System2200::initialize().  That function then takes
+care of setting up the rest of the emulator, including building the
+SysCfgState object from the .ini file, described earlier.
 
 At some point OnInitCmdLine() is called.  This gives the code a chance to
 parse the command line.  Currently the only thing that is checked is if

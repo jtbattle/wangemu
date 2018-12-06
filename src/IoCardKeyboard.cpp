@@ -152,7 +152,11 @@ IoCardKeyboard::receiveKeystroke(int keycode)
 {
     assert( (keycode >= 0) );
 
-    if (keycode & KEYCODE_HALT) {
+    if (keycode == KEYCODE_RESET) {
+        // warm reset
+        System2200::reset(false);
+    } else if (keycode == KEYCODE_HALT) {
+        // halt/step
         m_key_ready = false;
         m_cpu->halt();
     } else {

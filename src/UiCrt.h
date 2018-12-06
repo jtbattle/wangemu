@@ -51,7 +51,7 @@ public:
     int  getFrameCount() const { return m_frame_count; }
 
     // hardware reset
-    void reset();
+    void reset(bool hard_reset);
 
     // redraw the CRT display as necessary
     void refreshWindow();

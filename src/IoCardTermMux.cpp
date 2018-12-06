@@ -425,7 +425,10 @@ IoCardTermMux::receiveKeystroke(int term_num, int keycode)
 
     // remap certain keycodes from first-generation encoding to what is
     // send over the serial line
-    if (keycode == IoCardKeyboard::KEYCODE_HALT) {
+    if (keycode == IoCardKeyboard::KEYCODE_RESET) {
+        // reset
+        term.remote_kb_buff.push(static_cast<uint8>(0x12));
+    } else if (keycode == IoCardKeyboard::KEYCODE_HALT) {
         // halt/step
         term.remote_kb_buff.push(static_cast<uint8>(0x13));
     } else if (keycode == (IoCardKeyboard::KEYCODE_SF | IoCardKeyboard::KEYCODE_EDIT)) {

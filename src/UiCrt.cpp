@@ -84,7 +84,7 @@ Crt::Crt(CrtFrame *parent, int screen_type) :
 
     scr_clear();
 
-    reset();
+    reset(true);
 }
 
 
@@ -94,32 +94,40 @@ Crt::~Crt()
     wxDELETE(g_logger);
 }
 
-// hardware reset
-// mostly needed for intelligent terminal operation
-// FIXME: the real terminal doesn't know when a reset happens on
-//        the system board.  the host must have a foolproof sequence
-//        to reesablish protocol sync with the terminal.
-//        Thus, we shouldn't need to expose this.
+// reset the crt
+// hard_reset=true means
+//     power on reset
+// hard_reset=false means
+//     user pressed the SHIFT-RESET sequence or
+//     the terminal received a reset sequence
 void
-Crt::reset()
+Crt::reset(bool hard_reset)
 {
-    // dumb/smart terminal state:
-    m_curs_x     = 0;
-    m_curs_y     = 0;
-    m_curs_attr  = cursor_attr_t::CURSOR_ON;
-    m_dirty      = true;  // must regenerate display
+    bool smart_term = (m_screen_type == UI_SCREEN_2236DE);
 
-    // smart terminal state:
-    m_raw_cnt    = 0;
-    m_input_cnt  = 0;
+    // dumb CRT controllers don't independently get reset;
+    // the host CPU tells it to clear.  smart terminals
+    // will independently clear the screen even if the serial
+    // line is disconnected.
+    if (hard_reset || smart_term) {
+        // dumb/smart terminal state:
+        m_curs_x     = 0;
+        m_curs_y     = 0;
+        m_curs_attr  = cursor_attr_t::CURSOR_ON;
+        m_dirty      = true;  // must regenerate display
 
-    m_attrs      = char_attr_t::CHAR_ATTR_BRIGHT; // implicitly primary char set
-    m_attr_on    = false;
-    m_attr_temp  = false;
-    m_attr_under = false;
+        // smart terminal state:
+        m_raw_cnt    = 0;
+        m_input_cnt  = 0;
 
-    // model 2236 behavior by emitting ID string
-    if (m_screen_type == UI_SCREEN_2236DE) {
+        m_attrs      = char_attr_t::CHAR_ATTR_BRIGHT; // implicitly primary char set
+        m_attr_on    = false;
+        m_attr_temp  = false;
+        m_attr_under = false;
+    }
+
+    // smart terminals echo the ID string only at power on
+    if (hard_reset && smart_term) {
         char *idptr = &id_string[1];  // skip the leading asterisk
         while (*idptr) {
             processChar3(*idptr);
@@ -934,7 +942,7 @@ Crt::processChar2(uint8 byte)
                          && m_input_buf[4] == 0x0F) {
         m_input_cnt = 0;
         scr_clear();
-        reset();
+        reset(false);
         return;
     }
 

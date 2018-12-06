@@ -3,21 +3,30 @@ Emulator TODO list
 ============================================================================
 
 *) master list of priorities:
-   clean up reset key handling; submit
+   convert Host from borg singleton to a namespace; update code.txt too
    clean up flow control; submit
    clean up mxd script flow control; submit
-   add mvp/vlsi cpu and memory options; submit
    get rid of tied keyboard thing -- unnecessary generalization
+   add mvp/vlsi cpu and memory options; submit
    decide on a consistent set of naming conventions and stick to them
+      hey, code.txt already has one.  study it.
+   ... then review the priorities again
 
 *) why am I getting character overruns?
    it could happen if there is a slow command, say reset, but it happens
    even on simple text input.  upping the 8080 speed to 2+ MHz and it
    still happens, so it isn't slightly marginal timing.
 
-   the 8080 should do about 170 instructions per character time.
    (1780000 clks/sec)*(11 bits/char)*(1 sec/19200 bits) = 1019 clocks/char
-   assuming 6 clks/instruction average, that is 170 instructions.
+   assuming 6 clks/instruction average, that is 170 instructions per char.
+   however, that is assuming one terminal.  if all four terminals are busy,
+   that leaves only 42 instructions per byte!
+
+   TRY THIS:
+   log every character as it arrives at the callback. fetch the simtime
+   and log that with the character.  log the overrun event too.
+   then stare at the log and see if the processing time is irregular or
+   if it happens only at certain conditions.
 
    one solution would be to check for rx_ready in the callback, and if it
    is still set, schedule another callback for 20% of a character time, say,
@@ -29,11 +38,8 @@ Emulator TODO list
       does it need to obey flow control bytes or is there a better way?
       A: TBD
    2. On RESET, the 2236 sends 12 F8 E4. should the emulated terminal?
-       actually, I think the terminal sends 12 to MXD, MXD sends FB F6
-       (reset CRT); the terminal does a reset sequence (clear screen,
-       reset memory, whatever) and then sends E4 F8 (F8=flow control).
-       not sure what E4 does. See this comment in
-       IoCardTermMux::IoCardTermMux()
+       not sure what E4 does.
+       See this comment in IoCardTermMux::IoCardTermMux()
 // the MXD initializes the CRT buffer with FB F6 (crt reset) and
 // 16 0x01 (clear screen) characters.  these are sent unconditionally
 // (no flow control) after reset (see INIT_CRT_BUF).  The terminal
@@ -57,26 +63,16 @@ Emulator TODO list
 
     HOLD ON.  The above is speculation. But the capture from my python
     from the actual terminal shows the terminal independently sends the
-    three byte power on sequence.
-
-*) reset key handling is goofy.  UiCrtFrame.cpp handles Alt-R and Alt-W
-   via a menu option, and then calls sys.reset() right there.  that was
-   ok before, but now it needs to route through the terminal handler
-   because the MXD conditionally filters such events. we also want to
-   trigger the post-reset init byte sequence from 2236 to mxd.
+    three byte power on sequence even when nothing is sent to it.
 
 *) the tied_keyboard setting is read during getDefaults() in UiCrtFrame
    but tied_keyboard doesn't make sense for term mux because it is not
    an independent address
 
-*) I'm seeing new strobes to the disk controller in MVP OS.
-   IoCardDisk::CBS() handler has comments saying OB8 and OB1
-   were used for various things.
-
-*) in a few places, term_num is hardwired to 1.
-   don't worry about generalizing to N terminals until one term is working.
-   in fact, maybe keep it to one terminal just to keep the user interface
-   reasonable.
+*) print preview crashes now.  I'm not sure when it started happening.
+   study F:\Jim\libs\wx-3.1.0\samples\printing
+   trying to print fails too.
+   build a sample app which uses print dialog and see if it works there.
 
 *) add terminal mux emulation and terminal emulation so I can run MVP OS's
 
@@ -123,10 +119,66 @@ Emulator TODO list
       later erased and overwritten, making the handwritten note
       meaningless.
 
+*) add support for MVP and VLSI type CPUs
+   - VP configuration should have 32KB control mem and defeature the 30ms timer
+   - MVP adds 64KB ctl mem, 30ms timer, and up to 512KB of data RAM via SL reg
+   - VLSI-2 puts an 8b register at output port 80 called BSR (bank select reg);
+     bit [7] of that register indicates if extended addressing should use the
+     SL register of if [6:0] provided 7b of extended addressing. See MVP source
+     code file BPMVP00.
+
+*) Add 64K words of control memory, so BASIC-3/COBOL can run
+   OptionC.pdf in the jim/wang2200/docs/system/2200MVP_MaintenanceManual
+   directory describes the upgrade to give 64KB of control ram and
+   512KB of RAM.  0x8000 to 0x8FFF is a hole where the bootstram PROM lives.
+   Don't make it configurable (to reduce UI clutter).
+   Just tie it to the configuration: VP gets 32K, MVP/VLSI get 64K.
+
+*) Have an easy config mode and an expert mode.
+   The config dialog would have two tabs.  The "simple" tab would have
+   these configuration options:
+      a) 2200T    w/ 32KB RAM, printer, two disk drives, KB + 64x16 screen
+      b) 2200VP   w/ 64KB RAM, printer, two disk drives, KB + 80x24 screen
+      c) 2200MVP  w/512KB RAM, printer, two disk drives, 2236 MXD, one term
+      d) 2200VLSI w/  4MB RAM, printer, two disk drives, 2236 MXD, one term
+   Expert mode would have the existing configuration dialog.
+   - things are getting more confusing with the increased options.
+     have a feature where hovering over the config button in the
+     "Not OK" state will pop up an explanation of the problem
+
+*) the read and write routines go to great lengths to inline things,
+   but they both have the expression (m_memsize_KB<<10).  That should
+   be precomputed as m_memsize.  or should I just get rid of m_memsize_KB?
+
+*) on toolbar, add superscript to some SF keys in (M)VP mode:
+     SF4: END
+     SF5: down arrow  (useful when the edited line wraps)
+     SF6: up arrow    (useful when the edited line wraps)
+     SF7: BEGIN
+   Also, make up/down arrow keys map to SF5 and SF6
+
+*) I'm seeing new strobes to the disk controller in MVP OS.
+   IoCardDisk::CBS() handler has comments saying OB8 and OB1
+   were used for various things.
+
+*) notes on disk protocol and unimplemented commands:
+    C:/Users/Jim/Documents/wang2200/disk_protocol/notes.txt
+
+*) in a few places, term_num is hardwired to 1.
+   don't worry about generalizing to N terminals until one term is working.
+   in fact, maybe keep it to one terminal just to keep the user interface
+   reasonable.  but still clean up the code a bit to parameterize it better.
+
 *) review coding convention
-    - System2200 is a singleton.  it is better to instead use a namespace with
-      all the state and functions inside it, so System2200().foo would be
-      System2200::foo. I admit the current scheme is tacky.
+    - after deciding, write up a short document on what I've decided
+      for my own future reference, and for any potential contributor
+      WAIT -- code.txt already has one. read it again and review my code.
+    - review my naming convention. I haven't been consistent.
+      eg, some_are_like_this, someAreCamelCase.
+      eg, UiCrt_Keyboard.cpp vs UiCrtRender.cpp
+      review some c++ style guides and pick a convention.
+                  Google: https://google.github.io/styleguide/cppguide.html
+       Sutter/Stroustrup: https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines
     - do this or not?
         vimgrep '!= nullptr' *.cpp
         then replace with simple boolean tests, eg
@@ -139,46 +191,11 @@ Emulator TODO list
           IoCardDisk *tthis = static_cast<IoCardDisk*>
                                       (System2200().getInstFromSlot(slot));
       but should it be reinterpret_cast<>()?
-    - review my naming convention. I haven't been consistent.
-      eg, some_are_like_this, someAreCamelCase.
-      review some c++ style guides and pick a convention.
-              Google: https://google.github.io/styleguide/cppguide.html
-   Sutter/Stroustrup: https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines
 
-*) add support for MVP and VLSI type CPUs
-   - MVP adds the 30ms timer, and up to 512KB of data RAM via the SL register.
-   - VLSI-2 puts an 8b register at output port 80 called BSR (bank select reg);
-     bit [7] of that register indicates if extended addressing should use the
-     SL register of if [6:0] provided 7b of extended addressing. See MVP source
-     code file BPMVP00.
-     Were there other differences?  Scan the internal notes and PR releases for
-     clues.  I vaguely recall reading that the VLSI CPU offered a slight speed
-     advantage.
+*) do a memory leak check once in a while
 
-*) Add 64K words of control memory, so BASIC-3/COBOL can run
-   OptionC.pdf in the jim/wang2200/docs/system/2200MVP_MaintenanceManual
-   directory describes the upgrade to give 64KB of control ram and
-   512KB of RAM.  0x8000 to 0x8FFF is a hole where the bootstram PROM lives.
-   Don't make it configurable -- just give it all 64K to reduce UI clutter.
-   Or tie it to the configuration: VP gets 32K, MVP/VLSI get 64K.
-
-*) allow term MUX to connect to a real serial port
-        - a mac/linux/win lib: http://sigrok.org/wiki/Libserialport
-        - http://wjwwood.io/serial/
-        - https://iftools.com/opensource/ctb.en.php
-        - windows+linux only: http://www.teuniz.net/RS-232/
-
-*) notes on disk protocol and unimplemented commands:
-    C:/Users/Jim/Documents/wang2200/disk_protocol/notes.txt
-
-*) print preview crashes now.  I'm not sure when it started happening.
-   study F:\Jim\libs\wx-3.1.0\samples\printing
-   trying to print fails too.
-   maybe wait to debug this after updating to the latest wxwidgets.
-
-*) the read and write routines go to great lengths to inline things,
-   but they both have the expression (m_memsize_KB<<10).  That should
-   be precomputed as m_memsize.  or should I just get rid of m_memsize_KB?
+    - installed Dr. Memory, seems easy to use, no source changes and does
+      much more than just detecting leaks.  http://www.drmemory.org/
 
 *) Thought for possibly easier code.
 
@@ -202,13 +219,6 @@ Emulator TODO list
 
 *) In MXD mode, TAB means TAB (2236DW) or FN (2236DE) (instead of STMT).
    The help page should be updated to indicate this.
-
-*) on toolbar, add superscript to some SF keys in (M)VP mode:
-     SF4: END
-     SF5: down arrow  (useful when the edited line wraps)
-     SF6: up arrow    (useful when the edited line wraps)
-     SF7: BEGIN
-   Also, make up/down arrow keys map to SF5 and SF6
 
 *) improved 2236 terminal emulation
 
@@ -255,8 +265,6 @@ Emulator TODO list
       benefit of offering flexible scaling at low cost, and perhaps other
       video generation defect emulation.
 
-    - the smart terminal menu should have an option to reset just the terminal
-
     - allow running terminal as a separate process
         - running in process is easier to manage for the casual user, though
         - actual serial port connection
@@ -269,6 +277,8 @@ Emulator TODO list
    but it takes a while.  Doing PRINT HEX(0707070707070707070707) sounds
    the same as PRINT HEX(07).  Is there something in the hardware which
    ensures a given HEX(07) takes at least a certain amount of time?
+
+   Try sending a constant stream of 07's to the real 2236. what happens?
 
    Each HEX(07) (re)triggers a one-shot which gates a 1KHz 555 oscillator.
    Change the logic to match by making the wav file play in a loop
@@ -300,9 +310,9 @@ Emulator TODO list
    That changes the timing a bit.
 
    https://wang2200.org/docs/system/2200_SystemsMaintenanceManual.03-0025-0.1975.pdf
-   page 6-11 (pdf page 207) describes how long the bell lasts for the original CRT
-   controller, but it isn't clear without the corresponding schematic exactly
-   what it means.
+   page 6-11 (pdf page 207) describes how long the bell lasts for the original
+   CRT controller, but it isn't clear without the corresponding schematic
+   exactly what it means.
 
 *) add disk unit addressing cheatsheet?  I have forgotten the ins and outs.
     3xx
@@ -365,24 +375,6 @@ Emulator TODO list
         LIST DCT/D20  ==  LIST DCR/320
         LIST DCT/D21  ==  LIST DCF/320  ? hmm crashes emulator
 
-*) this is kind of obscure, but the #ID function returns a "unique" ID per system.
-   it comes from locations 8004 and 8005 of the boot PROM (so says BPMVP0E).
-   The boot prom of my emulator happens to return 4136.  Make it a config option?
-
-*) Maybe have an easy config mode and an expert mode.
-   The config dialog would have two tabs.  The "simple" tab would have
-   these configuration options:
-      a) 2200T    w/ 32KB RAM, printer, two disk drives, KB + 64x16 screen
-      b) 2200VP   w/ 64KB RAM, printer, two disk drives, KB + 80x24 screen
-      c) 2200MVP  w/512KB RAM, printer, two disk drives, 2236 MXD, one term
-      d) 2200VLSI w/4MB   RAM, printer, two disk drives, 2236 MXD, one term
-   Expert mode would have the existing configuration dialog.
-
-*) do a memory leak check once in a while
-
-    - installed Dr. Memory, seems easy to use, no source changes and does
-      much more than just detecting leaks.  http://www.drmemory.org/
-
 *) Document how to work around this problem in the README.
 
    the printer config allows picking either LPT1 or LPT2 as the real printer
@@ -437,6 +429,131 @@ Emulator TODO list
    see
     http://www.microsoft.com/communities/newsgroups/en-us/default.aspx?dg=microsoft.public.vstudio.general&tid=2d0b8055-3fe2-482b-9fb2-731eb51859ee&cat=&lang=en&cr=US&sloc=&p=1
 
+*) finally got a wang PC keyboard.  there are some extra keys, but the guess
+   I made how they'd be expressed was wrong (see UiCrt_Keyboard.cpp).
+   This is what the wx sample app "keyboard" sees:
+
+                  no shift   shift    control   alt
+    F11:          F11        S-F11    C-F11     A-F11
+    F13:          ALT-F3     C-S-F3   C-A-F3    A-F3
+    F14:          ALT-F4     C-S-F4   C-A-F4    A-F4
+    F15:          ALT-F5     C-S-F5   C-A-F5    A-F5
+    F16:          ALT-F6     C-S-F6   C-A-F6    A-F6
+    CANCEL:       ALT-F7     C-S-F7   C-A-F7    A-F7
+    HELP:         ALT-F8     C-S-F8   C-A-F8    A-F8
+    GL:           ALT-F9     C-S-F9   C-A-F9    A-F9
+    Erase/DecTab: ALT-F10    C-S-F10  C-A-F10   A-F10
+    EXEC/END:     END        S-END    C-END     A-END
+
+    maybe tie it in with the next bullet item.
+
+*) make keyboard mapping configurable
+    - requested by Mark Musen, who runs it on a mac under virtual PC.
+      there is no pause/break (->HALT/STEP) key on that setup.
+      (but ctrl-c should work for this specific case, right?)
+
+*) allow pasting text to the emulator from the clipboard.  should be easy.
+   copying text from the screen is significantly more work, as I'd have
+   to track start & end selection, account for scrolling, have some visual
+   indication.
+
+*) emulate "CPU running" light on keyboard (first-gen only)
+   double check -- it is probably (cpu waiting for input && 01 selected)
+
+*) add a debugger/monitor
+    - the VP disassembler doesn't match the assembler syntax as specified
+      in the 2600 sw development manual.
+      (2200MVP_ComputerArchitecture.11-79.pdf, pdf page 81 or so)
+
+*) emulate plotter?  no point really without an interesting program.
+   plotter commands:
+        80 | p = start of plot command
+
+        80 | t = step +x,+y
+        80 | r = step +x,-y
+        80 | s = step -x,+y
+        80 | q = step -x,-y
+
+        80 | v = step  0,-y
+        80 | w = step  0,+y
+
+        80 | x = step -x,0
+        80 | y = step +x,0
+
+        80 | z = move to zero position (user defined manually)
+        80 | u = end of plot command
+
+   The BASIC-2 manual mentions SELECT PLOT and says that the C driver
+   type sends plotter commands in binary, speeding things up.  The manual
+   doesn't describe PLOT!  But the 2200 type PLOT commands work.  I wonder
+   if they have been augmented.  It would be nice to have a Plotter manual.
+
+   the 2232 was a flatbed plotter.  in the docs/schematics/peripherals dir
+   is 6337 -- which is the "pen control & command decoder" for this plotter.
+
+*) allow term MUX to connect to a real serial port
+        - a mac/linux/win lib: http://sigrok.org/wiki/Libserialport
+        - http://wjwwood.io/serial/
+        - https://iftools.com/opensource/ctb.en.php
+        - windows+linux only: http://www.teuniz.net/RS-232/
+
+*) emulate cassette tape?
+   some information about it:
+      http://www.wang2200.org/docs/internal/2200_TapeDriveSpecifications.2-73.pdf
+      http://www.wang2200.org/docs/internal/2200_IO_Specifications.6-72.pdf
+   see also
+     c:\users\jim\documents\wang2200\io-notes.txt
+
+*) this is kind of obscure, but the #ID function returns a "unique" ID per
+   system.  it comes from locations 8004 and 8005 of the boot PROM
+   (so says BPMVP0E). The boot prom of my emulator happens to return 4136.
+   Make it a config option?
+
+*) useful resources for MXD emulation:
+   (save for later after I forget this stuff)
+   MXD 8080 code partial disassembly:
+        C:/Users/Jim/Documents/wang2200/boards/LVP\ box/7291_dasm/asm/mxd.asm
+   MVP mxd-related microcode, especially
+        C:/Users/Jim/Documents/wang2200/disk_images/unreleased/kryoflux/MVP_3.5_Source_Aug_91/mvp_3.5_source_code/JLMVP32A
+   MXC,D,E notes:
+        C:/users/jim/documents/wang2200/boards/terminal_mux_notes.txt
+   https://wang2200.org/docs/system/2200MVP_MaintenanceManual.729-0584-A.1-84.pdf
+       section F has schematics for many MVP cards, including MXD (7290-1, 7291-1)
+       (pdf page 336, ...)
+
+*) check out these tips on using wxWidgets under visual studio:
+    http://www.litwindow.com/Knowhow/wxHowto/wxhowto.html
+
+============================================================================
+release checklist (roughly in this order)
+============================================================================
+
+- review FIXME and TODO comments
+- review that the code complies with the self-imposed style guide
+- run dr_memory to find memory leaks
+- remove any cruft files
+- review and update the files to be included with the emulator, including
+    - html files
+    - relnotes.txt
+    - build.txt
+    - code.txt
+    - README.md
+    - todo.txt
+    - disks/...
+    - scripts/...
+    - wvdutil/...
+- package for windows
+- package for mac
+- unpackage on clean windows & mac machines and very emu works
+- update the website
+- archive a snapshot
+- to prevent confusion, immediately update the UiMyAboutDlg.cpp
+  and relnotes.txt files to the next pre-whatever revision number
+
+============================================================================
+other tasks
+============================================================================
+
 *) recover tapes
     - wang backup tapes are probably QIC-02
         http://www.lintech.org/comp-per/11MAGTAP.pdf
@@ -482,88 +599,6 @@ Emulator TODO list
     - adaptec AHA-2930LP scsi interface cards apparently work with win/7
         and are $15 on ebay.  many are for macs, but even the ones for
         windows probably can't talk to the wang because it isn't native scsi.
-
-*) finally got a wang PC keyboard.  there are some extra keys, but the guess
-   I made how they'd be expressed was wrong (see UiCrt_Keyboard.cpp).
-   This is what the wx sample app "keyboard" sees:
-
-                  no shift   shift    control   alt
-    F11:          F11        S-F11    C-F11     A-F11
-    F13:          ALT-F3     C-S-F3   C-A-F3    A-F3
-    F14:          ALT-F4     C-S-F4   C-A-F4    A-F4
-    F15:          ALT-F5     C-S-F5   C-A-F5    A-F5
-    F16:          ALT-F6     C-S-F6   C-A-F6    A-F6
-    CANCEL:       ALT-F7     C-S-F7   C-A-F7    A-F7
-    HELP:         ALT-F8     C-S-F8   C-A-F8    A-F8
-    GL:           ALT-F9     C-S-F9   C-A-F9    A-F9
-    Erase/DecTab: ALT-F10    C-S-F10  C-A-F10   A-F10
-    EXEC/END:     END        S-END    C-END     A-END
-
-    maybe tie it in with the next bullet item.
-
-*) make keyboard mapping configurable
-    - requested by Mark Musen, who runs it on a mac under virtual PC.
-      there is no pause/break (->HALT/STEP) key on that setup.
-
-*) allow pasting text to the emulator from the clipboard.  should be easy.
-   copying text from the screen is significantly more work, as I'd have
-   to track start & end selection, account for scrolling, have some visual
-   indication.
-
-*) check out these tips on using wxWidgets under visual studio:
-    http://www.litwindow.com/Knowhow/wxHowto/wxhowto.html
-
-*) emulate "CPU running" light on keyboard (first-gen only)
-
-*) add a debugger/monitor
-    - the VP disassembler doesn't match the assembler syntax as specified
-      in the 2600 sw development manual.
-      (2200MVP_ComputerArchitecture.11-79.pdf, pdf page 81 or so)
-
-*) emulate plotter?  no point really without an interesting program.
-   plotter commands:
-        80 | p = start of plot command
-
-        80 | t = step +x,+y
-        80 | r = step +x,-y
-        80 | s = step -x,+y
-        80 | q = step -x,-y
-
-        80 | v = step  0,-y
-        80 | w = step  0,+y
-
-        80 | x = step -x,0
-        80 | y = step +x,0
-
-        80 | z = move to zero position (user defined manually)
-        80 | u = end of plot command
-
-   The BASIC-2 manual mentions SELECT PLOT and says that the C driver
-   type sends plotter commands in binary, speeding things up.  The manual
-   doesn't describe PLOT!  But the 2200 type PLOT commands work.  I wonder
-   if they have been augmented.  It would be nice to have a Plotter manual.
-
-   the 2232 was a flatbed plotter.  in the docs/schematics/peripherals dir
-   is 6337 -- which is the "pen control & command decoder" for this plotter.
-
-*) emulate cassette tape?
-   some information about it:
-      http://www.wang2200.org/docs/internal/2200_TapeDriveSpecifications.2-73.pdf
-      http://www.wang2200.org/docs/internal/2200_IO_Specifications.6-72.pdf
-   see also
-     c:\users\jim\documents\wang2200\io-notes.txt
-
-*) useful resources for MXD emulation:
-   (save for later after I forget this stuff)
-   MXD 8080 code partial disassembly:
-        C:/Users/Jim/Documents/wang2200/boards/LVP\ box/7291_dasm/asm/mxd.asm
-   MVP mxd-related microcode, especially
-        C:/Users/Jim/Documents/wang2200/disk_images/unreleased/kryoflux/MVP_3.5_Source_Aug_91/mvp_3.5_source_code/JLMVP32A
-   MXC,D,E notes:
-        C:/users/jim/documents/wang2200/boards/terminal_mux_notes.txt
-   https://wang2200.org/docs/system/2200MVP_MaintenanceManual.729-0584-A.1-84.pdf
-       section F has schematics for many MVP cards, including MXD (7290-1, 7291-1)
-       (pdf page 336, ...)
 
 ============================================================================
 --- wvdutil issues ---

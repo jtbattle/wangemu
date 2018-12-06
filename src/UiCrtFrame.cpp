@@ -306,8 +306,8 @@ CrtFrame::isPrimaryCrt() const
     #define ALT  "Ctrl"         /* this gets remapped to Cmd */
     #define ALT2 "Shift-Ctrl"   /* this gets remapped to Shift-Cmd */
 #else
-    #define ALT  "Alt"
-    #define ALT2 "Alt"
+    #define ALT  "Shift-Alt"
+    #define ALT2 "Shift-Alt"
 #endif
 
 void
@@ -328,8 +328,8 @@ CrtFrame::makeMenubar(int primary_crt)
     wxMenu *menuCPU = nullptr;
     if (primary_crt) {
         menuCPU = new wxMenu;
-        menuCPU->Append(CPU_HardReset, "Hard &Reset CPU\t" ALT2 "+R", "Perform a power-up reset");
-        menuCPU->Append(CPU_WarmReset, "&Warm Reset CPU\t" ALT2 "+W", "Perform a state-preserving reset");
+        menuCPU->Append(CPU_HardReset, "Hard Reset CPU\t" ALT2 "+R", "Perform a power-up reset");
+        menuCPU->Append(CPU_WarmReset, "Warm Reset CPU\t" ALT2 "+W", "Perform a state-preserving reset");
         menuCPU->AppendSeparator();
         menuCPU->Append(CPU_ActualSpeed,      "&Actual Speed",      "Run emulation at speed of the actual machine", wxITEM_CHECK);
         menuCPU->Append(CPU_UnregulatedSpeed, "&Unregulated Speed", "Run emulation at maximum speed", wxITEM_CHECK);
@@ -975,10 +975,13 @@ CrtFrame::OnReset(wxCommandEvent &event)
         default:
             assert(false);
         case CPU_HardReset:
-            System2200::reset(true);      // hard reset
+            System2200::reset(true);  // hard reset
             break;
         case CPU_WarmReset:
-            System2200::reset(false);      // warm restart
+            m_crt->reset(false);
+            // route it through the keyboard handler because the MXD
+            // filters out resets which aren't from terminal #1
+            System2200::kb_keystroke(getTiedAddr(), m_term_num, IoCardKeyboard::KEYCODE_RESET);
             break;
     }
 }

@@ -946,7 +946,7 @@ System2200::kb_keystroke(int io_addr, int term_num, int keyvalue)
             if (kb.script_handle) {
                 // a script is running; ignore everything but HALT
                 // (on pc, ctrl-C or pause/break key)
-                if (keyvalue & IoCardKeyboard::KEYCODE_HALT) {
+                if (keyvalue == IoCardKeyboard::KEYCODE_HALT) {
                     kb.script_handle = nullptr;
                 }
                 return;

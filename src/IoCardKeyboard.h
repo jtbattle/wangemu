@@ -34,9 +34,10 @@ public:
     void receiveKeystroke(int keycode);
 
     // various keyboard related flags
-    enum { KEYCODE_SF   = 0x0100,  // special function key flag
-           KEYCODE_HALT = 0x0200,  // user pressed the reset button on the keyboard
-           KEYCODE_EDIT =    240   // the EDIT key
+    enum { KEYCODE_SF    = 0x0100,  // special function key flag
+           KEYCODE_HALT  = 0x0200,  // user pressed the halt/step button 
+           KEYCODE_RESET = 0x0201,  // user pressed the reset button
+           KEYCODE_EDIT  =   0xF0   // the EDIT key
     };
 
 private:

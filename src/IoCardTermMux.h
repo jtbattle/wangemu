@@ -40,11 +40,6 @@ public:
     void receiveKeystroke(int term_num, int keycode);
     // ...
 
-    enum { KEYCODE_SF   = 0x0100,  // special function key flag
-           KEYCODE_HALT = 0x0200,  // user pressed the reset button on the keyboard
-           KEYCODE_EDIT =    240   // the EDIT key
-    };
-
 private:
 
     // ---- card properties ----
