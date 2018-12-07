@@ -1,8 +1,7 @@
 Wang 2200 Emulator
 ==================
 
-wangemu is able to emulate a Wang 2200 computer or a Wang 2200 VP computer.
-Wang 2200 MVP emulation is not available yet, but it is a goal.
+wangemu is able to emulate a Wang 2200, 2200VP, or 2200MVP computer.
 
 The emulator is written in C++ and makes use of the
 [wxWidgets](http://www.wxwidgets.org)
@@ -20,6 +19,7 @@ The 2200 had an incredible array of peripherals it supported, but only a
 few are emulated:
 
 * CRT controller (64x16 or 80x24)
+* MXD terminal mux and 2236 intelligent terminal
 * printer controller (virtual, or redirect to real printer)
 * keyboard controller
 * disk controller
