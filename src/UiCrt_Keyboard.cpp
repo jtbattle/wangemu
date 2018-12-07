@@ -117,7 +117,7 @@ kd_keymap_t keydown_keymap_table[] = {
     { WXK_F16,          KC_SHIFT   | KC_CTRL,           IoCardKeyboard::KEYCODE_SF | IoCardKeyboard::KEYCODE_EDIT },
 #endif
 
-    // --------- alias for special function keys -------------
+    // ------------- alias for special function keys -------------
     // these are useful in EDIT mode, as they are much easier to remember
     // key              modifier                        mapping
 
@@ -143,6 +143,18 @@ kd_keymap_t keydown_keymap_table[] = {
     { 'I',              KC_CTRL,                        IoCardKeyboard::KEYCODE_SF | 0x0A },              // insert
     { 'K',              KC_CTRL,                        IoCardKeyboard::KEYCODE_SF | 0x08 },              // erase (kill)
 #endif
+
+    // ---------- alias for special function keys meaningful for VP ----------
+    // key              modifier                        mapping
+
+    // end of line
+    { WXK_RIGHT,        KC_CTRL,                        IoCardKeyboard::KEYCODE_SF   | 0x04 },
+    // down a line
+    { WXK_DOWN,         KC_NOSHIFT,                     IoCardKeyboard::KEYCODE_SF   | 0x05 },
+    // up a line
+    { WXK_UP,           KC_NOSHIFT,                     IoCardKeyboard::KEYCODE_SF   | 0x06 },
+    // start of line
+    { WXK_LEFT,         KC_CTRL,                        IoCardKeyboard::KEYCODE_SF   | 0x07 },
 
     // --------- misc -------------
     // these don't have any natural place to put them, but they are useful,

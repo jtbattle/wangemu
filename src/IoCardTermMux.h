@@ -10,10 +10,6 @@ class Cpu2200;
 class Scheduler;
 class Timer;
 
-//extern "C" {
-//struct i8080;
-//}
-
 class IoCardTermMux : public IoCard
 {
 public:
