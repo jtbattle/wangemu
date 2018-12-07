@@ -169,8 +169,6 @@ SysCfgState::setDefaults()
 void
 SysCfgState::loadIni()
 {
-    Host hst;
-
     // get CPU attributes and start accumulating new configuration changes
     {
         std::string subgroup("cpu");
@@ -178,7 +176,7 @@ SysCfgState::loadIni()
         int    ival;
 
         setCpuType( Cpu2200::CPUTYPE_2200T );  // default
-        bool b = hst.ConfigReadStr(subgroup, "cpu", &sval);
+        bool b = Host::ConfigReadStr(subgroup, "cpu", &sval);
         if (b) {
                  if (sval == "2200B")  { setCpuType( Cpu2200::CPUTYPE_2200B );  }
             else if (sval == "2200T")  { setCpuType( Cpu2200::CPUTYPE_2200T );  }
@@ -186,7 +184,7 @@ SysCfgState::loadIni()
         }
 
         int dflt_ram = (getCpuType() == Cpu2200::CPUTYPE_2200VP) ? 64 : 32;
-        b = hst.ConfigReadInt(subgroup, "memsize", &ival, dflt_ram);
+        b = Host::ConfigReadInt(subgroup, "memsize", &ival, dflt_ram);
         if (b) {
             switch (m_cputype) {
                 case Cpu2200::CPUTYPE_2200B:
@@ -210,7 +208,7 @@ SysCfgState::loadIni()
 
         // learn whether CPU speed is regulated or not
         regulateCpuSpeed( true );  // default
-        b = hst.ConfigReadStr(subgroup, "speed", &sval);
+        b = Host::ConfigReadStr(subgroup, "speed", &sval);
         if (b && (sval == "unregulated")) {
             regulateCpuSpeed( false );
         }
@@ -226,8 +224,8 @@ SysCfgState::loadIni()
         IoCard::card_t cardtype = IoCard::card_t::none;
 
         int io_addr;
-        (void)hst.ConfigReadInt(subgroup, "addr", &io_addr, -1);  // -1 if not found
-        int b = hst.ConfigReadStr(subgroup, "type", &sval);
+        (void)Host::ConfigReadInt(subgroup, "addr", &io_addr, -1);  // -1 if not found
+        int b = Host::ConfigReadStr(subgroup, "type", &sval);
         if (b) {
             cardtype = CardInfo::getCardTypeFromName(sval);
         }
@@ -260,10 +258,10 @@ SysCfgState::loadIni()
         std::string subgroup("misc");
         bool bval;
 
-        hst.ConfigReadBool(subgroup, "disk_realtime", &bval, true);
+        Host::ConfigReadBool(subgroup, "disk_realtime", &bval, true);
         setDiskRealtime( bval );  // default
 
-        hst.ConfigReadBool(subgroup, "warnio", &bval, true);
+        Host::ConfigReadBool(subgroup, "warnio", &bval, true);
         setWarnIo( bval );  // default
     }
 
@@ -277,8 +275,6 @@ SysCfgState::saveIni() const
 {
     assert(m_initialized);
 
-    Host hst;
-
     // save IO information
     for(int slot=0; slot<NUM_IOSLOTS; slot++) {
         std::string subgroup("io/slot-" + std::to_string(slot));
@@ -288,11 +284,11 @@ SysCfgState::saveIni() const
             char val[10];
             sprintf(val, "0x%03X", m_slot[slot].addr);
             std::string cardname = CardInfo::getCardName(cardtype);
-            hst.ConfigWriteStr(subgroup, "type", cardname);
-            hst.ConfigWriteStr(subgroup, "addr", val);
+            Host::ConfigWriteStr(subgroup, "type", cardname);
+            Host::ConfigWriteStr(subgroup, "addr", val);
         } else {
-            hst.ConfigWriteStr(subgroup, "type", "");
-            hst.ConfigWriteStr(subgroup, "addr", "");
+            Host::ConfigWriteStr(subgroup, "type", "");
+            Host::ConfigWriteStr(subgroup, "addr", "");
         }
 
         if (m_slot[slot].cardCfg != nullptr) {
@@ -309,19 +305,19 @@ SysCfgState::saveIni() const
         const char *foo = (m_cputype == Cpu2200::CPUTYPE_2200B) ? "2200B" :
                           (m_cputype == Cpu2200::CPUTYPE_2200T) ? "2200T" :
                                                                   "2200VP";
-        hst.ConfigWriteStr(subgroup, "cpu", foo);
+        Host::ConfigWriteStr(subgroup, "cpu", foo);
 
-        hst.ConfigWriteInt(subgroup, "memsize", getRamKB());
+        Host::ConfigWriteInt(subgroup, "memsize", getRamKB());
 
         foo = (System2200::isCpuSpeedRegulated()) ? "regulated" : "unregulated";
-        hst.ConfigWriteStr(subgroup, "speed", foo);
+        Host::ConfigWriteStr(subgroup, "speed", foo);
     }
 
     // save misc other config bits
     {
         const std::string subgroup("misc");
-        hst.ConfigWriteBool(subgroup, "disk_realtime", getDiskRealtime());
-        hst.ConfigWriteBool(subgroup, "warnio",        getWarnIo());
+        Host::ConfigWriteBool(subgroup, "disk_realtime", getDiskRealtime());
+        Host::ConfigWriteBool(subgroup, "warnio",        getWarnIo());
     }
 }
 

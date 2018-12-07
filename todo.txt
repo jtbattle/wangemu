@@ -3,7 +3,6 @@ Emulator TODO list
 ============================================================================
 
 *) master list of priorities:
-   convert Host from borg singleton to a namespace; update code.txt too
    clean up flow control; submit
    clean up mxd script flow control; submit
    get rid of tied keyboard thing -- unnecessary generalization
@@ -121,6 +120,8 @@ Emulator TODO list
 
 *) add support for MVP and VLSI type CPUs
    - VP configuration should have 32KB control mem and defeature the 30ms timer
+     Perhaps pop up a warning that the CPU is attempting to run an MVP OS
+     if it detects a 30ms trigger.
    - MVP adds 64KB ctl mem, 30ms timer, and up to 512KB of data RAM via SL reg
    - VLSI-2 puts an 8b register at output port 80 called BSR (bank select reg);
      bit [7] of that register indicates if extended addressing should use the
@@ -167,18 +168,19 @@ Emulator TODO list
 *) in a few places, term_num is hardwired to 1.
    don't worry about generalizing to N terminals until one term is working.
    in fact, maybe keep it to one terminal just to keep the user interface
-   reasonable.  but still clean up the code a bit to parameterize it better.
+   reasonable.  still, parameterize the code better even if this release
+   don't take advantage of it.
 
 *) review coding convention
-    - after deciding, write up a short document on what I've decided
-      for my own future reference, and for any potential contributor
-      WAIT -- code.txt already has one. read it again and review my code.
-    - review my naming convention. I haven't been consistent.
-      eg, some_are_like_this, someAreCamelCase.
-      eg, UiCrt_Keyboard.cpp vs UiCrtRender.cpp
+    - after studying the following coding guidelines, modify/extend what is
+      written in code.txt for my own future reference, and for any potential
+      contributor.  then review all the code for conformance.
       review some c++ style guides and pick a convention.
                   Google: https://google.github.io/styleguide/cppguide.html
        Sutter/Stroustrup: https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines
+    - review my naming convention. I haven't been consistent.
+      eg, some_are_like_this, someAreCamelCase.
+      eg, filenames UiCrt_Keyboard.cpp vs UiCrtRender.cpp
     - do this or not?
         vimgrep '!= nullptr' *.cpp
         then replace with simple boolean tests, eg
@@ -502,7 +504,9 @@ Emulator TODO list
       http://www.wang2200.org/docs/internal/2200_TapeDriveSpecifications.2-73.pdf
       http://www.wang2200.org/docs/internal/2200_IO_Specifications.6-72.pdf
    see also
-     c:\users\jim\documents\wang2200\io-notes.txt
+      c:\users\jim\documents\wang2200\io-notes.txt
+   It might be intellectually satisfying to dig into the details, but cassette
+   operation was a drag back then and it would never get used now.
 
 *) this is kind of obscure, but the #ID function returns a "unique" ID per
    system.  it comes from locations 8004 and 8005 of the boot PROM

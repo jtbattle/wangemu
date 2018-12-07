@@ -725,45 +725,43 @@ CrtFrame::initToolBar(wxToolBar *tb)
 void
 CrtFrame::saveDefaults()
 {
-    Host hst;
-
     std::ostringstream sg;
     sg << "ui/CRT-" << std::setw(2) << std::setfill('0') << std::hex << m_crt_addr;
     std::string subgroup(sg.str());
 
     // save screen color
-    hst.ConfigWriteInt(subgroup, "colorscheme", getDisplayColorScheme());
+    Host::ConfigWriteInt(subgroup, "colorscheme", getDisplayColorScheme());
 
     // save font choice
-    hst.ConfigWriteInt(subgroup, "fontsize",  m_fontsize[0]);
-    hst.ConfigWriteInt(subgroup, "fontsize2", m_fontsize[1]);
+    Host::ConfigWriteInt(subgroup, "fontsize",  m_fontsize[0]);
+    Host::ConfigWriteInt(subgroup, "fontsize2", m_fontsize[1]);
 
     // save contrast/brightness
-    hst.ConfigWriteInt(subgroup, "contrast",   m_crt->getDisplayContrast() );
-    hst.ConfigWriteInt(subgroup, "brightness", m_crt->getDisplayBrightness() );
+    Host::ConfigWriteInt(subgroup, "contrast",   m_crt->getDisplayContrast() );
+    Host::ConfigWriteInt(subgroup, "brightness", m_crt->getDisplayBrightness() );
 
     // save keyword mode
-    hst.ConfigWriteBool(subgroup, "keywordmode", getKeywordMode() );
+    Host::ConfigWriteBool(subgroup, "keywordmode", getKeywordMode() );
 
     // save tied keyboard io address
     std::ostringstream tfoo;
     tfoo << "0x" << std::setw(2) << std::setfill('0') << std::uppercase << std::hex << m_assoc_kb_addr;
     std::string foo(tfoo.str());
-    hst.ConfigWriteStr(subgroup, "tied_keyboard", foo);
+    Host::ConfigWriteStr(subgroup, "tied_keyboard", foo);
 
     // save position and size
     if (!m_fullscreen) {
-        hst.ConfigWriteWinGeom(this, subgroup);
+        Host::ConfigWriteWinGeom(this, subgroup);
     }
 
     // save statistics display mode
-    hst.ConfigWriteBool(subgroup, "timingstats", getShowStatistics() );
+    Host::ConfigWriteBool(subgroup, "timingstats", getShowStatistics() );
 
     // save toolbar status
-    hst.ConfigWriteBool(subgroup, "toolbar", m_toolBar->IsShown());
+    Host::ConfigWriteBool(subgroup, "toolbar", m_toolBar->IsShown());
 
     // save fullscreen status
-    hst.ConfigWriteBool(subgroup, "fullscreen", m_fullscreen);
+    Host::ConfigWriteBool(subgroup, "fullscreen", m_fullscreen);
 }
 
 
@@ -771,8 +769,6 @@ CrtFrame::saveDefaults()
 void
 CrtFrame::getDefaults()
 {
-    Host hst;
-
     wxString valstr;
     int v = 0;
     bool b;
@@ -783,11 +779,11 @@ CrtFrame::getDefaults()
     std::string subgroup(sg.str());
 
     // pick up keyword mode (A/a vs Keyword/A)
-    hst.ConfigReadBool(subgroup, "keywordmode", &b, false);
+    Host::ConfigReadBool(subgroup, "keywordmode", &b, false);
     setKeywordMode(b);
 
     // pick up tied keyboard io address
-    b = hst.ConfigReadInt(subgroup, "tied_keyboard", &v);
+    b = Host::ConfigReadInt(subgroup, "tied_keyboard", &v);
     if (b && (v >= 0x00) && (v <= 0xFF)) {
         m_assoc_kb_addr = v;
     } else {
@@ -808,28 +804,28 @@ CrtFrame::getDefaults()
 
     // pick up statistics display mode
     bool showstats;
-    hst.ConfigReadBool(subgroup, "timingstats", &showstats, false );
+    Host::ConfigReadBool(subgroup, "timingstats", &showstats, false );
     setShowStatistics(showstats);
 
     // save toolbar status
     bool show_toolbar;
-    hst.ConfigReadBool(subgroup, "toolbar", &show_toolbar, false );
+    Host::ConfigReadBool(subgroup, "toolbar", &show_toolbar, false );
     m_toolBar->Show(show_toolbar);
 
     // pick up screen location and size
     wxRect default_geom(50,50,690,380);
-    hst.ConfigReadWinGeom(this, subgroup, &default_geom);
+    Host::ConfigReadWinGeom(this, subgroup, &default_geom);
 
     // pick up fullscreen status
-    hst.ConfigReadBool(subgroup, "fullscreen", &m_fullscreen, false);
+    Host::ConfigReadBool(subgroup, "fullscreen", &m_fullscreen, false);
 
     // this must be done before changing the color scheme
-    hst.ConfigReadInt(subgroup, "contrast", &v, 100 );
+    Host::ConfigReadInt(subgroup, "contrast", &v, 100 );
     m_crt->setDisplayContrast(v);
-    hst.ConfigReadInt(subgroup, "brightness", &v, 0 );
+    Host::ConfigReadInt(subgroup, "brightness", &v, 0 );
     m_crt->setDisplayBrightness(v);
 
-    (void)hst.ConfigReadInt(subgroup, "colorscheme", &v, 0);
+    (void)Host::ConfigReadInt(subgroup, "colorscheme", &v, 0);
     if ((v >= 0) && (v < num_colorschemes)) {
         setDisplayColorScheme(v);
     } else {
@@ -838,11 +834,11 @@ CrtFrame::getDefaults()
 
     // pick up screen font size
     m_fontsize[0] = m_fontsize[1] = 2; // default
-    b = hst.ConfigReadInt(subgroup, "fontsize", &v);
+    b = Host::ConfigReadInt(subgroup, "fontsize", &v);
     if (b && ((v >=1 && v <= 3) || (v >= 8 && v <= 28))) {
         m_fontsize[0] = v;
     }
-    (void)hst.ConfigReadInt(subgroup, "fontsize2", &v);
+    (void)Host::ConfigReadInt(subgroup, "fontsize2", &v);
     if (b && ((v >=1 && v <= 3) || (v >= 8 && v <= 28))) {
         m_fontsize[1] = v;
     }
@@ -918,9 +914,8 @@ CrtFrame::getCursorBlinkPhase() const
 void
 CrtFrame::OnScript(wxCommandEvent& WXUNUSED(event))
 {
-    Host hst;
     std::string fullpath;
-    int r = hst.fileReq(Host::FILEREQ_SCRIPT, "Script to execute", 1, &fullpath);
+    int r = Host::fileReq(Host::FILEREQ_SCRIPT, "Script to execute", 1, &fullpath);
     if (r == Host::FILEREQ_OK) {
         // tell the core emulator to redirect input for a while
         System2200::kb_invokeScript(m_assoc_kb_addr, m_term_num, fullpath);
@@ -933,10 +928,9 @@ void
 CrtFrame::OnSnapshot(wxCommandEvent& WXUNUSED(event))
 {
     // get the name of a file to execute
-    Host hst;
     std::string fullpath;
 
-    int r = hst.fileReq(Host::FILEREQ_GRAB, "Filename of image", 0, &fullpath);
+    int r = Host::fileReq(Host::FILEREQ_GRAB, "Filename of image", 0, &fullpath);
     if (r == Host::FILEREQ_OK) {
         wxBitmap* bitmap = m_crt->grabScreen();
         bitmap->SaveFile(wxString(fullpath), wxBITMAP_TYPE_BMP);
@@ -999,9 +993,8 @@ CrtFrame::OnDiskFactory(wxCommandEvent &event)
 {
     std::string filename("");
     if (event.GetId() == Disk_Inspect) {
-        Host hst;
-        if (hst.fileReq(Host::FILEREQ_DISK, "Virtual Disk Name", 1, &filename) !=
-                        Host::FILEREQ_OK) {
+        if (Host::fileReq(Host::FILEREQ_DISK, "Virtual Disk Name", 1, &filename) !=
+                          Host::FILEREQ_OK) {
             return;     // canceled
         }
     }
@@ -1036,10 +1029,9 @@ CrtFrame::doInspect(const std::string &filename)
 void
 CrtFrame::OnDiskFormat(wxCommandEvent& WXUNUSED(event))
 {
-    Host hst;
     std::string filename;
-    if (hst.fileReq(Host::FILEREQ_DISK, "Virtual Disk Name", 1, &filename) !=
-                    Host::FILEREQ_OK) {
+    if (Host::fileReq(Host::FILEREQ_DISK, "Virtual Disk Name", 1, &filename) !=
+                      Host::FILEREQ_OK) {
         return; // cancelled
     }
 
@@ -1102,8 +1094,8 @@ CrtFrame::OnDisk(wxCommandEvent &event)
 
         case 0: // insert disk
         {   std::string fullpath;
-            if (Host().fileReq(Host::FILEREQ_DISK, "Disk to load", 1, &fullpath) ==
-                               Host::FILEREQ_OK) {
+            if (Host::fileReq(Host::FILEREQ_DISK, "Disk to load", 1, &fullpath) ==
+                              Host::FILEREQ_OK) {
                 int drive2, io_addr2;
                 bool b = System2200::findDisk(fullpath, nullptr, &drive2, &io_addr2);
                 if (b) {

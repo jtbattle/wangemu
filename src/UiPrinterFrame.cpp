@@ -320,8 +320,6 @@ PrinterFrame::setMenuChecks()
 void
 PrinterFrame::saveDefaults()
 {
-    Host hst;
-
     std::ostringstream sg;
     sg << "ui/Printer-" << std::setw(2) << std::setfill('0') << std::hex << m_printer_addr;
     std::string subgroup(sg.str());
@@ -333,27 +331,27 @@ PrinterFrame::saveDefaults()
     m_printer->getPageAttributes(llen, plen);
 
     // save position and size
-    hst.ConfigWriteWinGeom(this, subgroup);
+    Host::ConfigWriteWinGeom(this, subgroup);
 
     // save page attributes
-    hst.ConfigWriteInt(subgroup,  "pagelength",       plen);
-    hst.ConfigWriteInt(subgroup,  "linelength",       llen);
-    hst.ConfigWriteInt(subgroup,  "fontsize",         m_fontsize);
-    hst.ConfigWriteBool(subgroup, "greenbar",         m_printer->getGreenbar() );
-    hst.ConfigWriteBool(subgroup, "autoshow",         m_printer->getAutoshow() );
-    hst.ConfigWriteBool(subgroup, "printasgo",        m_printer->getPrintasgo() );
-    hst.ConfigWriteBool(subgroup, "portdirect",       m_printer->getPortdirect() );
-    hst.ConfigWriteStr(subgroup,  "portstring",       m_printer->getPortstring() );
-    hst.ConfigWriteInt(subgroup,  "orientation",      static_cast<int>(m_printer->getOrientation()) );
-    hst.ConfigWriteStr(subgroup,  "papername",        m_printer->getPaperName() );
-    hst.ConfigWriteInt(subgroup,  "paperid",          m_printer->getPaperId() );
-    hst.ConfigWriteInt(subgroup,  "paperbin",         m_printer->getBin() );
-    hst.ConfigWriteInt(subgroup,  "marginleft",       left);
-    hst.ConfigWriteInt(subgroup,  "marginright",      right);
-    hst.ConfigWriteInt(subgroup,  "margintop",        top);
-    hst.ConfigWriteInt(subgroup,  "marginbottom",     bottom);
-    hst.ConfigWriteInt(subgroup,  "previewzoom",      m_previewzoom);
-    hst.ConfigWriteStr(subgroup,  "realprintername",  m_printer->getRealPrinterName() );
+    Host::ConfigWriteInt(subgroup,  "pagelength",       plen);
+    Host::ConfigWriteInt(subgroup,  "linelength",       llen);
+    Host::ConfigWriteInt(subgroup,  "fontsize",         m_fontsize);
+    Host::ConfigWriteBool(subgroup, "greenbar",         m_printer->getGreenbar() );
+    Host::ConfigWriteBool(subgroup, "autoshow",         m_printer->getAutoshow() );
+    Host::ConfigWriteBool(subgroup, "printasgo",        m_printer->getPrintasgo() );
+    Host::ConfigWriteBool(subgroup, "portdirect",       m_printer->getPortdirect() );
+    Host::ConfigWriteStr(subgroup,  "portstring",       m_printer->getPortstring() );
+    Host::ConfigWriteInt(subgroup,  "orientation",      static_cast<int>(m_printer->getOrientation()) );
+    Host::ConfigWriteStr(subgroup,  "papername",        m_printer->getPaperName() );
+    Host::ConfigWriteInt(subgroup,  "paperid",          m_printer->getPaperId() );
+    Host::ConfigWriteInt(subgroup,  "paperbin",         m_printer->getBin() );
+    Host::ConfigWriteInt(subgroup,  "marginleft",       left);
+    Host::ConfigWriteInt(subgroup,  "marginright",      right);
+    Host::ConfigWriteInt(subgroup,  "margintop",        top);
+    Host::ConfigWriteInt(subgroup,  "marginbottom",     bottom);
+    Host::ConfigWriteInt(subgroup,  "previewzoom",      m_previewzoom);
+    Host::ConfigWriteStr(subgroup,  "realprintername",  m_printer->getRealPrinterName() );
 }
 
 
@@ -361,7 +359,6 @@ PrinterFrame::saveDefaults()
 void
 PrinterFrame::getDefaults()
 {
-    Host hst;
     std::string valstr;
     int v;
     bool b;
@@ -373,53 +370,53 @@ PrinterFrame::getDefaults()
 
     // pick up screen location and size
     wxRect default_geom(50,50,690,380);
-    hst.ConfigReadWinGeom(this, subgroup, &default_geom);
+    Host::ConfigReadWinGeom(this, subgroup, &default_geom);
 
     // pick up screen font size
-    b = hst.ConfigReadInt(subgroup, "fontsize", &v);
+    b = Host::ConfigReadInt(subgroup, "fontsize", &v);
     m_fontsize = (b && (v >= 8) && (v <= 28)) ? v : 12;
     m_printer->setFontSize(m_fontsize);
 
-    hst.ConfigReadBool(subgroup, "greenbar", &b, true);
+    Host::ConfigReadBool(subgroup, "greenbar", &b, true);
     m_printer->setGreenbar(b);
 
     // pick up page attributes
     int plen, llen;
-    (void)hst.ConfigReadInt(subgroup, "pagelength", &plen, 66);
-    (void)hst.ConfigReadInt(subgroup, "linelength", &llen, 80);
+    (void)Host::ConfigReadInt(subgroup, "pagelength", &plen, 66);
+    (void)Host::ConfigReadInt(subgroup, "linelength", &llen, 80);
     m_printer->setPageAttributes(llen, plen);
 
     // pick up autoshow attribute
-    hst.ConfigReadBool(subgroup, "autoshow", &b, true);
+    Host::ConfigReadBool(subgroup, "autoshow", &b, true);
     m_printer->setAutoshow(b);
 
     // pick up printasgo attribute
-    hst.ConfigReadBool(subgroup, "printasgo", &b, false);
+    Host::ConfigReadBool(subgroup, "printasgo", &b, false);
     m_printer->setPrintasgo(b);
 
     // pick up portdirect attribute
-    hst.ConfigReadBool(subgroup, "portdirect", &b, false);
+    Host::ConfigReadBool(subgroup, "portdirect", &b, false);
     m_printer->setPortdirect(b);
 
     // pick up portstring attribute
     std::string portstring("LPT1");
-    b = hst.ConfigReadStr(subgroup, "portstring", &portstring);
+    b = Host::ConfigReadStr(subgroup, "portstring", &portstring);
     m_printer->setPortstring(portstring);
 
     // pick up page margins
     int left, right, top, bottom;
-    (void)hst.ConfigReadInt(subgroup, "margintop",    &top,    50);
-    (void)hst.ConfigReadInt(subgroup, "marginbottom", &bottom, 50);
-    (void)hst.ConfigReadInt(subgroup, "marginleft",   &left,   50);
-    (void)hst.ConfigReadInt(subgroup, "marginright",  &right,  50);
+    (void)Host::ConfigReadInt(subgroup, "margintop",    &top,    50);
+    (void)Host::ConfigReadInt(subgroup, "marginbottom", &bottom, 50);
+    (void)Host::ConfigReadInt(subgroup, "marginleft",   &left,   50);
+    (void)Host::ConfigReadInt(subgroup, "marginright",  &right,  50);
     m_printer->setMargins(left, right, top, bottom);
 
     // pick up page preview zoom factor
-    (void)hst.ConfigReadInt(subgroup, "previewzoom", &m_previewzoom, 70);
+    (void)Host::ConfigReadInt(subgroup, "previewzoom", &m_previewzoom, 70);
 
     // pick up orientation
     int orientation;
-    (void)hst.ConfigReadInt(subgroup, "orientation", &orientation, wxPORTRAIT);
+    (void)Host::ConfigReadInt(subgroup, "orientation", &orientation, wxPORTRAIT);
     m_printer->setOrientation(static_cast<wxPrintOrientation>(orientation));
 
     // pick up paper id
@@ -427,7 +424,7 @@ PrinterFrame::getDefaults()
     // instead we recalc the paperid from the papername. The papername is what
     // is important the paperid is an enum that might change at some point.
     wxPaperSize paperid = wxPAPER_NONE;
-    b = hst.ConfigReadStr(subgroup, "papername", &valstr);
+    b = Host::ConfigReadStr(subgroup, "papername", &valstr);
     if (b) {
         paperid = PaperSize(valstr);
     }
@@ -442,7 +439,7 @@ PrinterFrame::getDefaults()
 
     // pick up paper bin
     wxPrintBin paperbin = wxPRINTBIN_DEFAULT;
-    b = hst.ConfigReadStr(subgroup, "paperbin", &valstr);
+    b = Host::ConfigReadStr(subgroup, "paperbin", &valstr);
     if (b) {
         paperbin = PaperBin(valstr);
     }
@@ -450,7 +447,7 @@ PrinterFrame::getDefaults()
 
     // pick up printer name
     std::string printername("");
-    b = hst.ConfigReadStr(subgroup, "realprintername", &printername);
+    b = Host::ConfigReadStr(subgroup, "realprintername", &printername);
     m_printer->setRealPrinterName(printername);
 }
 
@@ -550,7 +547,7 @@ void
 PrinterFrame::PP_OnClose(wxCloseEvent &event)
 {
     const std::string subgroup("ui/printpreview");
-    Host().ConfigWriteWinGeom(this, subgroup, false);
+    Host::ConfigWriteWinGeom(this, subgroup, false);
 
     wxPreviewControlBar *controlBar = ((wxPreviewFrame*)this)->GetControlBar();
     PrinterFrame *parent = (PrinterFrame*)GetParent();
@@ -594,7 +591,7 @@ PrinterFrame::OnPrintPreview(wxCommandEvent& WXUNUSED(event))
 
     const std::string subgroup("ui/printpreview");
     wxRect default_geom(100,100,600,650);
-    Host().ConfigReadWinGeom(frame, subgroup, &default_geom, false);
+    Host::ConfigReadWinGeom(frame, subgroup, &default_geom, false);
 
     frame->Initialize();
 

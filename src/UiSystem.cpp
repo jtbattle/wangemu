@@ -58,6 +58,8 @@ TheApp::OnInit()
     }
 #endif
 
+    Host::initialize();
+
     System2200::initialize();  // build the world
     System2200::reset(true);   // cold start
 
@@ -84,8 +86,8 @@ TheApp::OnIdle(wxIdleEvent &event)
 int
 TheApp::OnExit()
 {
-    // clean up the singleton state, which includes saving .ini file
-    Host().terminate();
+    // clean up, which includes saving .ini file
+    Host::terminate();
 
     return 0;
 }
@@ -186,7 +188,7 @@ TheApp::OnHelp_Launcher(wxCommandEvent &event)
 
     wxString target_file = (absolute) ? helpfile
                                       : ( "file:" + sep + sep +
-                                          Host().getAppHome() +
+                                          Host::getAppHome() +
                                           sep + helpfile );
 #ifdef __WXMSW__
     // wxLaunchDefaultBrowser()'s argument used to use windows-style paths,

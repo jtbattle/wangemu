@@ -200,11 +200,10 @@ The actual classes are Cpu2200t and Cpu2200vp.
 
 ---- Host ----
 
-Host is a kind of singleton class.  I thought I made up the idea, but
-subsequently have learned that others call this a "borg" class.  It provides
-some system dependent services, namely the ability to read and write state
-from the configuration file, to get realtime clock information, and to
-read and write from a set of file locations.
+Host is a namespace encapsulating some host-dependent utility functions.
+Mainly, it is a means for saving and restoring the emulator configuration,
+for accessing files of various categories, and for getting real time
+information.
 
 ---- Scheduler ----
 

@@ -14,46 +14,77 @@
 #include "wx/stdpaths.h"        // wxStandardPaths stuff
 
 // ============================================================================
-// declarations
+// module state
 // ============================================================================
 
-// static members need to be declared
-
-bool Host::m_initialized = false;
-
-std::string                   Host::m_app_home;            // path to application home directory
-std::unique_ptr<wxFileConfig> Host::m_config    = nullptr; // configuration file object
-std::unique_ptr<wxStopWatch>  Host::m_stopwatch = nullptr; // time program started
+std::string                   app_home;            // path to application home directory
+std::unique_ptr<wxFileConfig> config    = nullptr; // configuration file object
+std::unique_ptr<wxStopWatch>  stopwatch = nullptr; // time program started
 
 // remember where certain files are located
-std::string Host::m_FileDir[FILEREQ_NUM];         // dir where files come from
-std::string Host::m_Filename[FILEREQ_NUM];        // most recently chosen
-std::string Host::m_FileFilter[FILEREQ_NUM];      // suffix filter string
-int         Host::m_FileFilterIdx[FILEREQ_NUM];   // which filter was chosen
-std::string Host::m_IniGroup[FILEREQ_NUM];        // name in .ini file
+std::string fileDir[Host::FILEREQ_NUM];         // dir where files come from
+std::string filename[Host::FILEREQ_NUM];        // most recently chosen
+std::string fileFilter[Host::FILEREQ_NUM];      // suffix filter string
+int         fileFilterIdx[Host::FILEREQ_NUM];   // which filter was chosen
+std::string iniGroup[Host::FILEREQ_NUM];        // name in .ini file
 
 // ============================================================================
-// implementation
+// file-local functions
 // ============================================================================
 
-Host::Host()
+// get information about default dirs for file categories
+static void
+getConfigFileLocations()
 {
-    if (!m_initialized) {
-        initMembers();
-        m_initialized = true;
+    std::string subgroup("..");
+    std::string foo;
+
+    bool b = Host::ConfigReadStr(subgroup, "configversion", &foo);
+    if (b && (foo != "1")) {
+        UI_Warn("Configuration file version '%s' found.\n"
+                 "Version '1' expected.\n"
+                 "Attempting to read the config file anyway.\n", foo.c_str());
+    }
+
+    for(int i=0; i<Host::FILEREQ_NUM; i++) {
+
+        subgroup = iniGroup[i];
+        long v;
+
+        b = Host::ConfigReadStr(subgroup, "directory", &foo);
+        fileDir[i] = (b) ? foo : ".";
+
+        b = Host::ConfigReadStr(subgroup, "filterindex", &foo);
+        fileFilterIdx[i] = (b && wxString(foo).ToLong(&v)) ? v : 0;
+
+        filename[i] = "";     // intentionally don't save this
     }
 }
 
 
-Host::~Host()
+// save information about default dirs for file categories
+static void
+saveConfigFileLocations()
 {
-    // this doesn't free anything; terminate() should be called at
-    // the end of the world to really free resources
+    std::string subgroup("..");
+    std::string version("1");
+
+    Host::ConfigWriteStr(subgroup, "configversion", version);
+
+    for(int i=0; i<Host::FILEREQ_NUM; i++) {
+        subgroup = iniGroup[i];
+        Host::ConfigWriteStr(subgroup, "directory",   fileDir[i]);
+        Host::ConfigWriteInt(subgroup, "filterindex", fileFilterIdx[i]);
+    }
 }
 
 
+// ============================================================================
+// "public" functions
+// ============================================================================
+
 void
-Host::initMembers()
+Host::initialize()
 {
     // path to executable
     wxStandardPathsBase &stdp = wxStandardPaths::Get();
@@ -85,16 +116,16 @@ Host::initMembers()
   #endif
 #endif
 
-    m_app_home = std::string(exe_path.GetPath(wxPATH_GET_VOLUME));
+    app_home = std::string(exe_path.GetPath(wxPATH_GET_VOLUME));
 
 #ifdef __WXMSW__
-    m_config = std::make_unique<wxFileConfig>(
-                        wxEmptyString,                  // appName
-                        wxEmptyString,                  // vendorName
-                        m_app_home + "\\wangemu.ini",   // localFilename
-                        wxEmptyString,                  // globalFilename
-                        wxCONFIG_USE_LOCAL_FILE
-                );
+    config = std::make_unique<wxFileConfig>(
+                wxEmptyString,                  // appName
+                wxEmptyString,                  // vendorName
+                app_home + "\\wangemu.ini",     // localFilename
+                wxEmptyString,                  // globalFilename
+                wxCONFIG_USE_LOCAL_FILE
+             );
 #elif defined(__WXMAC__)
   #if 1
     // put wangemu.ini file in same directory as the executable
@@ -104,43 +135,43 @@ Host::initMembers()
   #else
     wxFileName init_path( stdp.GetUserConfigDir() + "/wangemu.ini" );
   #endif
-    m_config = std::make_unique<wxFileConfig>("", "", ini_path.GetFullPath());
-    wxConfigBase::Set(m_config);
+    config = std::make_unique<wxFileConfig>("", "", ini_path.GetFullPath());
+    wxConfigBase::Set(config);
 #endif
 
     // needed so we can compute a time difference to get ms later
-    m_stopwatch = std::make_unique<wxStopWatch>();
-    m_stopwatch->Start(0);
+    stopwatch = std::make_unique<wxStopWatch>();
+    stopwatch->Start(0);
 
     // default file locations
-    m_FileDir[FILEREQ_SCRIPT]       = ".";
-    m_Filename[FILEREQ_SCRIPT]      = "";
-    m_FileFilterIdx[FILEREQ_SCRIPT] = 0;
-    m_FileFilter[FILEREQ_SCRIPT]    = "script files (*.w22)"
-                                      "|*.w22|text files (*.txt)"
-                                      "|*.txt|All files (*.*)|*.*";
-    m_IniGroup[FILEREQ_SCRIPT]      = "ui/script";
+    fileDir[FILEREQ_SCRIPT]       = ".";
+    filename[FILEREQ_SCRIPT]      = "";
+    fileFilterIdx[FILEREQ_SCRIPT] = 0;
+    fileFilter[FILEREQ_SCRIPT]    = "script files (*.w22)"
+                                    "|*.w22|text files (*.txt)"
+                                    "|*.txt|All files (*.*)|*.*";
+    iniGroup[FILEREQ_SCRIPT]      = "ui/script";
 
-    m_FileDir[FILEREQ_GRAB]         = ".";
-    m_Filename[FILEREQ_GRAB]        = "";
-    m_FileFilterIdx[FILEREQ_GRAB]   = 0;
-    m_FileFilter[FILEREQ_GRAB]      = "BMP (*.bmp)|*.bmp"
-                                      "|Any file (*.*)|*.*";
-    m_IniGroup[FILEREQ_GRAB]        = "ui/screengrab";
+    fileDir[FILEREQ_GRAB]         = ".";
+    filename[FILEREQ_GRAB]        = "";
+    fileFilterIdx[FILEREQ_GRAB]   = 0;
+    fileFilter[FILEREQ_GRAB]      = "BMP (*.bmp)|*.bmp"
+                                    "|Any file (*.*)|*.*";
+    iniGroup[FILEREQ_GRAB]        = "ui/screengrab";
 
-    m_FileDir[FILEREQ_DISK]         = ".";
-    m_Filename[FILEREQ_DISK]        = "";
-    m_FileFilterIdx[FILEREQ_DISK]   = 0;
-    m_FileFilter[FILEREQ_DISK]      = "wang virtual disk (*.wvd)|*.wvd"
-                                      "|All files (*.*)|*.*";
-    m_IniGroup[FILEREQ_DISK]        = "ui/disk";
+    fileDir[FILEREQ_DISK]         = ".";
+    filename[FILEREQ_DISK]        = "";
+    fileFilterIdx[FILEREQ_DISK]   = 0;
+    fileFilter[FILEREQ_DISK]      = "wang virtual disk (*.wvd)|*.wvd"
+                                    "|All files (*.*)|*.*";
+    iniGroup[FILEREQ_DISK]        = "ui/disk";
 
-    m_FileDir[FILEREQ_PRINTER]       = ".";
-    m_Filename[FILEREQ_PRINTER]      = "";
-    m_FileFilterIdx[FILEREQ_PRINTER] = 0;
-    m_FileFilter[FILEREQ_PRINTER]    = "Text Files (*.txt)|*.txt"
-                                       "|All files (*.*)|*.*";
-    m_IniGroup[FILEREQ_PRINTER]      = "ui/printer";
+    fileDir[FILEREQ_PRINTER]       = ".";
+    filename[FILEREQ_PRINTER]      = "";
+    fileFilterIdx[FILEREQ_PRINTER] = 0;
+    fileFilter[FILEREQ_PRINTER]    = "Text Files (*.txt)|*.txt"
+                                     "|All files (*.*)|*.*";
+    iniGroup[FILEREQ_PRINTER]      = "ui/printer";
 
     // now try and read in defaults from ini file
     getConfigFileLocations();
@@ -153,12 +184,11 @@ Host::initMembers()
 void
 Host::terminate()
 {
-    if (m_config) {
+    if (config) {
         saveConfigFileLocations();
     }
-    m_config      = nullptr;
-    m_stopwatch   = nullptr;
-    m_initialized = false;
+    config    = nullptr;
+    stopwatch = nullptr;
 }
 
 
@@ -180,17 +210,17 @@ Host::fileReq(int requestor, std::string title, int readonly, std::string *fullp
     // get the name of a file to execute
     wxFileDialog dialog (0,
             title.c_str(),
-            m_FileDir[requestor],       // default directory
-            m_Filename[requestor],      // default file
-            m_FileFilter[requestor],    // file suffix filter
+            fileDir[requestor],       // default directory
+            filename[requestor],      // default file
+            fileFilter[requestor],    // file suffix filter
             style);
-    dialog.SetFilterIndex(m_FileFilterIdx[requestor]);
+    dialog.SetFilterIndex(fileFilterIdx[requestor]);
 
     if (dialog.ShowModal() == wxID_OK) {
         // remember what and where we selected
-        m_FileDir[requestor]       = dialog.GetDirectory();
-        m_Filename[requestor]      = dialog.GetFilename();
-        m_FileFilterIdx[requestor] = dialog.GetFilterIndex();
+        fileDir[requestor]       = dialog.GetDirectory();
+        filename[requestor]      = dialog.GetFilename();
+        fileFilterIdx[requestor] = dialog.GetFilterIndex();
         *fullpath = dialog.GetPath();
         return FILEREQ_OK;
     }
@@ -201,7 +231,7 @@ Host::fileReq(int requestor, std::string title, int readonly, std::string *fullp
 // return the absolute path to the dir containing the app
 std::string Host::getAppHome()
 {
-    return m_app_home;
+    return app_home;
 }
 
 
@@ -210,8 +240,8 @@ std::string Host::getAppHome()
 bool
 Host::isAbsolutePath(const std::string &name)
 {
-    wxFileName filename(name);
-    return filename.IsAbsolute();
+    wxFileName fname(name);
+    return fname.IsAbsolute();
 }
 
 
@@ -226,9 +256,9 @@ Host::asAbsolutePath(const std::string &name)
 }
 
 
-// ========================================================================
+// ----------------------------------------------------------------------------
 // Application configuration storage
-// ========================================================================
+// ----------------------------------------------------------------------------
 
 // fetch an association from the configuration file
 bool
@@ -238,8 +268,8 @@ Host::ConfigReadStr(const std::string &subgroup,
                     const std::string *defaultval)
 {
     wxString wxval;
-    m_config->SetPath( "/wangemu/config-0/" + subgroup);
-    bool b = m_config->Read(key, &wxval);
+    config->SetPath( "/wangemu/config-0/" + subgroup);
+    bool b = config->Read(key, &wxval);
     if (!b && (defaultval != nullptr)) {
         *val = *defaultval;
     } else {
@@ -371,8 +401,8 @@ Host::ConfigWriteStr(const std::string &subgroup,
 {
     wxString wxKey(key);
     wxString wxVal(val);
-    m_config->SetPath( "/wangemu/config-0/" + subgroup);
-    bool b = m_config->Write(wxKey, wxVal);
+    config->SetPath( "/wangemu/config-0/" + subgroup);
+    bool b = config->Write(wxKey, wxVal);
     assert(b);
     b = b;      // keep lint happy
 }
@@ -423,56 +453,9 @@ Host::ConfigWriteWinGeom(wxWindow *wxwin,
 }
 
 
-// get information about default dirs for file categories
-void
-Host::getConfigFileLocations()
-{
-    std::string subgroup("..");
-    std::string foo;
-
-    bool b = ConfigReadStr(subgroup, "configversion", &foo);
-    if (b && (foo != "1")) {
-        UI_Warn("Configuration file version '%s' found.\n"
-                 "Version '1' expected.\n"
-                 "Attempting to read the config file anyway.\n", foo.c_str());
-    }
-
-    for(int i=0; i<FILEREQ_NUM; i++) {
-
-        subgroup = m_IniGroup[i];
-        long v;
-
-        b = ConfigReadStr(subgroup, "directory", &foo);
-        m_FileDir[i] = (b) ? foo : ".";
-
-        b = ConfigReadStr(subgroup, "filterindex", &foo);
-        m_FileFilterIdx[i] = (b && wxString(foo).ToLong(&v)) ? v : 0;
-
-        m_Filename[i] = "";     // intentionally don't save this
-    }
-}
-
-
-// save information about default dirs for file categories
-void
-Host::saveConfigFileLocations()
-{
-    std::string subgroup("..");
-    std::string version("1");
-
-    ConfigWriteStr(subgroup, "configversion", version);
-
-    for(int i=0; i<FILEREQ_NUM; i++) {
-        subgroup = m_IniGroup[i];
-        ConfigWriteStr(subgroup, "directory",   m_FileDir[i]);
-        ConfigWriteInt(subgroup, "filterindex", m_FileFilterIdx[i]);
-    }
-}
-
-
-// ============================================================================
+// ----------------------------------------------------------------------------
 // real time functions
-// ============================================================================
+// ----------------------------------------------------------------------------
 
 // return the time in milliseconds as a 64b signed integer
 int64
@@ -481,7 +464,7 @@ Host::getTimeMs(void)
     // newer api should provide more accurate measurement of time
     // NB: wxLongLong can't be mapped directly to "long long" type,
     //     thus the following gyrations
-    wxLongLong x_time_us = m_stopwatch->TimeInMicro();
+    wxLongLong x_time_us = stopwatch->TimeInMicro();
     uint32 x_low  = x_time_us.GetLo();
      int32 x_high = x_time_us.GetHi();
      int64 x_time_ms = (((int64)x_high << 32) | x_low) / 1000;

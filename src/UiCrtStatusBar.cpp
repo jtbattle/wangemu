@@ -493,8 +493,8 @@ CrtStatusBar::OnDiskButton(wxMouseEvent &event)
 
         case insert_disk: {
             std::string fullpath;
-            if (Host().fileReq(Host::FILEREQ_DISK, "Disk to load", 1, &fullpath) ==
-                               Host::FILEREQ_OK) {
+            if (Host::fileReq(Host::FILEREQ_DISK, "Disk to load", 1, &fullpath) ==
+                              Host::FILEREQ_OK) {
                 int drive2, io_addr;
                 bool b = System2200::findDisk(fullpath, nullptr, &drive2, &io_addr);
                 if (b) {

@@ -426,9 +426,8 @@ void
 Printer::saveToFile()
 {
     std::string fullpath;
-    Host hst;
-    int r = hst.fileReq(Host::FILEREQ_PRINTER, "Save printer log file", 0,
-                         &fullpath);
+    int r = Host::fileReq(Host::FILEREQ_PRINTER, "Save printer log file", 0,
+                          &fullpath);
     if (r == Host::FILEREQ_OK) {
 
         // save the file

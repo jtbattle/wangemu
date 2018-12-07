@@ -142,8 +142,6 @@ isDiskController(int slot)
 static void
 saveDiskMounts(void)
 {
-    Host hst;
-
     for(int slot=0; slot<NUM_IOSLOTS; slot++) {
         if (isDiskController(slot)) {
             std::ostringstream subgroup;
@@ -164,7 +162,7 @@ saveDiskMounts(void)
                         assert(ok); ok=ok;
                     }
                 }
-                hst.ConfigWriteStr(subgroup.str(), item.str(), filename);
+                Host::ConfigWriteStr(subgroup.str(), item.str(), filename);
             } // drive
         } // if (isDiskController)
     } // slot
@@ -174,8 +172,6 @@ saveDiskMounts(void)
 static void
 restoreDiskMounts(void)
 {
-    Host hst;
-
     // look for disk controllers and populate drives
     for(int slot=0; slot<NUM_IOSLOTS; slot++) {
         if (isDiskController(slot)) {
@@ -189,7 +185,7 @@ restoreDiskMounts(void)
                 std::ostringstream item;
                 item << "filename-" << drive;
                 std::string filename;
-                bool b = hst.ConfigReadStr(subgroup.str(), item.str(), &filename);
+                bool b = Host::ConfigReadStr(subgroup.str(), item.str(), &filename);
                 if (b && !filename.empty()) {
                     bool bs = IoCardDisk::wvdInsertDisk(slot, drive, filename.c_str());
             #if 0 // wvdInsertDisk() already generated a warning
@@ -296,7 +292,7 @@ System2200::initialize()
 
     // CPU speed regulation
     firstslice = true;
-    m_simtime    = m_adjsimtime = Host().getTimeMs();
+    m_simtime    = m_adjsimtime = Host::getTimeMs();
     m_simsecs    = 0;
 
     realtimestart = 0;    // wall time of when sim started
@@ -578,7 +574,7 @@ System2200::onIdle()
             if (m_freeze_emu) {
                 // if we don't call sleep, we just get another onIdle event
                 // and end up pegging the host CPU
-                Host().sleep(10);
+                Host::sleep(10);
             } else {
                 emulateTimeslice(slice_duration);
             }
@@ -606,7 +602,6 @@ System2200::onIdle()
 void
 System2200::emulateTimeslice(int ts_ms)
 {
-    Host hst;
     int num_devices = m_clocked_devices.size();
 
     // try to stae reatime within this window
@@ -616,7 +611,7 @@ System2200::emulateTimeslice(int ts_ms)
         return;
     }
 
-    uint64 now_ms = hst.getTimeMs();
+    uint64 now_ms = Host::getTimeMs();
     int64 realtime_elapsed;
     int64 offset;
 
@@ -644,7 +639,7 @@ System2200::emulateTimeslice(int ts_ms)
         // we don't kill the full amount because the sleep function is
         // allowed to, and very well might, sleep longer than we asked.
         unsigned int ioffset = (unsigned int)(offset & (int64)0xFFF);  // bottom 4 sec or so
-        hst.sleep(ioffset/2);
+        Host::sleep(ioffset/2);
 
     } else {
 
@@ -778,7 +773,7 @@ System2200::emulateTimeslice(int ts_ms)
         }
 
         // at least yield so we don't hog the whole machine
-        hst.sleep(0);
+        Host::sleep(0);
     }
 }
 

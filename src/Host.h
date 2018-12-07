@@ -3,13 +3,6 @@
 //    file access
 //    real time functions
 //
-// It is designed as a singleton (really the "borg" idiom).  To use it,
-// create a Host instance anywhere and use its services, eg
-//    Host hst;
-//    m_simtime = hst.getTimeMs();
-// or
-//    m_simtime = Host().getTimeMs();
-//
 // The configuration is kept in an .ini file, with data stored hierarchically.
 // Viewed like a scoping problem, there are a few global ini values that
 // describe the ini file format revision.  Then there are N sets of emulator
@@ -40,85 +33,81 @@
 
 class wxWindow;
 class wxRect;
-class wxFileConfig;
-class wxStopWatch;
 
-class Host
+namespace Host
 {
-public:
-    CANT_ASSIGN_OR_COPY_CLASS(Host);
-    Host();
-    ~Host();
+    // must be called at time 0 to initialize things
+    void initialize();
 
     // this should be called at the end of the world to really free resources.
     // this could be avoided by creating/destroying m_config object on each
     // new Host, but that is excessive churn during start up / shut down, no?
-    static void terminate();
+    void terminate();
 
     // ---- read or write an entry in the configuration file ----
     // there are keys maintained for separate categories.
     // the ConfigRead* functions take a defaultval; this is the value returned
     // if the key for that subgroup isn't found in the config file.
 
-    static bool ConfigReadStr(  const std::string &subgroup,
-                                const std::string &key,
-                                std::string *val,
-                                const std::string *defaultval = 0);
+    bool ConfigReadStr(  const std::string &subgroup,
+                         const std::string &key,
+                         std::string *val,
+                         const std::string *defaultval = 0);
 
-    static void ConfigWriteStr( const std::string &subgroup,
-                                const std::string &key,
-                                const std::string &val);
+    void ConfigWriteStr( const std::string &subgroup,
+                         const std::string &key,
+                         const std::string &val);
 
-    static bool ConfigReadInt(  const std::string &subgroup,
-                                const std::string &key,
-                                int *val,
-                                const int defaultval = 0);
+    bool ConfigReadInt(  const std::string &subgroup,
+                         const std::string &key,
+                         int *val,
+                         const int defaultval = 0);
 
-    static void ConfigWriteInt( const std::string &subgroup,
-                                const std::string &key,
-                                const int val);
+    void ConfigWriteInt( const std::string &subgroup,
+                         const std::string &key,
+                         const int val);
 
-    static void ConfigReadBool( const std::string &subgroup,
-                                const std::string &key,
-                                bool *val,
-                                const bool defaultval = false);
+    void ConfigReadBool( const std::string &subgroup,
+                         const std::string &key,
+                         bool *val,
+                         const bool defaultval = false);
 
-    static void ConfigWriteBool(const std::string &subgroup,
-                                const std::string &key,
-                                const bool val);
+    void ConfigWriteBool(const std::string &subgroup,
+                         const std::string &key,
+                         const bool val);
 
     // these are specialized for saving/recalling the location and size
     // of windows of various kinds: emulated terminals, dialog boxes.
     // the client_size flag indicates whether the geometry we are dealing
     // with is of the window or the client.
-    static void ConfigReadWinGeom(  wxWindow     *wxwin,
-                                    const std::string &subgroup,
-                                    wxRect       *default_geom = nullptr,
-                                    bool          client_size = true );
+    void ConfigReadWinGeom(  wxWindow          *wxwin,
+                             const std::string &subgroup,
+                             wxRect            *default_geom = nullptr,
+                             bool               client_size = true );
 
-    static void ConfigWriteWinGeom( wxWindow     *wxwin,
-                                    const std::string &subgroup,
-                                    bool          client_size = true );
+    void ConfigWriteWinGeom( wxWindow          *wxwin,
+                             const std::string &subgroup,
+                             bool               client_size = true );
 
     // ---- time functions ----
 
     // return the time in milliseconds as a 64b signed integer
-    static int64 getTimeMs(void);
+    int64 getTimeMs(void);
 
     // go to sleep for approximately ms milliseconds before returning
-    static void sleep(unsigned int ms);
+    void sleep(unsigned int ms);
 
     // ---- file path functions ----
 
     // classifies the supplied filename as being either relative (false)
     // or absolute (returns true).
-    static bool isAbsolutePath(const std::string &name);
+    bool isAbsolutePath(const std::string &name);
 
     // make sure the name is put in normalized format
-    static std::string asAbsolutePath(const std::string &name);
+    std::string asAbsolutePath(const std::string &name);
 
     // return the absolute path to the dir containing the app
-    static std::string getAppHome();
+    std::string getAppHome();
 
     // ---- ask user to provide a file location ----
     // categories of separate file locations
@@ -134,30 +123,8 @@ public:
 
     // for a given category (FILEREQ_*), ask to select a file from
     // the default directory for that category.
-    static int fileReq(int requestor, std::string title,
-                       int readonly, std::string *fullpath);
-
-private:
-    // initialize class members
-    static void initMembers();
-
-    // get/save information about default dirs for file categories
-    static void  getConfigFileLocations();
-    static void saveConfigFileLocations();
-
-    // set up the object the first time it is used
-    static bool m_initialized;
-
-    static std::string                   m_app_home;  // path to application home directory
-    static std::unique_ptr<wxFileConfig> m_config;    // configuration file object
-    static std::unique_ptr<wxStopWatch>  m_stopwatch; // real time since simulation started
-
-    // remember where certain files are located
-    static std::string m_FileDir[FILEREQ_NUM];         // dir where files come from
-    static std::string m_Filename[FILEREQ_NUM];        // most recently chosen
-    static std::string m_FileFilter[FILEREQ_NUM];      // suffix filter string
-    static int         m_FileFilterIdx[FILEREQ_NUM];   // which filter was chosen
-    static std::string m_IniGroup[FILEREQ_NUM];        // name in .ini file
+    int fileReq(int requestor, std::string title,
+                int readonly, std::string *fullpath);
 };
 
 #endif _INCLUDE_HOST_H_
