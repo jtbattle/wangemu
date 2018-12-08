@@ -11,7 +11,7 @@
 #include "UiCrt.h"              // this module's defines
 #include "UiCrtErrorDlg.h"      // error code decoder
 #include "UiCrtFrame.h"         // this module's owner
-//#include "System2200.h"       // needed if dbglog() is in use
+#include "System2200.h"         // for kb_keystroke()
 
 #include <wx/sound.h>           // "beep!"
 
@@ -63,6 +63,7 @@ Crt::Crt(CrtFrame *parent, int screen_type) :
     m_frame_count(0),
     m_dirty(true),
     m_attr{0},
+    m_crt_sink(true),
     m_raw_cnt(0),
     m_raw_buf{0},
     m_box_bottom{false},
@@ -82,8 +83,6 @@ Crt::Crt(CrtFrame *parent, int screen_type) :
                 "HEX(07) will produce the host bell sound.");
     }
 
-    scr_clear();
-
     reset(true);
 }
 
@@ -99,7 +98,7 @@ Crt::~Crt()
 //     power on reset
 // hard_reset=false means
 //     user pressed the SHIFT-RESET sequence or
-//     the terminal received a reset sequence
+//     the terminal received a programmatic reset sequence
 void
 Crt::reset(bool hard_reset)
 {
@@ -124,17 +123,19 @@ Crt::reset(bool hard_reset)
         m_attr_on    = false;
         m_attr_temp  = false;
         m_attr_under = false;
+
+        scr_clear();
     }
 
-    // smart terminals echo the ID string only at power on
-    if (hard_reset && smart_term) {
+    // smart terminals echo the ID string to the CRT at power on
+    if (smart_term && hard_reset) {
         char *idptr = &id_string[1];  // skip the leading asterisk
         while (*idptr) {
-            processChar3(*idptr);
+            processCrtChar3(*idptr);
             idptr++;
         }
-        processChar3(0x0D);
-        processChar3(0x0A);
+        processCrtChar3(0x0D);
+        processCrtChar3(0x0A);
     }
 }
 
@@ -609,9 +610,12 @@ Crt::scr_scroll()
 void
 Crt::processChar(uint8 byte)
 {
-//dbglog("Crt::processChar(0x%02x), m_raw_cnt=%d\n", byte, m_raw_cnt);
+    auto handler = (m_crt_sink) ? std::mem_fn(&Crt::processCrtChar2)
+                                : std::mem_fn(&Crt::processPrtChar2);
+
+    //dbglog("Crt::processChar(0x%02x), m_raw_cnt=%d\n", byte, m_raw_cnt);
     if (m_screen_type != UI_SCREEN_2236DE) {
-        processChar3(byte);
+        processCrtChar3(byte);
         return;
     }
     //wxLogMessage("processChar(0x%02x)", byte);
@@ -624,19 +628,91 @@ Crt::processChar(uint8 byte)
     }
     if (m_raw_cnt == 0) {
         // pass it through
-        processChar2(byte);
+        handler(this, byte);
         return;
     }
+
     // keep accumulating command bytes
-    assert(m_raw_cnt < sizeof(m_raw_buf));
+    assert((0 <= m_raw_cnt) && (m_raw_cnt < sizeof(m_raw_buf)));
     m_raw_buf[m_raw_cnt++] = byte;
+
+    // ------------ immediate commands ------------
+    // sequences FBF0, FBF1, FBF2, FBF6 are "immediate", meaning they
+    // are not put in the input FIFO and take effect as soon as they are
+    // received.  According to the documentation,
+    //
+    //     Immediate commands may even be transmitted in the middle of a
+    //     non-immediate command sequence:
+    //         <escape><count> (normally the repeat char arrives next)
+    //         <escape><switch to printer><printer data...><escape><switch to crt>
+    //         <repeat character>
+    //
+    // Because of this, we have to look at the last two bytes.
+
+    if (m_raw_buf[m_raw_cnt-2] == 0xFB) {
+
+        // immediate command: route to crt (FB F0)
+        if (m_raw_buf[m_raw_cnt-1] == 0xF0) {
+            m_crt_sink = true;
+            m_raw_cnt -= 2;
+            return;
+        }
+
+        // immediate command: route to prt (FB F1)
+        if (m_raw_buf[m_raw_cnt-1] == 0xF1) {
+            m_crt_sink = false;
+            m_raw_cnt -= 2;
+            return;
+        }
+
+        // immediate command: restart terminal (FB F2)
+        // a real 2336 sends E4 (??) then F8 (crt go flow control)
+        // then F8 every three seconds while not throttled.
+        if (m_raw_buf[m_raw_cnt-1] == 0xF2) {
+            reset(false);
+            int io_addr  = m_parent->getTiedAddr();
+            int term_num = m_parent->getTermNum();
+#if 0
+            // if I include this, the emulator thinks it got the INIT atom (E4)
+            System2200::kb_keystroke(io_addr, term_num, 0xE4);
+#endif
+            System2200::kb_keystroke(io_addr, term_num, 0xF8);
+            // FIXME: then F8 every 3 seconds if not throttled
+            return;
+        }
+
+        // immediate command: reset crt (FB F6)
+        // a real 2336 sends E9 (crt stop flow control),
+        // then F8 (crt go flow control), then another F8, then E4 (??),
+        // then F8 every three seconds while not throttled.
+        //
+        // Fasstcom Terminal Spec v1.0.pdf, pdf page 22 says
+        // ... clear terminal data ONLY from receive buffer ...
+        // TODO: if true, I'm not doing that, as reset() wipes everything.
+        if (m_raw_buf[m_raw_cnt-1] == 0xF6) {
+            reset(false);
+            int io_addr  = m_parent->getTiedAddr();
+            int term_num = m_parent->getTermNum();
+            System2200::kb_keystroke(io_addr, term_num, 0xF9);
+            System2200::kb_keystroke(io_addr, term_num, 0xF8);
+            System2200::kb_keystroke(io_addr, term_num, 0xF8);
+#if 0
+            // if I include this, the emulator thinks it got the INIT atom (E4)
+            System2200::kb_keystroke(io_addr, term_num, 0xE4);
+#endif
+            // FIXME: then F8 every 3 seconds if not throttled
+            return;
+        }
+    }
+
+    // ------------ other sequences ------------
 
     // it is a character run sequence: FB nn cc
     // where nn is the repetition count, and cc is the character
     if (m_raw_cnt == 3) {
-//dbglog("Decompress run: cnt=%d, chr=0x%02x\n", m_raw_buf[1], m_raw_buf[2]);
+        //dbglog("Decompress run: cnt=%d, chr=0x%02x\n", m_raw_buf[1], m_raw_buf[2]);
         for(int i=0; i<m_raw_buf[1]; i++) {
-            processChar2(m_raw_buf[2]);
+            handler(this, m_raw_buf[2]);
         }
         m_raw_cnt = 0;
         return;
@@ -652,9 +728,9 @@ Crt::processChar(uint8 byte)
 
     // FB nn, where nn >= 0x60 represents (nn-0x60) spaces in a row
     if ((0x60 <= m_raw_buf[1]) && (m_raw_buf[1] <= 0xBF)) {
-//dbglog("Decompress spaces: cnt=%d\n", m_raw_buf[1]-0x60);
+        //dbglog("Decompress spaces: cnt=%d\n", m_raw_buf[1]-0x60);
         for(int i=0; i<m_raw_buf[1]-0x60; i++) {
-            processChar2(0x20);
+            handler(this, 0x20);
         }
         m_raw_cnt = 0;
         return;
@@ -665,7 +741,7 @@ Crt::processChar(uint8 byte)
         int delay_ms = 1000 * ((int)m_raw_buf[1] - 0xC0) / 6;
         // FIXME: doing this requires creating a flow control mechanism
         // to block further input, and creating a timer to expire N/6 seconds
-//dbglog("Delay sequence: cnt=%d\n", m_raw_buf[1]);
+        //dbglog("Delay sequence: cnt=%d\n", m_raw_buf[1]);
         delay_ms = delay_ms;  // defeat linter
         m_raw_cnt = 0;
         return;
@@ -673,8 +749,8 @@ Crt::processChar(uint8 byte)
 
     // check for literal 0xFB byte: FB D0
     if (m_raw_buf[1] == 0xD0) {
-//dbglog("Literal 0xFB byte\n");
-        processChar2(0xFB);
+        //dbglog("Literal 0xFB byte\n");
+        handler(this, 0xFB);
         m_raw_cnt = 0;
         return;
     }
@@ -691,7 +767,10 @@ Crt::processChar(uint8 byte)
 
     // enable cursor blink (FB FC)
     // if the cursor was off to begin with, it remains off
-    if (m_raw_buf[1] == 0xFC) {
+    // Fasstcom Terminal Spec v1.0.pdf, pdf page 22 says FBF4
+    // is a synonym for FBFC, so I've implemented it.
+    if ((m_raw_buf[1] == 0xF4) || 
+        (m_raw_buf[1] == 0xFC)) {
         if (m_curs_attr == cursor_attr_t::CURSOR_ON) {
             m_curs_attr = cursor_attr_t::CURSOR_BLINK;
         }
@@ -699,32 +778,21 @@ Crt::processChar(uint8 byte)
         return;
     }
 
-    // FIXME: immediate commands
-    // FB F0: route subsequent data to CRT
-    // FB F1: route subsequent data to Printer
-    // FB F2: restart terminal (see pdf page 3)
-    // FB F6: reset CRT only
-    // holy cow: "Immediate commands may even be transmitted in the middle
-    //            of a non-immediate command sequence"
-    //           <escape><count> (normally the repeat char arrives next)
-    //           <escape><switch to printer><printer data...><escape><switch to CRT>
-    //           <repeat character>
-
     // TODO: what should happen with illegal sequences?
     // for now, I'm passing them through
-//dbglog("Unexpected sequence: 0x%02x 0x%02x\n", m_raw_buf[0], m_raw_buf[1]);
-    processChar2(m_raw_buf[0]);
-    processChar2(m_raw_buf[1]);
+    //dbglog("Unexpected sequence: 0x%02x 0x%02x\n", m_raw_buf[0], m_raw_buf[1]);
+    handler(this, m_raw_buf[0]);
+    handler(this, m_raw_buf[1]);
     m_raw_cnt = 0;
 }
 
 
 // second level command stream interpretation, for 2236DE type
 void
-Crt::processChar2(uint8 byte)
+Crt::processCrtChar2(uint8 byte)
 {
     assert(m_screen_type == UI_SCREEN_2236DE);
-    //wxLogMessage("processChar2(0x%02x), m_input_cnt=%d", byte, m_input_cnt);
+    //wxLogMessage("processCrtChar2(0x%02x), m_input_cnt=%d", byte, m_input_cnt);
 
     assert( m_input_cnt < sizeof(m_input_buf) );
 
@@ -737,7 +805,7 @@ Crt::processChar2(uint8 byte)
         case 0x0D:  // carriage return
             // this has the side effect of disabling attributes if in temp 0E mode
             m_attr_temp = false;
-            processChar3(0x0D);
+            processCrtChar3(0x0D);
             return;
         case 0x0E:  // enable attributes
             m_attr_on   = false;  // after 04 xx yy 0E, 0E changes to temp mode?
@@ -751,7 +819,7 @@ Crt::processChar2(uint8 byte)
             return;
         default:
             // pass through
-            processChar3(byte);
+            processCrtChar3(byte);
             return;
         }
     }
@@ -780,8 +848,6 @@ Crt::processChar2(uint8 byte)
     if (m_input_cnt == 4 && m_input_buf[1] == 0x02
                          && m_input_buf[2] == 0x00
                          && m_input_buf[3] == 0x0F) {
-// wxLogMessage("esc: 02 02 00 0F --> ALT disabled");
-//      UI_Info("esc: 02 02 00 0F --> ALT disabled");
         m_attrs &= ~(char_attr_t::CHAR_ATTR_ALT);
         m_input_cnt = 0;
         return;
@@ -790,8 +856,6 @@ Crt::processChar2(uint8 byte)
     if (m_input_cnt == 4 && m_input_buf[1] == 0x02
                          && m_input_buf[2] == 0x02
                          && m_input_buf[3] == 0x0F) {
-// wxLogMessage("esc: 02 02 02 0F --> ALT enabled");
-//      UI_Info("esc: 02 02 02 0F --> ALT enabled");
         m_attrs |= (char_attr_t::CHAR_ATTR_ALT);
         m_input_cnt = 0;
         return;
@@ -849,9 +913,15 @@ Crt::processChar2(uint8 byte)
     if (m_input_cnt == 4 && m_input_buf[1] == 0x08
                          && m_input_buf[2] == 0x09
                          && m_input_buf[3] == 0x0F) {
+        int io_addr  = m_parent->getTiedAddr();
+        int term_num = m_parent->getTermNum();
         m_input_cnt = 0;
-        // FIXME: implement this, using id_string
-        UI_Info("terminal self-ID query not yet emulated");
+        char *idptr = &id_string[1];  // skip the leading asterisk
+        while (*idptr) {
+            System2200::kb_keystroke(io_addr, term_num, *idptr);
+            idptr++;
+        }
+        System2200::kb_keystroke(io_addr, term_num, 0x0D);
         return;
     }
     // 02 08 xx yy is otherwise undefined
@@ -940,8 +1010,9 @@ Crt::processChar2(uint8 byte)
                          && m_input_buf[2] == 0x0C
                          && m_input_buf[3] == 0x03
                          && m_input_buf[4] == 0x0F) {
+        // logging real 2336, it clears the CRT
+        // but doesn't spew out any return code
         m_input_cnt = 0;
-        scr_clear();
         reset(false);
         return;
     }
@@ -955,7 +1026,7 @@ Crt::processChar2(uint8 byte)
 
 // lowest level command stream interpretation
 void
-Crt::processChar3(uint8 byte)
+Crt::processCrtChar3(uint8 byte)
 {
     // true of old 64x16 display controller, which had only 7b buffer
     // byte &= 0x7F;
@@ -1055,7 +1126,20 @@ Crt::processChar3(uint8 byte)
     setDirty();
 }
 
+
+// second level prt command stream interpretation, for 2236DE type
+void
+Crt::processPrtChar2(uint8 byte)
+{
+    int term_num = m_parent->getTermNum();
+    // FIXME: connect a printer
+    UI_Info("term %d printer received 0x%02x", term_num, byte);
+}
+
+
+// ----------------------------------------------------------------------------
 // RIFF WAV file format
+// ----------------------------------------------------------------------------
 //  __________________________
 // | RIFF WAVE Chunk          |
 // |   groupID  = 'RIFF'      |

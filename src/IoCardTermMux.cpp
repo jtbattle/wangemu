@@ -147,10 +147,14 @@ IoCardTermMux::IoCardTermMux(std::shared_ptr<Scheduler> scheduler,
         );
     }
 
+    // A real 2336 sends the sequence E4 F8 about a second after
+    // it powers up (the second is to run self tests).  E4 is the
+    // BASIC atom code for INIT, but functionally I don't think it
+    // does anything.  The F8 is the "crt go" flow control byte.
+    // However, in a real system the CRT might be turned on before
+    // the 2200 CPU is, and so the MXD wouldn't see the init sequence.
     // the 2336 sends an init sequence on reset.  wait a fraction of
     // a second to give the 8080 time to wake up before sending it.
-// FIXME: this is a hack ... perhaps the terminal side should send it
-//        then again, some of that processing is done here...
     m_init_tmr = m_scheduler->TimerCreate(
                    TIMER_MS(500),
                    std::bind(&IoCardTermMux::SendInitSeq, this)
@@ -163,39 +167,10 @@ void
 IoCardTermMux::SendInitSeq()
 {
     m_init_tmr = nullptr;
-
-    bool por = false;  // FIXME: how to know which case to invoke?
     for(int term_num=0; term_num<MAX_TERMINALS; term_num++) {
         if (m_terms[term_num].wndhnd) {
-            if (!por) {
-#if 1
-// FIXME: overrun debug case. get rid of reset, which might be a long duration.
-// or schedule a 2nd init call to do the F8/E4 part of it.
-// it is possible that DTR/DSR type hardware handhshaking is involved in the
-// real hardware, but which isn't emulated at all.
-// it could be modeled by making CheckKbBuffer() not drain a byte if
-// the uart isn't in the DTR state yet.
-//              m_terms[term_num].remote_kb_buff.push(static_cast<uint8>(0x12));
-// OK, it seems to be due to 0x12, as we get 7 warnings (one less than the
-// number of bytes below.  but if 0x12 above is commented out, there are no
-// overrun warnings.
-                m_terms[term_num].remote_kb_buff.push(static_cast<uint8>(0xF8));
-                m_terms[term_num].remote_kb_buff.push(static_cast<uint8>(0xE4));
-//              m_terms[term_num].remote_kb_buff.push(static_cast<uint8>('!'));
-//              m_terms[term_num].remote_kb_buff.push(static_cast<uint8>('!'));
-//              m_terms[term_num].remote_kb_buff.push(static_cast<uint8>('!'));
-//              m_terms[term_num].remote_kb_buff.push(static_cast<uint8>('!'));
-//              m_terms[term_num].remote_kb_buff.push(static_cast<uint8>('!'));
-//              m_terms[term_num].remote_kb_buff.push(static_cast<uint8>('!'));
-#else
-                m_terms[term_num].remote_kb_buff.push(static_cast<uint8>(0x12));
-                m_terms[term_num].remote_kb_buff.push(static_cast<uint8>(0xF8));
-                m_terms[term_num].remote_kb_buff.push(static_cast<uint8>(0xE4));
-#endif
-            } else {
-                m_terms[term_num].remote_kb_buff.push(static_cast<uint8>(0xE4));
-                m_terms[term_num].remote_kb_buff.push(static_cast<uint8>(0xF8));
-            }
+//          m_terms[term_num].remote_kb_buff.push(static_cast<uint8>(0xE4));
+            m_terms[term_num].remote_kb_buff.push(static_cast<uint8>(0xF8));
             CheckKbBuffer(term_num);
         }
     }
@@ -273,6 +248,8 @@ IoCardTermMux::getAddresses() const
 // the MXD card has its own power-on-reset circuit. all !PRMS (prime reset)
 // does is set a latch that the 8080 can sample.  the latch is cleared
 // via "OUT 0".
+// interestingly, the reset pin on the i8251 uart (pin 21) is tied low
+// i.e., it doesn't have a hard reset.
 void
 IoCardTermMux::reset(bool hard_reset)
 {
@@ -359,7 +336,7 @@ int
 IoCardTermMux::getIB() const
 {
     // FIXME: do we need to give more status than this?
-    // In the real 6793 hardware, IB is driven by the most recent
+    // In the real hardware, IB is driven by the most recent
     // OUT_IB_N data any time the board is selected.  In addition,
     // any time the address offset is 5 or 7, a gate forcibly drives
     // !IB5 low (logically, the byte is or'd with 0x10). Looking at
@@ -426,7 +403,10 @@ IoCardTermMux::receiveKeystroke(int term_num, int keycode)
     // remap certain keycodes from first-generation encoding to what is
     // send over the serial line
     if (keycode == IoCardKeyboard::KEYCODE_RESET) {
-        // reset
+        // reset: although the terminal's tx fifo is modeled here and not
+        // in UiCrt, the terminal clears its tx fifo on reset, so we should
+        // do the same here.
+        term.remote_kb_buff = {};
         term.remote_kb_buff.push(static_cast<uint8>(0x12));
     } else if (keycode == IoCardKeyboard::KEYCODE_HALT) {
         // halt/step
@@ -470,7 +450,6 @@ IoCardTermMux::CheckKbBuffer(int term_num)
     if (term.remote_kb_buff.empty() ||  // nothing to do
         term.remote_baud_tmr            // modeling transport delay
        ) {
-        term.remote_baud_tmr = nullptr;
         return;
     }
 
@@ -479,7 +458,7 @@ IoCardTermMux::CheckKbBuffer(int term_num)
 
     if (term.rx_ready) {
         UI_Warn("terminal received char too fast");
-        // TODO: set uart overrun status bit
+        // TODO: set uart overrun status bit?
         // then fall through because the old char is overwritten
     }
 
@@ -545,6 +524,8 @@ int
 IoCardTermMux::i8080_in_func(int addr, void *user_data)
 {
     IoCardTermMux *tthis = static_cast<IoCardTermMux*>(user_data);
+    int term_num = tthis->m_uart_sel;
+    m_term_t &term = tthis->m_terms[term_num];
 
     int rv = 0x00;
     switch (addr) {
@@ -589,23 +570,24 @@ IoCardTermMux::i8080_in_func(int addr, void *user_data)
         break;
 
     case IN_UART_DATA:
-        rv = tthis->m_terms[tthis->m_uart_sel].rx_byte;
+        rv = term.rx_byte;
         // reading the data has the side effect of clearing the rxrdy status
-        tthis->m_terms[tthis->m_uart_sel].rx_ready = false;
+        term.rx_ready = false;
         tthis->update_interrupt();
         break;
 
     case IN_UART_STATUS:
         {
-        bool tx_empty = tthis->m_terms[0].tx_ready && !tthis->m_terms[0].tx_tmr;
-        rv = (tthis->m_terms[0].tx_ready ? 0x01 : 0x00)  // [0] = tx fifo empty
-           | (tthis->m_terms[0].rx_ready ? 0x02 : 0x00)  // [1] = rx fifo has a byte
-           | (tx_empty                   ? 0x04 : 0x00)  // [2] = tx serializer and fifo empty
-           | (false                      ? 0x08 : 0x00)  // [3] = parity error
-           | (false                      ? 0x10 : 0x00)  // [4] = overrun error
-           | (false                      ? 0x20 : 0x00)  // [5] = framing error
-           | (false                      ? 0x40 : 0x00)  // [6] = break detect
-           | (true                       ? 0x80 : 0x00); // [7] = data set ready
+        bool tx_empty = term.tx_ready && !term.tx_tmr;
+        bool dsr = (term_num < 1); // FIXME: tie it to the number of terminal instances
+        rv = (term.tx_ready ? 0x01 : 0x00)  // [0] = tx fifo empty
+           | (term.rx_ready ? 0x02 : 0x00)  // [1] = rx fifo has a byte
+           | (tx_empty      ? 0x04 : 0x00)  // [2] = tx serializer and fifo empty
+           | (false         ? 0x08 : 0x00)  // [3] = parity error
+           | (false         ? 0x10 : 0x00)  // [4] = overrun error
+           | (false         ? 0x20 : 0x00)  // [5] = framing error
+           | (false         ? 0x40 : 0x00)  // [6] = break detect
+           | (dsr           ? 0x80 : 0x00); // [7] = data set ready
         }
         break;
 

@@ -107,10 +107,12 @@ private:
     void scr_write_attr(int x, int y, uint8 attr)
         { m_attr[m_chars_w*y + x] = attr; }
 
-    // lower level character handling
-    void processChar2(uint8 byte);
-    // lowest level character handling
-    void processChar3(uint8 byte);
+    // lower level crt character handling
+    void processCrtChar2(uint8 byte);
+    // lowest level crt character handling
+    void processCrtChar3(uint8 byte);
+    // prt character handling (only one level of interpretation)
+    void processPrtChar2(uint8 byte);
 
     // scroll the contents of the screen up one row,
     // and fill the new row with blanks.
@@ -175,8 +177,11 @@ private:
         CHAR_ATTR_INV    = 0x80,  // inverse character
     };
     uint8         m_attr[80*25];    // display attributes
+
+    // byte stream command interpretation
+    bool          m_crt_sink;       // true=route to crt, false=to prt
     int           m_raw_cnt;        // raw input stream buffered until we have
-    uint8         m_raw_buf[3];     // ... a complete runlength sequence
+    uint8         m_raw_buf[5];     // ... a complete runlength sequence
     int           m_input_cnt;      // buffered input stream while decoding
     uint8         m_input_buf[10];  // ... character sequence escapes
     bool          m_box_bottom;     // true if we've seen at least one 0B

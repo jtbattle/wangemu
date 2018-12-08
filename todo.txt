@@ -3,7 +3,16 @@ Emulator TODO list
 ============================================================================
 
 *) master list of priorities:
-   clean up flow control; submit
+   add tx buffer rate regulation timer
+   implement flow control
+       add "crt stop" when it hits certain fullness thresholds
+          2536DWTerminalAndTerminalControllerProtocol.pdf, pdf page 3
+          it isn't clear to me how the accounting is done.  when the terminal
+          gets a compressed run, is the count before or after expansion?
+       add auto "crt go" when it drops under 30 chars (see above pdf) or
+          when under threshold every 3 seconds
+       verify eg "SELECT P6" works
+       submit
    clean up mxd script flow control; submit
    get rid of tied keyboard thing -- unnecessary generalization
    add mvp/vlsi cpu and memory options; submit
@@ -11,58 +20,23 @@ Emulator TODO list
       hey, code.txt already has one.  study it.
    ... then review the priorities again
 
-*) why am I getting character overruns?
-   it could happen if there is a slow command, say reset, but it happens
-   even on simple text input.  upping the 8080 speed to 2+ MHz and it
-   still happens, so it isn't slightly marginal timing.
+*) how does the script injection prevent from swamping the mxd?
+   does it need to obey flow control bytes or is there a better way?
 
-   (1780000 clks/sec)*(11 bits/char)*(1 sec/19200 bits) = 1019 clocks/char
-   assuming 6 clks/instruction average, that is 170 instructions per char.
-   however, that is assuming one terminal.  if all four terminals are busy,
-   that leaves only 42 instructions per byte!
+*) huh, my CRT actually is a 2336. no wonder I was confused with 2236/2336.
 
-   TRY THIS:
-   log every character as it arrives at the callback. fetch the simtime
-   and log that with the character.  log the overrun event too.
-   then stare at the log and see if the processing time is irregular or
-   if it happens only at certain conditions.
+*) in MXD mode, the Keyword checkbox is converted to A/A
+   However, the menu still says "Keyword Mode Shift-Alt+K".
+   A 2nd problem there, I didn't intend for this shortcut to be Shift-Alt,
+   just the resets.  Same with Fullscreen / Shift-Alt+Enter
 
-   one solution would be to check for rx_ready in the callback, and if it
-   is still set, schedule another callback for 20% of a character time, say,
-   vs dropping the character.  but that seems to be sweeping the problem
-   under the rug.
+*) 2236DE_TerminalUserManual.700-5711B.6-81.pdf, page 15 says all keys
+   repeat except RESET, EDIT, and underline.
 
-*) terminal protocol issues:
-   1. how does the script injection prevent from swamping the mxd?
-      does it need to obey flow control bytes or is there a better way?
-      A: TBD
-   2. On RESET, the 2236 sends 12 F8 E4. should the emulated terminal?
-       not sure what E4 does.
-       See this comment in IoCardTermMux::IoCardTermMux()
-// the MXD initializes the CRT buffer with FB F6 (crt reset) and
-// 16 0x01 (clear screen) characters.  these are sent unconditionally
-// (no flow control) after reset (see INIT_CRT_BUF).  The terminal
-// emulation code in UiCrt.cpp should not send anything after reset.
-// when it sees FB F6 from the MXD, it replies with a cold or warm
-// reset response, which includes the E4 F8 on power up. If the user
-// hits RESET at the terminal, it sends 12 (reset to MXD).
-// The MXD will send the FB F6 reset sequence again, I believe.
-   3. the 2236 doesn't send CRT-GO (after the init sequence) until after
-      it does a CRT-STOP. Thereafter it sends CRT-GO every four seconds
-      even if things are hunky dory. does this need modeling?
-      A: TBD
-
-    - Fasstcom Terminal Specs v1.0.pdf, pdf page 8 says
-      "... the terminal must always transmit a HEX(F8F9) every 3 to 5 seconds
-       whenever it is ready to receive new data during idle time.
-       This is called the constant poll."
-      The emulated terminal doesn't.  Should it?  Is this just to compensate
-      for the fact that the serial link wasn't perfect, so this avoided
-      accidentally dropping a XON character and freezing the handshake?
-
-    HOLD ON.  The above is speculation. But the capture from my python
-    from the actual terminal shows the terminal independently sends the
-    three byte power on sequence even when nothing is sent to it.
+*) as an experiment, I tried creating two MXD cards
+   the 2nd terminal also claims to be "term 1" on the titlebar.
+   booting MVP 3.5, it gets to the partition editor start up and hangs.
+   the secondary terminal doesn't have a status bar
 
 *) the tied_keyboard setting is read during getDefaults() in UiCrtFrame
    but tied_keyboard doesn't make sense for term mux because it is not
@@ -72,6 +46,12 @@ Emulator TODO list
    study F:\Jim\libs\wx-3.1.0\samples\printing
    trying to print fails too.
    build a sample app which uses print dialog and see if it works there.
+
+*) MXD mode, VP OS 2.4 and EDIT/RECALL works as expected -- EDIT causes
+   a leading "*".
+   But MVP OS 3.5, EDIT doesn't show the "*", though recall does recall.
+   Is that an OS thing or a bug in the emulator?
+   MVP OS 2.6.2 is the same as 3.5.
 
 *) add terminal mux emulation and terminal emulation so I can run MVP OS's
 
@@ -156,7 +136,14 @@ Emulator TODO list
      SF5: down arrow  (useful when the edited line wraps)
      SF6: up arrow    (useful when the edited line wraps)
      SF7: BEGIN
-   Also, make up/down arrow keys map to SF5 and SF6
+
+   Document in the keyboard help file there are some new keys
+     Shift-Alt-R is hard reset  (changed)
+     Shift-Alt-W is warm reset  (changed)
+     Up arrow is S.F. 06 (up a screen line)
+     Down arrow is S.F. 05 (down a screen line)
+     Ctrl-Left arrow is S.F. 07 (start of line)
+     Ctrl-Right arrow is S.F. 04 (end of line)
 
 *) I'm seeing new strobes to the disk controller in MVP OS.
    IoCardDisk::CBS() handler has comments saying OB8 and OB1
@@ -707,7 +694,7 @@ other tasks
 
    - Related to the previous point, the following might be a useful heuristic
      to know whether a program was written in Wang BASIC or BASIC-2.
-   
+
      Entering "10 PRINT A/3" in Wang BASIC, the space between the line number
      and PRINT is saved in the file.  "10PRINT A/3" will show up just like
      that.  But on BASIC-2, there is always a space printed after a line
@@ -892,7 +879,7 @@ Misc
         30 STR(A$(1),2,8)="BADNAME "
         40 DATA SAVE BA R(171) A$()
     Result: DIR shows the name in the catalog, not the file header (as expected)
-    
+
     NOHEAD: 8DAMEN, with the header block removed (other sectors moved back)
         10 DIM A$(16)16
         20 DATA LOAD BA R(164) A$()
