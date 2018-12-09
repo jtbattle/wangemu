@@ -154,7 +154,7 @@ private:
     // We pack RAM[addr][3:0] = {WANGRAM[2*addr+1],WANGRAM[2*addr+0]}
     // That is, each byte of this RAM holds consecutive WANG RAM nibbles,
     // with the lower addressed nibble in the lsbs of the RAM byte.
-    const int m_memsize_KB;
+    const int m_memsize;        // size, in bytes
     uint8     m_RAM[MAX_RAM];
 
     // this contains the CPU state
@@ -254,8 +254,8 @@ private:
     } m_ucode[MAX_UCODE];
 
     // main memory
+    const int m_memsize;        // size, in bytes
     uint8     m_RAM[MAX_RAM];
-    const int m_memsize_KB;
 
     // this contains the CPU state
     struct cpu2200vp_t {

@@ -23,15 +23,10 @@ Emulator TODO list
 *) how does the script injection prevent from swamping the mxd?
    does it need to obey flow control bytes or is there a better way?
 
-*) huh, my CRT actually is a 2336. no wonder I was confused with 2236/2336.
-
 *) in MXD mode, the Keyword checkbox is converted to A/A
    However, the menu still says "Keyword Mode Shift-Alt+K".
    A 2nd problem there, I didn't intend for this shortcut to be Shift-Alt,
    just the resets.  Same with Fullscreen / Shift-Alt+Enter
-
-*) 2236DE_TerminalUserManual.700-5711B.6-81.pdf, page 15 says all keys
-   repeat except RESET, EDIT, and underline.
 
 *) as an experiment, I tried creating two MXD cards
    the 2nd terminal also claims to be "term 1" on the titlebar.
@@ -47,6 +42,12 @@ Emulator TODO list
    trying to print fails too.
    build a sample app which uses print dialog and see if it works there.
 
+*) 2236DE_TerminalUserManual.700-5711B.6-81.pdf, page 15 says all keys
+   repeat except RESET, EDIT, and underline.  what implication does that
+   have for the emulator?
+
+*) huh, my CRT actually is a 2336. no wonder I was confused with 2236/2336.
+
 *) MXD mode, VP OS 2.4 and EDIT/RECALL works as expected -- EDIT causes
    a leading "*".
    But MVP OS 3.5, EDIT doesn't show the "*", though recall does recall.
@@ -54,7 +55,6 @@ Emulator TODO list
    MVP OS 2.6.2 is the same as 3.5.
 
 *) add terminal mux emulation and terminal emulation so I can run MVP OS's
-
    - currently the division is
         + IoCardKeyboard
         + IoCardDisplay
@@ -72,37 +72,38 @@ Emulator TODO list
         use case of one term, it is most useful.
      The CrtFrame logic enables some config options only on the "primary" crt,
         which historically has been the one at io_addr=05.  Rethink this.
+        For example, I think the status line is gone on non-primary CRTs,
+        which means A/A checkbox is not visible.
      Config dialog needs to allow term mux configurations.
-
-    - section 8 of 2200MVP_MaintenanceManual.729-0584-A.1-84.pdf lists
-      what is involved to upgrade a VP to an MVP.  part of it requires
-      changing the boot ROM ucode to deal with the larger program memory.
-      do I have these boot ROMs?
-         double check boards/other boards/6789 and see if those ROMs match
-         what the emulator uses
-      the MVP service manual section 8.2 (page 8-2) says
-          2200 VP/MVP Bootstrap Release 2.2 has been incorporated by ECN
-          #9772.  For a system to operate with an expanded memory, this ECN
-          must be performed.  The old PROMS on the 210-6789 must be replaced
-          with the following:
-              378-2045R1 = L27
-              378-2046R1 = L28
-              378-2047R1 = L29
-      the 6789 board that I got the 2nd set of bootstrap PROMs from
-      are windowed eproms without official Wang revision numbers.
-      handwritten on the chips are the following:
-          L29 says "2047"
-          L28 says "2046R5"
-          L27 says "2045R5"
-      It is possible that the contents were R5, but the EPROMs were
-      later erased and overwritten, making the handwritten note
-      meaningless.
 
 *) add support for MVP and VLSI type CPUs
    - VP configuration should have 32KB control mem and defeature the 30ms timer
      Perhaps pop up a warning that the CPU is attempting to run an MVP OS
      if it detects a 30ms trigger.
    - MVP adds 64KB ctl mem, 30ms timer, and up to 512KB of data RAM via SL reg
+        section 8 of 2200MVP_MaintenanceManual.729-0584-A.1-84.pdf lists
+        what is involved to upgrade a VP to an MVP.  part of it requires
+        changing the boot ROM ucode to deal with the larger program memory.
+        do I have these boot ROMs?
+           double check boards/other boards/6789 and see if those ROMs match
+           what the emulator uses
+        the MVP service manual section 8.2 (page 8-2) says
+            2200 VP/MVP Bootstrap Release 2.2 has been incorporated by ECN
+            #9772.  For a system to operate with an expanded memory, this ECN
+            must be performed.  The old PROMS on the 210-6789 must be replaced
+            with the following:
+                378-2045R1 = L27
+                378-2046R1 = L28
+                378-2047R1 = L29
+        the 6789 board that I got the 2nd set of bootstrap PROMs from
+        are windowed eproms without official Wang revision numbers.
+        handwritten on the chips are the following:
+            L29 says "2047"
+            L28 says "2046R5"
+            L27 says "2045R5"
+        It is possible that the contents were R5, but the EPROMs were
+        later erased and overwritten, making the handwritten note
+        meaningless.
    - VLSI-2 puts an 8b register at output port 80 called BSR (bank select reg);
      bit [7] of that register indicates if extended addressing should use the
      SL register of if [6:0] provided 7b of extended addressing. See MVP source
@@ -126,10 +127,6 @@ Emulator TODO list
    - things are getting more confusing with the increased options.
      have a feature where hovering over the config button in the
      "Not OK" state will pop up an explanation of the problem
-
-*) the read and write routines go to great lengths to inline things,
-   but they both have the expression (m_memsize_KB<<10).  That should
-   be precomputed as m_memsize.  or should I just get rid of m_memsize_KB?
 
 *) on toolbar, add superscript to some SF keys in (M)VP mode:
      SF4: END

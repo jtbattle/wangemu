@@ -499,7 +499,7 @@ Cpu2200t::mem_read(uint16 addr) const
         // addressed by complementing addr bit 4.
 
         int RAMaddr = (addr >> 1);
-        assert(RAMaddr < (m_memsize_KB<<10));
+        assert(RAMaddr < m_memsize);
 
         if (m_cpu.st3 & ST3_MASK_HORZ) {
             // horizontal addressing
@@ -550,7 +550,7 @@ Cpu2200t::mem_write(uint16 addr, uint4 wr_value, int write2)
         }
 
         RAMaddr = (addr >> 1);
-        assert(RAMaddr < (m_memsize_KB<<10));
+        assert(RAMaddr < m_memsize);
 
         if (addr & 1) {
             m_RAM[RAMaddr] = (uint8)((m_RAM[RAMaddr]&0x0F) | (wr_value<<4));
@@ -751,11 +751,13 @@ Cpu2200t::Cpu2200t(std::shared_ptr<Scheduler> scheduler,
                                                : UCODE_WORDS_2200T ),
     m_krom_size(  (m_cpuType == CPUTYPE_2200B) ?  KROM_WORDS_2200B
                                                :  KROM_WORDS_2200T ),
-    m_memsize_KB(ramsize),
+    m_memsize(ramsize),
     m_dbg(false)
 {
-    assert(ramsize >= 4 && ramsize <= 32);
-    assert((ramsize&3) == 0);           // multiple of 4
+    #define K *1024
+    assert(ramsize >= 4 K && ramsize <= 32 K);
+    assert((ramsize & 0xfff) == 0);           // multiple of 4K
+    #undef K
 
     // initialize ucode store from built-in image
     switch (m_cpuType) {
@@ -830,7 +832,7 @@ Cpu2200t::getCpuType() const
 int
 Cpu2200t::getRamSize() const
 {
-    return m_memsize_KB;
+    return (m_memsize >> 10);
 }
 
 
@@ -876,7 +878,7 @@ Cpu2200t::reset(bool hard_reset)
 
     // real hardware doesn't reset memory, but the emulator does
     if (hard_reset) {
-        for(i=0; i<(m_memsize_KB<<10); i++) {
+        for(i=0; i<m_memsize; i++) {
             m_RAM[i] = 0xFF;
             // it appears that either bit 0 or bit 4 must be set
             // otherwise bad things happen.
@@ -1385,7 +1387,7 @@ Cpu2200t::execOneOp()
         //  20K = 100, 24K=101, 28K=110, 32K=111
         // that is, it should be (#4K blocks - 1)
         decode_M_field(uop, a_op);
-        m_cpu.pc = (uint16)( (((m_memsize_KB>>2)-1) << 13) | (1<<12) );
+        m_cpu.pc = (uint16)( (((m_memsize>>12)-1) << 13) | (1<<12) );
         m_cpu.ic++;
         break;
 

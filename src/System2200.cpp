@@ -424,7 +424,7 @@ System2200::setConfig(const SysCfgState &newcfg)
     *current_cfg = newcfg;
 
     // (re)build the CPU
-    int ramsize = current_cfg->getRamKB();
+    int ramsize = (current_cfg->getRamKB()) * 1024;
     switch (current_cfg->getCpuType()) {
         default:
             assert(false);
@@ -436,7 +436,13 @@ System2200::setConfig(const SysCfgState &newcfg)
             cpu = std::make_shared<Cpu2200t>( scheduler, ramsize, Cpu2200::CPUTYPE_2200B );
             break;
         case Cpu2200::CPUTYPE_2200VP:
+#if 1
             cpu = std::make_shared<Cpu2200vp>( scheduler, ramsize, Cpu2200::CPUTYPE_2200VP );
+#else
+// FIXME: experiment; give it more than 64KB to see if I can get two terms & partitions
+            cpu = std::make_shared<Cpu2200vp>( scheduler, 512, Cpu2200::CPUTYPE_2200VP );
+// FIXME: I tried configuring with 128KB and I didn't get the power on message
+#endif
             break;
     }
     assert(cpu);

@@ -465,13 +465,14 @@ Cpu2200vp::set_sl(uint8 value)
 {
     m_cpu.sl = (value & 0xFF);
 
-    if (m_memsize_KB <= 64) {
+    int memsize_KB = (m_memsize >> 10);
+    if (memsize_KB <= 64) {
         m_cpu.bank_offset = 0;
-    } else if (m_memsize_KB <= 128) {
+    } else if (memsize_KB <= 128) {
         m_cpu.bank_offset = ((value >> 6) & 1) << 16; // bit [6]
-    } else if (m_memsize_KB <= 256) {
+    } else if (memsize_KB <= 256) {
         m_cpu.bank_offset = ((value >> 6) & 3) << 16; // bits [7:6]
-    } else if (m_memsize_KB <= 512) {
+    } else if (memsize_KB <= 512) {
         m_cpu.bank_offset = (((value >> 6) & 3) << 16)  // bits [7:6]
                           | (((value >> 5) & 1) << 18); // bit [5]
     } else {
@@ -613,7 +614,7 @@ Cpu2200vp::decimal_sub8(int a_op, int b_op, int ci) const
 // otherwise, add the bank offset, and force the addr to zero if it is too big
 #define inline_map_address(addr)   \
     (   ((addr) < 8192) ? (addr)     \
-      : ((addr) + m_cpu.bank_offset < (m_memsize_KB<<10)) ? (m_cpu.bank_offset+(addr)) \
+      : ((addr) + m_cpu.bank_offset < m_memsize) ? (m_cpu.bank_offset+(addr)) \
       : (0) \
     )
 
@@ -648,7 +649,7 @@ Cpu2200vp::decimal_sub8(int a_op, int b_op, int ci) const
         if (la < 8192) {                        \
             la ^= write2;                       \
             m_RAM[la] = (uint8)wr_value;        \
-        } else if (la + m_cpu.bank_offset < (m_memsize_KB<<10)) { \
+        } else if (la + m_cpu.bank_offset < m_memsize) { \
             la += m_cpu.bank_offset;            \
             la ^= write2;                       \
             m_RAM[la] = (uint8)wr_value;        \
@@ -745,15 +746,16 @@ Cpu2200vp::Cpu2200vp(std::shared_ptr<Scheduler> scheduler,
     m_scheduler(scheduler),
     m_tmr_30ms(nullptr),
     m_ucode{{0,0,0,0}},
-    m_memsize_KB(ramsize),
+    m_memsize(ramsize),
     m_dbg(false)
 {
     assert(cpu_subtype == CPUTYPE_2200VP);
     cpu_subtype = cpu_subtype;  // suppress 'unused' warning
 
-    assert(ramsize ==  32 || ramsize == 64 || ramsize == 128 ||
-           ramsize == 256 || ramsize == 512 );
-    assert((ramsize&0xF) == 0);         // multiple of 15
+    #define K *1024
+    assert(ramsize ==  32 K || ramsize ==  64 K || ramsize == 128 K ||
+           ramsize == 256 K || ramsize == 512 K );
+    #undef K
 
     // init microcode
     for(int i=0; i<MAX_RAM; i++) {
@@ -805,7 +807,7 @@ Cpu2200vp::getCpuType() const
 int
 Cpu2200vp::getRamSize() const
 {
-    return m_memsize_KB;
+    return (m_memsize >> 10);
 }
 
 
@@ -818,7 +820,7 @@ Cpu2200vp::reset(bool hard_reset)
 
     if (hard_reset) {
         int i;
-        for(i=0; i<(m_memsize_KB<<10); i++) {
+        for(i=0; i<m_memsize; i++) {
             m_RAM[i] = 0xFF;
         }
 #if 0
@@ -1635,7 +1637,7 @@ Cpu2200vp::dump_ram(const std::string &filename)
     }
 
     ofs.fill('0');
-    for(int addr=0; addr < (m_memsize_KB<<10); addr += 16) {
+    for(int addr=0; addr < m_memsize; addr += 16) {
         ofs << std::setw(4) << std::hex << std::uppercase << addr << ":";
         for(int i=0; i<16; i++) {
             ofs << " " << std::setw(2) << std::hex << std::uppercase << int(m_RAM[addr+i]);
