@@ -65,7 +65,7 @@ private:
     static const unsigned int KB_BUFF_MAX   = 64;
     void checkKbBuffer(int term_num);
     void checkTxBuffer(int term_num);
-    void termToMxdCallback(int term_num);
+    void termToMxdCallback(int term_num, int key);
     void mxdToTermCallback(int term_num, int byte);
 
     // board state

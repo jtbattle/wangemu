@@ -333,7 +333,7 @@ IoCardTermMux::CBS(int val)
 int
 IoCardTermMux::getIB() const
 {
-    // FIXME: do we need to give more status than this?
+    // TODO: do we need to give more status than this?
     // In the real hardware, IB is driven by the most recent
     // OUT_IB_N data any time the board is selected.  In addition,
     // any time the address offset is 5 or 7, a gate forcibly drives
@@ -453,34 +453,31 @@ IoCardTermMux::checkKbBuffer(int term_num)
     uint8 key = term.remote_kb_buff.front();
     term.remote_kb_buff.pop();
 
+    term.rx_tmr = m_scheduler->TimerCreate(
+                      serial_char_delay,
+                      std::bind(&IoCardTermMux::termToMxdCallback, this, term_num, key)
+                  );
+}
+
+// callback after a character has finished transmission
+void
+IoCardTermMux::termToMxdCallback(int term_num, int key)
+{
+    assert((0 <= term_num) && (term_num < MAX_TERMINALS));
+    m_term_t &term = m_terms[term_num];
+    term.rx_tmr = nullptr;
+
     if (term.rx_ready) {
         UI_Warn("terminal received char too fast");
         // TODO: set uart overrun status bit?
         // then fall through because the old char is overwritten
     }
 
-// FIXME: this code transmits the character instantly, then uses the timer
-// to hold off any more characters.  a more accurate model would be to bind
-// the key value to the timer, and have the timer set rx_ready/rx_byte
     term.rx_ready = true;
     term.rx_byte  = key;
     update_interrupt();
 
-    term.rx_tmr = m_scheduler->TimerCreate(
-                      serial_char_delay,
-                      std::bind(&IoCardTermMux::termToMxdCallback, this, term_num)
-                  );
-}
-
-// callback after a character has finished transmission
-void
-IoCardTermMux::termToMxdCallback(int term_num)
-{
-    assert((0 <= term_num) && (term_num < MAX_TERMINALS));
-    m_term_t &term = m_terms[term_num];
-    term.rx_tmr = nullptr;
-
-    // see if anything is pending
+    // see if any other chars are pending
     checkKbBuffer(term_num);
 }
 

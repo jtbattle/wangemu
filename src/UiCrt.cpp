@@ -1133,7 +1133,12 @@ Crt::processPrtChar2(uint8 byte)
 {
     int term_num = m_parent->getTermNum();
     // FIXME: connect a printer
+#ifdef _DEBUG
     UI_Info("term %d printer received 0x%02x", term_num, byte);
+#else
+    term_num = term_num;
+    byte = byte;
+#endif
 }
 
 
