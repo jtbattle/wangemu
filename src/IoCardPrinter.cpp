@@ -25,7 +25,7 @@ IoCardPrinter::IoCardPrinter(std::shared_ptr<Cpu2200> cpu,
         int io_addr;
         bool ok = System2200::getSlotInfo(cardslot, 0, &io_addr);
         assert(ok); ok=ok;
-        m_wndhnd = UI_initPrinter(io_addr);
+        m_wndhnd = UI_printerInit(io_addr);
         reset();
     }
 }
@@ -35,7 +35,7 @@ IoCardPrinter::~IoCardPrinter()
 {
     if (m_slot >= 0) {
         reset();        // turns off handshakes in progress
-        UI_destroyPrinter(getGuiPtr());
+        UI_printerDestroy(getGuiPtr());
     }
 }
 
@@ -113,7 +113,7 @@ IoCardPrinter::OBS(int val)
         UI_Info("printer OBS: Output of byte 0x%02x", val);
     }
 
-    UI_printChar(getGuiPtr(), (uint8)val);
+    UI_printerChar(getGuiPtr(), (uint8)val);
 
     m_cpu->setDevRdy(true);
 }

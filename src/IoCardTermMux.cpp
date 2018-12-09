@@ -129,7 +129,7 @@ IoCardTermMux::IoCardTermMux(std::shared_ptr<Scheduler> scheduler,
     System2200::registerClockedDevice(cb);
 
     // FIXME: just one for now
-    m_terms[0].wndhnd = UI_initCrt(UI_SCREEN_2236DE, io_addr, 1);
+    m_terms[0].wndhnd = UI_displayInit(UI_SCREEN_2236DE, io_addr, 1);
 
     {
         int term_num = 0; /* FIXME: term 1 is hardwired here */
@@ -204,7 +204,7 @@ IoCardTermMux::~IoCardTermMux()
 
         for(auto &t : m_terms) {
             if (t.wndhnd != nullptr) {
-                UI_destroyCrt(t.wndhnd);
+                UI_displayDestroy(t.wndhnd);
                 t.wndhnd = nullptr;
             }
         }

@@ -24,11 +24,11 @@ enum ui_screen_t {
     UI_SCREEN_80x24,
     UI_SCREEN_2236DE
 };
-CrtFrame* UI_initCrt(const int screen_type,
-                     const int io_addr, const int term_num);
+CrtFrame* UI_displayInit(const int screen_type,
+                         const int io_addr, const int term_num);
 
 // called before the display gets shut down
-void UI_destroyCrt(CrtFrame *wnd);
+void UI_displayDestroy(CrtFrame *wnd);
 
 // emit a character to the display
 void UI_displayChar(CrtFrame *wnd, uint8 byte);
@@ -42,13 +42,13 @@ void UI_diskEvent(int slot, int drive);
 // ---- printer interface ----
 
 // printer view
-PrinterFrame* UI_initPrinter(int io_addr);
+PrinterFrame* UI_printerInit(int io_addr);
 
 // called before the printer view gets shut down
-void UI_destroyPrinter(PrinterFrame *wnd);
+void UI_printerDestroy(PrinterFrame *wnd);
 
 // emit a character to the printer
-void UI_printChar(PrinterFrame *wnd, uint8 byte);
+void UI_printerChar(PrinterFrame *wnd, uint8 byte);
 
 // ---- system configuration ----
 

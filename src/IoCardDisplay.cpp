@@ -114,7 +114,7 @@ IoCardDisplay::IoCardDisplay(std::shared_ptr<Scheduler> scheduler,
     int io_addr;
     bool ok = System2200::getSlotInfo(cardslot, 0, &io_addr);
     assert(ok); ok=ok;
-    m_wndhnd = UI_initCrt(m_size, io_addr, 0);
+    m_wndhnd = UI_displayInit(m_size, io_addr, 0);
 
     reset(true);
 }
@@ -124,7 +124,7 @@ IoCardDisplay::~IoCardDisplay()
 {
     if (m_slot >= 0) {
         reset(true);    // turns off handshakes in progress
-        UI_destroyCrt(m_wndhnd);
+        UI_displayDestroy(m_wndhnd);
     }
 }
 

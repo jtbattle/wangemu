@@ -283,7 +283,7 @@ UI_Confirm(const char *fmt, ...)
 
 // called at the start of time to create the actual display
 CrtFrame*
-UI_initCrt(const int screen_type, const int io_addr, const int term_num)
+UI_displayInit(const int screen_type, const int io_addr, const int term_num)
 {
     int cputype = System2200::config().getCpuType();
     const char *cpustr = (cputype == Cpu2200::CPUTYPE_2200B) ? "2200B" :
@@ -314,7 +314,7 @@ UI_initCrt(const int screen_type, const int io_addr, const int term_num)
 
 // called before the display gets shut down
 void
-UI_destroyCrt(CrtFrame *wnd)
+UI_displayDestroy(CrtFrame *wnd)
 {
     wnd->destroyWindow();
 }
@@ -347,7 +347,7 @@ UI_diskEvent(int controller, int drive)
 
 // called at the start of time to create the actual display
 PrinterFrame*
-UI_initPrinter(int io_addr)
+UI_printerInit(int io_addr)
 {
     char title[32];
     sprintf(title, "Wang Printer /%03X", io_addr);
@@ -357,7 +357,7 @@ UI_initPrinter(int io_addr)
 
 // called before the display gets shut down
 void
-UI_destroyPrinter(PrinterFrame *wnd)
+UI_printerDestroy(PrinterFrame *wnd)
 {
     wnd->destroyWindow();
 }
@@ -366,7 +366,7 @@ UI_destroyPrinter(PrinterFrame *wnd)
 // this is called only from IoCardPrinter::OBS()
 // emit a character to the display
 void
-UI_printChar(PrinterFrame *wnd, uint8 byte)
+UI_printerChar(PrinterFrame *wnd, uint8 byte)
 {
     wnd->printChar(byte);
 }

@@ -9,6 +9,24 @@ Emulator TODO list
        so I guess it should also be modeled in IoCardTermMux. In real life
        the fifo is also used when the terminal is decompressing runs of
        bytes, but in the emulator those are handled instantly.
+       the problem is that there is no flow control from UiCrt to
+       IoCardTermMux -- and IoCardTermMux can't tell when a FBCx sequence
+       is sent (unless it too parses the byte stream).  yuck.
+
+       a better solution (?) is to separate out the core terminal & display
+       logic into gui-free code (essentialy the 2nd half of UiCrt.cpp) and
+       let UiCrt handle just the display of the state of that thing.  I'd need
+       to work out whether Crt pulls state from the core or or the core pushes
+       state.  Probably the pull model is most natural.
+
+       the terminal keyboard fifo and half the uart delay model could be
+       moved into that Terminal object, as well as the keyboard remapping.
+
+       IoCardTermMux currently calls UI_initCrt.  Perhaps it should instance
+       a Terminal, and that calls UI_initCrt.  How much plumbing is needed
+       for this? Does the model work for the 2200T scenario where a keyboard
+       card is independent of a display card? how is information routed?
+
        add "crt stop" when it hits certain fullness thresholds
           2536DWTerminalAndTerminalControllerProtocol.pdf, pdf page 3
           it isn't clear to me how the accounting is done.  when the terminal
@@ -23,9 +41,6 @@ Emulator TODO list
    decide on a consistent set of naming conventions and stick to them
       hey, code.txt already has one.  study it.
    ... then review the priorities again
-
-*) how does the script injection prevent from swamping the mxd?
-   does it need to obey flow control bytes or is there a better way?
 
 *) as an experiment, I tried creating two MXD cards
    the 2nd terminal also claims to be "term 1" on the titlebar.
@@ -60,10 +75,8 @@ Emulator TODO list
         + UiCrtFrame
             + UiCrtStatusBar
             + UiCrtConfigDlg
-            + UiCrt
-                + UiCrt_Charset.h
+            + UiCrt + UiCrt_Charset.h + UiCrt_Keyboard (all part of Crt class)
                 + UiCrtErrorDlg
-                + UiCrt_Keyboard
      Crt state is saved in the .ini file by ui/CRT-nn, where nn is the addr;
         this needs to be generalized
      The CrtFrame displays disk icons and activity, but in mux mode,
