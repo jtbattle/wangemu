@@ -3,8 +3,8 @@ Emulator TODO list
 ============================================================================
 
 *) master list of priorities:
-   add tx buffer rate regulation timer
-   implement flow control
+   term to mxd callback does the byte transfer at the wrong side of the timer
+   implement flow control from terminal to mxd
        add "crt stop" when it hits certain fullness thresholds
           2536DWTerminalAndTerminalControllerProtocol.pdf, pdf page 3
           it isn't clear to me how the accounting is done.  when the terminal

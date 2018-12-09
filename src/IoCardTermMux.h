@@ -63,8 +63,10 @@ private:
 
     static const unsigned int MAX_TERMINALS =  4;
     static const unsigned int KB_BUFF_MAX   = 64;
-    void CheckKbBuffer(int term_num);
-    void UartTxTimerCallback(int term_num);
+    void checkKbBuffer(int term_num);
+    void checkTxBuffer(int term_num);
+    void termToMxdCallback(int term_num);
+    void mxdToTermCallback(int term_num, int byte);
 
     // board state
     std::shared_ptr<Scheduler> m_scheduler; // shared event scheduler
@@ -91,16 +93,17 @@ private:
     struct m_term_t {
         // display related:
         CrtFrame              *wndhnd;      // opaque handle to UI window
-	// the transport baud rate is emulated here, as is the terminal keyboard buffer
+	// the terminal keyboard buffer is modeled in the card
+	// instead of cluttering up the Ui code
 	std::queue<uint8>      remote_kb_buff;
-	std::shared_ptr<Timer> remote_baud_tmr;
         // uart receive state
         bool                   rx_ready;    // received a byte
         int                    rx_byte;     // value of received byte
+	std::shared_ptr<Timer> rx_tmr;      // model uart rate & delay
         // uart transmit state
         bool                   tx_ready;    // room to accept a byte (1 deep FIFO)
         int                    tx_byte;     // value of tx byte
-        std::shared_ptr<Timer> tx_tmr;      // model uart xfer rate
+        std::shared_ptr<Timer> tx_tmr;      // model uart rate & delay
     } m_terms[MAX_TERMINALS];
 };
 

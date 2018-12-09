@@ -4,10 +4,11 @@
 // from a real MXD card.
 //
 // These documents were especially useful in reverse engineering the card:
-// https://wang2200.org/docs/system/2200MVP_MaintenanceManual.729-0584-A.1-84.pdf
+// - https://wang2200.org/docs/system/2200MVP_MaintenanceManual.729-0584-A.1-84.pdf
 //     section F, page 336..., has schematics for the MXD board (7290-1, 7291-1)
-// https://wang2200.org/docs/internal/2236MXE_Documentation.8-83.pdf
-// Hand disassembly of MXD ROM image (not yet online ... FIXME)
+// - https://wang2200.org/docs/internal/2236MXE_Documentation.8-83.pdf
+// - Hand disassembly of MXD ROM image:
+//     https://wang2200.org/2200tech/wang_2236mxd.lst
 
 #include "Ui.h"
 #include "IoCardTermMux.h"
@@ -22,8 +23,6 @@
 #ifdef _MSC_VER
 #pragma warning( disable: 4127 )  // conditional expression is constant
 #endif
-
-const bool dbg = false; // temporary debugging hack
 
 // the i8080 runs at 1.78 MHz
 const int ns_per_tick = 561;
@@ -104,12 +103,11 @@ IoCardTermMux::IoCardTermMux(std::shared_ptr<Scheduler> scheduler,
     for(auto &t : m_terms) {
         t.wndhnd = nullptr;
 
-        t.remote_baud_tmr = nullptr;
-
         t.rx_ready = false;
         t.rx_byte  = 0x00;
+        t.rx_tmr   = nullptr;
 
-        t.tx_ready = false;
+        t.tx_ready = true;
         t.tx_byte  = 0x00;
         t.tx_tmr   = nullptr;
     }
@@ -132,7 +130,6 @@ IoCardTermMux::IoCardTermMux(std::shared_ptr<Scheduler> scheduler,
 
     // FIXME: just one for now
     m_terms[0].wndhnd = UI_initCrt(UI_SCREEN_2236DE, io_addr, 1);
-    m_terms[0].tx_ready = true;
 
     {
         int term_num = 0; /* FIXME: term 1 is hardwired here */
@@ -161,8 +158,9 @@ IoCardTermMux::IoCardTermMux(std::shared_ptr<Scheduler> scheduler,
                  );
 }
 
-// the 2336 sends an init sequence of E4 F8 on power up.
-// the 2336 sends an init sequence of 12 F8 E4 on reset.
+// The 2336 sends an init sequence of E4 F8 on power up.
+// The emulator doesn't send E4 because it sometimes shows up as a
+// spurious "INIT" keyword. It isn't clear what the E4 is for.
 void
 IoCardTermMux::SendInitSeq()
 {
@@ -171,7 +169,7 @@ IoCardTermMux::SendInitSeq()
         if (m_terms[term_num].wndhnd) {
 //          m_terms[term_num].remote_kb_buff.push(static_cast<uint8>(0xE4));
             m_terms[term_num].remote_kb_buff.push(static_cast<uint8>(0xF8));
-            CheckKbBuffer(term_num);
+            checkKbBuffer(term_num);
         }
     }
 }
@@ -436,20 +434,19 @@ IoCardTermMux::receiveKeystroke(int term_num, int keycode)
         term.remote_kb_buff.push(static_cast<uint8>(keycode));
     }
 
-    CheckKbBuffer(term_num);
+    checkKbBuffer(term_num);
 }
 
 // process the next entry in kb event queue and schedule a timer to check
 // for the next one
 void
-IoCardTermMux::CheckKbBuffer(int term_num)
+IoCardTermMux::checkKbBuffer(int term_num)
 {
     assert((0 <= term_num) && (term_num < MAX_TERMINALS));
     m_term_t &term = m_terms[term_num];
 
-    if (term.remote_kb_buff.empty() ||  // nothing to do
-        term.remote_baud_tmr            // modeling transport delay
-       ) {
+    if (term.remote_kb_buff.empty() || term.rx_tmr) {
+        // nothing to do or serial channel is in use
         return;
     }
 
@@ -462,26 +459,64 @@ IoCardTermMux::CheckKbBuffer(int term_num)
         // then fall through because the old char is overwritten
     }
 
+// FIXME: this code transmits the character instantly, then uses the timer
+// to hold off any more characters.  a more accurate model would be to bind
+// the key value to the timer, and have the timer set rx_ready/rx_byte
     term.rx_ready = true;
     term.rx_byte  = key;
     update_interrupt();
 
-    term.remote_baud_tmr = m_scheduler->TimerCreate(
-                                serial_char_delay,
-                                std::bind(&IoCardTermMux::UartTxTimerCallback, this, term_num)
-                           );
+    term.rx_tmr = m_scheduler->TimerCreate(
+                      serial_char_delay,
+                      std::bind(&IoCardTermMux::termToMxdCallback, this, term_num)
+                  );
 }
 
 // callback after a character has finished transmission
 void
-IoCardTermMux::UartTxTimerCallback(int term_num)
+IoCardTermMux::termToMxdCallback(int term_num)
 {
     assert((0 <= term_num) && (term_num < MAX_TERMINALS));
     m_term_t &term = m_terms[term_num];
-    term.remote_baud_tmr = nullptr;
+    term.rx_tmr = nullptr;
 
     // see if anything is pending
-    CheckKbBuffer(term_num);
+    checkKbBuffer(term_num);
+}
+
+void
+IoCardTermMux::checkTxBuffer(int term_num)
+{
+    assert((0 <= term_num) && (term_num < MAX_TERMINALS));
+    m_term_t &term = m_terms[term_num];
+
+    if (term.tx_ready || term.tx_tmr) {
+        // nothing to do or serial channel is in use
+        return;
+    }
+
+    term.tx_tmr = m_scheduler->TimerCreate(
+                      serial_char_delay,
+                      std::bind(&IoCardTermMux::mxdToTermCallback, this, term_num, term.tx_byte)
+                  );
+
+    // the byte in the tx register is moved to the serializer,
+    // making room for the next tx byte
+    term.tx_ready = true;
+}
+
+// this causes a delay of 1/char_time before posting a byte to the terminal.
+// more than the latency, it is intended to rate limit the channel to match
+// that of a real serial terminal.
+void
+IoCardTermMux::mxdToTermCallback(int term_num, int byte)
+{
+    assert((0 <= term_num) && (term_num < MAX_TERMINALS));
+    m_term_t &term = m_terms[term_num];
+    term.tx_tmr = nullptr;
+
+    UI_displayChar(term.wndhnd, (uint8)byte);
+    checkTxBuffer(term_num);
 }
 
 // ============================================================================
@@ -639,12 +674,17 @@ IoCardTermMux::i8080_out_func(int addr, int byte, void *user_data)
         break;
 
     case OUT_UART_DATA:
-// FIXME: this should clear the txrdy status for (11/baudrate) seconds.
-// but it is more complicated than that because there is a serialization
-// buffer and a one byte fifo I believe.
-        if (tthis->m_uart_sel == 0) {
-            // FIXME: only one term is supported
-            UI_displayChar(tthis->m_terms[0].wndhnd, (uint8)byte);
+        if (tthis->m_uart_sel == 0) {  // FIXME: only one term is supported
+            int term_num   = tthis->m_uart_sel;
+            m_term_t &term = tthis->m_terms[term_num];
+#if defined(_DEBUG)
+            if (!term.tx_ready) {
+                UI_Warn("terminal %d mxd overwrote the uart tx buffer", term_num+1);
+            }
+#endif
+            term.tx_ready = false;
+            term.tx_byte  = byte;
+            tthis->checkTxBuffer(term_num);
         }
         break;
 
