@@ -37,8 +37,8 @@ struct iomap_t {
                     // if there is no device at that address
 };
 static std::array<std::unique_ptr<IoCard>, NUM_IOSLOTS> cardInSlot; // pointer to card in a given slot
-static std::array<iomap_t,256> IoMap;         // pointer to card responding to given address
-static int                     IoCurSelected; // address of most recent ABS
+static std::array<iomap_t,256> ioMap;      // pointer to card responding to given address
+static int                     curIoAddr;  // address of most recent ABS
 
 // ----------------------------- speed regulation -----------------------------
 
@@ -212,7 +212,7 @@ breakdown_cards(void)
     }
 
     // clean up mappings
-    for(auto &mapentry : IoMap) {
+    for(auto &mapentry : ioMap) {
         mapentry.slot   = -1;      // unoccupied
         mapentry.ignore = false;   // restore bad I/O warning flags
     }
@@ -220,6 +220,8 @@ breakdown_cards(void)
     if (cpu) {
         cpu->setDevRdy(false);  // nobody is driving, so it floats to 0
     }
+
+    curIoAddr = -1;
 }
 
 // ------------------------------------------------------------------------
@@ -281,14 +283,14 @@ System2200::initialize()
 #endif
 
     // set up IO management
-    for(auto &mapentry : IoMap) {
+    for(auto &mapentry : ioMap) {
         mapentry.slot   = -1;    // unoccupied
         mapentry.ignore = false;
     }
     for(auto &card : cardInSlot) {
         card = nullptr;
     }
-    IoCurSelected = -1;
+    curIoAddr = -1;
 
     // CPU speed regulation
     firstslice = true;
@@ -480,7 +482,7 @@ System2200::setConfig(const SysCfgState &newcfg)
         } else {
             std::vector<int> addresses = inst->getAddresses();
             for(unsigned int n=0; n<addresses.size(); n++) {
-                IoMap[addresses[n]].slot = slot;
+                ioMap[addresses[n]].slot = slot;
             }
             cardInSlot[slot] = std::move(inst);
         }
@@ -516,6 +518,8 @@ System2200::reconfigure()
 void
 System2200::reset(bool cold_reset)
 {
+    curIoAddr = -1;
+
     cpu->reset(cold_reset);
 
     // reset all I/O devices
@@ -793,21 +797,21 @@ void
 System2200::cpu_ABS(uint8 byte)
 {
     // done if reselecting same device
-    if (byte == IoCurSelected) {
+    if (byte == curIoAddr) {
         return;
     }
 
     // deselect old card
-    if ((IoCurSelected > 0) && (IoMap[IoCurSelected].slot >= 0)) {
-        (cardInSlot[IoMap[IoCurSelected].slot])->deselect();
+    if ((curIoAddr > 0) && (ioMap[curIoAddr].slot >= 0)) {
+        (cardInSlot[ioMap[curIoAddr].slot])->deselect();
     }
-    IoCurSelected = byte;
+    curIoAddr = byte;
 
     bool vp_mode = (cpu->getCpuType() == Cpu2200::CPUTYPE_2200VP);
 
     // by default, assume the device is not ready.
     // the addressed card will turn it back below if appropriate
-    if (IoCurSelected == 0x00 && vp_mode) {
+    if (curIoAddr == 0x00 && vp_mode) {
         // the (M)VP CPU special cases address 00 and forces ready true
         cpu->setDevRdy(true);
         return;
@@ -816,31 +820,31 @@ System2200::cpu_ABS(uint8 byte)
     cpu->setDevRdy(false);
 
     // let the selected card know it has been chosen
-    if (IoMap[IoCurSelected].slot >= 0) {
-        int slot = IoMap[IoCurSelected].slot;
+    if (ioMap[curIoAddr].slot >= 0) {
+        int slot = ioMap[curIoAddr].slot;
         cardInSlot[slot]->select();
         return;
     }
 
     // MVP OS probes addr 80 to test for the bank select register (BSR).
     // for non-VSLI CPUs, it would be annoying to get warned about it.
-    if (vp_mode && (IoCurSelected == 0x80)) {
+    if (vp_mode && (curIoAddr == 0x80)) {
         return;
     }
 
     // warn the user that a non-existant device has been selected
-    if (!IoMap[IoCurSelected].ignore && current_cfg->getWarnIo()
-        && (IoCurSelected != 0x00)  // intentionally select nothing
-        && (IoCurSelected != 0x46)  // testing for mxd at 0x4n
-        && (IoCurSelected != 0x86)  // testing for mxd at 0x8n
-        && (IoCurSelected != 0xC6)  // testing for mxd at 0xCn
+    if (!ioMap[curIoAddr].ignore && current_cfg->getWarnIo()
+        && (curIoAddr != 0x00)  // intentionally select nothing
+        && (curIoAddr != 0x46)  // testing for mxd at 0x4n
+        && (curIoAddr != 0x86)  // testing for mxd at 0x8n
+        && (curIoAddr != 0xC6)  // testing for mxd at 0xCn
        ) {
         bool response = UI_Confirm(
                     "Warning: selected non-existent I/O device %02X\n"
                     "Should I warn you of further accesses to this device?",
-                    IoCurSelected );
+                    curIoAddr );
         // suppress further warnings
-        IoMap[IoCurSelected].ignore = !response;
+        ioMap[curIoAddr].ignore = !response;
     }
 }
 
@@ -857,9 +861,9 @@ System2200::cpu_OBS(uint8 byte)
 // allowing the CPU to do another I/O operation.  Normally, the device
 // being used will generate a Busy indicator after the I/O Bus (!OB1 - !OB8)
 // has been strobed by !OBS, the CPU output strobe.
-    if (IoCurSelected > 0) {
-        if (IoMap[IoCurSelected].slot >= 0) {
-            cardInSlot[IoMap[IoCurSelected].slot]->OBS(byte);
+    if (curIoAddr > 0) {
+        if (ioMap[curIoAddr].slot >= 0) {
+            cardInSlot[ioMap[curIoAddr].slot]->OBS(byte);
         }
     }
 }
@@ -874,8 +878,8 @@ System2200::cpu_CBS(uint8 byte)
     //   * some use it like another OBS strobe to capture some type
     //     of command word
     //   * some cards use it to trigger an IBS strobe
-    if ((IoCurSelected > 0) && (IoMap[IoCurSelected].slot >= 0)) {
-        cardInSlot[IoMap[IoCurSelected].slot]->CBS(byte);
+    if ((curIoAddr > 0) && (ioMap[curIoAddr].slot >= 0)) {
+        cardInSlot[ioMap[curIoAddr].slot]->CBS(byte);
     }
 }
 
@@ -884,9 +888,9 @@ System2200::cpu_CBS(uint8 byte)
 void
 System2200::cpu_CPB(bool busy)
 {
-    if ((IoCurSelected > 0) && (IoMap[IoCurSelected].slot >= 0)) {
+    if ((curIoAddr > 0) && (ioMap[curIoAddr].slot >= 0)) {
         // signal that we want to get something
-        cardInSlot[IoMap[IoCurSelected].slot]->CPB(busy);
+        cardInSlot[ioMap[curIoAddr].slot]->CPB(busy);
     }
 }
 
@@ -895,9 +899,9 @@ System2200::cpu_CPB(bool busy)
 int
 System2200::cpu_poll_IB()
 {
-    if  ((IoCurSelected > 0) && (IoMap[IoCurSelected].slot >= 0)) {
+    if  ((curIoAddr > 0) && (ioMap[curIoAddr].slot >= 0)) {
         // signal that we want to get something
-        return (int)(cardInSlot[IoMap[IoCurSelected].slot]->getIB());
+        return (int)(cardInSlot[ioMap[curIoAddr].slot]->getIB());
     }
     return 0;
 }
@@ -1108,7 +1112,7 @@ IoCard*
 System2200::getInstFromIoAddr(int io_addr)
 {
     assert( (io_addr >= 0) && (io_addr <= 0xFFF) );
-    return cardInSlot[IoMap[io_addr & 0xFF].slot].get();
+    return cardInSlot[ioMap[io_addr & 0xFF].slot].get();
 }
 
 
