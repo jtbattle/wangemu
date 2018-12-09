@@ -147,7 +147,7 @@ private:
     // ---- utility functions ----
 
     // create menubar
-    void makeMenubar(int primary_crt);
+    void makeMenubar(bool primary_crt, bool smart_term);
 
     // return the primary CRTframe (/005)
     static CrtFrame *getPrimaryFrame();

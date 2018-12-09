@@ -228,16 +228,16 @@ CrtFrame::CrtFrame( const wxString& title,
     m_blink_phase(0),
     m_fps(0)
 {
-    m_primary_crt = (screen_type == UI_SCREEN_2236DE) ? (m_crt_addr == 0x00)
-                                                      : (m_crt_addr == 0x05);
+    bool smart_term = (screen_type == UI_SCREEN_2236DE);
+    m_primary_crt = (smart_term) ? (m_crt_addr == 0x00)
+                                 : (m_crt_addr == 0x05);
 
     // set the frame icon
     SetIcon(wang_xpm);
 
-    makeMenubar(isPrimaryCrt()); // create menubar
+    makeMenubar(isPrimaryCrt(), smart_term);
 
     // create a status bar with two panes
-    bool smart_term = (screen_type == UI_SCREEN_2236DE);
     m_statBar = new CrtStatusBar(this, smart_term, isPrimaryCrt());
     SetStatusBar(m_statBar);
     SetStatusBarPane(1);        // use second pane for menu help strings
@@ -306,12 +306,12 @@ CrtFrame::isPrimaryCrt() const
     #define ALT  "Ctrl"         /* this gets remapped to Cmd */
     #define ALT2 "Shift-Ctrl"   /* this gets remapped to Shift-Cmd */
 #else
-    #define ALT  "Shift-Alt"
+    #define ALT  "Alt"
     #define ALT2 "Shift-Alt"
 #endif
 
 void
-CrtFrame::makeMenubar(int primary_crt)
+CrtFrame::makeMenubar(bool primary_crt, bool smart_term)
 {
     wxMenu *menuFile = new wxMenu;
     if (primary_crt) {
@@ -365,7 +365,11 @@ CrtFrame::makeMenubar(int primary_crt)
         menuConfig->Append(Configure_Dialog,     "&Configure System...",      "Change I/O settings");
     }
     menuConfig->Append(Configure_Screen_Dialog,  "&Configure Screen...",      "Change display settings");
-    menuConfig->Append(Configure_KeywordMode,    "&Keyword mode\t" ALT "+K",  "Toggle keyboard keyword mode",        wxITEM_CHECK);
+    if (smart_term) {
+        menuConfig->Append(Configure_KeywordMode,    "&Kaps lock\t" ALT "+K",  "Toggle keyboard keyword mode",        wxITEM_CHECK);
+    } else {
+        menuConfig->Append(Configure_KeywordMode,    "&Keyword mode\t" ALT "+K",  "Toggle keyboard keyword mode",        wxITEM_CHECK);
+    }
     menuConfig->Append(Configure_SF_toolBar,     "SF key toolbar",            "Toggle special function key toolbar", wxITEM_CHECK);
     menuConfig->Append(Configure_Fullscreen,     "Fullscreen\t" ALT "+Enter", "Toggle full screen display",          wxITEM_CHECK);
     if (primary_crt) {

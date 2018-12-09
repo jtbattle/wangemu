@@ -23,11 +23,6 @@ Emulator TODO list
 *) how does the script injection prevent from swamping the mxd?
    does it need to obey flow control bytes or is there a better way?
 
-*) in MXD mode, the Keyword checkbox is converted to A/A
-   However, the menu still says "Keyword Mode Shift-Alt+K".
-   A 2nd problem there, I didn't intend for this shortcut to be Shift-Alt,
-   just the resets.  Same with Fullscreen / Shift-Alt+Enter
-
 *) as an experiment, I tried creating two MXD cards
    the 2nd terminal also claims to be "term 1" on the titlebar.
    booting MVP 3.5, it gets to the partition editor start up and hangs.
