@@ -48,9 +48,6 @@ Emulator TODO list
    use only 0. When the logical term# needs to be used (eg, on the titlebar)
    it would be incremented for display.
 
-*) UiCrtRender.cpp should be named UiCrt_Render.cpp for consistency
-      git mv UiCrtRender.cpp UiCrt_Render.cpp
-
 *) many foo.h have CANT_ASSIGN_OR_COPY_CLASS(classname)
    macro invocation, but they don't #include "w2200.h" where it is defined.
    that is bad hygiene.  check all the header files.
