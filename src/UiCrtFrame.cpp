@@ -231,7 +231,7 @@ CrtFrame::CrtFrame( const wxString& title,
     m_fps(0)
 {
     bool smart_term = (crt_state->screen_type == UI_SCREEN_2236DE);
-    m_primary_crt = (smart_term) ? (m_crt_addr == 0x01)
+    m_primary_crt = (smart_term) ? (m_crt_addr == 0x00)
                                  : (m_crt_addr == 0x05);
 
     // set the frame icon
@@ -261,6 +261,14 @@ CrtFrame::CrtFrame( const wxString& title,
     addCrt();
 
     getDefaults();      // get configuration options, or supply defaults
+#if 1
+// FIXME: hack -- m_assoc_kb_addr defaults to 01, so if we attempt to
+//        route a key to a Terminal (which registers at registersKB at 0x00)
+//        it fails to find it.  so hack around it for now.
+if (smart_term) {
+    m_assoc_kb_addr = 0x00;
+}
+#endif
 
     // if I don't do this before ShowFullScreen, bad things happen when
     // switching later from fullscreen to !fullscreen in some circumstances

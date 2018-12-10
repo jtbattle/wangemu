@@ -80,7 +80,7 @@ IoCardTermMux::IoCardTermMux(std::shared_ptr<Scheduler> scheduler,
                              int baseaddr, int cardslot) :
     m_scheduler(scheduler),
     m_cpu(cpu),
-//  m_i8080(nullptr),
+    m_i8080(nullptr),
     m_baseaddr(baseaddr),
     m_slot(cardslot),
     m_selected(false),
@@ -93,8 +93,7 @@ IoCardTermMux::IoCardTermMux(std::shared_ptr<Scheduler> scheduler,
     m_obscbs_data(0x00),
     m_rbi(0xff),                // not ready
     m_uart_sel(0),
-    m_interrupt_pending(false),
-    m_init_tmr(nullptr)
+    m_interrupt_pending(false)
 {
     if (m_slot < 0) {
         // this is just a probe to query properties, so don't make a window
@@ -103,11 +102,9 @@ IoCardTermMux::IoCardTermMux(std::shared_ptr<Scheduler> scheduler,
 
     for(auto &t : m_terms) {
         t.terminal = nullptr;
-        t.remote_kb_buff = {};
 
         t.rx_ready = false;
         t.rx_byte  = 0x00;
-        t.rx_tmr   = nullptr;
 
         t.tx_ready = true;
         t.tx_byte  = 0x00;
@@ -131,53 +128,9 @@ IoCardTermMux::IoCardTermMux(std::shared_ptr<Scheduler> scheduler,
     System2200::registerClockedDevice(cb);
 
     // FIXME: just one for now
-    // address io_addr+1 is associated with the terminal because
-    // when it routes via system2200, 01 is associated with the KB.
-    // it is arbitrary, but it has to be consistent.
     m_terms[0].terminal =
-        std::make_unique<Terminal>(io_addr+1, 1, UI_SCREEN_2236DE);
-
-    {
-        int term_num = 0; /* FIXME: term 1 is hardwired here */
-        System2200::registerKb(
-            // FIXME: need 0x01 because elsewhere m_assoc_kb_addr defaults to 0x01;
-            //        a later System2200::kb_foo(m_assoc_kb_addr,...) call fails
-            //        fix the m_assoc_kb_addr logic instead of this hack
-            m_baseaddr + 0x01,
-            term_num+1,
-            std::bind(&IoCardTermMux::receiveKeystroke,
-                      this, term_num, std::placeholders::_1)
-        );
-    }
-
-    // A real 2336 sends the sequence E4 F8 about a second after
-    // it powers up (the second is to run self tests).  E4 is the
-    // BASIC atom code for INIT, but functionally I don't think it
-    // does anything.  The F8 is the "crt go" flow control byte.
-    // However, in a real system the CRT might be turned on before
-    // the 2200 CPU is, and so the MXD wouldn't see the init sequence.
-    // the 2336 sends an init sequence on reset.  wait a fraction of
-    // a second to give the 8080 time to wake up before sending it.
-    m_init_tmr = m_scheduler->TimerCreate(
-                   TIMER_MS(500),
-                   std::bind(&IoCardTermMux::SendInitSeq, this)
-                 );
-}
-
-// The 2336 sends an init sequence of E4 F8 on power up.
-// The emulator doesn't send E4 because it sometimes shows up as a
-// spurious "INIT" keyword. It isn't clear what the E4 is for.
-void
-IoCardTermMux::SendInitSeq()
-{
-    m_init_tmr = nullptr;
-    for(int term_num=0; term_num<MAX_TERMINALS; term_num++) {
-        if (m_terms[term_num].terminal) {
-//          m_terms[term_num].remote_kb_buff.push(static_cast<uint8>(0xE4));
-            m_terms[term_num].remote_kb_buff.push(static_cast<uint8>(0xF8));
-            checkKbBuffer(term_num);
-        }
-    }
+        std::make_unique<Terminal>(scheduler, this,
+                                   io_addr, 1, UI_SCREEN_2236DE);
 }
 
 // perform on instruction and return the number of ns of elapsed time.
@@ -202,12 +155,8 @@ IoCardTermMux::~IoCardTermMux()
 {
     if (m_slot >= 0) {
         // not just a temp object, so clean up
-        System2200::unregisterKb(m_baseaddr + 0x01, /* see the hack comment in registerKb() */
-                                 1 /* FIXME: term 1 is hardwired here */);
-
         i8080_destroy(static_cast<i8080*>(m_i8080));
         m_i8080 = nullptr;
-
         for(auto &t : m_terms) {
             t.terminal = nullptr;
         }
@@ -382,106 +331,22 @@ IoCardTermMux::update_interrupt()
                        || m_terms[3].rx_ready;
 }
 
-// the received keyval is appropriate for the first generation keyboards,
-// but the smart terminals:
-//   (a) couldn't send an IB9 (9th bit) per key, and
-//   (b) certain keys were coded differently, including as a pair of bytes
-// as smart terminals were connected via 19200 baud serial lines, we
-// model the transport delay by firing a timer for that long which disallows
-// sending any more keys for that long.  if any key arrives while the timer is
-// active, store it in a fifo and send the next one when the timer expires.
+// a character has come in from the serial port
 void
 IoCardTermMux::receiveKeystroke(int term_num, int keycode)
 {
     assert((0 <= term_num) && (term_num < MAX_TERMINALS));
     m_term_t &term = m_terms[term_num];
 
-    if (term.remote_kb_buff.size() >= KB_BUFF_MAX) {
-        UI_Warn("the terminal keyboard buffer dropped a character");
-        return;
-    }
-
-    // remap certain keycodes from first-generation encoding to what is
-    // send over the serial line
-    if (keycode == IoCardKeyboard::KEYCODE_RESET) {
-        // reset: although the terminal's tx fifo is modeled here and not
-        // in UiCrt, the terminal clears its tx fifo on reset, so we should
-        // do the same here.
-        term.remote_kb_buff = {};
-        term.remote_kb_buff.push(static_cast<uint8>(0x12));
-    } else if (keycode == IoCardKeyboard::KEYCODE_HALT) {
-        // halt/step
-        term.remote_kb_buff.push(static_cast<uint8>(0x13));
-    } else if (keycode == (IoCardKeyboard::KEYCODE_SF | IoCardKeyboard::KEYCODE_EDIT)) {
-        // edit
-        term.remote_kb_buff.push(static_cast<uint8>(0xBD));
-    } else if (keycode & IoCardKeyboard::KEYCODE_SF) {
-        // special function
-        term.remote_kb_buff.push(static_cast<uint8>(0xFD));
-        term.remote_kb_buff.push(static_cast<uint8>(keycode & 0xff));
-    } else if (keycode == 0xE6) {
-        // the pc TAB key maps to "STMT" in 2200T mode,
-        // but it maps to "FN" (function) in 2336 mode
-        term.remote_kb_buff.push(static_cast<uint8>(0xFD));
-        term.remote_kb_buff.push(static_cast<uint8>(0x7E));
-    } else if (keycode == 0xE5) {
-        // erase
-        term.remote_kb_buff.push(static_cast<uint8>(0xE5));
-    } else if (0x80 <= keycode && keycode < 0xE5) {
-        // it is an atom; add prefix
-        term.remote_kb_buff.push(static_cast<uint8>(0xFD));
-        term.remote_kb_buff.push(static_cast<uint8>(keycode & 0xff));
-    } else {
-        // the mapping is unchanged
-        assert(keycode == (keycode & 0xff));
-        term.remote_kb_buff.push(static_cast<uint8>(keycode));
-    }
-
-    checkKbBuffer(term_num);
-}
-
-// process the next entry in kb event queue and schedule a timer to check
-// for the next one
-void
-IoCardTermMux::checkKbBuffer(int term_num)
-{
-    assert((0 <= term_num) && (term_num < MAX_TERMINALS));
-    m_term_t &term = m_terms[term_num];
-
-    if (term.remote_kb_buff.empty() || term.rx_tmr) {
-        // nothing to do or serial channel is in use
-        return;
-    }
-
-    uint8 key = term.remote_kb_buff.front();
-    term.remote_kb_buff.pop();
-
-    term.rx_tmr = m_scheduler->TimerCreate(
-                      serial_char_delay,
-                      std::bind(&IoCardTermMux::termToMxdCallback, this, term_num, key)
-                  );
-}
-
-// callback after a character has finished transmission
-void
-IoCardTermMux::termToMxdCallback(int term_num, int key)
-{
-    assert((0 <= term_num) && (term_num < MAX_TERMINALS));
-    m_term_t &term = m_terms[term_num];
-    term.rx_tmr = nullptr;
-
     if (term.rx_ready) {
         UI_Warn("terminal received char too fast");
         // TODO: set uart overrun status bit?
         // then fall through because the old char is overwritten
     }
-
     term.rx_ready = true;
-    term.rx_byte  = key;
-    update_interrupt();
+    term.rx_byte  = keycode;
 
-    // see if any other chars are pending
-    checkKbBuffer(term_num);
+    update_interrupt();
 }
 
 void

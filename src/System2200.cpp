@@ -233,6 +233,7 @@ breakdown_cards(void)
 
 static std::ofstream dbg_ofs;
 
+#ifdef _DEBUG
 static void
 dbglog_open(const std::string &filename)
 {
@@ -251,6 +252,7 @@ dbglog_close()
         dbg_ofs.close();
     }
 }
+#endif
 
 void
 dbglog(const char *fmt, ...)
@@ -278,7 +280,7 @@ dbglog(const char *fmt, ...)
 void
 System2200::initialize()
 {
-#if 0 || defined(_DEBUG)
+#ifdef _DEBUG
     dbglog_open("w2200dbg.log");
 #endif
 

@@ -13,8 +13,19 @@
 //    modeling uart delay and rate limiting
 
 #include "Ui.h"
-#include "Terminal.h"
+#include "IoCardKeyboard.h"
+#include "IoCardTermMux.h"
+#include "Scheduler.h"
 #include "System2200.h"
+#include "Terminal.h"
+
+// FIXME: this is here and in IoCardTermMux.cpp
+//        put it somewhere in common
+// character transmission time, in nanoseconds
+const int64 serial_char_delay =
+            TIMER_US(  11.0              /* bits per character */
+                     * 1.0E6 / 19200.0   /* microseconds per bit */
+                    );
 
 // ----------------------------------------------------------------------------
 // Terminal
@@ -22,9 +33,15 @@
 
 static char id_string[] = "*2236DE R2016 19200BPS 8+O (USA)";
 
-Terminal::Terminal(int io_addr, int term_num, ui_screen_t screen_type) :
+Terminal::Terminal(std::shared_ptr<Scheduler> scheduler,
+                   IoCardTermMux *muxd,
+                   int io_addr, int term_num, ui_screen_t screen_type) :
+    m_scheduler(scheduler),
+    m_muxd(muxd),
     m_io_addr(io_addr),
-    m_term_num(term_num)
+    m_term_num(term_num),
+    m_init_tmr(nullptr),
+    m_tx_tmr(nullptr)
 {
     m_disp.screen_type = screen_type;
     m_disp.chars_w  = (screen_type == UI_SCREEN_64x16)  ? 64 : 80;
@@ -35,15 +52,47 @@ Terminal::Terminal(int io_addr, int term_num, ui_screen_t screen_type) :
 
     m_wndhnd = UI_displayInit(UI_SCREEN_2236DE, m_io_addr, m_term_num, &m_disp);
     assert(m_wndhnd);
+
+    bool smart_term = (screen_type == UI_SCREEN_2236DE);
+    if (smart_term) {
+        // in dumb systems, the IoCardKeyboard will establish the callback
+        System2200::registerKb(
+            m_io_addr, m_term_num,
+            std::bind(&Terminal::receiveKeystroke, this, std::placeholders::_1)
+        );
+
+        // A real 2336 sends the sequence E4 F8 about a second after
+        // it powers up (the second is to run self tests).  E4 is the
+        // BASIC atom code for INIT, but functionally I don't think it
+        // does anything.  The F8 is the "crt go" flow control byte.
+        // However, in a real system the CRT might be turned on before
+        // the 2200 CPU is, and so the MXD wouldn't see the init sequence.
+        // the 2336 sends an init sequence on reset.  wait a fraction of
+        // a second to give the 8080 time to wake up before sending it.
+        m_init_tmr = m_scheduler->TimerCreate(
+                       TIMER_MS(500),
+                       std::bind(&Terminal::SendInitSeq, this)
+                     );
+    }
 }
 
 
 // free resources on destruction
 Terminal::~Terminal()
 {
+    bool smart_term = (m_disp.screen_type == UI_SCREEN_2236DE);
+    if (smart_term) {
+        System2200::unregisterKb(m_io_addr, m_term_num);
+    }
+
     UI_displayDestroy(m_wndhnd);
     m_wndhnd = nullptr;
 }
+
+
+// ----------------------------------------------------------------------------
+// public member functions
+// ----------------------------------------------------------------------------
 
 // reset the crt
 // hard_reset=true means
@@ -75,6 +124,9 @@ Terminal::reset(bool hard_reset)
         for(auto &byte : m_raw_buf)   { byte = 0x00; }  // not strictly necessary
         for(auto &byte : m_input_buf) { byte = 0x00; }  // not strictly necessary
 
+        m_tx_tmr = nullptr;
+        m_kb_buff = {};
+
         m_attrs      = char_attr_t::CHAR_ATTR_BRIGHT; // implicitly primary char set
         m_attr_on    = false;
         m_attr_temp  = false;
@@ -94,6 +146,119 @@ Terminal::reset(bool hard_reset)
     }
 }
 
+
+// ----------------------------------------------------------------------------
+// terminal to mxd communication channel
+// ----------------------------------------------------------------------------
+
+// The 2336 sends an init sequence of E4 F8 on power up.
+// The emulator doesn't send E4 because it sometimes shows up as a
+// spurious "INIT" keyword. It isn't clear what the E4 is for.
+void
+Terminal::SendInitSeq()
+{
+    m_init_tmr = nullptr;
+//  m_kb_buff.push(static_cast<uint8>(0xE4));
+    m_kb_buff.push(static_cast<uint8>(0xF8));
+    checkKbBuffer();
+}
+
+
+// the received keyval is appropriate for the first generation keyboards,
+// but the smart terminals:
+//   (a) couldn't send an IB9 (9th bit) per key, and
+//   (b) certain keys were coded differently, including as a pair of bytes
+// as smart terminals were connected via 19200 baud serial lines, we
+// model the transport delay by firing a timer for that long which disallows
+// sending any more keys for that long.  if any key arrives while the timer is
+// active, store it in a fifo and send the next one when the timer expires.
+void
+Terminal::receiveKeystroke(int keycode)
+{
+    if (m_kb_buff.size() >= KB_BUFF_MAX) {
+        UI_Warn("the terminal keyboard buffer dropped a character");
+        return;
+    }
+
+    // remap certain keycodes from first-generation encoding to what is
+    // send over the serial line
+    if (keycode == IoCardKeyboard::KEYCODE_RESET) {
+        // reset: although the terminal's tx fifo is modeled here and not
+        // in UiCrt, the terminal clears its tx fifo on reset, so we should
+        // do the same here.
+        m_kb_buff = {};
+        m_kb_buff.push(static_cast<uint8>(0x12));
+    } else if (keycode == IoCardKeyboard::KEYCODE_HALT) {
+        // halt/step
+        m_kb_buff.push(static_cast<uint8>(0x13));
+    } else if (keycode == (IoCardKeyboard::KEYCODE_SF | IoCardKeyboard::KEYCODE_EDIT)) {
+        // edit
+        m_kb_buff.push(static_cast<uint8>(0xBD));
+    } else if (keycode & IoCardKeyboard::KEYCODE_SF) {
+        // special function
+        m_kb_buff.push(static_cast<uint8>(0xFD));
+        m_kb_buff.push(static_cast<uint8>(keycode & 0xff));
+    } else if (keycode == 0xE6) {
+        // the pc TAB key maps to "STMT" in 2200T mode,
+        // but it maps to "FN" (function) in 2336 mode
+        m_kb_buff.push(static_cast<uint8>(0xFD));
+        m_kb_buff.push(static_cast<uint8>(0x7E));
+    } else if (keycode == 0xE5) {
+        // erase
+        m_kb_buff.push(static_cast<uint8>(0xE5));
+    } else if (0x80 <= keycode && keycode < 0xE5) {
+        // it is an atom; add prefix
+        m_kb_buff.push(static_cast<uint8>(0xFD));
+        m_kb_buff.push(static_cast<uint8>(keycode & 0xff));
+    } else {
+        // the mapping is unchanged
+        assert(keycode == (keycode & 0xff));
+        m_kb_buff.push(static_cast<uint8>(keycode));
+    }
+
+    checkKbBuffer();
+}
+
+
+// process the next entry in kb event queue and schedule a timer to check
+// for the next one
+void
+Terminal::checkKbBuffer()
+{
+    if (m_kb_buff.empty() || m_tx_tmr) {
+        // nothing to do or serial channel is in use
+        return;
+    }
+
+    uint8 key = m_kb_buff.front();
+    m_kb_buff.pop();
+
+    m_tx_tmr = m_scheduler->TimerCreate(
+                   serial_char_delay,
+                   std::bind(&Terminal::termToMxdCallback, this, key)
+               );
+}
+
+
+// callback after a character has finished transmission
+void
+Terminal::termToMxdCallback(int key)
+{
+    m_tx_tmr = nullptr;
+
+// FIXME: here is the bogus stuff.  m_term_num=1 for the first term
+//        but the receiver is 0-based, not 1-based
+//  m_muxd->receiveKeystroke(m_term_num, key);
+    m_muxd->receiveKeystroke(0, key);
+
+    // see if any other chars are pending
+    checkKbBuffer();
+}
+
+
+// ----------------------------------------------------------------------------
+// crt character processing
+// ----------------------------------------------------------------------------
 
 // advance the cursor in y
 void

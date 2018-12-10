@@ -3,25 +3,21 @@ Emulator TODO list
 ============================================================================
 
 *) master list of priorities:
-   refactor out terminal logic from Crt and IoCardTermMux classes
    implement flow control from terminal to mxd
-       there must be a rx fifo (from the terminals perspective) so it can
-       keep receiving characters while it is waiting on the SELECT P delay,
-       so I guess it should also be modeled in IoCardTermMux. In real life
-       the fifo is also used when the terminal is decompressing runs of
-       bytes, but in the emulator those are handled instantly.
-       the problem is that there is no flow control from UiCrt to
-       IoCardTermMux -- and IoCardTermMux can't tell when a FBCx sequence
-       is sent (unless it too parses the byte stream).  yuck.
-
-       add "crt stop" when it hits certain fullness thresholds
-          2536DWTerminalAndTerminalControllerProtocol.pdf, pdf page 3
-          it isn't clear to me how the accounting is done.  when the terminal
-          gets a compressed run, is the count before or after expansion?
-       add auto "crt go" when it drops under 30 chars (see above pdf) or
-          when under threshold every 3 seconds
-       verify eg "SELECT P6" works
-       submit
+      - Terminal.h  KB_BUFF_MAX must be made larger to match a real 2236
+      - when a FB Cx sequence (select P delay) is received, it must fire
+        a timer for the specified amount of time, preventing more character
+        processing until it expires.
+        In real life the fifo is also used when the terminal is decompressing
+        runs of bytes, but in the emulator those are handled instantly.
+      - add "crt stop" when it hits certain fullness thresholds
+        2536DWTerminalAndTerminalControllerProtocol.pdf, pdf page 3
+        it isn't clear to me how the accounting is done.  when the terminal
+        gets a compressed run, is the count before or after expansion?
+      - add auto "crt go" when it drops under 30 chars (see above pdf) or
+        when under threshold every 3 seconds
+      - verify eg "SELECT P6" works
+      - submit
    clean up mxd script flow control; submit
    get rid of tied keyboard thing -- unnecessary generalization
    add mvp/vlsi cpu and memory options; submit
@@ -29,14 +25,8 @@ Emulator TODO list
       hey, code.txt already has one.  study it.
    ... then review the priorities again
 
-*) refactor out terminal logic from Crt class
-
-   move the terminal keyboard fifo and half the uart delay model
-   into the Terminal object, as well as the keyboard remapping.
-
-   issues:
-      - CrtFrame OnReset menu action calls m_crt->reset(false), but really
-        it is the Terminal that needs to be reset, as it owns the state.
+*) CrtFrame OnReset menu action calls m_crt->reset(false), but really
+   it is the Terminal that needs to be reset, as it owns the state.
 
 *) WTF? why does UiCrtFrame::addCrt() exist?
    It is a static list that maintains a list of all the Crts in the emulation.
@@ -54,18 +44,20 @@ Emulator TODO list
 
 *) in some places term_num is 0..3, and in others it is 1..4
    or in at least one place 0=dumb, 1..4=smart term
+   I think it would be best to use 0..3 everywhere, and dumb terminals
+   use only 0. When the logical term# needs to be used (eg, on the titlebar)
+   it would be incremented for display.
 
 *) UiCrtRender.cpp should be named UiCrt_Render.cpp for consistency
       git mv UiCrtRender.cpp UiCrt_Render.cpp
 
 *) many foo.h have CANT_ASSIGN_OR_COPY_CLASS(classname)
    macro invocation, but they don't #include "w2200.h" where it is defined.
-   that is bad hygiene.
+   that is bad hygiene.  check all the header files.
 
 *) as an experiment, I tried creating two MXD cards
-   the 2nd terminal also claims to be "term 1" on the titlebar.
    booting MVP 3.5, it gets to the partition editor start up and hangs.
-   the secondary terminal doesn't have a status bar
+   the secondary terminal doesn't have a status bar.
 
 *) the tied_keyboard setting is read during getDefaults() in UiCrtFrame
    but tied_keyboard doesn't make sense for term mux because it is not

@@ -5,8 +5,12 @@
 
 #include "w2200.h"
 #include "TerminalState.h"
+#include <queue>
 
 class CrtFrame;
+class Scheduler;
+class Timer;
+class IoCardTermMux;
 enum ui_screen_t;
 
 class Terminal
@@ -14,7 +18,9 @@ class Terminal
 public:
     CANT_ASSIGN_OR_COPY_CLASS(Terminal);
 
-    Terminal(int io_addr, int term_num, ui_screen_t screen_type);
+    Terminal(std::shared_ptr<Scheduler> scheduler,
+             IoCardTermMux *muxd,
+             int io_addr, int term_num, ui_screen_t screen_type);
     ~Terminal();
 
     // hardware reset
@@ -24,7 +30,23 @@ public:
     void processChar(uint8 byte);
 
 private:
+    static const unsigned int KB_BUFF_MAX = 64;
+
     // ---- functions ----
+
+    // send an init sequence from emulated terminal shortly after reset
+    void SendInitSeq();
+
+    // process a key received from the associated Crt,
+    // or when System2200 stuffs characters during script processing
+    void receiveKeystroke(int keycode);
+
+    // process the next entry in kb event queue and schedule a timer to
+    // check for the next one
+    void checkKbBuffer();
+
+    // callback after a character has finished transmission
+    void termToMxdCallback(int key);
 
     // clear the display and home the cursor
     void scr_clear();
@@ -44,12 +66,15 @@ private:
     void adjustCursorX(int delta);      // move cursor left or right
 
     // ---- state ----
+    std::shared_ptr<Scheduler> m_scheduler; // shared event scheduler
+    IoCardTermMux *m_muxd;          // nullptr if dumb term
 
     // display state and geometry
     CrtFrame     *m_wndhnd;         // opaque handle to UI window
     int           m_io_addr;        // associated I/O address
     int           m_term_num;       // associated terminal number
     crt_state_t   m_disp;           // contents of display memory
+    std::shared_ptr<Timer> m_init_tmr;  // send init sequence from terminal
 
     // current character attributes
     int           m_attrs;          // current char attributes
@@ -65,7 +90,12 @@ private:
     int           m_input_cnt;      // buffered input stream while decoding
     uint8         m_input_buf[10];  // ... character sequence escapes
 
-    // inline functions
+    // the terminal keyboard buffer is modeled in the card
+    // instead of cluttering up the Ui code
+    std::queue<uint8> m_kb_buff;
+    std::shared_ptr<Timer> m_tx_tmr;  // model uart rate & delay
+
+    // ---- inline functions ----
 
     // set horizontal position
     inline void setCursorX(int x) { m_disp.curs_x = x; }

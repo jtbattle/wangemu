@@ -115,7 +115,8 @@ IoCardDisplay::IoCardDisplay(std::shared_ptr<Scheduler> scheduler,
 
     reset(true);
 
-    m_terminal = std::make_unique<Terminal>(baseaddr, 0, screen_type);
+    m_terminal = std::make_unique<Terminal>(scheduler, nullptr,
+                                            baseaddr, 0, screen_type);
     assert(m_terminal);
 }
 
