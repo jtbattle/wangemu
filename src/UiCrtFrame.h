@@ -7,6 +7,7 @@
 
 class Crt;
 class CrtStatusBar;
+struct crt_state_t;
 
 // Define a new frame type: this is going to be our main frame
 class CrtFrame : public wxFrame
@@ -15,9 +16,9 @@ public:
     CANT_ASSIGN_OR_COPY_CLASS(CrtFrame);
     // constructor
     CrtFrame(   const wxString &title,
-                const int screen_type,
                 const int io_addr,
-                const int term_num      // 0 if dumb, 1-4 if term mux
+                const int term_num,     // 0 if dumb, 1-4 if term mux
+                crt_state_t *crt_state
             );
 
     // destructor
@@ -36,9 +37,6 @@ public:
     int getTiedAddr() const;
     int getTermNum() const;
 
-    // emit a character to the display
-    void processChar(uint8 byte);
-
     // add CRT to list
     void addCrt();
 
@@ -50,6 +48,9 @@ public:
 
     // set simulation time for informative display
     static void setSimSeconds(int secs, float relative_speed);
+
+    // create a bell (0x07) sound
+    void ding();
 
     // set CRT font style and size
     static int         getNumFonts();

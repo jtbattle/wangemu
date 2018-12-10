@@ -9,6 +9,7 @@
 class Cpu2200;
 class Scheduler;
 class Timer;
+class Terminal;
 
 class IoCardTermMux : public IoCard
 {
@@ -92,7 +93,7 @@ private:
     // per terminal state
     struct m_term_t {
         // display related:
-        CrtFrame              *wndhnd;      // opaque handle to UI window
+        std::unique_ptr<Terminal> terminal; // terminal model
 	// the terminal keyboard buffer is modeled in the card
 	// instead of cluttering up the Ui code
 	std::queue<uint8>      remote_kb_buff;

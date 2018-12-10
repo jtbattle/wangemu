@@ -28,7 +28,7 @@ IoCardKeyboard::IoCardKeyboard(std::shared_ptr<Scheduler> scheduler,
 {
     if (m_slot >= 0) {
         reset();
-        System2200::kb_register(
+        System2200::registerKb(
             m_baseaddr, 0,
             std::bind(&IoCardKeyboard::receiveKeystroke, this, std::placeholders::_1)
         );
@@ -40,7 +40,7 @@ IoCardKeyboard::~IoCardKeyboard()
 {
     if (m_slot >= 0) {
         reset();        // turns off handshakes in progress
-        System2200::kb_unregister(m_baseaddr, 0);
+        System2200::unregisterKb(m_baseaddr, 0);
     }
 }
 

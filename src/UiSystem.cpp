@@ -10,6 +10,8 @@
 // declarations
 // ============================================================================
 
+struct crt_state_t;
+
 // ----------------------------------------------------------------------------
 // headers
 // ----------------------------------------------------------------------------
@@ -283,7 +285,8 @@ UI_Confirm(const char *fmt, ...)
 
 // called at the start of time to create the actual display
 CrtFrame*
-UI_displayInit(const int screen_type, const int io_addr, const int term_num)
+UI_displayInit(const int screen_type, const int io_addr, const int term_num,
+               crt_state_t *crt_state)
 {
     int cputype = System2200::config().getCpuType();
     const char *cpustr = (cputype == Cpu2200::CPUTYPE_2200B) ? "2200B" :
@@ -308,7 +311,7 @@ UI_displayInit(const int screen_type, const int io_addr, const int term_num)
     }
 
     // Create the main application window
-    return new CrtFrame(title, screen_type, io_addr, term_num);
+    return new CrtFrame(title, io_addr, term_num, crt_state);
 }
 
 
@@ -320,11 +323,10 @@ UI_displayDestroy(CrtFrame *wnd)
 }
 
 
-// emit a character to the display
-void
-UI_displayChar(CrtFrame *wnd, uint8 byte)
+// create a bell (0x07) sound for the given terminal
+void UI_displayDing(CrtFrame *wnd)
 {
-    wnd->processChar(byte);
+    wnd->ding();
 }
 
 

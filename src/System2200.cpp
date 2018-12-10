@@ -913,7 +913,7 @@ System2200::cpu_poll_IB()
 
 // register a handler for a key event to a given keyboard terminal
 void
-System2200::kb_register(int io_addr, int term_num, kbCallback cb)
+System2200::registerKb(int io_addr, int term_num, kbCallback cb)
 {
     assert(cb);
 
@@ -930,7 +930,7 @@ System2200::kb_register(int io_addr, int term_num, kbCallback cb)
 }
 
 void
-System2200::kb_unregister(int io_addr, int term_num)
+System2200::unregisterKb(int io_addr, int term_num)
 {
     for(auto it = begin(m_kb_routes); it != end(m_kb_routes); ++it) {
         if (io_addr == it->io_addr && term_num == it->term_num) {

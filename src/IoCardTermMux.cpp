@@ -16,6 +16,7 @@
 #include "Cpu2200.h"
 #include "Scheduler.h"
 #include "System2200.h"
+#include "Terminal.h"
 #include "i8080.h"
 
 #define NOISY  0        // turn on some debugging messages
@@ -101,7 +102,8 @@ IoCardTermMux::IoCardTermMux(std::shared_ptr<Scheduler> scheduler,
     }
 
     for(auto &t : m_terms) {
-        t.wndhnd = nullptr;
+        t.terminal = nullptr;
+        t.remote_kb_buff = {};
 
         t.rx_ready = false;
         t.rx_byte  = 0x00;
@@ -129,11 +131,15 @@ IoCardTermMux::IoCardTermMux(std::shared_ptr<Scheduler> scheduler,
     System2200::registerClockedDevice(cb);
 
     // FIXME: just one for now
-    m_terms[0].wndhnd = UI_displayInit(UI_SCREEN_2236DE, io_addr, 1);
+    // address io_addr+1 is associated with the terminal because
+    // when it routes via system2200, 01 is associated with the KB.
+    // it is arbitrary, but it has to be consistent.
+    m_terms[0].terminal =
+        std::make_unique<Terminal>(io_addr+1, 1, UI_SCREEN_2236DE);
 
     {
         int term_num = 0; /* FIXME: term 1 is hardwired here */
-        System2200::kb_register(
+        System2200::registerKb(
             // FIXME: need 0x01 because elsewhere m_assoc_kb_addr defaults to 0x01;
             //        a later System2200::kb_foo(m_assoc_kb_addr,...) call fails
             //        fix the m_assoc_kb_addr logic instead of this hack
@@ -166,7 +172,7 @@ IoCardTermMux::SendInitSeq()
 {
     m_init_tmr = nullptr;
     for(int term_num=0; term_num<MAX_TERMINALS; term_num++) {
-        if (m_terms[term_num].wndhnd) {
+        if (m_terms[term_num].terminal) {
 //          m_terms[term_num].remote_kb_buff.push(static_cast<uint8>(0xE4));
             m_terms[term_num].remote_kb_buff.push(static_cast<uint8>(0xF8));
             checkKbBuffer(term_num);
@@ -196,17 +202,14 @@ IoCardTermMux::~IoCardTermMux()
 {
     if (m_slot >= 0) {
         // not just a temp object, so clean up
-        System2200::kb_unregister(m_baseaddr + 0x01, /* see the hack comment in kb_register() */
-                                   1 /* FIXME: term 1 is hardwired here */);
+        System2200::unregisterKb(m_baseaddr + 0x01, /* see the hack comment in registerKb() */
+                                 1 /* FIXME: term 1 is hardwired here */);
 
         i8080_destroy(static_cast<i8080*>(m_i8080));
         m_i8080 = nullptr;
 
         for(auto &t : m_terms) {
-            if (t.wndhnd != nullptr) {
-                UI_displayDestroy(t.wndhnd);
-                t.wndhnd = nullptr;
-            }
+            t.terminal = nullptr;
         }
     }
 }
@@ -512,7 +515,7 @@ IoCardTermMux::mxdToTermCallback(int term_num, int byte)
     m_term_t &term = m_terms[term_num];
     term.tx_tmr = nullptr;
 
-    UI_displayChar(term.wndhnd, (uint8)byte);
+    term.terminal->processChar(static_cast<uint8>(byte));
     checkTxBuffer(term_num);
 }
 

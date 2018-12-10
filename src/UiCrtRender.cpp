@@ -1,5 +1,6 @@
-// This file implements the part of the Crt class related to drawing
-// the pixels of the Crt given the m_display[] and m_attr[] state.
+// This file implements the part of the Crt class related to drawing the
+// pixels of the Crt given the m_crt_state->display[] and m_crt_state->attr[]
+// state.
 //
 // To eliminate flashing, text is drawn to a pre-allocated bitmap,
 // m_scrbits.  Once the full screen image has been constructed,
@@ -34,8 +35,8 @@
 //      format conversion of a wxImage array.
 //
 //   3) in the future, it would be interesting to use a wxGlContext to
-//      render the image map via a shader, using the m_display[] and
-//      m_attr[] arrays as an input texture to the shader.
+//      render the image map via a shader, using the m_crt_state->display[]
+//      and m_crt_state->attr[] arrays as an input texture to the shader.
 
 // ----------------------------------------------------------------------------
 // headers
@@ -47,6 +48,7 @@
 #include "UiCrt_Charset.h"      // wang character generator bitmaps
 #include "UiCrtErrorDlg.h"      // error code decoder
 #include "UiCrtFrame.h"         // this module's owner
+#include "TerminalState.h"      // characater attribute names
 
 #include <wx/image.h>           // required only for blur hack
 #include <wx/rawbmp.h>          // for direct bitmap manipulation
@@ -318,7 +320,7 @@ Crt::generateFontmap()
 
     wxColor blk(*wxBLACK), norm(*wxWHITE), intense(*wxWHITE);
     float f_blk(0.0f),   f_norm(1.0f),   f_intense(1.0f);
-    if (m_screen_type == UI_SCREEN_2236DE) {
+    if (m_crt_state->screen_type == UI_SCREEN_2236DE) {
         // diminish normal to differentiate it from bright intensity
         norm = wxColor(0x70,0x70,0x70);  // only blue channel is used
         f_norm = 160.0f/255.0f;
@@ -579,7 +581,7 @@ Crt::generateScreen()
         generateScreenByBlits(memDC);
     }
 
-    if (m_screen_type == UI_SCREEN_2236DE) {
+    if (m_crt_state->screen_type == UI_SCREEN_2236DE) {
         generateScreenOverlay(memDC);
     }
 
@@ -602,13 +604,13 @@ Crt::generateScreenByBlits(wxMemoryDC &memDC)
     bool text_blink_enable = m_parent->getTextBlinkPhase();
 
     // draw each row of the text
-    for(int row=0; row<m_chars_h2; ++row) {
+    for(int row=0; row<m_crt_state->chars_h2; ++row) {
 
-        if (m_screen_type == UI_SCREEN_2236DE) {
+        if (m_crt_state->screen_type == UI_SCREEN_2236DE) {
 
-            for(int col=0; col<m_chars_w; ++col) {
-                uint8 chr   = m_display[row*m_chars_w + col];
-                uint8 attr  =    m_attr[row*m_chars_w + col];
+            for(int col=0; col<m_crt_state->chars_w; ++col) {
+                uint8 chr   = m_crt_state->display[row*m_crt_state->chars_w + col];
+                uint8 attr  =    m_crt_state->attr[row*m_crt_state->chars_w + col];
                 bool blink  = (attr & char_attr_t::CHAR_ATTR_BLINK)  ? true : false;
                 int  alt    = (attr & char_attr_t::CHAR_ATTR_ALT)    ? 4 : 0;
                 int  inv    = (attr & char_attr_t::CHAR_ATTR_INV)    ? 2 : 0;
@@ -633,8 +635,8 @@ Crt::generateScreenByBlits(wxMemoryDC &memDC)
         } else {
 
             // old terminal: one character set, no attributes
-            for(int col=0; col<m_chars_w; ++col) {
-                int chr = m_display[row*m_chars_w + col];
+            for(int col=0; col<m_crt_state->chars_w; ++col) {
+                int chr = m_crt_state->display[row*m_crt_state->chars_w + col];
                 if ((chr >= 0x10) && (chr != 0x20)) {  // if (non-blank character)
                     memDC.Blit(col*m_charcell_w, row*m_charcell_h,  // dest x,y
                                m_charcell_w, m_charcell_h,          // w,h
@@ -653,8 +655,8 @@ void
 Crt::generateScreenCursor(wxMemoryDC &memDC)
 {
     bool cursor_blink_enable = m_parent->getCursorBlinkPhase();
-    if (m_curs_attr == cursor_attr_t::CURSOR_OFF  ||
-        m_curs_attr == cursor_attr_t::CURSOR_BLINK && !cursor_blink_enable) {
+    if (m_crt_state->curs_attr == cursor_attr_t::CURSOR_OFF  ||
+        m_crt_state->curs_attr == cursor_attr_t::CURSOR_BLINK && !cursor_blink_enable) {
         // don't draw the cursor at all
         return;
     }
@@ -662,13 +664,13 @@ Crt::generateScreenCursor(wxMemoryDC &memDC)
     wxColor fg(intensityToColor(1.0f));
     wxColor bg(intensityToColor(0.0f));
     wxColor color(fg);
-    if (m_screen_type == UI_SCREEN_2236DE) {
-        uint8 attr = m_attr[80*m_curs_y + m_curs_x];
+    if (m_crt_state->screen_type == UI_SCREEN_2236DE) {
+        uint8 attr = m_crt_state->attr[80*m_crt_state->curs_y + m_crt_state->curs_x];
         color = (attr & char_attr_t::CHAR_ATTR_INV) ? bg : fg;
     }
 
-    int top   = m_charcell_h*(m_curs_y+1) - (2 * m_charcell_sy*m_charcell_dy);
-    int left  = m_charcell_w* m_curs_x;
+    int top   = m_charcell_h*(m_crt_state->curs_y+1) - (2 * m_charcell_sy*m_charcell_dy);
+    int left  = m_charcell_w* m_crt_state->curs_x;
     int right = left + m_charcell_w - 1;
     memDC.SetPen( wxPen(color, 1, wxPENSTYLE_SOLID) );
     for(int y=0; y < 2; ++y) {
@@ -685,12 +687,13 @@ Crt::generateScreenCursor(wxMemoryDC &memDC)
 void
 Crt::generateScreenOverlay(wxMemoryDC &memDC)
 {
-    assert(m_screen_type == UI_SCREEN_2236DE);
+    assert(m_crt_state->screen_type == UI_SCREEN_2236DE);
 
     // box overlay is always normal brightness.
     // in 2236 mode, we diminish normal brightness in order to get bright (1.0)
-    wxColor fg = (m_screen_type == UI_SCREEN_2236DE) ? intensityToColor(0.6f)
-                                                     : intensityToColor(1.0f);
+    wxColor fg = (m_crt_state->screen_type == UI_SCREEN_2236DE)
+                        ? intensityToColor(0.6f)
+                        : intensityToColor(1.0f);
     wxPen pen(fg, 1, wxPENSTYLE_USER_DASH);
     wxDash dashpat[2];
     if (m_charcell_sx == 1) {
@@ -711,7 +714,7 @@ Crt::generateScreenOverlay(wxMemoryDC &memDC)
         int top = row * m_charcell_h;
         int start = -1;
         for(int col=0; col < 80; ++col, ++off) {
-            if (m_attr[off] & (char_attr_t::CHAR_ATTR_LEFT)) {
+            if (m_crt_state->attr[off] & (char_attr_t::CHAR_ATTR_LEFT)) {
                 // start or extend
                 if (start < 0) {
                     start = col*m_charcell_w;
@@ -724,7 +727,7 @@ Crt::generateScreenOverlay(wxMemoryDC &memDC)
                 }
                 start = -1;
             }
-            if (m_attr[off] & (char_attr_t::CHAR_ATTR_RIGHT)) {
+            if (m_crt_state->attr[off] & (char_attr_t::CHAR_ATTR_RIGHT)) {
                 if (start < 0) { // start of run
                     start = col*m_charcell_w + (m_charcell_w >> 1);
                 }
@@ -753,7 +756,7 @@ Crt::generateScreenOverlay(wxMemoryDC &memDC)
         int mid = col * m_charcell_w + (m_charcell_w >> 1);
         int start = -1;
         for(int row=0; row < 25; ++row, off += 80) {
-            if (m_attr[off] & (char_attr_t::CHAR_ATTR_VERT)) {
+            if (m_crt_state->attr[off] & (char_attr_t::CHAR_ATTR_VERT)) {
                 if (start < 0) { // start of run
                     start = row * m_charcell_h;
                 }
@@ -808,18 +811,18 @@ Crt::generateScreenByRawBmp(wxColor fg, wxColor bg)
 
     // draw the characters (diddlescan order)
     TT_t::Iterator sp(raw_screen);  // screen pointer
-    for(int row=0; row<m_chars_h2; ++row) {
+    for(int row=0; row<m_crt_state->chars_h2; ++row) {
 
         // the upper left corner of the leftmost char of row
         TT_t::Iterator rowUL = sp;
 
-        for(int col=0; col<m_chars_w; ++col) {
+        for(int col=0; col<m_crt_state->chars_w; ++col) {
 
             // the upper left corner of the char on the screen
             TT_t::Iterator charUL = sp;
 
-            int ch   = m_display[row*m_chars_w + col];
-            int attr =    m_attr[row*m_chars_w + col];
+            int ch   = m_crt_state->display[row*m_crt_state->chars_w + col];
+            int attr =    m_crt_state->attr[row*m_crt_state->chars_w + col];
 
             // pick out subimage of current character from the
             // fontmap and copy it to the screen image

@@ -164,6 +164,7 @@
     <ClCompile Include="src\ScriptFile.cpp" />
     <ClCompile Include="src\SysCfgState.cpp" />
     <ClCompile Include="src\System2200.cpp" />
+    <ClCompile Include="src\Terminal.cpp" />
     <ClCompile Include="src\ucode_2200B.cpp" />
     <ClCompile Include="src\ucode_2200T.cpp" />
     <ClCompile Include="src\ucode_boot_vp.cpp" />

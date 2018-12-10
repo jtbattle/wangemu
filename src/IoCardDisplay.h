@@ -9,6 +9,8 @@
 class Cpu2200;
 class Scheduler;
 class Timer;
+class Terminal;
+enum ui_screen_t;
 
 class IoCardDisplay : public IoCard
 {
@@ -19,7 +21,7 @@ public:
     // ----- common IoCard functions -----
     IoCardDisplay(std::shared_ptr<Scheduler> scheduler,
                   std::shared_ptr<Cpu2200>   cpu,
-                  int baseaddr, int cardslot, int size=UI_SCREEN_64x16);
+                  int baseaddr, int cardslot, ui_screen_t screen_type);
     ~IoCardDisplay();
 
     std::vector<int> getAddresses() const override;
@@ -45,11 +47,11 @@ private:
     bool       m_selected;      // the card is currently selected
     bool       m_card_busy;     // the card is busy doing something
 
-    const int  m_size;          // display type
-    CrtFrame  *m_wndhnd;        // opaque handle to UI window
+    const int  m_screen_type;   // display type
+    std::unique_ptr<Terminal>  m_terminal;  // handle to display logic
 
     // model controller "busy" timing
-    std::shared_ptr<Timer>      m_tmr_hsync;    // horizontal sync timer
+    std::shared_ptr<Timer> m_tmr_hsync;  // horizontal sync timer
     bool       m_realtime;      // true: match real timing, false: go fast
     int        m_hsync_count;   // which horizontal line we are on
     enum class busy_state {

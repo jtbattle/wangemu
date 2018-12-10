@@ -77,8 +77,8 @@ namespace System2200
     // ---- keyboard input routing ----
 
     // register a handler for a key event to a given keyboard terminal
-    void kb_register(int io_addr, int term_num, kbCallback cb);
-    void kb_unregister(int io_addr, int term_num);
+    void registerKb(int io_addr, int term_num, kbCallback cb);
+    void unregisterKb(int io_addr, int term_num);
 
     // send a key event to the specified keyboard/terminal
     void kb_keystroke(int io_addr, int term_num, int keyvalue);

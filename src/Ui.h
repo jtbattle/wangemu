@@ -13,6 +13,7 @@
 class DiskCtrlCfgState;
 class CrtFrame;
 class PrinterFrame;
+struct crt_state_t;
 
 // =============================================================
 // exported by UI
@@ -25,13 +26,14 @@ enum ui_screen_t {
     UI_SCREEN_2236DE
 };
 CrtFrame* UI_displayInit(const int screen_type,
-                         const int io_addr, const int term_num);
+                         const int io_addr, const int term_num,
+                         crt_state_t *crt_state);
 
 // called before the display gets shut down
 void UI_displayDestroy(CrtFrame *wnd);
 
-// emit a character to the display
-void UI_displayChar(CrtFrame *wnd, uint8 byte);
+// create a bell (0x07) sound for the given terminal
+void UI_displayDing(CrtFrame *wnd);
 
 // inform the UI how far along the simulation is in emulated time
 void UI_setSimSeconds(unsigned long seconds, float relative_speed);

@@ -53,6 +53,7 @@
 #include "IoCardDisplay.h"
 #include "Scheduler.h"          // for Timer...() functions
 #include "System2200.h"
+#include "Terminal.h"
 #include "Cpu2200.h"
 
 #define NOISY  0        // turn on some debugging messages
@@ -92,15 +93,16 @@ static const int num_scanlines = 256;
 // instance constructor
 IoCardDisplay::IoCardDisplay(std::shared_ptr<Scheduler> scheduler,
                              std::shared_ptr<Cpu2200>   cpu,
-                             int baseaddr, int cardslot, int size) :
+                             int baseaddr, int cardslot,
+                             ui_screen_t screen_type) :
     m_scheduler(scheduler),
     m_cpu(cpu),
     m_baseaddr(baseaddr),
     m_slot(cardslot),
     m_selected(false),
     m_card_busy(false),
-    m_size(size),
-    m_wndhnd(nullptr),
+    m_screen_type(screen_type),
+    m_terminal(nullptr),
     m_tmr_hsync(nullptr),
     m_realtime(true),
     m_hsync_count(0),
@@ -111,12 +113,10 @@ IoCardDisplay::IoCardDisplay(std::shared_ptr<Scheduler> scheduler,
         return;
     }
 
-    int io_addr;
-    bool ok = System2200::getSlotInfo(cardslot, 0, &io_addr);
-    assert(ok); ok=ok;
-    m_wndhnd = UI_displayInit(m_size, io_addr, 0);
-
     reset(true);
+
+    m_terminal = std::make_unique<Terminal>(baseaddr, 0, screen_type);
+    assert(m_terminal);
 }
 
 // instance destructor
@@ -124,21 +124,21 @@ IoCardDisplay::~IoCardDisplay()
 {
     if (m_slot >= 0) {
         reset(true);    // turns off handshakes in progress
-        UI_displayDestroy(m_wndhnd);
+        m_terminal = nullptr;
     }
 }
 
 const std::string
 IoCardDisplay::getDescription() const
 {
-    return (m_size == UI_SCREEN_64x16) ? "64x16 CRT Controller"
-                                       : "80x24 CRT Controller";
+    return (m_screen_type == UI_SCREEN_64x16) ? "64x16 CRT Controller"
+                                              : "80x24 CRT Controller";
 }
 
 const std::string
 IoCardDisplay::getName() const
 {
-    return (m_size == UI_SCREEN_64x16) ? "6312A" : "7011";
+    return (m_screen_type == UI_SCREEN_64x16) ? "6312A" : "7011";
 }
 
 // return a list of the various base addresses a card can map to
@@ -212,7 +212,7 @@ IoCardDisplay::OBS(int val)
         UI_Info("display OBS: Output of byte 0x%02x", val);
     }
 
-    UI_displayChar(m_wndhnd, (uint8)val);
+    m_terminal->processChar(static_cast<uint8>(val));
 
     if (System2200::isCpuSpeedRegulated()) {
         if (val == 0x03) {
@@ -255,7 +255,7 @@ IoCardDisplay::getIB() const
     // or
     //    SELECT PRINT 005(80), CO 005(80), LIST 005(80)
     // is performed on reset.
-    return (m_size == UI_SCREEN_80x24) ? 0x10 : 0x00;
+    return (m_screen_type == UI_SCREEN_80x24) ? 0x10 : 0x00;
 }
 
 // change of CPU Busy state

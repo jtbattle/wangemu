@@ -6,13 +6,15 @@
 
 class wxSound;
 class CrtFrame;
+struct crt_state_t;
 
 class Crt: public wxWindow
 {
 public:
     CANT_ASSIGN_OR_COPY_CLASS(Crt);
-    Crt( CrtFrame *parent, int screen_type);    // constructor
-    ~Crt();                                     // destructor
+
+    Crt(CrtFrame *parent, crt_state_t *crt_state);
+    ~Crt();
 
     // ---- setters/getters ----
 
@@ -50,9 +52,6 @@ public:
     void setFrameCount(int n)  { m_frame_count = n; }
     int  getFrameCount() const { return m_frame_count; }
 
-    // hardware reset
-    void reset(bool hard_reset);
-
     // redraw the CRT display as necessary
     void refreshWindow();
 
@@ -63,8 +62,8 @@ public:
     // return a pointer to the screen image
     wxBitmap* grabScreen();
 
-    // send a character to the display controller
-    void processChar(uint8 byte);
+    // create a bell (0x07) sound
+    void ding();
 
 private:
     // ---- event handlers ----
@@ -97,42 +96,17 @@ private:
     // map an intensity to a display color
     wxColor intensityToColor(float f) const;
 
-    // clear the display; home the cursor
-    void scr_clear();
-
-    // write 1 character to the video memory at location (x,y).
-    // it is up to the caller to set the screen dirty flag.
-    void scr_write_char(int x, int y, uint8 ch)
-        { m_display[m_chars_w*y + x] = ch; }
-    void scr_write_attr(int x, int y, uint8 attr)
-        { m_attr[m_chars_w*y + x] = attr; }
-
-    // lower level crt character handling
-    void processCrtChar2(uint8 byte);
-    // lowest level crt character handling
-    void processCrtChar3(uint8 byte);
-    // prt character handling (only one level of interpretation)
-    void processPrtChar2(uint8 byte);
-
-    // scroll the contents of the screen up one row,
-    // and fill the new row with blanks.
-    void scr_scroll();
-
-    void setCursorX(int x);             // set horizontal position
-    void setCursorY(int y);             // set vertical position
-    void adjustCursorY(int delta);      // advance the cursor in y
-    void adjustCursorX(int delta);      // move cursor left or right
     void explainError(const std::string &errcode,
                       const wxPoint &orig); // pop up error description
 
-    CrtFrame * const m_parent;      // who owns us
-    const int     m_screen_type;    // UI_SCREEN_* enum value
-    const int     m_chars_w;        // screen dimension, in characters
-    const int     m_chars_h;        // screen dimension, in characters
-    const int     m_chars_h2;       // 2236: 25, otherwise == m_chars_h
+    // ---- state ----
 
-    uint8         m_display[80*25]; // character codes
+    CrtFrame * const m_parent;      // who owns us
+    crt_state_t  *m_crt_state;      // contents of display memory
+
     wxBitmap      m_scrbits;        // image of the display
+    int           m_frame_count;    // for tracking refresh fps
+    bool          m_dirty;          // need to refresh display
 
     wxBitmap      m_fontmap;        // image of the font in use
     int           m_fontsize;       // size of font (in points)
@@ -153,50 +127,6 @@ private:
     int           m_scrpix_w;       // display dimension, in pixels
     int           m_scrpix_h;       // display dimension, in pixels
     wxRect        m_RCscreen;       // active text area
-
-    enum cursor_attr_t {
-        CURSOR_OFF,
-        CURSOR_ON,
-        CURSOR_BLINK
-    };
-    int           m_curs_x;         // cursor location now
-    int           m_curs_y;         // cursor location now
-    cursor_attr_t m_curs_attr;      // cursor state
-
-    int           m_frame_count;    // for tracking refresh fps
-    bool          m_dirty;          // something has changed since last refresh
-
-    // state used only in smart terminal mode (eg 2236DE)
-    enum char_attr_t : uint8 {
-        CHAR_ATTR_RIGHT  = 0x01,  // top right horizontal line
-        CHAR_ATTR_VERT   = 0x02,  // mid cell vertical line
-        CHAR_ATTR_LEFT   = 0x04,  // top left horizontal line
-        CHAR_ATTR_ALT    = 0x08,  // alternate character set
-        CHAR_ATTR_BRIGHT = 0x10,  // high intensity
-        CHAR_ATTR_BLINK  = 0x40,  // blink character
-        CHAR_ATTR_INV    = 0x80,  // inverse character
-    };
-    uint8         m_attr[80*25];    // display attributes
-
-    // byte stream command interpretation
-    bool          m_crt_sink;       // true=route to crt, false=to prt
-    int           m_raw_cnt;        // raw input stream buffered until we have
-    uint8         m_raw_buf[5];     // ... a complete runlength sequence
-    int           m_input_cnt;      // buffered input stream while decoding
-    uint8         m_input_buf[10];  // ... character sequence escapes
-    bool          m_box_bottom;     // true if we've seen at least one 0B
-    int           m_attrs;          // current char attributes
-    bool          m_attr_on;        // use attr bits until next 0F
-    bool          m_attr_temp;      // use attr bits until next 0D or 0F
-    bool          m_attr_under;     // draw underlined char if m_attr_on
-
-    void setBoxAttr(bool box_draw, uint8 attr, int y_adj=0) {
-        if (box_draw) {
-            m_attr[80*(m_curs_y+y_adj) + m_curs_x] |=  attr;
-        } else { // erase
-            m_attr[80*(m_curs_y+y_adj) + m_curs_x] &= ~attr;
-        }
-    }
 
     // sound for beep
     void create_beep();

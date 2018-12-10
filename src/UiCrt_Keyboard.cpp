@@ -12,6 +12,7 @@
 #include "UiSystem.h"           // sharing info between UI_wxgui modules
 #include "UiCrtFrame.h"         // emulated terminal
 #include "UiCrt.h"              // just the display part
+#include "TerminalState.h"      // m_crt_state definition
 #include "tokens.h"             // keymap tokens
 
 // ----------------------------------------------------------------------------
@@ -341,7 +342,7 @@ Crt::OnKeyDown(wxKeyEvent &event)
 void
 Crt::OnChar(wxKeyEvent &event)
 {
-    bool smart_term = (m_screen_type == UI_SCREEN_2236DE);
+    bool smart_term = (m_crt_state->screen_type == UI_SCREEN_2236DE);
 
     // don't swallow keystrokes that we can't handle
     if (event.AltDown() || event.ControlDown()) {

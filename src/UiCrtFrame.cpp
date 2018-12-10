@@ -7,6 +7,7 @@
 #include "IoCardKeyboard.h"     // to pick up core_* keyboard interface
 #include "IoCardPrinter.h"
 #include "System2200.h"
+#include "TerminalState.h"
 #include "Ui.h"                 // emulator interface
 #include "UiSystem.h"
 #include "UiCrtFrame.h"
@@ -206,9 +207,10 @@ END_EVENT_TABLE()
 
 // constructor
 CrtFrame::CrtFrame( const wxString& title,
-                    const int screen_type,
                     const int io_addr,
-                    const int term_num) :
+                    const int term_num,
+                    crt_state_t *crt_state
+                  ) :
        wxFrame((wxFrame *)nullptr, -1, title, wxDefaultPosition, wxDefaultSize,
                wxDEFAULT_FRAME_STYLE | wxNO_FULL_REPAINT_ON_RESIZE),
     m_menuBar(nullptr),
@@ -228,8 +230,8 @@ CrtFrame::CrtFrame( const wxString& title,
     m_blink_phase(0),
     m_fps(0)
 {
-    bool smart_term = (screen_type == UI_SCREEN_2236DE);
-    m_primary_crt = (smart_term) ? (m_crt_addr == 0x00)
+    bool smart_term = (crt_state->screen_type == UI_SCREEN_2236DE);
+    m_primary_crt = (smart_term) ? (m_crt_addr == 0x01)
                                  : (m_crt_addr == 0x05);
 
     // set the frame icon
@@ -254,7 +256,7 @@ CrtFrame::CrtFrame( const wxString& title,
     initToolBar(m_toolBar);
     m_toolBar->Show(false); // can get changed in GetDefaults()
 
-    m_crt = new Crt( this, screen_type );
+    m_crt = new Crt(this, crt_state);
 
     addCrt();
 
@@ -909,6 +911,12 @@ CrtFrame::getCursorBlinkPhase() const
     return (m_blink_phase < 3);
 }
 
+// create a bell (0x07) sound
+void
+CrtFrame::ding()
+{
+    m_crt->ding();
+}
 
 // ----------------------------------------------------------------------------
 // event handlers
@@ -976,7 +984,11 @@ CrtFrame::OnReset(wxCommandEvent &event)
             System2200::reset(true);  // hard reset
             break;
         case CPU_WarmReset:
+#if 0
+// FIXME: need to reset the Terminal, not the crt
+//        terminal could pass in a reset callback. yuckish.
             m_crt->reset(false);
+#endif
             // route it through the keyboard handler because the MXD
             // filters out resets which aren't from terminal #1
             System2200::kb_keystroke(getTiedAddr(), m_term_num, IoCardKeyboard::KEYCODE_RESET);
@@ -1514,15 +1526,6 @@ CrtFrame::refreshWindow()
 {
     // pass it through
     m_crt->refreshWindow();
-}
-
-
-// emit a character to the display
-void
-CrtFrame::processChar(uint8 byte)
-{
-    // pass it through
-    m_crt->processChar(byte);
 }
 
 

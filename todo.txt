@@ -3,6 +3,7 @@ Emulator TODO list
 ============================================================================
 
 *) master list of priorities:
+   refactor out terminal logic from Crt and IoCardTermMux classes
    implement flow control from terminal to mxd
        there must be a rx fifo (from the terminals perspective) so it can
        keep receiving characters while it is waiting on the SELECT P delay,
@@ -12,20 +13,6 @@ Emulator TODO list
        the problem is that there is no flow control from UiCrt to
        IoCardTermMux -- and IoCardTermMux can't tell when a FBCx sequence
        is sent (unless it too parses the byte stream).  yuck.
-
-       a better solution (?) is to separate out the core terminal & display
-       logic into gui-free code (essentialy the 2nd half of UiCrt.cpp) and
-       let UiCrt handle just the display of the state of that thing.  I'd need
-       to work out whether Crt pulls state from the core or or the core pushes
-       state.  Probably the pull model is most natural.
-
-       the terminal keyboard fifo and half the uart delay model could be
-       moved into that Terminal object, as well as the keyboard remapping.
-
-       IoCardTermMux currently calls UI_initCrt.  Perhaps it should instance
-       a Terminal, and that calls UI_initCrt.  How much plumbing is needed
-       for this? Does the model work for the 2200T scenario where a keyboard
-       card is independent of a display card? how is information routed?
 
        add "crt stop" when it hits certain fullness thresholds
           2536DWTerminalAndTerminalControllerProtocol.pdf, pdf page 3
@@ -41,6 +28,39 @@ Emulator TODO list
    decide on a consistent set of naming conventions and stick to them
       hey, code.txt already has one.  study it.
    ... then review the priorities again
+
+*) refactor out terminal logic from Crt class
+
+   move the terminal keyboard fifo and half the uart delay model
+   into the Terminal object, as well as the keyboard remapping.
+
+   issues:
+      - CrtFrame OnReset menu action calls m_crt->reset(false), but really
+        it is the Terminal that needs to be reset, as it owns the state.
+
+*) WTF? why does UiCrtFrame::addCrt() exist?
+   It is a static list that maintains a list of all the Crts in the emulation.
+   It exists for the use by getPrimaryFrame(). That is caleld by
+       CrtFrame::setSimSeconds()
+       CrtFrame::setShowStatistics()
+       CrtFrame::diskEvent()
+   Why maintain the list? Is it because CRTs are constructed out of order (true)
+   but the above functions should't be called. Why not just have a single
+   CrtFrame var pointing the primary one?  why have a list?
+
+   m_primary_crt is set in CrtFrame's constructor, and it is based simply
+   on the crt address.  that isnt' even sufficient in the case of the term mux.
+   FIXME
+
+*) in some places term_num is 0..3, and in others it is 1..4
+   or in at least one place 0=dumb, 1..4=smart term
+
+*) UiCrtRender.cpp should be named UiCrt_Render.cpp for consistency
+      git mv UiCrtRender.cpp UiCrt_Render.cpp
+
+*) many foo.h have CANT_ASSIGN_OR_COPY_CLASS(classname)
+   macro invocation, but they don't #include "w2200.h" where it is defined.
+   that is bad hygiene.
 
 *) as an experiment, I tried creating two MXD cards
    the 2nd terminal also claims to be "term 1" on the titlebar.
