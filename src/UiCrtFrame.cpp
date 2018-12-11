@@ -992,11 +992,6 @@ CrtFrame::OnReset(wxCommandEvent &event)
             System2200::reset(true);  // hard reset
             break;
         case CPU_WarmReset:
-#if 0
-// FIXME: need to reset the Terminal, not the crt
-//        terminal could pass in a reset callback. yuckish.
-            m_crt->reset(false);
-#endif
             // route it through the keyboard handler because the MXD
             // filters out resets which aren't from terminal #1
             System2200::kb_keystroke(getTiedAddr(), m_term_num, IoCardKeyboard::KEYCODE_RESET);

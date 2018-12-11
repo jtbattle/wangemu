@@ -3,7 +3,6 @@ Emulator TODO list
 ============================================================================
 
 *) master list of priorities:
-   - submit the include file cleanup I just did
    implement flow control from terminal to mxd
       - Terminal.h  KB_BUFF_MAX must be made larger to match a real 2236.
       - wait a second; I was confused. KB_BUFF_MAX is an outbound FIFO.
@@ -30,11 +29,6 @@ Emulator TODO list
    decide on a consistent set of naming conventions and stick to them
       hey, code.txt already has one.  study it.
    ... then review the priorities again
-
-*) CrtFrame OnReset menu action calls m_crt->reset(false), but really
-   it is the Terminal that needs to be reset, as it owns the state.
-   In the keyboard handler of Terminal, if reset (0x12) is seen, not only
-   clear the fifo, but call the local reset.
 
 *) in some places term_num is 0..3, and in others it is 1..4
    or in at least one place 0=dumb, 1..4=smart term

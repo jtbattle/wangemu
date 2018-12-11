@@ -183,10 +183,7 @@ Terminal::receiveKeystroke(int keycode)
     // remap certain keycodes from first-generation encoding to what is
     // send over the serial line
     if (keycode == IoCardKeyboard::KEYCODE_RESET) {
-        // reset: although the terminal's tx fifo is modeled here and not
-        // in UiCrt, the terminal clears its tx fifo on reset, so we should
-        // do the same here.
-        m_kb_buff = {};
+        reset(false);  // clear screen, home cursor, and empty fifos
         m_kb_buff.push(static_cast<uint8>(0x12));
     } else if (keycode == IoCardKeyboard::KEYCODE_HALT) {
         // halt/step
