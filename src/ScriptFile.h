@@ -4,6 +4,7 @@
 #ifndef _INCLUDE_SCRIPT_H_
 #define _INCLUDE_SCRIPT_H_
 
+#include "w2200.h"
 #include <fstream>
 #include <memory>
 

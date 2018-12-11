@@ -5,6 +5,9 @@
 #ifndef _INCLUDE_UI_CRT_FRAME_H_
 #define _INCLUDE_UI_CRT_FRAME_H_
 
+#include "w2200.h"
+#include "wx/wx.h"
+
 class Crt;
 class CrtStatusBar;
 struct crt_state_t;

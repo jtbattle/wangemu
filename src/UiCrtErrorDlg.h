@@ -5,6 +5,9 @@
 #ifndef _INCLUDE_UI_CRT_ERROR_DLG_H_
 #define _INCLUDE_UI_CRT_ERROR_DLG_H_
 
+#include "w2200.h"
+#include "wx/wx.h"
+
 // modal dialog box for configuring the emulated computer
 class CrtErrorDlg : public wxDialog
 {

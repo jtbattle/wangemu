@@ -4,6 +4,9 @@
 #ifndef _INCLUDE_UI_CRT_H_
 #define _INCLUDE_UI_CRT_H_
 
+#include "w2200.h"
+#include "wx/wx.h"
+
 class wxSound;
 class CrtFrame;
 struct crt_state_t;

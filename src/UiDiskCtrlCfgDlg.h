@@ -7,6 +7,7 @@
 #ifndef _INCLUDE_UI_DISK_CONTROLLER_CFG_DLG_H_
 #define _INCLUDE_UI_DISK_CONTROLLER_CFG_DLG_H_
 
+#include "wx/wx.h"
 #include "DiskCtrlCfgState.h"
 
 class DiskCtrlCfgDlg : public wxDialog

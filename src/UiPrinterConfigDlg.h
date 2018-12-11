@@ -9,6 +9,7 @@
 
 // ==================== exported by UiConfigPrinter.cpp ====================
 
+#include "w2200.h"
 #include "wx/dialog.h"
 #include "wx/string.h"
 

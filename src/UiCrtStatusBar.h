@@ -26,6 +26,9 @@
     #define HANDLE_MSB_PAINT 0
 #endif
 
+#include "w2200.h"
+#include "wx/wx.h"
+
 class MyStaticBitmap : public wxStaticBitmap
 {
 public:

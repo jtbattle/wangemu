@@ -3,8 +3,11 @@ Emulator TODO list
 ============================================================================
 
 *) master list of priorities:
+   - submit the include file cleanup I just did
    implement flow control from terminal to mxd
-      - Terminal.h  KB_BUFF_MAX must be made larger to match a real 2236
+      - Terminal.h  KB_BUFF_MAX must be made larger to match a real 2236.
+      - wait a second; I was confused. KB_BUFF_MAX is an outbound FIFO.
+        what needs to be modeled is an inbound fifo, which is entirely missing.
       - when a FB Cx sequence (select P delay) is received, it must fire
         a timer for the specified amount of time, preventing more character
         processing until it expires.
@@ -16,7 +19,10 @@ Emulator TODO list
         gets a compressed run, is the count before or after expansion?
       - add auto "crt go" when it drops under 30 chars (see above pdf) or
         when under threshold every 3 seconds
-      - verify eg "SELECT P6" works
+      - verify SELECT P1..P9 have the right delay
+      - verify: do SELECT P9, blast enough text that it must flow control
+                then let the backlog clear and verify the right number of
+                chars made it to the display
       - submit
    clean up mxd script flow control; submit
    get rid of tied keyboard thing -- unnecessary generalization
@@ -27,10 +33,18 @@ Emulator TODO list
 
 *) CrtFrame OnReset menu action calls m_crt->reset(false), but really
    it is the Terminal that needs to be reset, as it owns the state.
+   In the keyboard handler of Terminal, if reset (0x12) is seen, not only
+   clear the fifo, but call the local reset.
+
+*) in some places term_num is 0..3, and in others it is 1..4
+   or in at least one place 0=dumb, 1..4=smart term
+   I think it would be best to use 0..3 everywhere, and dumb terminals
+   use only 0 (or maybe -1). When the logical term# needs to be used
+   (eg, on the titlebar) it would be incremented for display.
 
 *) WTF? why does UiCrtFrame::addCrt() exist?
    It is a static list that maintains a list of all the Crts in the emulation.
-   It exists for the use by getPrimaryFrame(). That is caleld by
+   It exists for the use by getPrimaryFrame(). That is called by
        CrtFrame::setSimSeconds()
        CrtFrame::setShowStatistics()
        CrtFrame::diskEvent()
@@ -42,19 +56,9 @@ Emulator TODO list
    on the crt address.  that isnt' even sufficient in the case of the term mux.
    FIXME
 
-*) in some places term_num is 0..3, and in others it is 1..4
-   or in at least one place 0=dumb, 1..4=smart term
-   I think it would be best to use 0..3 everywhere, and dumb terminals
-   use only 0. When the logical term# needs to be used (eg, on the titlebar)
-   it would be incremented for display.
-
-*) many foo.h have CANT_ASSIGN_OR_COPY_CLASS(classname)
-   macro invocation, but they don't #include "w2200.h" where it is defined.
-   that is bad hygiene.  check all the header files.
-
 *) as an experiment, I tried creating two MXD cards
    booting MVP 3.5, it gets to the partition editor start up and hangs.
-   the secondary terminal doesn't have a status bar.
+   the secondary terminal doesn't have a status bar (known misfeature).
 
 *) the tied_keyboard setting is read during getDefaults() in UiCrtFrame
    but tied_keyboard doesn't make sense for term mux because it is not
@@ -84,7 +88,7 @@ Emulator TODO list
         + UiCrtFrame
             + UiCrtStatusBar
             + UiCrtConfigDlg
-            + UiCrt + UiCrt_Charset.h + UiCrt_Keyboard (all part of Crt class)
+            + UiCrt + UiCrt_Charset.h + UiCrt_Keyboard + UiCrt_Render (all part of Crt class)
                 + UiCrtErrorDlg
      Crt state is saved in the .ini file by ui/CRT-nn, where nn is the addr;
         this needs to be generalized
@@ -220,8 +224,8 @@ Emulator TODO list
     There is no need for Kill() either -- the consumer just sets the pointer
     to nullptr and all the magic happens.
 
-*) None of the recent changes has been compiled on OSX, so most likely there
-   will be problems.  Once the code is somewhat stable under windows,
+*) None of the recent changes has been compiled on OSX, so there will
+   be problems.  Once the code is somewhat stable under windows,
    build it on OSX and iron out the problems.
 
 *) In MXD mode, TAB means TAB (2236DW) or FN (2236DE) (instead of STMT).
@@ -321,6 +325,11 @@ Emulator TODO list
    CRT controller, but it isn't clear without the corresponding schematic
    exactly what it means.
 
+*) allow pasting text to the emulator from the clipboard.  should be easy.
+   copying text from the screen is significantly more work, as I'd have
+   to track start & end selection, account for scrolling, have some visual
+   indication.
+
 *) add disk unit addressing cheatsheet?  I have forgotten the ins and outs.
     3xx
     Bxx
@@ -417,14 +426,6 @@ Emulator TODO list
     + if the program ends without filling the last page, you may need to send a
       HEX(0C) (page feed) to the printer to flush out the partial page.
 
-*) When changing configurations, currently I:
-        - destroy current config
-        - rebuild world
-   Would it be cleaner to do the following?
-        - build new world
-        - on success, swap to new world, then destroy old world
-        - on failure, report problem, and old world is still usable
-
 *) update the website (and build notes) with directions on how to make
    the thing such that it doesn't have DLL dependencies.  What a mess.
       1) declare "_BIND_TO_CURRENT_CRT_VERSION=1" in the wx libs that
@@ -435,6 +436,18 @@ Emulator TODO list
          to the top level emulator directory
    see
     http://www.microsoft.com/communities/newsgroups/en-us/default.aspx?dg=microsoft.public.vstudio.general&tid=2d0b8055-3fe2-482b-9fb2-731eb51859ee&cat=&lang=en&cr=US&sloc=&p=1
+
+----------------------------------------------------------------------------
+feature ideas which likely will never be implemented
+----------------------------------------------------------------------------
+
+*) emulate "CPU running" light on keyboard (first-gen only)
+   double check -- it is probably (cpu waiting for input && 01 selected)
+
+*) add a debugger/monitor
+    - the VP disassembler doesn't match the assembler syntax as specified
+      in the 2600 sw development manual.
+      (2200MVP_ComputerArchitecture.11-79.pdf, pdf page 81 or so)
 
 *) finally got a wang PC keyboard.  there are some extra keys, but the guess
    I made how they'd be expressed was wrong (see UiCrt_Keyboard.cpp).
@@ -458,19 +471,6 @@ Emulator TODO list
     - requested by Mark Musen, who runs it on a mac under virtual PC.
       there is no pause/break (->HALT/STEP) key on that setup.
       (but ctrl-c should work for this specific case, right?)
-
-*) allow pasting text to the emulator from the clipboard.  should be easy.
-   copying text from the screen is significantly more work, as I'd have
-   to track start & end selection, account for scrolling, have some visual
-   indication.
-
-*) emulate "CPU running" light on keyboard (first-gen only)
-   double check -- it is probably (cpu waiting for input && 01 selected)
-
-*) add a debugger/monitor
-    - the VP disassembler doesn't match the assembler syntax as specified
-      in the 2600 sw development manual.
-      (2200MVP_ComputerArchitecture.11-79.pdf, pdf page 81 or so)
 
 *) emulate plotter?  no point really without an interesting program.
    plotter commands:

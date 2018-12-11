@@ -5,6 +5,8 @@
 #ifndef _INCLUDE_UI_PRINTER_FRAME_H_
 #define _INCLUDE_UI_PRINTER_FRAME_H_
 
+#include "w2200.h"
+#include "wx/wx.h"
 #include <wx/cmndata.h>
 
 class Printer;

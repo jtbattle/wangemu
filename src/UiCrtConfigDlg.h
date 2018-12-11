@@ -3,6 +3,9 @@
 #ifndef _INCLUDE_UI_CRT_CONFIG_DLG_H_
 #define _INCLUDE_UI_CRT_CONFIG_DLG_H_
 
+#include "w2200.h"
+#include "wx/wx.h"
+
 class CrtConfigDlg : public wxDialog
 {
 public:

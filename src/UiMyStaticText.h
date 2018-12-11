@@ -7,6 +7,9 @@
 #ifndef _INCLUDE_UI_MYSTATICTEXT_H_
 #define _INCLUDE_UI_MYSTATICTEXT_H_
 
+#include "w2200.h"
+#include "wx/wx.h"
+
 class MyStaticText : public wxStaticText
 {
 public:

@@ -4,6 +4,9 @@
 #ifndef _INCLUDE_UI_DISK_FACTORY_H_
 #define _INCLUDE_UI_DISK_FACTORY_H_
 
+#include "w2200.h"
+#include "wx/wx.h"
+
 class PropPanel;
 class LabelPanel;
 class Wvd;
