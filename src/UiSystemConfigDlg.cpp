@@ -414,7 +414,7 @@ SystemConfigDlg::OnCardChoice( wxCommandEvent &event )
     IoCard::card_t cardtype = static_cast<IoCard::card_t>(idx);
 
     m_cfg.setSlotCardType( slot, cardtype );
-    m_cfg.setSlotCardAddr( slot, 0x00 );       // user must set io later
+    m_cfg.setSlotCardAddr( slot, -1 );       // user must set io later
 
     // update the associated io_addr picker
     setValidIoChoices(slot, idx);
