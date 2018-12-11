@@ -78,7 +78,7 @@ private:
     int         m_obscbs_offset;     // io_offset at time of obs or cbs strobe
     int         m_obscbs_data;       // data captured at obs or cbs strobe
     int         m_rbi;               // 0=ready, 1=busy
-    int         m_uart_sel;          // one hot encoding of selected uart
+    int         m_uart_sel;          // currently addressed uart, 0..3
     bool        m_interrupt_pending; // one of the uarts has an rx byte
 
     // ---- per terminal state ----

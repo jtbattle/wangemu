@@ -242,12 +242,7 @@ void
 Terminal::termToMxdCallback(int key)
 {
     m_tx_tmr = nullptr;
-
-// FIXME: here is the bogus stuff.  m_term_num=1 for the first term
-//        but the receiver is 0-based, not 1-based
-//  m_muxd->receiveKeystroke(m_term_num, key);
-    m_muxd->receiveKeystroke(0, key);
-
+    m_muxd->receiveKeystroke(m_term_num, key);
     // see if any other chars are pending
     checkKbBuffer();
 }

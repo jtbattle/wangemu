@@ -130,7 +130,7 @@ IoCardTermMux::IoCardTermMux(std::shared_ptr<Scheduler> scheduler,
     // FIXME: just one for now
     m_terms[0].terminal =
         std::make_unique<Terminal>(scheduler, this,
-                                   io_addr, 1, UI_SCREEN_2236DE);
+                                   io_addr, 0, UI_SCREEN_2236DE);
 }
 
 // perform on instruction and return the number of ns of elapsed time.

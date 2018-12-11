@@ -301,13 +301,15 @@ UI_displayInit(const int screen_type, const int io_addr, const int term_num,
     }
 
     wxString title;
-    if (term_num < 1) {
+    if (screen_type != UI_SCREEN_2236DE) {
         // old style display
         title.Printf("Wang %s %s CRT /0%02X", cpustr, dispstr, io_addr);
     } else {
         // smart terminal mux
+        // internally, term_num is 0-indexed, but in Wang documentation,
+        // the terminal number is 1-based
         title.Printf("Wang %s %s CRT /0%02X term %d",
-                        cpustr, dispstr, io_addr, term_num);
+                        cpustr, dispstr, io_addr, term_num+1);
     }
 
     // Create the main application window

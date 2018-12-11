@@ -30,12 +30,6 @@ Emulator TODO list
       hey, code.txt already has one.  study it.
    ... then review the priorities again
 
-*) in some places term_num is 0..3, and in others it is 1..4
-   or in at least one place 0=dumb, 1..4=smart term
-   I think it would be best to use 0..3 everywhere, and dumb terminals
-   use only 0 (or maybe -1). When the logical term# needs to be used
-   (eg, on the titlebar) it would be incremented for display.
-
 *) WTF? why does UiCrtFrame::addCrt() exist?
    It is a static list that maintains a list of all the Crts in the emulation.
    It exists for the use by getPrimaryFrame(). That is called by

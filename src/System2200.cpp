@@ -82,11 +82,11 @@ static std::vector<clocked_device_t> m_clocked_devices;
 
 typedef struct {
     int         io_addr;
-    int         term_num;
+    int         term_num;       // 0..3 for smart terms; 0 for display controllers
     kbCallback  callback_fn;
 #if 0
-// FIXME: make corresponding change in System2200.cpp
-// figure out why this doesn't compile - complains about invoking deleted function
+// TODO: figure out why this doesn't compile - (here and later on)
+//        complains about invoking deleted function
     std::unique_ptr<ScriptFile>
                 script_handle;  // ID of which script stream we're processing
 #else
@@ -955,6 +955,7 @@ System2200::kb_keystroke(int io_addr, int term_num, int keyvalue)
                 // (on pc, ctrl-C or pause/break key)
                 if (keyvalue == IoCardKeyboard::KEYCODE_HALT) {
                     kb.script_handle = nullptr;
+                    // FIXME: leaking here
                 }
                 return;
             }
@@ -984,7 +985,8 @@ System2200::kb_invokeScript(int io_addr, int term_num,
                         ScriptFile::SCRIPT_META_HEX |
                         ScriptFile::SCRIPT_META_KEY ;
 #if 0
-    // FIXME: make corresponding change in System2200.h
+// TODO: figure out why this doesn't compile - (here and where kb struct is declared)
+//        complains about invoking deleted function
             kb.script_handle = std::make_unique<ScriptFile>(
                                    filename, flags, 3 /*max nesting*/
                                );
@@ -1036,6 +1038,7 @@ System2200::kb_keyReady(int io_addr, int term_num)
             } else {
                 // EOF
                 kb.script_handle = nullptr;
+                // FIXME: leaking here
             }
         }
     }
