@@ -140,7 +140,7 @@ static const struct colorscheme_t {
       "White on Blue" }
 };
 
-const int num_colorschemes = sizeof(colorscheme) / sizeof(colorscheme_t);
+static const int num_colorschemes = sizeof(colorscheme) / sizeof(colorscheme_t);
 
 // ----------------------------------------------------------------------------
 // CrtFrame
@@ -152,7 +152,7 @@ const int num_colorschemes = sizeof(colorscheme) / sizeof(colorscheme_t);
                            wxFULLSCREEN_NOSTATUSBAR )
 
 // CrtFrame static members
-std::vector<CrtFrame*> CrtFrame::m_crtlist;     // list of crt's in the system
+CrtFrame* CrtFrame::m_primaryFrame = nullptr;
 
 // connect the wxWidgets events with the functions which process them
 BEGIN_EVENT_TABLE(CrtFrame, wxFrame)
@@ -231,8 +231,13 @@ CrtFrame::CrtFrame( const wxString& title,
     m_fps(0)
 {
     bool smart_term = (crt_state->screen_type == UI_SCREEN_2236DE);
-    m_primary_crt = (smart_term) ? (m_crt_addr == 0x00)
+    m_primary_crt = (smart_term) ? ((m_crt_addr == 0x00) && (term_num == 0))
                                  : (m_crt_addr == 0x05);
+
+    if (m_primary_crt) {
+        assert(!m_primaryFrame);
+        m_primaryFrame = this;
+    }
 
     // set the frame icon
     SetIcon(wang_xpm);
@@ -257,8 +262,6 @@ CrtFrame::CrtFrame( const wxString& title,
     m_toolBar->Show(false); // can get changed in GetDefaults()
 
     m_crt = new Crt(this, crt_state);
-
-    addCrt();
 
     getDefaults();      // get configuration options, or supply defaults
 #if 1
@@ -1475,51 +1478,30 @@ CrtFrame::getTermNum() const
 //   Crt frame management functions
 // ----------------------------------------------------------------------------
 
-// add Crt to list
-void
-CrtFrame::addCrt()
-{
-    m_crtlist.push_back(this);
-}
-
-
 // remove self from the list of CRTs
 void
 CrtFrame::destroyWindow()
 {
     saveDefaults();     // save config options
 
-    // find ourselves in the list of crts
-    auto it = find(begin(m_crtlist), end(m_crtlist), this);
-    assert( it != m_crtlist.end() );
+    // if this is the primary frame, forget about it now
+    if (m_primaryFrame == this) {
+        m_primaryFrame = nullptr;
+    }
 
-    // close this window  (system may defer it for a while)
-    (*it)->Destroy();
-
-    // take it from the list (OK to delete since this list is static)
-    m_crtlist.erase(it);
+    // close this window (system may defer it for a while)
+    Destroy();
 }
 
 
-// return a pointer to the main Crt window
+// One distinguished CRT which has all the controls, eg, kind of the superuser.
+// This primary Crt has the ability to change the system configuration, and to
+// change which disk images are in use. Non-primary CRTs can change only local
+// properties, like CRT phosphor color and font.
 CrtFrame *
 CrtFrame::getPrimaryFrame()
 {
-    bool first = true;
-    for(auto &crt : m_crtlist) {
-        if (crt->isPrimaryCrt()) {
-            if (!first) {
-                // optimize placement so future searches find it immediately
-                CrtFrame *tmp = m_crtlist[0];
-                m_crtlist[0] = crt;
-                crt = tmp;
-            }
-            return m_crtlist[0];
-        }
-        first = false;
-    }
-
-    return 0;  // not found
+    return m_primaryFrame;
 }
 
 

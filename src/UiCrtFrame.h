@@ -40,9 +40,6 @@ public:
     int getTiedAddr() const;
     int getTermNum() const;
 
-    // add CRT to list
-    void addCrt();
-
     // request the CRT to be destroyed
     void destroyWindow();
 
@@ -208,7 +205,8 @@ private:
     int      m_blink_phase;
     int      m_fps;             // most recent frames/sec count
 
-    static std::vector<CrtFrame*> m_crtlist;     // list of crt's in the system
+    // the one privileged CRT (/005 display, or term 1 of MXD at 0x00)
+    static CrtFrame *m_primaryFrame;
 
     DECLARE_EVENT_TABLE()
 };

@@ -30,20 +30,6 @@ Emulator TODO list
       hey, code.txt already has one.  study it.
    ... then review the priorities again
 
-*) WTF? why does UiCrtFrame::addCrt() exist?
-   It is a static list that maintains a list of all the Crts in the emulation.
-   It exists for the use by getPrimaryFrame(). That is called by
-       CrtFrame::setSimSeconds()
-       CrtFrame::setShowStatistics()
-       CrtFrame::diskEvent()
-   Why maintain the list? Is it because CRTs are constructed out of order (true)
-   but the above functions should't be called. Why not just have a single
-   CrtFrame var pointing the primary one?  why have a list?
-
-   m_primary_crt is set in CrtFrame's constructor, and it is based simply
-   on the crt address.  that isnt' even sufficient in the case of the term mux.
-   FIXME
-
 *) as an experiment, I tried creating two MXD cards
    booting MVP 3.5, it gets to the partition editor start up and hangs.
    the secondary terminal doesn't have a status bar (known misfeature).
