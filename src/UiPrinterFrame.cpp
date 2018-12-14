@@ -550,7 +550,7 @@ PrinterFrame::PP_OnClose(wxCloseEvent &event)
     Host::ConfigWriteWinGeom(this, subgroup, false);
 
     wxPreviewControlBar *controlBar = ((wxPreviewFrame*)this)->GetControlBar();
-    PrinterFrame *parent = (PrinterFrame*)GetParent();
+    PrinterFrame *parent = static_cast<PrinterFrame*>(GetParent());
     parent->m_previewzoom = controlBar->GetZoomControl();
 
     event.Skip();

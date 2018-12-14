@@ -351,6 +351,11 @@ private:
     int        m_get_bytes_ptr;       // get pointer
     int        m_send_bytes_ptr;      // put pointer
 
+    // the special COPY command sets up the following state.
+    // the next command is a normal READ in form, but the normal READ
+    // behavior is taken over by the COPY semantics.
+    bool       m_copy_pending;        // the state below is meaningful
+
     // the special COPY and VERIFY RANGE commands save into this state
     int        m_range_drive;         // chosen drive
     int        m_range_platter;       // chosen platter
@@ -359,11 +364,6 @@ private:
     int        m_dest_drive;          // copy destination: chosen drive
     int        m_dest_platter;        // copy destination: chosen platter
     int        m_dest_start;          // copy destination: 24b sector address
-
-    // the special COPY command sets up the following state.
-    // the next command is a normal READ in form, but the normal READ
-    // behavior is taken over by the COPY semantics.
-    bool       m_copy_pending;        // the state below is meaningful
 };
 
 #endif // _INCLUDE_IOCARD_DISK_H_

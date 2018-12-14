@@ -10,7 +10,7 @@ class CrtConfigDlg : public wxDialog
 {
 public:
     CANT_ASSIGN_OR_COPY_CLASS(CrtConfigDlg);
-    CrtConfigDlg(wxFrame *parent, wxString title);
+    CrtConfigDlg(wxFrame *parent, const wxString &title);
     ~CrtConfigDlg();
 
 private:

@@ -34,7 +34,7 @@ public:
     };
     void setFontSize(const int size);
 
-    void setColor(wxColor FG, wxColor BG);
+    void setColor(const wxColor &FG, const wxColor &BG);
 
     // values range from 0 to 100
     void setDisplayContrast(int n);

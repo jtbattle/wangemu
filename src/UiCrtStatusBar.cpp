@@ -222,12 +222,6 @@ CrtStatusBar::CrtStatusBar(CrtFrame *parent, bool smart_term, bool shown) :
         for(int drive=0; drive<m_num_drives[ctrl]; drive++) {
             int idx = 4*ctrl + drive;
 
-            if (drive >= m_num_drives[ctrl]) {
-                // not needed
-                m_diskicon[idx] = nullptr;
-                continue;
-            }
-
             m_diskicon[idx] = std::make_unique<MyStaticBitmap>(
                                     this,
                                     ID_Button_DiskCtrl0_FDrive + idx, // wxWindowID

@@ -116,7 +116,7 @@ hex(char *buf, int *off, int value, int digits)
 // stuff in the target address, in hex.  however, if the address
 // is very near the current address, list it as relative.
 static void
-addr(char *buf, int *off, int cur_pc, int new_pc)
+dasmaddr(char *buf, int *off, int cur_pc, int new_pc)
 {
     int len = 0;
 #if DASM_REL_BRANCH
@@ -508,7 +508,7 @@ dasm_type3(char *buf, char *mnemonic, uint32 ic, uint32 uop)
     buf[len++] = ','; buf[len] = '\0';
     len += dasm_b_field(&buf[len], munged_uop);
     buf[len++] = ','; buf[len] = '\0';
-    addr(buf, &len, ic, newic);
+    dasmaddr(buf, &len, ic, newic);
 
     return len;
 }
@@ -566,7 +566,7 @@ dasm_type4(char *buf, char *mnemonic, uint32 ic, uint32 uop)
     buf[len++] = ','; buf[len] = '\0';
     len += dasm_b_field(&buf[len], (uop & noXbit));
     buf[len++] = ','; buf[len] = '\0';
-    addr(buf, &len, ic, newic);
+    dasmaddr(buf, &len, ic, newic);
 
     if ((uop & 0x70000F) == 0x60000D) {         // BT or BF of SH
         uint8 bitfield = (uint8)(uop & 0xF0);
@@ -876,13 +876,13 @@ dasm_op_vp(char *buf, uint32 ic, uint32 uop)
                 newic = FULLBR(uop);
                 strcpy(buf,"SB"); len = 2;
                 pad_spaces(buf, &len, PARAM_COL);
-                addr(buf, &len, ic, newic);
+                dasmaddr(buf, &len, ic, newic);
                 break;
             case 0x17:  // unconditional branch
                 newic = FULLBR(uop);
                 strcpy(buf,"B"); len = 1;
                 pad_spaces(buf, &len, PARAM_COL);
-                addr(buf, &len, ic, newic);
+                dasmaddr(buf, &len, ic, newic);
                 break;
 
         // mask branch instructions:

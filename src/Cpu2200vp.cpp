@@ -758,7 +758,7 @@ Cpu2200vp::Cpu2200vp(std::shared_ptr<Scheduler> scheduler,
     #undef K
 
     // init microcode
-    for(int i=0; i<MAX_RAM; i++) {
+    for(int i=0; i<MAX_UCODE; i++) {
         write_ucode((uint16)i, 0);
     }
     for(int i=0; i<1024; i++) {
@@ -800,14 +800,6 @@ int
 Cpu2200vp::getCpuType() const
 {
     return CPUTYPE_2200VP;
-}
-
-
-// report how much memory the CPU has, in KB
-int
-Cpu2200vp::getRamSize() const
-{
-    return (m_memsize >> 10);
 }
 
 

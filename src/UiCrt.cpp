@@ -114,7 +114,7 @@ Crt::setDisplayBrightness(int n)
 
 // set the display fg/bg colors
 void
-Crt::setColor(wxColor FG, wxColor BG)
+Crt::setColor(const wxColor &FG, const wxColor &BG)
 {
     m_FGcolor = FG;
     m_BGcolor = BG;

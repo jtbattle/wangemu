@@ -11,7 +11,7 @@ class MyAboutDlg : public wxDialog
 {
 public:
     CANT_ASSIGN_OR_COPY_CLASS(MyAboutDlg);
-    MyAboutDlg(wxWindow *parent);
+    explicit MyAboutDlg(wxWindow *parent);
 
 private:
     // ---- event handlers ----

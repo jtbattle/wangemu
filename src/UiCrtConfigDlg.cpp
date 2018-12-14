@@ -34,7 +34,7 @@ END_EVENT_TABLE()
 //      |
 //      +-- m_FontChoice
 //      +-- m_ColorChoice
-CrtConfigDlg::CrtConfigDlg(wxFrame *parent, wxString title) :
+CrtConfigDlg::CrtConfigDlg(wxFrame *parent, const wxString &title) :
         wxDialog(parent, -1, title,
                  wxDefaultPosition, wxDefaultSize,
                  wxDEFAULT_DIALOG_STYLE | wxRESIZE_BORDER),

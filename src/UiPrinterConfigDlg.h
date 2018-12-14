@@ -41,7 +41,7 @@ public:
                      const long style = wxDEFAULT_DIALOG_STYLE
                     );
 
-    bool TransferDataToWindow();
+    bool TransferDataToWindow() override;
     wxTextCtrl *text;
 };
 

@@ -120,13 +120,15 @@ IoCardKeyboard::OBS(int val)
 void
 IoCardKeyboard::CBS(int val)
 {
-    val &= 0xFF;
+    int val8 = val & 0xFF;
 
 #if 0
     // unexpected -- the real hardware ignores this byte
     if (NOISY) {
-        UI_Warn("unexpected keyboard CBS: Output of byte 0x%02x", val);
+        UI_Warn("unexpected keyboard CBS: Output of byte 0x%02x", val8);
     }
+#else
+    val8 = val8;
 #endif
 }
 

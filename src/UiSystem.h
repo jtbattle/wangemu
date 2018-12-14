@@ -65,16 +65,16 @@ private:
     // this one is called on application startup and is a good place for the app
     // initialization (doing it here and not in the ctor allows to have an error
     // return: if OnInit() returns false, the application terminates)
-    bool OnInit();
+    bool OnInit() override;
 
     // like the name says
-    int OnExit();
+    int OnExit() override;
 
     // set the command line parsing options
-    void OnInitCmdLine(wxCmdLineParser& parser);
+    void OnInitCmdLine(wxCmdLineParser& parser) override;
 
     // after the command line has been parsed, decode what it finds
-    bool OnCmdLineParsed(wxCmdLineParser& parser);
+    bool OnCmdLineParsed(wxCmdLineParser& parser) override;
 
     // called whenever there is nothing else to do
     void OnIdle(wxIdleEvent &event);

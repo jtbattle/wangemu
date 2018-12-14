@@ -146,7 +146,6 @@ saveDiskMounts(void)
         if (isDiskController(slot)) {
             std::ostringstream subgroup;
             subgroup << "io/slot-" << slot;
-            std::string val;
             const auto cfg = current_cfg->getCardConfig(slot);
             const auto dcfg = dynamic_cast<const DiskCtrlCfgState*>(cfg.get());
             assert(dcfg);

@@ -18,7 +18,7 @@ class DiskCtrlCfgHelpDlg : public wxDialog
 {
 public:
     CANT_ASSIGN_OR_COPY_CLASS(DiskCtrlCfgHelpDlg);
-    DiskCtrlCfgHelpDlg(wxWindow *parent);
+    explicit DiskCtrlCfgHelpDlg(wxWindow *parent);
     //DECLARE_EVENT_TABLE()
 };
 

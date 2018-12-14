@@ -164,8 +164,7 @@ wxFont Crt::pickFont(int pointsize, int bold, const std::string &facename)
         font = wxFont(pointsize, wxFONTFAMILY_MODERN,
                                  wxFONTSTYLE_NORMAL,
                                  fontweight);
-        std::string name = font.GetFaceName();
-        name = "";
+        // debugging: std::string name = font.GetFaceName();
     }
 
     return font;
@@ -557,10 +556,6 @@ Crt::generateFontmap()
 void
 Crt::generateScreen()
 {
-    static bool reentrant = false;
-//  assert(!reentrant);
-    reentrant = true;
-
     if (isFontDirty()) {
         generateFontmap();
         recalcBorders();  // the bitmap store might have changed size
@@ -569,10 +564,11 @@ Crt::generateScreen()
     wxColor fg(intensityToColor(1.0f)),  // color of text
             bg(intensityToColor(0.0f));  // color of background
 
-    bool success = false;
 #if DRAW_WITH_RAWBMP
 // FIXME: see if we still need this for OSX
-    success = generateScreenByRawBmp(fg, bg);
+    bool success = generateScreenByRawBmp(fg, bg);
+#else
+    bool success = false;
 #endif
     wxMemoryDC memDC(m_scrbits);
     if (!success) {
@@ -589,7 +585,6 @@ Crt::generateScreen()
 
     // release the bitmap
     memDC.SelectObject(wxNullBitmap);
-    reentrant = false;
 }
 
 

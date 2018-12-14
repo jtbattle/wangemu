@@ -20,14 +20,14 @@ public:
     // ------------ common CardCfgState interface ------------
     // See CardCfgState.h for the use of these functions.
 
-    void setDefaults();
-    void loadIni(const std::string &subgroup);
-    void saveIni(const std::string &subgroup) const;
-    bool operator==(const CardCfgState &rhs) const;
-    bool operator!=(const CardCfgState &rhs) const;
-    std::shared_ptr<CardCfgState> clone() const;
-    bool configOk(bool warn) const;
-    bool needsReboot(const CardCfgState &other) const;
+    void setDefaults() override;
+    void loadIni(const std::string &subgroup) override;
+    void saveIni(const std::string &subgroup) const override;
+    bool operator==(const CardCfgState &rhs) const override;
+    bool operator!=(const CardCfgState &rhs) const override;
+    std::shared_ptr<CardCfgState> clone() const override;
+    bool configOk(bool warn) const override;
+    bool needsReboot(const CardCfgState &other) const override;
 
     // ------------ unique to DiskCtrlCfgState ------------
 

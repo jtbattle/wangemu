@@ -7,6 +7,7 @@
 *.sln.docstates
 mydisks/
 myscripts/
+wangemu-cppcheck-build-dir/
 
 # Build results
 [Dd]ebug/
@@ -183,28 +184,22 @@ Desktop.ini
 $RECYCLE.BIN/
 
 # Windows Installer files
-*.cab
-*.msi
-*.msm
-*.msp
 *.ini
-tags
-src/make_tags.bat
 *.exe
-todo.txt
-verify_multisectors.w22
-
 *.pyc
-termtest/poll.py
-
 *.db
-dr_memory.bat
 *.opendb
 *.json
+
+# project specific
+2600_notes.txt
+dr_memory.bat
+todo.txt
+src/make_tags.bat
+src/tags
+termtest/poll.py
+termtest/catch_kb.py
 wvdutil/games.wvd
 wvdutil/lint.bat
 wvdutil/unscramble.py
-termtest/catch_kb.py
-2600_notes.txt
-*.a1
 .vs/slnx.sqlite

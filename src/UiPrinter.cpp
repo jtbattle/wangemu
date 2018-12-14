@@ -897,12 +897,10 @@ Printout::OnPrintPage(int page)
     // does not use margins.
 
     // first, get some key parameters from Printer
-    size_t length;
     int llen, plen;
     m_printer->getPageAttributes(llen, plen);
     int cell_w, cell_h;
     m_printer->getCellAttributes(&cell_w, &cell_h);
-    length = llen;
 
     // device units margin
     int marginleft, marginright, margintop, marginbottom;

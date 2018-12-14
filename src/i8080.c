@@ -259,11 +259,11 @@ static void i8080_store_flags(i8080 *cpu)
 
 static void i8080_retrieve_flags(i8080 *cpu)
 {
-    S_FLAG = F & F_NEG      ? 1 : 0;
-    Z_FLAG = F & F_ZERO     ? 1 : 0;
-    H_FLAG = F & F_HCARRY   ? 1 : 0;
-    P_FLAG = F & F_PARITY   ? 1 : 0;
-    C_FLAG = F & F_CARRY    ? 1 : 0;
+    S_FLAG = (F & F_NEG)     ? 1 : 0;
+    Z_FLAG = (F & F_ZERO)    ? 1 : 0;
+    H_FLAG = (F & F_HCARRY)  ? 1 : 0;
+    P_FLAG = (F & F_PARITY)  ? 1 : 0;
+    C_FLAG = (F & F_CARRY)   ? 1 : 0;
 }
 
 // ----- crappy debug logging facility -----

@@ -828,20 +828,10 @@ Cpu2200t::getCpuType() const
 }
 
 
-// report how much memory the CPU has, in KB
-int
-Cpu2200t::getRamSize() const
-{
-    return (m_memsize >> 10);
-}
-
-
 // true=cold boot (power cycle), false=warm restart
 void
 Cpu2200t::reset(bool hard_reset)
 {
-    int i;
-
     m_cpu.ic        = 0x0000;
     m_cpu.icsp      = ICSTACK_TOP;
     m_cpu.prev_sr   = false;
@@ -878,7 +868,7 @@ Cpu2200t::reset(bool hard_reset)
 
     // real hardware doesn't reset memory, but the emulator does
     if (hard_reset) {
-        for(i=0; i<m_memsize; i++) {
+        for(int i=0; i<m_memsize; i++) {
             m_RAM[i] = 0xFF;
             // it appears that either bit 0 or bit 4 must be set
             // otherwise bad things happen.

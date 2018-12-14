@@ -14,7 +14,7 @@ class Printer: public wxScrolledWindow
 {
 public:
     CANT_ASSIGN_OR_COPY_CLASS(Printer);
-    Printer( PrinterFrame *parent );
+    explicit Printer( PrinterFrame *parent );
     ~Printer();
 
     // ---- setters/getters ----
@@ -190,11 +190,12 @@ public:
     Printout(wxChar *title, std::shared_ptr<Printer> printer);
 
     // ---- event handlers ----
-    bool OnPrintPage(int page);
-    bool OnBeginDocument(int startPage, int endPage);
+    bool OnPrintPage(int page) override;
+    bool OnBeginDocument(int startPage, int endPage) override;
 
-    bool HasPage(int page);
-    void GetPageInfo(int *minPage, int *maxPage, int *selPageFrom, int *selPageTo);
+    bool HasPage(int page) override;
+    void GetPageInfo(int *minPage, int *maxPage,
+                     int *selPageFrom, int *selPageTo) override;
 
 private:
     std::shared_ptr<Printer> m_printer;

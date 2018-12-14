@@ -27,6 +27,8 @@ SysCfgState::SysCfgState() :
     m_warn_io(true)
 {
     for(auto &slot : m_slot) {
+        slot.type    = IoCard::card_t::none;
+        slot.addr    = -1;
         slot.cardCfg = nullptr;
     }
 }

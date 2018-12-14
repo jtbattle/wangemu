@@ -22,9 +22,6 @@ public:
     enum { CPUTYPE_2200B, CPUTYPE_2200T, CPUTYPE_2200VP };
     virtual int getCpuType() const = 0;
 
-    // report how much RAM the CPU has
-    virtual int getRamSize() const = 0;
-
     // true=hard reset, false=soft reset
     virtual void reset(bool hard_reset) = 0;
 
@@ -76,14 +73,13 @@ public:
     Cpu2200t(std::shared_ptr<Scheduler> scheduler,
              int ramsize, int subtype);
     ~Cpu2200t();
-    int   getCpuType() const;
-    int   getRamSize() const;
-    void  reset(bool hard_reset);
-    uint8 getAB() const;
-    void  setDevRdy(bool ready);
-    void  IoCardCbIbs(int data);
-    int   execOneOp();            // simulate one instruction
-    void  halt();
+    int   getCpuType() const override;
+    void  reset(bool hard_reset) override;
+    uint8 getAB() const override;
+    void  setDevRdy(bool ready) override;
+    void  IoCardCbIbs(int data) override;
+    int   execOneOp() override;  // simulate one instruction
+    void  halt() override;
 
 private:
     // ---- member functions ----
@@ -190,14 +186,13 @@ public:
     Cpu2200vp(std::shared_ptr<Scheduler> scheduler,
               int ramsize, int subtype);
     ~Cpu2200vp();
-    int   getCpuType() const;
-    int   getRamSize() const;
-    void  reset(bool hard_reset);
-    uint8 getAB() const;
-    void  setDevRdy(bool ready);
-    void  IoCardCbIbs(int data);
-    int   execOneOp();            // simulate one instruction
-    void  halt();
+    int   getCpuType() const override;
+    void  reset(bool hard_reset) override;
+    uint8 getAB() const override;
+    void  setDevRdy(bool ready) override;
+    void  IoCardCbIbs(int data) override;
+    int   execOneOp() override;  // simulate one instruction
+    void  halt() override;
 
     // ---- class-specific members: ----
 

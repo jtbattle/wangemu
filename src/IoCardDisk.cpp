@@ -323,25 +323,26 @@ IoCardDisk::deselect()
 void
 IoCardDisk::OBS(int val)
 {
-    val &= 0xFF;
+    int val8 = val & 0xFF;
 
     if (DBG > 2) {
-        dbglog("disk OBS(AB=0x%02x): byte=0x%02x\n", m_cpu->getAB(), val);
+        dbglog("disk OBS(AB=0x%02x): byte=0x%02x\n", m_cpu->getAB(), val8);
     }
 
-    (void)advanceState(EVENT_OBS, val);
+    (void)advanceState(EVENT_OBS, val8);
     m_cpu->setDevRdy(!m_card_busy);
 }
 
 void
 IoCardDisk::CBS(int val)
 {
-    val &= 0xFF;
+    int val8 = val & 0xFF;
+    val8 = val8;  // lint
 
     // unexpected -- the real hardware ignores this byte
     if (NOISY > 0) {
         // FIXME: MVP spews these two a lot. what do they mean?
-        // UI_Warn("unexpected disk CBS: Output of byte 0x%02x", val);
+        // UI_Warn("unexpected disk CBS: Output of byte 0x%02x", val8);
     }
 
     // TODO:
@@ -354,7 +355,7 @@ IoCardDisk::CBS(int val)
     //
     // the emulator just ignores this mode as it has no effect as there
     // is no other system competing for the disk.
-    hogged = !!(val & 0x80);
+    hogged = !!(val8 & 0x80);
 #endif
 
     // FIXME:
@@ -363,7 +364,7 @@ IoCardDisk::CBS(int val)
     // hardwired to cause a hard reset of the disk controller.
     // I don't see that hardware in the early floppy disk controller
     // design, but they could have added it later.
-    if (val & 1) {
+    if (val8 & 1) {
         reset(true);
     }
 #endif
