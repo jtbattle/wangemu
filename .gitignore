@@ -206,3 +206,5 @@ wvdutil/lint.bat
 wvdutil/unscramble.py
 termtest/catch_kb.py
 2600_notes.txt
+*.a1
+.vs/slnx.sqlite

@@ -30,9 +30,36 @@ public:
     void processChar(uint8 byte);
 
 private:
-    static const unsigned int KB_BUFF_MAX = 64;
+    // size of the FIFO holding keystrokes which are yet to be sent to the
+    // host CPU. this is unlikely to ever be met except if the serial line
+    // rate is given an option to be set to a low value.
+    static const unsigned int KB_BUFF_MAX = 32;
+
+    // size of the FIFO holding received characters which have yet to be
+    // parsed and interpreted. in the real terminal, a Z80 CPU has to do
+    // a certain amount of work for each character, and especially in the
+    // case of decompressing runs, two received characters can turn into
+    // 80 characters to get on the CRT with all attendant cursor tracking
+    // and scrolling accounting.
+    //
+    // in the emulator, those activities are handled instantly, but there
+    // is one case where delay is modeled: when the <FB><Cn> pair is received,
+    // which is used to implement the effects of "SELECT Pn" delays.  because
+    // the serial line is still active, the TX buffer can fill, which triggers
+    // the terminal to perform flow control back to the host.  these flow
+    // control characters have to be inserted at the head of the outbound
+    // serial stream.
+    //
+    // 2536DWTerminalAndTerminalControllerProtocol.pdf describes the FIFO
+    // sies and flow control thresholds.
+    static const unsigned int CRT_BUFF_MAX = 196;  //  96 + 100 overrun
+    static const unsigned int PRT_BUFF_MAX = 232;  // 132 + 100 overrun
 
     // ---- functions ----
+
+    // reset crt/prt part of state
+    void reset_crt();
+    void reset_prt();
 
     // send an init sequence from emulated terminal shortly after reset
     void SendInitSeq();
@@ -48,6 +75,9 @@ private:
     // callback after a character has finished transmission
     void termToMxdCallback(int key);
 
+    // callback after SELECT Pn timer expires
+    void selectPCallback();
+
     // clear the display and home the cursor
     void scr_clear();
 
@@ -55,12 +85,14 @@ private:
     // and fill the new row with blanks.
     void scr_scroll();
 
-    // lower level crt character handling
+    // receive queueing
+    void crtCharFifo(uint8 byte);
+    void prtCharFifo(uint8 byte);
+    // drain pending rx characters
+    void checkCrtFifo();
+    void processCrtChar1(uint8 byte);
     void processCrtChar2(uint8 byte);
-    // lowest level crt character handling
     void processCrtChar3(uint8 byte);
-    // prt character handling (only one level of interpretation)
-    void processPrtChar2(uint8 byte);
 
     void adjustCursorY(int delta);      // advance the cursor in y
     void adjustCursorX(int delta);      // move cursor left or right
@@ -84,6 +116,7 @@ private:
     bool          m_box_bottom;     // true if we've seen at least one 0B
 
     // byte stream command interpretation
+    bool          m_escape_seen;    // escape (FB) received immediately prior
     bool          m_crt_sink;       // true=route to crt, false=to prt
     int           m_raw_cnt;        // raw input stream buffered until we have
     uint8         m_raw_buf[5];     // ... a complete runlength sequence
@@ -94,6 +127,19 @@ private:
     // instead of cluttering up the Ui code
     std::queue<uint8> m_kb_buff;
     std::shared_ptr<Timer> m_tx_tmr;  // model uart rate & delay
+
+    // crt receive buffer and flow control state
+    std::queue<uint8> m_crt_buff;
+    bool              m_crt_send_go;     // a <F8> crt-go flow byte is needed
+    bool              m_crt_send_stop;   // a <FA> crt-stop flow byte is needed
+    std::shared_ptr<Timer> m_crt_tmr;    // background crt-go timer
+    std::shared_ptr<Timer> m_selectp_tmr; // SELECT Pn timer
+
+    // prt receive buffer and flow control state
+    std::queue<uint8> m_prt_buff;
+    bool              m_prt_send_go;     // a <F9> prt-go flow byte is needed
+    bool              m_prt_send_stop;   // a <FB> prt-stop flow byte is needed
+    std::shared_ptr<Timer> m_prt_tmr;    // background prt-go timer
 
     // ---- inline functions ----
 

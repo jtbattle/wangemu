@@ -3,26 +3,7 @@ Emulator TODO list
 ============================================================================
 
 *) master list of priorities:
-   implement flow control from terminal to mxd
-      - Terminal.h  KB_BUFF_MAX must be made larger to match a real 2236.
-      - wait a second; I was confused. KB_BUFF_MAX is an outbound FIFO.
-        what needs to be modeled is an inbound fifo, which is entirely missing.
-      - when a FB Cx sequence (select P delay) is received, it must fire
-        a timer for the specified amount of time, preventing more character
-        processing until it expires.
-        In real life the fifo is also used when the terminal is decompressing
-        runs of bytes, but in the emulator those are handled instantly.
-      - add "crt stop" when it hits certain fullness thresholds
-        2536DWTerminalAndTerminalControllerProtocol.pdf, pdf page 3
-        it isn't clear to me how the accounting is done.  when the terminal
-        gets a compressed run, is the count before or after expansion?
-      - add auto "crt go" when it drops under 30 chars (see above pdf) or
-        when under threshold every 3 seconds
-      - verify SELECT P1..P9 have the right delay
-      - verify: do SELECT P9, blast enough text that it must flow control
-                then let the backlog clear and verify the right number of
-                chars made it to the display
-      - submit
+   clean up remaining nits on Terminal flow control processing
    clean up mxd script flow control; submit
    get rid of tied keyboard thing -- unnecessary generalization
    add mvp/vlsi cpu and memory options; submit

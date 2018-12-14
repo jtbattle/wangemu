@@ -41,7 +41,10 @@ Terminal::Terminal(std::shared_ptr<Scheduler> scheduler,
     m_io_addr(io_addr),
     m_term_num(term_num),
     m_init_tmr(nullptr),
-    m_tx_tmr(nullptr)
+    m_tx_tmr(nullptr),
+    m_selectp_tmr(nullptr),
+    m_crt_tmr(nullptr),
+    m_prt_tmr(nullptr)
 {
     m_disp.screen_type = screen_type;
     m_disp.chars_w  = (screen_type == UI_SCREEN_64x16)  ? 64 : 80;
@@ -62,15 +65,9 @@ Terminal::Terminal(std::shared_ptr<Scheduler> scheduler,
         );
 
         // A real 2336 sends the sequence E4 F8 about a second after
-        // it powers up (the second is to run self tests).  E4 is the
-        // BASIC atom code for INIT, but functionally I don't think it
-        // does anything.  The F8 is the "crt go" flow control byte.
-        // However, in a real system the CRT might be turned on before
-        // the 2200 CPU is, and so the MXD wouldn't see the init sequence.
-        // the 2336 sends an init sequence on reset.  wait a fraction of
-        // a second to give the 8080 time to wake up before sending it.
+        // it powers up (the second is to run self tests).
         m_init_tmr = m_scheduler->TimerCreate(
-                       TIMER_MS(500),
+                       TIMER_MS(700),
                        std::bind(&Terminal::SendInitSeq, this)
                      );
     }
@@ -84,6 +81,12 @@ Terminal::~Terminal()
     if (smart_term) {
         System2200::unregisterKb(m_io_addr, m_term_num);
     }
+
+    m_init_tmr    = nullptr;
+    m_tx_tmr      = nullptr;
+    m_crt_tmr     = nullptr;
+    m_prt_tmr     = nullptr;
+    m_selectp_tmr = nullptr;
 
     UI_displayDestroy(m_wndhnd);
     m_wndhnd = nullptr;
@@ -110,28 +113,16 @@ Terminal::reset(bool hard_reset)
     // will independently clear the screen even if the serial
     // line is disconnected.
     if (hard_reset || smart_term) {
-        // dumb/smart terminal state:
-        m_disp.curs_x     = 0;
-        m_disp.curs_y     = 0;
-        m_disp.curs_attr  = cursor_attr_t::CURSOR_ON;
-        m_disp.dirty      = true;  // must regenerate display
-        scr_clear();
-
-        // smart terminal state:
-        m_crt_sink   = true;
-        m_raw_cnt    = 0;
-        m_input_cnt  = 0;
-        for(auto &byte : m_raw_buf)   { byte = 0x00; }  // not strictly necessary
-        for(auto &byte : m_input_buf) { byte = 0x00; }  // not strictly necessary
-
+        // transmission path state
         m_tx_tmr = nullptr;
         m_kb_buff = {};
 
-        m_attrs      = char_attr_t::CHAR_ATTR_BRIGHT; // implicitly primary char set
-        m_attr_on    = false;
-        m_attr_temp  = false;
-        m_attr_under = false;
-        m_box_bottom = false;
+        // reset command stream immediate mode parsing
+        m_escape_seen = false;
+        m_crt_sink    = true;
+
+        reset_crt();
+        reset_prt();
     }
 
     // smart terminals echo the ID string to the CRT at power on
@@ -147,13 +138,61 @@ Terminal::reset(bool hard_reset)
 }
 
 
+// reset just the crt part of the terminal state
+void
+Terminal::reset_crt()
+{
+    // dumb/smart terminal state:
+    m_disp.curs_x    = 0;
+    m_disp.curs_y    = 0;
+    m_disp.curs_attr = cursor_attr_t::CURSOR_ON;
+    m_disp.dirty     = true;  // must regenerate display
+    scr_clear();
+
+    // smart terminal state:
+    m_raw_cnt    = 0;
+    m_input_cnt  = 0;
+    for(auto &byte : m_raw_buf)   { byte = 0x00; }  // not strictly necessary
+    for(auto &byte : m_input_buf) { byte = 0x00; }  // not strictly necessary
+
+    m_tx_tmr = nullptr;
+    m_kb_buff = {};
+
+    m_attrs      = char_attr_t::CHAR_ATTR_BRIGHT; // implicitly primary char set
+    m_attr_on    = false;
+    m_attr_temp  = false;
+    m_attr_under = false;
+    m_box_bottom = false;
+
+    // crt buffer and associated flow control
+    m_crt_buff      = {};
+    m_crt_send_go   = false;
+    m_crt_send_stop = false;
+    m_crt_tmr       = nullptr;
+    m_selectp_tmr   = nullptr;
+}
+
+
+// reset just the prt part of the terminal state
+void
+Terminal::reset_prt()
+{
+    m_prt_buff      = {};
+    m_prt_send_go   = false;
+    m_prt_send_stop = false;
+    m_prt_tmr       = nullptr;
+}
+
+
 // ----------------------------------------------------------------------------
 // terminal to mxd communication channel
 // ----------------------------------------------------------------------------
 
-// The 2336 sends an init sequence of E4 F8 on power up.
-// The emulator doesn't send E4 because it sometimes shows up as a
-// spurious "INIT" keyword. It isn't clear what the E4 is for.
+// The 2336 sends an init sequence of E4 F8 on power up.  The emulator
+// doesn't send E4 because it sometimes shows up as a spurious "INIT"
+// keyword. It isn't clear what the E4 is for.  The F8 is the "crt go"
+// flow control byte.  In a real system the CRT might be turned on before
+// the 2200 CPU is, and so the MXD wouldn't see the init sequence.
 void
 Terminal::SendInitSeq()
 {
@@ -222,17 +261,34 @@ Terminal::receiveKeystroke(int keycode)
 void
 Terminal::checkKbBuffer()
 {
-    if (m_kb_buff.empty() || m_tx_tmr) {
-        // nothing to do or serial channel is in use
+    if (m_tx_tmr) {
+        // serial channel is in use
         return;
     }
 
-    uint8 key = m_kb_buff.front();
-    m_kb_buff.pop();
+    if (m_kb_buff.empty() && !m_crt_send_go && !m_crt_send_stop) {
+        // nothing to do
+        return;
+    }
+
+    assert(!(m_crt_send_go && m_crt_send_stop));
+
+    // if a flow control byte is pending, it cuts to the head of the line
+    uint8 byte;
+    if (m_crt_send_go) {
+        byte = 0xF8;
+        m_crt_send_go = false;
+    } else if (m_crt_send_stop) {
+        byte = 0xFA;
+        m_crt_send_stop = false;
+    } else {
+        byte = m_kb_buff.front();
+        m_kb_buff.pop();
+    }
 
     m_tx_tmr = m_scheduler->TimerCreate(
                    serial_char_delay,
-                   std::bind(&Terminal::termToMxdCallback, this, key)
+                   std::bind(&Terminal::termToMxdCallback, this, byte)
                );
 }
 
@@ -342,101 +398,83 @@ Terminal::scr_scroll()
     }
 }
 
-
-// send a byte to the display controller.
-// for dumb terminals, there are a handful control codes which have
-// side effects, but most characters are simply poked into the current
-// cursor location and the cursor advances.
-//
-// But the 2236DE recognizes certain bytes as escapes which trigger
-// a command sequence or more complex behavior.  At the top level there
-// is the unpacking of compressed character sequence (run length encoded).
-
-// first level: FB-escape sequences (mostly char run decompression)
+// ----------------------------------------------------------------------------
+// host to terminal byte stream routing
+// ----------------------------------------------------------------------------
 // some of the escape sequence information was gleaned from this document:
 //     2536DWTerminalAndTerminalControllerProtocol.pdf
+//
+// For dumb terminals, the byte is simply sent on to the lowest level
+// character handling, which interprets single byte control codes (eg,
+// backspace, carriage return, home) and literal characters.
+//
+// The 2236DE has a multi-level command stream interpreter.  At the top
+// level, here, there are a few "immediate" escape sequences which are not
+// queued and are handled immediately.  All the other bytes are simply
+// routed to either the crt or prt receive FIFO.
+
 void
 Terminal::processChar(uint8 byte)
 {
-    auto handler = (m_crt_sink) ? std::mem_fn(&Terminal::processCrtChar2)
-                                : std::mem_fn(&Terminal::processPrtChar2);
-
-    //dbglog("Terminal::processChar(0x%02x), m_raw_cnt=%d\n", byte, m_raw_cnt);
     if (m_disp.screen_type != UI_SCREEN_2236DE) {
+        // dumb display: no fifo, no command parsing, and no delay
         processCrtChar3(byte);
         return;
     }
-    //wxLogMessage("processChar(0x%02x)", byte);
 
-    if ((m_raw_cnt == 0) && (byte == 0xFB)) {
-        // start a FB ... sequence
-        m_raw_buf[0] = 0xFB;
-        m_raw_cnt = 1;
+    //dbglog("Terminal::processChar(0x%02x), m_raw_cnt=%d\n", byte, m_raw_cnt);
+
+    auto handler = (m_crt_sink) ? std::mem_fn(&Terminal::crtCharFifo)
+                                : std::mem_fn(&Terminal::prtCharFifo);
+
+    // we potentially have to stack FB escapes in the case that an immediate
+    // sequence (eg, FB F0 = route to CRT) comes in the middle of, say,
+    // the compression sequence FB <FB F0> 68
+    if (byte == 0xFB) {
+        if (m_escape_seen) {
+            // two escapes in a row -- forward the first to the current sink
+            handler(this, static_cast<uint8>(0xFB));
+        }
+        m_escape_seen = true;
         return;
     }
-    if (m_raw_cnt == 0) {
-        // pass it through
+
+    if (!m_escape_seen) {
+        // not part of a possible immediate command: pass it through
         handler(this, byte);
         return;
     }
 
-    // keep accumulating command bytes
-    assert((0 <= m_raw_cnt) && (m_raw_cnt < sizeof(m_raw_buf)));
-    m_raw_buf[m_raw_cnt++] = byte;
+    // <FB> <something> has been received and has not yet been forwarded.
+    // Sequences FBF0, FBF1, FBF2, FBF6 are immediate, meaning they are not
+    // put in the input FIFO and take effect as soon as they are received.
+    switch (byte) {
 
-    // ------------ immediate commands ------------
-    // sequences FBF0, FBF1, FBF2, FBF6 are "immediate", meaning they
-    // are not put in the input FIFO and take effect as soon as they are
-    // received.  According to the documentation,
-    //
-    //     Immediate commands may even be transmitted in the middle of a
-    //     non-immediate command sequence:
-    //         <escape><count> (normally the repeat char arrives next)
-    //         <escape><switch to printer><printer data...><escape><switch to crt>
-    //         <repeat character>
-    //
-    // Because of this, we have to look at the last two bytes.
-
-    if (m_raw_buf[m_raw_cnt-2] == 0xFB) {
-
-        // immediate command: route to crt (FB F0)
-        if (m_raw_buf[m_raw_cnt-1] == 0xF0) {
+        case 0xF0: // route to crt (FB F0)
             m_crt_sink = true;
-            m_raw_cnt -= 2;
-            return;
-        }
+            break;
 
-        // immediate command: route to prt (FB F1)
-        if (m_raw_buf[m_raw_cnt-1] == 0xF1) {
+        case 0xF1: // route to prt (FB F1)
             m_crt_sink = false;
-            m_raw_cnt -= 2;
-            return;
-        }
+            break;
 
-        // immediate command: restart terminal (FB F2)
-        // a real 2336 sends E4 (??) then F8 (crt go flow control)
-        // then F8 every three seconds while not throttled.
-        if (m_raw_buf[m_raw_cnt-1] == 0xF2) {
-            reset(false);
+        case 0xF2: // restart terminal (FB F2)
+            reset(false);  // soft reset
+            // a real 2336 sends E4 (??) then F8 (crt go flow control)
+            // then F8 every three seconds while not throttled.
 #if 0
             // if I include this, the emulator thinks it got the INIT atom (E4)
             System2200::kb_keystroke(m_io_addr, m_term_num, 0xE4);
 #endif
             System2200::kb_keystroke(m_io_addr, m_term_num, 0xF8);
             // FIXME: then F8 every 3 seconds if not throttled
-            return;
-        }
+            break;
 
-        // immediate command: reset crt (FB F6)
-        // a real 2336 sends E9 (crt stop flow control),
-        // then F8 (crt go flow control), then another F8, then E4 (??),
-        // then F8 every three seconds while not throttled.
-        //
-        // Fasstcom Terminal Spec v1.0.pdf, pdf page 22 says
-        // ... clear terminal data ONLY from receive buffer ...
-        // TODO: if true, I'm not doing that, as reset() wipes everything.
-        if (m_raw_buf[m_raw_cnt-1] == 0xF6) {
-            reset(false);
+        case 0xF6: // reset crt (FB F6)
+            reset_crt();
+            // a real 2336 sends E9 (crt stop flow control),
+            // then F8 (crt go flow control), then another F8, then E4 (??),
+            // then F8 every three seconds while not throttled.
             System2200::kb_keystroke(m_io_addr, m_term_num, 0xF9);
             System2200::kb_keystroke(m_io_addr, m_term_num, 0xF8);
             System2200::kb_keystroke(m_io_addr, m_term_num, 0xF8);
@@ -445,18 +483,98 @@ Terminal::processChar(uint8 byte)
             System2200::kb_keystroke(m_io_addr, m_term_num, 0xE4);
 #endif
             // FIXME: then F8 every 3 seconds if not throttled
-            return;
-        }
+            break;
+
+        default:
+            // pass through to current sink the pending escape and current char
+            handler(this, static_cast<uint8>(0xFB));
+            handler(this, byte);
+            break;
     }
 
-    // ------------ other sequences ------------
+    m_escape_seen = false;
+}
+
+// ----------------------------------------------------------------------------
+// crt byte stream parsing
+// ----------------------------------------------------------------------------
+
+// input queue for CRT byte stream
+void
+Terminal::crtCharFifo(uint8 byte)
+{
+    int size = m_crt_buff.size();
+    if (size == CRT_BUFF_MAX) {
+        UI_Warn("Terminal 0x%02x, term#%d had crt fifo overflow",
+                m_io_addr, m_term_num+1);
+        return;  // we dropped the new one
+    }
+
+    m_crt_buff.push(byte);
+    size++;
+    if (size == 96 || size == 113) {
+        m_crt_send_stop = true;
+        m_crt_send_go   = false;
+        checkKbBuffer();
+    }
+
+    // process the new traffic
+    checkCrtFifo();
+}
+
+
+// drain the crt byte fifo until it is empty or we hit a delay
+void
+Terminal::checkCrtFifo()
+{
+    int size = m_crt_buff.size();
+    while (size > 0) {
+        if (m_selectp_tmr) {
+            return;  // waiting on SELECT Pn timeout
+        }
+        uint8 byte = m_crt_buff.front();
+        m_crt_buff.pop();
+        size--;
+        if (size == 30) {
+// FIXME: should send go only if crt-stop is in effect
+// have enum: FLOW_START, FLOW_STOPPED, FLOW_GOING, FLOW_GO_PEND, FLOW_STOP_PEND
+            // just drained below the hysteresis threshold
+            m_crt_send_go   = true;
+            m_crt_send_stop = false;
+            checkKbBuffer();
+        }
+        processCrtChar1(byte);
+    }
+}
+
+
+// decode escape sequences, decompress runs
+void
+Terminal::processCrtChar1(uint8 byte)
+{
+    if ((m_raw_cnt == 0) && (byte == 0xFB)) {
+        // start a FB ... sequence
+        m_raw_buf[0] = 0xFB;
+        m_raw_cnt = 1;
+        return;
+    }
+
+    if (m_raw_cnt == 0) {
+        // pass it through
+        processCrtChar2(byte);
+        return;
+    }
+
+    // keep accumulating command bytes
+    assert((0 <= m_raw_cnt) && (m_raw_cnt < sizeof(m_raw_buf)));
+    m_raw_buf[m_raw_cnt++] = byte;
 
     // it is a character run sequence: FB nn cc
     // where nn is the repetition count, and cc is the character
     if (m_raw_cnt == 3) {
         //dbglog("Decompress run: cnt=%d, chr=0x%02x\n", m_raw_buf[1], m_raw_buf[2]);
         for(int i=0; i<m_raw_buf[1]; i++) {
-            handler(this, m_raw_buf[2]);
+            processCrtChar2(m_raw_buf[2]);
         }
         m_raw_cnt = 0;
         return;
@@ -473,8 +591,8 @@ Terminal::processChar(uint8 byte)
     // FB nn, where nn >= 0x60 represents (nn-0x60) spaces in a row
     if ((0x60 <= m_raw_buf[1]) && (m_raw_buf[1] <= 0xBF)) {
         //dbglog("Decompress spaces: cnt=%d\n", m_raw_buf[1]-0x60);
-        for(int i=0; i<m_raw_buf[1]-0x60; i++) {
-            handler(this, static_cast<uint8>(0x20));
+        for(int i=0x60; i<m_raw_buf[1]; i++) {
+            processCrtChar2(static_cast<uint8>(0x20));
         }
         m_raw_cnt = 0;
         return;
@@ -483,10 +601,16 @@ Terminal::processChar(uint8 byte)
     // check for delay sequence: FB Cn
     if ((0xC1 <= m_raw_buf[1]) && (m_raw_buf[1] <= 0xC9)) {
         int delay_ms = 1000 * ((int)m_raw_buf[1] - 0xC0) / 6;
-        // FIXME: doing this requires creating a flow control mechanism
-        // to block further input, and creating a timer to expire N/6 seconds
+        assert(m_selectp_tmr == nullptr);
+        if (delay_ms > 0) {
+//UI_Info("Got FB Cn, delay=%d ms", delay_ms);
+            m_selectp_tmr = m_scheduler->TimerCreate(
+                                   TIMER_MS(delay_ms),
+                                   std::bind(&Terminal::selectPCallback, this)
+                                 );
+            assert(m_selectp_tmr != nullptr);
+        }
         //dbglog("Delay sequence: cnt=%d\n", m_raw_buf[1]);
-        delay_ms = delay_ms;  // defeat linter
         m_raw_cnt = 0;
         return;
     }
@@ -494,7 +618,7 @@ Terminal::processChar(uint8 byte)
     // check for literal 0xFB byte: FB D0
     if (m_raw_buf[1] == 0xD0) {
         //dbglog("Literal 0xFB byte\n");
-        handler(this, static_cast<uint8>(0xFB));
+        processCrtChar2(static_cast<uint8>(0xFB));
         m_raw_cnt = 0;
         return;
     }
@@ -524,8 +648,8 @@ Terminal::processChar(uint8 byte)
     // TODO: what should happen with illegal sequences?
     // for now, I'm passing them through
     //dbglog("Unexpected sequence: 0x%02x 0x%02x\n", m_raw_buf[0], m_raw_buf[1]);
-    handler(this, m_raw_buf[0]);
-    handler(this, m_raw_buf[1]);
+    processCrtChar2(m_raw_buf[0]);
+    processCrtChar2(m_raw_buf[1]);
     m_raw_cnt = 0;
 }
 
@@ -754,7 +878,7 @@ Terminal::processCrtChar2(uint8 byte)
         // logging real 2336, it clears the CRT
         // but doesn't spew out any return code
         m_input_cnt = 0;
-        reset(false);
+        reset_crt();
         return;
     }
 
@@ -865,16 +989,39 @@ Terminal::processCrtChar3(uint8 byte)
 }
 
 
-// second level prt command stream interpretation, for 2236DE type
+// callback after SELECT Pn timer expires
 void
-Terminal::processPrtChar2(uint8 byte)
+Terminal::selectPCallback()
+{
+    m_selectp_tmr = nullptr;
+    checkCrtFifo();
+}
+
+// ----------------------------------------------------------------------------
+// printer receive parsing
+// ----------------------------------------------------------------------------
+
+// input queue for PRT byte stream
+void
+Terminal::prtCharFifo(uint8 byte)
 {
 #if 0
-    // FIXME: connect a printer
-    UI_Info("term %d printer received 0x%02x", m_term_num, byte);
+    // FIXME: not modeling remote printer yet
+    int size = m_prt_buff.size();
+    if (size == PRT_BUFF_MAX) {
+        UI_Warn("Terminal 0x%02x, term#%d had printer fifo overflow",
+                m_io_addr, m_term_num+1);
+        return;  // we dropped the new one
+    }
+
+    m_prt_buff.push_back(byte);
+    size++;
+    if (size == 132 || size == 149) {
+        m_prt_send_stop = true;
+    }
 #else
-    m_term_num = m_term_num;
     byte = byte;
+    return;
 #endif
 }
 
