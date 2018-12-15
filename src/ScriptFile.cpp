@@ -71,7 +71,7 @@ ScriptFile::~ScriptFile()
 // sure the file exists and is readable.  returns false on error.
 
 bool
-ScriptFile::openedOk() const
+ScriptFile::openedOk() const noexcept
 {
     return m_opened_ok;
 }
@@ -80,7 +80,7 @@ ScriptFile::openedOk() const
 // indicate if all the characters int the file have been returned
 
 bool
-ScriptFile::isEof() const
+ScriptFile::isEof() const noexcept
 {
     return m_eof;
 }
@@ -149,7 +149,7 @@ ScriptFile::m_prepare_next_line()
 // helper functions
 
 bool
-ScriptFile::ishexdigit(char ch) const
+ScriptFile::ishexdigit(char ch) const noexcept
 {
     return (ch >= '0' && ch <= '9') ||
            (ch >= 'A' && ch <= 'F') ||
@@ -158,7 +158,7 @@ ScriptFile::ishexdigit(char ch) const
 
 
 int
-ScriptFile::hexval(char ch) const
+ScriptFile::hexval(char ch) const noexcept
 {
     if (ch >= '0' && ch <= '9') {
         return ch - '0';

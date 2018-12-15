@@ -134,13 +134,13 @@ Wvd::close()
 // -------------------------------------------------------------------------
 
 bool
-Wvd::isModified() const
+Wvd::isModified() const noexcept
 {
     return m_metaModified;
 }
 
 void
-Wvd::setModified(bool modified)
+Wvd::setModified(bool modified) noexcept
 {
     m_metaModified = modified;
 }

@@ -705,7 +705,7 @@ Cpu2200t::decimal_add(uint4 a_op, uint4 b_op, int ci) const noexcept
 //  active low).
 // cy=1 effectively means no borrow; cy=0 means borrow
 uint8
-Cpu2200t::decimal_sub(uint4 a_op, uint4 b_op, int ci) const
+Cpu2200t::decimal_sub(uint4 a_op, uint4 b_op, int ci) const noexcept
 {
     #ifdef _DEBUG
     // these are known to fire (eg, running diags), yet something

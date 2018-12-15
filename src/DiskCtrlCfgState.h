@@ -14,8 +14,8 @@ class DiskCtrlCfgState : public CardCfgState
 {
 public:
     DiskCtrlCfgState();
-    DiskCtrlCfgState(const DiskCtrlCfgState &obj);              // copy
-    DiskCtrlCfgState &operator=(const DiskCtrlCfgState &rhs);   // assign
+    DiskCtrlCfgState(const DiskCtrlCfgState &obj) noexcept;             // copy
+    DiskCtrlCfgState &operator=(const DiskCtrlCfgState &rhs) noexcept;  // assign
 
     // ------------ common CardCfgState interface ------------
     // See CardCfgState.h for the use of these functions.
@@ -26,14 +26,14 @@ public:
     bool operator==(const CardCfgState &rhs) const override;
     bool operator!=(const CardCfgState &rhs) const override;
     std::shared_ptr<CardCfgState> clone() const override;
-    bool configOk(bool warn) const override;
+    bool configOk(bool warn) const noexcept override;
     bool needsReboot(const CardCfgState &other) const override;
 
     // ------------ unique to DiskCtrlCfgState ------------
 
     // set/get the number of disk drives associated with the controller
-    void setNumDrives(int count);
-    int  getNumDrives() const;
+    void setNumDrives(int count) noexcept;
+    int  getNumDrives() const noexcept;
 
     // set/get the disk controller intelligence mode
     enum disk_ctrl_intelligence_t {
@@ -41,13 +41,13 @@ public:
         DISK_CTRL_INTELLIGENT,       // intelligent disk controller
         DISK_CTRL_AUTO               // it depends on attached media
     };
-    void setIntelligence(disk_ctrl_intelligence_t intelligence);
-    disk_ctrl_intelligence_t getIntelligence() const;
+    void setIntelligence(disk_ctrl_intelligence_t intelligence) noexcept;
+    disk_ctrl_intelligence_t getIntelligence() const noexcept;
 
     // warn the user when small media is inserted into an intelligent controller,
     // or when large media is inserted into a dumb controller.
-    void setWarnMismatch(bool warn);
-    bool getWarnMismatch() const;
+    void setWarnMismatch(bool warn) noexcept;
+    bool getWarnMismatch() const noexcept;
 
 private:
     // just for debugging -- make sure we don't attempt to use such a config

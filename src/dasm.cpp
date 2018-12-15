@@ -64,7 +64,7 @@ dasm_hex(char *buf, int value, int digits) noexcept
 // stuff in the target address, in hex.  however, if the address
 // is very near the current address, list it as relative.
 static int
-dasm_addr(char *buf, int cur_pc, int new_pc)
+dasm_addr(char *buf, int cur_pc, int new_pc) noexcept
 {
     assert(buf != nullptr);
 #if DASM_REL_BRANCH
@@ -126,7 +126,7 @@ dasm_a_field(char *buf, uint32 uop, bool &adj) noexcept
 // disassemble the I input bus field
 // return the number of bytes printed out
 static int
-dasm_i_field(char *buf, uint32 uop)
+dasm_i_field(char *buf, uint32 uop) noexcept
 {
     assert(buf != nullptr);
     const int field = ((uop >> 4) & 0xF);
@@ -322,7 +322,7 @@ dasm_ST3_bitfield(char *buf, int *len, uint4 bits) noexcept
 // return the number of bytes printed out
 // "illegal" is an output parameter.
 static int
-dasm_type1(char *buf, const char *mnemonic, bool &illegal, uint32 uop)
+dasm_type1(char *buf, const char *mnemonic, bool &illegal, uint32 uop) noexcept
 {
     assert(buf != nullptr);
     assert(mnemonic != nullptr);
@@ -485,7 +485,7 @@ dasm_type4(char *buf, const char *mnemonic, uint32 ic, uint32 uop)
 // return the number of bytes printed out
 // "illegal" is an output parameter.
 static int
-dasm_type5(char *buf, const char *mnemonic, bool &illegal, uint32 uop)
+dasm_type5(char *buf, const char *mnemonic, bool &illegal, uint32 uop) noexcept
 {
     assert(buf != nullptr);
     assert(mnemonic != nullptr);
@@ -508,7 +508,7 @@ dasm_type5(char *buf, const char *mnemonic, bool &illegal, uint32 uop)
 // return the number of bytes printed out
 // "illegal" is an output parameter.
 static int
-dasm_type6(char *buf, const char *mnemonic, bool &illegal, uint32 uop)
+dasm_type6(char *buf, const char *mnemonic, bool &illegal, uint32 uop) noexcept
 {
     assert(buf != nullptr);
     assert(mnemonic != nullptr);

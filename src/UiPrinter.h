@@ -21,39 +21,39 @@ public:
     void setFontSize(const int size);
 
     void setGreenbar(bool greenbar=true);
-    bool getGreenbar() const;
+    bool getGreenbar() const noexcept;
 
-    void setMargins(int  left, int  right, int  top, int  bottom);
-    void getMargins(int &left, int &right, int &top, int &bottom) const;
+    void setMargins(int  left, int  right, int  top, int  bottom) noexcept;
+    void getMargins(int &left, int &right, int &top, int &bottom) const noexcept;
 
-    void               setOrientation(wxPrintOrientation orientation);
-    wxPrintOrientation getOrientation() const;
+    void               setOrientation(wxPrintOrientation orientation) noexcept;
+    wxPrintOrientation getOrientation() const noexcept;
 
-    void        setPaperId(wxPaperSize paperid);
-    wxPaperSize getPaperId() const;
+    void        setPaperId(wxPaperSize paperid) noexcept;
+    wxPaperSize getPaperId() const noexcept;
 
     void   setPaperName(const std::string &papername);
     std::string getPaperName() const;
 
-    void       setBin(wxPrintBin paperbin);
-    wxPrintBin getBin() const;
+    void       setBin(wxPrintBin paperbin) noexcept;
+    wxPrintBin getBin() const noexcept;
 
     void        setRealPrinterName(const std::string &name);
     std::string getRealPrinterName() const;
 
-    void setPageAttributes(int  linelength, int  pagelength);
-    void getPageAttributes(int &linelength, int &pagelength) const;
+    void setPageAttributes(int  linelength, int  pagelength) noexcept;
+    void getPageAttributes(int &linelength, int &pagelength) const noexcept;
 
     void getCellAttributes(int &cell_w, int &cell_h) const;
 
-    void setAutoshow(bool b);
-    bool getAutoshow() const;
+    void setAutoshow(bool b) noexcept;
+    bool getAutoshow() const noexcept;
 
-    void setPrintasgo(bool b);
-    bool getPrintasgo() const;
+    void setPrintasgo(bool b) noexcept;
+    bool getPrintasgo() const noexcept;
 
-    void setPortdirect(bool b);
-    bool getPortdirect() const;
+    void setPortdirect(bool b) noexcept;
+    bool getPortdirect() const noexcept;
 
     void        setPortstring(const std::string &name);
     std::string getPortstring() const;
@@ -75,10 +75,10 @@ public:
     void printClear();
 
     // return true if the print stream is empty
-    bool isEmpty() const;
+    bool isEmpty() const noexcept;
 
     // return the number of pages in the current copy of the printstream
-    int numberOfPages() const;
+    int numberOfPages() const noexcept;
 
     // create a print page image
     void generatePrintPage(wxDC *dc, int pagenum, float vertAdjust);
@@ -89,13 +89,13 @@ public:
     // the print dialog is modeless, so a copy of the stream needs to be made
     // and used for the print dialog. These two functions are used to manage the copy
     void createStreamCopy();
-    void destroyStreamCopy();
+    void destroyStreamCopy() noexcept;
 
 private:
     // ---- event handlers ----
     void OnPaint(wxPaintEvent &event);
     void OnSize(wxSizeEvent &event);
-    void OnEraseBackground(wxEraseEvent &event);
+    void OnEraseBackground(wxEraseEvent &event) noexcept;
     void OnTimer(wxTimerEvent &event);
 
     // ---- utility functions ----

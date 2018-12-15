@@ -120,7 +120,7 @@ dasm_hex(char *buf, int value, int digits) noexcept
 // stuff in the target address, in hex.  however, if the address
 // is very near the current address, list it as relative.
 static int
-dasm_addr(char *buf, int cur_pc, int new_pc)
+dasm_addr(char *buf, int cur_pc, int new_pc) noexcept
 {
     assert(buf != nullptr);
 #if DASM_REL_BRANCH
@@ -203,7 +203,7 @@ dasm_c_field(char *buf, bool &illegal, uint32 uop) noexcept
 // disassemble the I input bus field
 // return the number of bytes printed out
 static int
-dasm_i4_field(char *buf, uint32 uop)
+dasm_i4_field(char *buf, uint32 uop) noexcept
 {
     assert(buf != nullptr);
     const int field = (uop >> 4) & 0xF;
@@ -215,7 +215,7 @@ dasm_i4_field(char *buf, uint32 uop)
 // disassemble the I input bus field
 // return the number of bytes printed out
 static int
-dasm_i8_field(char *buf, uint32 uop)
+dasm_i8_field(char *buf, uint32 uop) noexcept
 {
     assert(buf != nullptr);
     const int field = IMM8(uop);
@@ -302,7 +302,7 @@ dasm_cy_field(char *buf, bool &illegal, uint32 uop) noexcept
 // return the number of bytes printed out.
 // "illegal" is an output parameter.
 static int
-dasm_type1(char *buf, const char *mnemonic, bool &illegal, uint32 uop)
+dasm_type1(char *buf, const char *mnemonic, bool &illegal, uint32 uop) noexcept
 {
     assert(buf != nullptr);
     assert(mnemonic != nullptr);
@@ -334,7 +334,7 @@ dasm_type1(char *buf, const char *mnemonic, bool &illegal, uint32 uop)
 // return the number of bytes printed out.
 // "illegal" is an output parameter.
 static int
-dasm_type1a(char *buf, const char *mnemonic, bool &illegal, uint32 uop)
+dasm_type1a(char *buf, const char *mnemonic, bool &illegal, uint32 uop) noexcept
 {
     assert(buf != nullptr);
     assert(mnemonic != nullptr);
@@ -364,7 +364,7 @@ dasm_type1a(char *buf, const char *mnemonic, bool &illegal, uint32 uop)
 // return the number of bytes printed out.
 // "illegal" is an output parameter.
 static int
-dasm_typeSHFT(char *buf, const char *mnemonic, bool &illegal, uint32 uop)
+dasm_typeSHFT(char *buf, const char *mnemonic, bool &illegal, uint32 uop) noexcept
 {
     assert(buf != nullptr);
     assert(mnemonic != nullptr);
@@ -393,7 +393,7 @@ dasm_typeSHFT(char *buf, const char *mnemonic, bool &illegal, uint32 uop)
 // return the number of bytes printed out.
 // "illegal" is an output parameter.
 static int
-dasm_typeM(char *buf, const char *mnemonic, bool &illegal, uint32 uop)
+dasm_typeM(char *buf, const char *mnemonic, bool &illegal, uint32 uop) noexcept
 {
     assert(buf != nullptr);
     assert(mnemonic != nullptr);
@@ -467,7 +467,7 @@ dasm_type2a(char *buf, const char *mnemonic, bool &illegal, uint32 uop)
 // return the number of bytes printed out.
 // "illegal" is an output parameter.
 static int
-dasm_type2b(char *buf, const char *mnemonic, bool &illegal, uint32 uop)
+dasm_type2b(char *buf, const char *mnemonic, bool &illegal, uint32 uop) noexcept
 {
     assert(buf != nullptr);
     assert(mnemonic != nullptr);
@@ -614,7 +614,7 @@ dasm_type4(char *buf, const char *mnemonic, uint32 ic, uint32 uop)
 // disassemble TAP instructions
 // return the number of bytes printed out
 static int
-dasm_type5(char *buf, const char *mnemonic, uint32 uop)
+dasm_type5(char *buf, const char *mnemonic, uint32 uop) noexcept
 {
     assert(buf != nullptr);
     assert(mnemonic != nullptr);
@@ -635,7 +635,7 @@ dasm_type5(char *buf, const char *mnemonic, uint32 uop)
 // disassemble TPA/XPA/TPS instructions
 // return the number of bytes printed out
 static int
-dasm_type6(char *buf, const char *mnemonic, uint32 uop)
+dasm_type6(char *buf, const char *mnemonic, uint32 uop) noexcept
 {
     assert(buf != nullptr);
     assert(mnemonic != nullptr);
@@ -658,7 +658,7 @@ dasm_type6(char *buf, const char *mnemonic, uint32 uop)
 // disassemble SR/SR,RCM/SR,WCM instructions
 // return the number of bytes printed out
 static int
-dasm_type7(char *buf, const char *mnemonic, uint32 uop)
+dasm_type7(char *buf, const char *mnemonic, uint32 uop) noexcept
 {
     assert(buf != nullptr);
     assert(mnemonic != nullptr);

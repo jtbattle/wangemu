@@ -34,7 +34,7 @@ public:
     bool getKeywordMode() const;
 
     // indicate if this is device 005 or not
-    bool isPrimaryCrt() const;
+    bool isPrimaryCrt() const noexcept;
 
     // the io address of the emulated keyboard associated with this window
     int getTiedAddr() const noexcept;
@@ -70,11 +70,11 @@ public:
     // values range from 0 to 100
     void setDisplayContrast(int n);
     void setDisplayBrightness(int n);
-    int  getDisplayContrast() const;
-    int  getDisplayBrightness() const;
+    int  getDisplayContrast() const noexcept;
+    int  getDisplayBrightness() const noexcept;
 
-    bool getTextBlinkPhase() const;
-    bool getCursorBlinkPhase() const;
+    bool getTextBlinkPhase() const noexcept;
+    bool getCursorBlinkPhase() const noexcept;
 
     // mechanics of carrying out format for a given filename
     // must be public so statusbar can use it

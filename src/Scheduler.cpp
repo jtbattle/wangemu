@@ -147,7 +147,7 @@ Scheduler::TimerCreate(int64 ns, const sched_callback_t &fcn)
 }
 
 int64
-Scheduler::FirstEvent()
+Scheduler::FirstEvent() noexcept
 {
     int64 rv = MAX_TIME;
     for(auto &t : m_timer) {

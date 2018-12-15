@@ -135,7 +135,7 @@ IoCardTermMux::IoCardTermMux(std::shared_ptr<Scheduler> scheduler,
 
 // perform on instruction and return the number of ns of elapsed time.
 int
-IoCardTermMux::execOneOp()
+IoCardTermMux::execOneOp() noexcept
 {
     if (m_interrupt_pending) {
         // vector to 0x0038 (rst 7)
@@ -309,7 +309,7 @@ IoCardTermMux::CPB(bool busy)
 
 // update the board's !ready/busy status (if selected)
 void
-IoCardTermMux::update_rbi()
+IoCardTermMux::update_rbi() noexcept
 {
     // don't drive !rbi if the board isn't selected
     if (m_io_offset == 0 || !m_selected) {
@@ -323,7 +323,7 @@ IoCardTermMux::update_rbi()
 }
 
 void
-IoCardTermMux::update_interrupt()
+IoCardTermMux::update_interrupt() noexcept
 {
     m_interrupt_pending = m_terms[0].rx_ready
                        || m_terms[1].rx_ready
@@ -389,7 +389,7 @@ IoCardTermMux::mxdToTermCallback(int term_num, int byte)
 // ============================================================================
 
 int
-IoCardTermMux::i8080_rd_func(int addr, void *user_data)
+IoCardTermMux::i8080_rd_func(int addr, void *user_data) noexcept
 {
     if (addr < 0x1000) {
         // read 4K eprom
@@ -408,7 +408,7 @@ IoCardTermMux::i8080_rd_func(int addr, void *user_data)
 }
 
 void
-IoCardTermMux::i8080_wr_func(int addr, int byte, void *user_data)
+IoCardTermMux::i8080_wr_func(int addr, int byte, void *user_data) noexcept
 {
     assert(byte == (byte & 0xff));
 

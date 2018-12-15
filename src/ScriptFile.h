@@ -31,10 +31,10 @@ public:
 
     // after opening the file, this function should be checked to make
     // sure the file exists and is readable.  returns false on error.
-    bool openedOk() const;
+    bool openedOk() const noexcept;
 
     // indicate if all the characters int the file have been returned
-    bool isEof() const;
+    bool isEof() const noexcept;
 
     // return a string containing the file and line we are about to read.
     //    "somescript.txt:17"
@@ -69,8 +69,8 @@ private:
     int             m_cur_char;     // which character to return next
 
     // helpers
-    bool ishexdigit(char ch) const;
-    int  hexval(char ch) const;
+    bool ishexdigit(char ch) const noexcept;
+    int  hexval(char ch) const noexcept;
 };
 
 #endif // ifdef _INCLUDE_SCRIPT_H_

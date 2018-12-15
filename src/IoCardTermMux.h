@@ -45,19 +45,19 @@ private:
     std::vector<int> getBaseAddresses() const override;
 
     // i8080 hal interface
-    static int  i8080_rd_func(int addr, void *user_data);
-    static void i8080_wr_func(int addr, int byte, void *user_data);
+    static int  i8080_rd_func(int addr, void *user_data) noexcept;
+    static void i8080_wr_func(int addr, int byte, void *user_data) noexcept;
     static int  i8080_in_func(int addr, void *user_data);
     static void i8080_out_func(int addr, int byte, void *user_data);
 
     // perform one i8080 instruction
-    int execOneOp();
+    int execOneOp() noexcept;
 
     // update the board's !ready/busy status (if selected)
-    void update_rbi();
+    void update_rbi() noexcept;
 
     // raise an interrupt if any uart has an rx char ready
-    void update_interrupt();
+    void update_interrupt() noexcept;
 
     void checkTxBuffer(int term_num);
     void mxdToTermCallback(int term_num, int byte);

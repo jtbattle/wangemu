@@ -69,8 +69,8 @@ public:
     void close();
 
     // metadata setters/getters
-    bool isModified() const;
-    void setModified(bool modified=true);
+    bool isModified() const noexcept;
+    void setModified(bool modified=true) noexcept;
 
     std::string getPath() const;
     void setPath(const std::string &filename);

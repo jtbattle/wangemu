@@ -308,7 +308,7 @@ CrtFrame::~CrtFrame()
 
 // indicate if this is device 005 or not
 bool
-CrtFrame::isPrimaryCrt() const
+CrtFrame::isPrimaryCrt() const noexcept
 {
     return m_primary_crt;
 }
@@ -909,13 +909,13 @@ CrtFrame::setSimSeconds(int secs, float relative_speed)
 //   10:  norm     on
 //   11:  bright   off
 bool
-CrtFrame::getTextBlinkPhase() const
+CrtFrame::getTextBlinkPhase() const noexcept
 {
     return (m_blink_phase & 1) == 1;
 }
 
 bool
-CrtFrame::getCursorBlinkPhase() const
+CrtFrame::getCursorBlinkPhase() const noexcept
 {
     // I believe the 2236 had a 50% duty cycle,
     // but the 2336 definitely has a 75% duty cycle
@@ -1265,7 +1265,7 @@ CrtFrame::OnPrinter(wxCommandEvent &event)
     assert(inst != nullptr);
 
     // get the printer controller card handle
-    IoCardPrinter *card = dynamic_cast<IoCardPrinter*>(inst);
+    const IoCardPrinter *card = dynamic_cast<IoCardPrinter*>(inst);
     assert(card != nullptr);
     PrinterFrame *prtwnd = card->getGuiPtr();
     assert(prtwnd != nullptr);
@@ -1293,7 +1293,7 @@ CrtFrame::OnPrintAndClear(wxCommandEvent& WXUNUSED(event))
             // map device I/O address to card handle
             IoCard *inst = System2200::getInstFromIoAddr(io_addr);
             assert(inst != nullptr);
-            IoCardPrinter *card = dynamic_cast<IoCardPrinter*>(inst);
+            const IoCardPrinter *card = dynamic_cast<IoCardPrinter*>(inst);
             assert(card != nullptr);
 
             // fetch associated gui window pointer and use it
@@ -1414,7 +1414,7 @@ CrtFrame::setDisplayContrast(int n)
 }
 
 int
-CrtFrame::getDisplayContrast() const
+CrtFrame::getDisplayContrast() const noexcept
 {
     return m_crt->getDisplayContrast();
 }
@@ -1426,7 +1426,7 @@ CrtFrame::setDisplayBrightness(int n)
 }
 
 int
-CrtFrame::getDisplayBrightness() const
+CrtFrame::getDisplayBrightness() const noexcept
 {
     return m_crt->getDisplayBrightness();
 }

@@ -27,7 +27,7 @@ public:
     void  CPB(bool busy) override;
 
     // give access to associated gui window
-    PrinterFrame *getGuiPtr() const;
+    PrinterFrame *getGuiPtr() const noexcept;
 
 private:
     // ---- card properties ----

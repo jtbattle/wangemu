@@ -143,7 +143,7 @@ IoCardPrinter::CPB(bool busy)
 // ---- accessor of opaque gui pointer ----
 
 PrinterFrame *
-IoCardPrinter::getGuiPtr() const
+IoCardPrinter::getGuiPtr() const noexcept
 {
     return m_wndhnd;
 }

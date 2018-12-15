@@ -286,7 +286,7 @@ Crt::OnLeftDClick(wxMouseEvent &event)
     // first char of row
     char *p = reinterpret_cast<char *>(&m_crt_state->display[cell_y * m_crt_state->chars_w]);
     // one past final char of row
-    char * const e = (p + m_crt_state->chars_w);
+    const char *e = (p + m_crt_state->chars_w);
 
     // scan entire line looking for first appearance of one of these forms.
     // Wang BASIC:
@@ -310,12 +310,12 @@ Crt::OnLeftDClick(wxMouseEvent &event)
         }
 
         // make sure there is at least one digit
-        if (!isdigit(*pp)) {
+        if (!isdigit(static_cast<unsigned char>(*pp))) {
             continue;
         }
 
         // grab the number
-        while ((pp < e) && isdigit(*pp)) {
+        while ((pp < e) && isdigit(static_cast<unsigned char>(*pp))) {
             errcode += *pp++;
         }
 

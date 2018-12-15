@@ -21,7 +21,7 @@ DiskCtrlCfgState::DiskCtrlCfgState() :
 
 // assignment
 DiskCtrlCfgState&
-DiskCtrlCfgState::operator=(const DiskCtrlCfgState &rhs)
+DiskCtrlCfgState::operator=(const DiskCtrlCfgState &rhs) noexcept
 {
     // don't copy something that hasn't been initialized
     assert(rhs.m_initialized);
@@ -39,7 +39,7 @@ DiskCtrlCfgState::operator=(const DiskCtrlCfgState &rhs)
 
 
 // copy constructor
-DiskCtrlCfgState::DiskCtrlCfgState(const DiskCtrlCfgState &obj)
+DiskCtrlCfgState::DiskCtrlCfgState(const DiskCtrlCfgState &obj) noexcept
     : CardCfgState()  // good hygiene, although base class is empty
 {
     assert(obj.m_initialized);
@@ -132,7 +132,7 @@ DiskCtrlCfgState::saveIni(const std::string &subgroup) const
 
 
 void
-DiskCtrlCfgState::setNumDrives(int count)
+DiskCtrlCfgState::setNumDrives(int count) noexcept
 {
     assert(count >= 1 && count <= 4);
     m_num_drives = count;
@@ -140,7 +140,7 @@ DiskCtrlCfgState::setNumDrives(int count)
 }
 
 void
-DiskCtrlCfgState::setIntelligence(disk_ctrl_intelligence_t intelligence)
+DiskCtrlCfgState::setIntelligence(disk_ctrl_intelligence_t intelligence) noexcept
 {
     assert( intelligence == DISK_CTRL_DUMB        ||
             intelligence == DISK_CTRL_INTELLIGENT ||
@@ -150,23 +150,29 @@ DiskCtrlCfgState::setIntelligence(disk_ctrl_intelligence_t intelligence)
 }
 
 void
-DiskCtrlCfgState::setWarnMismatch(bool warn)
+DiskCtrlCfgState::setWarnMismatch(bool warn) noexcept
 {
     m_warn_mismatch = warn;
     m_initialized = true;
 }
 
 int
-DiskCtrlCfgState::getNumDrives() const
-        { return m_num_drives; }
+DiskCtrlCfgState::getNumDrives() const noexcept
+{
+    return m_num_drives;
+}
 
 DiskCtrlCfgState::disk_ctrl_intelligence_t
-DiskCtrlCfgState::getIntelligence() const
-        { return m_intelligence; }
+DiskCtrlCfgState::getIntelligence() const noexcept
+{
+    return m_intelligence;
+}
 
 bool
-DiskCtrlCfgState::getWarnMismatch() const
-        { return m_warn_mismatch; }
+DiskCtrlCfgState::getWarnMismatch() const noexcept
+{
+    return m_warn_mismatch;
+}
 
 
 // return a copy of self
@@ -181,7 +187,7 @@ DiskCtrlCfgState::clone() const
 // if returning false, this routine first calls UI_Alert() describing what
 // is wrong.
 bool
-DiskCtrlCfgState::configOk(bool warn) const
+DiskCtrlCfgState::configOk(bool warn) const noexcept
 {
     assert(m_initialized);
     if (!m_initialized) {

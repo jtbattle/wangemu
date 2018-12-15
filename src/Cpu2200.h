@@ -114,7 +114,7 @@ private:
     uint8 decimal_add(uint4 a_op, uint4 b_op, int ci) const noexcept;
 
     // subtract two BCD nibbles
-    uint8 decimal_sub(uint4 a_op, uint4 b_op, int ci) const;
+    uint8 decimal_sub(uint4 a_op, uint4 b_op, int ci) const noexcept;
 
     // ---- data members ----
 

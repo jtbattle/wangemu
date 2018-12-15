@@ -70,7 +70,7 @@
 // start.
 //
 bool
-IoCardDisk::cax_init()
+IoCardDisk::cax_init() noexcept
 {
     // return true if AB indicates this is command initiation
     return (m_cpu->getAB() & 0xA0) == 0xA0;
@@ -121,15 +121,10 @@ IoCardDisk::statename(int state) const
 
 // indicate if the controller state machine is idle or busy
 bool
-IoCardDisk::inIdleState() const
+IoCardDisk::inIdleState() const noexcept
 {
-    if (m_state == CTRL_WAKEUP) {
-        return true;
-    }
-    if ((m_state == CTRL_COMMAND) && (m_state_cnt==0)) {
-        return true;
-    }
-    return false;
+    return  (m_state == CTRL_WAKEUP) ||
+           ((m_state == CTRL_COMMAND) && (m_state_cnt==0));
 }
 
 
@@ -158,7 +153,7 @@ IoCardDisk::driveIsDumb(int drive) const
 
 // helper routine to set the conditions to receive and echo bytes from the host
 void
-IoCardDisk::getBytes(int count, disk_sm_t return_state)
+IoCardDisk::getBytes(int count, disk_sm_t return_state) noexcept
 {
     m_calling_state = m_state;
     m_return_state  = return_state;
@@ -170,7 +165,7 @@ IoCardDisk::getBytes(int count, disk_sm_t return_state)
 
 // helper routine to set the conditions to send bytes to the host
 void
-IoCardDisk::sendBytes(int count, disk_sm_t return_state)
+IoCardDisk::sendBytes(int count, disk_sm_t return_state) noexcept
 {
     m_calling_state  = m_state;
     m_return_state   = return_state;

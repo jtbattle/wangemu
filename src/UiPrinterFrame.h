@@ -32,8 +32,8 @@ public:
     std::string PaperSize(wxPaperSize papersizeval) const;
 
     // translation of paperbin (wxPrintBin) enum
-    wxPrintBin PaperBin(std::string paperbinname) const;
-    std::string PaperBin(wxPrintBin paperbinval) const;
+    wxPrintBin PaperBin(std::string paperbinname) const noexcept;
+    std::string PaperBin(wxPrintBin paperbinval) const noexcept;
 
     // emit a character to the display
     void printChar(uint8 byte);

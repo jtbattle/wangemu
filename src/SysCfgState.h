@@ -51,24 +51,24 @@ public:
     void saveIni() const;
 
     // set/get the type of CPU.  CPUTYPE_2200{B,T,VP}
-    void setCpuType(int type);
-    int  getCpuType() const;
+    void setCpuType(int type) noexcept;
+    int  getCpuType() const noexcept;
 
     // throttle the CPU to match the real hardware, or not
-    void regulateCpuSpeed(bool regulated);
-    bool isCpuSpeedRegulated() const;
+    void regulateCpuSpeed(bool regulated) noexcept;
+    bool isCpuSpeedRegulated() const noexcept;
 
     // set/get amount of RAM in the system configuration
-    void setRamKB(int kb);
-    int  getRamKB() const;
+    void setRamKB(int kb) noexcept;
+    int  getRamKB() const noexcept;
 
     // set/get control over whether disk operations are performed in realtime
-    void setDiskRealtime(bool realtime);
-    bool getDiskRealtime() const;
+    void setDiskRealtime(bool realtime) noexcept;
+    bool getDiskRealtime() const noexcept;
 
     // warn the user when an attempt is made to access a device at a bad addr
-    void setWarnIo(bool warn);
-    bool getWarnIo() const;
+    void setWarnIo(bool warn) noexcept;
+    bool getWarnIo() const noexcept;
 
     // retrieve the pointer to the per-card configuration state
     const std::shared_ptr<CardCfgState> getCardConfig(int slot) const;
@@ -78,12 +78,12 @@ public:
 
     // set/get the type of the card in the specified backplane slot
     void setSlotCardType(int slot, IoCard::card_t type);
-    IoCard::card_t getSlotCardType(int slot) const;
-    bool isSlotOccupied(int slot) const;
+    IoCard::card_t getSlotCardType(int slot) const noexcept;
+    bool isSlotOccupied(int slot) const noexcept;
 
     // set/get the address of the card in the specified backplane slot
-    void setSlotCardAddr(int slot, int addr);
-    int  getSlotCardAddr(int slot) const;
+    void setSlotCardAddr(int slot, int addr) noexcept;
+    int  getSlotCardAddr(int slot) const noexcept;
 
     // returns true if the current configuration is valid and consistent.
     // if warn is true, errors produce a UI_Alert() explanation

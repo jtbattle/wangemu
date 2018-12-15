@@ -93,7 +93,7 @@ public:
                                 int *trackSeekMs,
                                 int *diskRpm,
                                 int *interleave
-                               );
+                               ) noexcept;
 
 private:
     // ---- card properties ----
@@ -300,10 +300,10 @@ private:
 
     // return true if this was a sw reset command and set state appropriately,
     // otherwise return false
-    bool cax_init();
+    bool cax_init() noexcept;
 
     // indicate if the controller state machine is idle or busy
-    bool inIdleState() const;
+    bool inIdleState() const noexcept;
 
     // report if a given drive is occupied and has media that is suitable
     // for the intelligent disk protocol, namely disks with > 32K sectors,
@@ -313,10 +313,10 @@ private:
     bool driveIsDumb(int drive) const;
 
     // helper routine to set the conditions to receive and echo bytes from the host
-    void getBytes(int count, disk_sm_t return_state);
+    void getBytes(int count, disk_sm_t return_state) noexcept;
 
     // helper routine to set the conditions to send bytes to the host
-    void sendBytes(int count, disk_sm_t return_state);
+    void sendBytes(int count, disk_sm_t return_state) noexcept;
 
     // for debugging
     std::string statename(int state) const;

@@ -44,10 +44,10 @@ namespace System2200
     void setConfig(const SysCfgState &newcfg);
 
     // give access to components
-    const SysCfgState& config();
+    const SysCfgState& config() noexcept;
 
     // indicate that user wants to reconfigure the system
-    void reconfigure();
+    void reconfigure() noexcept;
 
     // reset the whole system
     void reset(bool cold_reset);
@@ -57,7 +57,7 @@ namespace System2200
     bool isCpuSpeedRegulated();
 
     // temporarily halt emulation
-    void freezeEmu(bool freeze);
+    void freezeEmu(bool freeze) noexcept;
 
     // called whenever there is free time.  it returns true
     // if it wants to be called back later when idle again
@@ -110,10 +110,10 @@ namespace System2200
 
     // return the instance handle of the device at the specified IO address
     // used by IoCardKeyboard.c
-    IoCard* getInstFromIoAddr(int io_addr);
+    IoCard* getInstFromIoAddr(int io_addr) noexcept;
 
     // given a slot, return the "this" element
-    IoCard* getInstFromSlot(int slot);
+    IoCard* getInstFromSlot(int slot) noexcept;
 
     // find slot number of disk controller #n (starting with 0).
     // returns true if successful.

@@ -89,7 +89,7 @@ private:
     void TimerKill(Timer* tmr);
 
     // returns, in absolute ns, the time of the soonest event on the timer list
-    int64 FirstEvent();
+    int64 FirstEvent() noexcept;
 
     int64 m_time_ns;        // simulated absolute time (in ns)
     int64 m_trigger_ns;     // time next event expires

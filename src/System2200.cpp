@@ -111,13 +111,13 @@ static bool m_freeze_emu  = false;  // toggle to prevent time advancing
 static bool m_do_reconfig = false;  // deferred request to reconfigure
 
 static void
-setTerminationState(term_state_t newstate)
+setTerminationState(term_state_t newstate) noexcept
 {
     m_termination_state = newstate;
 }
 
 static term_state_t
-getTerminationState()
+getTerminationState() noexcept
 {
     return m_termination_state;
 }
@@ -203,7 +203,7 @@ restoreDiskMounts(void)
 
 // break down any resources currently committed
 static void
-breakdown_cards(void)
+breakdown_cards(void) noexcept
 {
     // destroy card instances
     for(auto &card : cardInSlot) {
@@ -495,7 +495,7 @@ System2200::setConfig(const SysCfgState &newcfg)
 
 // give access to components
 const SysCfgState&
-System2200::config()
+System2200::config() noexcept
 {
     return *current_cfg;
 }
@@ -509,7 +509,7 @@ System2200::config()
 // later on, in the onIdle code, this flag is checked and the reconfiguration
 // happens then.
 void
-System2200::reconfigure()
+System2200::reconfigure() noexcept
 {
     m_do_reconfig = true;
 }
@@ -556,7 +556,7 @@ System2200::isCpuSpeedRegulated()
 
 // halt emulation
 void
-System2200::freezeEmu(bool freeze)
+System2200::freezeEmu(bool freeze) noexcept
 {
     m_freeze_emu = freeze;
 }
@@ -1112,7 +1112,7 @@ System2200::getPrinterIoAddr(int n)
 // FIXME: returning a raw pointer -- does all this need to be
 //        converted to shared_ptr?
 IoCard*
-System2200::getInstFromIoAddr(int io_addr)
+System2200::getInstFromIoAddr(int io_addr) noexcept
 {
     assert( (io_addr >= 0) && (io_addr <= 0xFFF) );
     return cardInSlot[ioMap[io_addr & 0xFF].slot].get();
@@ -1123,7 +1123,7 @@ System2200::getInstFromIoAddr(int io_addr)
 // FIXME: returning a raw pointer -- does all this need to be
 //        converted to shared_ptr?
 IoCard*
-System2200::getInstFromSlot(int slot)
+System2200::getInstFromSlot(int slot) noexcept
 {
     assert(slot >=0 && slot < NUM_IOSLOTS);
     return cardInSlot[slot].get();

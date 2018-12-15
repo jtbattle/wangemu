@@ -122,14 +122,14 @@ Printer::setGreenbar(bool greenbar)
 }
 
 bool
-Printer::getGreenbar() const
+Printer::getGreenbar() const noexcept
 {
     return m_greenbar;
 }
 
 
 void
-Printer::setMargins(int left, int right, int top, int bottom)
+Printer::setMargins(int left, int right, int top, int bottom) noexcept
 {
     m_marginleft = left;
     m_marginright = right;
@@ -138,7 +138,7 @@ Printer::setMargins(int left, int right, int top, int bottom)
 }
 
 void
-Printer::getMargins(int &left, int &right, int &top, int &bottom) const
+Printer::getMargins(int &left, int &right, int &top, int &bottom) const noexcept
 {
     left = m_marginleft;
     right = m_marginright;
@@ -147,25 +147,25 @@ Printer::getMargins(int &left, int &right, int &top, int &bottom) const
 }
 
 void
-Printer::setOrientation(wxPrintOrientation orientation)
+Printer::setOrientation(wxPrintOrientation orientation) noexcept
 {
     m_orientation = orientation;
 }
 
 wxPrintOrientation
-Printer::getOrientation() const
+Printer::getOrientation() const noexcept
 {
     return m_orientation;
 }
 
 void
-Printer::setPaperId(wxPaperSize paperid)
+Printer::setPaperId(wxPaperSize paperid) noexcept
 {
     m_paperid = paperid;
 }
 
 wxPaperSize
-Printer::getPaperId() const
+Printer::getPaperId() const noexcept
 {
     return m_paperid;
 }
@@ -183,13 +183,13 @@ Printer::getPaperName() const
 }
 
 void
-Printer::setBin(wxPrintBin paperbin)
+Printer::setBin(wxPrintBin paperbin) noexcept
 {
     m_paperbin = paperbin;
 }
 
 wxPrintBin
-Printer::getBin() const
+Printer::getBin() const noexcept
 {
     return m_paperbin;
 }
@@ -207,7 +207,7 @@ Printer::getRealPrinterName() const
 }
 
 void
-Printer::setPageAttributes(int linelength, int pagelength)
+Printer::setPageAttributes(int linelength, int pagelength) noexcept
 {
     m_linelength = linelength;
     m_pagelength = pagelength;
@@ -216,7 +216,7 @@ Printer::setPageAttributes(int linelength, int pagelength)
 
 
 void
-Printer::getPageAttributes(int &linelength, int &pagelength) const
+Printer::getPageAttributes(int &linelength, int &pagelength) const noexcept
 {
     linelength = m_linelength;
     pagelength = m_pagelength;
@@ -231,7 +231,7 @@ Printer::getCellAttributes(int &cell_w, int &cell_h) const
 
 // set autoshow attribute
 void
-Printer::setAutoshow(bool b)
+Printer::setAutoshow(bool b) noexcept
 {
     m_autoshow = b;
 }
@@ -239,14 +239,14 @@ Printer::setAutoshow(bool b)
 
 // get autoshow attribute
 bool
-Printer::getAutoshow() const
+Printer::getAutoshow() const noexcept
 {
     return m_autoshow;
 }
 
 // set printasgo attribute
 void
-Printer::setPrintasgo(bool b)
+Printer::setPrintasgo(bool b) noexcept
 {
     m_printasgo = b;
 }
@@ -254,21 +254,21 @@ Printer::setPrintasgo(bool b)
 
 // get printasgo attribute
 bool
-Printer::getPrintasgo() const
+Printer::getPrintasgo() const noexcept
 {
     return m_printasgo;
 }
 
 // set portdirect attribute
 void
-Printer::setPortdirect(bool b)
+Printer::setPortdirect(bool b) noexcept
 {
     m_portdirect = b;
 }
 
 //get portdirect attribute
 bool
-Printer::getPortdirect() const
+Printer::getPortdirect() const noexcept
 {
     return m_portdirect;
 }
@@ -473,14 +473,14 @@ Printer::printClear()
 
 // return true of the print stream is empty
 bool
-Printer::isEmpty() const
+Printer::isEmpty() const noexcept
 {
     return m_printstream.empty();
 }
 
 // return the number of pages in the current copy of the printstream
 int
-Printer::numberOfPages() const
+Printer::numberOfPages() const noexcept
 {
     const int num_rows = m_printstream.size();
     return ((num_rows + m_pagelength-1) / m_pagelength);  // round up
@@ -538,7 +538,7 @@ Printer::createStreamCopy()
 
 
 void
-Printer::destroyStreamCopy()
+Printer::destroyStreamCopy() noexcept
 {
     m_printstream_copy.clear();
 }
@@ -620,7 +620,7 @@ Printer::OnTimer(wxTimerEvent &WXUNUSED(event))
 // intercept this event to prevent flashing as the system so helpfully
 // clears the window for us before generating the OnPaint event.
 void
-Printer::OnEraseBackground(wxEraseEvent &WXUNUSED(event))
+Printer::OnEraseBackground(wxEraseEvent &WXUNUSED(event)) noexcept
 {
     // do nothing
 }

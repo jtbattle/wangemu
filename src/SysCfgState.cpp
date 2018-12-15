@@ -325,21 +325,21 @@ SysCfgState::saveIni() const
 
 
 void
-SysCfgState::setCpuType(int type)
+SysCfgState::setCpuType(int type) noexcept
 {
     m_cputype = type;
     m_initialized = true;
 }
 
 void
-SysCfgState::regulateCpuSpeed(bool regulated)
+SysCfgState::regulateCpuSpeed(bool regulated) noexcept
 {
     m_speed_regulated = regulated;
     m_initialized = true;
 }
 
 void
-SysCfgState::setRamKB(int kb)
+SysCfgState::setRamKB(int kb) noexcept
 {
     switch (kb) {
 
@@ -378,14 +378,14 @@ SysCfgState::setRamKB(int kb)
 }
 
 void
-SysCfgState::setDiskRealtime(bool realtime)
+SysCfgState::setDiskRealtime(bool realtime) noexcept
 {
     m_disk_realtime = realtime;
     m_initialized = true;
 }
 
 void
-SysCfgState::setWarnIo(bool warn)
+SysCfgState::setWarnIo(bool warn) noexcept
 {
     m_warn_io = warn;
     m_initialized = true;
@@ -408,43 +408,59 @@ SysCfgState::setSlotCardType(int slot, IoCard::card_t type)
 }
 
 void
-SysCfgState::setSlotCardAddr(int slot, int addr)
+SysCfgState::setSlotCardAddr(int slot, int addr) noexcept
 {
     m_slot[slot].addr = addr;
     m_initialized = true;
 }
 
 int
-SysCfgState::getCpuType() const
-        { return m_cputype; }
+SysCfgState::getCpuType() const noexcept
+{
+    return m_cputype;
+}
 
 bool
-SysCfgState::isCpuSpeedRegulated() const
-        { return m_speed_regulated; }
+SysCfgState::isCpuSpeedRegulated() const noexcept
+{
+    return m_speed_regulated;
+}
 
 int
-SysCfgState::getRamKB() const
-        { return m_ramsize; }
+SysCfgState::getRamKB() const noexcept
+{
+    return m_ramsize;
+}
 
 bool
-SysCfgState::getDiskRealtime() const
-        { return m_disk_realtime; }
+SysCfgState::getDiskRealtime() const noexcept
+{
+    return m_disk_realtime;
+}
 
 bool
-SysCfgState::getWarnIo() const
-        { return m_warn_io; }
+SysCfgState::getWarnIo() const noexcept
+{
+    return m_warn_io;
+}
 
 IoCard::card_t
-SysCfgState::getSlotCardType(int slot) const
-        { return m_slot[slot].type; }
+SysCfgState::getSlotCardType(int slot) const noexcept
+{
+    return m_slot[slot].type;
+}
 
 bool
-SysCfgState::isSlotOccupied(int slot) const
-        { return m_slot[slot].type != IoCard::card_t::none; }
+SysCfgState::isSlotOccupied(int slot) const noexcept
+{
+    return m_slot[slot].type != IoCard::card_t::none;
+}
 
 int
-SysCfgState::getSlotCardAddr(int slot) const
-        { return m_slot[slot].addr; }
+SysCfgState::getSlotCardAddr(int slot) const noexcept
+{
+    return m_slot[slot].addr;
+}
 
 
 // retrieve the pointer to the per-card configuration state
