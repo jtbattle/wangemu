@@ -3,58 +3,37 @@ Emulator TODO list
 ============================================================================
 
 *) master list of priorities:
-   clean up remaining nits on Terminal flow control processing
-   clean up mxd script flow control; submit
-   get rid of tied keyboard thing -- unnecessary generalization
+   implement mxd script flow control; submit
    add mvp/vlsi cpu and memory options; submit
+   get >1 MXD configuration working
+   get >1 term per MXD configuration working
    decide on a consistent set of naming conventions and stick to them
       hey, code.txt already has one.  study it.
    ... then review the priorities again
 
-*) as an experiment, I tried creating two MXD cards
-   booting MVP 3.5, it gets to the partition editor start up and hangs.
-   the secondary terminal doesn't have a status bar (known misfeature).
+*) support more than one MXD (each with one terminal)
+   - booting MVP 3.5, it gets to the partition editor start up and hangs.
+   - the secondary terminal doesn't have a status bar (known misfeature).
+     it should at least allow the Kaps feature.
+   - the concept of tied keyboards should not apply to such CrtFrames
+     the tied_keyboard setting is read during getDefaults() in UiCrtFrame.
+   - terminal save/restore state should be based on addr+term#
+     currently the tag is:
+        [wangemu/config-0/ui/CRT-05]
+        [wangemu/config-0/ui/Printer-215]  << shouldn't have (2)15
+     for mxd should be
+        [wangemu/config-0/ui/MXD-CRT-{00,40,80,C0}-{1,2,3,4}]
+        [wangemu/config-0/ui/MXD-PRT-{00,40,80,C0}-{1,2,3,4}]
 
-*) the tied_keyboard setting is read during getDefaults() in UiCrtFrame
-   but tied_keyboard doesn't make sense for term mux because it is not
-   an independent address
+*) support MXD with more than one terminal
+     - config dialog needs to allow term mux configurations,
+       just like disk controllers have a config editor
+     - in a few places, term_num is hardwired to 0.
 
 *) print preview crashes now.  I'm not sure when it started happening.
    study F:\Jim\libs\wx-3.1.0\samples\printing
    trying to print fails too.
    build a sample app which uses print dialog and see if it works there.
-
-*) 2236DE_TerminalUserManual.700-5711B.6-81.pdf, page 15 says all keys
-   repeat except RESET, EDIT, and underline.  what implication does that
-   have for the emulator?
-
-*) huh, my CRT actually is a 2336. no wonder I was confused with 2236/2336.
-
-*) MXD mode, VP OS 2.4 and EDIT/RECALL works as expected -- EDIT causes
-   a leading "*".
-   But MVP OS 3.5, EDIT doesn't show the "*", though recall does recall.
-   Is that an OS thing or a bug in the emulator?
-   MVP OS 2.6.2 is the same as 3.5.
-
-*) add terminal mux emulation and terminal emulation so I can run MVP OS's
-   - currently the division is
-        + IoCardKeyboard
-        + IoCardDisplay
-        + UiCrtFrame
-            + UiCrtStatusBar
-            + UiCrtConfigDlg
-            + UiCrt + UiCrt_Charset.h + UiCrt_Keyboard + UiCrt_Render (all part of Crt class)
-                + UiCrtErrorDlg
-     Crt state is saved in the .ini file by ui/CRT-nn, where nn is the addr;
-        this needs to be generalized
-     The CrtFrame displays disk icons and activity, but in mux mode,
-        there really shouldn't be a 1:1 mapping.  However, in the typical
-        use case of one term, it is most useful.
-     The CrtFrame logic enables some config options only on the "primary" crt,
-        which historically has been the one at io_addr=05.  Rethink this.
-        For example, I think the status line is gone on non-primary CRTs,
-        which means A/A checkbox is not visible.
-     Config dialog needs to allow term mux configurations.
 
 *) add support for MVP and VLSI type CPUs
    - VP configuration should have 32KB control mem and defeature the 30ms timer
@@ -122,18 +101,22 @@ Emulator TODO list
      Ctrl-Left arrow is S.F. 07 (start of line)
      Ctrl-Right arrow is S.F. 04 (end of line)
 
+*) 2236DE_TerminalUserManual.700-5711B.6-81.pdf, page 15 says all keys
+   repeat except RESET, EDIT, and underline.  what implication does that
+   have for the emulator?
+
+*) MXD mode, VP OS 2.4 and EDIT/RECALL works as expected -- EDIT causes
+   a leading "*".
+   But MVP OS 3.5, EDIT doesn't show the "*", though recall does recall.
+   Is that an OS thing or a bug in the emulator?
+   MVP OS 2.6.2 is the same as 3.5.
+
 *) I'm seeing new strobes to the disk controller in MVP OS.
    IoCardDisk::CBS() handler has comments saying OB8 and OB1
    were used for various things.
 
 *) notes on disk protocol and unimplemented commands:
     C:/Users/Jim/Documents/wang2200/disk_protocol/notes.txt
-
-*) in a few places, term_num is hardwired to 1.
-   don't worry about generalizing to N terminals until one term is working.
-   in fact, maybe keep it to one terminal just to keep the user interface
-   reasonable.  still, parameterize the code better even if this release
-   don't take advantage of it.
 
 *) review coding convention
     - after studying the following coding guidelines, modify/extend what is
@@ -145,18 +128,9 @@ Emulator TODO list
     - review my naming convention. I haven't been consistent.
       eg, some_are_like_this, someAreCamelCase.
       eg, filenames UiCrt_Keyboard.cpp vs UiCrtRender.cpp
-    - do this or not?
-        vimgrep '!= nullptr' *.cpp
-        then replace with simple boolean tests, eg
-            assert(inst != nullptr);
-        becomes
-            assert(inst);
-    - look for old-style static casts and replace with modern
-        (int)foo --> static_cast<int>(foo)
-    - I have code like this in multiple places:
-          IoCardDisk *tthis = static_cast<IoCardDisk*>
-                                      (System2200().getInstFromSlot(slot));
-      but should it be reinterpret_cast<>()?
+    - there are few places were the code is using naked pointers.
+      the wxWidgets API can't avoid it, but other cases are in my control.
+      eg, look for "new" and "delete".
 
 *) do a memory leak check once in a while
 

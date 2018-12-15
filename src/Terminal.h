@@ -55,6 +55,15 @@ private:
     static const unsigned int CRT_BUFF_MAX = 196;  //  96 + 100 overrun
     static const unsigned int PRT_BUFF_MAX = 232;  // 132 + 100 overrun
 
+    // this describes the state of the crt and prt flow control
+    enum class flow_state_t {
+        START,     // traffic is flowing; STOP has never been sent
+        STOP_PEND, // waiting for an opportunity to send STOP command
+        STOPPED,   // traffic should halt; STOP has been sent recently
+        GO_PEND,   // waiting for an opportunity to send GO command
+        GOING,     // traffic is flowing, but STOP was sent in the past
+    };
+
     // ---- functions ----
 
     // reset crt/prt part of state
@@ -125,21 +134,19 @@ private:
 
     // the terminal keyboard buffer is modeled in the card
     // instead of cluttering up the Ui code
-    std::queue<uint8> m_kb_buff;
-    std::shared_ptr<Timer> m_tx_tmr;  // model uart rate & delay
+    std::queue<uint8>      m_kb_buff;
+    std::shared_ptr<Timer> m_tx_tmr;            // model uart rate & delay
 
     // crt receive buffer and flow control state
-    std::queue<uint8> m_crt_buff;
-    bool              m_crt_send_go;     // a <F8> crt-go flow byte is needed
-    bool              m_crt_send_stop;   // a <FA> crt-stop flow byte is needed
-    std::shared_ptr<Timer> m_crt_tmr;    // background crt-go timer
-    std::shared_ptr<Timer> m_selectp_tmr; // SELECT Pn timer
+    std::queue<uint8>      m_crt_buff;
+    flow_state_t           m_crt_flow_state;
+    std::shared_ptr<Timer> m_crt_tmr;           // background crt-go timer
+    std::shared_ptr<Timer> m_selectp_tmr;       // SELECT Pn timer
 
     // prt receive buffer and flow control state
-    std::queue<uint8> m_prt_buff;
-    bool              m_prt_send_go;     // a <F9> prt-go flow byte is needed
-    bool              m_prt_send_stop;   // a <FB> prt-stop flow byte is needed
-    std::shared_ptr<Timer> m_prt_tmr;    // background prt-go timer
+    std::queue<uint8>      m_prt_buff;
+    flow_state_t           m_prt_flow_state;
+    std::shared_ptr<Timer> m_prt_tmr;           // background prt-go timer
 
     // ---- inline functions ----
 

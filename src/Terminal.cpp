@@ -11,6 +11,14 @@
 //    doing character stream parsing and decompression
 //    remapping keyboard encoding to match 2236
 //    modeling uart delay and rate limiting
+//
+// TODO:
+//   - remote printer isn't modeled, though most of the plumbing is in place
+//   - in a real 2336 terminal, after flow control is initiated, the terminal
+//     send a CRT-GO byte every three seconds or so while the rx buffer is
+//     empty. I guess this is a robustness feature to even if the first CRT-GO
+//     gets dropped a later one will get things going again.  that is less
+//     important in the emulator where line loss is not a possibility.
 
 #include "Ui.h"
 #include "IoCardKeyboard.h"
@@ -165,11 +173,10 @@ Terminal::reset_crt()
     m_box_bottom = false;
 
     // crt buffer and associated flow control
-    m_crt_buff      = {};
-    m_crt_send_go   = false;
-    m_crt_send_stop = false;
-    m_crt_tmr       = nullptr;
-    m_selectp_tmr   = nullptr;
+    m_crt_buff       = {};
+    m_crt_flow_state = flow_state_t::START;
+    m_crt_tmr        = nullptr;
+    m_selectp_tmr    = nullptr;
 }
 
 
@@ -177,10 +184,9 @@ Terminal::reset_crt()
 void
 Terminal::reset_prt()
 {
-    m_prt_buff      = {};
-    m_prt_send_go   = false;
-    m_prt_send_stop = false;
-    m_prt_tmr       = nullptr;
+    m_prt_buff       = {};
+    m_prt_flow_state = flow_state_t::START;
+    m_prt_tmr        = nullptr;
 }
 
 
@@ -266,22 +272,22 @@ Terminal::checkKbBuffer()
         return;
     }
 
-    if (m_kb_buff.empty() && !m_crt_send_go && !m_crt_send_stop) {
+    if (m_kb_buff.empty() && (m_crt_flow_state != flow_state_t::STOP_PEND)
+                          && (m_crt_flow_state != flow_state_t::GO_PEND)) {
         // nothing to do
         return;
     }
 
-    assert(!(m_crt_send_go && m_crt_send_stop));
-
     // if a flow control byte is pending, it cuts to the head of the line
-    uint8 byte = m_kb_buff.front();
-    if (m_crt_send_go) {
+    uint8 byte = 0x00;
+    if (m_crt_flow_state == flow_state_t::GO_PEND) {
         byte = 0xF8;
-        m_crt_send_go = false;
-    } else if (m_crt_send_stop) {
+        m_crt_flow_state = flow_state_t::GOING;
+    } else if (m_crt_flow_state == flow_state_t::STOP_PEND) {
         byte = 0xFA;
-        m_crt_send_stop = false;
+        m_crt_flow_state = flow_state_t::STOPPED;
     } else {
+        byte = m_kb_buff.front();
         m_kb_buff.pop();
     }
 
@@ -491,8 +497,7 @@ Terminal::crtCharFifo(uint8 byte)
     m_crt_buff.push(byte);
     size++;
     if (size == 96 || size == 113) {
-        m_crt_send_stop = true;
-        m_crt_send_go   = false;
+        m_crt_flow_state = flow_state_t::STOP_PEND;
         checkKbBuffer();
     }
 
@@ -513,12 +518,9 @@ Terminal::checkCrtFifo()
         const uint8 byte = m_crt_buff.front();
         m_crt_buff.pop();
         size--;
-        if (size == 30) {
-// FIXME: should send go only if crt-stop is in effect
-// have enum: FLOW_START, FLOW_STOPPED, FLOW_GOING, FLOW_GO_PEND, FLOW_STOP_PEND
-            // just drained below the hysteresis threshold
-            m_crt_send_go   = true;
-            m_crt_send_stop = false;
+        if ((size == 30) && (m_crt_flow_state == flow_state_t::STOPPED)) {
+            // send a GO if we drop below the threshold and we're stopped
+            m_crt_flow_state = flow_state_t::GO_PEND;
             checkKbBuffer();
         }
         processCrtChar1(byte);
@@ -985,18 +987,6 @@ Terminal::prtCharFifo(uint8 byte)
 {
 #if 0
     // FIXME: not modeling remote printer yet
-    int size = m_prt_buff.size();
-    if (size == PRT_BUFF_MAX) {
-        UI_Warn("Terminal 0x%02x, term#%d had printer fifo overflow",
-                m_io_addr, m_term_num+1);
-        return;  // we dropped the new one
-    }
-
-    m_prt_buff.push_back(byte);
-    size++;
-    if (size == 132 || size == 149) {
-        m_prt_send_stop = true;
-    }
 #else
     byte = byte;
     return;
