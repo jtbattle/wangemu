@@ -276,8 +276,8 @@ private:
 };
 
 // microcode disassembly utilities
-int dasm_one   (char *buff, uint16 ic, uint32 ucode);
-int dasm_one_vp(char *buff, uint16 ic, uint32 ucode);
+bool dasm_one   (char *buff, uint16 ic, uint32 ucode);
+bool dasm_one_vp(char *buff, uint16 ic, uint32 ucode);
 
 #endif _INCLUDE_CPU2200_H_
 

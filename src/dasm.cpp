@@ -36,32 +36,31 @@ quit(int rc)
 #endif
 
 
-// fill out the buffer to the specified number of spaces
+// fill out the buffer to the specified number of spaces.
+// offset is an in/out parameter.
 static void
-pad_spaces(char *buf, int *off, int limit)
+pad_spaces(char *buf, int &offset, int limit)
 {
     assert(buf != nullptr);
-    assert(off != nullptr);
-
-    int p = *off;
-    while (p < limit) {
-        buf[p++] = ' ';
+    int idx = offset;
+    while (idx < limit) {
+        buf[idx++] = ' ';
     }
-    buf[p] = '\0';
-    *off = p;
+    buf[idx] = '\0';
+    offset = idx;
 }
 
 
-// stuff in a hex value at the buffer location offset "off",
-// updating off in the process, 'digits' long.  if the number
-// starts with A-F, precede it with a bonus 0.
+// stuff in a hex value at the buffer location "offset",
+// updating offset in the process, 'digits' long.
+// if the number starts with A-F, precede it with a bonus 0.
+// offset is an in/out parameter.
 static void
-hex(char *buf, int *off, int value, int digits)
+dasm_hex(char *buf, int &offset, int value, int digits)
 {
     assert(buf != nullptr);
-    assert(off != nullptr);
 
-    // figure out if we need a leading zero
+    // do we need a leading zero?
     const int first_dig = (value >> 4*(digits-1)) & 0xF;
     if (first_dig >= 10) {
         digits++;
@@ -69,42 +68,45 @@ hex(char *buf, int *off, int value, int digits)
 
     char fmtstr[16];
     sprintf(&fmtstr[0], "%%0%dX", digits);
-    sprintf(&buf[*off], &fmtstr[0], value);
-    *off += digits;
+    sprintf(&buf[offset], &fmtstr[0], value);
+    offset += digits;
 }
 
 
 // stuff in the target address, in hex.  however, if the address
 // is very near the current address, list it as relative.
+// offset is an in/out parameter.
 static void
-addr(char *buf, int *off, int cur_pc, int new_pc)
+dasm_addr(char *buf, int &offset, int cur_pc, int new_pc)
 {
+    assert(buf != nullptr);
 #if DASM_REL_BRANCH
     const int window = 2;       // how big of a window to use relative addr
     const int diff = new_pc - cur_pc;
 
     int len = 0;
     if (diff == 0) {
-        len += sprintf(&buf[*off], "*");
+        len += sprintf(&buf[offset], "*");
     } else if (diff > 0 && diff <= window) {
-        len += sprintf(&buf[*off], "*+%d", diff);
+        len += sprintf(&buf[offset], "*+%d", diff);
     } else if (diff < 0 && diff >= -window) {
-        len += sprintf(&buf[*off], "*%d", diff);
+        len += sprintf(&buf[offset], "*%d", diff);
     } else {
 #endif
-        hex(buf, off, new_pc, 4);
+        dasm_hex(buf, offset, new_pc, 4);
     }
 
-    *off += len;
+    offset += len;
 }
 
 
-// disassemble the A input bus field
-// *adj is set to 1 if the PC value is modified (if adj != nullptr)
-// return the number of bytes printed out
+// disassemble the A input bus field.
+// return the number of bytes printed out.
+// adj is an output field, and is set to true if the PC value is modified.
 static int
-dasm_a_field(char *buf, uint32 uop, int *adj)
+dasm_a_field(char *buf, uint32 uop, bool &adj)
 {
+    assert(buf != nullptr);
     const int field = ((uop >> 4) & 0xF);
 
     if (field < 8) {
@@ -128,9 +130,7 @@ dasm_a_field(char *buf, uint32 uop, int *adj)
     }
 
     // indicate if the PC would get adjusted
-    if (adj != nullptr) {
-        *adj |= pc;
-    }
+    adj |= (pc != 0);
 
     return sprintf(buf, str);
 }
@@ -141,9 +141,10 @@ dasm_a_field(char *buf, uint32 uop, int *adj)
 static int
 dasm_i_field(char *buf, uint32 uop)
 {
+    assert(buf != nullptr);
     const int field = ((uop >> 4) & 0xF);
     int len = 0;
-    hex(buf, &len, field, 1);
+    dasm_hex(buf, len, field, 1);
     return len;
 }
 
@@ -153,6 +154,7 @@ dasm_i_field(char *buf, uint32 uop)
 static int
 dasm_b_field(char *buf, uint32 uop)
 {
+    assert(buf != nullptr);
     const int xbit  = ((uop >> 14) & 0x1);
     const int field = ((uop >> 10) & 0xF);
 
@@ -192,18 +194,17 @@ dasm_b_field(char *buf, uint32 uop)
 
 
 // disassemble the C output bus field
-// return the number of bytes printed out
+// return the number of bytes printed out.
+// "illegal" is an output parameter.
 static int
-dasm_c_field(char *buf, int *illegal, uint32 uop)
+dasm_c_field(char *buf, bool &illegal, uint32 uop)
 {
     assert(buf != nullptr);
-    assert(illegal != nullptr);
-
     const int xbit  = ((uop >> 14) & 0x1);
     const int field = ((uop >>  0) & 0xF);
 
     if (field < 8) {
-        *illegal = 0;
+        illegal = false;
         return sprintf(buf, "F%d", field);
     }
 
@@ -235,10 +236,10 @@ dasm_c_field(char *buf, int *illegal, uint32 uop)
     }
 
     if (str == nullptr) {
-        *illegal = 1;
+        illegal = true;
         return sprintf(buf, "???");
     } else {
-        *illegal = 0;
+        illegal = false;
         if (str[0] != '\0') {
             return sprintf(buf, "%s", str);
         }
@@ -333,45 +334,47 @@ dasm_ST3_bitfield(char *buf, int *len, uint4 bits)
 
 // disassemble ALU op reg to reg
 // return the number of bytes printed out
+// "illegal" is an output parameter.
 static int
-dasm_type1(char *buf, char *mnemonic, int *illegal, uint32 uop)
+dasm_type1(char *buf, const char *mnemonic, bool &illegal, uint32 uop)
 {
     assert(buf != nullptr);
     assert(mnemonic != nullptr);
-    assert(illegal != nullptr);
+    bool bad = false;
 
     const int b_field = (uop >> 10) & 0xF;
     const int mov = DASM_PSEUDO_OPS
                  && !strcmp(mnemonic,"OR")
                  && (b_field == 0xF); // OR a,0,c  --> MV a,c
     const char *mnem = (mov) ? "MV" : mnemonic;
-    int bad = 0;
 
     int len = sprintf(buf, "%s", mnem);
     len += dasm_m_field(&buf[len], uop);
-    pad_spaces(buf, &len, PARAM_COL);
+    pad_spaces(buf, len, PARAM_COL);
 
-    len += dasm_a_field(&buf[len], uop, nullptr);
+    bool dummy = false;
+    len += dasm_a_field(&buf[len], uop, dummy);
     if (!mov) {
         len += sprintf(&buf[len], ",");
         len += dasm_b_field(&buf[len], uop);
     }
     len += sprintf(&buf[len], ",");
-    len += dasm_c_field(&buf[len], &bad, uop);
+    len += dasm_c_field(&buf[len], bad, uop);
 
-    *illegal = bad;
+    illegal = bad;
     return len;
 }
 
 
 // disassemble ALU op with immediate
 // return the number of bytes printed out
+// "illegal" is an output parameter.
 static int
-dasm_type2(char *buf, char *mnemonic, int *illegal, uint32 uop)
+dasm_type2(char *buf, const char *mnemonic, bool &illegal, uint32 uop)
 {
     assert(buf != nullptr);
     assert(mnemonic != nullptr);
-    assert(illegal != nullptr);
+    bool bad = false;
 
     const int i_field = (uop >>  4) & 0xF;
     const int b_field = (uop >> 10) & 0xF;
@@ -390,11 +393,10 @@ dasm_type2(char *buf, char *mnemonic, int *illegal, uint32 uop)
     const char *mnem = (mvi) ? "MVI"
                      : (mov) ? "MV"
                              : mnemonic;
-    int bad = 0;
 
     int len = sprintf(buf, "%s", mnem);
     len += dasm_m_field(&buf[len], uop);
-    pad_spaces(buf, &len, PARAM_COL);
+    pad_spaces(buf, len, PARAM_COL);
 
     if (!mov) {
         len += dasm_i_field(&buf[len], uop);
@@ -406,13 +408,13 @@ dasm_type2(char *buf, char *mnemonic, int *illegal, uint32 uop)
         len += dasm_b_field(&buf[len], uop);
     }
     len += sprintf(&buf[len], ",");
-    len += dasm_c_field(&buf[len], &bad, uop);
+    len += dasm_c_field(&buf[len], bad, uop);
 
     if (ori && ((b_st1 && c_st1) || (b_st3 && c_st3))) {
         // ORI #,ST1,ST1 = setting ST1 flag bit(s)
         // ORI #,ST3,ST3 = setting ST3 flag bit(s)
         const uint4 bitfield = (uint4)i_field;
-        pad_spaces(buf, &len, COMMENT_COL);
+        pad_spaces(buf, len, COMMENT_COL);
         len += sprintf(&buf[len], "; setting: ");
         ((b_st1) ? dasm_ST1_bitfield : dasm_ST3_bitfield) (buf, &len, bitfield);
     }
@@ -420,36 +422,36 @@ dasm_type2(char *buf, char *mnemonic, int *illegal, uint32 uop)
         // ANDI #,ST1,ST1 = clearing ST1 flag bit(s)
         // ANDI #,ST3,ST3 = clearing ST3 flag bit(s)
         const uint4 bitfield = (uint4)(~i_field & 0xF);
-        pad_spaces(buf, &len, COMMENT_COL);
+        pad_spaces(buf, len, COMMENT_COL);
         len += sprintf(&buf[len], "; clearing: ");
         ((b_st1) ? dasm_ST1_bitfield : dasm_ST3_bitfield) (buf, &len, bitfield);
     }
     if (mvi && (c_st1 || c_st3)) {
         const uint4 bitfield = (uint4)i_field;
-        pad_spaces(buf, &len, COMMENT_COL);
+        pad_spaces(buf, len, COMMENT_COL);
         len += sprintf(&buf[len], "; setting: ");
         ((c_st1) ? dasm_ST1_bitfield : dasm_ST3_bitfield) (buf, &len, bitfield);
     }
 
-    *illegal = bad;
+    illegal = bad;
     return len;
 }
 
 
 // disassemble conditional branch, reg to reg compare
 // return the number of bytes printed out
+// "illegal" is an output parameter.
 static int
-dasm_type3(char *buf, char *mnemonic, int *illegal, uint32 ic, uint32 uop)
+dasm_type3(char *buf, const char *mnemonic, bool &illegal, uint32 ic, uint32 uop)
 {
     assert(buf != nullptr);
     assert(mnemonic != nullptr);
-    assert(illegal != nullptr);
 
     const uint32 newic   = (ic & 0xFF00) | ((uop >> 4) & 0xF0) | (uop & 0x0F);
     const uint32 fakeuop = (uop & 0x0F000) >> 2;      // B field is in different location, and no X field
 
     int len = sprintf(buf, "%s", mnemonic);
-    pad_spaces(buf, &len, PARAM_COL);
+    pad_spaces(buf, len, PARAM_COL);
 
     // service manual doesn't say it is illegal to +/- the PC
     // with this type of branch, but I don't think it makes sense.
@@ -457,7 +459,7 @@ dasm_type3(char *buf, char *mnemonic, int *illegal, uint32 ic, uint32 uop)
     len += sprintf(&buf[len], ",");
     len += dasm_b_field(&buf[len], fakeuop);
     len += sprintf(&buf[len], ",");
-    addr(buf, &len, ic, newic);
+    dasm_addr(buf, len, ic, newic);
 
     return len;
 }
@@ -466,7 +468,7 @@ dasm_type3(char *buf, char *mnemonic, int *illegal, uint32 ic, uint32 uop)
 // disassemble conditional branch, reg vs immediate
 // return the number of bytes printed out
 static int
-dasm_type4(char *buf, char *mnemonic, uint32 ic, uint32 uop)
+dasm_type4(char *buf, const char *mnemonic, uint32 ic, uint32 uop)
 {
     assert(buf != nullptr);
     assert(mnemonic != nullptr);
@@ -475,17 +477,17 @@ dasm_type4(char *buf, char *mnemonic, uint32 ic, uint32 uop)
     const uint32 fakeuop = (uop & 0x0F000) >> 2;      // B field is in different location, and no X field
 
     int len = sprintf(buf, "%s", mnemonic);
-    pad_spaces(buf, &len, PARAM_COL);
+    pad_spaces(buf, len, PARAM_COL);
 
     len += dasm_i_field(&buf[len], uop);
     len += sprintf(&buf[len], ",");
     len += dasm_b_field(&buf[len], fakeuop);
     len += sprintf(&buf[len], ",");
-    addr(buf, &len, ic, newic);
+    dasm_addr(buf, len, ic, newic);
 
     if ((uop & 0xEF000) == 0xCA000) {   // BT or BF with B=ST1
         const uint4 bitfield = (uint4)((uop >> 4) & 0x0F);
-        pad_spaces(buf, &len, COMMENT_COL);
+        pad_spaces(buf, len, COMMENT_COL);
         len += sprintf(&buf[len], "; testing: ");
         dasm_ST1_bitfield(buf, &len, bitfield);
     }
@@ -495,21 +497,21 @@ dasm_type4(char *buf, char *mnemonic, uint32 ic, uint32 uop)
 
 // disassemble TPI/TMP/TIP instructions
 // return the number of bytes printed out
+// "illegal" is an output parameter.
 static int
-dasm_type5(char *buf, char *mnemonic, int *illegal, uint32 uop)
+dasm_type5(char *buf, const char *mnemonic, bool &illegal, uint32 uop)
 {
     assert(buf != nullptr);
     assert(mnemonic != nullptr);
-    assert(illegal != nullptr);
 
     const int m_field = ((uop >> 8) & 0x3);
 
     int len = sprintf(buf, "%s", mnemonic);
     len += dasm_m_field(&buf[len], uop);
-    pad_spaces(buf, &len, PARAM_COL);
+    pad_spaces(buf, len, PARAM_COL);
     if (m_field >= 2) {
         // there is a write, and A supplies the data
-        pad_spaces(buf, &len, PARAM_COL);
+        pad_spaces(buf, len, PARAM_COL);
         len += dasm_a_field(&buf[len], uop, illegal);
     }
     return len;
@@ -518,20 +520,20 @@ dasm_type5(char *buf, char *mnemonic, int *illegal, uint32 uop)
 
 // disassemble transfer/exchange pc/aux instructions.
 // return the number of bytes printed out
+// "illegal" is an output parameter.
 static int
-dasm_type6(char *buf, char *mnemonic, int *illegal, uint32 uop)
+dasm_type6(char *buf, const char *mnemonic, bool &illegal, uint32 uop)
 {
     assert(buf != nullptr);
     assert(mnemonic != nullptr);
-    assert(illegal != nullptr);
 
     const int r_field = uop & 0xF;
     const int m_field = ((uop >> 8) & 0x3);
 
     int len = sprintf(buf, "%s", mnemonic);
     len += dasm_m_field(&buf[len], uop);
-    pad_spaces(buf, &len, PARAM_COL);
-    hex(buf, &len, r_field, 1);
+    pad_spaces(buf, len, PARAM_COL);
+    dasm_hex(buf, len, r_field, 1);
     if (m_field >= 2) {
         // display source only on writes
         len += sprintf(&buf[len], ",");
@@ -543,28 +545,28 @@ dasm_type6(char *buf, char *mnemonic, int *illegal, uint32 uop)
 
 // disassemble "mini instructions".
 // return the number of bytes printed out.
+// "illegal" is an output parameter.
 static int
-dasm_miniop(char *buf, int *illegal, uint32 uop)
+dasm_miniop(char *buf, bool &illegal, uint32 uop)
 {
     assert(buf != nullptr);
-    assert(illegal != nullptr);
 
     const int opcode2 = (uop >> 10) & 0x1F;
     const int m_field = (uop >>  8) & 0x3;
     int len = 0;
 
-    *illegal = 0;       // default
+    illegal = false;  // default
 
     switch (opcode2) {
 
         case 0x00: // control I/O (CIO)
             len = sprintf(buf, "%s", "CIO");
             len += dasm_m_field(&buf[len], uop);
-            pad_spaces(buf, &len, PARAM_COL);
+            pad_spaces(buf, len, PARAM_COL);
             len += sprintf(&buf[len], "%02X", (int)(uop & 0xFF));
             if ((uop & 0xF0) != 0x00) {
                 char *comma = "";
-                pad_spaces(buf, &len, COMMENT_COL);
+                pad_spaces(buf, len, COMMENT_COL);
                 len += sprintf(&buf[len], "; ");
                 if (uop & 0x80) {
                     len += sprintf(&buf[len], "AB = K");
@@ -590,12 +592,12 @@ dasm_miniop(char *buf, int *illegal, uint32 uop)
                 case 0x40: // generate -ABS
                     break;
                 default:
-                    *illegal = 1;
+                    illegal = true;
                     break;
             }
             if (m_field >= 2) {
                 // there is no source of data to feed a write
-                *illegal = 1;
+                illegal = true;
             }
             break;
 
@@ -604,7 +606,7 @@ dasm_miniop(char *buf, int *illegal, uint32 uop)
             len += dasm_m_field(&buf[len], uop);
             if (m_field >= 2) {
                 // there is a write, and A supplies the data
-                pad_spaces(buf, &len, PARAM_COL);
+                pad_spaces(buf, len, PARAM_COL);
                 len += dasm_a_field(&buf[len], uop, illegal);
             }
             break;
@@ -657,7 +659,7 @@ dasm_miniop(char *buf, int *illegal, uint32 uop)
             break;
         default:
             len = sprintf(buf, "bad miniop: %02X", opcode2);
-            *illegal = 1;
+            illegal = true;
             break;
     }
 
@@ -678,7 +680,7 @@ dasm_op(char *buf, uint16 ic, uint32 uop)
     int len = 0;
     uint16 newic;
 
-    int illegal = 0;        // default
+    bool illegal = false;  // default
 
     // primary instruction decode
     switch (opcode1) {
@@ -686,79 +688,79 @@ dasm_op(char *buf, uint16 ic, uint32 uop)
     // register instructions:
 
         case 0x00:      // OR
-            len = dasm_type1(buf, "OR", &illegal, uop);
+            len = dasm_type1(buf, "OR", illegal, uop);
             break;
         case 0x01:      // XOR
-            len = dasm_type1(buf, "XOR", &illegal, uop);
+            len = dasm_type1(buf, "XOR", illegal, uop);
             break;
         case 0x02:      // AND
-            len = dasm_type1(buf, "AND", &illegal, uop);
+            len = dasm_type1(buf, "AND", illegal, uop);
             break;
         case 0x03:      // decimal subtract w/ carry
-            len = dasm_type1(buf, "DSC", &illegal, uop);
+            len = dasm_type1(buf, "DSC", illegal, uop);
             break;
         case 0x04:      // binary add
-            len = dasm_type1(buf, "A", &illegal, uop);
+            len = dasm_type1(buf, "A", illegal, uop);
             break;
         case 0x05:      // binary add w/ carry
-            len = dasm_type1(buf, "AC", &illegal, uop);
+            len = dasm_type1(buf, "AC", illegal, uop);
             break;
         case 0x06:      // decimal add
-            len = dasm_type1(buf, "DA", &illegal, uop);
+            len = dasm_type1(buf, "DA", illegal, uop);
             break;
         case 0x07:      // decimal add w/ carry
-            len = dasm_type1(buf, "DAC", &illegal, uop);
+            len = dasm_type1(buf, "DAC", illegal, uop);
             break;
 
         case 0x08:      // or immediate
             if ((m_field == 0) && (b_field == 0)) {
                 // mnemonic
-                len = dasm_type2(buf, "ORI", &illegal, uop);
+                len = dasm_type2(buf, "ORI", illegal, uop);
             } else {
-                len = dasm_type2(buf, "ORI", &illegal, uop);
+                len = dasm_type2(buf, "ORI", illegal, uop);
             }
             break;
         case 0x09:      // xor immediate
-            len = dasm_type2(buf, "XORI", &illegal, uop);
+            len = dasm_type2(buf, "XORI", illegal, uop);
             break;
         case 0x0A:      // and immediate
-            len = dasm_type2(buf, "ANDI", &illegal, uop);
+            len = dasm_type2(buf, "ANDI", illegal, uop);
             break;
         case 0x0B:      // mini instruction decode
-            len = dasm_miniop(buf, &illegal, uop);
+            len = dasm_miniop(buf, illegal, uop);
             break;
         case 0x0C:      // binary add immediate
-            len = dasm_type2(buf, "AI", &illegal, uop);
+            len = dasm_type2(buf, "AI", illegal, uop);
             break;
         case 0x0D:      // binary add immediate w/ carry
-            len = dasm_type2(buf, "ACI", &illegal, uop);
+            len = dasm_type2(buf, "ACI", illegal, uop);
             break;
         case 0x0E:      // decimal add immediate
-            len = dasm_type2(buf, "DAI", &illegal, uop);
+            len = dasm_type2(buf, "DAI", illegal, uop);
             break;
         case 0x0F:      // decimal add immediate w/ carry
-            len = dasm_type2(buf, "DACI", &illegal, uop);
+            len = dasm_type2(buf, "DACI", illegal, uop);
             break;
 
     // branch instructions:
 
         case 0x10: case 0x11:   // branch if R[AAAA] == R[BBBB]
-            len = dasm_type3(buf, "BER", &illegal, ic, uop);
+            len = dasm_type3(buf, "BER", illegal, ic, uop);
             break;
         case 0x12: case 0x13:   // branch if R[AAAA] != R[BBBB]
-            len = dasm_type3(buf, "BNR", &illegal, ic, uop);
+            len = dasm_type3(buf, "BNR", illegal, ic, uop);
             break;
         case 0x14: case 0x15:   // subroutine branch
             newic = (uint16)((uop & 0xF00F) | ((uop<<4) & 0x0F00) | ((uop>>4) & 0x00F0));
             len = sprintf(buf, "SB");
-            pad_spaces(buf, &len, PARAM_COL);
-            addr(buf, &len, ic, newic);
+            pad_spaces(buf, len, PARAM_COL);
+            dasm_addr(buf, len, ic, newic);
             break;
         case 0x16: case 0x17:   // unconditional branch
             newic = (uint16)((uop & 0xF00F) | ((uop<<4) & 0x0F00) | ((uop>>4) & 0x00F0));
             len = sprintf(buf, "B");
-            pad_spaces(buf, &len, PARAM_COL);
-            addr(buf, &len, ic, newic);
+            pad_spaces(buf, len, PARAM_COL);
+            dasm_addr(buf, len, ic, newic);
             break;
         case 0x18: case 0x19:   // branch if true
             len = dasm_type4(buf, "BT", ic, uop);
@@ -778,13 +780,13 @@ dasm_op(char *buf, uint16 ic, uint32 uop)
 }
 
 
-int
+bool
 dasm_one(char *buff, uint16 ic, uint32 ucode)
 {
     assert(buff != nullptr);
     char dasmtext[100];
 
-    const int illegal = dasm_op(&dasmtext[0], ic, ucode);
+    const bool illegal = dasm_op(&dasmtext[0], ic, ucode);
     sprintf(buff, "%04X: %05X : %s %s\n", ic, ucode, &dasmtext[0],
             illegal ? "(ILLEGAL)" : "");
 

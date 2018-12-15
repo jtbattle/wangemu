@@ -1398,7 +1398,7 @@ Cpu2200t::execOneOp()
         // swap
         tmp_pc = m_cpu.pc;
         m_cpu.pc = m_cpu.aux[r_field];
-        m_cpu.aux[r_field] = static_cast<uint16>(tmp_pc + (int16)(puop->p16));
+        m_cpu.aux[r_field] = static_cast<uint16>(tmp_pc + static_cast<int16>(puop->p16));
         m_cpu.ic++;
         break;
 
