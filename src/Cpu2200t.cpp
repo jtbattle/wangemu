@@ -182,7 +182,7 @@ enum {
 // the microinstruction is checked for validity and the instruction is
 // predecoded to make subsequent interpretation faster.
 void
-Cpu2200t::write_ucode(int addr, uint32 uop)
+Cpu2200t::write_ucode(int addr, uint32 uop) noexcept
 {
     static const int8 pc_adjust_tbl[16] = {
          0,  0,  0,  0,  0,  0,  0,  0,
@@ -461,7 +461,7 @@ Cpu2200t::dump_16n(int addr)
 // there are two memory spaces: ROM and RAM
 // for RAM, there are two modes: "horizontal" and "vertical".
 uint8
-Cpu2200t::mem_read(uint16 addr) const
+Cpu2200t::mem_read(uint16 addr) const noexcept
 {
     uint8 rv;
 
@@ -536,7 +536,7 @@ Cpu2200t::mem_read(uint16 addr) const
 // WRITE2 flips A0 in horizontal mode.
 // WRITE2 flips A4 in vertical mode.
 void
-Cpu2200t::mem_write(uint16 addr, uint4 wr_value, int write2)
+Cpu2200t::mem_write(uint16 addr, uint4 wr_value, int write2) noexcept
 {
     if (m_cpu.st1 & ST1_MASK_ROM) {
         // ROM address space
@@ -678,7 +678,7 @@ Cpu2200t::store_C_operand(uint32 uop, uint4 value)
     } while (false)
 
 uint8
-Cpu2200t::decimal_add(uint4 a_op, uint4 b_op, int ci) const
+Cpu2200t::decimal_add(uint4 a_op, uint4 b_op, int ci) const noexcept
 {
     #ifdef _DEBUG
     // these are known to fire (eg, running diags), yet something
@@ -817,7 +817,7 @@ Cpu2200t::~Cpu2200t()
 
 // report CPU type
 int
-Cpu2200t::getCpuType() const
+Cpu2200t::getCpuType() const noexcept
 {
     return m_cpuType;
 }
@@ -825,7 +825,7 @@ Cpu2200t::getCpuType() const
 
 // true=cold boot (power cycle), false=warm restart
 void
-Cpu2200t::reset(bool hard_reset)
+Cpu2200t::reset(bool hard_reset) noexcept
 {
     m_cpu.ic        = 0x0000;
     m_cpu.icsp      = ICSTACK_TOP;
@@ -924,7 +924,7 @@ Cpu2200t::IoCardCbIbs(int data)
 //   (perhaps this is always connected and doesn't depend on device selection)
 //    ready: st3 bit 0 and is used to indicate the device has data ready.
 void
-Cpu2200t::halt()
+Cpu2200t::halt() noexcept
 {
     // set the halt/step key notification
     m_cpu.st3 = static_cast<uint4>(m_cpu.st3 | ST3_MASK_HALT);
@@ -935,7 +935,7 @@ Cpu2200t::halt()
 // when its busy/ready status changes.  If no card is selected,
 // it floats to one (it is an open collector bus signal).
 void
-Cpu2200t::setDevRdy(bool ready)
+Cpu2200t::setDevRdy(bool ready) noexcept
 {
     m_cpu.st3 = static_cast<uint4>( (m_cpu.st3 & ~ST3_MASK_DEVRDY) |
                                     (ready ? ST3_MASK_DEVRDY : 0) );
@@ -946,7 +946,7 @@ Cpu2200t::setDevRdy(bool ready)
 // information after the card has been selected.  this lets it peek into
 // that part of the cpu state.
 uint8
-Cpu2200t::getAB() const
+Cpu2200t::getAB() const noexcept
 {
     return m_cpu.ab;
 }
@@ -958,7 +958,7 @@ Cpu2200t::getAB() const
 int
 Cpu2200t::execOneOp()
 {
-    const ucode_t *puop = &m_ucode[m_cpu.ic];
+    const ucode_t * const puop = &m_ucode[m_cpu.ic];
     const uint32 uop = puop->ucode;
     int r_field;
     uint16 tmp_pc;

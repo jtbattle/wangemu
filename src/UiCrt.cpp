@@ -76,7 +76,7 @@ Crt::setFontDirty(bool dirty)
 }
 
 bool
-Crt::isFontDirty() const
+Crt::isFontDirty() const noexcept
 {
     return m_fontdirty;
 };
@@ -91,7 +91,7 @@ Crt::setFontSize(const int size)
 }
 
 int
-Crt::getFontSize() const
+Crt::getFontSize() const noexcept
 {
     return m_fontsize;
 }
@@ -530,7 +530,6 @@ Crt::create_beep()
 
     // create a contiguous block, copy the headers into it,
     // then append the sample data
-//  uint8 *wav = new (nothrow) uint8 [total_bytes];
     uint8 *wav = new uint8 [total_bytes];
     if (wav == nullptr) {
         return;

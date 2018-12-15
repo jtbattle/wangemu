@@ -309,7 +309,7 @@ Terminal::termToMxdCallback(int key)
 
 // advance the cursor in y
 void
-Terminal::adjustCursorY(int delta)
+Terminal::adjustCursorY(int delta) noexcept
 {
     m_disp.curs_y += delta;
     if (m_disp.curs_y >= m_disp.chars_h) {
@@ -326,7 +326,7 @@ Terminal::adjustCursorY(int delta)
 
 // move cursor left or right
 void
-Terminal::adjustCursorX(int delta)
+Terminal::adjustCursorX(int delta) noexcept
 {
     m_disp.curs_x += delta;
     if (m_disp.curs_x >= m_disp.chars_w) {
@@ -339,31 +339,10 @@ Terminal::adjustCursorX(int delta)
 
 // clear the display; home the cursor
 void
-Terminal::scr_clear()
+Terminal::scr_clear() noexcept
 {
-    char fillval = ' ';
-
-#if 1
-    for(auto &byte : m_disp.display) { byte = fillval; }
-#else
-    for(int y=0; y<m_disp.chars_h; y++) {
-    for(int x=0; x<m_disp.chars_w; x++) {
-        scr_write_char(x, y, fillval);
-    }}
-#endif
-
-#if 1
-    for(auto &byte : m_disp.attr) { byte = 0x00; }
-#else
-    if (m_disp.screen_type == UI_SCREEN_2236DE) {
-        uint8 attr = 0;
-        for(int y=0; y<25; y++) {
-        for(int x=0; x<80; x++) {
-            scr_write_attr(x, y, attr);
-        }}
-    }
-#endif
-
+    for(auto &byte : m_disp.display) { byte = static_cast<uint8>(0x20); }
+    for(auto &byte : m_disp.attr)    { byte = static_cast<uint8>(0x00); }
     setCursorX(0);
     setCursorY(0);
 }
@@ -372,7 +351,7 @@ Terminal::scr_clear()
 // scroll the contents of the screen up one row, and fill the new
 // row with blanks.
 void
-Terminal::scr_scroll()
+Terminal::scr_scroll() noexcept
 {
     uint8 *d  = &m_disp.display[0];  // first char of row 0
     uint8 *s  = d + m_disp.chars_w;  // first char of row 1

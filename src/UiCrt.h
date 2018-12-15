@@ -39,21 +39,21 @@ public:
     // values range from 0 to 100
     void setDisplayContrast(int n);
     void setDisplayBrightness(int n);
-    int  getDisplayContrast()   const { return m_display_contrast; }
-    int  getDisplayBrightness() const { return m_display_brightness; }
+    int  getDisplayContrast()   const noexcept { return m_display_contrast; }
+    int  getDisplayBrightness() const noexcept { return m_display_brightness; }
 
     // tracks whether screen might have changed
-    void setDirty(bool dirty = true)
+    void setDirty(bool dirty = true) noexcept
         { m_dirty = dirty; };
-    bool isDirty() const
+    bool isDirty() const noexcept
         { return m_dirty; };
 
     // tracks whether cached fontmap is out of date
     void setFontDirty(bool dirty = true);
-    bool isFontDirty() const;
+    bool isFontDirty() const noexcept;
 
-    void setFrameCount(int n)  { m_frame_count = n; }
-    int  getFrameCount() const { return m_frame_count; }
+    void setFrameCount(int n)  noexcept { m_frame_count = n; }
+    int  getFrameCount() const noexcept { return m_frame_count; }
 
     // redraw the CRT display as necessary
     void refreshWindow();
@@ -80,7 +80,7 @@ private:
     // ---- utility functions ----
 
     wxFont pickFont(int pointsize, int bold, const std::string &facename="");
-    int getFontSize() const;
+    int getFontSize() const noexcept;
 
     // rebuild m_fontmap
     void generateFontmap();

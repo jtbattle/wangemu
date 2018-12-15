@@ -79,11 +79,11 @@ private:
     void selectPCallback();
 
     // clear the display and home the cursor
-    void scr_clear();
+    void scr_clear() noexcept;
 
     // scroll the contents of the screen up one row,
     // and fill the new row with blanks.
-    void scr_scroll();
+    void scr_scroll() noexcept;
 
     // receive queueing
     void crtCharFifo(uint8 byte);
@@ -94,8 +94,8 @@ private:
     void processCrtChar2(uint8 byte);
     void processCrtChar3(uint8 byte);
 
-    void adjustCursorY(int delta);      // advance the cursor in y
-    void adjustCursorX(int delta);      // move cursor left or right
+    void adjustCursorY(int delta) noexcept;  // advance the cursor in y
+    void adjustCursorX(int delta) noexcept;  // move cursor left or right
 
     // ---- state ----
     std::shared_ptr<Scheduler> m_scheduler; // shared event scheduler
@@ -144,19 +144,19 @@ private:
     // ---- inline functions ----
 
     // set horizontal position
-    inline void setCursorX(int x) { m_disp.curs_x = x; }
+    inline void setCursorX(int x) noexcept { m_disp.curs_x = x; }
     // set vertical position
-    inline void setCursorY(int y) { m_disp.curs_y = y; }
+    inline void setCursorY(int y) noexcept { m_disp.curs_y = y; }
 
     // write 1 character to the video memory at location (x,y).
     // it is up to the caller to set the screen dirty flag.
-    inline void scr_write_char(int x, int y, uint8 ch)
+    inline void scr_write_char(int x, int y, uint8 ch) noexcept
         { m_disp.display[m_disp.chars_w*y + x] = ch; }
-    inline void scr_write_attr(int x, int y, uint8 attr)
+    inline void scr_write_attr(int x, int y, uint8 attr) noexcept
         { m_disp.attr[m_disp.chars_w*y + x] = attr; }
 
     // set or clear a character cell line attribute bit
-    inline void setBoxAttr(bool box_draw, uint8 attr, int y_adj=0) {
+    inline void setBoxAttr(bool box_draw, uint8 attr, int y_adj=0) noexcept {
         if (box_draw) {
             m_disp.attr[80*(m_disp.curs_y+y_adj) + m_disp.curs_x] |=  attr;
         } else { // erase

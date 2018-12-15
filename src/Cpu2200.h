@@ -20,19 +20,19 @@ public:
 
     // report which type of CPU is in use
     enum { CPUTYPE_2200B, CPUTYPE_2200T, CPUTYPE_2200VP };
-    virtual int getCpuType() const = 0;
+    virtual int getCpuType() const noexcept = 0;
 
     // true=hard reset, false=soft reset
-    virtual void reset(bool hard_reset) = 0;
+    virtual void reset(bool hard_reset) noexcept = 0;
 
     // indicates if cpu is running or halted
     enum { CPU_RUNNING=0, CPU_HALTED=1 };
-    int status() const { return m_status; }
+    int status() const noexcept { return m_status; }
 
     // the disk controller is odd in that it uses the AB bus to signal some
     // information after the card has been selected.  this lets it peek into
     // that part of the cpu state.
-    virtual uint8 getAB() const = 0;
+    virtual uint8 getAB() const noexcept = 0;
 
     // when a card is selected, or its status changes, it uses this function
     // to notify the core emulator about the new status.
@@ -42,7 +42,7 @@ public:
     //   (perhaps this is always connected and doesn't depend on device selection)
     // ready: st3 bit 0 and is used to indicate the device is ready to accept a
     //        new command (and perhaps has data ready from an earlier command)
-    virtual void setDevRdy(bool ready) = 0;
+    virtual void setDevRdy(bool ready) noexcept = 0;
 
     // when a card gets an IOhdlr_getbyte and it decides to return the data
     // request, this function is called to return that data.  it also takes
@@ -55,7 +55,7 @@ public:
     // this is a signal that in theory any card could use to set a
     // particular status flag in a cpu register, but the only role
     // I know it is used for is when the keyboard HALT key is pressed.
-    virtual void halt() = 0;
+    virtual void halt() noexcept = 0;
 
 protected:
     int m_status;  // whether the cpu is running or halted
@@ -73,19 +73,19 @@ public:
     Cpu2200t(std::shared_ptr<Scheduler> scheduler,
              int ramsize, int subtype);
     ~Cpu2200t();
-    int   getCpuType() const override;
-    void  reset(bool hard_reset) override;
-    uint8 getAB() const override;
-    void  setDevRdy(bool ready) override;
+    int   getCpuType() const noexcept override;
+    void  reset(bool hard_reset) noexcept override;
+    uint8 getAB() const noexcept override;
+    void  setDevRdy(bool ready) noexcept override;
     void  IoCardCbIbs(int data) override;
     int   execOneOp() override;  // simulate one instruction
-    void  halt() override;
+    void  halt() noexcept override;
 
 private:
     // ---- member functions ----
 
     // store the microcode word to the given microstore address
-    void write_ucode(int addr, uint32 uop);
+    void write_ucode(int addr, uint32 uop) noexcept;
 
     // dump the most important contents of the uP state
     void dump_state(int fulldump);
@@ -94,10 +94,10 @@ private:
     void dump_16n(int addr);
 
     // read from the specified address
-    uint8 mem_read(uint16 addr) const;
+    uint8 mem_read(uint16 addr) const noexcept;
 
     // write to the specified address.
-    void mem_write(uint16 addr, uint4 wr_value, int write2);
+    void mem_write(uint16 addr, uint4 wr_value, int write2) noexcept;
 
     // reading ST3 is a subroutine because it must return state that wasn't
     // what was written
@@ -111,7 +111,7 @@ private:
     int store_C_operand(uint32 uop, uint4 value);
 
     // add two BCD nibbles
-    uint8 decimal_add(uint4 a_op, uint4 b_op, int ci) const;
+    uint8 decimal_add(uint4 a_op, uint4 b_op, int ci) const noexcept;
 
     // subtract two BCD nibbles
     uint8 decimal_sub(uint4 a_op, uint4 b_op, int ci) const;
@@ -186,20 +186,20 @@ public:
     Cpu2200vp(std::shared_ptr<Scheduler> scheduler,
               int ramsize, int subtype);
     ~Cpu2200vp();
-    int   getCpuType() const override;
-    void  reset(bool hard_reset) override;
-    uint8 getAB() const override;
-    void  setDevRdy(bool ready) override;
+    int   getCpuType() const noexcept override;
+    void  reset(bool hard_reset) noexcept override;
+    uint8 getAB() const noexcept override;
+    void  setDevRdy(bool ready) noexcept override;
     void  IoCardCbIbs(int data) override;
     int   execOneOp() override;  // simulate one instruction
-    void  halt() override;
+    void  halt() noexcept override;
 
     // ---- class-specific members: ----
 
 private:
     // ---- member functions ----
     // predecode uinstruction and write it to store
-    void write_ucode(uint16 addr, uint32 uop);
+    void write_ucode(uint16 addr, uint32 uop) noexcept;
 
     // dump the most important contents of the uP state
     void dump_state(int fulldump);
@@ -208,23 +208,23 @@ private:
     void set_sh(uint8 value);
 
     // set SL register
-    void set_sl(uint8 value);
+    void set_sl(uint8 value) noexcept;
 
     // 9b result: carry out and 8b result
-    uint16 decimal_add8(int a_op, int b_op, int ci) const;
+    uint16 decimal_add8(int a_op, int b_op, int ci) const noexcept;
 
     // 9b result: carry out and 8b result
     // if ci is 0, it means compute a-b.
     // if ci is 1, it means compute a-b-1.
     // msb of result is new carry bit: 1=borrow, 0=no borrow
-    uint16 decimal_sub8(int a_op, int b_op, int ci) const;
+    uint16 decimal_sub8(int a_op, int b_op, int ci) const noexcept;
 
     // return the chosen bits of B and A, returns with the bits
     // of b in [7:4] and the bits of A in [3:0]
-    uint8 get_HbHa(int HbHa, int a_op, int b_op) const;
+    uint8 get_HbHa(int HbHa, int a_op, int b_op) const noexcept;
 
     // this callback occurs when the 30 ms timeslicing one-shot times out.
-    void tcb30msDone();
+    void tcb30msDone() noexcept;
 
 #ifdef HAVE_FILE_DUMP
     void dump_ram(const std::string &filename);

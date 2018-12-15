@@ -1331,7 +1331,7 @@ CrtFrame::OnMenuOpen(wxMenuEvent &event)
 // -------- allow discovery of possible font styles --------
 
 int
-CrtFrame::getNumFonts()
+CrtFrame::getNumFonts() noexcept
 {
     return num_fonts;
 }
@@ -1339,7 +1339,7 @@ CrtFrame::getNumFonts()
 // allow discovery of allowed values
 // as idx ranges from 0 to n, return the font size constant.
 int
-CrtFrame::getFontNumber(int idx)
+CrtFrame::getFontNumber(int idx) noexcept
 {
     assert(idx >= 0 && idx < num_fonts);
     return font_table[idx].size;
@@ -1356,7 +1356,7 @@ CrtFrame::getFontName(int idx)
 // -------- allow discovery of possible color schemes --------
 
 int
-CrtFrame::getNumColorSchemes()
+CrtFrame::getNumColorSchemes() noexcept
 {
     return num_colorschemes;
 }
@@ -1380,7 +1380,7 @@ CrtFrame::setFontSize(int size)
 }
 
 int
-CrtFrame::getFontSize() const
+CrtFrame::getFontSize() const noexcept
 {
     return m_fontsize[m_fullscreen];
 }
@@ -1401,7 +1401,7 @@ CrtFrame::setDisplayColorScheme(int n)
 }
 
 int
-CrtFrame::getDisplayColorScheme() const
+CrtFrame::getDisplayColorScheme() const noexcept
 {
     return m_colorsel;
 }
@@ -1447,7 +1447,7 @@ CrtFrame::setShowStatistics(bool show)
 }
 
 bool
-CrtFrame::getShowStatistics() const
+CrtFrame::getShowStatistics() const noexcept
 {
     return m_showstats;
 }
@@ -1468,13 +1468,13 @@ CrtFrame::getKeywordMode() const
 
 // the io address of the emulated keyboard associated with this window
 int
-CrtFrame::getTiedAddr() const
+CrtFrame::getTiedAddr() const noexcept
 {
     return m_assoc_kb_addr;
 }
 
 int
-CrtFrame::getTermNum() const
+CrtFrame::getTermNum() const noexcept
 {
     return m_term_num;
 }
@@ -1504,7 +1504,7 @@ CrtFrame::destroyWindow()
 // change which disk images are in use. Non-primary CRTs can change only local
 // properties, like CRT phosphor color and font.
 CrtFrame *
-CrtFrame::getPrimaryFrame()
+CrtFrame::getPrimaryFrame() noexcept
 {
     return m_primaryFrame;
 }

@@ -165,7 +165,7 @@ enum {
 #define IMM8(uop) ((((uop) >> 10) & 0xF0) | (((uop) >> 4) & 0xF))
 
 void
-Cpu2200vp::write_ucode(uint16 addr, uint32 uop)
+Cpu2200vp::write_ucode(uint16 addr, uint32 uop) noexcept
 {
     static const int pc_adjust_tbl[16] = {
          0,  0, 0, 0,  0,  0,  0,  0,
@@ -461,7 +461,7 @@ Cpu2200vp::write_ucode(uint16 addr, uint32 uop)
 // setting SL can have more complicated side effects.
 // we keep shadow state of the memory bank addressing bits.
 void
-Cpu2200vp::set_sl(uint8 value)
+Cpu2200vp::set_sl(uint8 value) noexcept
 {
     m_cpu.sl = (value & 0xFF);
 
@@ -501,7 +501,7 @@ Cpu2200vp::set_sh(uint8 value)
 
 // 9b result: carry out and 8b result
 uint16
-Cpu2200vp::decimal_add8(int a_op, int b_op, int ci) const
+Cpu2200vp::decimal_add8(int a_op, int b_op, int ci) const noexcept
 {
     const int a_op_low  = (a_op >> 0) & 0xF;
     const int b_op_low  = (b_op >> 0) & 0xF;
@@ -535,7 +535,7 @@ Cpu2200vp::decimal_add8(int a_op, int b_op, int ci) const
 // if ci is 1, it means compute a-b-1.
 // msb of result is new carry bit: 1=borrow, 0=no borrow
 uint16
-Cpu2200vp::decimal_sub8(int a_op, int b_op, int ci) const
+Cpu2200vp::decimal_sub8(int a_op, int b_op, int ci) const noexcept
 {
     const int a_op_low  = (a_op >> 0) & 0xF;
     const int a_op_high = (a_op >> 4) & 0xF;
@@ -655,7 +655,7 @@ Cpu2200vp::decimal_sub8(int a_op, int b_op, int ci) const
 // return the chosen bits of B and A, returns with the bits
 // of b in [7:4] and the bits of A in [3:0]
 uint8
-Cpu2200vp::get_HbHa(int HbHa, int a_op, int b_op) const
+Cpu2200vp::get_HbHa(int HbHa, int a_op, int b_op) const noexcept
 {
     int rslt;
 
@@ -793,7 +793,7 @@ Cpu2200vp::~Cpu2200vp()
 
 // report CPU type
 int
-Cpu2200vp::getCpuType() const
+Cpu2200vp::getCpuType() const noexcept
 {
     return CPUTYPE_2200VP;
 }
@@ -801,7 +801,7 @@ Cpu2200vp::getCpuType() const
 
 // true=hard reset, false=soft reset
 void
-Cpu2200vp::reset(bool hard_reset)
+Cpu2200vp::reset(bool hard_reset) noexcept
 {
     m_cpu.ic   = static_cast<uint16>((hard_reset) ? TRAP_POWER : TRAP_RESET);
     m_cpu.icsp = STACKSIZE-1;
@@ -869,7 +869,7 @@ Cpu2200vp::IoCardCbIbs(int data)
 // I'm not sure what the names should be in general, but these are based
 // on what the keyboard uses them for.
 void
-Cpu2200vp::halt()
+Cpu2200vp::halt() noexcept
 {
     // set the halt/step key notification
     m_cpu.sh = static_cast<uint8>(m_cpu.sh | SH_MASK_HALT);
@@ -881,7 +881,7 @@ Cpu2200vp::halt()
 // (it is an open collector bus signal, but the polarity on the bus is
 //  inverted, so that floating 1 becomes a zero to microcode).
 void
-Cpu2200vp::setDevRdy(bool ready)
+Cpu2200vp::setDevRdy(bool ready) noexcept
 {
     m_cpu.sh = static_cast<uint8>(
                    (ready) ? (m_cpu.sh |  SH_MASK_DEVRDY)      /* set */
@@ -893,7 +893,7 @@ Cpu2200vp::setDevRdy(bool ready)
 // information after the card has been selected.  this lets it peek into
 // that part of the cpu state.
 uint8
-Cpu2200vp::getAB() const
+Cpu2200vp::getAB() const noexcept
 {
     return m_cpu.ab;
 }
@@ -901,7 +901,7 @@ Cpu2200vp::getAB() const
 
 // this callback occurs when the 30 ms timeslicing one-shot times out.
 void
-Cpu2200vp::tcb30msDone()
+Cpu2200vp::tcb30msDone() noexcept
 {
     m_cpu.sh &= ~SH_MASK_30MS;    // one shot output falls
     m_tmr_30ms = nullptr;         // dead timer

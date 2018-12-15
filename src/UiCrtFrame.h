@@ -37,8 +37,8 @@ public:
     bool isPrimaryCrt() const;
 
     // the io address of the emulated keyboard associated with this window
-    int getTiedAddr() const;
-    int getTermNum() const;
+    int getTiedAddr() const noexcept;
+    int getTermNum() const noexcept;
 
     // request the CRT to be destroyed
     void destroyWindow();
@@ -53,19 +53,19 @@ public:
     void ding();
 
     // set CRT font style and size
-    static int         getNumFonts();
-    static int         getFontNumber(int idx);
+    static int         getNumFonts() noexcept;
+    static int         getFontNumber(int idx) noexcept;
     static std::string getFontName(int idx);
 
     // set/get CRT font size
     void          setFontSize(int size);
-    int           getFontSize() const;
+    int           getFontSize() const noexcept;
 
     // pick one of N color schemes
-    static int         getNumColorSchemes();
+    static int         getNumColorSchemes() noexcept;
     static std::string getColorSchemeName(int idx);
     void               setDisplayColorScheme(int n);
-    int                getDisplayColorScheme() const;
+    int                getDisplayColorScheme() const noexcept;
 
     // values range from 0 to 100
     void setDisplayContrast(int n);
@@ -151,7 +151,7 @@ private:
     void makeMenubar(bool primary_crt, bool smart_term);
 
     // return the primary CRTframe (/005)
-    static CrtFrame *getPrimaryFrame();
+    static CrtFrame *getPrimaryFrame() noexcept;
 
     // save/get CRT options to the config file
     void saveDefaults();
@@ -159,7 +159,7 @@ private:
 
     // control whether simulation speed shows up on statusbar
     void setShowStatistics(bool show=true);
-    bool getShowStatistics() const;
+    bool getShowStatistics() const noexcept;
 
     void setMenuChecks(const wxMenu *menu);
 
