@@ -279,8 +279,8 @@ PrinterFrame::setupRealPrinter()
     // margins
     int left, right, top, bottom;
     m_printer->getMargins(left, right, top, bottom);
-    wxPoint point(left, top);
-    wxPoint point2(right, bottom);
+    const wxPoint point(left, top);
+    const wxPoint point2(right, bottom);
     m_pageSetupData->SetMarginTopLeft(point);
     m_pageSetupData->SetMarginBottomRight(point2);
 
@@ -305,7 +305,7 @@ void
 PrinterFrame::setMenuChecks()
 {
     // ----- display -----------------------------------
-    bool greenbar = m_printer->getGreenbar();
+    const bool greenbar = m_printer->getGreenbar();
     m_menuBar->Check(Display_Greenbar, greenbar);
 
     m_menuBar->Check(Display_FontSize8,  m_fontsize ==  8);
@@ -550,7 +550,9 @@ PrinterFrame::PP_OnClose(wxCloseEvent &event)
     Host::ConfigWriteWinGeom(this, subgroup, false);
 
     wxPreviewControlBar *controlBar = ((wxPreviewFrame*)this)->GetControlBar();
-    PrinterFrame *parent = static_cast<PrinterFrame*>(GetParent());
+    assert(controlBar != nullptr);
+    PrinterFrame *parent = dynamic_cast<PrinterFrame*>(GetParent());
+    assert(parent != nullptr);
     parent->m_previewzoom = controlBar->GetZoomControl();
 
     event.Skip();
@@ -723,7 +725,7 @@ PrinterFrame::OnFontSize(wxCommandEvent &event)
 void
 PrinterFrame::OnDisplayGreenbar(wxCommandEvent& WXUNUSED(event))
 {
-    bool greenbar = m_printer->getGreenbar();
+    const bool greenbar = m_printer->getGreenbar();
     m_printer->setGreenbar(!greenbar);
 }
 
@@ -830,6 +832,7 @@ PrinterFrame::printAndClear()
 
     // remember where the focus was so we can restore it
     wxWindow *winHasFocus = FindFocus();
+    assert(winHasFocus != nullptr);
 
     wxPrintDialogData printDialogData(*m_printData);
     printDialogData.SetToPage(m_printer->numberOfPages());

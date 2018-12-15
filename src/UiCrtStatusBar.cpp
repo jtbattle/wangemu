@@ -181,13 +181,13 @@ CrtStatusBar::CrtStatusBar(CrtFrame *parent, bool smart_term, bool shown) :
         int slot;
         (void)System2200::findDiskController(ctrl, &slot); // where is it plugged in?
         int io;
-        bool ok = System2200::getSlotInfo(slot, 0, &io);   // address it is mapped to
+        bool ok = System2200::getSlotInfo(slot, nullptr, &io);  // address it is mapped to
         assert(ok); ok = ok;
 
         // figure out how many drives are attached to this controller
         m_num_drives[ctrl] = 0;
         for(int d=0; d<4; d++) {
-            int stat = IoCardDisk::wvdDriveStatus(slot, d);
+            const int stat = IoCardDisk::wvdDriveStatus(slot, d);
             if (stat & IoCardDisk::WVD_STAT_DRIVE_EXISTENT) {
                 m_num_drives[ctrl]++;
             } else {
@@ -199,13 +199,13 @@ CrtStatusBar::CrtStatusBar(CrtFrame *parent, bool smart_term, bool shown) :
         wxString label;
         label.Printf("3%02X:", io & 0xff);
         m_disklabel[2*ctrl+0] = std::make_unique<wxStaticText>( this, -1, label );
-        wxSize label_size0  = m_disklabel[2*ctrl+0]->GetSize();
-        int    label_width0 = label_size0.GetWidth();
+        const wxSize label_size0  = m_disklabel[2*ctrl+0]->GetSize();
+        const int    label_width0 = label_size0.GetWidth();
 
         label.Printf("3%02X:", (io + 0x40) & 0xff);
         m_disklabel[2*ctrl+1] = std::make_unique<wxStaticText>( this, -1, label );
-        wxSize label_size1  = m_disklabel[2*ctrl+1]->GetSize();
-        int    label_width1 = label_size1.GetWidth();
+        const wxSize label_size1 = m_disklabel[2*ctrl+1]->GetSize();
+        int label_width1 = label_size1.GetWidth();
         if (m_num_drives[ctrl] <= 2) {
             // not needed
             m_disklabel[2*ctrl+1]->Hide();
@@ -275,8 +275,8 @@ CrtStatusBar::CrtStatusBar(CrtFrame *parent, bool smart_term, bool shown) :
     pane_styles[panes] = wxSB_FLAT;
     panes++;
 
-    SetFieldsCount (panes, pane_widths);
-    SetStatusStyles(panes, pane_styles);
+    SetFieldsCount (panes, &pane_widths[0]);
+    SetStatusStyles(panes, &pane_styles[0]);
 
     // create checkbox to display/control whether shifted keys produce
     // keywords or cap characters.  the OnSize handler will size it and
@@ -296,14 +296,14 @@ void
 CrtStatusBar::SetDiskIcon(const int slot, const int drive)
 {
     int io_addr;        // address of this slot
-    bool ok = System2200::getSlotInfo(slot, 0, &io_addr);
+    bool ok = System2200::getSlotInfo(slot, nullptr, &io_addr);
     assert(ok); ok=ok;
 
     // figure out if disk is empty, idle, or running
-    int stat = IoCardDisk::wvdDriveStatus(slot, drive);
-    bool empty    =  !(stat & IoCardDisk::WVD_STAT_DRIVE_OCCUPIED);  // disk is not present
-//  bool running  = !!(stat & IoCardDisk::WVD_STAT_DRIVE_RUNNING);   // motor is active
-    bool selected = !!(stat & IoCardDisk::WVD_STAT_DRIVE_SELECTED);  // unit is being addressed
+    const int stat = IoCardDisk::wvdDriveStatus(slot, drive);
+    const bool empty    =  !(stat & IoCardDisk::WVD_STAT_DRIVE_OCCUPIED);  // disk is not present
+//  const bool running  = !!(stat & IoCardDisk::WVD_STAT_DRIVE_RUNNING);   // motor is active
+    const bool selected = !!(stat & IoCardDisk::WVD_STAT_DRIVE_SELECTED);  // unit is being addressed
 
     // figure out which disk controller this maps to
     int controller;
@@ -316,7 +316,7 @@ CrtStatusBar::SetDiskIcon(const int slot, const int drive)
         }
     }
     int idx = 4*controller+drive;
-    int mod_addr = io_addr + ((drive >= 2) ? 0x40 : 0x00);
+    const int mod_addr = io_addr + ((drive >= 2) ? 0x40 : 0x00);
 
     wxString tip;
     bool harddisk = false;  // until proven otherwise
@@ -341,9 +341,9 @@ CrtStatusBar::SetDiskIcon(const int slot, const int drive)
     // 0: hard disk,       1: selected hard disk
     // 2: occupied floppy, 3: selected occupied floppy
     // 4: empty floppy,    5: selected empty floppy
-    int state = empty    ? ((selected) ? 5 : 4)
-              : harddisk ? ((selected) ? 1 : 0)
-                         : ((selected) ? 3 : 2);
+    const int state = empty    ? ((selected) ? 5 : 4)
+                    : harddisk ? ((selected) ? 1 : 0)
+                               : ((selected) ? 3 : 2);
 
     // reassign and redraw the icon, but only if needed -- reduces flashing
     if (m_diskstate[idx] != state) {
@@ -396,7 +396,7 @@ CrtStatusBar::OnSize(wxSizeEvent &event)
 
         wxRect status_rect;
         GetFieldRect(2 + ctrl, status_rect);
-        int y_off = (status_rect.height - DISK_ICON_HEIGHT) / 2;
+        const int y_off = (status_rect.height - DISK_ICON_HEIGHT) / 2;
 
         // move the labels for the primary and optional secondary drives
         m_disklabel[2*ctrl+0]->Move(
@@ -440,24 +440,24 @@ CrtStatusBar::OnKeywordCtl(wxCommandEvent &event)
 void
 CrtStatusBar::OnDiskButton(wxMouseEvent &event)
 {
-    int diff = event.GetId() - ID_Button_DiskCtrl0_FDrive;
+    const int diff = event.GetId() - ID_Button_DiskCtrl0_FDrive;
     if (diff < 0) {
         return; // clicked somewhere else on the status bar
     }
 
-    int controller = diff >> 2;
-    int drive      = diff & 3;
+    const int controller = diff >> 2;
+    const int drive      = diff & 3;
     assert((controller >= 0) && (controller < (MAX_DISK_DRIVES/2)));
 
-    bool left_click  = event.LeftDown();
-    bool right_click = event.RightDown();
-    bool cmd_down    = event.CmdDown(); // control key on PC, CMD key on Mac
+    const bool left_click  = event.LeftDown();
+    const bool right_click = event.RightDown();
+    const bool cmd_down    = event.CmdDown(); // control key on PC, CMD key on Mac
 
     int slot;
     bool ok = System2200::findDiskController(controller, &slot);
     assert(ok); ok=ok;
-    int stat = IoCardDisk::wvdDriveStatus(slot, drive);
-    bool drive_occupied = !!(stat & IoCardDisk::WVD_STAT_DRIVE_OCCUPIED);
+    const int stat = IoCardDisk::wvdDriveStatus(slot, drive);
+    const bool drive_occupied = !!(stat & IoCardDisk::WVD_STAT_DRIVE_OCCUPIED);
 
     // which behavior are we after
     m_popup_action = unknown;
@@ -490,7 +490,7 @@ CrtStatusBar::OnDiskButton(wxMouseEvent &event)
             if (Host::fileReq(Host::FILEREQ_DISK, "Disk to load", 1, &fullpath) ==
                               Host::FILEREQ_OK) {
                 int drive2, io_addr;
-                bool b = System2200::findDisk(fullpath, nullptr, &drive2, &io_addr);
+                const bool b = System2200::findDisk(fullpath, nullptr, &drive2, &io_addr);
                 if (b) {
                     UI_Warn("Disk already in drive %c /%03x", "FR"[drive2], io_addr);
                     return;

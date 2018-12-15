@@ -100,7 +100,7 @@ PrinterConfigDlg::PrinterConfigDlg( wxWindow *parent, const wxString& title,
 bool
 PrinterConfigDlg::TransferDataToWindow()
 {
-    bool r = wxDialog::TransferDataToWindow();
+    const bool r = wxDialog::TransferDataToWindow();
     // set focus to the first text control
     text->SetFocus();
     return r;

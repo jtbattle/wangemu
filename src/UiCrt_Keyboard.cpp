@@ -286,9 +286,9 @@ Crt::OnKeyDown(wxKeyEvent &event)
         return;
     }
 
-    int wxKey = event.GetKeyCode();
-    int shift = event.ShiftDown();
-    int ctrl  = event.ControlDown();
+    const int wxKey = event.GetKeyCode();
+    const int shift = event.ShiftDown();
+    const int ctrl  = event.ControlDown();
     int key = 0x00;    // key value we stuff into emulator
 
     bool foundmap = false;
@@ -342,7 +342,7 @@ Crt::OnKeyDown(wxKeyEvent &event)
 void
 Crt::OnChar(wxKeyEvent &event)
 {
-    bool smart_term = (m_crt_state->screen_type == UI_SCREEN_2236DE);
+    const bool smart_term = (m_crt_state->screen_type == UI_SCREEN_2236DE);
 
     // don't swallow keystrokes that we can't handle
     if (event.AltDown() || event.ControlDown()) {
@@ -350,11 +350,11 @@ Crt::OnChar(wxKeyEvent &event)
         return;
     }
 
-    int wxKey = event.GetKeyCode();
-    int key = 0x00;    // keep lint happy
+    const int wxKey = event.GetKeyCode();
 
+    const bool keyword_mode = m_parent->getKeywordMode();
     bool foundmap = false;
-    bool keyword_mode = m_parent->getKeywordMode();
+    int key = 0x00;
     if (smart_term) {
         // the 2236 doesn't support keyword mode, just caps lock
         if (keyword_mode && ('a' <= wxKey && wxKey <= 'z')) {

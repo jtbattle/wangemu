@@ -104,8 +104,8 @@ private:
 };
 
 // scale us/ms to ns, which is what TimerCreate() expects
-inline int64 TIMER_US(double f) { return int64(   1000.0*f+0.5); }
-inline int64 TIMER_MS(double f) { return int64(1000000.0*f+0.5); }
+constexpr int64 TIMER_US(double f) { return static_cast<int64>(   1000.0*f+0.5); }
+constexpr int64 TIMER_MS(double f) { return static_cast<int64>(1000000.0*f+0.5); }
 
 #endif // _INCLUDE_SCHEDULER_H_
 

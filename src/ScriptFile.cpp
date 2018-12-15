@@ -114,7 +114,7 @@ ScriptFile::getLineDescription() const
 void
 ScriptFile::m_prepare_next_line()
 {
-    m_ifs->getline( m_charbuf, MAX_EXPECTED_LINE_LENGTH);
+    m_ifs->getline(&m_charbuf[0], MAX_EXPECTED_LINE_LENGTH);
     if (m_ifs->gcount() == 0) {
         m_charbuf[0] = '\0';
         m_eof = true;
@@ -135,7 +135,7 @@ ScriptFile::m_prepare_next_line()
     }
 
     // remove any combination of trailing CRs and LFs from buffer
-    int len = strlen(m_charbuf);
+    int len = strlen(&m_charbuf[0]);
     while ((m_charbuf[len-1] == '\n' || m_charbuf[len-1] == '\r') && len>0) {
         m_charbuf[len-1] = '\0';
         len--;
@@ -432,7 +432,7 @@ ScriptFile::getNextByte(int *byte)
         // Escape case #3: "\<label>" -> map using symbol table
         if (m_metaflags & SCRIPT_META_KEY) {
             for(unsigned int i=0; i<sizeof(metakeytable)/sizeof(metakeytable_t); i++) {
-                int len = strlen(metakeytable[i].name);
+                const int len = strlen(metakeytable[i].name);
                 if (strncmp( &m_charbuf[m_cur_char], metakeytable[i].name, len) == 0) {
                     // we found a matcher
                     *byte = metakeytable[i].val;
@@ -470,7 +470,7 @@ ScriptFile::getNextByte(int *byte)
                     // determine the path to the current script
                     std::string tmp_fname;
 #if __WXMSW__
-                    size_t last_sep = m_filename.find_last_of("/\\");
+                    const size_t last_sep = m_filename.find_last_of("/\\");
                     tmp_fname = m_filename.substr(0,last_sep+1) + inc_fname;
 #else
                     size_t last_sep = m_filename.find_last_of("/");

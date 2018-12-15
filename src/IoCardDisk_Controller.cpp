@@ -189,9 +189,9 @@ IoCardDisk::sendBytes(int count, disk_sm_t return_state)
 bool
 IoCardDisk::advanceState(disk_event_t event, const int val)
 {
-    bool poll_before = (!m_cpb && !m_card_busy);
-    bool rv = advanceStateInt(event, val);
-    bool poll_after  = (!m_cpb && !m_card_busy);
+    const bool poll_before = (!m_cpb && !m_card_busy);
+    const bool rv = advanceStateInt(event, val);
+    const bool poll_after  = (!m_cpb && !m_card_busy);
 
     if (!poll_before && poll_after) {
         checkDiskReady();  // causes reentrancy to this function
@@ -405,7 +405,7 @@ IoCardDisk::advanceStateInt(disk_event_t event, const int val)
     case CTRL_GET_BYTES:
         assert(m_card_busy == false);
         if (event == EVENT_OBS) {
-            m_get_bytes[m_get_bytes_ptr] = (uint8)val;
+            m_get_bytes[m_get_bytes_ptr] = static_cast<uint8>(val);
             m_state = CTRL_GET_BYTES2;
         }
         break;
@@ -468,7 +468,7 @@ IoCardDisk::advanceStateInt(disk_event_t event, const int val)
     case CTRL_COMMAND:
         assert(m_card_busy == false);
         if (event == EVENT_OBS) {
-            m_header[m_state_cnt] = (uint8)val;
+            m_header[m_state_cnt] = static_cast<uint8>(val);
             m_state = CTRL_COMMAND_ECHO;
             if (m_state_cnt == 0) {
                 m_command =  (val >> 5) & 7;
@@ -537,7 +537,7 @@ disk operation
     case CTRL_COMMAND_ECHO_BAD:  // special case; fall through
     case CTRL_COMMAND_ECHO:
         if (event == EVENT_IBS_POLL) {
-            bool bad_spcl_cmd = (m_state == CTRL_COMMAND_ECHO_BAD);
+            const bool bad_spcl_cmd = (m_state == CTRL_COMMAND_ECHO_BAD);
             rv = true;  // we have data to return
             m_state = CTRL_COMMAND;  // may be overridden
             m_byte_to_send = m_header[m_state_cnt++];
@@ -711,7 +711,7 @@ disk operation
                 UI_Warn("CTRL_READ1 received mystery byte of 0x%02x", val);
             }
             m_state = CTRL_READ2;
-            bool ok = iwvdReadSector();  // really read the data
+            const bool ok = iwvdReadSector();  // really read the data
             m_byte_to_send = (ok) ? 0x00 : 0x01;
             // 0x00 = status OK
             // 0x01 -> ERR 71/I95  (cannot find sector/protected platter)
@@ -746,7 +746,7 @@ disk operation
     // expect to receive 256 data bytes plus one LRC byte
     case CTRL_WRITE1:
         if (event == EVENT_OBS) {
-            m_buffer[m_bufptr++] = (uint8)val;
+            m_buffer[m_bufptr++] = static_cast<uint8>(val);
             if (m_bufptr == 257) {
                 int cksum = 0;
                 for(int i=0; i<256; i++) {
@@ -769,7 +769,7 @@ disk operation
                     m_byte_to_send = 0x01;  // error status
                 } else {
                     // actually update the virtual disk
-                    bool ok = iwvdWriteSector();
+                    const bool ok = iwvdWriteSector();
                     m_byte_to_send = (ok) ? 0x00 : 0x02;
                 }
                 // finished receiving data and LRC, send status byte
@@ -898,8 +898,8 @@ disk operation
             if (m_drive >= numDrives()) {
                 m_byte_to_send = 0x01;
             } else {
-                int num_platters = m_d[m_drive].wvd->getNumPlatters();
-                int num_sectors  = m_d[m_drive].wvd->getNumSectors();
+                const int num_platters = m_d[m_drive].wvd->getNumPlatters();
+                const int num_sectors  = m_d[m_drive].wvd->getNumSectors();
                 m_byte_to_send = (m_d[m_drive].state == DRIVE_EMPTY) ? 0x01
                                : (m_range_start   >= num_sectors)    ? 0x01
                                : (m_range_platter >= num_platters)   ? 0x02
@@ -920,7 +920,7 @@ disk operation
                        m_get_bytes[2];
         if (event == EVENT_IBS_POLL) {
             rv = true;
-            int num_sectors = m_d[m_drive].wvd->getNumSectors();
+            const int num_sectors = m_d[m_drive].wvd->getNumSectors();
             m_byte_to_send = (m_d[m_drive].state == DRIVE_EMPTY) ? 0x01
                            : (m_range_end >= num_sectors)        ? 0x01
                                                                  : 0x00;
@@ -936,14 +936,14 @@ disk operation
     // we must ensure the command is legal, and return status indicating this.
     case CTRL_COPY3:
         if (event == EVENT_IBS_POLL) {
-            int sector_count = m_range_end - m_range_start + 1;
-            int final_dst = m_secaddr + sector_count - 1;
+            const int sector_count = m_range_end - m_range_start + 1;
+            const int final_dst = m_secaddr + sector_count - 1;
             rv = true;
             if (m_drive >= numDrives()) {
                 m_byte_to_send = 0x01;
             } else {
-                int num_platters = m_d[m_drive].wvd->getNumPlatters();
-                int num_sectors  = m_d[m_drive].wvd->getNumSectors();
+                const int num_platters = m_d[m_drive].wvd->getNumPlatters();
+                const int num_sectors  = m_d[m_drive].wvd->getNumSectors();
                 m_byte_to_send = (m_d[m_drive].state == DRIVE_EMPTY) ? 0x01
                                : (final_dst >= num_sectors)          ? 0x01
                                : (m_platter >= num_platters)         ? 0x02
@@ -991,10 +991,10 @@ disk operation
             // plus the delay of stepping to the destination track.
             // this isn't right if the src and dst platters have a different
             // number of sectors/track.
-            int64 src_ns_per_trk = m_d[m_range_drive].ns_per_sector
-                                 * m_d[m_range_drive].sectors_per_track;
-            int dst_cur_track = m_dest_start
-                              / m_d[m_dest_drive].sectors_per_track;
+            const int64 src_ns_per_trk = m_d[m_range_drive].ns_per_sector
+                                       * m_d[m_range_drive].sectors_per_track;
+            const int dst_cur_track = m_dest_start
+                                    / m_d[m_dest_drive].sectors_per_track;
 
             // wvdGetNsToTrack() and wvdSeekTrack() need m_drive set
             m_drive = m_dest_drive;
@@ -1002,8 +1002,8 @@ disk operation
                 UI_diskEvent(m_slot, d);
             }
 
-            int64 delay = src_ns_per_trk  // time reading source track
-                        + wvdGetNsToTrack(dst_cur_track);  // seeking dst track
+            const int64 delay = src_ns_per_trk  // time reading source track
+                              + wvdGetNsToTrack(dst_cur_track);  // seeking dst track
             m_d[m_dest_drive].track = dst_cur_track;
 
             m_state = CTRL_COPY6;
@@ -1018,15 +1018,15 @@ disk operation
     // what happens if the src and dst disks don't have the same sectors/track.
     case CTRL_COPY6:
         {
-            int src_sec_per_trk    = m_d[m_range_drive].sectors_per_track;
-            int src_cur_track      = m_range_start / src_sec_per_trk;
-            int first_sec_of_track = src_cur_track * src_sec_per_trk;
-            int last_sec_of_track  = first_sec_of_track + src_sec_per_trk - 1;
-            int64 dst_ns_per_trk   = m_d[m_dest_drive].ns_per_sector
-                                   * m_d[m_dest_drive].sectors_per_track;
-            int first = std::max(m_range_start, first_sec_of_track);
-            int last  = std::min(m_range_end,    last_sec_of_track);
-            int count = last - first + 1;
+            const int src_sec_per_trk    = m_d[m_range_drive].sectors_per_track;
+            const int src_cur_track      = m_range_start / src_sec_per_trk;
+            const int first_sec_of_track = src_cur_track * src_sec_per_trk;
+            const int last_sec_of_track  = first_sec_of_track + src_sec_per_trk - 1;
+            const int64 dst_ns_per_trk   = m_d[m_dest_drive].ns_per_sector
+                                         * m_d[m_dest_drive].sectors_per_track;
+            const int first = std::max(m_range_start, first_sec_of_track);
+            const int last  = std::min(m_range_end,    last_sec_of_track);
+            const int count = last - first + 1;
 
             // copy the source track to the destination track(s)
             bool ok = true;
@@ -1035,14 +1035,14 @@ disk operation
 
             for(int n=0; ok && (n < count); n++) {
                 ok = m_d[m_range_drive].wvd->readSector
-                                    (m_range_platter, m_range_start+n, data);
+                                    (m_range_platter, m_range_start+n, &data[0]);
                 if (!ok) {
                     m_byte_to_send = 0x02;  // generic error
                 } else if (m_d[m_drive].wvd->getWriteProtect()) {
                     m_byte_to_send = 0x01;  // write protect
                 } else {
                     ok = m_d[m_dest_drive].wvd->writeSector
-                                    (m_dest_platter, m_dest_start+n, data);
+                                    (m_dest_platter, m_dest_start+n, &data[0]);
                     if (!ok) {
                         m_byte_to_send = 0x02;  // generic error
                     }
@@ -1063,8 +1063,8 @@ disk operation
                     UI_diskEvent(m_slot, d);
                 }
                 m_drive = m_range_drive;
-                int64 delay = dst_ns_per_trk
-                            + wvdGetNsToTrack(src_cur_track+1);
+                const int64 delay = dst_ns_per_trk
+                                  + wvdGetNsToTrack(src_cur_track+1);
                 m_d[m_drive].track = src_cur_track+1;
                 wvdTickleMotorOffTimer();  // make sure motor keeps going
                 wvdSeekTrack(delay);
@@ -1155,20 +1155,20 @@ disk operation
             } else {
                 // fill all sectors with 0x00
                 uint8 data[256];
-                memset(data, (uint8)0x00, 256);
+                memset(&data[0], static_cast<uint8>(0x00), 256);
                 for(int n=0; ok && n<sec_per_trk; n++) {
-                    ok = m_d[m_drive].wvd->writeSector(m_platter, n, data);
+                    ok = m_d[m_drive].wvd->writeSector(m_platter, n, &data[0]);
                 }
                 if (!ok) {
                     m_byte_to_send = 0x02;
                 }
             }
 
-            int next_track = m_d[m_drive].track + 1;
+            const int next_track = m_d[m_drive].track + 1;
             if (ok && (next_track < tracks)) {
                 m_state = CTRL_FORMAT2; // stay
                 // account for one rotation of disk, plus step time
-                int64 delay = ns_per_trk + wvdGetNsToTrack(next_track);
+                const int64 delay = ns_per_trk + wvdGetNsToTrack(next_track);
                 m_d[m_drive].track = next_track;
                 wvdTickleMotorOffTimer();  // make sure motor keeps going
                 wvdSeekTrack(delay);
@@ -1317,8 +1317,8 @@ disk operation
             if (m_drive >= numDrives()) {
                 m_byte_to_send = 0x01;  // non-existent drive
             } else {
-                int num_platters = m_d[m_drive].wvd->getNumPlatters();
-                int num_sectors  = m_d[m_drive].wvd->getNumSectors();
+                const int num_platters = m_d[m_drive].wvd->getNumPlatters();
+                const int num_sectors  = m_d[m_drive].wvd->getNumSectors();
                 m_byte_to_send = (m_d[m_drive].state == DRIVE_EMPTY) ? 0x01
                                : (m_range_start   >= num_sectors)    ? 0x01
                                : (m_range_platter >= num_platters)   ? 0x02
@@ -1365,31 +1365,31 @@ disk operation
     // read all the sectors on the current track that fall in range
     case CTRL_VERIFY_RANGE4:
         {
-            int cur_track     = m_d[m_drive].track;
-            int sec_per_trk   = m_d[m_drive].sectors_per_track;
-            int64 ns_per_trk  = m_d[m_drive].ns_per_sector * sec_per_trk;
-            int last_track    = m_range_end / sec_per_trk;
-            int first_sec_of_track = cur_track * sec_per_trk;
-            int last_sec_of_track  = first_sec_of_track + sec_per_trk - 1;
-            int first = std::max(m_range_start, first_sec_of_track);
-            int last  = std::min(m_range_end,    last_sec_of_track);
+            const int cur_track     = m_d[m_drive].track;
+            const int sec_per_trk   = m_d[m_drive].sectors_per_track;
+            const int64 ns_per_trk  = m_d[m_drive].ns_per_sector * sec_per_trk;
+            const int last_track    = m_range_end / sec_per_trk;
+            const int first_sec_of_track = cur_track * sec_per_trk;
+            const int last_sec_of_track  = first_sec_of_track + sec_per_trk - 1;
+            const int first = std::max(m_range_start, first_sec_of_track);
+            const int last  = std::min(m_range_end,    last_sec_of_track);
 
             bool ok = true;
             m_byte_to_send = 0x00;
             uint8 data[256];
 
             for(m_secaddr = first; ok && (m_secaddr <= last); m_secaddr++) {
-                ok = m_d[m_drive].wvd->readSector(m_range_platter, m_secaddr, data);
+                ok = m_d[m_drive].wvd->readSector(m_range_platter, m_secaddr, &data[0]);
             }
             if (!ok) {
                 m_byte_to_send = 0x01;  // seek error
             }
 
-            int next_track = m_d[m_drive].track + 1;
+            const int next_track = m_d[m_drive].track + 1;
             if (ok && (next_track <= last_track)) {
                 m_state = CTRL_VERIFY_RANGE4; // stay
                 // account for one rotation of disk, plus step time
-                int64 delay = ns_per_trk + wvdGetNsToTrack(next_track);
+                const int64 delay = ns_per_trk + wvdGetNsToTrack(next_track);
                 m_d[m_drive].track = next_track;
                 wvdTickleMotorOffTimer();  // make sure motor keeps going
                 wvdSeekTrack(delay);

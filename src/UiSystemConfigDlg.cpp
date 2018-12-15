@@ -174,7 +174,7 @@ SystemConfigDlg::SystemConfigDlg(wxFrame *parent) :
         m_cardDesc[slot]->Append("(vacant)", (void*)(-2));
 
         for(int ctype=0; ctype<IoCard::NUM_CARDTYPES; ctype++) {
-            IoCard::card_t ct = IoCard::card_types[ctype];
+            const IoCard::card_t ct = IoCard::card_types[ctype];
             std::string cardname = CardInfo::getCardName(ct);
             std::string carddesc = CardInfo::getCardDesc(ct);
             std::string str( cardname + " (" + carddesc + ")" );
@@ -283,7 +283,7 @@ SystemConfigDlg::updateDlg()
 #endif
 
     m_memSize->SetSelection(-1); // just in case there is no match, make it obvious
-    int ramsize = m_cfg.getRamKB();
+    const int ramsize = m_cfg.getRamKB();
     for(unsigned int i=0; i<m_memSize->GetCount(); i++) {
         if ((int)(m_memSize->GetClientData(i)) == ramsize) {
             m_memSize->SetSelection(i);
@@ -295,8 +295,8 @@ SystemConfigDlg::updateDlg()
     m_warnIo->SetValue(m_cfg.getWarnIo());
 
     for(int slot=0; slot<NUM_IOSLOTS; slot++) {
-        IoCard::card_t cardtype = m_cfg.getSlotCardType(slot);
-        int int_cardtype = static_cast<int>(cardtype);
+        const IoCard::card_t cardtype = m_cfg.getSlotCardType(slot);
+        const int int_cardtype = static_cast<int>(cardtype);
         if (cardtype == IoCard::card_t::none) {
             m_cardDesc[slot]->SetSelection(0);
         } else {
@@ -335,7 +335,7 @@ SystemConfigDlg::updateButtons()
     // I'm not sure this is the best way to do this, but it works well enough.
     Layout();
     Fit();
-    wxSize sz(GetSize());
+    const wxSize sz(GetSize());
     SetMinSize(sz);
 }
 
@@ -343,9 +343,9 @@ SystemConfigDlg::updateButtons()
 void
 SystemConfigDlg::OnCpuChoice( wxCommandEvent& WXUNUSED(event) )
 {
-    int selection = m_cpuType->GetSelection();
-    int cputype   = (int)(m_cpuType->GetClientData(selection));
-    int cur_mem   = m_cfg.getRamKB();
+    const int selection = m_cpuType->GetSelection();
+    const int cputype   = (int)(m_cpuType->GetClientData(selection));
+    const int cur_mem   = m_cfg.getRamKB();
 
     m_cfg.setCpuType(cputype);
 
@@ -354,7 +354,7 @@ SystemConfigDlg::OnCpuChoice( wxCommandEvent& WXUNUSED(event) )
 
     // try to map current memory size to legal one
     for(unsigned int i=0; i<m_memSize->GetCount(); i++) {
-        int legal_size = (int)m_memSize->GetClientData(i);
+        const int legal_size = (int)m_memSize->GetClientData(i);
         if (cur_mem == legal_size) {
             // perfect mapping -- done
             m_memSize->SetSelection(i);
@@ -379,7 +379,7 @@ SystemConfigDlg::OnCpuChoice( wxCommandEvent& WXUNUSED(event) )
 void
 SystemConfigDlg::OnMemsizeChoice( wxCommandEvent& WXUNUSED(event) )
 {
-    int selection = m_memSize->GetSelection();
+    const int selection = m_memSize->GetSelection();
     m_cfg.setRamKB( (int)(m_memSize->GetClientData(selection)) );
     updateButtons();
 }
@@ -388,7 +388,7 @@ SystemConfigDlg::OnMemsizeChoice( wxCommandEvent& WXUNUSED(event) )
 void
 SystemConfigDlg::OnDiskRealtime( wxCommandEvent& WXUNUSED(event) )
 {
-    bool checked = m_diskRealtime->IsChecked();
+    const bool checked = m_diskRealtime->IsChecked();
     m_cfg.setDiskRealtime( checked );
     updateButtons();
 }
@@ -396,7 +396,7 @@ SystemConfigDlg::OnDiskRealtime( wxCommandEvent& WXUNUSED(event) )
 void
 SystemConfigDlg::OnWarnIo( wxCommandEvent& WXUNUSED(event) )
 {
-    bool checked = m_warnIo->IsChecked();
+    const bool checked = m_warnIo->IsChecked();
     m_cfg.setWarnIo( checked );
     updateButtons();
 }
@@ -404,17 +404,18 @@ SystemConfigDlg::OnWarnIo( wxCommandEvent& WXUNUSED(event) )
 void
 SystemConfigDlg::OnCardChoice( wxCommandEvent &event )
 {
-    int id = event.GetId();
+    const int id = event.GetId();
     assert(id >= ID_SLOT0_CARD_CHOICE && id <= ID_SLOTN_CARD_CHOICE);
-    int slot = id - ID_SLOT0_CARD_CHOICE;
-    wxChoice *hCtl = m_cardDesc[slot];
-    int selection = hCtl->GetSelection();
+    const int slot = id - ID_SLOT0_CARD_CHOICE;
+    const wxChoice *hCtl = m_cardDesc[slot];
+    assert(hCtl != nullptr);
+    const int selection = hCtl->GetSelection();
     int idx = (int)(hCtl->GetClientData(selection));
     if (idx < 0) { idx = -1; }  // hack due to -2 hack earlier
-    IoCard::card_t cardtype = static_cast<IoCard::card_t>(idx);
+    const IoCard::card_t cardtype = static_cast<IoCard::card_t>(idx);
 
-    m_cfg.setSlotCardType( slot, cardtype );
-    m_cfg.setSlotCardAddr( slot, -1 );       // user must set io later
+    m_cfg.setSlotCardType(slot, cardtype);
+    m_cfg.setSlotCardAddr(slot, -1);       // user must set io later
 
     // update the associated io_addr picker
     setValidIoChoices(slot, idx);
@@ -426,12 +427,12 @@ SystemConfigDlg::OnCardChoice( wxCommandEvent &event )
 void
 SystemConfigDlg::OnAddrChoice( wxCommandEvent &event )
 {
-    int id = event.GetId();
+    const int id = event.GetId();
     assert(id >= ID_SLOT0_ADDR_CHOICE && id <= ID_SLOTN_ADDR_CHOICE);
-    int slot = id - ID_SLOT0_ADDR_CHOICE;
-    int cardsel      =       m_cardDesc[slot]->GetSelection();
-    int cardtype_idx = (int)(m_cardDesc[slot]->GetClientData(cardsel));
-    int addrsel      =       m_cardAddr[slot]->GetSelection();
+    const int slot = id - ID_SLOT0_ADDR_CHOICE;
+    const int cardsel      =       m_cardDesc[slot]->GetSelection();
+    const int cardtype_idx = (int)(m_cardDesc[slot]->GetClientData(cardsel));
+    const int addrsel      =       m_cardAddr[slot]->GetSelection();
     assert(cardtype_idx >= 0);
 
     std::vector<int> base_addresses = CardInfo::getCardBaseAddresses(static_cast<IoCard::card_t>(cardtype_idx));
@@ -447,11 +448,11 @@ SystemConfigDlg::configStateOk(bool warn)
 {
     // make sure all io addresses have been selected
     for(int slot=0; slot<NUM_IOSLOTS; slot++) {
-        int cardsel = m_cardDesc[slot]->GetSelection();
+        const int cardsel = m_cardDesc[slot]->GetSelection();
         if (cardsel == 0) {
             continue;   // not occupied
         }
-        int addrsel = m_cardAddr[slot]->GetSelection();
+        const int addrsel = m_cardAddr[slot]->GetSelection();
         if (addrsel < 0) {
             if (warn) {
                 UI_Error("Please select an I/O address for slot %d", slot);
@@ -496,7 +497,7 @@ SystemConfigDlg::OnButton(wxCommandEvent &event)
             if ( (event.GetId() >= ID_SLOT0_BTN_CONFIG) &&
                  (event.GetId() <= ID_SLOTN_BTN_CONFIG) ) {
                 // one of the per-card configuration buttons was pressed
-                int slot = event.GetId() - ID_SLOT0_BTN_CONFIG;
+                const int slot = event.GetId() - ID_SLOT0_BTN_CONFIG;
                 m_cfg.editCardConfig(slot);
                 updateButtons();
             } else {
@@ -535,11 +536,13 @@ void
 SystemConfigDlg::setValidIoChoices(int slot, int cardtype_idx)
 {
     wxChoice *hAddrCtl = m_cardAddr[slot];
+    assert(hAddrCtl != nullptr);
     wxButton *hCfgCtl  = m_cardCfg[slot];
-    IoCard::card_t ct = static_cast<IoCard::card_t>(cardtype_idx);
+    assert(hCfgCtl != nullptr);
+    const IoCard::card_t ct = static_cast<IoCard::card_t>(cardtype_idx);
     hAddrCtl->Clear();      // wipe out any previous list
 
-    bool occupied = m_cfg.isSlotOccupied(slot);
+    const bool occupied = m_cfg.isSlotOccupied(slot);
     hAddrCtl->Enable(occupied);
 
     if (occupied) {
@@ -547,7 +550,7 @@ SystemConfigDlg::setValidIoChoices(int slot, int cardtype_idx)
 
         int addr_mtch_idx = -1;
         for(unsigned int j=0; j<base_addresses.size(); j++) {
-            int io_addr = base_addresses[j];
+            const int io_addr = base_addresses[j];
             wxString str;
             str.Printf( "0x%03X", io_addr);
             hAddrCtl->Append(str);
@@ -573,7 +576,7 @@ SystemConfigDlg::setValidIoChoices(int slot, int cardtype_idx)
     }
 
     // hide the configuration button if there is nothing to configure
-    bool show_btn = occupied && CardInfo::isCardConfigurable(ct);
+    const bool show_btn = occupied && CardInfo::isCardConfigurable(ct);
     hCfgCtl->Show(show_btn);
 }
 

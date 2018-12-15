@@ -44,7 +44,7 @@ public:
     void setPageAttributes(int  linelength, int  pagelength);
     void getPageAttributes(int &linelength, int &pagelength) const;
 
-    void getCellAttributes(int *cell_w, int *cell_h) const;
+    void getCellAttributes(int &cell_w, int &cell_h) const;
 
     void setAutoshow(bool b);
     bool getAutoshow() const;

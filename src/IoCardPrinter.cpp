@@ -23,7 +23,7 @@ IoCardPrinter::IoCardPrinter(std::shared_ptr<Cpu2200> cpu,
 {
     if (m_slot >= 0) {
         int io_addr;
-        bool ok = System2200::getSlotInfo(cardslot, 0, &io_addr);
+        bool ok = System2200::getSlotInfo(cardslot, nullptr, &io_addr);
         assert(ok); ok=ok;
         m_wndhnd = UI_printerInit(io_addr);
         reset();
@@ -107,13 +107,13 @@ IoCardPrinter::deselect()
 void
 IoCardPrinter::OBS(int val)
 {
-    val &= 0xFF;
+    const uint8 val8 = val & 0xFF;
 
     if (NOISY) {
-        UI_Info("printer OBS: Output of byte 0x%02x", val);
+        UI_Info("printer OBS: Output of byte 0x%02x", val8);
     }
 
-    UI_printerChar(getGuiPtr(), (uint8)val);
+    UI_printerChar(getGuiPtr(), val8);
 
     m_cpu->setDevRdy(true);
 }

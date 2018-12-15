@@ -133,7 +133,7 @@ isDiskController(int slot)
     assert(slot >= 0 && slot < NUM_IOSLOTS);
 
     int cardtype_idx;
-    bool ok = System2200::getSlotInfo(slot, &cardtype_idx, 0);
+    const bool ok = System2200::getSlotInfo(slot, &cardtype_idx, nullptr);
 
     return ok && (cardtype_idx == static_cast<int>(IoCard::card_t::disk));
 }
@@ -149,13 +149,13 @@ saveDiskMounts(void)
             const auto cfg = current_cfg->getCardConfig(slot);
             const auto dcfg = dynamic_cast<const DiskCtrlCfgState*>(cfg.get());
             assert(dcfg);
-            int num_drives = dcfg->getNumDrives();
+            const int num_drives = dcfg->getNumDrives();
             for(int drive=0; drive<num_drives; drive++) {
                 std::ostringstream item;
                 item << "filename-" << drive;
                 std::string filename("");
                 if (isDiskController(slot)) {
-                    int stat = IoCardDisk::wvdDriveStatus(slot, drive);
+                    const int stat = IoCardDisk::wvdDriveStatus(slot, drive);
                     if (stat & IoCardDisk::WVD_STAT_DRIVE_OCCUPIED) {
                         bool ok = IoCardDisk::wvdGetFilename(slot, drive, &filename);
                         assert(ok); ok=ok;
@@ -177,7 +177,7 @@ restoreDiskMounts(void)
             const auto cfg = current_cfg->getCardConfig(slot);
             const auto dcfg = dynamic_cast<const DiskCtrlCfgState*>(cfg.get());
             assert(dcfg);
-            int num_drives = dcfg->getNumDrives();
+            const int num_drives = dcfg->getNumDrives();
             for(int drive=0; drive<num_drives; drive++) {
                 std::ostringstream subgroup;
                 subgroup << "io/slot-" << slot;
@@ -260,11 +260,11 @@ dbglog(const char *fmt, ...)
     va_list args;
 
     va_start(args, fmt);
-    vsnprintf(buff, sizeof(buff), fmt, args);
+    vsnprintf(&buff[0], sizeof(buff), fmt, args);
     va_end(args);
 
     if (dbg_ofs.good()) {
-        dbg_ofs << buff;
+        dbg_ofs << &buff[0];
         // this is useful if we are getting assert()s, causing
         // the last buffered block to not appear in the log.
         dbg_ofs.flush();
@@ -396,13 +396,13 @@ System2200::setConfig(const SysCfgState &newcfg)
         current_cfg = std::make_shared<SysCfgState>();
     } else {
         // check if the change is minor, not requiring a teardown
-        bool rebuild_required = current_cfg->needsReboot(newcfg);
+        const bool rebuild_required = current_cfg->needsReboot(newcfg);
         if (!rebuild_required) {
             *current_cfg = newcfg;  // make new config permanent
             // notify all configured cards about possible new configuration
             for(int slot=0; slot < NUM_IOSLOTS; slot++) {
                 if (current_cfg->isSlotOccupied(slot)) {
-                    IoCard::card_t ct = current_cfg->getSlotCardType(slot);
+                    const IoCard::card_t ct = current_cfg->getSlotCardType(slot);
                     if (CardInfo::isCardConfigurable(ct)) {
                         auto cfg = current_cfg->getCardConfig(slot);
                         auto card = getInstFromSlot(slot);
@@ -464,12 +464,12 @@ System2200::setConfig(const SysCfgState &newcfg)
             continue;
         }
 
-        IoCard::card_t cardtype = current_cfg->getSlotCardType(slot);
-        int io_addr             = current_cfg->getSlotCardAddr(slot) & 0xFF;
+        const IoCard::card_t cardtype = current_cfg->getSlotCardType(slot);
+        const int io_addr             = current_cfg->getSlotCardAddr(slot) & 0xFF;
 
-        bool display = (cardtype == IoCard::card_t::disp_64x16)
-                    || (cardtype == IoCard::card_t::disp_80x24)
-                    || (cardtype == IoCard::card_t::term_mux) ;
+        const bool display = (cardtype == IoCard::card_t::disp_64x16)
+                          || (cardtype == IoCard::card_t::disp_80x24)
+                          || (cardtype == IoCard::card_t::term_mux) ;
 
         if ((pass==0 && display) || (pass==1 && !display)) {
             continue;
@@ -613,7 +613,7 @@ System2200::onIdle()
 void
 System2200::emulateTimeslice(int ts_ms)
 {
-    int num_devices = m_clocked_devices.size();
+    const int num_devices = m_clocked_devices.size();
 
     // try to stae reatime within this window
     const int64 adj_window = 10LL*ts_ms;  // look at the last 10 timeslices
@@ -622,16 +622,14 @@ System2200::emulateTimeslice(int ts_ms)
         return;
     }
 
-    uint64 now_ms = Host::getTimeMs();
-    int64 realtime_elapsed;
-    int64 offset;
+    const uint64 now_ms = Host::getTimeMs();
 
     if (firstslice) {
         firstslice = false;
         realtimestart = now_ms;
     }
-    realtime_elapsed = now_ms - realtimestart;
-    offset = m_adjsimtime - realtime_elapsed;
+    const int64 realtime_elapsed = now_ms - realtimestart;
+    int64 offset = m_adjsimtime - realtime_elapsed;
 
     if (offset > adj_window) {
         // we're way ahead (probably because we are running unregulated)
@@ -649,7 +647,7 @@ System2200::emulateTimeslice(int ts_ms)
         // we are running ahead of schedule; kill some time.
         // we don't kill the full amount because the sleep function is
         // allowed to, and very well might, sleep longer than we asked.
-        unsigned int ioffset = (unsigned int)(offset & (int64)0xFFF);  // bottom 4 sec or so
+        const unsigned int ioffset = static_cast<unsigned int>(offset & 0xFFFLL);  // bottom 4 sec or so
         Host::sleep(ioffset/2);
 
     } else {
@@ -668,7 +666,7 @@ System2200::emulateTimeslice(int ts_ms)
         if (num_devices == 1) {
             auto cb = m_clocked_devices[0].callback_fn;
             while (slice_ns > 0) {
-                int op_ns = cb();
+                const int op_ns = cb();
                 if (op_ns > 10000) {
                     slice_ns = 0; // finish the timeslice
                 } else  {
@@ -704,7 +702,7 @@ System2200::emulateTimeslice(int ts_ms)
 
             // at the start of a timeslice, shift time for all cards towards
             // zero to prevent overflowing the 32b nanosecond counters
-            uint32 rebase = m_clocked_devices[order[0]].ns;
+            const uint32 rebase = m_clocked_devices[order[0]].ns;
             for(auto idx : order) {
                 assert(m_clocked_devices[idx].ns >= rebase);
                 m_clocked_devices[idx].ns -= rebase;
@@ -716,8 +714,8 @@ System2200::emulateTimeslice(int ts_ms)
             // its time, then move it to the right place in the list.
             while (slice_ns > 0) {
                 auto cb = m_clocked_devices[order[0]].callback_fn;
-                int op_ns_signed = cb();
-                uint32 op_ns = static_cast<uint32>(op_ns_signed);
+                const int op_ns_signed = cb();
+                const uint32 op_ns = static_cast<uint32>(op_ns_signed);
                 if (op_ns > 50000) {
                     slice_ns = 0; // finish the timeslice
                 } else {
@@ -728,11 +726,11 @@ System2200::emulateTimeslice(int ts_ms)
                     // of this vs min() and then later sorting the clocked devices.
                     // at the very least, special case having two devices,
                     // rather than all this generalized sorting for N devices.
-                    uint32 clamp_ns = m_clocked_devices[order[1]].ns - m_clocked_devices[order[0]].ns;
-                    uint32 delta_ns = std::min(op_ns, clamp_ns);
+                    const uint32 clamp_ns = m_clocked_devices[order[1]].ns - m_clocked_devices[order[0]].ns;
+                    const uint32 delta_ns = std::min(op_ns, clamp_ns);
                     slice_ns -= delta_ns;
                     scheduler->TimerTick(delta_ns);
-                    uint32 new_ns = (m_clocked_devices[order[0]].ns += op_ns);
+                    const uint32 new_ns = (m_clocked_devices[order[0]].ns += op_ns);
                     auto entry0 = order[0];
                     int i;
                     for(i=0; i<num_devices-1; ++i) {
@@ -756,27 +754,28 @@ System2200::emulateTimeslice(int ts_ms)
             return;
         }
 
-        m_simsecs = (unsigned long)((m_simtime/1000) & 0xFFFFFFFF);
+        m_simsecs = static_cast<unsigned long>((m_simtime/1000) & 0xFFFFFFFF);
 
-        int real_seconds_now = (int)(realtime_elapsed/1000);
+        const int real_seconds_now = static_cast<int>(realtime_elapsed/1000);
         if (real_seconds != real_seconds_now) {
             real_seconds = real_seconds_now;
             if (perf_hist_len > 10) {
                 // compute running performance average over the
                 // last real second or so
-                int n1 = (perf_hist_ptr - 1 + perf_hist_size)
-                       % perf_hist_size;
+                const int n1 = (perf_hist_ptr - 1 + perf_hist_size)
+                             % perf_hist_size;
                 int64 ms_diff = 0;
                 int slices = 0;
                 for(int n=1; n<perf_hist_len; n+=10) {
-                    int n0 = (n1 - n + perf_hist_size) % perf_hist_size;
+                    const int n0 = (n1 - n + perf_hist_size) % perf_hist_size;
                     slices = n;
                     ms_diff = (perf_real_ms[n1] - perf_real_ms[n0]);
                     if (ms_diff > 1000) {
                         break;
                     }
                 }
-                float relative_speed = (float)(slices*ts_ms) / (float)ms_diff;
+                const float relative_speed = static_cast<float>(slices*ts_ms)
+                                           / static_cast<float>(ms_diff);
 
                 // update the status bar with simulated seconds and performance
                 UI_setSimSeconds(m_simsecs, relative_speed);
@@ -808,7 +807,7 @@ System2200::cpu_ABS(uint8 byte)
     }
     curIoAddr = byte;
 
-    bool vp_mode = (cpu->getCpuType() == Cpu2200::CPUTYPE_2200VP);
+    const bool vp_mode = (cpu->getCpuType() == Cpu2200::CPUTYPE_2200VP);
 
     // by default, assume the device is not ready.
     // the addressed card will turn it back below if appropriate
@@ -822,7 +821,7 @@ System2200::cpu_ABS(uint8 byte)
 
     // let the selected card know it has been chosen
     if (ioMap[curIoAddr].slot >= 0) {
-        int slot = ioMap[curIoAddr].slot;
+        const int slot = ioMap[curIoAddr].slot;
         cardInSlot[slot]->select();
         return;
     }
@@ -840,7 +839,7 @@ System2200::cpu_ABS(uint8 byte)
         && (curIoAddr != 0x86)  // testing for mxd at 0x8n
         && (curIoAddr != 0xC6)  // testing for mxd at 0xCn
        ) {
-        bool response = UI_Confirm(
+        const bool response = UI_Confirm(
                     "Warning: selected non-existent I/O device %02X\n"
                     "Should I warn you of further accesses to this device?",
                     curIoAddr );
@@ -902,7 +901,7 @@ System2200::cpu_poll_IB()
 {
     if  ((curIoAddr > 0) && (ioMap[curIoAddr].slot >= 0)) {
         // signal that we want to get something
-        return (int)(cardInSlot[ioMap[curIoAddr].slot]->getIB());
+        return cardInSlot[ioMap[curIoAddr].slot]->getIB();
     }
     return 0;
 }
@@ -980,9 +979,9 @@ System2200::kb_invokeScript(int io_addr, int term_num,
 
     for(auto &kb : m_kb_routes) {
         if (io_addr == kb.io_addr && term_num == kb.term_num) {
-            int flags = ScriptFile::SCRIPT_META_INC |
-                        ScriptFile::SCRIPT_META_HEX |
-                        ScriptFile::SCRIPT_META_KEY ;
+            const int flags = ScriptFile::SCRIPT_META_INC
+                            | ScriptFile::SCRIPT_META_HEX
+                            | ScriptFile::SCRIPT_META_KEY ;
 #if 0
 // TODO: figure out why this doesn't compile - (here and where kb struct is declared)
 //        complains about invoking deleted function
@@ -1057,11 +1056,11 @@ System2200::getSlotInfo(int slot, int *cardtype_idx, int *addr)
         return false;
     }
 
-    if (cardtype_idx != 0) {
-        *cardtype_idx = (int)current_cfg->getSlotCardType(slot);
+    if (cardtype_idx != nullptr) {
+        *cardtype_idx = static_cast<int>(current_cfg->getSlotCardType(slot));
     }
 
-    if (addr != 0) {
+    if (addr != nullptr) {
         *addr = current_cfg->getSlotCardAddr(slot);
     }
 
@@ -1136,8 +1135,9 @@ System2200::getInstFromSlot(int slot)
 bool
 System2200::findDiskController(const int n, int *slot)
 {
-    int num_ioslots = NUM_IOSLOTS;
+    const int num_ioslots = NUM_IOSLOTS;
     int numfound = 0;
+    assert(slot != nullptr);
 
     assert(n >= 0);
 
@@ -1156,6 +1156,7 @@ System2200::findDiskController(const int n, int *slot)
 
 // find slot,drive of any disk controller with disk matching name.
 // returns true if successful.
+// note: slot, drive, io_addr are optionally nullptr.
 bool
 System2200::findDisk(const std::string &filename,
                      int *slot, int *drive, int *io_addr)
@@ -1170,9 +1171,9 @@ System2200::findDisk(const std::string &filename,
         const auto cfg = current_cfg->getCardConfig(slt);
         const auto dcfg = dynamic_cast<const DiskCtrlCfgState*>(cfg.get());
         assert(dcfg);
-        int num_drives = dcfg->getNumDrives();
+        const int num_drives = dcfg->getNumDrives();
         for(int d=0; d<num_drives; d++) {
-            int stat = IoCardDisk::wvdDriveStatus(slt, d);
+            const int stat = IoCardDisk::wvdDriveStatus(slt, d);
             if (stat & IoCardDisk::WVD_STAT_DRIVE_OCCUPIED) {
                 std::string fname;
                 bool ok = IoCardDisk::wvdGetFilename(slt, d, &fname);
@@ -1185,7 +1186,7 @@ System2200::findDisk(const std::string &filename,
                         *drive = d;
                     }
                     if (io_addr) {
-                        ok = getSlotInfo(slt, 0, io_addr);
+                        ok = getSlotInfo(slt, nullptr, io_addr);
                         assert(ok); ok = ok;
                     }
                     return true;

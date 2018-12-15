@@ -30,7 +30,7 @@ void MyStaticText::OnMouseClick(wxMouseEvent &event)
 // make RETURN key kill the dialog too
 void MyStaticText::OnKeyDown(wxKeyEvent &event)
 {
-    int wxKey = event.GetKeyCode();
+    const int wxKey = event.GetKeyCode();
     if (wxKey == WXK_RETURN) {
         // fabricate a left click and send it to the dialog
         // this will cause it to shut down

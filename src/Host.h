@@ -52,7 +52,7 @@ namespace Host
     bool ConfigReadStr(  const std::string &subgroup,
                          const std::string &key,
                          std::string *val,
-                         const std::string *defaultval = 0);
+                         const std::string *defaultval = nullptr);
 
     void ConfigWriteStr( const std::string &subgroup,
                          const std::string &key,

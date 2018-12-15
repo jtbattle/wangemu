@@ -80,8 +80,8 @@ CrtConfigDlg::CrtConfigDlg(wxFrame *parent, const wxString &title) :
 #endif
     wxFlexGridSizer *hGrid = new wxFlexGridSizer( 0, 2, vgap, 0);
 
-    int label_flags = wxALIGN_RIGHT | wxLEFT | wxRIGHT; // right aligned text with left and right margin
-    int ctl_flags   = wxALIGN_LEFT  | wxRIGHT;          // left aligned control with right margin
+    const int label_flags = wxALIGN_RIGHT | wxLEFT | wxRIGHT; // right aligned text with left and right margin
+    const int ctl_flags   = wxALIGN_LEFT  | wxRIGHT;          // left aligned control with right margin
 
     hGrid->AddSpacer(5); hGrid->AddSpacer(5);
 
@@ -123,7 +123,7 @@ CrtConfigDlg::~CrtConfigDlg()
 void
 CrtConfigDlg::OnFontChoice( wxCommandEvent &event )
 {
-    int size = (int)(event.GetClientData());
+    const int size = (int)(event.GetClientData());
     CrtFrame *pp = wxStaticCast(GetParent(), CrtFrame);
     pp->setFontSize(size);
 }
@@ -131,7 +131,7 @@ CrtConfigDlg::OnFontChoice( wxCommandEvent &event )
 void
 CrtConfigDlg::OnColorChoice( wxCommandEvent& WXUNUSED(event) )
 {
-    int selection = m_ColorChoice->GetSelection();
+    const int selection = m_ColorChoice->GetSelection();
     CrtFrame *pp = wxStaticCast(GetParent(), CrtFrame);
     pp->setDisplayColorScheme(selection);
 }
@@ -139,7 +139,7 @@ CrtConfigDlg::OnColorChoice( wxCommandEvent& WXUNUSED(event) )
 void
 CrtConfigDlg::OnContrastSlider( wxScrollEvent &event )
 {
-    int pos = event.GetPosition();
+    const int pos = event.GetPosition();
     CrtFrame *pp = wxStaticCast(GetParent(), CrtFrame);
     pp->setDisplayContrast(pos);
 }
@@ -147,7 +147,7 @@ CrtConfigDlg::OnContrastSlider( wxScrollEvent &event )
 void
 CrtConfigDlg::OnBrightnessSlider( wxScrollEvent &event )
 {
-    int pos = event.GetPosition();
+    const int pos = event.GetPosition();
     CrtFrame *pp = wxStaticCast(GetParent(), CrtFrame);
     pp->setDisplayBrightness(pos);
 }
@@ -159,7 +159,7 @@ CrtConfigDlg::updateDlg()
     CrtFrame *pp = wxStaticCast(GetParent(), CrtFrame);
 
     // figure out mapping of font size to index
-    int font_size = pp->getFontSize();
+    const int font_size = pp->getFontSize();
     int font_choice = -1;
     for(unsigned int i=0; i<m_FontChoice->GetCount(); i++) {
         if ((int)(m_FontChoice->GetClientData(i)) == font_size) {
@@ -168,13 +168,13 @@ CrtConfigDlg::updateDlg()
     }
     m_FontChoice->SetSelection(font_choice);
 
-    int color_choice = pp->getDisplayColorScheme();
+    const int color_choice = pp->getDisplayColorScheme();
     m_ColorChoice->SetSelection(color_choice);
 
-    int contrast = pp->getDisplayContrast();
+    const int contrast = pp->getDisplayContrast();
     m_ContrastSlider->SetValue(contrast);
 
-    int brightness = pp->getDisplayBrightness();
+    const int brightness = pp->getDisplayBrightness();
     m_BrightnessSlider->SetValue(brightness);
 }
 

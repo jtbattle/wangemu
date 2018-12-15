@@ -112,7 +112,7 @@ IoCardTermMux::IoCardTermMux(std::shared_ptr<Scheduler> scheduler,
     }
 
     int io_addr;
-    bool ok = System2200::getSlotInfo(cardslot, 0, &io_addr);
+    bool ok = System2200::getSlotInfo(cardslot, nullptr, &io_addr);
     assert(ok); ok=ok;
 
     m_i8080 = i8080_new(IoCardTermMux::i8080_rd_func,
@@ -142,7 +142,7 @@ IoCardTermMux::execOneOp()
         i8080_interrupt(static_cast<i8080*>(m_i8080), 0xFF);
     }
 
-    int ticks = i8080_exec_one_op(static_cast<i8080*>(m_i8080));
+    const int ticks = i8080_exec_one_op(static_cast<i8080*>(m_i8080));
     if (ticks > 30) {
         // it is in an error state
         return 4 * ns_per_tick;
@@ -316,8 +316,8 @@ IoCardTermMux::update_rbi()
         return;
     }
 
-    bool busy = ((m_obs_seen || m_cbs_seen) && (m_io_offset >= 4))
-             || !!((m_rbi >> (m_io_offset-1)) & 1);
+    const bool busy = ((m_obs_seen || m_cbs_seen) && (m_io_offset >= 4))
+                   || !!((m_rbi >> (m_io_offset-1)) & 1);
 
     m_cpu->setDevRdy(!busy);
 }
@@ -398,7 +398,8 @@ IoCardTermMux::i8080_rd_func(int addr, void *user_data)
 
     if ((0x2000 <= addr) && (addr < 0x3000)) {
         // read 4KB ram
-        IoCardTermMux *tthis = static_cast<IoCardTermMux*>(user_data);
+        const IoCardTermMux *tthis = static_cast<IoCardTermMux*>(user_data);
+        assert(tthis != nullptr);
         return tthis->m_ram[addr & 0x0FFF];
     }
 
@@ -414,6 +415,7 @@ IoCardTermMux::i8080_wr_func(int addr, int byte, void *user_data)
     if ((0x2000 <= addr) && (addr < 0x3000)) {
         // write 4KB ram
         IoCardTermMux *tthis = static_cast<IoCardTermMux*>(user_data);
+        assert(tthis != nullptr);
         tthis->m_ram[addr & 0x0FFF] = static_cast<uint8>(byte);
         return;
     }
@@ -424,6 +426,7 @@ int
 IoCardTermMux::i8080_in_func(int addr, void *user_data)
 {
     IoCardTermMux *tthis = static_cast<IoCardTermMux*>(user_data);
+    assert(tthis != nullptr);
     int term_num = tthis->m_uart_sel;
     m_term_t &term = tthis->m_terms[term_num];
 
@@ -440,7 +443,7 @@ IoCardTermMux::i8080_in_func(int addr, void *user_data)
 
     case IN_2200_STATUS:
         {
-        bool cpu_waiting = tthis->m_selected && !tthis->m_cpb;  // CPU waiting for input
+        const bool cpu_waiting = tthis->m_selected && !tthis->m_cpb;  // CPU waiting for input
         rv = (tthis->m_obs_seen   ? 0x01 : 0x00)  // [0]
            | (tthis->m_cbs_seen   ? 0x02 : 0x00)  // [1]
            | (tthis->m_prime_seen ? 0x04 : 0x00)  // [2]
@@ -478,8 +481,8 @@ IoCardTermMux::i8080_in_func(int addr, void *user_data)
 
     case IN_UART_STATUS:
         {
-        bool tx_empty = term.tx_ready && !term.tx_tmr;
-        bool dsr = (term_num < 1); // FIXME: tie it to the number of terminal instances
+        const bool tx_empty = term.tx_ready && !term.tx_tmr;
+        const bool dsr = (term_num < 1); // FIXME: tie it to the number of terminal instances
         rv = (term.tx_ready ? 0x01 : 0x00)  // [0] = tx fifo empty
            | (term.rx_ready ? 0x02 : 0x00)  // [1] = rx fifo has a byte
            | (tx_empty      ? 0x04 : 0x00)  // [2] = tx serializer and fifo empty
@@ -501,8 +504,9 @@ IoCardTermMux::i8080_in_func(int addr, void *user_data)
 void
 IoCardTermMux::i8080_out_func(int addr, int byte, void *user_data)
 {
-    assert(byte == (byte & 0xff));
     IoCardTermMux *tthis = static_cast<IoCardTermMux*>(user_data);
+    assert(tthis != nullptr);
+    assert(byte == (byte & 0xff));
 
     switch (addr) {
 

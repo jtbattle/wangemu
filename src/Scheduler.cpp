@@ -101,7 +101,7 @@ TimerTest(void)
 // Scheduler implementation
 // ======================================================================
 
-const int64 MAX_TIME = ((int64)1 << 62);
+static const int64 MAX_TIME = (1LL << 62);
 
 Scheduler::Scheduler() :
     m_time_ns(0),
@@ -190,7 +190,7 @@ void Scheduler::TimerCredit(void)
 
     // scan each active timer, moving expired ones to the retired list
     std::vector<std::shared_ptr<Timer>> retired;
-    int active_before = m_timer.size();
+    const int active_before = m_timer.size();
     int active_after = 0;
     for(int s=0; s<active_before; s++) {
         if (m_timer[s].unique()) {

@@ -59,13 +59,13 @@ MyAboutDlg::MyAboutDlg(wxWindow *parent) :
     wxSizer *vsizer = new wxBoxSizer(wxVERTICAL);
 
     #include "wang_icon48.xpm"
-    wxBitmap icon(wang_icon48_xpm);
+    wxBitmap icon(&wang_icon48_xpm[0]);
     hsizer->Add(new wxStaticBitmap(this, wxID_ANY, icon), 0,
                 wxALIGN_CENTER_VERTICAL | wxLEFT | wxRIGHT, side_margin);
 
     MyStaticText *version = new MyStaticText(this, wxID_ANY,
         "Wang 2200 Emulator\n"
-        "Version 3.0-pre; December 13, 2018");
+        "Version 3.0-pre; December 14, 2018");
     wxFont boldfont(*wxNORMAL_FONT);
     boldfont.SetPointSize(boldfont.GetPointSize() + 2);
     boldfont.SetWeight(wxFONTWEIGHT_BOLD);

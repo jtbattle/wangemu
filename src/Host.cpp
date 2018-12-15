@@ -87,7 +87,7 @@ void
 Host::initialize()
 {
     // path to executable
-    wxStandardPathsBase &stdp = wxStandardPaths::Get();
+    const wxStandardPathsBase &stdp = wxStandardPaths::Get();
     wxFileName exe_path( stdp.GetExecutablePath() );
 
 #ifdef __VISUALC__
@@ -95,7 +95,7 @@ Host::initialize()
     // these are one below the anticipated real location where the exe will
     // live, so if we detect we are running from there, we raise the directory
     // one notch.
-    int dircount = exe_path.GetDirCount();
+    const int dircount = exe_path.GetDirCount();
     const wxArrayString dirnames = exe_path.GetDirs();
     if (dirnames[dircount-1].Lower() == "debug" ||
         dirnames[dircount-1].Lower() == "release") {
@@ -200,6 +200,7 @@ Host::terminate()
 int
 Host::fileReq(int requestor, std::string title, int readonly, std::string *fullpath)
 {
+    assert(fullpath != nullptr);
     int style;
 
     assert(requestor >= 0 && requestor < FILEREQ_NUM);
@@ -208,7 +209,8 @@ Host::fileReq(int requestor, std::string title, int readonly, std::string *fullp
                        : (wxFD_SAVE | wxFD_OVERWRITE_PROMPT);
 
     // get the name of a file to execute
-    wxFileDialog dialog (0,
+    wxFileDialog dialog(
+            nullptr,
             title.c_str(),
             fileDir[requestor],       // default directory
             filename[requestor],      // default file
@@ -267,6 +269,7 @@ Host::ConfigReadStr(const std::string &subgroup,
                     std::string *val,
                     const std::string *defaultval)
 {
+    assert(val != nullptr);
     wxString wxval;
     config->SetPath( "/wangemu/config-0/" + subgroup);
     bool b = config->Read(key, &wxval);
@@ -285,6 +288,7 @@ Host::ConfigReadInt(const std::string &subgroup,
                     int *val,
                     const int defaultval)
 {
+    assert(val != nullptr);
     std::string valstr;
     bool b = ConfigReadStr(subgroup, key, &valstr);
     long v = 0;
@@ -303,9 +307,9 @@ Host::ConfigReadBool(const std::string &subgroup,
                      bool *val,
                      const bool defaultval)
 {
-    wxString valstr;
+    assert(val != nullptr);
     int v;
-    bool b = ConfigReadInt(subgroup, key, &v, ((defaultval) ? 1:0) );
+    const bool b = ConfigReadInt(subgroup, key, &v, ((defaultval) ? 1:0) );
     if (b && (v >= 0) && (v <= 1)) {
         *val = (v==1);
     } else {
@@ -363,8 +367,8 @@ Host::ConfigReadWinGeom(wxWindow *wxwin,
     }
 
     // sanity check window position
-    int screen_w = wxSystemSettings::GetMetric(wxSYS_SCREEN_X);
-    int screen_h = wxSystemSettings::GetMetric(wxSYS_SCREEN_Y);
+    const int screen_w = wxSystemSettings::GetMetric(wxSYS_SCREEN_X);
+    const int screen_h = wxSystemSettings::GetMetric(wxSYS_SCREEN_Y);
 
     // if origin is off screen, move it on screen
     if (x < 0) { x = 0; }
@@ -382,8 +386,8 @@ Host::ConfigReadWinGeom(wxWindow *wxwin,
     }
 
     // now move and resize the window
-    wxPoint pt(x,y);
-    wxSize  sz(w,h);
+    const wxPoint pt(x,y);
+    const wxSize  sz(w,h);
     wxwin->Move(pt);
     if (client_size) {
         wxwin->SetClientSize(sz);
@@ -426,7 +430,7 @@ Host::ConfigWriteBool(const std::string &subgroup,
                       const std::string &key,
                       const bool val)
 {
-    int foo = (val) ? 1 : 0;
+    const int foo = (val) ? 1 : 0;
     ConfigWriteInt(subgroup, key, foo);
 }
 
@@ -464,10 +468,10 @@ Host::getTimeMs(void)
     // newer api should provide more accurate measurement of time
     // NB: wxLongLong can't be mapped directly to "long long" type,
     //     thus the following gyrations
-    wxLongLong x_time_us = stopwatch->TimeInMicro();
-    uint32 x_low  = x_time_us.GetLo();
-     int32 x_high = x_time_us.GetHi();
-     int64 x_time_ms = (((int64)x_high << 32) | x_low) / 1000;
+    const wxLongLong x_time_us = stopwatch->TimeInMicro();
+    const uint32 x_low     = x_time_us.GetLo();
+    const  int32 x_high    = x_time_us.GetHi();
+    const  int64 x_time_ms = (((int64)x_high << 32) | x_low) / 1000;
     return x_time_ms;
 }
 

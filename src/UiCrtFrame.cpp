@@ -230,7 +230,7 @@ CrtFrame::CrtFrame( const wxString& title,
     m_blink_phase(0),
     m_fps(0)
 {
-    bool smart_term = (crt_state->screen_type == UI_SCREEN_2236DE);
+    const bool smart_term = (crt_state->screen_type == UI_SCREEN_2236DE);
     m_primary_crt = (smart_term) ? ((m_crt_addr == 0x00) && (term_num == 0))
                                  : (m_crt_addr == 0x05);
 
@@ -240,7 +240,7 @@ CrtFrame::CrtFrame( const wxString& title,
     }
 
     // set the frame icon
-    SetIcon(wang_xpm);
+    SetIcon(&wang_xpm[0]);
 
     makeMenubar(isPrimaryCrt(), smart_term);
 
@@ -251,10 +251,10 @@ CrtFrame::CrtFrame( const wxString& title,
 
     // create toolbar
 #if 0
-    long tb_style = wxNO_BORDER | wxHORIZONTAL | wxTB_FLAT | wxTB_TEXT
-                  | wxTB_NOICONS
+    const long tb_style = wxNO_BORDER | wxHORIZONTAL | wxTB_FLAT | wxTB_TEXT
+                        | wxTB_NOICONS
 #else
-    long tb_style = wxNO_BORDER | wxHORIZONTAL | wxTB_FLAT;
+    const long tb_style = wxNO_BORDER | wxHORIZONTAL | wxTB_FLAT;
 #endif
             ;
     m_toolBar = CreateToolBar(tb_style, TB_TOOLBAR);
@@ -360,7 +360,7 @@ CrtFrame::makeMenubar(bool primary_crt, bool smart_term)
         // there is at least one printer
         menuPrinter = new wxMenu;
         for(int i=0; ;i++) {
-            int io_addr = System2200::getPrinterIoAddr(i);
+            const int io_addr = System2200::getPrinterIoAddr(i);
             if (io_addr < 0) {
                 break;
             }
@@ -392,7 +392,7 @@ CrtFrame::makeMenubar(bool primary_crt, bool smart_term)
         // there is more than one keyboard
         menuConfig->AppendSeparator();
         for(int i=0; ;i++) {
-            int addr = System2200::getKbIoAddr(i);
+            const int addr = System2200::getKbIoAddr(i);
             if (addr < 0) {
                 break;
             }
@@ -436,13 +436,13 @@ CrtFrame::setMenuChecks(const wxMenu *menu)
 {
     // ----- file --------------------------------------
     if (isPrimaryCrt()) {
-        bool script_running = System2200::kb_scriptModeActive(m_assoc_kb_addr, m_term_num);
+        const bool script_running = System2200::kb_scriptModeActive(m_assoc_kb_addr, m_term_num);
         m_menuBar->Enable(File_Script, !script_running);
     }
 
     // ----- cpu ---------------------------------------
     if (isPrimaryCrt()) {
-        bool regulated = System2200::isCpuSpeedRegulated();
+        const bool regulated = System2200::isCpuSpeedRegulated();
         m_menuBar->Check( CPU_ActualSpeed,       regulated );
         m_menuBar->Check( CPU_UnregulatedSpeed, !regulated );
     }
@@ -454,7 +454,7 @@ CrtFrame::setMenuChecks(const wxMenu *menu)
     if (isPrimaryCrt() && (DiskMenuPos >= 0)
         && (menu == m_menuBar->GetMenu(DiskMenuPos)) ) {
         wxMenu *diskmenu = m_menuBar->GetMenu(DiskMenuPos);
-        int items = diskmenu->GetMenuItemCount();
+        const int items = diskmenu->GetMenuItemCount();
 
         // the entire Disk menu used to be recreated and replaced each time,
         // but that caused problems on wxMAC, so now instead all the menu
@@ -470,10 +470,10 @@ CrtFrame::setMenuChecks(const wxMenu *menu)
             if (!System2200::findDiskController(controller, &slot)) {
                 break;
             }
-            bool ok = System2200::getSlotInfo(slot, 0, &io_addr);
+            bool ok = System2200::getSlotInfo(slot, nullptr, &io_addr);
             assert(ok); ok=ok;
             for(int d=0; d<2; d++) {
-                int stat = IoCardDisk::wvdDriveStatus(slot, d);
+                const int stat = IoCardDisk::wvdDriveStatus(slot, d);
                 if (stat & IoCardDisk::WVD_STAT_DRIVE_OCCUPIED) {
                     wxString str1, str2;
                     str1.Printf("Drive %c/%03X: Remove", d?'R':'F', io_addr);
@@ -504,7 +504,7 @@ CrtFrame::setMenuChecks(const wxMenu *menu)
         if (System2200::getKbIoAddr(1) >= 0) {
             // there is more than one keyboard
             for(int i=0; ;i++) {
-                int addr = System2200::getKbIoAddr(i);
+                const int addr = System2200::getKbIoAddr(i);
                 if (addr < 0) {
                     break;
                 }
@@ -553,7 +553,7 @@ CrtFrame::initToolBar(wxToolBar *tb)
     // we keep trying smaller fonts until one meets the requirements.
     for(int font_size=14; font_size>=8; font_size--) {
 #else
-    int font_size = 8;
+    const int font_size = 8;
 #endif
 
     wxFont key_font(font_size, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL);
@@ -605,11 +605,11 @@ CrtFrame::initToolBar(wxToolBar *tb)
             textH = height;
         }
     }
-    int buttonH(2*textH);
+    const int buttonH(2*textH);
 #else // !BIG_BUTTONS
-    int buttonH(textH);
+    const int buttonH(textH);
 #endif
-    int buttonW(textW);
+    const int buttonW(textW);
 #ifdef __WXMAC__
     if (buttonW > 32) {
         continue;       // try next smaller font size
@@ -684,25 +684,25 @@ CrtFrame::initToolBar(wxToolBar *tb)
         }
         if (shaft_ticks > 0) {
             wxPen dashPen(fg, 1, wxPENSTYLE_SOLID);
-            wxDash dashes[] = { 4, 2 };
+            const wxDash dashes[] = { 4, 2 };
             int shaft_len = buttonW/5;
             if (shaft_ticks > 1) {
 #if __WXMSW__
                 // the USER_DASH style doesn't seem to work as I'd expect
                 // (as of wxWidgets 2.6.0)
                 dashPen.SetStyle(wxPENSTYLE_USER_DASH);
-                dashPen.SetDashes(2, dashes);
+                dashPen.SetDashes(2, &dashes[0]);
 #endif
                 // four dashes, three spaces
                 shaft_len = (shaft_ticks  )*dashes[0]
                           + (shaft_ticks-1)*dashes[1];
             }
 
-            int shaft_y       = textH/2;
-            int shaft_beg_x   = buttonW/2   - (arrow_dir * shaft_len)/2;
-            int shaft_end_x   = shaft_beg_x + (arrow_dir * shaft_len);
-            int arrow_delta_x = -arrow_dir * dashes[0];
-            int arrow_delta_y =              dashes[0]; // make it 45 degrees
+            const int shaft_y       = textH/2;
+            const int shaft_beg_x   = buttonW/2   - (arrow_dir * shaft_len)/2;
+            const int shaft_end_x   = shaft_beg_x + (arrow_dir * shaft_len);
+            const int arrow_delta_x = -arrow_dir * dashes[0];
+            const int arrow_delta_y =              dashes[0]; // make it 45 degrees
 
             // draw shaft
             memDC.SetPen(dashPen);
@@ -938,7 +938,7 @@ void
 CrtFrame::OnScript(wxCommandEvent& WXUNUSED(event))
 {
     std::string fullpath;
-    int r = Host::fileReq(Host::FILEREQ_SCRIPT, "Script to execute", 1, &fullpath);
+    const int r = Host::fileReq(Host::FILEREQ_SCRIPT, "Script to execute", 1, &fullpath);
     if (r == Host::FILEREQ_OK) {
         // tell the core emulator to redirect input for a while
         System2200::kb_invokeScript(m_assoc_kb_addr, m_term_num, fullpath);
@@ -953,9 +953,10 @@ CrtFrame::OnSnapshot(wxCommandEvent& WXUNUSED(event))
     // get the name of a file to execute
     std::string fullpath;
 
-    int r = Host::fileReq(Host::FILEREQ_GRAB, "Filename of image", 0, &fullpath);
+    const int r = Host::fileReq(Host::FILEREQ_GRAB, "Filename of image", 0, &fullpath);
     if (r == Host::FILEREQ_OK) {
         wxBitmap* bitmap = m_crt->grabScreen();
+        assert(bitmap != nullptr);
         bitmap->SaveFile(wxString(fullpath), wxBITMAP_TYPE_BMP);
     }
 }
@@ -1035,7 +1036,7 @@ CrtFrame::doInspect(const std::string &filename)
     System2200::freezeEmu(true);    // halt emulation
 
     int slot, drive;
-    bool in_use = System2200::findDisk(filename, &slot, &drive, nullptr);
+    const bool in_use = System2200::findDisk(filename, &slot, &drive, nullptr);
     if (in_use) {
         // close filehandles to the specified drive
         IoCardDisk::wvdFlush(slot, drive);
@@ -1070,7 +1071,7 @@ CrtFrame::doFormat(const std::string &filename)
     bool ok = IoCardDisk::wvdGetWriteProtect(filename, &wp);
     if (ok) {
         int slot, drive, io_addr;
-        bool in_use = System2200::findDisk(filename, &slot, &drive, &io_addr);
+        const bool in_use = System2200::findDisk(filename, &slot, &drive, &io_addr);
 
         wxString prompt = "";
         if (in_use) {
@@ -1119,7 +1120,7 @@ CrtFrame::OnDisk(wxCommandEvent &event)
             if (Host::fileReq(Host::FILEREQ_DISK, "Disk to load", 1, &fullpath) ==
                               Host::FILEREQ_OK) {
                 int drive2, io_addr2;
-                bool b = System2200::findDisk(fullpath, nullptr, &drive2, &io_addr2);
+                const bool b = System2200::findDisk(fullpath, nullptr, &drive2, &io_addr2);
                 if (b) {
                     UI_Warn("Disk already in drive %c /%03x", "FC"[drive2], io_addr2);
                     return;
@@ -1213,7 +1214,7 @@ CrtFrame::OnConfigureScreenDialog(wxCommandEvent& WXUNUSED(event))
 void
 CrtFrame::OnConfigureKeywordMode(wxCommandEvent& WXUNUSED(event))
 {
-    bool state = m_statBar->getKeywordMode();
+    const bool state = m_statBar->getKeywordMode();
     m_statBar->setKeywordMode(!state);
 }
 
@@ -1221,7 +1222,7 @@ CrtFrame::OnConfigureKeywordMode(wxCommandEvent& WXUNUSED(event))
 void
 CrtFrame::OnConfigureSfToolbar(wxCommandEvent& WXUNUSED(event))
 {
-    bool state = m_toolBar->IsShown();
+    const bool state = m_toolBar->IsShown();
     m_toolBar->Show(!state);
     SendSizeEvent();
 }
@@ -1231,7 +1232,7 @@ void
 CrtFrame::OnConfigureStats(wxCommandEvent& WXUNUSED(event))
 {
     if (isPrimaryCrt()) {
-        bool showing = getShowStatistics();
+        const bool showing = getShowStatistics();
         setShowStatistics(!showing);
     }
 }
@@ -1240,11 +1241,11 @@ CrtFrame::OnConfigureStats(wxCommandEvent& WXUNUSED(event))
 void
 CrtFrame::OnConfigureKbTie(wxCommandEvent &event)
 {
-    int id = event.GetId();
+    const int id = event.GetId();
     assert( (id >= Configure_KB_Tie0) && (id <= Configure_KB_TieN) );
 
-    int idx = id - Configure_KB_Tie0;
-    int new_addr = System2200::getKbIoAddr(idx);
+    const int idx = id - Configure_KB_Tie0;
+    const int new_addr = System2200::getKbIoAddr(idx);
     assert(new_addr >= 0);
 
     m_assoc_kb_addr = new_addr;
@@ -1254,18 +1255,20 @@ CrtFrame::OnConfigureKbTie(wxCommandEvent &event)
 void
 CrtFrame::OnPrinter(wxCommandEvent &event)
 {
-    int id = event.GetId();
+    const int id = event.GetId();
     assert( (id >= Printer_0) && (id <= Printer_N) );
 
     // map chosen device to an I/O address
-    int idx = id - Printer_0;
-    int io_addr = System2200::getPrinterIoAddr(idx);
+    const int idx = id - Printer_0;
+    const int io_addr = System2200::getPrinterIoAddr(idx);
     IoCard *inst = System2200::getInstFromIoAddr(io_addr);
     assert(inst != nullptr);
 
     // get the printer controller card handle
-    IoCardPrinter *card = static_cast<IoCardPrinter*>(inst);
+    IoCardPrinter *card = dynamic_cast<IoCardPrinter*>(inst);
+    assert(card != nullptr);
     PrinterFrame *prtwnd = card->getGuiPtr();
+    assert(prtwnd != nullptr);
 
     prtwnd->Show(true);
     prtwnd->Raise();
@@ -1282,7 +1285,7 @@ CrtFrame::OnPrintAndClear(wxCommandEvent& WXUNUSED(event))
 
         // there is at least one printer
         for(int i=0; ;i++) {
-            int io_addr = System2200::getPrinterIoAddr(i);
+            const int io_addr = System2200::getPrinterIoAddr(i);
             if (io_addr < 0) {
                 break; // no more printers
             }
@@ -1290,10 +1293,12 @@ CrtFrame::OnPrintAndClear(wxCommandEvent& WXUNUSED(event))
             // map device I/O address to card handle
             IoCard *inst = System2200::getInstFromIoAddr(io_addr);
             assert(inst != nullptr);
-            IoCardPrinter *card = static_cast<IoCardPrinter*>(inst);
+            IoCardPrinter *card = dynamic_cast<IoCardPrinter*>(inst);
+            assert(card != nullptr);
 
             // fetch associated gui window pointer and use it
             PrinterFrame *prtwnd = card->getGuiPtr();
+            assert(prtwnd != nullptr);
             prtwnd->printAndClear();
         }
     }
@@ -1304,13 +1309,13 @@ CrtFrame::OnPrintAndClear(wxCommandEvent& WXUNUSED(event))
 void
 CrtFrame::OnToolBarButton(wxCommandEvent &event)
 {
-    int id = event.GetId();
-    bool shift = ::wxGetKeyState(WXK_SHIFT);
+    const int id = event.GetId();
+    const bool shift = ::wxGetKeyState(WXK_SHIFT);
 
     const int sf = IoCardKeyboard::KEYCODE_SF;
-    int keycode = (id == TB_EDIT) ? (sf | IoCardKeyboard::KEYCODE_EDIT)
-                : (shift)         ? (sf | (id - TB_SF0 + 16))
-                                  : (sf | (id - TB_SF0));
+    const int keycode = (id == TB_EDIT) ? (sf | IoCardKeyboard::KEYCODE_EDIT)
+                      : (shift)         ? (sf | (id - TB_SF0 + 16))
+                                        : (sf | (id - TB_SF0));
 
     System2200::kb_keystroke(getTiedAddr(), m_term_num, keycode);
 }

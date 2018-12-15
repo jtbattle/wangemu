@@ -114,7 +114,7 @@ bool
 TheApp::OnCmdLineParsed(wxCmdLineParser& parser)
 {
     // let base class handle its defaults
-    bool OK = wxApp::OnCmdLineParsed(parser);
+    const bool OK = wxApp::OnCmdLineParsed(parser);
 
     if (OK) {
         // do my processing here
@@ -220,11 +220,11 @@ static bool
 UI_AlertMsg(long style, std::string title, const char *fmt, va_list &args)
 {
     char buff[1000];
-    vsnprintf(buff, sizeof(buff), fmt, args);
+    vsnprintf(&buff[0], sizeof(buff), fmt, args);
 
-    std::string info(buff);
+    std::string info(&buff[0]);
     wxMessageDialog dialog(nullptr, info, title, style);
-    int rv = dialog.ShowModal();
+    const int rv = dialog.ShowModal();
     return (rv == wxID_YES);
 }
 
@@ -262,12 +262,12 @@ UI_Info(const char *fmt, ...)
 bool
 UI_Confirm(const char *fmt, ...)
 {
-    long style = wxYES | wxNO | wxNO_DEFAULT | wxICON_EXCLAMATION;
-//  long style = wxYES | wxNO | wxNO_DEFAULT | wxICON_QUESTION;
+    const long style = wxYES | wxNO | wxNO_DEFAULT | wxICON_EXCLAMATION;
+//  const long style = wxYES | wxNO | wxNO_DEFAULT | wxICON_QUESTION;
 
     va_list args;
     va_start(args, fmt);
-    bool rv = UI_AlertMsg( style, "Question", fmt, args );
+    const bool rv = UI_AlertMsg( style, "Question", fmt, args );
     va_end(args);
 
     return rv;
@@ -288,16 +288,16 @@ CrtFrame*
 UI_displayInit(const int screen_type, const int io_addr, const int term_num,
                crt_state_t *crt_state)
 {
-    int cputype = System2200::config().getCpuType();
+    const int cputype = System2200::config().getCpuType();
     const char *cpustr = (cputype == Cpu2200::CPUTYPE_2200B) ? "2200B" :
                          (cputype == Cpu2200::CPUTYPE_2200T) ? "2200T" :
                                                                "2200VP";
-    char *dispstr;
+    char *dispstr = "unknown";
     switch (screen_type) {
-        default: assert(false);
         case UI_SCREEN_64x16:  dispstr = "64x16"; break;
         case UI_SCREEN_80x24:  dispstr = "80x24"; break;
         case UI_SCREEN_2236DE: dispstr = "2236DE"; break;
+        default: assert(false);
     }
 
     wxString title;
@@ -313,7 +313,9 @@ UI_displayInit(const int screen_type, const int io_addr, const int term_num,
     }
 
     // Create the main application window
-    return new CrtFrame(title, io_addr, term_num, crt_state);
+    CrtFrame *crtptr = new CrtFrame(title, io_addr, term_num, crt_state);
+    assert(crtptr != nullptr);
+    return crtptr;
 }
 
 
@@ -321,6 +323,7 @@ UI_displayInit(const int screen_type, const int io_addr, const int term_num,
 void
 UI_displayDestroy(CrtFrame *wnd)
 {
+    assert(wnd != nullptr);
     wnd->destroyWindow();
 }
 
@@ -328,6 +331,7 @@ UI_displayDestroy(CrtFrame *wnd)
 // create a bell (0x07) sound for the given terminal
 void UI_displayDing(CrtFrame *wnd)
 {
+    assert(wnd != nullptr);
     wnd->ding();
 }
 
@@ -354,8 +358,8 @@ PrinterFrame*
 UI_printerInit(int io_addr)
 {
     char title[32];
-    sprintf(title, "Wang Printer /%03X", io_addr);
-    return new PrinterFrame( title, io_addr );
+    sprintf(&title[0], "Wang Printer /%03X", io_addr);
+    return new PrinterFrame(&title[0], io_addr);
 }
 
 
@@ -363,6 +367,7 @@ UI_printerInit(int io_addr)
 void
 UI_printerDestroy(PrinterFrame *wnd)
 {
+    assert(wnd != nullptr);
     wnd->destroyWindow();
 }
 
@@ -372,6 +377,7 @@ UI_printerDestroy(PrinterFrame *wnd)
 void
 UI_printerChar(PrinterFrame *wnd, uint8 byte)
 {
+    assert(wnd != nullptr);
     wnd->printChar(byte);
 }
 
@@ -390,6 +396,7 @@ UI_SystemConfigDlg()
 void
 UI_ConfigureCard(DiskCtrlCfgState *cfg)
 {
+    assert(cfg != nullptr);
     DiskCtrlCfgDlg(nullptr, *cfg).ShowModal();
 }
 

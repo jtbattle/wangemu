@@ -104,7 +104,7 @@ Wvd::open(const std::string &filename)
     m_hasPath = true;
     m_path = filename;
 
-    bool ok = readHeader();
+    const bool ok = readHeader();
 // don't need to raise alarm, since readHeader() already did
 //  if (!ok) {
 //      UI_Info("Error opening file", filename.c_str());
@@ -258,13 +258,14 @@ Wvd::setLabel(const std::string &newlabel)
 bool
 Wvd::readSector(int platter, int sector, uint8 *buffer)
 {
+    assert(buffer != nullptr);
     refreshMetadata();
 
     assert(platter >= 0 && platter < m_numPlatters);
     assert(sector  >= 0 && sector  < m_numPlatterSectors);
     assert(m_file != nullptr);
 
-    int abs_sector = m_numPlatterSectors*platter + sector + 1;
+    const int abs_sector = m_numPlatterSectors*platter + sector + 1;
     return rawReadSector(abs_sector, buffer);
 }
 
@@ -274,13 +275,14 @@ Wvd::readSector(int platter, int sector, uint8 *buffer)
 bool
 Wvd::writeSector(int platter, int sector, uint8 *buffer)
 {
+    assert(buffer != nullptr);
     refreshMetadata();
 
     assert(platter >= 0 && platter < m_numPlatters);
     assert(sector  >= 0 && sector  < m_numPlatterSectors);
     assert(m_file != nullptr);
 
-    int abs_sector = m_numPlatterSectors*platter + sector + 1;
+    const int abs_sector = m_numPlatterSectors*platter + sector + 1;
     return rawWriteSector(abs_sector, buffer);
 }
 
@@ -356,16 +358,16 @@ Wvd::rawWriteSector(const int sector, const uint8 *data)
         dbglog("========== writing absolute sector %d ==========\n", sector);
         for(int i=0; i<256; i+=16) {
             char str[200];
-            sprintf(str, "%02X:", i);
+            sprintf(&str[0], "%02X:", i);
             for(int ii=0; ii<16; ii++) {
-                sprintf(str+3+3*ii, " %02X", data[i+ii]);
+                sprintf(&str[3+3*ii], " %02X", data[i+ii]);
             }
-            dbglog("%s\n", str);
+            dbglog("%s\n", &str[0]);
         }
     }
 
     // go to the start of the Nth sector
-    m_file->seekp( 256LL*sector );
+    m_file->seekp(256LL*sector);
     if (!m_file->good()) {
         UI_Error("Error seeking to write sector %d of '%s'",
                  sector, m_path.c_str());
@@ -374,7 +376,7 @@ Wvd::rawWriteSector(const int sector, const uint8 *data)
     }
 
     // write them all
-    m_file->write( (char*)data, 256 );
+    m_file->write((char*)data, 256);
     if (!m_file->good()) {
         UI_Error("Error writing to sector %d of '%s'",
                   sector, m_path.c_str());
@@ -420,11 +422,11 @@ Wvd::rawReadSector(const int sector, const uint8 *data)
         dbglog("========== reading absolute sector %d ==========\n", sector);
         for(int i=0; i<256; i+=16) {
             char str[200];
-            sprintf(str, "%02X:", i);
+            sprintf(&str[0], "%02X:", i);
             for(int ii=0; ii<16; ii++) {
-                sprintf(str+3+3*ii, " %02X", data[i+ii]);
+                sprintf(&str[3+3*ii], " %02X", data[i+ii]);
             }
-            dbglog("%s\n", str);
+            dbglog("%s\n", &str[0]);
         }
     }
 
@@ -452,7 +454,7 @@ Wvd::writeHeader()
 
     // header block -- zap it to zeros
     uint8 data[256];
-    memset(data, (uint8)0x00, 256);
+    memset(&data[0], static_cast<uint8>(0x00), 256);
 
     // magic string
     data[0] = 'W';
@@ -481,12 +483,12 @@ Wvd::writeHeader()
 
     data[10] = static_cast<uint8>(m_diskType);
 
-    data[11] = (uint8)m_numPlatters-1;
+    data[11] = static_cast<uint8>(m_numPlatters-1);
 
     strncpy((char*)&data[16], m_label.c_str(), WVD_MAX_LABEL_LEN);
 
     // write the header block -- first absolute sector of disk image
-    return rawWriteSector(0, data);
+    return rawWriteSector(0, &data[0]);
 }
 
 
@@ -505,7 +507,7 @@ Wvd::reopen()
             m_file = nullptr;
             return;
         }
-        bool ok = readHeader();
+        const bool ok = readHeader();
         if (!ok) {
             m_file = nullptr;
             return;
@@ -529,7 +531,7 @@ Wvd::readHeader()
     m_numPlatterSectors = 1;
 
     uint8 data[256];
-    bool ok = rawReadSector(0, data);
+    const bool ok = rawReadSector(0, &data[0]);
     if (!ok) {
         return false;
     }
@@ -551,21 +553,21 @@ Wvd::readHeader()
         return false;
     }
 
-    bool tmp_writeProtect = (data[7] != 0x00);
+    const bool tmp_writeProtect = (data[7] != 0x00);
 
-    int tmp_sectors = (int)((data[9] << 8) | data[8]);
+    const int tmp_sectors = (int)((data[9] << 8) | data[8]);
     if (tmp_sectors > WVD_MAX_SECTORS) {
         UI_Error("The disk claims to have more than %d platters", WVD_MAX_SECTORS);
         return false;
     }
 
-    disktype_t tmp_disktype = static_cast<disktype_t>(data[10]);
+    const disktype_t tmp_disktype = static_cast<disktype_t>(data[10]);
     if (tmp_disktype >= DISKTYPE_ILLEGAL) {
         UI_Error("The disktype field of the disk image isn't legal");
         return false;
     }
 
-    int tmp_platters = (int)data[11] + 1;
+    const int tmp_platters = (int)data[11] + 1;
     if (tmp_platters > WVD_MAX_PLATTERS) {
         UI_Error("The disk claims to have more than %d platters", WVD_MAX_PLATTERS);
         return false;
@@ -598,11 +600,11 @@ Wvd::format(const int platter)
 
     // fill all non-header sectors with 0x00
     uint8 data[256];
-    memset(data, (uint8)0x00, 256);
+    memset(&data[0], static_cast<uint8>(0x00), 256);
 
     bool ok = true;
     for(int n=0; ok && n<m_numPlatterSectors; n++) {
-        ok = writeSector(platter, n, data);
+        ok = writeSector(platter, n, &data[0]);
     }
 
     return ok;

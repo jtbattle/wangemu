@@ -187,10 +187,10 @@ Crt::OnPaint(wxPaintEvent &WXUNUSED(event))
     // this all gets clipped against the damaged region,
     // so we don't actually draw it if it isn't necessary.
     {
-        int left     = m_RCscreen.GetLeft();
-        int top      = m_RCscreen.GetTop();
-        int bottom   = m_RCscreen.GetBottom() + 1;
-        int right    = m_RCscreen.GetRight() + 1;
+        const int left     = m_RCscreen.GetLeft();
+        const int top      = m_RCscreen.GetTop();
+        const int bottom   = m_RCscreen.GetBottom() + 1;
+        const int right    = m_RCscreen.GetRight() + 1;
 // hmm, I was wondering how the bottom & right edges were treated.
 // dumping various m_RCscreen.GetFoo() calls, I got this example:
 //     top=12, bottom=300, height=289.
@@ -199,8 +199,8 @@ Crt::OnPaint(wxPaintEvent &WXUNUSED(event))
 // When I set up m_RCscreen, I set top and height.  thus, the use of
 // Bottom (and Right) are suspect here.  bottom and right are inclusive
 // of the active text area.  I fix that by adding 1 to bottom and right.
-        int bottom_h = (m_scrpix_h - bottom);
-        int right_w  = (m_scrpix_w - right);
+        const int bottom_h = (m_scrpix_h - bottom);
+        const int right_w  = (m_scrpix_w - right);
 
         wxColor bg(intensityToColor(0.0f));
         dc.SetBrush(wxBrush(bg, wxBRUSHSTYLE_SOLID));
@@ -258,15 +258,15 @@ Crt::OnEraseBackground(wxEraseEvent &WXUNUSED(event))
 void
 Crt::OnLeftDClick(wxMouseEvent &event)
 {
-    wxPoint pos     = event.GetPosition();      // client window coordinates
-    wxPoint abs_pos = ClientToScreen(pos);      // absolute screen coordinates
+    const wxPoint pos = event.GetPosition();  // client window coordinates
+    wxPoint abs_pos = ClientToScreen(pos);    // absolute screen coordinates
 
     if (m_charcell_w == 0 || m_charcell_h == 0) {
         return;
     }
 
-    int cell_x = (pos.x - m_RCscreen.GetX()) / m_charcell_w;
-    int cell_y = (pos.y - m_RCscreen.GetY()) / m_charcell_h;
+    const int cell_x = (pos.x - m_RCscreen.GetX()) / m_charcell_w;
+    const int cell_y = (pos.y - m_RCscreen.GetY()) / m_charcell_h;
 
     if (cell_x < 0 || cell_x > m_crt_state->chars_w) {
         return;
@@ -286,7 +286,7 @@ Crt::OnLeftDClick(wxMouseEvent &event)
     // first char of row
     char *p = reinterpret_cast<char *>(&m_crt_state->display[cell_y * m_crt_state->chars_w]);
     // one past final char of row
-    char *e = reinterpret_cast<char *>(p + m_crt_state->chars_w);
+    char * const e = (p + m_crt_state->chars_w);
 
     // scan entire line looking for first appearance of one of these forms.
     // Wang BASIC:
@@ -401,10 +401,10 @@ void
 Crt::recalcBorders()
 {
     // figure out where the active drawing area is
-    int width  = m_charcell_w*m_crt_state->chars_w;
-    int height = m_charcell_h*m_crt_state->chars_h2;
-    int orig_x = (width  < m_scrpix_w) ? (m_scrpix_w-width)/2  : 0;
-    int orig_y = (height < m_scrpix_h) ? (m_scrpix_h-height)/2 : 0;
+    const int width  = m_charcell_w*m_crt_state->chars_w;
+    const int height = m_charcell_h*m_crt_state->chars_h2;
+    const int orig_x = (width  < m_scrpix_w) ? (m_scrpix_w-width)/2  : 0;
+    const int orig_y = (height < m_scrpix_h) ? (m_scrpix_h-height)/2 : 0;
 
     assert(width >= 0 && width < 4096 && height >= 0 && height < 4096);
 
@@ -497,37 +497,36 @@ typedef struct {
 void
 Crt::create_beep()
 {
-    RIFF_t        RiffHdr;
-    FormatChunk_t FormatHdr;
-    DataChunk_t   DataHdr;
-
     const int sample_rate   = 16000;
     const int samples_naive = sample_rate * 8/60;    // 8 vblank intervals
     const int samples       = (samples_naive & ~3);  // multiple of 4
 
-    int total_bytes = sizeof(RIFF_t)
-                    + sizeof(FormatChunk_t)
-                    + sizeof(DataChunk_t)
-                    + 1*samples;  // 1 byte per sample
+    const int total_bytes = sizeof(RIFF_t)
+                          + sizeof(FormatChunk_t)
+                          + sizeof(DataChunk_t)
+                          + 1*samples;  // 1 byte per sample
 
     // chunk description
-    RiffHdr.groupID   = (uint32)BE32(riffID);
-    RiffHdr.riffBytes = (uint32)LE32(total_bytes-8);
-    RiffHdr.riffType  = (uint32)BE32(waveID);
+    RIFF_t RiffHdr;
+    RiffHdr.groupID   = static_cast<uint32>(BE32(riffID));
+    RiffHdr.riffBytes = static_cast<uint32>(LE32(total_bytes-8));
+    RiffHdr.riffType  = static_cast<uint32>(BE32(waveID));
 
     // first subchunk, format description
-    FormatHdr.chunkID       = (uint32)BE32(fmtID);
-    FormatHdr.chunkSize     = ( int32)LE32(sizeof(FormatHdr)-8);
-    FormatHdr.formatTag     = ( int16)LE16(1);  // pcm
-    FormatHdr.channels      = (uint16)LE16(1);  // mono
-    FormatHdr.sampleRate    = (uint32)LE32(  sample_rate);
-    FormatHdr.bytesPerSec   = (uint32)LE32(1*sample_rate);
-    FormatHdr.blockAlign    = (uint16)LE16(1);
-    FormatHdr.bitsPerSample = (uint16)LE16(8);  // good enough for a beep
+    FormatChunk_t FormatHdr;
+    FormatHdr.chunkID       = static_cast<uint32>(BE32(fmtID));
+    FormatHdr.chunkSize     = static_cast< int32>(LE32(sizeof(FormatHdr)-8));
+    FormatHdr.formatTag     = static_cast< int16>(LE16(1));  // pcm
+    FormatHdr.channels      = static_cast<uint16>(LE16(1));  // mono
+    FormatHdr.sampleRate    = static_cast<uint32>(LE32(  sample_rate));
+    FormatHdr.bytesPerSec   = static_cast<uint32>(LE32(1*sample_rate));
+    FormatHdr.blockAlign    = static_cast<uint16>(LE16(1));
+    FormatHdr.bitsPerSample = static_cast<uint16>(LE16(8));  // good enough for a beep
 
     // second subchunk, data
-    DataHdr.chunkID   = (uint32)BE32(dataID);
-    DataHdr.chunkSize = (uint32)LE32(1*samples);
+    DataChunk_t DataHdr;
+    DataHdr.chunkID   = static_cast<uint32>(BE32(dataID));
+    DataHdr.chunkSize = static_cast<uint32>(LE32(1*samples));
 
     // create a contiguous block, copy the headers into it,
     // then append the sample data
@@ -543,21 +542,21 @@ Crt::create_beep()
 
     // make a clipped sin wave at 1 KHz
     // the frequency has been chosen to match that of my real 2336DE terminal
-    float freq_Hz     = 1940.0f;
-    float phase_scale = 2*3.14159f * freq_Hz / sample_rate;
-    float clip        = 0.70f;  // chop off top/bottom of wave
-    float amplitude   = 40.0f;  // loudness
+    const float freq_Hz     = 1940.0f;
+    const float phase_scale = 2*3.14159f * freq_Hz / sample_rate;
+    const float clip        = 0.70f;  // chop off top/bottom of wave
+    const float amplitude   = 40.0f;  // loudness
     for(int n=0; n<samples; n++) {
         float s = sin(phase_scale * n);
         s = (s >  clip) ?  clip
           : (s < -clip) ? -clip
                         : s;
-        int sample = int(128.0f + amplitude * s);
+        int sample = static_cast<int>(128.0f + amplitude * s);
         *wp++ = sample;
     }
 
     m_beep = std::make_shared<wxSound>();
-    bool success = m_beep->Create(total_bytes, wav);
+    const bool success = m_beep->Create(total_bytes, wav);
     if (!success) {
         m_beep = nullptr;
     }

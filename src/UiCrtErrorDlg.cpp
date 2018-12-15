@@ -42,7 +42,7 @@ CrtErrorDlg::CrtErrorDlg( wxWindow *parent,
     SetBackgroundColour(bgc);
 
     // determine which entry matches
-    bool vp_mode = (System2200::config().getCpuType() == Cpu2200::CPUTYPE_2200VP);
+    const bool vp_mode = (System2200::config().getCpuType() == Cpu2200::CPUTYPE_2200VP);
     const std::vector<errtable_t> &pet = (vp_mode) ? errtable_vp : errtable;
 
     bool found = false;
@@ -117,8 +117,8 @@ CrtErrorDlg::CrtErrorDlg( wxWindow *parent,
 
     // make sure it is on the screen
     wxRect dlg_rect = this->GetRect();
-    int screen_w = wxSystemSettings::GetMetric(wxSYS_SCREEN_X);
-    int screen_h = wxSystemSettings::GetMetric(wxSYS_SCREEN_Y);
+    const int screen_w = wxSystemSettings::GetMetric(wxSYS_SCREEN_X);
+    const int screen_h = wxSystemSettings::GetMetric(wxSYS_SCREEN_Y);
     // check bottom right
     if (dlg_rect.GetBottom() > screen_h-1) {
         dlg_rect.Offset(0, screen_h-1 - dlg_rect.GetBottom());

@@ -37,7 +37,7 @@ IoCard::makeTmpCard(card_t type, int baseaddr)
 {
     std::shared_ptr<Scheduler> dummy_scheduler{nullptr};
     std::shared_ptr<Cpu2200t>  dummy_cpu{nullptr};
-    CardCfgState*              dummy_config{nullptr};
+    CardCfgState const * const dummy_config{nullptr};
 
     return makeCardImpl( dummy_scheduler,
                          dummy_cpu,

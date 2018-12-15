@@ -156,7 +156,7 @@ DiskFactory::DiskFactory(wxFrame *parent, const std::string &filename) :
         m_butCancel(nullptr),
         m_butSave(nullptr)
 {
-    bool new_disk = filename.empty();
+    const bool new_disk = filename.empty();
     m_butCancel = nullptr;
     m_butSave   = nullptr;
 
@@ -207,7 +207,7 @@ DiskFactory::DiskFactory(wxFrame *parent, const std::string &filename) :
     panel->SetSizer(topsizer);
     topsizer->Fit(this);
     topsizer->SetSizeHints(this);
-    wxRect rc = GetRect();  // window size as declared by sizer
+    const wxRect rc = GetRect();  // window size as declared by sizer
 
     // pick up screen location and size
     const std::string subgroup("ui/disk_dialog");
@@ -236,8 +236,8 @@ void
 DiskFactory::updateButtons()
 {
     // disable the Save or SaveAs button if there have been no changes
-    bool new_disk = m_diskdata->getPath().empty();
-    bool modified = m_diskdata->isModified();
+    const bool new_disk = m_diskdata->getPath().empty();
+    const bool modified = m_diskdata->isModified();
     if (m_butSave) {
         m_butSave->Enable(new_disk || modified);
     }
@@ -277,7 +277,7 @@ DiskFactory::OnButton_SaveAs(wxCommandEvent& WXUNUSED(event))
 
     // check if this disk is in a drive already
     int drive, io_addr;
-    bool in_use = System2200::findDisk(name, nullptr, &drive, &io_addr);
+    const bool in_use = System2200::findDisk(name, nullptr, &drive, &io_addr);
     if (in_use) {
         UI_Warn("This disk is in use at /%03X, drive %d.\n\n"
                 "Either save to a new name or eject the disk first.",
@@ -394,7 +394,7 @@ PropPanel::PropPanel(DiskFactory *df,
         m_disktype = new wxRadioBox( this, -1, "Disk Type",
                                      wxDefaultPosition, wxDefaultSize,
                                      num_disk_types,
-                                     type_choices,
+                                     &type_choices[0],
                                      0, wxRA_SPECIFY_ROWS
                                     );
         boxh->Add(m_disktype, 0, wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL | margin_LRT, margin_pixels);
@@ -402,7 +402,7 @@ PropPanel::PropPanel(DiskFactory *df,
 
     {
         // make a heading for the properties information
-        int bottom_margin = 4;
+        const int bottom_margin = 4;
 
 #if !STATICBOX_DISK_PROPS
         wxStaticText *st_heading = new wxStaticText(this, -1, "Disk Properties");
@@ -441,8 +441,8 @@ PropPanel::PropPanel(DiskFactory *df,
             m_st_type->Hide();
         }
 
-        int flags = wxALIGN_LEFT | wxALIGN_TOP | wxRIGHT | wxTOP |
-                    ((new_disk) ? wxLEFT : 0);
+        const int flags = wxALIGN_LEFT | wxALIGN_TOP | wxRIGHT | wxTOP
+                        | ((new_disk) ? wxLEFT : 0);
         boxh->Add(prop_sizer, 0, flags, margin_pixels);
     }
     topsizer->Add(boxh, 0, wxALIGN_LEFT | margin_LRT, margin_pixels);
@@ -463,8 +463,8 @@ PropPanel::refresh()
 {
     assert(m_diskdata);
 
-    bool new_disk = (m_diskdata->getPath()).empty();
-    bool modified = m_diskdata->isModified();
+    const bool new_disk = (m_diskdata->getPath()).empty();
+    const bool modified = m_diskdata->isModified();
 
     // update path to disk
     if (!new_disk) {
@@ -473,16 +473,15 @@ PropPanel::refresh()
     }
 
     // based on the disk type, print some other information
-    int radio_sel;
-    int num_platters = m_diskdata->getNumPlatters();
-    int num_sectors  = m_diskdata->getNumSectors();
-    int disk_type    = m_diskdata->getDiskType();
+    const int num_platters = m_diskdata->getNumPlatters();
+    const int num_sectors  = m_diskdata->getNumSectors();
+    const int disk_type    = m_diskdata->getDiskType();
 
     int spt, step, rpm;
     IoCardDisk::getDiskGeometry(disk_type, &spt, &step, &rpm, nullptr);
 
     // scan the disk_choices[] table to find a match
-    radio_sel = -1;
+    int radio_sel = -1;
     if (new_disk) {
         for(int i=0; i < num_disk_types; i++) {
             if ( (disk_type    == disk_choices[i].disk_type) &&
@@ -512,7 +511,7 @@ PropPanel::refresh()
     label = std::to_string(num_platters) + " platter" + ((num_platters>1) ? "s" : "");
     m_st_plats->SetLabel(label);
 
-    int num_tracks = int( num_sectors / spt );
+    const int num_tracks = (num_sectors / spt);
     const std::string per_platter = (num_platters > 1) ? "/platter" : "";
     label = std::to_string(num_tracks) + " tracks" + per_platter;
     m_st_tracks->SetLabel(label);
@@ -544,7 +543,7 @@ PropPanel::refresh()
 void
 PropPanel::OnDiskTypeButton(wxCommandEvent& WXUNUSED(event))
 {
-    int choice = m_disktype->GetSelection();
+    const int choice = m_disktype->GetSelection();
     assert(choice < num_disk_types);
 
     m_diskdata->setDiskType   (disk_choices[choice].disk_type);
@@ -606,7 +605,7 @@ LabelPanel::LabelPanel(DiskFactory *df,
 void
 LabelPanel::refresh()
 {
-    bool modified = m_diskdata->isModified();
+    const bool modified = m_diskdata->isModified();
 
     // refreshing the label triggers the EVT_TEXT action,
     // which set the modified bit.  since we just did an update,
@@ -615,7 +614,7 @@ LabelPanel::refresh()
 
     // I tried doing this in the constructor, but all the text was
     // always selected by default.  oh, well, better than nothing.
-    int last = m_text->GetLastPosition();
+    const int last = m_text->GetLastPosition();
     m_text->SetSelection(last, last);
 
     m_parent->updateButtons();

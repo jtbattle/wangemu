@@ -223,10 +223,10 @@ Printer::getPageAttributes(int &linelength, int &pagelength) const
 }
 
 void
-Printer::getCellAttributes(int *cell_w, int *cell_h) const
+Printer::getCellAttributes(int &cell_w, int &cell_h) const
 {
-    *cell_w = m_charcell_w;
-    *cell_h = m_charcell_h;
+    cell_w = m_charcell_w;
+    cell_h = m_charcell_h;
 }
 
 // set autoshow attribute
@@ -379,7 +379,7 @@ to the next tab stop.
         default:        // just a character
             if ((byte >= 32) && (m_linebuf_len < m_linebuf_maxlen)) {
                 // accumulate the partial line
-                m_linebuf[m_linebuf_len++] = (char)byte;
+                m_linebuf[m_linebuf_len++] = static_cast<char>(byte);
             }
             break;
     }
@@ -426,8 +426,9 @@ void
 Printer::saveToFile()
 {
     std::string fullpath;
-    int r = Host::fileReq(Host::FILEREQ_PRINTER, "Save printer log file", 0,
-                          &fullpath);
+    const int r = Host::fileReq(Host::FILEREQ_PRINTER,
+                                "Save printer log file", 0,
+                                &fullpath);
     if (r == Host::FILEREQ_OK) {
 
         // save the file
@@ -447,7 +448,7 @@ Printer::saveToFile()
 #else
             std::string tmpline(m_printstream[n] + "\n");
 #endif
-            int len = tmpline.length();
+            const int len = tmpline.length();
             ofs.write( tmpline.c_str(), len );
             if (!ofs.good()) {
                 UI_Error("Error writing to line %d of '%s'", n+1, fullpath.c_str());
@@ -489,12 +490,14 @@ Printer::numberOfPages() const
 void
 Printer::generatePrintPage(wxDC *dc, int pagenum, float vertAdjust)
 {
-    size_t length = m_linelength;
-    int startRow = ((pagenum - 1) * m_pagelength);
-    int startCol = 0;
+    assert(dc != nullptr);
+
+    const size_t length = m_linelength;
+    const int startRow = ((pagenum - 1) * m_pagelength);
+    const int startCol = 0;
     std::string line;
 
-    dc->SetFont( m_font );
+    dc->SetFont(m_font);
 
     // draw each row of the text
     for(int row = 0; row < m_pagelength; row++) {
@@ -706,16 +709,16 @@ Printer::generateScreen(int startCol, int startRow)
         imgDC.SetPen(rectoutline);
         imgDC.SetBrush(rectfill);
 
-        int bar_2h = bar_h*2;   // twice height of greenbar
-        int first_greenbar = ((startRow                )/bar_2h)*bar_2h + bar_h;
-        int last_greenbar  = ((startRow + m_chars_h + 1)/bar_2h)*bar_2h + bar_h;
+        const int bar_2h = bar_h*2;   // twice height of greenbar
+        const int first_greenbar = ((startRow                )/bar_2h)*bar_2h + bar_h;
+        const int last_greenbar  = ((startRow + m_chars_h + 1)/bar_2h)*bar_2h + bar_h;
 
         for(int bar = first_greenbar; bar <= last_greenbar; bar += bar_2h) {
-            int yoff = (bar - startRow) * m_charcell_h;
-            int xoff = left_edge + hmargin* m_charcell_w - m_charcell_w/2;  //  \ expand it 1/2 char
-            int width  = m_linelength * m_charcell_w     + m_charcell_w;    //  / on each side
-            int height = bar_h * m_charcell_h;
-            double radius = m_charcell_w * 0.5;
+            const int yoff = (bar - startRow) * m_charcell_h;
+            const int xoff = left_edge + hmargin* m_charcell_w - m_charcell_w/2;  //  \ expand it 1/2 char
+            const int width  = m_linelength * m_charcell_w     + m_charcell_w;    //  / on each side
+            const int height = bar_h * m_charcell_h;
+            const double radius = m_charcell_w * 0.5;
             imgDC.DrawRoundedRectangle(xoff,yoff, width,height, radius);
         }
 
@@ -727,19 +730,19 @@ Printer::generateScreen(int startCol, int startRow)
     if (1) {
         wxColor gray = wxColour(0x80, 0x80, 0x80);
         wxPen breakpen(gray, 1, wxPENSTYLE_USER_DASH);
-        wxDash dashArray[] = { 2, 5 };  // pixels on, pixels off
-        breakpen.SetDashes(2, dashArray);
+        const wxDash dashArray[] = { 2, 5 };  // pixels on, pixels off
+        breakpen.SetDashes(2, &dashArray[0]);
         imgDC.SetPen(breakpen);
 
-        int first_break = ((startRow                )/m_pagelength)*m_pagelength;
-        int last_break  = ((startRow + m_chars_h + 1)/m_pagelength)*m_pagelength;
+              int first_break = ((startRow                )/m_pagelength)*m_pagelength;
+        const int last_break  = ((startRow + m_chars_h + 1)/m_pagelength)*m_pagelength;
         if (startRow == 0) {
             first_break += m_pagelength;        // skip first break
         }
         for(int brk = first_break; brk <= last_break; brk += m_pagelength) {
-            int x_off = left_edge;
-            int y_off = m_charcell_h * (brk - startRow);
-            int x_end = left_edge + page_w;
+            const int x_off = left_edge;
+            const int y_off = m_charcell_h * (brk - startRow);
+            const int x_end = left_edge + page_w;
             imgDC.DrawLine( x_off, y_off,       // from (x,y)
                             x_end, y_off);      // to   (x,y)
         }
@@ -762,14 +765,14 @@ Printer::generateScreen(int startCol, int startRow)
             if (startRow + row < num_rows) {
                 // the line exists
                 line = m_printstream[startRow + row];
-                size_t nchars = (m_linelength+hmargin) - skip_chars;
+                const size_t nchars = (m_linelength+hmargin) - skip_chars;
                 if ((skip_chars > 0) || (nchars < line.length())) {
                     // chop off any chars to the left of the display or
                     // to the right of the right edge of the virtual paper
                     line = line.substr(skip_chars, nchars);
                 }
-                int x_off = left_bg_w + m_charcell_w * std::max(hmargin - startCol, 0);
-                int y_off = m_charcell_h * row;
+                const int x_off = left_bg_w + m_charcell_w * std::max(hmargin - startCol, 0);
+                const int y_off = m_charcell_h * row;
                 imgDC.DrawText(line, x_off, y_off);
             }
 
@@ -783,8 +786,8 @@ Printer::generateScreen(int startCol, int startRow)
 void
 Printer::emitLine()
 {
-    m_linebuf[m_linebuf_len] = (char)0x00;
-    m_printstream.push_back(std::string(m_linebuf));
+    m_linebuf[m_linebuf_len] = '\0';
+    m_printstream.push_back(std::string(&m_linebuf[0]));
     m_linebuf_len = 0;
 
     if (m_autoshow) {
@@ -805,7 +808,7 @@ Printer::emitLine()
 void
 Printer::formFeed()
 {
-    int linesToAdd = m_pagelength - (m_printstream.size() % m_pagelength);
+    const int linesToAdd = m_pagelength - (m_printstream.size() % m_pagelength);
     for(int i = 0; i < linesToAdd; i++) {
         // call emit line to that current line buffer is flushed
         // and to make sure page oriented functions such as "print as you go" are invoked
@@ -900,7 +903,7 @@ Printout::OnPrintPage(int page)
     int llen, plen;
     m_printer->getPageAttributes(llen, plen);
     int cell_w, cell_h;
-    m_printer->getCellAttributes(&cell_w, &cell_h);
+    m_printer->getCellAttributes(cell_w, cell_h);
 
     // device units margin
     int marginleft, marginright, margintop, marginbottom;
@@ -922,8 +925,8 @@ Printout::OnPrintPage(int page)
     dc->GetSize(&w, &h);
 
     // Calculate a suitable scaling factor
-    float scaleX=(float)(w/maxX);
-    float scaleY=(float)(h/maxY);
+    const float scaleX = static_cast<float>(w)/maxX;
+    const float scaleY = static_cast<float>(h)/maxY;
 
     // use x or y scaling factor, whichever fits on the DC
 //      float actualScale = std::min(scaleX, scaleY);
@@ -934,22 +937,22 @@ Printout::OnPrintPage(int page)
     float posY = (float)((h - (maxY*actualScale))/2.0);
 #else
     // no centering
-    float posX = marginleft;
-    float posY = margintop;
+    const float posX = marginleft;
+    const float posY = margintop;
 #endif
 
-    //set the scale and origin
-    float vertAdjust;
+    // set the scale and origin
 #if 0
     dc->SetUserScale(actualScale, actualScale);
-    vertAdjust = 1.0;
+    float vertAdjust = 1.0;
 #else
     // we want to set things up so that the width is correct, and then
     // we will create a spacing factor for the vertical dimension
     dc->SetUserScale(scaleX, scaleX);
-    vertAdjust = scaleY / scaleX;
+    const float vertAdjust = scaleY / scaleX;
 #endif
-    dc->SetDeviceOrigin((long)posX, (long)posY);
+    dc->SetDeviceOrigin(static_cast<long>(posX),
+                        static_cast<long>(posY));
 
 #else
     //approach 2
@@ -1006,6 +1009,11 @@ Printout::OnBeginDocument(int startPage, int endPage)
 void
 Printout::GetPageInfo(int *minPage, int *maxPage, int *selPageFrom, int * selPageTo)
 {
+    assert(minPage     != nullptr);
+    assert(maxPage     != nullptr);
+    assert(selPageFrom != nullptr);
+    assert(selPageTo   != nullptr);
+
     *minPage = 1;
     *maxPage = m_printer->numberOfPages();
     *selPageFrom = 1;

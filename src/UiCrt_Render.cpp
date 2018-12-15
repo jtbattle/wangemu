@@ -69,21 +69,20 @@ Crt::intensityToColor(float f) const
     const float contrast   = getDisplayContrast()   * 0.01f * 1.3f;
     const float brightness = getDisplayBrightness() * 0.01f;
 
-    bool black_bg = (m_BGcolor.Red()   == 0x00) &&
-                    (m_BGcolor.Green() == 0x00) &&
-                    (m_BGcolor.Blue()  == 0x00);
+    const bool black_bg = (m_BGcolor.Red()   == 0x00)
+                       && (m_BGcolor.Green() == 0x00)
+                       && (m_BGcolor.Blue()  == 0x00);
 
-    int r, g, b;
-
+    int r=0x00, g=0x00, b=0x00;
     if (black_bg) {
         // We are modeling a monochromatic CRT.
         // Twiddle the intensity and then apply it uniformly.
         float v = brightness + f*contrast;
         v = (v < 0.0f) ? 0.0f
           : (v > 1.0f) ? 1.0f : v;
-        r = (int)(v * m_FGcolor.Red()   + 0.5f);
-        g = (int)(v * m_FGcolor.Green() + 0.5f);
-        b = (int)(v * m_FGcolor.Blue()  + 0.5f);
+        r = static_cast<int>(v * m_FGcolor.Red()   + 0.5f);
+        g = static_cast<int>(v * m_FGcolor.Green() + 0.5f);
+        b = static_cast<int>(v * m_FGcolor.Blue()  + 0.5f);
     } else {
         // FG/BG both have colors.  The monochromatic model doesn't apply.
         // Instead what we do is use the intensity to interpolate between
@@ -95,9 +94,9 @@ Crt::intensityToColor(float f) const
         const float diff_g = weight * (m_FGcolor.Green() - m_BGcolor.Green());
         const float diff_b = weight * (m_FGcolor.Blue()  - m_BGcolor.Blue());
 
-        r = (int)(m_BGcolor.Red()   + diff_r + (brightness * 255.0) + 0.5f);
-        g = (int)(m_BGcolor.Green() + diff_g + (brightness * 256.0) + 0.5f);
-        b = (int)(m_BGcolor.Blue()  + diff_b + (brightness * 256.0) + 0.5f);
+        r = static_cast<int>(m_BGcolor.Red()   + diff_r + (brightness * 255.0) + 0.5f);
+        g = static_cast<int>(m_BGcolor.Green() + diff_g + (brightness * 256.0) + 0.5f);
+        b = static_cast<int>(m_BGcolor.Blue()  + diff_b + (brightness * 256.0) + 0.5f);
 #define CLAMP8(x) ( ((x)<0x00) ? 0x00 : ((x)>0xFF) ? 0xFF : (x) )
         r = CLAMP8(r);
         g = CLAMP8(g);
@@ -145,8 +144,8 @@ Crt::intensityToColor(float f) const
 wxFont Crt::pickFont(int pointsize, int bold, const std::string &facename)
 {
     wxFont font;
-    auto fontweight = (bold) ? wxFONTWEIGHT_BOLD : wxFONTWEIGHT_NORMAL;
-    bool underline = false;
+    const auto fontweight = (bold) ? wxFONTWEIGHT_BOLD : wxFONTWEIGHT_NORMAL;
+    const bool underline = false;
 
     if (facename != "") {
         // try the specified family name
@@ -175,11 +174,11 @@ Crt::generateFontmap()
 {
     wxClientDC dc(this);
     wxMemoryDC charDC;
-    wxFont font;  // for prerendering native font
-    int sx,       // bitmap replication factor in x
-        sy,       // bitmap replication factor in y
-        dy;       // step in y (allows skipping rows)
-    int filter;   // which filter kernel to use
+    wxFont font;    // for prerendering native font
+    int sx = 0,     // bitmap replication factor in x
+        sy = 0,     // bitmap replication factor in y
+        dy = 0;     // step in y (allows skipping rows)
+    int filter = 0; // which filter kernel to use
 
     const int fontsize = getFontSize();
 
@@ -228,7 +227,7 @@ Crt::generateFontmap()
 
     // pick a filter kernel for blurring
     // there is no real science here, just ad-hoc tweaking
-    const float *filter_w;
+    const float *filter_w = nullptr;
     {
         static const float w_noop[9] = {
             // don't do any filtering
@@ -274,12 +273,12 @@ Crt::generateFontmap()
 //filter = 0; // debugging, makes it easier to see pixel pattern
         switch (filter) {
             default: assert(false);
-            case 0: filter_w = w_noop;           break;
-            case 1: filter_w = w_semi_gaussian;  break;
-            case 2: filter_w = w_gaussian;       break;
-            case 3: filter_w = w_gaussian_tweak; break;
-            case 4: filter_w = w_1D;             break;
-            case 5: filter_w = w_contrast;       break;
+            case 0: filter_w = &w_noop[0];           break;
+            case 1: filter_w = &w_semi_gaussian[0];  break;
+            case 2: filter_w = &w_gaussian[0];       break;
+            case 3: filter_w = &w_gaussian_tweak[0]; break;
+            case 4: filter_w = &w_1D[0];             break;
+            case 5: filter_w = &w_contrast[0];       break;
         }
     }
 
@@ -329,14 +328,14 @@ Crt::generateFontmap()
     // FIMXE: gamma compensation?
     wxColor colormap[256];
     for(int n=0; n<256; ++n) {
-        float w = n * (1.0f/256.0f);
-        wxColor c = intensityToColor(w);
+        const float w = n * (1.0f/256.0f);
+        const wxColor c = intensityToColor(w);
         colormap[n].Set(c.Red(), c.Green(), c.Blue());
     }
 
     // boundaries for drawing graphics chars
-    int boxx[3] = { 0, m_charcell_w / 2, m_charcell_w };
-    int boxy[4] = { 0, m_charcell_h / 3, 2*m_charcell_h/3, m_charcell_h };
+    const int boxx[3] = { 0, m_charcell_w / 2, m_charcell_w };
+    const int boxy[4] = { 0, m_charcell_h / 3, 2*m_charcell_h/3, m_charcell_h };
 
     // build a glyph map of the entire character set
     for(int bright=0; bright<2; ++bright) {
@@ -363,7 +362,7 @@ Crt::generateFontmap()
             charDC.SetBrush( wxBrush(fg_eff, wxBRUSHSTYLE_SOLID) );
 
             for(int chr=0; chr<256; ++chr) {
-                int ch = (chr & 0x7F);  // minus underline flag
+                const int ch = (chr & 0x7F);  // minus underline flag
 
                 if (fontsize >= FONT_NATIVE8) {
 
@@ -374,7 +373,7 @@ Crt::generateFontmap()
                         // box graphics characters
                         for(int yy=0; yy<3; ++yy) {
                             for(int xx=0; xx<2; ++xx) {
-                                int shift = 2*yy + xx;
+                                const int shift = 2*yy + xx;
                                 if ((chr >> shift) & 1) {
                                     // x,y,w,h
                                     charDC.DrawRectangle(
@@ -415,23 +414,23 @@ Crt::generateFontmap()
                     // underline style doesn't work for all platforms,
                     // so do it manually.
                     if (chr >= 0x80) {
-                        float dot_bg = blk.Blue() / 255.0f;
-                        float dot_fg = norm.Blue() / 255.0f;
-                        int thickness = (fontsize > FONT_NATIVE10) ? 2 : 1;
+                        const float dot_bg = blk.Blue() / 255.0f;
+                        const float dot_fg = norm.Blue() / 255.0f;
+                        const int thickness = (fontsize > FONT_NATIVE10) ? 2 : 1;
                         for(int yy=0; yy<thickness; ++yy) {
-                            int row = offset + (m_charcell_h-sy) + yy - thickness+1;
+                            const int row = offset + (m_charcell_h-sy) + yy - thickness+1;
                             for(int x=0; x<m_charcell_w; ++x) {
 #if 0
                                 // normal mode:
                                 //    alternate pixels, skipping the first pair
                                 // inv mode:
                                 //    light just the first pair
-                                bool lit = (inv) ? (x < 2)
-                                                 : (x > 1 && ((x&1)==1));
+                                const bool lit = (inv) ? (x < 2)
+                                                       : (x > 1 && ((x&1)==1));
 #else
-                                bool lit = (inv) ? (x < 2) : (x > 1);
+                                const bool lit = (inv) ? (x < 2) : (x > 1);
 #endif
-                                float v = (lit) ? dot_fg : dot_bg;
+                                const float v = (lit) ? dot_fg : dot_bg;
                                 char_intensity[row][x] = v;
                             }
                         }
@@ -513,17 +512,17 @@ Crt::generateFontmap()
                 for(int y=offset; y<m_charcell_h+offset; ++y) {
                 for(int x=offset; x<m_charcell_w+offset; ++x) {
 
-                    float fv = filter_w[0]*char_intensity[y-1][x-1]
-                             + filter_w[1]*char_intensity[y-1][x+0]
-                             + filter_w[2]*char_intensity[y-1][x+1]
-                             + filter_w[3]*char_intensity[y+0][x-1]
-                             + filter_w[4]*char_intensity[y+0][x+0]
-                             + filter_w[5]*char_intensity[y+0][x+1]
-                             + filter_w[6]*char_intensity[y+1][x-1]
-                             + filter_w[7]*char_intensity[y+1][x+0]
-                             + filter_w[8]*char_intensity[y+1][x+1];
+                    const float fv = filter_w[0]*char_intensity[y-1][x-1]
+                                   + filter_w[1]*char_intensity[y-1][x+0]
+                                   + filter_w[2]*char_intensity[y-1][x+1]
+                                   + filter_w[3]*char_intensity[y+0][x-1]
+                                   + filter_w[4]*char_intensity[y+0][x+0]
+                                   + filter_w[5]*char_intensity[y+0][x+1]
+                                   + filter_w[6]*char_intensity[y+1][x-1]
+                                   + filter_w[7]*char_intensity[y+1][x+0]
+                                   + filter_w[8]*char_intensity[y+1][x+1];
 
-                    int idx = int(255.0f*fv + 0.5f);
+                    int idx = static_cast<int>(255.0f*fv + 0.5f);
                     idx = (idx < 0x00) ? 0x00
                         : (idx > 0xFF) ? 0xFF
                                        : idx;
@@ -535,7 +534,7 @@ Crt::generateFontmap()
                 } } // for x,y
 
                 // copy it to the final font bitmap
-                int row_offset = m_charcell_h * (4*alt + 2*inv + bright);
+                const int row_offset = m_charcell_h * (4*alt + 2*inv + bright);
                 fdc.DrawBitmap( wxBitmap(blur_img),    // source image
                                 chr*m_charcell_w, row_offset ); // dest x,y
 
@@ -566,9 +565,9 @@ Crt::generateScreen()
 
 #if DRAW_WITH_RAWBMP
 // FIXME: see if we still need this for OSX
-    bool success = generateScreenByRawBmp(fg, bg);
+    const bool success = generateScreenByRawBmp(fg, bg);
 #else
-    bool success = false;
+    const bool success = false;
 #endif
     wxMemoryDC memDC(m_scrbits);
     if (!success) {
@@ -596,7 +595,7 @@ Crt::generateScreenByBlits(wxMemoryDC &memDC)
     wxMemoryDC fontmapDC;
     fontmapDC.SelectObjectAsSource(m_fontmap);
 
-    bool text_blink_enable = m_parent->getTextBlinkPhase();
+    const bool text_blink_enable = m_parent->getTextBlinkPhase();
 
     // draw each row of the text
     for(int row=0; row<m_crt_state->chars_h2; ++row) {
@@ -604,12 +603,12 @@ Crt::generateScreenByBlits(wxMemoryDC &memDC)
         if (m_crt_state->screen_type == UI_SCREEN_2236DE) {
 
             for(int col=0; col<m_crt_state->chars_w; ++col) {
-                uint8 chr   = m_crt_state->display[row*m_crt_state->chars_w + col];
-                uint8 attr  =    m_crt_state->attr[row*m_crt_state->chars_w + col];
-                bool blink  = (attr & char_attr_t::CHAR_ATTR_BLINK)  ? true : false;
-                int  alt    = (attr & char_attr_t::CHAR_ATTR_ALT)    ? 4 : 0;
-                int  inv    = (attr & char_attr_t::CHAR_ATTR_INV)    ? 2 : 0;
-                int  bright = (attr & char_attr_t::CHAR_ATTR_BRIGHT) ? 1 : 0;
+                const uint8 chr    = m_crt_state->display[row*m_crt_state->chars_w + col];
+                const uint8 attr   = m_crt_state->attr[row*m_crt_state->chars_w + col];
+                const bool  blink  = (attr & char_attr_t::CHAR_ATTR_BLINK)  ? true : false;
+                const int   alt    = (attr & char_attr_t::CHAR_ATTR_ALT)    ? 4 : 0;
+                const int   inv    = (attr & char_attr_t::CHAR_ATTR_INV)    ? 2 : 0;
+                      int   bright = (attr & char_attr_t::CHAR_ATTR_BRIGHT) ? 1 : 0;
 
                 // blinking alternates between normal and bright intensity
                 // but intense text can't blink because it is already intense
@@ -619,7 +618,7 @@ Crt::generateScreenByBlits(wxMemoryDC &memDC)
 
                 if ((chr != 0x20) || inv) {
                     // if (non-blank character)
-                    int font_row = m_charcell_h * (alt + inv + bright);
+                    const int font_row = m_charcell_h * (alt + inv + bright);
                     memDC.Blit(col*m_charcell_w, row*m_charcell_h,  // dest x,y
                                m_charcell_w, m_charcell_h,          // w,h
                                &fontmapDC,                          // src image
@@ -631,7 +630,7 @@ Crt::generateScreenByBlits(wxMemoryDC &memDC)
 
             // old terminal: one character set, no attributes
             for(int col=0; col<m_crt_state->chars_w; ++col) {
-                int chr = m_crt_state->display[row*m_crt_state->chars_w + col];
+                const int chr = m_crt_state->display[row*m_crt_state->chars_w + col];
                 if ((chr >= 0x10) && (chr != 0x20)) {  // if (non-blank character)
                     memDC.Blit(col*m_charcell_w, row*m_charcell_h,  // dest x,y
                                m_charcell_w, m_charcell_h,          // w,h
@@ -649,7 +648,7 @@ Crt::generateScreenByBlits(wxMemoryDC &memDC)
 void
 Crt::generateScreenCursor(wxMemoryDC &memDC)
 {
-    bool cursor_blink_enable = m_parent->getCursorBlinkPhase();
+    const bool cursor_blink_enable = m_parent->getCursorBlinkPhase();
     if (m_crt_state->curs_attr == cursor_attr_t::CURSOR_OFF  ||
         m_crt_state->curs_attr == cursor_attr_t::CURSOR_BLINK && !cursor_blink_enable) {
         // don't draw the cursor at all
@@ -660,17 +659,17 @@ Crt::generateScreenCursor(wxMemoryDC &memDC)
     wxColor bg(intensityToColor(0.0f));
     wxColor color(fg);
     if (m_crt_state->screen_type == UI_SCREEN_2236DE) {
-        uint8 attr = m_crt_state->attr[80*m_crt_state->curs_y + m_crt_state->curs_x];
+        const uint8 attr = m_crt_state->attr[80*m_crt_state->curs_y + m_crt_state->curs_x];
         color = (attr & char_attr_t::CHAR_ATTR_INV) ? bg : fg;
     }
 
-    int top   = m_charcell_h*(m_crt_state->curs_y+1) - (2 * m_charcell_sy*m_charcell_dy);
-    int left  = m_charcell_w* m_crt_state->curs_x;
-    int right = left + m_charcell_w - 1;
+    const int top   = m_charcell_h*(m_crt_state->curs_y+1) - (2 * m_charcell_sy*m_charcell_dy);
+    const int left  = m_charcell_w* m_crt_state->curs_x;
+    const int right = left + m_charcell_w - 1;
     memDC.SetPen( wxPen(color, 1, wxPENSTYLE_SOLID) );
     for(int y=0; y < 2; ++y) {
         for(int yy=0; yy<m_charcell_sy; ++yy) {
-            int yyy = top + y*m_charcell_dy*m_charcell_sy + yy;
+            const int yyy = top + y*m_charcell_dy*m_charcell_sy + yy;
             memDC.DrawLine(left,  yyy,
                            right, yyy);
         }
@@ -700,13 +699,13 @@ Crt::generateScreenOverlay(wxMemoryDC &memDC)
     //  dashpat[0] = 2; dashpat[1] = 2; // 3 on, 1 off for some reason
         dashpat[0] = 1; dashpat[1] = 3; // 2 on, 2 off (empirically, win7)
     }
-    pen.SetDashes(2, dashpat);
+    pen.SetDashes(2, &dashpat[0]);
     memDC.SetPen(pen);
 
     // find horizontal runs of lines and draw them
     for(int row=0; row < 25; ++row) {
+        const int top = row * m_charcell_h;
         int off = 80 * row;
-        int top = row * m_charcell_h;
         int start = -1;
         for(int col=0; col < 80; ++col, ++off) {
             if (m_crt_state->attr[off] & (char_attr_t::CHAR_ATTR_LEFT)) {
@@ -716,7 +715,7 @@ Crt::generateScreenOverlay(wxMemoryDC &memDC)
                 }
             } else if (start >= 0) {
                 // hit the end
-                int rgt = col * m_charcell_w;
+                const int rgt = col * m_charcell_w;
                 for(int yy=0; yy<m_charcell_sy; ++yy) {
                     memDC.DrawLine(start, top+yy, rgt, top+yy);
                 }
@@ -728,7 +727,7 @@ Crt::generateScreenOverlay(wxMemoryDC &memDC)
                 }
             } else if (start >= 0) {
                 // end of run
-                int rgt = col * m_charcell_w + (m_charcell_w >> 1);
+                const int rgt = col * m_charcell_w + (m_charcell_w >> 1);
                 for(int yy=0; yy<m_charcell_sy; ++yy) {
                     memDC.DrawLine(start, top+yy, rgt, top+yy);
                 }
@@ -737,7 +736,7 @@ Crt::generateScreenOverlay(wxMemoryDC &memDC)
         }
         // draw if we made it all the way to the right side
         if (start >= 0) {
-            int rgt = 80 * m_charcell_w;
+            const int rgt = 80 * m_charcell_w;
             for(int yy=0; yy<m_charcell_sy; ++yy) {
                 memDC.DrawLine(start, top+yy, rgt, top+yy);
             }
@@ -747,8 +746,8 @@ Crt::generateScreenOverlay(wxMemoryDC &memDC)
     // find vertical runs of lines and draw them
     // the 25th line is guaranteed to not have the vert attribute
     for(int col=0; col < 80; ++col) {
+        const int mid = col * m_charcell_w + (m_charcell_w >> 1);
         int off = col;
-        int mid = col * m_charcell_w + (m_charcell_w >> 1);
         int start = -1;
         for(int row=0; row < 25; ++row, off += 80) {
             if (m_crt_state->attr[off] & (char_attr_t::CHAR_ATTR_VERT)) {
@@ -757,7 +756,7 @@ Crt::generateScreenOverlay(wxMemoryDC &memDC)
                 }
             } else if (start >= 0) {
                 // end of run
-                int end = row * m_charcell_h;
+                const int end = row * m_charcell_h;
                 for(int xx=0; xx<m_charcell_sx; ++xx) {
                     memDC.DrawLine(mid+xx, start, mid+xx, end+(m_charcell_sy>>1));
                 }

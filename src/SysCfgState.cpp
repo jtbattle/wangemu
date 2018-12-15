@@ -175,7 +175,6 @@ SysCfgState::loadIni()
     {
         std::string subgroup("cpu");
         std::string sval;
-        int    ival;
 
         setCpuType( Cpu2200::CPUTYPE_2200T );  // default
         bool b = Host::ConfigReadStr(subgroup, "cpu", &sval);
@@ -185,7 +184,8 @@ SysCfgState::loadIni()
             else if (sval == "2200VP") { setCpuType( Cpu2200::CPUTYPE_2200VP ); }
         }
 
-        int dflt_ram = (getCpuType() == Cpu2200::CPUTYPE_2200VP) ? 64 : 32;
+        const int dflt_ram = (getCpuType() == Cpu2200::CPUTYPE_2200VP) ? 64 : 32;
+        int ival;
         b = Host::ConfigReadInt(subgroup, "memsize", &ival, dflt_ram);
         if (b) {
             switch (m_cputype) {
@@ -234,8 +234,8 @@ SysCfgState::loadIni()
 
         // TODO: ideally, we'd check the card type against the list of
         //       addresses allowed for that card type
-        bool plausible_card = IoCard::legal_card_t(cardtype)
-                           && ((0 <= io_addr)  && (io_addr <= 0xFFF));
+        const bool plausible_card = IoCard::legal_card_t(cardtype)
+                                 && ((0 <= io_addr)  && (io_addr <= 0xFFF));
 
         if (plausible_card) {
             setSlotCardType( slot, cardtype );
@@ -281,13 +281,13 @@ SysCfgState::saveIni() const
     for(int slot=0; slot<NUM_IOSLOTS; slot++) {
         std::string subgroup("io/slot-" + std::to_string(slot));
 
-        IoCard::card_t cardtype = m_slot[slot].type;
+        const IoCard::card_t cardtype = m_slot[slot].type;
         if (cardtype != IoCard::card_t::none) {
             char val[10];
-            sprintf(val, "0x%03X", m_slot[slot].addr);
+            sprintf(&val[0], "0x%03X", m_slot[slot].addr);
             std::string cardname = CardInfo::getCardName(cardtype);
             Host::ConfigWriteStr(subgroup, "type", cardname);
-            Host::ConfigWriteStr(subgroup, "addr", val);
+            Host::ConfigWriteStr(subgroup, "addr", &val[0]);
         } else {
             Host::ConfigWriteStr(subgroup, "type", "");
             Host::ConfigWriteStr(subgroup, "addr", "");

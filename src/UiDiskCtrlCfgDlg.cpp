@@ -203,11 +203,11 @@ DiskCtrlCfgDlg::DiskCtrlCfgDlg(wxFrame *parent, DiskCtrlCfgState &cfg) :
         m_oldcfg( cfg ),  // the existing configuration
         m_cfg   ( cfg )   // we edit this, and it is the exact one passed to us
 {
-    wxString choicesNumDrives[] = { "1", "2", "3", "4" };
+    const wxString choicesNumDrives[] = { "1", "2", "3", "4" };
     m_rbNumDrives = new wxRadioBox(this, ID_RB_NUM_DRIVES,
                                    "Number of drives",
                                    wxDefaultPosition, wxDefaultSize,
-                                   4, choicesNumDrives,
+                                   4, &choicesNumDrives[0],
                                    1, wxRA_SPECIFY_ROWS);
     m_rbNumDrives->SetItemToolTip(0, "Primary F drive");
     m_rbNumDrives->SetItemToolTip(1, "Primary R drive");
@@ -226,7 +226,8 @@ DiskCtrlCfgDlg::DiskCtrlCfgDlg(wxFrame *parent, DiskCtrlCfgState &cfg) :
     m_rbIntelligence = new wxRadioBox(this, ID_RB_INTELLIGENCE,
                                       "Controller Type",
                                       wxDefaultPosition, wxDefaultSize,
-                                      numIntelligenceChoices, choicesIntelligence,
+                                      numIntelligenceChoices,
+                                      &choicesIntelligence[0],
                                       1, wxRA_SPECIFY_ROWS);
     m_rbIntelligence->SetItemToolTip(0, "Controller for single platter\n"
                                         "drives with <= 32K sectors" );
@@ -337,7 +338,7 @@ DiskCtrlCfgDlg::OnIntelligence( wxCommandEvent& WXUNUSED(event) )
 void
 DiskCtrlCfgDlg::OnWarnMismatch( wxCommandEvent& WXUNUSED(event) )
 {
-    bool checked = m_warnMismatch->IsChecked();
+    const bool checked = m_warnMismatch->IsChecked();
     m_cfg.setWarnMismatch( checked );
     m_btnRevert->Enable( m_cfg != m_oldcfg );
 }

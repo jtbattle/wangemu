@@ -57,8 +57,7 @@ CardInfo::isCardConfigurable(IoCard::card_t cardtype)
 {
     assert(cardtype == IoCard::card_t::none || IoCard::legal_card_t(cardtype));
     std::unique_ptr<IoCard> tmpcard(IoCard::makeTmpCard(cardtype));
-    bool rv = tmpcard->isConfigurable();
-    return rv;
+    return tmpcard->isConfigurable();
 }
 
 

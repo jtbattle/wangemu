@@ -56,7 +56,7 @@ Terminal::Terminal(std::shared_ptr<Scheduler> scheduler,
     m_wndhnd = UI_displayInit(UI_SCREEN_2236DE, m_io_addr, m_term_num, &m_disp);
     assert(m_wndhnd);
 
-    bool smart_term = (screen_type == UI_SCREEN_2236DE);
+    const bool smart_term = (screen_type == UI_SCREEN_2236DE);
     if (smart_term) {
         // in dumb systems, the IoCardKeyboard will establish the callback
         System2200::registerKb(
@@ -77,7 +77,7 @@ Terminal::Terminal(std::shared_ptr<Scheduler> scheduler,
 // free resources on destruction
 Terminal::~Terminal()
 {
-    bool smart_term = (m_disp.screen_type == UI_SCREEN_2236DE);
+    const bool smart_term = (m_disp.screen_type == UI_SCREEN_2236DE);
     if (smart_term) {
         System2200::unregisterKb(m_io_addr, m_term_num);
     }
@@ -106,7 +106,7 @@ Terminal::~Terminal()
 void
 Terminal::reset(bool hard_reset)
 {
-    bool smart_term = (m_disp.screen_type == UI_SCREEN_2236DE);
+    const bool smart_term = (m_disp.screen_type == UI_SCREEN_2236DE);
 
     // dumb CRT controllers don't independently get reset;
     // the host CPU tells it to clear.  smart terminals
@@ -274,7 +274,7 @@ Terminal::checkKbBuffer()
     assert(!(m_crt_send_go && m_crt_send_stop));
 
     // if a flow control byte is pending, it cuts to the head of the line
-    uint8 byte;
+    uint8 byte = m_kb_buff.front();
     if (m_crt_send_go) {
         byte = 0xF8;
         m_crt_send_go = false;
@@ -282,7 +282,6 @@ Terminal::checkKbBuffer()
         byte = 0xFA;
         m_crt_send_stop = false;
     } else {
-        byte = m_kb_buff.front();
         m_kb_buff.pop();
     }
 
@@ -375,8 +374,8 @@ Terminal::scr_clear()
 void
 Terminal::scr_scroll()
 {
-    uint8 *d  = m_disp.display;                     // first char of row 0
-    uint8 *s  = d + m_disp.chars_w;                 // first char of row 1
+    uint8 *d  = &m_disp.display[0];  // first char of row 0
+    uint8 *s  = d + m_disp.chars_w;  // first char of row 1
     uint8 *d2 = d + m_disp.chars_w*(m_disp.chars_h2-1);  // first char of last row
 
     // scroll up the data
@@ -386,10 +385,10 @@ Terminal::scr_scroll()
 
     // cake care of the attribute plane
     if (m_disp.screen_type == UI_SCREEN_2236DE) {
-        d  = m_disp.attr;                             // first char of row 0
-        s  = d + m_disp.chars_w;                      // first char of row 1
+        d  = &m_disp.attr[0];     // first char of row 0
+        s  = d + m_disp.chars_w;  // first char of row 1
         d2 = d + m_disp.chars_w*(m_disp.chars_h2-1);  // first char of last row
-        uint8 attr_fill = 0;
+        const uint8 attr_fill = 0;
 
         // scroll up the data
         (void)memcpy(d, s, (m_disp.chars_h2-1)*m_disp.chars_w);
@@ -532,7 +531,7 @@ Terminal::checkCrtFifo()
         if (m_selectp_tmr) {
             return;  // waiting on SELECT Pn timeout
         }
-        uint8 byte = m_crt_buff.front();
+        const uint8 byte = m_crt_buff.front();
         m_crt_buff.pop();
         size--;
         if (size == 30) {
@@ -600,7 +599,7 @@ Terminal::processCrtChar1(uint8 byte)
 
     // check for delay sequence: FB Cn
     if ((0xC1 <= m_raw_buf[1]) && (m_raw_buf[1] <= 0xC9)) {
-        int delay_ms = 1000 * ((int)m_raw_buf[1] - 0xC0) / 6;
+        const int delay_ms = 1000 * (m_raw_buf[1] - 0xC0) / 6;
         assert(m_selectp_tmr == nullptr);
         if (delay_ms > 0) {
 //UI_Info("Got FB Cn, delay=%d ms", delay_ms);
@@ -811,7 +810,7 @@ Terminal::processCrtChar2(uint8 byte)
         return;
     }
     if (m_input_cnt == 4 && m_input_buf[1] == 0x0B) {
-        bool box_draw = (m_input_buf[2] == 0x02);
+        const bool box_draw = (m_input_buf[2] == 0x02);
         m_input_cnt--;  // drop current command byte
         switch (byte) {
             case 0x08: // move left
@@ -952,11 +951,11 @@ Terminal::processCrtChar3(uint8 byte)
                 byte = byte + 0x40;     // 0x10 aliases into 0x50, etc.
             }
 #endif
-            bool use_alt_char = (byte >= 0x80)
-                             && (m_attrs & char_attr_t::CHAR_ATTR_ALT);
+            const bool use_alt_char = (byte >= 0x80)
+                                   && (m_attrs & char_attr_t::CHAR_ATTR_ALT);
 
-            bool use_underline = ((byte >= 0x90) && !use_alt_char)
-                              || (m_attr_under && (m_attr_on || m_attr_temp));
+            const bool use_underline = ((byte >= 0x90) && !use_alt_char)
+                                    || (m_attr_under && (m_attr_on || m_attr_temp));
 
             byte = (byte & 0x7F)
                  | ((use_underline) ? 0x80 : 0x00);
@@ -964,10 +963,10 @@ Terminal::processCrtChar3(uint8 byte)
             scr_write_char(m_disp.curs_x, m_disp.curs_y, byte);
 
             // update char attributes in screen buffer
-            int old = m_disp.attr[m_disp.chars_w*m_disp.curs_y + m_disp.curs_x]
-                    & ( char_attr_t::CHAR_ATTR_LEFT  |
-                        char_attr_t::CHAR_ATTR_RIGHT |
-                        char_attr_t::CHAR_ATTR_VERT  );
+            const int old = m_disp.attr[m_disp.chars_w*m_disp.curs_y + m_disp.curs_x]
+                          & ( char_attr_t::CHAR_ATTR_LEFT  |
+                              char_attr_t::CHAR_ATTR_RIGHT |
+                              char_attr_t::CHAR_ATTR_VERT  );
 
             int attr_mask = 0;
             if (!m_attr_on && !m_attr_temp) {

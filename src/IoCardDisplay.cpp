@@ -207,24 +207,24 @@ IoCardDisplay::OBS(int val)
 {
     assert(m_busy_state == busy_state::IDLE);
 
-    val &= 0xFF;
+    const uint8 val8 = val & 0xFF;
 
     if (NOISY) {
-        UI_Info("display OBS: Output of byte 0x%02x", val);
+        UI_Info("display OBS: Output of byte 0x%02x", val8);
     }
 
-    m_terminal->processChar(static_cast<uint8>(val));
+    m_terminal->processChar(val8);
 
     if (System2200::isCpuSpeedRegulated()) {
-        if (val == 0x03) {
+        if (val8 == 0x03) {
             m_busy_state = busy_state::CLEAR1;
             m_card_busy = true;
 #if 0
-        } else if (val == 0x0A && cur_row == 15) {
+        } else if (val8 == 0x0A && cur_row == 15) {
             m_busy_state = busy_state::ROLL1;
             m_card_busy = true;
 #endif
-        } else if (val >= 0x10) {
+        } else if (val8 >= 0x10) {
             m_busy_state = busy_state::CHAR;
             m_card_busy = true;
         }
