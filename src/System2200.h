@@ -25,7 +25,7 @@ class SysCfgState;
 typedef std::function<int()>     clkCallback;
 typedef std::function<void(int)> kbCallback;
 
-// this is a singleton
+// fixed services related to the overall simulation
 namespace System2200
 {
     // because everything is static, we have to be told when
@@ -126,7 +126,27 @@ namespace System2200
 };
 
 
+// ------------------------------------------------------------------------
+// legal cpu system configurations
+// ------------------------------------------------------------------------
+// FIXME: move this into the System2200 namespace
+
+typedef struct {
+    int              cpuType;          // Cpu2200::CPUTYPE_* value
+    std::string      label;            // human-readable label
+    std::vector<int> ramSizeOptions;   // list of legal RAM configurations in KB
+    std::vector<int> ucodeSizeOptions; // list of legal ucode sizes, in words
+    bool             hasOneShot;       // does it have the timeslice one-shot?
+} cpuconfig_t;
+
+extern const std::vector<cpuconfig_t> cpuConfigs;
+const cpuconfig_t* getCpuConfig(const std::string &configName);
+const cpuconfig_t* getCpuConfig(int configId);
+const cpuconfig_t* badCpuConfig();  // sentinel
+
+// ------------------------------------------------------------------------
 // logging utility function for debug purposes
+// ------------------------------------------------------------------------
 // exported by System2200.cpp
 void dbglog(const char *fmt, ...);
 

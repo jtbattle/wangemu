@@ -42,7 +42,9 @@ CrtErrorDlg::CrtErrorDlg( wxWindow *parent,
     SetBackgroundColour(bgc);
 
     // determine which entry matches
-    const bool vp_mode = (System2200::config().getCpuType() == Cpu2200::CPUTYPE_2200VP);
+    const int cpuType = System2200::config().getCpuType();
+    const bool vp_mode = (cpuType != Cpu2200::CPUTYPE_2200B)
+                      && (cpuType != Cpu2200::CPUTYPE_2200T);
     const std::vector<errtable_t> &pet = (vp_mode) ? errtable_vp : errtable;
 
     bool found = false;

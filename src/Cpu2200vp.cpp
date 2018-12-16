@@ -25,6 +25,9 @@
 
 bool g_dbg_trace = false;
 
+// give a one-time warning about a misconfigured system
+static bool g_30ms_warning = false;
+
 // if this is defined as 0, a few variables get initialized
 // unnecessarily, which may very slightly slow down the emulation,
 // but which will result in the compiler complaining about potentially
@@ -165,7 +168,7 @@ enum {
 #define IMM8(uop) ((((uop) >> 10) & 0xF0) | (((uop) >> 4) & 0xF))
 
 void
-Cpu2200vp::write_ucode(uint16 addr, uint32 uop) noexcept
+Cpu2200vp::write_ucode(uint16 addr, uint32 uop, bool force) noexcept
 {
     static const int pc_adjust_tbl[16] = {
          0,  0, 0, 0,  0,  0,  0,  0,
@@ -186,6 +189,11 @@ Cpu2200vp::write_ucode(uint16 addr, uint32 uop) noexcept
     int illegal = 0;    // innocent until proven guilty
 
     uop &= 0x00FFFFFF;  // only 24b are meaningful
+
+    if (addr >= m_ucodeWords && !force) {
+        // it is a noop
+        return;
+    }
 
     m_ucode[addr].ucode = uop;
     m_ucode[addr].p8    = 0;    // default
@@ -489,7 +497,10 @@ Cpu2200vp::set_sh(uint8 value)
 {
     const int cpb_changed = ((m_cpu.sh ^ value) & SH_MASK_CPB);
 
-    const uint8 mask = SH_MASK_DEVRDY;  // ucode can't change this
+    // ucode can't write these bits
+    const uint8 mask = SH_MASK_DEVRDY
+                     | SH_MASK_30MS;
+
     m_cpu.sh = static_cast<uint8>(  (~mask & value)
                                   | ( mask & m_cpu.sh));
 
@@ -739,26 +750,35 @@ Cpu2200vp::get_HbHa(int HbHa, int a_op, int b_op) const noexcept
 Cpu2200vp::Cpu2200vp(std::shared_ptr<Scheduler> scheduler,
                      int ramsize, int cpu_subtype) :
     Cpu2200(),  // init base class
+    m_cpu_subtype(cpu_subtype),
     m_scheduler(scheduler),
+    m_hasOneShot(false),
     m_tmr_30ms(nullptr),
     m_ucode{{0,0,0,0}},
     m_memsize(ramsize),
     m_dbg(false)
 {
-    assert(cpu_subtype == CPUTYPE_2200VP);
-    cpu_subtype = cpu_subtype;  // suppress 'unused' warning
-
-    #define K *1024
-    assert(ramsize ==  32 K || ramsize ==  64 K || ramsize == 128 K ||
-           ramsize == 256 K || ramsize == 512 K );
-    #undef K
+    // find which configuration options are available/legal for this CPU
+    auto cpuCfg = getCpuConfig(cpu_subtype);
+    assert(cpuCfg != nullptr);
+    bool ram_found = false;
+    for(auto const kb : cpuCfg->ramSizeOptions) {
+        ram_found |= (ramsize == 1024*kb);
+    }
+    assert(ram_found);
+    // supporting this would require extra GUI work
+    // and the user experience complexity isn't worth it
+    assert(cpuCfg->ucodeSizeOptions.size() == 1);
+    m_ucodeWords = cpuCfg->ucodeSizeOptions[0] * 1024;
+    m_hasOneShot = cpuCfg->hasOneShot;
 
     // init microcode
     for(int i=0; i<MAX_UCODE; i++) {
-        write_ucode(static_cast<uint16>(i), 0);
+        write_ucode(static_cast<uint16>(i), 0, true);
     }
+    // TODO: have different boot images for different CPU types?
     for(int i=0; i<1024; i++) {
-        write_ucode(static_cast<uint16>(0x8000+i), ucode_2200vp[i]);
+        write_ucode(static_cast<uint16>(0x8000+i), ucode_2200vp[i], true);
     }
 
     // register for clock callback
@@ -795,7 +815,7 @@ Cpu2200vp::~Cpu2200vp()
 int
 Cpu2200vp::getCpuType() const noexcept
 {
-    return CPUTYPE_2200VP;
+    return m_cpu_subtype;
 }
 
 
@@ -829,14 +849,20 @@ Cpu2200vp::reset(bool hard_reset) noexcept
         m_cpu.ab = 0;
         m_cpu.ab_sel = 0;
 #endif
-        set_sl(0);  // make sure bank select is 0
-        m_cpu.sh &= ~0x80;        // only SH7 one bit is affected
+        set_sl(0);           // make sure bank select is 0
+        m_cpu.sh &= ~0x80;   // only SH7 one bit is affected
 
-        // actually, the one-shot isn't reset, but let's be safe
-        m_cpu.sh &= ~SH_MASK_30MS;
-        if (m_tmr_30ms != nullptr) {
-            m_tmr_30ms->Kill();
-            m_tmr_30ms = nullptr;
+        if (m_hasOneShot) {
+            // if the one-shot isn't stuffed, the status bit
+            // probably floats high
+            m_cpu.sh |= SH_MASK_30MS;
+        } else {
+            // actually, the one-shot isn't reset, but let's be safe
+            m_cpu.sh &= ~SH_MASK_30MS;
+            if (m_tmr_30ms != nullptr) {
+                m_tmr_30ms->Kill();
+                m_tmr_30ms = nullptr;
+            }
         }
     }
 
@@ -903,6 +929,7 @@ Cpu2200vp::getAB() const noexcept
 void
 Cpu2200vp::tcb30msDone() noexcept
 {
+    assert(m_hasOneShot);
     m_cpu.sh &= ~SH_MASK_30MS;    // one shot output falls
     m_tmr_30ms = nullptr;         // dead timer
 }
@@ -1282,22 +1309,31 @@ Cpu2200vp::execOneOp()
         } // t_field
 
         if ((uop & 0xC) == 0xC) {
-            // this is not documented in the arch manual, but it appears
-            // in the MVP CPU schematic.  if ucode bits 3:2 are both one,
-            // the 30 ms one shot gets retriggered.
-            m_cpu.sh |= SH_MASK_30MS;     // one shot output rises
-            if (m_tmr_30ms != nullptr) {
-                // kill pending timer before starting a new one
-                m_tmr_30ms->Kill();
-                m_tmr_30ms = nullptr;
+            if (m_hasOneShot) {
+                // this is not documented in the arch manual, but it appears
+                // in the MVP CPU schematic.  if ucode bits 3:2 are both one,
+                // the 30 ms one shot gets retriggered.
+                m_cpu.sh |= SH_MASK_30MS;     // one shot output rises
+                if (m_tmr_30ms != nullptr) {
+                    // kill pending timer before starting a new one
+                    m_tmr_30ms->Kill();
+                    m_tmr_30ms = nullptr;
+                }
+                // BPMVP14A says
+                //    CLOCK SPECIFICATIONS:
+                //         20 MS. MIN.
+                //         27 MS. AVE.
+                //         35 MS. MAX.
+                m_tmr_30ms = m_scheduler->TimerCreate( TIMER_MS(27),
+                                                       [&](){ tcb30msDone(); } );
+            } else {
+                if (!g_30ms_warning) {
+                    UI_Warn("Your system is configured with a 2200VP CPU,\n"
+                            "but the operating system appears to be MVP.\n"
+                            "Configure your system for an MVP or MicroVP for this OS.");
+                    g_30ms_warning = true;
+                }
             }
-            // BPMVP14A says
-            //    CLOCK SPECIFICATIONS:
-            //         20 MS. MIN.
-            //         27 MS. AVE.
-            //         35 MS. MAX.
-            m_tmr_30ms = m_scheduler->TimerCreate( TIMER_MS(27),
-                                                   [&](){ tcb30msDone(); } );
         }
 
         m_cpu.ic++;

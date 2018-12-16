@@ -11,15 +11,10 @@
 #include "UiSystemConfigDlg.h"
 #include "System2200.h"
 
-#define KB_FEATURE    0 // allow user to specify keyboard type
-
 enum
 {
     ID_CPU_CHOICE = 1,
     ID_MEMSIZE_CHOICE,
-#if KB_FEATURE
-    ID_KEYBOARD_CHOICE,
-#endif
 
     ID_CHK_DISK_REALTIME,
     ID_CHK_WARN_IO,
@@ -45,9 +40,6 @@ BEGIN_EVENT_TABLE(SystemConfigDlg, wxDialog)
 
     EVT_CHOICE(ID_CPU_CHOICE,           SystemConfigDlg::OnCpuChoice)
     EVT_CHOICE(ID_MEMSIZE_CHOICE,       SystemConfigDlg::OnMemsizeChoice)
-#if KB_FEATURE
-    EVT_CHOICE(ID_KEYBOARD_CHOICE,      SystemConfigDlg::OnKBChoice)
-#endif
     EVT_CHECKBOX(ID_CHK_DISK_REALTIME,  SystemConfigDlg::OnDiskRealtime)
     EVT_CHECKBOX(ID_CHK_WARN_IO,        SystemConfigDlg::OnWarnIo)
 
@@ -104,18 +96,12 @@ SystemConfigDlg::SystemConfigDlg(wxFrame *parent) :
 
     // leaf controls for leftgrid
     m_cpuType = new wxChoice(this, ID_CPU_CHOICE);
-    m_cpuType->Append("2200B",  (void *)Cpu2200::CPUTYPE_2200B);
-    m_cpuType->Append("2200T",  (void *)Cpu2200::CPUTYPE_2200T);
-    m_cpuType->Append("2200VP", (void *)Cpu2200::CPUTYPE_2200VP);
+    for(auto &cpuCfg : cpuConfigs) {
+        m_cpuType->Append(cpuCfg.label.c_str(), (void *)cpuCfg.cpuType);
+    }
 
     m_memSize = new wxChoice(this, ID_MEMSIZE_CHOICE);
     setMemsizeStrings();
-
-#if KB_FEATURE
-    m_kbType = new wxChoice(this, ID_KEYBOARD_CHOICE);
-    m_kbType->Append("2222");
-    m_kbType->Enable( m_KbType->GetCount() > 1);
-#endif
 
     leftgrid->Add(new wxStaticText(this, -1, ""), 0,
                 wxALIGN_CENTER | wxALIGN_CENTER_VERTICAL | wxBOTTOM, v_text_margin);
@@ -131,13 +117,6 @@ SystemConfigDlg::SystemConfigDlg(wxFrame *parent) :
                 wxALIGN_RIGHT | wxALIGN_CENTER_VERTICAL | wxRIGHT, h_text_margin);
     leftgrid->Add(m_memSize, 1,
                 wxGROW | wxALIGN_CENTER_VERTICAL);
-
-#if KB_FEATURE
-    leftgrid->Add(new wxStaticText(this, -1, "Keyboard"), 0,
-                wxALIGN_RIGHT | wxALIGN_CENTER_VERTICAL | wxRIGHT, h_text_margin);
-    leftgrid->Add(m_kbType, 1,
-                wxGROW | wxALIGN_CENTER_VERTICAL);
-#endif
 
     // continuing on down the left side, we get this option
     m_diskRealtime = new wxCheckBox(this, ID_CHK_DISK_REALTIME,
@@ -247,27 +226,18 @@ SystemConfigDlg::setMemsizeStrings()
 {
     m_memSize->Clear();  // erase any existing strings
 
-    switch (m_cfg.getCpuType()) {
-        case Cpu2200::CPUTYPE_2200B:
-        case Cpu2200::CPUTYPE_2200T:
-            m_memSize->Append(" 4 KB", (void*) 4);
-            m_memSize->Append(" 8 KB", (void*) 8);
-            m_memSize->Append("12 KB", (void*)12);
-            m_memSize->Append("16 KB", (void*)16);
-            m_memSize->Append("24 KB", (void*)24);
-            m_memSize->Append("32 KB", (void*)32);
-            break;
-        case Cpu2200::CPUTYPE_2200VP:
-            m_memSize->Append("32 KB", (void*)32);
-            m_memSize->Append("64 KB", (void*)64);
-// MVP supports these, but not VP:
-//          m_memSize->Append("128 KB", (void*)128);
-//          m_memSize->Append("256 KB", (void*)256);
-//          m_memSize->Append("512 KB", (void*)512);
-            break;
-        default:
-            assert(false);
-            break;
+    int cpuType = m_cfg.getCpuType();
+    auto cpuCfg = getCpuConfig(cpuType);
+    assert(cpuCfg != nullptr);
+
+    for(auto const kb : cpuCfg->ramSizeOptions) {
+        char label[10];
+        if (kb < 1024) {
+            sprintf(&label[0], "%3d KB", kb);
+        } else {
+            sprintf(&label[0], "%3d MB", kb/1024);
+        }
+        m_memSize->Append(label, (void*)kb);
     }
 }
 
@@ -276,11 +246,16 @@ SystemConfigDlg::setMemsizeStrings()
 void
 SystemConfigDlg::updateDlg()
 {
-    m_cpuType->SetSelection(m_cfg.getCpuType());
-
-#if KB_FEATURE
-    m_kbType->SetSelection(0);
-#endif
+    int cpuType = m_cfg.getCpuType();
+    bool found = false;
+    for(unsigned int n=0; n<cpuConfigs.size(); ++n) {
+        if (cpuConfigs[n].cpuType == cpuType) {
+            m_cpuType->SetSelection(n);
+            found = true;
+            break;
+        }
+    }
+    assert(found);
 
     m_memSize->SetSelection(-1); // just in case there is no match, make it obvious
     const int ramsize = m_cfg.getRamKB();
@@ -345,7 +320,6 @@ SystemConfigDlg::OnCpuChoice( wxCommandEvent& WXUNUSED(event) )
 {
     const int selection = m_cpuType->GetSelection();
     const int cputype   = (int)(m_cpuType->GetClientData(selection));
-    const int cur_mem   = m_cfg.getRamKB();
 
     m_cfg.setCpuType(cputype);
 
@@ -353,23 +327,25 @@ SystemConfigDlg::OnCpuChoice( wxCommandEvent& WXUNUSED(event) )
     setMemsizeStrings();
 
     // try to map current memory size to legal one
-    for(unsigned int i=0; i<m_memSize->GetCount(); i++) {
-        const int legal_size = (int)m_memSize->GetClientData(i);
-        if (cur_mem == legal_size) {
-            // perfect mapping -- done
+    auto cpuCfg = getCpuConfig(cputype);
+    assert(cpuCfg != nullptr);
+
+    const int ram_choices = cpuCfg->ramSizeOptions.size();
+    const int min_ram = cpuCfg->ramSizeOptions[0];
+    const int max_ram = cpuCfg->ramSizeOptions[ram_choices-1];
+    int cur_mem = m_cfg.getRamKB();
+    if (cur_mem < min_ram) { cur_mem = min_ram; }
+    if (cur_mem > max_ram) { cur_mem = max_ram; }
+
+    int i = 0;
+    for(int kb : cpuCfg->ramSizeOptions) {
+        if (cur_mem <= kb) {
+            // round up to the next biggest ram in the list of valid sizes
             m_memSize->SetSelection(i);
-            break;
-        } else if ((cputype != Cpu2200::CPUTYPE_2200VP) && (legal_size == 32)) {
-            // in case it was > 32KB before
-            m_memSize->SetSelection(i);
-            m_cfg.setRamKB(legal_size);
-            break;
-        } else if (cur_mem < legal_size) {
-            // round up to the next memory size
-            m_memSize->SetSelection(i);
-            m_cfg.setRamKB(legal_size);
+            m_cfg.setRamKB(kb);
             break;
         }
+        i++;
     }
 
     updateButtons();

@@ -176,43 +176,39 @@ SysCfgState::loadIni()
         std::string subgroup("cpu");
         std::string sval;
 
-        setCpuType( Cpu2200::CPUTYPE_2200T );  // default
-        bool b = Host::ConfigReadStr(subgroup, "cpu", &sval);
-        if (b) {
-                 if (sval == "2200B")  { setCpuType( Cpu2200::CPUTYPE_2200B );  }
-            else if (sval == "2200T")  { setCpuType( Cpu2200::CPUTYPE_2200T );  }
-            else if (sval == "2200VP") { setCpuType( Cpu2200::CPUTYPE_2200VP ); }
-        }
+        std::string defaultCpu = "2200T";
+        bool b = Host::ConfigReadStr(subgroup, "cpu", &sval, &defaultCpu);
+        assert(b);
 
-        const int dflt_ram = (getCpuType() == Cpu2200::CPUTYPE_2200VP) ? 64 : 32;
+        auto cpuCfg = getCpuConfig(sval);
+        if (cpuCfg == nullptr) {
+            UI_Warn("The ini didn't specify a legal cpu type.\n"
+                    "Delete your .ini and start over.");
+            cpuCfg = getCpuConfig("2200T");
+        }
+        setCpuType(cpuCfg->cpuType);
+
+        const int ram_choices = cpuCfg->ramSizeOptions.size();
+        const int min_ram = cpuCfg->ramSizeOptions[0];
+        const int max_ram = cpuCfg->ramSizeOptions[ram_choices-1];
+        const int dflt_ram = max_ram;
         int ival;
         b = Host::ConfigReadInt(subgroup, "memsize", &ival, dflt_ram);
-        if (b) {
-            switch (m_cputype) {
-                case Cpu2200::CPUTYPE_2200B:
-                case Cpu2200::CPUTYPE_2200T:
-                    if (ival ==  4 || ival ==  8 || ival == 12 ||
-                        ival == 16 || ival == 24 || ival == 32) {
-                        setRamKB( ival );
-                    }
-                    break;
-                case Cpu2200::CPUTYPE_2200VP:
-                    if (ival ==  32 || ival ==  64 ||
-                        ival == 128 || ival == 256 ||
-                        ival == 512 ) {
-                        setRamKB( ival );
-                    }
-                    break;
-                default:
-                    assert(false);
+        if (ival < min_ram) { ival = min_ram; }
+        if (ival > max_ram) { ival = max_ram; }
+        for(int kb : cpuCfg->ramSizeOptions) {
+            if (ival <= kb) {
+                // round up to the next biggest ram in the list of valid sizes
+                setRamKB(kb);
+                break;
             }
         }
 
         // learn whether CPU speed is regulated or not
-        regulateCpuSpeed( true );  // default
+        regulateCpuSpeed(true);  // default
         b = Host::ConfigReadStr(subgroup, "speed", &sval);
         if (b && (sval == "unregulated")) {
-            regulateCpuSpeed( false );
+            regulateCpuSpeed(false);
         }
     }
 
@@ -304,14 +300,14 @@ SysCfgState::saveIni() const
     {
         const std::string subgroup("cpu");
 
-        const char *foo = (m_cputype == Cpu2200::CPUTYPE_2200B) ? "2200B" :
-                          (m_cputype == Cpu2200::CPUTYPE_2200T) ? "2200T" :
-                                                                  "2200VP";
-        Host::ConfigWriteStr(subgroup, "cpu", foo);
+        auto cpuCfg = getCpuConfig(m_cputype);
+        assert(cpuCfg != nullptr);
+        std::string cpuLabel = cpuCfg->label;
+        Host::ConfigWriteStr(subgroup, "cpu", cpuLabel.c_str());
 
         Host::ConfigWriteInt(subgroup, "memsize", getRamKB());
 
-        foo = (System2200::isCpuSpeedRegulated()) ? "regulated" : "unregulated";
+        char *foo = (System2200::isCpuSpeedRegulated()) ? "regulated" : "unregulated";
         Host::ConfigWriteStr(subgroup, "speed", foo);
     }
 
@@ -341,39 +337,7 @@ SysCfgState::regulateCpuSpeed(bool regulated) noexcept
 void
 SysCfgState::setRamKB(int kb) noexcept
 {
-    switch (kb) {
-
-    // OK for A,B,C,S,T
-        case  4:
-        case  8:
-        case 12:
-        case 16:
-        case 24:
-            assert(m_cputype != Cpu2200::CPUTYPE_2200VP);
-            m_ramsize = kb;
-            break;
-
-    // OK for either CPU type
-        case 32:
-            m_ramsize = kb;
-            break;
-
-    // OK only for VP
-        case 64:
-        case 128:
-        case 256:
-        case 512:
-            assert(m_cputype == Cpu2200::CPUTYPE_2200VP);
-            m_ramsize = kb;
-            break;
-
-    // should never happen
-        default:
-            assert(false);
-            m_ramsize = 32;
-            break;
-    }
-
+    m_ramsize = kb;
     m_initialized = true;
 }
 

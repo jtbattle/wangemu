@@ -1018,7 +1018,8 @@ IoCardDisk::iwvdInsertDisk(int drive,
     const int  num_sectors  = m_d[drive].wvd->getNumSectors();
     const int  num_platters = m_d[drive].wvd->getNumPlatters();
     const bool large_disk   = (num_sectors > max_sectors) || (num_platters > 1);
-    const bool first_gen    = (System2200::config().getCpuType() != Cpu2200::CPUTYPE_2200VP);
+    const bool first_gen    = (System2200::config().getCpuType() == Cpu2200::CPUTYPE_2200B)
+                           || (System2200::config().getCpuType() == Cpu2200::CPUTYPE_2200T);
     const bool dumb_ctrl    = (intelligence() == DiskCtrlCfgState::DISK_CTRL_DUMB);
     const bool warn         = warnMismatch();
 

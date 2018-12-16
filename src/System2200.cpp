@@ -427,25 +427,21 @@ System2200::setConfig(const SysCfgState &newcfg)
     *current_cfg = newcfg;
 
     // (re)build the CPU
-    int ramsize = (current_cfg->getRamKB()) * 1024;
-    switch (current_cfg->getCpuType()) {
+    const int ramsize = (current_cfg->getRamKB()) * 1024;
+    int cpuType = current_cfg->getCpuType();
+    switch (cpuType) {
         default:
             assert(false);
+            cpuType = Cpu2200::CPUTYPE_2200T;
             // fall through in non-debug build if config type is invalid
-        case Cpu2200::CPUTYPE_2200T:
-            cpu = std::make_shared<Cpu2200t>( scheduler, ramsize, Cpu2200::CPUTYPE_2200T );
-            break;
         case Cpu2200::CPUTYPE_2200B:
-            cpu = std::make_shared<Cpu2200t>( scheduler, ramsize, Cpu2200::CPUTYPE_2200B );
+        case Cpu2200::CPUTYPE_2200T:
+            cpu = std::make_shared<Cpu2200t>( scheduler, ramsize, cpuType);
             break;
-        case Cpu2200::CPUTYPE_2200VP:
-#if 1
-            cpu = std::make_shared<Cpu2200vp>( scheduler, ramsize, Cpu2200::CPUTYPE_2200VP );
-#else
-// FIXME: experiment; give it more than 64KB to see if I can get two terms & partitions
-            cpu = std::make_shared<Cpu2200vp>( scheduler, 512, Cpu2200::CPUTYPE_2200VP );
-// FIXME: I tried configuring with 128KB and I didn't get the power on message
-#endif
+        case Cpu2200::CPUTYPE_VP:
+        case Cpu2200::CPUTYPE_MVPC:
+        case Cpu2200::CPUTYPE_MICROVP:
+            cpu = std::make_shared<Cpu2200vp>( scheduler, ramsize, cpuType);
             break;
     }
     assert(cpu);
@@ -807,7 +803,9 @@ System2200::cpu_ABS(uint8 byte)
     }
     curIoAddr = byte;
 
-    const bool vp_mode = (cpu->getCpuType() == Cpu2200::CPUTYPE_2200VP);
+    const int cpuType = cpu->getCpuType();
+    const bool vp_mode = (cpuType != Cpu2200::CPUTYPE_2200B)
+                      && (cpuType != Cpu2200::CPUTYPE_2200T);
 
     // by default, assume the device is not ready.
     // the addressed card will turn it back below if appropriate
@@ -1200,6 +1198,86 @@ System2200::findDisk(const std::string &filename,
     } // for(controller)
 
     return false;
+}
+
+
+// ------------------------------------------------------------------------
+// legal cpu system configurations
+// ------------------------------------------------------------------------
+
+const std::vector<cpuconfig_t> cpuConfigs = {
+    // https://wang2200.org/docs/datasheet/2200ABC_CPU_DataSheet.700-3491.11-74.pdf
+    {   Cpu2200::CPUTYPE_2200B,    // .cpuType
+        "2200B",                   // .label
+        { 4, 8, 12, 16, 24, 32 },  // .ramSizeOptions (20K and 28K were conceptually options too)
+        { 0 },                     // .ucodeSizeOptions
+        false                      // .hasOneShot
+    },
+
+    // https://wang2200.org/docs/datasheet/2200T_CPU_DataSheet.700-3723D.1-79.pdf
+    {   Cpu2200::CPUTYPE_2200T,    // .cpuType
+        "2200T",                   // .label
+        { 8, 16, 24, 32 },         // .ramSizeOptions
+        { 0 },                     // .ucodeSizeOptions
+        false                      // .hasOneShot
+    },
+
+    // https://wang2200.org/docs/datasheet/2200VP_CPU_DataSheet.700-4051C.10-80.pdf
+    {   Cpu2200::CPUTYPE_VP,       // .cpuType
+        "2200VP",                  // .label
+        { 16, 32, 48, 64 },        // .ramSizeOptions
+        { 32 },                    // .ucodeSizeOptions
+        false                      // .hasOneShot
+    },
+
+#if 0 // remove it to reduce cognitive overload
+    // https://wang2200.org/docs/datasheet/2200MVP_DataSheet.700-4656G.10-82.pdf
+    {   Cpu2200::CPUTYPE_MVP,      // .cpuType
+        "2200MVP",                 // .label
+        { 32, 64, 128, 256 },      // .ramSizeOptions
+        { 32 },                    // .ucodeSizeOptions
+        true                       // .hasOneShot
+    },
+#endif
+    // https://wang2200.org/docs/datasheet/MVP_LVP_SystemsOptionC.700-6832.4-81.pdf
+    // https://wang2200.org/docs/system/2200SystemsOptionC.729-1062.pdf
+    {   Cpu2200::CPUTYPE_MVPC,     // .cpuType
+        "2200MVP-C",               // .label
+        { 32, 64, 128, 256, 512 }, // .ramSizeOptions
+        { 64 },                    // .ucodeSizeOptions
+        true                       // .hasOneShot
+    },
+#if 0 // FIXME: need to model the BSR (bank select reg) port
+    // https://wang2200.org/docs/system/2200MicroVP_MaintenanceManual.741-1668.5-88.pdf
+    {   Cpu2200::CPUTYPE_MICROVP,  // .cpuType
+        "MicroVP",                 // .label
+        { 128, 512, 1024, 2048 },  // .ramSizeOptions (4MB and 8MB were options too)
+        { 32 },                    // .ucodeSizeOptions
+        true                       // .hasOneShot
+    },
+#endif
+};
+
+const cpuconfig_t*
+getCpuConfig(const std::string &configName)
+{
+    for(auto const &cfg : cpuConfigs) {
+        if (cfg.label == configName) {
+            return &cfg;
+        }
+    }
+    return nullptr;
+}
+
+const cpuconfig_t*
+getCpuConfig(int configId)
+{
+    for(auto const &cfg : cpuConfigs) {
+        if (cfg.cpuType == configId) {
+            return &cfg;
+        }
+    }
+    return nullptr;
 }
 
 // vim: ts=8:et:sw=4:smarttab

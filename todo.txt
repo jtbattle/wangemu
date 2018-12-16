@@ -4,6 +4,13 @@ Emulator TODO list
 
 *) master list of priorities:
    add mvp/vlsi cpu and memory options; submit
+       - move cpuConfigs into System2200:: namespace
+       - thoroughly test configuration options
+       - MicroVp barfs when I try to boot MVP 2.6.2 (maybe others)
+       - VLSI-2 puts an 8b register at output port 80 called BSR (bank select
+         reg); bit [7] of that register indicates if extended addressing
+         should use the SL register of if [6:0] provided 7b of extended
+         addressing. See MVP source code file BPMVP00.
    get >1 MXD configuration working
    get >1 term per MXD configuration working
    decide on a consistent set of naming conventions and stick to them
@@ -11,11 +18,6 @@ Emulator TODO list
    ... then review the priorities again
 
 *) support more than one MXD (each with one terminal)
-   - booting MVP 3.5, it gets to the partition editor start up and hangs.
-   - the secondary terminal doesn't have a status bar (known misfeature).
-     it should at least allow the Kaps feature.
-   - the concept of tied keyboards should not apply to such CrtFrames
-     the tied_keyboard setting is read during getDefaults() in UiCrtFrame.
    - terminal save/restore state should be based on addr+term#
      currently the tag is:
         [wangemu/config-0/ui/CRT-05]
@@ -23,56 +25,24 @@ Emulator TODO list
      for mxd should be
         [wangemu/config-0/ui/MXD-CRT-{00,40,80,C0}-{1,2,3,4}]
         [wangemu/config-0/ui/MXD-PRT-{00,40,80,C0}-{1,2,3,4}]
+   - the secondary terminal doesn't have a status bar (known misfeature).
+     it should at least allow the Kaps feature.
+   - the concept of tied keyboards should not apply to such CrtFrames
+     the tied_keyboard setting is read during getDefaults() in UiCrtFrame.
+   - booting MVP 3.5, it gets to the partition editor start up and hangs.
 
 *) support MXD with more than one terminal
      - config dialog needs to allow term mux configurations,
        just like disk controllers have a config editor
+           - # of terminals associated with MXD
+           - baud rate?
+           - in the future, real serial port?
      - in a few places, term_num is hardwired to 0.
 
 *) print preview crashes now.  I'm not sure when it started happening.
    study F:\Jim\libs\wx-3.1.0\samples\printing
    trying to print fails too.
    build a sample app which uses print dialog and see if it works there.
-
-*) add support for MVP and VLSI type CPUs
-   - VP configuration should have 32KB control mem and defeature the 30ms timer
-     Perhaps pop up a warning that the CPU is attempting to run an MVP OS
-     if it detects a 30ms trigger.
-   - MVP adds 64KB ctl mem, 30ms timer, and up to 512KB of data RAM via SL reg
-        section 8 of 2200MVP_MaintenanceManual.729-0584-A.1-84.pdf lists
-        what is involved to upgrade a VP to an MVP.  part of it requires
-        changing the boot ROM ucode to deal with the larger program memory.
-        do I have these boot ROMs?
-           double check boards/other boards/6789 and see if those ROMs match
-           what the emulator uses
-        the MVP service manual section 8.2 (page 8-2) says
-            2200 VP/MVP Bootstrap Release 2.2 has been incorporated by ECN
-            #9772.  For a system to operate with an expanded memory, this ECN
-            must be performed.  The old PROMS on the 210-6789 must be replaced
-            with the following:
-                378-2045R1 = L27
-                378-2046R1 = L28
-                378-2047R1 = L29
-        the 6789 board that I got the 2nd set of bootstrap PROMs from
-        are windowed eproms without official Wang revision numbers.
-        handwritten on the chips are the following:
-            L29 says "2047"
-            L28 says "2046R5"
-            L27 says "2045R5"
-        It is possible that the contents were R5, but the EPROMs were
-        later erased and overwritten, making the handwritten note
-        meaningless.
-   - VLSI-2 puts an 8b register at output port 80 called BSR (bank select reg);
-     bit [7] of that register indicates if extended addressing should use the
-     SL register of if [6:0] provided 7b of extended addressing. See MVP source
-     code file BPMVP00.
-
-*) Add 64K words of control memory, so BASIC-3/COBOL can run
-   OptionC.pdf in the jim/wang2200/docs/system/2200MVP_MaintenanceManual
-   directory describes the upgrade to give 64KB of control ram and
-   512KB of RAM.  0x8000 to 0x8FFF is a hole where the bootstram PROM lives.
-   Don't make it configurable (to reduce UI clutter).
-   Just tie it to the configuration: VP gets 32K, MVP/VLSI get 64K.
 
 *) Have an easy config mode and an expert mode.
    The config dialog would have two tabs.  The "simple" tab would have

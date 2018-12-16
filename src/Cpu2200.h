@@ -19,7 +19,8 @@ public:
     virtual ~Cpu2200() { };
 
     // report which type of CPU is in use
-    enum { CPUTYPE_2200B, CPUTYPE_2200T, CPUTYPE_2200VP };
+    enum { CPUTYPE_2200B, CPUTYPE_2200T,
+           CPUTYPE_VP, CPUTYPE_MVP, CPUTYPE_MVPC, CPUTYPE_MICROVP };
     virtual int getCpuType() const noexcept = 0;
 
     // true=hard reset, false=soft reset
@@ -199,7 +200,7 @@ public:
 private:
     // ---- member functions ----
     // predecode uinstruction and write it to store
-    void write_ucode(uint16 addr, uint32 uop) noexcept;
+    void write_ucode(uint16 addr, uint32 uop, bool force=false) noexcept;
 
     // dump the most important contents of the uP state
     void dump_state(int fulldump);
@@ -232,11 +233,13 @@ private:
 
     // ---- data members ----
 
+    const int                   m_cpu_subtype;
     std::shared_ptr<Scheduler>  m_scheduler;  // shared system timing scheduler object
+    bool                        m_hasOneShot; // this cpu supports timeslicing
     std::shared_ptr<Timer>      m_tmr_30ms;   // time slice 30 ms one shot
 
-    static const int MAX_RAM   = 512*1024; // max # bytes of main memory
-    static const int MAX_UCODE =  64*1024; // max # words in ucode store
+    static const int MAX_RAM   = 2048*1024; // max # bytes of main memory
+    static const int MAX_UCODE =   64*1024; // max # words in ucode store
 
     static const int STACKSIZE = 96; // number of entries in the return stack
 
@@ -247,6 +250,7 @@ private:
         uint8  p8;          // predecode: instruction specific
         uint16 p16;         // predecode: instruction specific
     } m_ucode[MAX_UCODE];
+    int m_ucodeWords;       // number of implemented words
 
     // main memory
     const int m_memsize;        // size, in bytes
