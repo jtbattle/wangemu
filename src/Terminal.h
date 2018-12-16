@@ -116,6 +116,7 @@ private:
     int           m_term_num;       // associated terminal number
     crt_state_t   m_disp;           // contents of display memory
     std::shared_ptr<Timer> m_init_tmr;  // send init sequence from terminal
+    bool          m_script_active;  // a script is feeding us keystrokes
 
     // current character attributes
     int           m_attrs;          // current char attributes
@@ -134,7 +135,8 @@ private:
 
     // the terminal keyboard buffer is modeled in the card
     // instead of cluttering up the Ui code
-    std::queue<uint8>      m_kb_buff;
+    std::queue<uint8>      m_kb_buff;           // pending input
+    std::deque<uint8>      m_kb_recent;         // recent history
     std::shared_ptr<Timer> m_tx_tmr;            // model uart rate & delay
 
     // crt receive buffer and flow control state

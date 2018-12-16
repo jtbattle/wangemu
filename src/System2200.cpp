@@ -1019,27 +1019,31 @@ System2200::kb_scriptModeActive(int io_addr, int term_num)
 }
 
 // when invoked on a terminal in script mode, causes key callback to be
-// invoked with the next character from the script
-void
+// invoked with the next character from the script.  it returns true if
+// a script supplied a character.
+bool
 System2200::kb_keyReady(int io_addr, int term_num)
 {
     for(auto &kb : m_kb_routes) {
         if (io_addr == kb.io_addr && term_num == kb.term_num) {
             if (!kb.script_handle) {
-                return;
+                return false;
             }
             int ch;
             if (kb.script_handle->getNextByte(&ch)) {
                 // yes, a key is available
                 auto cb = kb.callback_fn;
                 cb(ch);
+                return true;
             } else {
                 // EOF
                 kb.script_handle = nullptr;
                 // FIXME: leaking here
+                return false;
             }
         }
     }
+    return false;
 }
 
 // ========================================================================

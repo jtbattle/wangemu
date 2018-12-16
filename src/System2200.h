@@ -91,8 +91,9 @@ namespace System2200
     bool kb_scriptModeActive(int io_addr, int term_num);
 
     // when invoked on a terminal in script mode, causes key callback to be
-    // invoked with the next character from the script
-    void kb_keyReady(int io_addr, int term_num);
+    // invoked with the next character from the script.  it returns true if
+    // a script supplied a character.
+    bool kb_keyReady(int io_addr, int term_num);
 
     // ---- slot manager ----
 

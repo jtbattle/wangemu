@@ -202,7 +202,8 @@ void
 IoCardKeyboard::check_keyready()
 {
     if (!m_key_ready) {
-        System2200::kb_keyReady(m_baseaddr, 0);
+        bool script_active = System2200::kb_keyReady(m_baseaddr, 0);
+        script_active = !script_active;  // make lint shut up
     }
 // FIXME: keyReady doesn't change m_selected, so the above call can't affect
 // it this cycle.  maybe the thing to do is after m_key_ready is set to

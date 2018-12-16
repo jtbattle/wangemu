@@ -3,7 +3,6 @@ Emulator TODO list
 ============================================================================
 
 *) master list of priorities:
-   implement mxd script flow control; submit
    add mvp/vlsi cpu and memory options; submit
    get >1 MXD configuration working
    get >1 term per MXD configuration working
@@ -86,6 +85,10 @@ Emulator TODO list
    - things are getting more confusing with the increased options.
      have a feature where hovering over the config button in the
      "Not OK" state will pop up an explanation of the problem
+
+*) add a warning that if the user types ALT-R or ALT-W that they need
+   to use Shift-ALT-R or Shift-ALT-W if they want a reset.  Maybe have
+   a memory so it happens only once per emulator run.
 
 *) on toolbar, add superscript to some SF keys in (M)VP mode:
      SF4: END

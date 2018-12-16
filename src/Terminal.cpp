@@ -27,8 +27,8 @@
 #include "System2200.h"
 #include "Terminal.h"
 
-// FIXME: this is here and in IoCardTermMux.cpp
-//        put it somewhere in common
+// TODO: this is here and in IoCardTermMux.cpp
+//       put it somewhere in common
 // character transmission time, in nanoseconds
 const int64 serial_char_delay =
             TIMER_US(  11.0              /* bits per character */
@@ -52,7 +52,8 @@ Terminal::Terminal(std::shared_ptr<Scheduler> scheduler,
     m_tx_tmr(nullptr),
     m_selectp_tmr(nullptr),
     m_crt_tmr(nullptr),
-    m_prt_tmr(nullptr)
+    m_prt_tmr(nullptr),
+    m_script_active(false)
 {
     m_disp.screen_type = screen_type;
     m_disp.chars_w  = (screen_type == UI_SCREEN_64x16)  ? 64 : 80;
@@ -121,10 +122,6 @@ Terminal::reset(bool hard_reset)
     // will independently clear the screen even if the serial
     // line is disconnected.
     if (hard_reset || smart_term) {
-        // transmission path state
-        m_tx_tmr = nullptr;
-        m_kb_buff = {};
-
         // reset command stream immediate mode parsing
         m_escape_seen = false;
         m_crt_sink    = true;
@@ -163,8 +160,14 @@ Terminal::reset_crt()
     for(auto &byte : m_raw_buf)   { byte = 0x00; }  // not strictly necessary
     for(auto &byte : m_input_buf) { byte = 0x00; }  // not strictly necessary
 
-    m_tx_tmr = nullptr;
-    m_kb_buff = {};
+    // we have to make an exception: if the script issues CLEAR,
+    // the terminal is sent a "reset crt" sequence, but actually wiping
+    // these out would break the script processing.
+    if (!m_script_active) {
+        m_tx_tmr = nullptr;
+        m_kb_buff = {};
+        m_kb_recent = {};
+    }
 
     m_attrs      = char_attr_t::CHAR_ATTR_BRIGHT; // implicitly primary char set
     m_attr_on    = false;
@@ -291,8 +294,53 @@ Terminal::checkKbBuffer()
         m_kb_buff.pop();
     }
 
+    // this is a hacky heuristic, but the 2200 system didn't have any
+    // flow control to prevent a terminal from overrunning the host.
+    // that is, the term->mxd path is 2000 chars/sec, but the MXD cannot
+    // process characters that fast and the system depended on humans not
+    // using anywhere near the line rate other than in bursts.
+    //
+    // running at 1/2 the rate for normal chars loses some; running at 1/50
+    // on carriage returns isn't enough time for whatever bookkeeping BASIC
+    // does at the end of line.  so instead we run at 1/4 rate for normal
+    // chars, and 1/100 rate for <CR> and hope that is enough.
+    int64 delay = serial_char_delay;
+    if (m_script_active) {
+        delay *= ((byte == 0x0D) ? 100 : 4);
+    }
+
+    // unfortunately, the "CLEAR" command (which starts all the scripts
+    // distributed with wangemu) takes a long time to execute, and the
+    // previous hackery is not enough. instead, an artificial delay is
+    // added if we are in script mode and the most recently received
+    // characters were "C L E A R <CR> <something>".  We have to test
+    // when <something> is received because we want the delay to occur
+    // after the <CR> is seen.
+    //
+    // if this doesn't work, there is another more grungy solution.  the
+    // MXD emulator could peek at the 8080's memory and figure out how deep
+    // the RX fifo is and somehow throttle this code from sending any
+    // characters if it was in danger of overrunning.  that would be a big
+    // and ugly hammer.
+    m_kb_recent.push_back(byte);
+    int fifo_size = m_kb_recent.size();
+    if (fifo_size > 7) {
+        m_kb_recent.pop_front();
+        if (m_script_active) {
+            std::vector<uint8> k{m_kb_recent.begin(), m_kb_recent.end()}; // convert deque to vector
+            if (   (k[0] == 'C')
+                && (k[1] == 'L')
+                && (k[2] == 'E')
+                && (k[3] == 'A')
+                && (k[4] == 'R')
+                && (k[5] == 0x0D)) {
+                delay = TIMER_MS(1000);
+            }
+        }
+    }
+
     m_tx_tmr = m_scheduler->TimerCreate(
-                   serial_char_delay,
+                   delay,
                    std::bind(&Terminal::termToMxdCallback, this, byte)
                );
 }
@@ -304,6 +352,12 @@ Terminal::termToMxdCallback(int key)
 {
     m_tx_tmr = nullptr;
     m_muxd->receiveKeystroke(m_term_num, key);
+
+    // poll for script input, but don't let it overrun the key buffer
+    if (m_kb_buff.size() < 5) {
+        m_script_active = System2200::kb_keyReady(m_io_addr, m_term_num);
+    }
+
     // see if any other chars are pending
     checkKbBuffer();
 }
@@ -451,7 +505,7 @@ Terminal::processChar(uint8 byte)
             System2200::kb_keystroke(m_io_addr, m_term_num, 0xE4);
 #endif
             System2200::kb_keystroke(m_io_addr, m_term_num, 0xF8);
-            // FIXME: then F8 every 3 seconds if not throttled
+            // TODO: then F8 every 3 seconds if not throttled
             break;
 
         case 0xF6: // reset crt (FB F6)
@@ -466,7 +520,7 @@ Terminal::processChar(uint8 byte)
             // if I include this, the emulator thinks it got the INIT atom (E4)
             System2200::kb_keystroke(m_io_addr, m_term_num, 0xE4);
 #endif
-            // FIXME: then F8 every 3 seconds if not throttled
+            // TODO: then F8 every 3 seconds if not throttled
             break;
 
         default:
@@ -986,7 +1040,7 @@ void
 Terminal::prtCharFifo(uint8 byte)
 {
 #if 0
-    // FIXME: not modeling remote printer yet
+    // TODO: not modeling remote printer yet
 #else
     byte = byte;
     return;
