@@ -793,7 +793,7 @@ Cpu2200vp::Cpu2200vp(std::shared_ptr<Scheduler> scheduler,
     m_dbg(false)
 {
     // find which configuration options are available/legal for this CPU
-    auto cpuCfg = getCpuConfig(cpu_subtype);
+    auto cpuCfg = System2200::getCpuConfig(cpu_subtype);
     assert(cpuCfg != nullptr);
     bool ram_found = false;
     for(auto const kb : cpuCfg->ramSizeOptions) {

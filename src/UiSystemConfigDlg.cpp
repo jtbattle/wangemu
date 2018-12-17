@@ -96,7 +96,7 @@ SystemConfigDlg::SystemConfigDlg(wxFrame *parent) :
 
     // leaf controls for leftgrid
     m_cpuType = new wxChoice(this, ID_CPU_CHOICE);
-    for(auto &cpuCfg : cpuConfigs) {
+    for(auto &cpuCfg : System2200::cpuConfigs) {
         m_cpuType->Append(cpuCfg.label.c_str(), (void *)cpuCfg.cpuType);
     }
 
@@ -227,7 +227,7 @@ SystemConfigDlg::setMemsizeStrings()
     m_memSize->Clear();  // erase any existing strings
 
     int cpuType = m_cfg.getCpuType();
-    auto cpuCfg = getCpuConfig(cpuType);
+    auto cpuCfg = System2200::getCpuConfig(cpuType);
     assert(cpuCfg != nullptr);
 
     for(auto const kb : cpuCfg->ramSizeOptions) {
@@ -248,8 +248,8 @@ SystemConfigDlg::updateDlg()
 {
     int cpuType = m_cfg.getCpuType();
     bool found = false;
-    for(unsigned int n=0; n<cpuConfigs.size(); ++n) {
-        if (cpuConfigs[n].cpuType == cpuType) {
+    for(unsigned int n=0; n<System2200::cpuConfigs.size(); ++n) {
+        if (System2200::cpuConfigs[n].cpuType == cpuType) {
             m_cpuType->SetSelection(n);
             found = true;
             break;
@@ -327,7 +327,7 @@ SystemConfigDlg::OnCpuChoice( wxCommandEvent& WXUNUSED(event) )
     setMemsizeStrings();
 
     // try to map current memory size to legal one
-    auto cpuCfg = getCpuConfig(cputype);
+    auto cpuCfg = System2200::getCpuConfig(cputype);
     assert(cpuCfg != nullptr);
 
     const int ram_choices = cpuCfg->ramSizeOptions.size();

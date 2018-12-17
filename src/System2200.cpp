@@ -1205,7 +1205,7 @@ System2200::findDisk(const std::string &filename,
 // legal cpu system configurations
 // ------------------------------------------------------------------------
 
-const std::vector<cpuconfig_t> cpuConfigs = {
+const std::vector<System2200::cpuconfig_t> System2200::cpuConfigs = {
     // https://wang2200.org/docs/datasheet/2200ABC_CPU_DataSheet.700-3491.11-74.pdf
     {   Cpu2200::CPUTYPE_2200B,    // .cpuType
         "2200B",                   // .label
@@ -1251,16 +1251,16 @@ const std::vector<cpuconfig_t> cpuConfigs = {
     // https://wang2200.org/docs/system/2200MicroVP_MaintenanceManual.741-1668.5-88.pdf
     {   Cpu2200::CPUTYPE_MICROVP,  // .cpuType
         "MicroVP",                 // .label
-        { 128, 512, 1024, 2048 },  // .ramSizeOptions (4MB and 8MB were options too)
+        { 128, 512, 1024, 2048, 4096, 8192 },  // .ramSizeOptions
         { 64 },                    // .ucodeSizeOptions
         true                       // .hasOneShot
     },
 };
 
-const cpuconfig_t*
-getCpuConfig(const std::string &configName)
+const System2200::cpuconfig_t*
+System2200::getCpuConfig(const std::string &configName)
 {
-    for(auto const &cfg : cpuConfigs) {
+    for(auto const &cfg : System2200::cpuConfigs) {
         if (cfg.label == configName) {
             return &cfg;
         }
@@ -1268,10 +1268,10 @@ getCpuConfig(const std::string &configName)
     return nullptr;
 }
 
-const cpuconfig_t*
-getCpuConfig(int configId)
+const System2200::cpuconfig_t*
+System2200::getCpuConfig(int configId)
 {
-    for(auto const &cfg : cpuConfigs) {
+    for(auto const &cfg : System2200::cpuConfigs) {
         if (cfg.cpuType == configId) {
             return &cfg;
         }

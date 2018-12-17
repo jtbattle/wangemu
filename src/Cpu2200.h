@@ -237,7 +237,7 @@ private:
     bool                        m_hasOneShot; // this cpu supports timeslicing
     std::shared_ptr<Timer>      m_tmr_30ms;   // time slice 30 ms one shot
 
-    static const int MAX_RAM   = 2048*1024; // max # bytes of main memory
+    static const int MAX_RAM   = 8192*1024; // max # bytes of main memory
     static const int MAX_UCODE =   64*1024; // max # words in ucode store
 
     static const int STACKSIZE = 96; // number of entries in the return stack

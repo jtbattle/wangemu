@@ -180,11 +180,11 @@ SysCfgState::loadIni()
         bool b = Host::ConfigReadStr(subgroup, "cpu", &sval, &defaultCpu);
         assert(b);
 
-        auto cpuCfg = getCpuConfig(sval);
+        auto cpuCfg = System2200::getCpuConfig(sval);
         if (cpuCfg == nullptr) {
             UI_Warn("The ini didn't specify a legal cpu type.\n"
                     "Delete your .ini and start over.");
-            cpuCfg = getCpuConfig("2200T");
+            cpuCfg = System2200::getCpuConfig("2200T");
         }
         setCpuType(cpuCfg->cpuType);
 
@@ -300,7 +300,7 @@ SysCfgState::saveIni() const
     {
         const std::string subgroup("cpu");
 
-        auto cpuCfg = getCpuConfig(m_cputype);
+        auto cpuCfg = System2200::getCpuConfig(m_cputype);
         assert(cpuCfg != nullptr);
         std::string cpuLabel = cpuCfg->label;
         Host::ConfigWriteStr(subgroup, "cpu", cpuLabel.c_str());
