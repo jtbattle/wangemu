@@ -388,7 +388,7 @@ PropPanel::PropPanel(DiskFactory *df,
 
     if (new_disk) {
         wxString type_choices[num_disk_types];
-        for(int i=0; i<num_disk_types; i++) {
+        for (int i=0; i<num_disk_types; i++) {
             type_choices[i] = disk_choices[i].description;
         }
         m_disktype = new wxRadioBox( this, -1, "Disk Type",
@@ -483,7 +483,7 @@ PropPanel::refresh()
     // scan the disk_choices[] table to find a match
     int radio_sel = -1;
     if (new_disk) {
-        for(int i=0; i < num_disk_types; i++) {
+        for (int i=0; i < num_disk_types; i++) {
             if ( (disk_type    == disk_choices[i].disk_type) &&
                  (num_platters == disk_choices[i].platters)  &&
                  (num_sectors  == disk_choices[i].sectors_per_platter)

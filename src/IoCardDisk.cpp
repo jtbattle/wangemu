@@ -171,7 +171,7 @@ IoCardDisk::~IoCardDisk()
     // "temp" cards aren't fully initialized
     if (m_slot >= 0) {
         reset();
-        for(int drive=0; drive<numDrives(); drive++) {
+        for (int drive=0; drive<numDrives(); drive++) {
             m_d[drive].wvd = nullptr;
         }
     }
@@ -276,7 +276,7 @@ IoCardDisk::reset(bool hard_reset)
         m_tmr_motor_off = nullptr;
     }
 
-    for(int drive=0; drive<numDrives(); drive++) {
+    for (int drive=0; drive<numDrives(); drive++) {
         stopMotor(drive);
     }
 
@@ -299,7 +299,7 @@ IoCardDisk::select()
     }
 
     m_cpu->setDevRdy(!m_card_busy);
-    for(int drive=0; drive<numDrives(); drive++) {
+    for (int drive=0; drive<numDrives(); drive++) {
         UI_diskEvent(m_slot, drive);
     }
 }
@@ -315,7 +315,7 @@ IoCardDisk::deselect()
     m_selected = false;
     m_cpb      = true;
 
-    for(int drive=0; drive<numDrives(); drive++) {
+    for (int drive=0; drive<numDrives(); drive++) {
         UI_diskEvent(m_slot, drive);
     }
 }
@@ -419,7 +419,7 @@ IoCardDisk::createDiskController()
 {
     m_tmr_motor_off = nullptr;
 
-    for(int drive=0; drive<4; drive++) {
+    for (int drive=0; drive<4; drive++) {
         m_d[drive].wvd = (drive < numDrives()) ? std::make_unique<Wvd>()
                                                : nullptr;
         m_d[drive].state = DRIVE_EMPTY;
@@ -736,7 +736,7 @@ IoCardDisk::tcbMotorOff(int arg)
         dbglog("MOTOR OFF timer fired\n");
     }
 
-    for(int drive=0; drive<numDrives(); drive++) {
+    for (int drive=0; drive<numDrives(); drive++) {
         stopMotor(drive);
     }
 
@@ -951,7 +951,7 @@ IoCardDisk::wvdFormatFile(const std::string &filename)
     }
 
     const int num_platters = dsk.getNumPlatters();
-    for(int p=0; ok && p<num_platters; p++) {
+    for (int p=0; ok && p<num_platters; p++) {
         ok = dsk.format(p);
     }
 
@@ -1134,7 +1134,7 @@ IoCardDisk::iwvdReadSector()
 
     // compute LRC
     int cksum = 0;
-    for(int i=0; i<256; i++) {
+    for (int i=0; i<256; i++) {
         cksum += m_buffer[i];
     }
     m_buffer[256] = static_cast<uint8>(cksum & 0xFF);  // LRC byte
@@ -1277,14 +1277,14 @@ platterHasValidCatalog(Wvd *wvd, int p)
     // sweep through the presumed index, and make sure the data looks
     // like a valid catalog index.  the first sector has 15 index entries,
     // and the others have 16.
-    for(int idx=0; idx < index_sectors; idx++) {
+    for (int idx=0; idx < index_sectors; idx++) {
         ok = wvd->readSector(p, idx, &secbuffer[0]);
         if (!ok) {
             return false;  // that isn't good!
         }
         bool unused_seen = false;
         const int first_idxoff = (idx == 0) ? 1 : 0;
-        for(int idxoff = first_idxoff; idxoff < 16; idxoff++) {
+        for (int idxoff = first_idxoff; idxoff < 16; idxoff++) {
             const uint8 *entry = &secbuffer[16*idxoff];
             // byte 0 of the index indicates if the file is unused (0x00),
             // valid (0x10), scratched (0x11), or reclaimed (0x21).
@@ -1356,7 +1356,7 @@ IoCardDisk::platterHasBit15Problem(Wvd *wvd, int p, bool fix_it)
 
     // sweep the index, checking for bit 15, and fixing any violations.
     // the first sector has 15 index entries, and the others have 16.
-    for(int idx=0; idx < index_sectors; idx++) {
+    for (int idx=0; idx < index_sectors; idx++) {
 
         ok = wvd->readSector(p, idx, &secbuffer[0]);
         if (!ok) {
@@ -1366,7 +1366,7 @@ IoCardDisk::platterHasBit15Problem(Wvd *wvd, int p, bool fix_it)
         bool sector_modified = false;
 
         const int first_idxoff = (idx == 0) ? 1 : 0;
-        for(int idxoff = first_idxoff; idxoff < 16; idxoff++) {
+        for (int idxoff = first_idxoff; idxoff < 16; idxoff++) {
             uint8 *entry = &secbuffer[16*idxoff];
             // byte 0 of the index indicates if the file is unused (0x00),
             // valid (0x10), scratched (0x11), or reclaimed (0x21).
@@ -1413,7 +1413,7 @@ IoCardDisk::diskHasBit15Problem(Wvd *wvd, bool fix_it)
 
     bool has_problem = false;
 
-    for(int p=0; p<numPlatters; p++) {
+    for (int p=0; p<numPlatters; p++) {
         const bool has_catalog = platterHasValidCatalog(wvd, p);
         if (has_catalog) {
             has_problem |= platterHasBit15Problem(wvd, p, fix_it);

@@ -26,7 +26,7 @@ SysCfgState::SysCfgState() :
     m_disk_realtime(true),
     m_warn_io(true)
 {
-    for(auto &slot : m_slot) {
+    for (auto &slot : m_slot) {
         slot.type    = IoCard::card_t::none;
         slot.addr    = -1;
         slot.cardCfg = nullptr;
@@ -37,7 +37,7 @@ SysCfgState::SysCfgState() :
 SysCfgState::~SysCfgState()
 {
     // drop all attached cards
-    for(auto &slot : m_slot) {
+    for (auto &slot : m_slot) {
         slot.cardCfg = nullptr;
     }
 }
@@ -55,7 +55,7 @@ SysCfgState::operator=(const SysCfgState &rhs)
         return *this;
     }
 
-    for(int slot=0; slot<NUM_IOSLOTS; slot++) {
+    for (int slot=0; slot<NUM_IOSLOTS; slot++) {
         m_slot[slot].type = rhs.m_slot[slot].type;
         m_slot[slot].addr = rhs.m_slot[slot].addr;
         // here we must do a deep copy:
@@ -80,7 +80,7 @@ SysCfgState::SysCfgState(const SysCfgState &obj)
 {
     assert(obj.m_initialized);
 
-    for(int slot=0; slot<NUM_IOSLOTS; slot++) {
+    for (int slot=0; slot<NUM_IOSLOTS; slot++) {
         m_slot[slot].type = obj.m_slot[slot].type;
         m_slot[slot].addr = obj.m_slot[slot].addr;
         // here we must do a deep copy:
@@ -107,7 +107,7 @@ SysCfgState::operator==(const SysCfgState &rhs) const
     assert(    m_initialized);
     assert(rhs.m_initialized);
 
-    for(int slot=0; slot<NUM_IOSLOTS; slot++) {
+    for (int slot=0; slot<NUM_IOSLOTS; slot++) {
         if ( (m_slot[slot].type    != rhs.m_slot[slot].type) ||
              (m_slot[slot].addr    != rhs.m_slot[slot].addr) ||
              ( (    m_slot[slot].cardCfg == nullptr) !=
@@ -146,7 +146,7 @@ SysCfgState::setDefaults()
     setWarnIo(true);
 
     // wipe out all cards
-    for(int slot=0; slot < NUM_IOSLOTS; slot++) {
+    for (int slot=0; slot < NUM_IOSLOTS; slot++) {
         setSlotCardType( slot, IoCard::card_t::none );
         setSlotCardAddr( slot, 0x000 );
     }
@@ -196,7 +196,7 @@ SysCfgState::loadIni()
         b = Host::ConfigReadInt(subgroup, "memsize", &ival, dflt_ram);
         if (ival < min_ram) { ival = min_ram; }
         if (ival > max_ram) { ival = max_ram; }
-        for(const int kb : cpuCfg->ramSizeOptions) {
+        for (const int kb : cpuCfg->ramSizeOptions) {
             if (ival <= kb) {
                 // round up to the next biggest ram in the list of valid sizes
                 setRamKB(kb);
@@ -213,7 +213,7 @@ SysCfgState::loadIni()
     }
 
     // get IO slot attributes
-    for(int slot=0; slot<NUM_IOSLOTS; slot++) {
+    for (int slot=0; slot<NUM_IOSLOTS; slot++) {
 
         std::ostringstream osf;
         osf << "io/slot-" << slot;
@@ -274,7 +274,7 @@ SysCfgState::saveIni() const
     assert(m_initialized);
 
     // save IO information
-    for(int slot=0; slot<NUM_IOSLOTS; slot++) {
+    for (int slot=0; slot<NUM_IOSLOTS; slot++) {
         std::string subgroup("io/slot-" + std::to_string(slot));
 
         const IoCard::card_t cardtype = m_slot[slot].type;
@@ -294,7 +294,7 @@ SysCfgState::saveIni() const
             m_slot[slot].cardCfg->saveIni(cardsubgroup);
         }
 
-    } // for(slot=NUM_IOSLOTS)
+    } // for (slot=NUM_IOSLOTS)
 
     // save CPU information
     {
@@ -473,7 +473,7 @@ SysCfgState::configOk(bool warn) const
     bool pri_crt_found = false;
     bool pri_kb_found  = false;
 
-    for(int slot=0; slot<NUM_IOSLOTS; slot++) {
+    for (int slot=0; slot<NUM_IOSLOTS; slot++) {
 
         if (!isSlotOccupied(slot)) {
             continue;
@@ -508,7 +508,7 @@ SysCfgState::configOk(bool warn) const
         slotInst = nullptr;
 
         // check for address conflicts
-        for(int slot2=slot+1; slot2<NUM_IOSLOTS; slot2++) {
+        for (int slot2=slot+1; slot2<NUM_IOSLOTS; slot2++) {
 
             if (!isSlotOccupied(slot2)) {
                 continue;
@@ -520,8 +520,8 @@ SysCfgState::configOk(bool warn) const
             slot2Inst = nullptr;
 
             // sweep through all occupied addresses and look for collisions
-            for(const int slot_addr : slotAddresses) {
-                for(const int slot2_addr : slot2Addresses) {
+            for (const int slot_addr : slotAddresses) {
+                for (const int slot2_addr : slot2Addresses) {
                     if ((slot_addr & 0xFF) == (slot2_addr & 0xFF)) {
                         if (warn) {
                             UI_Error("Configuration problem: "
@@ -572,7 +572,7 @@ SysCfgState::needsReboot(const SysCfgState &other) const
         return true;
     }
 
-    for(int slot=0; slot<NUM_IOSLOTS; slot++) {
+    for (int slot=0; slot<NUM_IOSLOTS; slot++) {
 
         if (m_slot[slot].type != other.m_slot[slot].type) {
             return true;

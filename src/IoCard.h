@@ -130,7 +130,7 @@ public:
 
     // return true if the argument is a legal card enum
     static bool legal_card_t(card_t c) {
-        for(auto &ct : card_types) {
+        for (auto &ct : card_types) {
             if (c == ct)
                 return true;
         }

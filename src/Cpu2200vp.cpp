@@ -796,7 +796,7 @@ Cpu2200vp::Cpu2200vp(std::shared_ptr<Scheduler> scheduler,
     auto cpuCfg = System2200::getCpuConfig(cpu_subtype);
     assert(cpuCfg != nullptr);
     bool ram_found = false;
-    for(auto const kb : cpuCfg->ramSizeOptions) {
+    for (auto const kb : cpuCfg->ramSizeOptions) {
         ram_found |= (ramsize == 1024*kb);
     }
     assert(ram_found);
@@ -807,11 +807,11 @@ Cpu2200vp::Cpu2200vp(std::shared_ptr<Scheduler> scheduler,
     m_hasOneShot = cpuCfg->hasOneShot;
 
     // init microcode
-    for(int i=0; i<MAX_UCODE; i++) {
+    for (int i=0; i<MAX_UCODE; i++) {
         write_ucode(static_cast<uint16>(i), 0, true);
     }
     // TODO: have different boot images for different CPU types?
-    for(int i=0; i<1024; i++) {
+    for (int i=0; i<1024; i++) {
         write_ucode(static_cast<uint16>(0x8000+i), ucode_2200vp[i], true);
     }
 
@@ -824,7 +824,7 @@ Cpu2200vp::Cpu2200vp(std::shared_ptr<Scheduler> scheduler,
     {
         char buff[200];
         uint16 pc;
-        for(pc=0x8000; pc<0x8400; pc++) {
+        for (pc=0x8000; pc<0x8400; pc++) {
             (void)dasm_one_vp(buff, pc, m_ucode[pc].ucode);
             dbglog(buff);
         }
@@ -862,19 +862,19 @@ Cpu2200vp::reset(bool hard_reset) noexcept
 
     if (hard_reset) {
         int i;
-        for(i=0; i<m_memsize; i++) {
+        for (i=0; i<m_memsize; i++) {
             m_RAM[i] = 0xFF;
         }
 #if 0
         m_cpu.pc = 0;
         m_cpu.orig_pc;
-        for(i=0; i<32; i++) {
+        for (i=0; i<32; i++) {
             m_cpu.aux[32];
         }
-        for(i=0; i<8; i++) {
+        for (i=0; i<8; i++) {
             m_cpu.reg[i];
         }
-        for(i=0; i<STACKSIZE; i++) {
+        for (i=0; i<STACKSIZE; i++) {
             m_cpu.icstack[i] = 0;
         }
         m_cpu.ch = 0;
@@ -1701,9 +1701,9 @@ Cpu2200vp::dump_ram(const std::string &filename)
     }
 
     ofs.fill('0');
-    for(int addr=0; addr < m_memsize; addr += 16) {
+    for (int addr=0; addr < m_memsize; addr += 16) {
         ofs << std::setw(4) << std::hex << std::uppercase << addr << ":";
-        for(int i=0; i<16; i++) {
+        for (int i=0; i<16; i++) {
             ofs << " " << std::setw(2) << std::hex << std::uppercase << int(m_RAM[addr+i]);
         }
         ofs << std::endl;
@@ -1711,7 +1711,7 @@ Cpu2200vp::dump_ram(const std::string &filename)
 
     ofs << std::endl << std::endl;
     ofs << "===============================================" << std::endl << std::endl;
-    for(int addr=0; addr<0x8000; addr++) {
+    for (int addr=0; addr<0x8000; addr++) {
         char buff[200];
         (void)dasm_one_vp(buff, addr, m_ucode[addr].ucode);
         ofs << buff;
@@ -1761,7 +1761,7 @@ Cpu2200vp::dump_state(int fulldump)
         const int num = STACKSIZE-1 - m_cpu.icsp;
         const int todo = (num > 6) ? 6 : num;
         dbglog("    recent: ");
-        for(int i=STACKSIZE-1; i>STACKSIZE-1-todo; i--) {
+        for (int i=STACKSIZE-1; i>STACKSIZE-1-todo; i--) {
             dbglog("%04X ", m_cpu.icstack[i]);
         }
         dbglog("\n");

@@ -442,7 +442,7 @@ Printer::saveToFile()
 
         const int maxn = m_printstream.size();
 
-        for(int n = 0; n < maxn; n++) {
+        for (int n = 0; n < maxn; n++) {
 #ifdef __WXMSW__
             std::string tmpline(m_printstream[n] + "\r\n");
 #else
@@ -500,7 +500,7 @@ Printer::generatePrintPage(wxDC *dc, int pagenum, float vertAdjust)
     dc->SetFont(m_font);
 
     // draw each row of the text
-    for(int row = 0; row < m_pagelength; row++) {
+    for (int row = 0; row < m_pagelength; row++) {
 
         if (static_cast<size_t>(startRow + row) < m_printstream.size() ) {
             // the line exists
@@ -713,7 +713,7 @@ Printer::generateScreen(int startCol, int startRow)
         const int first_greenbar = ((startRow                )/bar_2h)*bar_2h + bar_h;
         const int last_greenbar  = ((startRow + m_chars_h + 1)/bar_2h)*bar_2h + bar_h;
 
-        for(int bar = first_greenbar; bar <= last_greenbar; bar += bar_2h) {
+        for (int bar = first_greenbar; bar <= last_greenbar; bar += bar_2h) {
             const int yoff = (bar - startRow) * m_charcell_h;
             const int xoff = left_edge + hmargin* m_charcell_w - m_charcell_w/2;  //  \ expand it 1/2 char
             const int width  = m_linelength * m_charcell_w     + m_charcell_w;    //  / on each side
@@ -739,7 +739,7 @@ Printer::generateScreen(int startCol, int startRow)
         if (startRow == 0) {
             first_break += m_pagelength;        // skip first break
         }
-        for(int brk = first_break; brk <= last_break; brk += m_pagelength) {
+        for (int brk = first_break; brk <= last_break; brk += m_pagelength) {
             const int x_off = left_edge;
             const int y_off = m_charcell_h * (brk - startRow);
             const int x_end = left_edge + page_w;
@@ -760,7 +760,7 @@ Printer::generateScreen(int startCol, int startRow)
         const int num_rows = m_printstream.size();
         std::string line;
 
-        for(int row = 0; row < m_chars_h + 1; row++) {
+        for (int row = 0; row < m_chars_h + 1; row++) {
 
             if (startRow + row < num_rows) {
                 // the line exists
@@ -776,7 +776,7 @@ Printer::generateScreen(int startCol, int startRow)
                 imgDC.DrawText(line, x_off, y_off);
             }
 
-        } // for(row)
+        } // for (row)
     }
 
     imgDC.SelectObject(wxNullBitmap);   // release m_scrbits
@@ -809,7 +809,7 @@ void
 Printer::formFeed()
 {
     const int linesToAdd = m_pagelength - (m_printstream.size() % m_pagelength);
-    for(int i = 0; i < linesToAdd; i++) {
+    for (int i = 0; i < linesToAdd; i++) {
         // call emit line to that current line buffer is flushed
         // and to make sure page oriented functions such as "print as you go" are invoked
         // if necessary

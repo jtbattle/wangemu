@@ -175,7 +175,7 @@ CrtStatusBar::CrtStatusBar(CrtFrame *parent, bool smart_term, bool shown) :
 #endif
     wxBitmap dummy(1,1,1);
 
-    for(int ctrl=0; ctrl<m_num_disk_controllers; ctrl++) {
+    for (int ctrl=0; ctrl<m_num_disk_controllers; ctrl++) {
 
         // gather info about this controller
         int slot;
@@ -186,7 +186,7 @@ CrtStatusBar::CrtStatusBar(CrtFrame *parent, bool smart_term, bool shown) :
 
         // figure out how many drives are attached to this controller
         m_num_drives[ctrl] = 0;
-        for(int d=0; d<4; d++) {
+        for (int d=0; d<4; d++) {
             const int stat = IoCardDisk::wvdDriveStatus(slot, d);
             if (stat & IoCardDisk::WVD_STAT_DRIVE_EXISTENT) {
                 m_num_drives[ctrl]++;
@@ -219,7 +219,7 @@ CrtStatusBar::CrtStatusBar(CrtFrame *parent, bool smart_term, bool shown) :
                                    + 2*(DISK_ICON_WIDTH+4*DISK_ICON_GAP);
 
         // create the icons for the drives
-        for(int drive=0; drive<m_num_drives[ctrl]; drive++) {
+        for (int drive=0; drive<m_num_drives[ctrl]; drive++) {
             int idx = 4*ctrl + drive;
 
             m_diskicon[idx] = std::make_unique<MyStaticBitmap>(
@@ -307,7 +307,7 @@ CrtStatusBar::SetDiskIcon(const int slot, const int drive)
 
     // figure out which disk controller this maps to
     int controller;
-    for(controller=0; ; controller++) {
+    for (controller=0; ; controller++) {
         int thisslot;
         ok = System2200::findDiskController(controller, &thisslot);
         assert(ok); ok = ok;
@@ -362,10 +362,10 @@ CrtStatusBar::~CrtStatusBar()
 {
     m_keyword_ctl = nullptr;
 
-    for(int ctrl=0; ctrl<m_num_disk_controllers; ctrl++) {
+    for (int ctrl=0; ctrl<m_num_disk_controllers; ctrl++) {
         m_disklabel[2*ctrl+0] = nullptr;
         m_disklabel[2*ctrl+1] = nullptr;
-        for(int drive=0; drive<m_num_drives[ctrl]; drive++) {
+        for (int drive=0; drive<m_num_drives[ctrl]; drive++) {
             m_diskicon[4*ctrl+drive] = nullptr;
         }
     }
@@ -392,7 +392,7 @@ CrtStatusBar::OnSize(wxSizeEvent &event)
 #endif
 
     // move disk icons
-    for(int ctrl=0; ctrl<m_num_disk_controllers; ctrl++) {
+    for (int ctrl=0; ctrl<m_num_disk_controllers; ctrl++) {
 
         wxRect status_rect;
         GetFieldRect(2 + ctrl, status_rect);
@@ -411,7 +411,7 @@ CrtStatusBar::OnSize(wxSizeEvent &event)
         }
 
         // move the disk icons
-        for(int drive=0; drive<m_num_drives[ctrl]; drive++) {
+        for (int drive=0; drive<m_num_drives[ctrl]; drive++) {
             m_diskicon[4*ctrl+drive]->Move(
                     status_rect.GetX() + m_diskicon_xoff[4*ctrl+drive],
                     status_rect.GetY() + y_off

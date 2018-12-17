@@ -356,10 +356,10 @@ Wvd::rawWriteSector(const int sector, const uint8 *data)
 
     if (DBG > 0) {
         dbglog("========== writing absolute sector %d ==========\n", sector);
-        for(int i=0; i<256; i+=16) {
+        for (int i=0; i<256; i+=16) {
             char str[200];
             sprintf(&str[0], "%02X:", i);
-            for(int ii=0; ii<16; ii++) {
+            for (int ii=0; ii<16; ii++) {
                 sprintf(&str[3+3*ii], " %02X", data[i+ii]);
             }
             dbglog("%s\n", &str[0]);
@@ -420,10 +420,10 @@ Wvd::rawReadSector(const int sector, const uint8 *data)
 
     if (DBG > 0) {
         dbglog("========== reading absolute sector %d ==========\n", sector);
-        for(int i=0; i<256; i+=16) {
+        for (int i=0; i<256; i+=16) {
             char str[200];
             sprintf(&str[0], "%02X:", i);
-            for(int ii=0; ii<16; ii++) {
+            for (int ii=0; ii<16; ii++) {
                 sprintf(&str[3+3*ii], " %02X", data[i+ii]);
             }
             dbglog("%s\n", &str[0]);
@@ -603,7 +603,7 @@ Wvd::format(const int platter)
     memset(&data[0], static_cast<uint8>(0x00), 256);
 
     bool ok = true;
-    for(int n=0; ok && n<m_numPlatterSectors; n++) {
+    for (int n=0; ok && n<m_numPlatterSectors; n++) {
         ok = writeSector(platter, n, &data[0]);
     }
 
@@ -640,7 +640,7 @@ Wvd::createFile(const std::string &filename)
 
     bool ok = writeHeader();
     if (ok) {
-        for(int p=0; ok && p<m_numPlatters; p++) {
+        for (int p=0; ok && p<m_numPlatters; p++) {
             ok = format(p);
         }
     }

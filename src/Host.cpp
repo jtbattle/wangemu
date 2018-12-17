@@ -46,7 +46,7 @@ getConfigFileLocations()
                  "Attempting to read the config file anyway.\n", foo.c_str());
     }
 
-    for(int i=0; i<Host::FILEREQ_NUM; i++) {
+    for (int i=0; i<Host::FILEREQ_NUM; i++) {
 
         subgroup = iniGroup[i];
         long v;
@@ -71,7 +71,7 @@ saveConfigFileLocations()
 
     Host::ConfigWriteStr(subgroup, "configversion", version);
 
-    for(int i=0; i<Host::FILEREQ_NUM; i++) {
+    for (int i=0; i<Host::FILEREQ_NUM; i++) {
         subgroup = iniGroup[i];
         Host::ConfigWriteStr(subgroup, "directory",   fileDir[i]);
         Host::ConfigWriteInt(subgroup, "filterindex", fileFilterIdx[i]);

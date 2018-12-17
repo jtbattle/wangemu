@@ -431,7 +431,7 @@ ScriptFile::getNextByte(int *byte)
 
         // Escape case #3: "\<label>" -> map using symbol table
         if (m_metaflags & SCRIPT_META_KEY) {
-            for(unsigned int i=0; i<sizeof(metakeytable)/sizeof(metakeytable_t); i++) {
+            for (unsigned int i=0; i<sizeof(metakeytable)/sizeof(metakeytable_t); i++) {
                 const int len = strlen(metakeytable[i].name);
                 if (strncmp( &m_charbuf[m_cur_char], metakeytable[i].name, len) == 0) {
                     // we found a matcher
@@ -453,7 +453,7 @@ ScriptFile::getNextByte(int *byte)
             // scan for either end of line or ">"
             m_cur_char += 9;
             int end_char;
-            for(end_char = m_cur_char; m_charbuf[end_char] && m_charbuf[end_char]!='>'; end_char++) {
+            for (end_char = m_cur_char; m_charbuf[end_char] && m_charbuf[end_char]!='>'; end_char++) {
                 ;
             }
             if (m_charbuf[end_char] == '>') {

@@ -96,7 +96,7 @@ SystemConfigDlg::SystemConfigDlg(wxFrame *parent) :
 
     // leaf controls for leftgrid
     m_cpuType = new wxChoice(this, ID_CPU_CHOICE);
-    for(auto &cpuCfg : System2200::cpuConfigs) {
+    for (auto &cpuCfg : System2200::cpuConfigs) {
         m_cpuType->Append(cpuCfg.label.c_str(), (void *)cpuCfg.cpuType);
     }
 
@@ -145,14 +145,14 @@ SystemConfigDlg::SystemConfigDlg(wxFrame *parent) :
     rightgrid->Add(new wxStaticText(this, -1, ""), 1,
                 wxALIGN_CENTER | wxALIGN_CENTER_VERTICAL | wxBOTTOM, v_text_margin);
 
-    for(int slot=0; slot<NUM_IOSLOTS; slot++) {
+    for (int slot=0; slot<NUM_IOSLOTS; slot++) {
 
         m_cardDesc[slot] = new wxChoice(this, ID_SLOT0_CARD_CHOICE+slot);
         // FIXME: for some reason, if I use -1, it reads as 0 (!) in
         //        OnCardChoice().  this was true in 2.6, and is true in 2.8.8
         m_cardDesc[slot]->Append("(vacant)", (void*)(-2));
 
-        for(int ctype=0; ctype<IoCard::NUM_CARDTYPES; ctype++) {
+        for (int ctype=0; ctype<IoCard::NUM_CARDTYPES; ctype++) {
             const IoCard::card_t ct = IoCard::card_types[ctype];
             std::string cardname = CardInfo::getCardName(ct);
             std::string carddesc = CardInfo::getCardDesc(ct);
@@ -230,7 +230,7 @@ SystemConfigDlg::setMemsizeStrings()
     auto cpuCfg = System2200::getCpuConfig(cpuType);
     assert(cpuCfg != nullptr);
 
-    for(auto const kb : cpuCfg->ramSizeOptions) {
+    for (auto const kb : cpuCfg->ramSizeOptions) {
         char label[10];
         if (kb < 1024) {
             sprintf(&label[0], "%3d KB", kb);
@@ -248,7 +248,7 @@ SystemConfigDlg::updateDlg()
 {
     const int cpuType = m_cfg.getCpuType();
     bool found = false;
-    for(unsigned int n=0; n<System2200::cpuConfigs.size(); ++n) {
+    for (unsigned int n=0; n<System2200::cpuConfigs.size(); ++n) {
         if (System2200::cpuConfigs[n].cpuType == cpuType) {
             m_cpuType->SetSelection(n);
             found = true;
@@ -259,7 +259,7 @@ SystemConfigDlg::updateDlg()
 
     m_memSize->SetSelection(-1); // just in case there is no match, make it obvious
     const int ramsize = m_cfg.getRamKB();
-    for(unsigned int i=0; i<m_memSize->GetCount(); i++) {
+    for (unsigned int i=0; i<m_memSize->GetCount(); i++) {
         if (reinterpret_cast<int>(m_memSize->GetClientData(i)) == ramsize) {
             m_memSize->SetSelection(i);
         }
@@ -269,7 +269,7 @@ SystemConfigDlg::updateDlg()
 
     m_warnIo->SetValue(m_cfg.getWarnIo());
 
-    for(int slot=0; slot<NUM_IOSLOTS; slot++) {
+    for (int slot=0; slot<NUM_IOSLOTS; slot++) {
         const IoCard::card_t cardtype = m_cfg.getSlotCardType(slot);
         const int int_cardtype = static_cast<int>(cardtype);
         if (cardtype == IoCard::card_t::none) {
@@ -338,7 +338,7 @@ SystemConfigDlg::OnCpuChoice( wxCommandEvent& WXUNUSED(event) )
     if (cur_mem > max_ram) { cur_mem = max_ram; }
 
     int i = 0;
-    for(const int kb : cpuCfg->ramSizeOptions) {
+    for (const int kb : cpuCfg->ramSizeOptions) {
         if (cur_mem <= kb) {
             // round up to the next biggest ram in the list of valid sizes
             m_memSize->SetSelection(i);
@@ -423,7 +423,7 @@ bool
 SystemConfigDlg::configStateOk(bool warn)
 {
     // make sure all io addresses have been selected
-    for(int slot=0; slot<NUM_IOSLOTS; slot++) {
+    for (int slot=0; slot<NUM_IOSLOTS; slot++) {
         const int cardsel = m_cardDesc[slot]->GetSelection();
         if (cardsel == 0) {
             continue;   // not occupied
@@ -525,7 +525,7 @@ SystemConfigDlg::setValidIoChoices(int slot, int cardtype_idx)
         std::vector<int> base_addresses = CardInfo::getCardBaseAddresses(ct);
 
         int addr_mtch_idx = -1;
-        for(unsigned int j=0; j<base_addresses.size(); j++) {
+        for (unsigned int j=0; j<base_addresses.size(); j++) {
             const int io_addr = base_addresses[j];
             wxString str;
             str.Printf( "0x%03X", io_addr);

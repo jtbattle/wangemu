@@ -359,7 +359,7 @@ CrtFrame::makeMenubar(bool primary_crt, bool smart_term)
     if (primary_crt && (System2200::getPrinterIoAddr(0) >= 0)) {
         // there is at least one printer
         menuPrinter = new wxMenu;
-        for(int i=0; ;i++) {
+        for (int i=0; ; i++) {
             const int io_addr = System2200::getPrinterIoAddr(i);
             if (io_addr < 0) {
                 break;
@@ -391,7 +391,7 @@ CrtFrame::makeMenubar(bool primary_crt, bool smart_term)
     if (System2200::getKbIoAddr(1) >= 0) {
         // there is more than one keyboard
         menuConfig->AppendSeparator();
-        for(int i=0; ;i++) {
+        for (int i=0; ; i++) {
             const int addr = System2200::getKbIoAddr(i);
             if (addr < 0) {
                 break;
@@ -459,20 +459,20 @@ CrtFrame::setMenuChecks(const wxMenu *menu)
         // the entire Disk menu used to be recreated and replaced each time,
         // but that caused problems on wxMAC, so now instead all the menu
         // items get removed and replaced each time.
-        for(int i=items-1; i>=0; i--) {
+        for (int i=items-1; i>=0; i--) {
             wxMenuItem *item = diskmenu->FindItemByPosition(i);
             diskmenu->Delete(item);
         }
 
         // see if there are any disk controllers
-        for(int controller=0; ; controller++) {
+        for (int controller=0; ; controller++) {
             int slot, io_addr;
             if (!System2200::findDiskController(controller, &slot)) {
                 break;
             }
             bool ok = System2200::getSlotInfo(slot, nullptr, &io_addr);
             assert(ok); ok=ok;
-            for(int d=0; d<2; d++) {
+            for (int d=0; d<2; d++) {
                 const int stat = IoCardDisk::wvdDriveStatus(slot, d);
                 if (stat & IoCardDisk::WVD_STAT_DRIVE_OCCUPIED) {
                     wxString str1, str2;
@@ -503,7 +503,7 @@ CrtFrame::setMenuChecks(const wxMenu *menu)
         }
         if (System2200::getKbIoAddr(1) >= 0) {
             // there is more than one keyboard
-            for(int i=0; ;i++) {
+            for (int i=0; ; i++) {
                 const int addr = System2200::getKbIoAddr(i);
                 if (addr < 0) {
                     break;
@@ -525,7 +525,7 @@ CrtFrame::initToolBar(wxToolBar *tb)
     int h = img.GetHeight();
     tb->SetToolBitmapSize(wxSize(w,h));
 
-    for(int i=0; i<17; i++) {
+    for (int i=0; i<17; i++) {
         wxString label, tooltip;
         if (i < 16) {
             label.Printf("SF%d", i);
@@ -551,7 +551,7 @@ CrtFrame::initToolBar(wxToolBar *tb)
     // something forces the icon to shrink and the results aren't pretty.
     // this is combatted two ways.  first, shorter strings are used; second,
     // we keep trying smaller fonts until one meets the requirements.
-    for(int font_size=14; font_size>=8; font_size--) {
+    for (int font_size=14; font_size>=8; font_size--) {
 #else
     const int font_size = 8;
 #endif
@@ -595,7 +595,7 @@ CrtFrame::initToolBar(wxToolBar *tb)
     };
 
     // see if any of the labels is wider than the SFxx string
-    for(int ii=0; ii<17; ii++) {
+    for (int ii=0; ii<17; ii++) {
         int width, height;
         memDC.GetTextExtent(sf_labels[ii], &width, &height);
         if (width > textW) {
@@ -633,7 +633,7 @@ CrtFrame::initToolBar(wxToolBar *tb)
     memDC.SetTextBackground(bg);
     memDC.SelectObject(wxNullBitmap);
 
-    for(int i=0; i<17; i++) {
+    for (int i=0; i<17; i++) {
         wxString label, tooltip;
         if (i < 16) {
             label.Printf("SF%d", i);
@@ -730,7 +730,7 @@ CrtFrame::initToolBar(wxToolBar *tb)
     }
     #ifdef __WXMAC__
         break;  // we found a font size that works
-    } // for(font_size)
+    } // for (font_size)
     #endif
 #endif // !SFKEY_TINY_STYLE
 
@@ -809,7 +809,7 @@ CrtFrame::getDefaults()
     // make sure that old mapping still makes sense
     int found = 0;
 // FIXME: why 10?  why not NUM_IOSLOTS?
-    for(int i=0; i<10; i++) {
+    for (int i=0; i<10; i++) {
         if (System2200::getKbIoAddr(i) == m_assoc_kb_addr) {
             found = 1;
             break;
@@ -1284,7 +1284,7 @@ CrtFrame::OnPrintAndClear(wxCommandEvent& WXUNUSED(event))
     if (System2200::getPrinterIoAddr(0) >= 0) {
 
         // there is at least one printer
-        for(int i=0; ;i++) {
+        for (int i=0; ; i++) {
             const int io_addr = System2200::getPrinterIoAddr(i);
             if (io_addr < 0) {
                 break; // no more printers

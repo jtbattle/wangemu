@@ -292,7 +292,7 @@ Crt::OnKeyDown(wxKeyEvent &event)
     int key = 0x00;    // key value we stuff into emulator
 
     bool foundmap = false;
-    for(auto const &kkey : keydown_keymap_table) {
+    for (auto const &kkey : keydown_keymap_table) {
         if (kkey.wxKey != wxKey) {
             continue;
         }
@@ -364,7 +364,7 @@ Crt::OnChar(wxKeyEvent &event)
     } else {
         // the first generation keyboards had a keyword associated with
         // each letter A-Z
-        for(auto const &kkey : onchar_keymap_table) {
+        for (auto const &kkey : onchar_keymap_table) {
             if (kkey.wxKey == wxKey) {
                 key = (keyword_mode) ? kkey.wangKey_KW_mode
                                      : kkey.wangKey_Aa_mode;

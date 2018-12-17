@@ -657,7 +657,7 @@ disk operation
                 m_state = CTRL_COMMAND;
             } else  {
                 // let the UI know that selection might have changed
-                for(int d=0; d<numDrives(); d++) {
+                for (int d=0; d<numDrives(); d++) {
                     UI_diskEvent(m_slot, d);
                 }
 
@@ -744,7 +744,7 @@ disk operation
             m_buffer[m_bufptr++] = static_cast<uint8>(val);
             if (m_bufptr == 257) {
                 int cksum = 0;
-                for(int i=0; i<256; i++) {
+                for (int i=0; i<256; i++) {
                     cksum += m_buffer[i];
                 }
                 cksum &= 0xFF;  // LRC
@@ -811,7 +811,7 @@ disk operation
                 // this is the right thing to do, although the disk controller
                 // microcode in the Module Repair Guide #2 ignores the LRC byte
                 int cksum = 0;
-                for(int i=0; i<256; i++) {
+                for (int i=0; i<256; i++) {
                     cksum += m_buffer[i];
                 }
                 cksum &= 0xFF;
@@ -960,7 +960,7 @@ disk operation
                 m_state = CTRL_COPY7;
             } else {
                 setBusyState(true);
-                for(int d=0; d<numDrives(); d++) {
+                for (int d=0; d<numDrives(); d++) {
                     UI_diskEvent(m_slot, d);
                 }
                 m_drive = m_range_drive;
@@ -993,7 +993,7 @@ disk operation
 
             // wvdGetNsToTrack() and wvdSeekTrack() need m_drive set
             m_drive = m_dest_drive;
-            for(int d=0; d<numDrives(); d++) {
+            for (int d=0; d<numDrives(); d++) {
                 UI_diskEvent(m_slot, d);
             }
 
@@ -1028,7 +1028,7 @@ disk operation
             m_byte_to_send = 0x00;
             uint8 data[256];
 
-            for(int n=0; ok && (n < count); n++) {
+            for (int n=0; ok && (n < count); n++) {
                 ok = m_d[m_range_drive].wvd->readSector
                                     (m_range_platter, m_range_start+n, &data[0]);
                 if (!ok) {
@@ -1054,7 +1054,7 @@ disk operation
             if (ok && (m_range_start <= m_range_end)) {
                 m_state = CTRL_COPY5;
                 // account for one rotation of disk, plus step time
-                for(int d=0; d<numDrives(); d++) {
+                for (int d=0; d<numDrives(); d++) {
                     UI_diskEvent(m_slot, d);
                 }
                 m_drive = m_range_drive;
@@ -1151,7 +1151,7 @@ disk operation
                 // fill all sectors with 0x00
                 uint8 data[256];
                 memset(&data[0], static_cast<uint8>(0x00), 256);
-                for(int n=0; ok && n<sec_per_trk; n++) {
+                for (int n=0; ok && n<sec_per_trk; n++) {
                     ok = m_d[m_drive].wvd->writeSector(m_platter, n, &data[0]);
                 }
                 if (!ok) {
@@ -1373,7 +1373,7 @@ disk operation
             m_byte_to_send = 0x00;
             uint8 data[256];
 
-            for(m_secaddr = first; ok && (m_secaddr <= last); m_secaddr++) {
+            for (m_secaddr = first; ok && (m_secaddr <= last); m_secaddr++) {
                 ok = m_d[m_drive].wvd->readSector(m_range_platter, m_secaddr, &data[0]);
             }
             if (!ok) {

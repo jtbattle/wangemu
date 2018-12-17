@@ -421,7 +421,7 @@ Cpu2200t::dump_state(int fulldump)
         int todo = (num > 6) ? 6 : num;
         int i;
         dbglog("    recent: ");
-        for(i=ICSTACK_TOP; i>ICSTACK_TOP-todo; i--) {
+        for (i=ICSTACK_TOP; i>ICSTACK_TOP-todo; i--) {
             dbglog("%04X ", m_cpu.icstack[i]);
         }
         dbglog("\n");
@@ -440,7 +440,7 @@ Cpu2200t::dump_16n(int addr)
     int i;
     addr &= ~1;
     sprintf(buff, "RAM[%04X] = ", addr);
-    for(i=0; i<8; i++) {
+    for (i=0; i<8; i++) {
         sprintf(&buff[12+i],"%X", nibble_swap(m_RAM[addr+i]));
     }
     dbglog("%s\n", buff);
@@ -758,21 +758,21 @@ Cpu2200t::Cpu2200t(std::shared_ptr<Scheduler> scheduler,
     switch (m_cpuType) {
         int i;
         case CPUTYPE_2200B:
-            for(i=0; i<m_ucode_size; i++) {
+            for (i=0; i<m_ucode_size; i++) {
                 write_ucode(i, ucode_2200B[i]);
             }
-            for(i=0; i<UCODE_WORDS_2200BX; i++) {
+            for (i=0; i<UCODE_WORDS_2200BX; i++) {
                 write_ucode(0x7E00+i, ucode_2200BX[i]);
             }
-            for(i=0; i<m_krom_size; i++) {
+            for (i=0; i<m_krom_size; i++) {
                 m_kROM[i] = kROM_2200B[i];
             }
             break;
         case CPUTYPE_2200T:
-            for(i=0; i<m_ucode_size; i++) {
+            for (i=0; i<m_ucode_size; i++) {
                 write_ucode(i, ucode_2200T[i]);
             }
-            for(i=0; i<m_krom_size; i++) {
+            for (i=0; i<m_krom_size; i++) {
                 m_kROM[i] = kROM_2200T[i];
             }
             break;
@@ -789,13 +789,13 @@ Cpu2200t::Cpu2200t(std::shared_ptr<Scheduler> scheduler,
     {
         char buff[200];
         uint16 pc;
-        for(pc=0x0000; pc<m_ucode_size; pc++) {
+        for (pc=0x0000; pc<m_ucode_size; pc++) {
             (void)dasm_one(buff, pc, m_ucode[pc].ucode & 0x000FFFFF);
             dbglog(buff);
         }
         if (m_cpuType == CPUTYPE_2200B) {
             // disassemble the patch ROM
-            for(pc=0x7E00; pc<0x7E00+UCODE_WORDS_2200BX; pc++) {
+            for (pc=0x7E00; pc<0x7E00+UCODE_WORDS_2200BX; pc++) {
                 (void)dasm_one(buff, pc, m_ucode[pc].ucode & 0x000FFFFF);
                 dbglog(buff);
             }
@@ -841,14 +841,14 @@ Cpu2200t::reset(bool hard_reset) noexcept
     // the real HW doesn't reset these, but do it anyway for purity
     m_cpu.pc = 0;
 #if 0 // interestingly, this must not be reset, or warm reset doesn't work
-    for(int i=0; i<16; i++) {
+    for (int i=0; i<16; i++) {
         m_cpu.aux[i] = 0x0000;
     }
 #endif
-    for(int i=0; i<8; i++) {
+    for (int i=0; i<8; i++) {
         m_cpu.reg[i] = 0x0;
     }
-    for(int i=0; i<ICSTACK_SIZE; i++) {
+    for (int i=0; i<ICSTACK_SIZE; i++) {
         m_cpu.icstack[i] = 0x0000;
     }
     m_cpu.c = 0x00;
@@ -863,7 +863,7 @@ Cpu2200t::reset(bool hard_reset) noexcept
 
     // real hardware doesn't reset memory, but the emulator does
     if (hard_reset) {
-        for(int i=0; i<m_memsize; i++) {
+        for (int i=0; i<m_memsize; i++) {
             m_RAM[i] = 0xFF;
             // it appears that either bit 0 or bit 4 must be set
             // otherwise bad things happen.

@@ -157,8 +157,8 @@ Terminal::reset_crt()
     // smart terminal state:
     m_raw_cnt    = 0;
     m_input_cnt  = 0;
-    for(auto &byte : m_raw_buf)   { byte = 0x00; }  // not strictly necessary
-    for(auto &byte : m_input_buf) { byte = 0x00; }  // not strictly necessary
+    for (auto &byte : m_raw_buf)   { byte = 0x00; }  // not strictly necessary
+    for (auto &byte : m_input_buf) { byte = 0x00; }  // not strictly necessary
 
     // we have to make an exception: if the script issues CLEAR,
     // the terminal is sent a "reset crt" sequence, but actually wiping
@@ -401,8 +401,8 @@ Terminal::adjustCursorX(int delta) noexcept
 void
 Terminal::scr_clear() noexcept
 {
-    for(auto &byte : m_disp.display) { byte = static_cast<uint8>(0x20); }
-    for(auto &byte : m_disp.attr)    { byte = static_cast<uint8>(0x00); }
+    for (auto &byte : m_disp.display) { byte = static_cast<uint8>(0x20); }
+    for (auto &byte : m_disp.attr)    { byte = static_cast<uint8>(0x00); }
     setCursorX(0);
     setCursorY(0);
 }
@@ -607,7 +607,7 @@ Terminal::processCrtChar1(uint8 byte)
     // where nn is the repetition count, and cc is the character
     if (m_raw_cnt == 3) {
         //dbglog("Decompress run: cnt=%d, chr=0x%02x\n", m_raw_buf[1], m_raw_buf[2]);
-        for(int i=0; i<m_raw_buf[1]; i++) {
+        for (int i=0; i<m_raw_buf[1]; i++) {
             processCrtChar2(m_raw_buf[2]);
         }
         m_raw_cnt = 0;
@@ -625,7 +625,7 @@ Terminal::processCrtChar1(uint8 byte)
     // FB nn, where nn >= 0x60 represents (nn-0x60) spaces in a row
     if ((0x60 <= m_raw_buf[1]) && (m_raw_buf[1] <= 0xBF)) {
         //dbglog("Decompress spaces: cnt=%d\n", m_raw_buf[1]-0x60);
-        for(int i=0x60; i<m_raw_buf[1]; i++) {
+        for (int i=0x60; i<m_raw_buf[1]; i++) {
             processCrtChar2(static_cast<uint8>(0x20));
         }
         m_raw_cnt = 0;

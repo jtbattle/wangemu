@@ -550,7 +550,7 @@ dasm_SH_bitfield(char *buf, uint8 bits) noexcept
     bool many = false;
     int len = 0;
 
-    for(int i=0; i<8; i++) {
+    for (int i=0; i<8; i++) {
         if (bits & (1 << i)) {
             if (many) {
                 strcpy(&buf[len], ", ");
@@ -558,7 +558,7 @@ dasm_SH_bitfield(char *buf, uint8 bits) noexcept
             }
             many = true;
             char *str;
-            switch(i) {
+            switch (i) {
                  case 0: str = "carry";      break;
                  case 1: str = "CRB";        break;
                  case 2: str = "KFN";        break;
@@ -687,7 +687,7 @@ dasm_op_vp(char *buf, uint16 ic, uint32 uop) noexcept
     uint16 newic;
 
     int parity = 0;
-    for(int bit=0; bit<24; bit++) {
+    for (int bit=0; bit<24; bit++) {
         parity ^= (uop >> bit) & 1;
     }
 

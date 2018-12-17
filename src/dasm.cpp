@@ -263,7 +263,7 @@ dasm_ST1_bitfield(char *buf, int *len, uint4 bits) noexcept
     bool many = false;
     int p = *len;
 
-    for(int i=0; i<4; i++) {
+    for (int i=0; i<4; i++) {
         if (bits & (1 << i)) {
             if (many) {
                 strcpy(&buf[p], ", ");
@@ -271,7 +271,7 @@ dasm_ST1_bitfield(char *buf, int *len, uint4 bits) noexcept
             }
             many = true;
             char *str;
-            switch(i) {
+            switch (i) {
                  case 0: str = "carry";      break;
                  case 1: str = "CPB";        break;
                  case 2: str = "KFN";        break;
@@ -295,7 +295,7 @@ dasm_ST3_bitfield(char *buf, int *len, uint4 bits) noexcept
     bool many = false;
     int p = *len;
 
-    for(int i=0; i<4; i++) {
+    for (int i=0; i<4; i++) {
         if (bits & (1 << i)) {
             if (many) {
                 strcpy(&buf[p], ", ");
@@ -303,7 +303,7 @@ dasm_ST3_bitfield(char *buf, int *len, uint4 bits) noexcept
             }
             many = true;
             char *str;
-            switch(i) {
+            switch (i) {
                  case 0: str = "ready/!busy"; break;
                  case 1: str = "IB5";         break;
                  case 2: str = "HALT";        break;

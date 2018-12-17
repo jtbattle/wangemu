@@ -88,7 +88,7 @@ TimerTest(void)
     auto t2 = test_scheduler.TimerCreate( 10, std::bind(&TimerTestFoo::report1, &foo, 2) );
     auto t3 = test_scheduler.TimerCreate( 50, std::bind(&TimerTestFoo::report2, &foo, 3) );
 
-    for(int n=0; n<100; n++) {
+    for (int n=0; n<100; n++) {
         if (n == 5) {
             t1->Kill();
         }
@@ -150,7 +150,7 @@ int64
 Scheduler::FirstEvent() noexcept
 {
     int64 rv = MAX_TIME;
-    for(auto &t : m_timer) {
+    for (auto &t : m_timer) {
         if (t->expires_ns < rv) {
             rv = t->expires_ns;
         }
@@ -192,7 +192,7 @@ void Scheduler::TimerCredit(void)
     std::vector<std::shared_ptr<Timer>> retired;
     const int active_before = m_timer.size();
     int active_after = 0;
-    for(int s=0; s<active_before; s++) {
+    for (int s=0; s<active_before; s++) {
         if (m_timer[s].unique()) {
             // the timer is killed because the scheduler holds the only
             // reference to it.
@@ -211,7 +211,7 @@ void Scheduler::TimerCredit(void)
     if (active_after < active_before) {
         // shrink active list, but null out pointers so resize doesn't
         // free them, as they now live on the retired list
-        for(int i=active_after; i < active_before; i++) {
+        for (int i=active_after; i < active_before; i++) {
             m_timer[i] = nullptr;
         }
         m_timer.resize(active_after);  // delete any expired timers
@@ -228,7 +228,7 @@ void Scheduler::TimerCredit(void)
                });
 
     // scan through the retired list and perform callbacks
-    for(auto &t : retired) {
+    for (auto &t : retired) {
         (t->callback)();
     }
 }

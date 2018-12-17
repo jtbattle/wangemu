@@ -5,7 +5,7 @@
 IoCard::card_t
 CardInfo::getCardTypeFromName(const std::string &name)
 {
-    for(auto &ct : IoCard::card_types) {
+    for (auto &ct : IoCard::card_types) {
         std::unique_ptr<IoCard> tmpcard(IoCard::makeTmpCard(ct));
         assert(tmpcard != nullptr);
         std::string thisname = tmpcard->getName();

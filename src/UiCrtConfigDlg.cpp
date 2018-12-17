@@ -50,14 +50,14 @@ CrtConfigDlg::CrtConfigDlg(wxFrame *parent, const wxString &title) :
 
     m_FontChoice = new wxChoice(this, ID_FONT_CHOICE);
     // FIXME: the encodings should come from the enum
-    for(int i=0; i<pp->getNumFonts(); i++) {
+    for (int i=0; i<pp->getNumFonts(); i++) {
         int         size  = pp->getFontNumber(i);
         std::string label = pp->getFontName(i);
         m_FontChoice->Append(label, (void*)size);
     }
 
     m_ColorChoice = new wxChoice(this, ID_COLOR_CHOICE);
-    for(int j=0; j<pp->getNumColorSchemes(); j++) {
+    for (int j=0; j<pp->getNumColorSchemes(); j++) {
         std::string label = pp->getColorSchemeName(j);
         m_ColorChoice->Append(label, (void*)j);
     }
@@ -161,7 +161,7 @@ CrtConfigDlg::updateDlg()
     // figure out mapping of font size to index
     const int font_size = pp->getFontSize();
     int font_choice = -1;
-    for(unsigned int i=0; i<m_FontChoice->GetCount(); i++) {
+    for (unsigned int i=0; i<m_FontChoice->GetCount(); i++) {
         if (reinterpret_cast<int>(m_FontChoice->GetClientData(i)) == font_size) {
             font_choice = i;
         }

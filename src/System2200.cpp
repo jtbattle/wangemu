@@ -142,7 +142,7 @@ isDiskController(int slot) noexcept
 static void
 saveDiskMounts(void)
 {
-    for(int slot=0; slot<NUM_IOSLOTS; slot++) {
+    for (int slot=0; slot<NUM_IOSLOTS; slot++) {
         if (isDiskController(slot)) {
             std::ostringstream subgroup;
             subgroup << "io/slot-" << slot;
@@ -150,7 +150,7 @@ saveDiskMounts(void)
             const auto dcfg = dynamic_cast<const DiskCtrlCfgState*>(cfg.get());
             assert(dcfg);
             const int num_drives = dcfg->getNumDrives();
-            for(int drive=0; drive<num_drives; drive++) {
+            for (int drive=0; drive<num_drives; drive++) {
                 std::ostringstream item;
                 item << "filename-" << drive;
                 std::string filename("");
@@ -172,13 +172,13 @@ static void
 restoreDiskMounts(void)
 {
     // look for disk controllers and populate drives
-    for(int slot=0; slot<NUM_IOSLOTS; slot++) {
+    for (int slot=0; slot<NUM_IOSLOTS; slot++) {
         if (isDiskController(slot)) {
             const auto cfg = current_cfg->getCardConfig(slot);
             const auto dcfg = dynamic_cast<const DiskCtrlCfgState*>(cfg.get());
             assert(dcfg);
             const int num_drives = dcfg->getNumDrives();
-            for(int drive=0; drive<num_drives; drive++) {
+            for (int drive=0; drive<num_drives; drive++) {
                 std::ostringstream subgroup;
                 subgroup << "io/slot-" << slot;
                 std::ostringstream item;
@@ -196,9 +196,9 @@ restoreDiskMounts(void)
                     bs = bs; // keep lint happy
             #endif
                 }
-            } // for(drive)
+            } // for (drive)
         } // if (isDiskController)
-    } // for(slot)
+    } // for (slot)
 }
 
 // break down any resources currently committed
@@ -206,12 +206,12 @@ static void
 breakdown_cards(void) noexcept
 {
     // destroy card instances
-    for(auto &card : cardInSlot) {
+    for (auto &card : cardInSlot) {
         card = nullptr;
     }
 
     // clean up mappings
-    for(auto &mapentry : ioMap) {
+    for (auto &mapentry : ioMap) {
         mapentry.slot   = -1;      // unoccupied
         mapentry.ignore = false;   // restore bad I/O warning flags
     }
@@ -284,11 +284,11 @@ System2200::initialize()
 #endif
 
     // set up IO management
-    for(auto &mapentry : ioMap) {
+    for (auto &mapentry : ioMap) {
         mapentry.slot   = -1;    // unoccupied
         mapentry.ignore = false;
     }
-    for(auto &card : cardInSlot) {
+    for (auto &card : cardInSlot) {
         card = nullptr;
     }
     curIoAddr = -1;
@@ -372,7 +372,7 @@ System2200::unregisterClockedDevice(clkCallback cb) noexcept
 #if 0
 // FIXME: it is not possible to compare bound functions, so a different
 // approach is needed
-    for(auto it=begin(m_clocked_devices); it != end(m_clocked_devices); ++it) {
+    for (auto it=begin(m_clocked_devices); it != end(m_clocked_devices); ++it) {
         if (it->callback_fn == cb) {
             m_clocked_devices.erase(it);
             break;
@@ -400,7 +400,7 @@ System2200::setConfig(const SysCfgState &newcfg)
         if (!rebuild_required) {
             *current_cfg = newcfg;  // make new config permanent
             // notify all configured cards about possible new configuration
-            for(int slot=0; slot < NUM_IOSLOTS; slot++) {
+            for (int slot=0; slot < NUM_IOSLOTS; slot++) {
                 if (current_cfg->isSlotOccupied(slot)) {
                     const IoCard::card_t ct = current_cfg->getSlotCardType(slot);
                     if (CardInfo::isCardConfigurable(ct)) {
@@ -453,8 +453,8 @@ System2200::setConfig(const SysCfgState &newcfg)
     // bar will be misconfigured.  the hack is to sweep the list twice,
     // skipping CRT's the first time, then doing only CRTs the second time.
 
-    for(int pass=0; pass<2; pass++) {
-    for(int slot=0; slot<NUM_IOSLOTS; slot++) {
+    for (int pass=0; pass<2; pass++) {
+    for (int slot=0; slot<NUM_IOSLOTS; slot++) {
 
         if (!current_cfg->isSlotOccupied(slot)) {
             continue;
@@ -478,7 +478,7 @@ System2200::setConfig(const SysCfgState &newcfg)
             UI_Warn("Configuration problem: failure to create slot %d card instance", slot);
         } else {
             std::vector<int> addresses = inst->getAddresses();
-            for(unsigned int n=0; n<addresses.size(); n++) {
+            for (unsigned int n=0; n<addresses.size(); n++) {
                 ioMap[addresses[n]].slot = slot;
             }
             cardInSlot[slot] = std::move(inst);
@@ -520,7 +520,7 @@ System2200::reset(bool cold_reset)
     cpu->reset(cold_reset);
 
     // reset all I/O devices
-    for(int slot=0; slot<NUM_IOSLOTS; slot++) {
+    for (int slot=0; slot<NUM_IOSLOTS; slot++) {
         if (current_cfg->isSlotOccupied(slot)) {
             cardInSlot[slot]->reset(cold_reset);
         }
@@ -678,12 +678,12 @@ System2200::emulateTimeslice(int ts_ms)
             // so this array is used to maintain the order of the devices
             // where [0] is the one most behind in time.
             std::vector<int> order;
-            for(int n=0; n<num_devices; n++) {
+            for (int n=0; n<num_devices; n++) {
                 order.push_back(n);
             }
             // bubble sort in time order
-            for(int n=0; n<num_devices; n++) {
-                for(int k=0; k<num_devices-1; k++) {
+            for (int n=0; n<num_devices; n++) {
+                for (int k=0; k<num_devices-1; k++) {
                     if (m_clocked_devices[order[k]].ns >
                         m_clocked_devices[order[k+1]].ns) {
                         std::swap(order[k], order[k+1]);
@@ -691,7 +691,7 @@ System2200::emulateTimeslice(int ts_ms)
                 }
             }
             // double check they are sorted in time order
-            for(int k=0; k<num_devices-1; k++) {
+            for (int k=0; k<num_devices-1; k++) {
                 assert (m_clocked_devices[order[k]].ns <=
                         m_clocked_devices[order[k+1]].ns);
             }
@@ -699,7 +699,7 @@ System2200::emulateTimeslice(int ts_ms)
             // at the start of a timeslice, shift time for all cards towards
             // zero to prevent overflowing the 32b nanosecond counters
             const uint32 rebase = m_clocked_devices[order[0]].ns;
-            for(auto idx : order) {
+            for (auto idx : order) {
                 assert(m_clocked_devices[idx].ns >= rebase);
                 m_clocked_devices[idx].ns -= rebase;
             }
@@ -730,7 +730,7 @@ System2200::emulateTimeslice(int ts_ms)
                     const uint32 new_ns = (m_clocked_devices[order[0]].ns += op_ns);
                     auto entry0 = order[0];
                     int i;
-                    for(i=0; i<num_devices-1; ++i) {
+                    for (i=0; i<num_devices-1; ++i) {
                         if (m_clocked_devices[order[i+1]].ns < new_ns) {
                             order[i] = order[i+1];
                         } else {
@@ -763,7 +763,7 @@ System2200::emulateTimeslice(int ts_ms)
                              % perf_hist_size;
                 int64 ms_diff = 0;
                 int slices = 0;
-                for(int n=1; n<perf_hist_len; n+=10) {
+                for (int n=1; n<perf_hist_len; n+=10) {
                     const int n0 = (n1 - n + perf_hist_size) % perf_hist_size;
                     slices = n;
                     ms_diff = (perf_real_ms[n1] - perf_real_ms[n0]);
@@ -917,7 +917,7 @@ System2200::registerKb(int io_addr, int term_num, kbCallback cb) noexcept
     assert(cb);
 
     // check that it isn't already registered
-    for(auto &kb : m_kb_routes) {
+    for (auto &kb : m_kb_routes) {
         if (io_addr == kb.io_addr && term_num == kb.term_num) {
             UI_Warn("Attempt to register kb handler at io_addr=0x%02x, term_num=%d twice",
                     io_addr, term_num);
@@ -931,7 +931,7 @@ System2200::registerKb(int io_addr, int term_num, kbCallback cb) noexcept
 void
 System2200::unregisterKb(int io_addr, int term_num) noexcept
 {
-    for(auto it = begin(m_kb_routes); it != end(m_kb_routes); ++it) {
+    for (auto it = begin(m_kb_routes); it != end(m_kb_routes); ++it) {
         if (io_addr == it->io_addr && term_num == it->term_num) {
             m_kb_routes.erase(it);
             return;
@@ -945,7 +945,7 @@ System2200::unregisterKb(int io_addr, int term_num) noexcept
 void
 System2200::kb_keystroke(int io_addr, int term_num, int keyvalue)
 {
-    for(auto &kb : m_kb_routes) {
+    for (auto &kb : m_kb_routes) {
         if (io_addr == kb.io_addr && term_num == kb.term_num) {
             if (kb.script_handle) {
                 // a script is running; ignore everything but HALT
@@ -976,7 +976,7 @@ System2200::kb_invokeScript(int io_addr, int term_num,
         return;
     }
 
-    for(auto &kb : m_kb_routes) {
+    for (auto &kb : m_kb_routes) {
         if (io_addr == kb.io_addr && term_num == kb.term_num) {
             const int flags = ScriptFile::SCRIPT_META_INC
                             | ScriptFile::SCRIPT_META_HEX
@@ -1007,7 +1007,7 @@ System2200::kb_invokeScript(int io_addr, int term_num,
 bool
 System2200::kb_scriptModeActive(int io_addr, int term_num)
 {
-    for(auto &kb : m_kb_routes) {
+    for (auto &kb : m_kb_routes) {
         if (io_addr == kb.io_addr && term_num == kb.term_num) {
             return (kb.script_handle != nullptr);
         }
@@ -1023,7 +1023,7 @@ System2200::kb_scriptModeActive(int io_addr, int term_num)
 bool
 System2200::kb_keyReady(int io_addr, int term_num)
 {
-    for(auto &kb : m_kb_routes) {
+    for (auto &kb : m_kb_routes) {
         if (io_addr == kb.io_addr && term_num == kb.term_num) {
             if (!kb.script_handle) {
                 return false;
@@ -1078,7 +1078,7 @@ System2200::getKbIoAddr(int n) noexcept
 {
     int num = 0;
 
-    for(int slot=0; slot<NUM_IOSLOTS; slot++) {
+    for (int slot=0; slot<NUM_IOSLOTS; slot++) {
         if (current_cfg->getSlotCardType(slot) == IoCard::card_t::keyboard) {
             if (num == n) {
                 return current_cfg->getSlotCardAddr(slot);
@@ -1098,7 +1098,7 @@ System2200::getPrinterIoAddr(int n) noexcept
 {
     int num = 0;
 
-    for(int slot=0; slot<NUM_IOSLOTS; slot++) {
+    for (int slot=0; slot<NUM_IOSLOTS; slot++) {
         if (current_cfg->getSlotCardType(slot) == IoCard::card_t::printer) {
             if (num == n) {
                 return current_cfg->getSlotCardAddr(slot);
@@ -1144,7 +1144,7 @@ System2200::findDiskController(const int n, int *slot)
 
     assert(n >= 0);
 
-    for(int probe=0; probe<num_ioslots; probe++) {
+    for (int probe=0; probe<num_ioslots; probe++) {
         if (isDiskController(probe)) {
             if (numfound++ == n) {
                 *slot = probe;
@@ -1164,7 +1164,7 @@ bool
 System2200::findDisk(const std::string &filename,
                      int *slot, int *drive, int *io_addr)
 {
-    for(int controller=0; ; controller++) {
+    for (int controller=0; ; controller++) {
 
         int slt;
         if (!findDiskController(controller, &slt)) {
@@ -1175,7 +1175,7 @@ System2200::findDisk(const std::string &filename,
         const auto dcfg = dynamic_cast<const DiskCtrlCfgState*>(cfg.get());
         assert(dcfg);
         const int num_drives = dcfg->getNumDrives();
-        for(int d=0; d<num_drives; d++) {
+        for (int d=0; d<num_drives; d++) {
             const int stat = IoCardDisk::wvdDriveStatus(slt, d);
             if (stat & IoCardDisk::WVD_STAT_DRIVE_OCCUPIED) {
                 std::string fname;
@@ -1195,8 +1195,8 @@ System2200::findDisk(const std::string &filename,
                     return true;
                 }
             }
-        } // for(d)
-    } // for(controller)
+        } // for (d)
+    } // for (controller)
 
     return false;
 }
@@ -1261,7 +1261,7 @@ const std::vector<System2200::cpuconfig_t> System2200::cpuConfigs = {
 const System2200::cpuconfig_t*
 System2200::getCpuConfig(const std::string &configName) noexcept
 {
-    for(auto const &cfg : System2200::cpuConfigs) {
+    for (auto const &cfg : System2200::cpuConfigs) {
         if (cfg.label == configName) {
             return &cfg;
         }
@@ -1272,7 +1272,7 @@ System2200::getCpuConfig(const std::string &configName) noexcept
 const System2200::cpuconfig_t*
 System2200::getCpuConfig(int configId) noexcept
 {
-    for(auto const &cfg : System2200::cpuConfigs) {
+    for (auto const &cfg : System2200::cpuConfigs) {
         if (cfg.cpuType == configId) {
             return &cfg;
         }

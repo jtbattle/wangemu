@@ -100,7 +100,7 @@ IoCardTermMux::IoCardTermMux(std::shared_ptr<Scheduler> scheduler,
         return;
     }
 
-    for(auto &t : m_terms) {
+    for (auto &t : m_terms) {
         t.terminal = nullptr;
 
         t.rx_ready = false;
@@ -157,7 +157,7 @@ IoCardTermMux::~IoCardTermMux()
         // not just a temp object, so clean up
         i8080_destroy(static_cast<i8080*>(m_i8080));
         m_i8080 = nullptr;
-        for(auto &t : m_terms) {
+        for (auto &t : m_terms) {
             t.terminal = nullptr;
         }
     }
@@ -189,7 +189,7 @@ std::vector<int>
 IoCardTermMux::getAddresses() const
 {
     std::vector<int> v;
-    for(int i=1; i<8; i++) {
+    for (int i=1; i<8; i++) {
         v.push_back( m_baseaddr + i );
     }
     return v;
