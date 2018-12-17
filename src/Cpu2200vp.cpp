@@ -14,7 +14,7 @@
 #include "Cpu2200.h"
 #include "IoCardKeyboard.h"
 #include "Scheduler.h"
-#include "System2200.h"
+#include "system2200.h"
 #include "ucode_2200.h"
 
 // control which functions get inlined
@@ -539,7 +539,7 @@ Cpu2200vp::set_sh(uint8 value)
                                   | ( mask & m_cpu.sh));
 
     if (cpb_changed) {
-        System2200::cpu_CPB( !!(m_cpu.sh & SH_MASK_CPB) );
+        system2200::cpu_CPB( !!(m_cpu.sh & SH_MASK_CPB) );
     }
 }
 
@@ -793,7 +793,7 @@ Cpu2200vp::Cpu2200vp(std::shared_ptr<Scheduler> scheduler,
     m_dbg(false)
 {
     // find which configuration options are available/legal for this CPU
-    auto cpuCfg = System2200::getCpuConfig(cpu_subtype);
+    auto cpuCfg = system2200::getCpuConfig(cpu_subtype);
     assert(cpuCfg != nullptr);
     bool ram_found = false;
     for (auto const kb : cpuCfg->ramSizeOptions) {
@@ -817,7 +817,7 @@ Cpu2200vp::Cpu2200vp(std::shared_ptr<Scheduler> scheduler,
 
     // register for clock callback
     clkCallback cb = std::bind(&Cpu2200vp::execOneOp, this);
-    System2200::registerClockedDevice(cb);
+    system2200::registerClockedDevice(cb);
 
 #if 0
     // disassemble boot ROM
@@ -839,7 +839,7 @@ Cpu2200vp::Cpu2200vp(std::shared_ptr<Scheduler> scheduler,
 Cpu2200vp::~Cpu2200vp()
 {
     clkCallback cb = std::bind(&Cpu2200vp::execOneOp, this);
-    System2200::unregisterClockedDevice(cb);
+    system2200::unregisterClockedDevice(cb);
 
     reset(true);
 }
@@ -919,7 +919,7 @@ Cpu2200vp::IoCardCbIbs(int data)
     assert( (m_cpu.sh & SH_MASK_CPB) == 0 );
     m_cpu.k = static_cast<uint8>(data & 0xFF);
     m_cpu.sh |= SH_MASK_CPB;            // CPU busy; inhibit IBS
-    System2200::cpu_CPB( true );        // we are busy now
+    system2200::cpu_CPB( true );        // we are busy now
 
     // return special status if it is a special function key
     if (data & IoCardKeyboard::KEYCODE_SF) {
@@ -1287,7 +1287,7 @@ Cpu2200vp::execOneOp()
                     dbglog("-ABS with AB=%02X, ic=0x%04X\n", m_cpu.ab_sel, m_cpu.ic);
                 }
                 //UI_Info("CPU:ABS when AB=%02X", m_cpu.ab);
-                System2200::cpu_ABS(m_cpu.ab_sel);  // address bus strobe
+                system2200::cpu_ABS(m_cpu.ab_sel);  // address bus strobe
                 break;
             case 0x20: // OBS
                 if (m_dbg) {
@@ -1305,7 +1305,7 @@ Cpu2200vp::execOneOp()
                     set_bsr(m_cpu.k);
                 } else {
                     setDevRdy(false);  // (M)VP cpus do this, but not 2200T
-                    System2200::cpu_OBS(m_cpu.k);  // output data bus strobe
+                    system2200::cpu_OBS(m_cpu.k);  // output data bus strobe
                 }
                 break;
             case 0x10: // CBS
@@ -1318,7 +1318,7 @@ Cpu2200vp::execOneOp()
                 }
                 //UI_Info("CPU:CBS when AB=%02X, AB_SEL=%02X, K=%02X", m_cpu.ab, m_cpu.ab_sel, m_cpu.k);
                 setDevRdy(false);  // (M)VP cpus do this, but not 2200T
-                System2200::cpu_CBS(m_cpu.k);    // control bus strobe
+                system2200::cpu_CBS(m_cpu.k);    // control bus strobe
                 break;
             case 0x08: // status request
                 // although the 2600 arch manual doesn't describe this op,
@@ -1329,12 +1329,12 @@ Cpu2200vp::execOneOp()
                 //     978080 : CIO       ??? (ILLEGAL)
                 // this corresponds to a mask of 0x08.
 //UI_Info("doing CIO STATUS_REQUEST, AB=%02x, IC=%04X", m_cpu.ab, m_cpu.ic);
-                m_cpu.k = static_cast<uint8>(System2200::cpu_poll_IB());
+                m_cpu.k = static_cast<uint8>(system2200::cpu_poll_IB());
                 // Paul Szudzik's SDS_Wang2200.pdf arch manual says
                 //    Fire internal IBS one shot (SRS).  Sets CPB.  Basically
                 //    used for Status Requests from MUXD.
                 m_cpu.sh |= SH_MASK_CPB;    // CPU busy; inhibit IBS
-                System2200::cpu_CPB(true);  // we are busy now
+                system2200::cpu_CPB(true);  // we are busy now
                 break;
             case 0x00: // no strobe
                 break;

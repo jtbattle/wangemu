@@ -74,7 +74,7 @@ private:
     void SendInitSeq();
 
     // process a key received from the associated Crt,
-    // or when System2200 stuffs characters during script processing
+    // or when system2200 stuffs characters during script processing
     void receiveKeystroke(int keycode);
 
     // process the next entry in kb event queue and schedule a timer to

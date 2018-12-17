@@ -2,9 +2,9 @@
 // headers
 // ----------------------------------------------------------------------------
 
-#include "Host.h"               // for Config* functions
+#include "host.h"               // for Config* functions
 #include "IoCardDisk.h"         // disk access routines
-#include "System2200.h"         // disk access routines
+#include "system2200.h"         // disk access routines
 #include "Ui.h"                 // emulator interface
 #include "UiSystem.h"           // sharing info between UI_wxgui modules
 #include "UiDiskFactory.h"
@@ -212,7 +212,7 @@ DiskFactory::DiskFactory(wxFrame *parent, const std::string &filename) :
     // pick up screen location and size
     const std::string subgroup("ui/disk_dialog");
     wxRect default_geom(rc.GetX(),rc.GetY(),rc.GetWidth(),rc.GetHeight());
-    Host::ConfigReadWinGeom(this, subgroup, &default_geom);
+    host::ConfigReadWinGeom(this, subgroup, &default_geom);
 
     updateDlg();
 }
@@ -221,7 +221,7 @@ DiskFactory::DiskFactory(wxFrame *parent, const std::string &filename) :
 DiskFactory::~DiskFactory()
 {
     const std::string subgroup("ui/disk_dialog");
-    Host::ConfigWriteWinGeom(this, subgroup);
+    host::ConfigWriteWinGeom(this, subgroup);
 
     m_diskdata = nullptr;
 }
@@ -269,15 +269,15 @@ void
 DiskFactory::OnButton_SaveAs(wxCommandEvent& WXUNUSED(event))
 {
     std::string name;
-    if (Host::fileReq(Host::FILEREQ_DISK, "Virtual Disk Name", 0, &name) !=
-                      Host::FILEREQ_OK) {
+    if (host::fileReq(host::FILEREQ_DISK, "Virtual Disk Name", 0, &name) !=
+                      host::FILEREQ_OK) {
         return;
     }
     assert(!name.empty());
 
     // check if this disk is in a drive already
     int drive, io_addr;
-    const bool in_use = System2200::findDisk(name, nullptr, &drive, &io_addr);
+    const bool in_use = system2200::findDisk(name, nullptr, &drive, &io_addr);
     if (in_use) {
         UI_Warn("This disk is in use at /%03X, drive %d.\n\n"
                 "Either save to a new name or eject the disk first.",

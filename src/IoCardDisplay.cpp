@@ -52,7 +52,7 @@
 #include "Ui.h"
 #include "IoCardDisplay.h"
 #include "Scheduler.h"          // for Timer...() functions
-#include "System2200.h"
+#include "system2200.h"
 #include "Terminal.h"
 #include "Cpu2200.h"
 
@@ -215,7 +215,7 @@ IoCardDisplay::OBS(int val)
 
     m_terminal->processChar(val8);
 
-    if (System2200::isCpuSpeedRegulated()) {
+    if (system2200::isCpuSpeedRegulated()) {
         if (val8 == 0x03) {
             m_busy_state = busy_state::CLEAR1;
             m_card_busy = true;
@@ -281,7 +281,7 @@ IoCardDisplay::CPB(bool busy)
 void
 IoCardDisplay::tcbHsync(int arg)
 {
-    const bool regulated = System2200::isCpuSpeedRegulated();
+    const bool regulated = system2200::isCpuSpeedRegulated();
 
     m_hsync_count++;
 

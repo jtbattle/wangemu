@@ -24,7 +24,7 @@
 #include "IoCardKeyboard.h"
 #include "IoCardTermMux.h"
 #include "Scheduler.h"
-#include "System2200.h"
+#include "system2200.h"
 #include "Terminal.h"
 
 // TODO: this is here and in IoCardTermMux.cpp
@@ -68,7 +68,7 @@ Terminal::Terminal(std::shared_ptr<Scheduler> scheduler,
     const bool smart_term = (screen_type == UI_SCREEN_2236DE);
     if (smart_term) {
         // in dumb systems, the IoCardKeyboard will establish the callback
-        System2200::registerKb(
+        system2200::registerKb(
             m_io_addr, m_term_num,
             std::bind(&Terminal::receiveKeystroke, this, std::placeholders::_1)
         );
@@ -88,7 +88,7 @@ Terminal::~Terminal()
 {
     const bool smart_term = (m_disp.screen_type == UI_SCREEN_2236DE);
     if (smart_term) {
-        System2200::unregisterKb(m_io_addr, m_term_num);
+        system2200::unregisterKb(m_io_addr, m_term_num);
     }
 
     m_init_tmr    = nullptr;
@@ -355,7 +355,7 @@ Terminal::termToMxdCallback(int key)
 
     // poll for script input, but don't let it overrun the key buffer
     if (m_kb_buff.size() < 5) {
-        m_script_active = System2200::kb_keyReady(m_io_addr, m_term_num);
+        m_script_active = system2200::kb_keyReady(m_io_addr, m_term_num);
     }
 
     // see if any other chars are pending
@@ -502,9 +502,9 @@ Terminal::processChar(uint8 byte)
             // then F8 every three seconds while not throttled.
 #if 0
             // if I include this, the emulator thinks it got the INIT atom (E4)
-            System2200::kb_keystroke(m_io_addr, m_term_num, 0xE4);
+            system2200::kb_keystroke(m_io_addr, m_term_num, 0xE4);
 #endif
-            System2200::kb_keystroke(m_io_addr, m_term_num, 0xF8);
+            system2200::kb_keystroke(m_io_addr, m_term_num, 0xF8);
             // TODO: then F8 every 3 seconds if not throttled
             break;
 
@@ -513,12 +513,12 @@ Terminal::processChar(uint8 byte)
             // a real 2336 sends E9 (crt stop flow control),
             // then F8 (crt go flow control), then another F8, then E4 (??),
             // then F8 every three seconds while not throttled.
-            System2200::kb_keystroke(m_io_addr, m_term_num, 0xF9);
-            System2200::kb_keystroke(m_io_addr, m_term_num, 0xF8);
-            System2200::kb_keystroke(m_io_addr, m_term_num, 0xF8);
+            system2200::kb_keystroke(m_io_addr, m_term_num, 0xF9);
+            system2200::kb_keystroke(m_io_addr, m_term_num, 0xF8);
+            system2200::kb_keystroke(m_io_addr, m_term_num, 0xF8);
 #if 0
             // if I include this, the emulator thinks it got the INIT atom (E4)
-            System2200::kb_keystroke(m_io_addr, m_term_num, 0xE4);
+            system2200::kb_keystroke(m_io_addr, m_term_num, 0xE4);
 #endif
             // TODO: then F8 every 3 seconds if not throttled
             break;
@@ -817,10 +817,10 @@ Terminal::processCrtChar2(uint8 byte)
         m_input_cnt = 0;
         char *idptr = &id_string[1];  // skip the leading asterisk
         while (*idptr) {
-            System2200::kb_keystroke(m_io_addr, m_term_num, *idptr);
+            system2200::kb_keystroke(m_io_addr, m_term_num, *idptr);
             idptr++;
         }
-        System2200::kb_keystroke(m_io_addr, m_term_num, 0x0D);
+        system2200::kb_keystroke(m_io_addr, m_term_num, 0x0D);
         return;
     }
     // 02 08 xx yy is otherwise undefined

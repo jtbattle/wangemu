@@ -2,7 +2,7 @@
 
 #include "Ui.h"
 #include "IoCardPrinter.h"
-#include "System2200.h"
+#include "system2200.h"
 #include "Cpu2200.h"
 
 #define NOISY  0        // turn on some debugging messages
@@ -23,7 +23,7 @@ IoCardPrinter::IoCardPrinter(std::shared_ptr<Cpu2200> cpu,
 {
     if (m_slot >= 0) {
         int io_addr;
-        bool ok = System2200::getSlotInfo(cardslot, nullptr, &io_addr);
+        bool ok = system2200::getSlotInfo(cardslot, nullptr, &io_addr);
         assert(ok); ok=ok;
         m_wndhnd = UI_printerInit(io_addr);
         reset();

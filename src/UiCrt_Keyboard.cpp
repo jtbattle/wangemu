@@ -8,7 +8,7 @@
 
 #include "Ui.h"                 // emulator interface
 #include "IoCardKeyboard.h"     // to pick up core_* keyboard functions
-#include "System2200.h"
+#include "system2200.h"
 #include "UiSystem.h"           // sharing info between UI_wxgui modules
 #include "UiCrtFrame.h"         // emulated terminal
 #include "UiCrt.h"              // just the display part
@@ -329,7 +329,7 @@ Crt::OnKeyDown(wxKeyEvent &event)
 #endif
 
     if (foundmap) {
-        System2200::kb_keystroke(m_parent->getTiedAddr(),
+        system2200::kb_keystroke(m_parent->getTiedAddr(),
                                  m_parent->getTermNum(),
                                  key);
     } else {
@@ -381,7 +381,7 @@ Crt::OnChar(wxKeyEvent &event)
     }
 
     if (foundmap) {
-        System2200::kb_keystroke(m_parent->getTiedAddr(),
+        system2200::kb_keystroke(m_parent->getTiedAddr(),
                                  m_parent->getTermNum(),
                                  key);
     } else {

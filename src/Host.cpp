@@ -4,7 +4,7 @@
 
 #include "Ui.h"                 // pick up debugging def of "new", but make this cleaner
 #include "UiSystem.h"           // sharing info between UI_wxgui modules
-#include "Host.h"
+#include "host.h"
 
 #include "wx/filename.h"        // for wxFileName
 #include "wx/fileconf.h"        // for configuration state object
@@ -22,11 +22,11 @@ std::unique_ptr<wxFileConfig> config    = nullptr; // configuration file object
 std::unique_ptr<wxStopWatch>  stopwatch = nullptr; // time program started
 
 // remember where certain files are located
-std::string fileDir[Host::FILEREQ_NUM];         // dir where files come from
-std::string filename[Host::FILEREQ_NUM];        // most recently chosen
-std::string fileFilter[Host::FILEREQ_NUM];      // suffix filter string
-int         fileFilterIdx[Host::FILEREQ_NUM];   // which filter was chosen
-std::string iniGroup[Host::FILEREQ_NUM];        // name in .ini file
+std::string fileDir[host::FILEREQ_NUM];         // dir where files come from
+std::string filename[host::FILEREQ_NUM];        // most recently chosen
+std::string fileFilter[host::FILEREQ_NUM];      // suffix filter string
+int         fileFilterIdx[host::FILEREQ_NUM];   // which filter was chosen
+std::string iniGroup[host::FILEREQ_NUM];        // name in .ini file
 
 // ============================================================================
 // file-local functions
@@ -39,22 +39,22 @@ getConfigFileLocations()
     std::string subgroup("..");
     std::string foo;
 
-    bool b = Host::ConfigReadStr(subgroup, "configversion", &foo);
+    bool b = host::ConfigReadStr(subgroup, "configversion", &foo);
     if (b && (foo != "1")) {
         UI_Warn("Configuration file version '%s' found.\n"
                  "Version '1' expected.\n"
                  "Attempting to read the config file anyway.\n", foo.c_str());
     }
 
-    for (int i=0; i<Host::FILEREQ_NUM; i++) {
+    for (int i=0; i<host::FILEREQ_NUM; i++) {
 
         subgroup = iniGroup[i];
         long v;
 
-        b = Host::ConfigReadStr(subgroup, "directory", &foo);
+        b = host::ConfigReadStr(subgroup, "directory", &foo);
         fileDir[i] = (b) ? foo : ".";
 
-        b = Host::ConfigReadStr(subgroup, "filterindex", &foo);
+        b = host::ConfigReadStr(subgroup, "filterindex", &foo);
         fileFilterIdx[i] = (b && wxString(foo).ToLong(&v)) ? v : 0;
 
         filename[i] = "";     // intentionally don't save this
@@ -69,12 +69,12 @@ saveConfigFileLocations()
     std::string subgroup("..");
     std::string version("1");
 
-    Host::ConfigWriteStr(subgroup, "configversion", version);
+    host::ConfigWriteStr(subgroup, "configversion", version);
 
-    for (int i=0; i<Host::FILEREQ_NUM; i++) {
+    for (int i=0; i<host::FILEREQ_NUM; i++) {
         subgroup = iniGroup[i];
-        Host::ConfigWriteStr(subgroup, "directory",   fileDir[i]);
-        Host::ConfigWriteInt(subgroup, "filterindex", fileFilterIdx[i]);
+        host::ConfigWriteStr(subgroup, "directory",   fileDir[i]);
+        host::ConfigWriteInt(subgroup, "filterindex", fileFilterIdx[i]);
     }
 }
 
@@ -84,7 +84,7 @@ saveConfigFileLocations()
 // ============================================================================
 
 void
-Host::initialize()
+host::initialize()
 {
     // path to executable
     const wxStandardPathsBase &stdp = wxStandardPaths::Get();
@@ -178,11 +178,11 @@ Host::initialize()
 }
 
 
-// Host is a kind of singleton, and as such it isn't owned and thus isn't
+// host is a kind of singleton, and as such it isn't owned and thus isn't
 // destroyed by going out of scope.  Instead, TheApp::OnExit() calls this
 // from UiSystem.cpp.
 void
-Host::terminate()
+host::terminate()
 {
     if (config) {
         saveConfigFileLocations();
@@ -198,7 +198,7 @@ Host::terminate()
 // ask user to provide a file location
 
 int
-Host::fileReq(int requestor, std::string title, int readonly, std::string *fullpath)
+host::fileReq(int requestor, std::string title, int readonly, std::string *fullpath)
 {
     assert(fullpath != nullptr);
     int style;
@@ -231,7 +231,7 @@ Host::fileReq(int requestor, std::string title, int readonly, std::string *fullp
 
 
 // return the absolute path to the dir containing the app
-std::string Host::getAppHome()
+std::string host::getAppHome()
 {
     return app_home;
 }
@@ -240,7 +240,7 @@ std::string Host::getAppHome()
 // classifies the supplied filename as being either relative (false)
 // or absolute (returns true).
 bool
-Host::isAbsolutePath(const std::string &name)
+host::isAbsolutePath(const std::string &name)
 {
     wxFileName fname(name);
     return fname.IsAbsolute();
@@ -249,7 +249,7 @@ Host::isAbsolutePath(const std::string &name)
 
 // make sure the name is put in normalized format
 std::string
-Host::asAbsolutePath(const std::string &name)
+host::asAbsolutePath(const std::string &name)
 {
     wxFileName fn(name);
     (void)fn.MakeAbsolute();
@@ -264,7 +264,7 @@ Host::asAbsolutePath(const std::string &name)
 
 // fetch an association from the configuration file
 bool
-Host::ConfigReadStr(const std::string &subgroup,
+host::ConfigReadStr(const std::string &subgroup,
                     const std::string &key,
                     std::string *val,
                     const std::string *defaultval)
@@ -283,7 +283,7 @@ Host::ConfigReadStr(const std::string &subgroup,
 
 
 bool
-Host::ConfigReadInt(const std::string &subgroup,
+host::ConfigReadInt(const std::string &subgroup,
                     const std::string &key,
                     int *val,
                     const int defaultval)
@@ -302,7 +302,7 @@ Host::ConfigReadInt(const std::string &subgroup,
 
 
 void
-Host::ConfigReadBool(const std::string &subgroup,
+host::ConfigReadBool(const std::string &subgroup,
                      const std::string &key,
                      bool *val,
                      const bool defaultval)
@@ -327,7 +327,7 @@ Host::ConfigReadBool(const std::string &subgroup,
 // for people who already had a .ini file, it would have messed up their
 // settings a bit on the changeover.
 void
-Host::ConfigReadWinGeom(wxWindow *wxwin,
+host::ConfigReadWinGeom(wxWindow *wxwin,
                         const std::string &subgroup,
                         wxRect *default_geom,
                         bool client_size)
@@ -399,7 +399,7 @@ Host::ConfigReadWinGeom(wxWindow *wxwin,
 
 // send a string association to the configuration file
 void
-Host::ConfigWriteStr(const std::string &subgroup,
+host::ConfigWriteStr(const std::string &subgroup,
                      const std::string &key,
                      const std::string &val)
 {
@@ -414,7 +414,7 @@ Host::ConfigWriteStr(const std::string &subgroup,
 
 // send an integer association to the configuration file
 void
-Host::ConfigWriteInt(const std::string &subgroup,
+host::ConfigWriteInt(const std::string &subgroup,
                      const std::string &key,
                      const int val)
 {
@@ -426,7 +426,7 @@ Host::ConfigWriteInt(const std::string &subgroup,
 
 // send a boolean association to the configuration file
 void
-Host::ConfigWriteBool(const std::string &subgroup,
+host::ConfigWriteBool(const std::string &subgroup,
                       const std::string &key,
                       const bool val)
 {
@@ -437,7 +437,7 @@ Host::ConfigWriteBool(const std::string &subgroup,
 
 // write out the geometry for a window
 void
-Host::ConfigWriteWinGeom(wxWindow *wxwin,
+host::ConfigWriteWinGeom(wxWindow *wxwin,
                          const std::string &subgroup,
                          bool client_size)
 {
@@ -463,7 +463,7 @@ Host::ConfigWriteWinGeom(wxWindow *wxwin,
 
 // return the time in milliseconds as a 64b signed integer
 int64
-Host::getTimeMs(void)
+host::getTimeMs(void)
 {
     // newer api should provide more accurate measurement of time
     // NB: wxLongLong can't be mapped directly to "long long" type,
@@ -478,7 +478,7 @@ Host::getTimeMs(void)
 
 // go to sleep for approximately ms milliseconds before returning
 void
-Host::sleep(unsigned int ms)
+host::sleep(unsigned int ms)
 {
     wxMilliSleep(ms);
 }

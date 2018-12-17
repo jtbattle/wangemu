@@ -1,7 +1,7 @@
 // TheApp is where the emulator first "wakes up", in the OnInit() function.
 // The OnIdle() event handler is the point where the core emulation runs,
 // that is, emulated time passes.  The emulation doens't happen in this class;
-// instead the OnIdle gets reflected into the core System2200 class.
+// instead the OnIdle gets reflected into the core system2200 class.
 //
 // The rest of it is just a pachinko machine of events to redraw the screen
 // and handle user interaction.

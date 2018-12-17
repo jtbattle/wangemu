@@ -2,12 +2,12 @@
 
 #include "CardInfo.h"
 #include "Cpu2200.h"
-#include "Host.h"
+#include "host.h"
 #include "IoCardDisk.h"
 #include "IoCardKeyboard.h"  // for KEYCODE_HALT
 #include "Scheduler.h"
 #include "ScriptFile.h"
-#include "System2200.h"
+#include "system2200.h"
 #include "SysCfgState.h"
 #include "Ui.h"
 
@@ -15,8 +15,8 @@
 #include <sstream>
 
 // ----------------------------------------------------------------------------
-// this is the "private" state of the System2200 namespace,
-// invisible to anyone importing System2200.h
+// this is the "private" state of the system2200 namespace,
+// invisible to anyone importing system2200.h
 // ----------------------------------------------------------------------------
 
 // for coordinating events in the emulator
@@ -133,7 +133,7 @@ isDiskController(int slot) noexcept
     assert(slot >= 0 && slot < NUM_IOSLOTS);
 
     int cardtype_idx;
-    const bool ok = System2200::getSlotInfo(slot, &cardtype_idx, nullptr);
+    const bool ok = system2200::getSlotInfo(slot, &cardtype_idx, nullptr);
 
     return ok && (cardtype_idx == static_cast<int>(IoCard::card_t::disk));
 }
@@ -161,7 +161,7 @@ saveDiskMounts(void)
                         assert(ok); ok=ok;
                     }
                 }
-                Host::ConfigWriteStr(subgroup.str(), item.str(), filename);
+                host::ConfigWriteStr(subgroup.str(), item.str(), filename);
             } // drive
         } // if (isDiskController)
     } // slot
@@ -184,7 +184,7 @@ restoreDiskMounts(void)
                 std::ostringstream item;
                 item << "filename-" << drive;
                 std::string filename;
-                bool b = Host::ConfigReadStr(subgroup.str(), item.str(), &filename);
+                bool b = host::ConfigReadStr(subgroup.str(), item.str(), &filename);
                 if (b && !filename.empty()) {
                     bool bs = IoCardDisk::wvdInsertDisk(slot, drive, filename.c_str());
             #if 0 // wvdInsertDisk() already generated a warning
@@ -277,7 +277,7 @@ dbglog(const char *fmt, ...)
 
 // build the world
 void
-System2200::initialize()
+system2200::initialize()
 {
 #ifdef _DEBUG
     dbglog_open("w2200dbg.log");
@@ -295,7 +295,7 @@ System2200::initialize()
 
     // CPU speed regulation
     firstslice = true;
-    m_simtime    = m_adjsimtime = Host::getTimeMs();
+    m_simtime    = m_adjsimtime = host::getTimeMs();
     m_simsecs    = 0;
 
     realtimestart = 0;    // wall time of when sim started
@@ -327,7 +327,7 @@ System2200::initialize()
 // because everything is static, the destructor does nothing, so we
 // need this function to know when the real Armageddon has arrived.
 void
-System2200::cleanup()
+system2200::cleanup()
 {
     // remember which disks are saved in each drive
     saveDiskMounts();
@@ -350,7 +350,7 @@ System2200::cleanup()
 // as such, at this point nothing has been shut down.
 // after all windows have been shut down, we receive OnExit().
 void
-System2200::terminate() noexcept
+system2200::terminate() noexcept
 {
     setTerminationState(TERMINATING);
 }
@@ -358,7 +358,7 @@ System2200::terminate() noexcept
 
 // unregister a callback function which advances with the clock
 void
-System2200::registerClockedDevice(clkCallback cb) noexcept
+system2200::registerClockedDevice(clkCallback cb) noexcept
 {
     clocked_device_t cd = { cb, 0 };
     m_clocked_devices.push_back(cd);
@@ -367,7 +367,7 @@ System2200::registerClockedDevice(clkCallback cb) noexcept
 
 // unregister a callback function which advances with the clock
 void
-System2200::unregisterClockedDevice(clkCallback cb) noexcept
+system2200::unregisterClockedDevice(clkCallback cb) noexcept
 {
 #if 0
 // FIXME: it is not possible to compare bound functions, so a different
@@ -389,7 +389,7 @@ System2200::unregisterClockedDevice(clkCallback cb) noexcept
 // build a system according to the spec.
 // if a system already exists, tear it down and rebuild it.
 void
-System2200::setConfig(const SysCfgState &newcfg)
+system2200::setConfig(const SysCfgState &newcfg)
 {
     if (!current_cfg) {
         // first time we don't need to tear anything down
@@ -491,7 +491,7 @@ System2200::setConfig(const SysCfgState &newcfg)
 
 // give access to components
 const SysCfgState&
-System2200::config() noexcept
+system2200::config() noexcept
 {
     return *current_cfg;
 }
@@ -505,7 +505,7 @@ System2200::config() noexcept
 // later on, in the onIdle code, this flag is checked and the reconfiguration
 // happens then.
 void
-System2200::reconfigure() noexcept
+system2200::reconfigure() noexcept
 {
     m_do_reconfig = true;
 }
@@ -513,7 +513,7 @@ System2200::reconfigure() noexcept
 
 // reset the cpu
 void
-System2200::reset(bool cold_reset)
+system2200::reset(bool cold_reset)
 {
     curIoAddr = -1;
 
@@ -531,7 +531,7 @@ System2200::reset(bool cold_reset)
 // turn cpu speed regulation on (true) or off (false)
 // this is a convenience function
 void
-System2200::regulateCpuSpeed(bool regulated) noexcept
+system2200::regulateCpuSpeed(bool regulated) noexcept
 {
     current_cfg->regulateCpuSpeed(regulated);
 
@@ -544,7 +544,7 @@ System2200::regulateCpuSpeed(bool regulated) noexcept
 // indicate if the CPU is throttled or not
 // this is a convenience function
 bool
-System2200::isCpuSpeedRegulated() noexcept
+system2200::isCpuSpeedRegulated() noexcept
 {
     return current_cfg->isCpuSpeedRegulated();
 }
@@ -552,14 +552,14 @@ System2200::isCpuSpeedRegulated() noexcept
 
 // halt emulation
 void
-System2200::freezeEmu(bool freeze) noexcept
+system2200::freezeEmu(bool freeze) noexcept
 {
     m_freeze_emu = freeze;
 }
 
 // called whenever there is free time
 bool
-System2200::onIdle()
+system2200::onIdle()
 {
     if (m_do_reconfig) {
         m_do_reconfig = false;
@@ -581,7 +581,7 @@ System2200::onIdle()
             if (m_freeze_emu) {
                 // if we don't call sleep, we just get another onIdle event
                 // and end up pegging the host CPU
-                Host::sleep(10);
+                host::sleep(10);
             } else {
                 emulateTimeslice(slice_duration);
             }
@@ -607,7 +607,7 @@ System2200::onIdle()
 
 // simulate a few ms worth of instructions
 void
-System2200::emulateTimeslice(int ts_ms)
+system2200::emulateTimeslice(int ts_ms)
 {
     const int num_devices = m_clocked_devices.size();
 
@@ -618,7 +618,7 @@ System2200::emulateTimeslice(int ts_ms)
         return;
     }
 
-    const uint64 now_ms = Host::getTimeMs();
+    const uint64 now_ms = host::getTimeMs();
 
     if (firstslice) {
         firstslice = false;
@@ -644,7 +644,7 @@ System2200::emulateTimeslice(int ts_ms)
         // we don't kill the full amount because the sleep function is
         // allowed to, and very well might, sleep longer than we asked.
         const unsigned int ioffset = static_cast<unsigned int>(offset & 0xFFFLL);  // bottom 4 sec or so
-        Host::sleep(ioffset/2);
+        host::sleep(ioffset/2);
 
     } else {
 
@@ -780,7 +780,7 @@ System2200::emulateTimeslice(int ts_ms)
         }
 
         // at least yield so we don't hog the whole machine
-        Host::sleep(0);
+        host::sleep(0);
     }
 }
 
@@ -791,7 +791,7 @@ System2200::emulateTimeslice(int ts_ms)
 
 // address byte strobe
 void
-System2200::cpu_ABS(uint8 byte)
+system2200::cpu_ABS(uint8 byte)
 {
     // done if reselecting same device
     if (byte == curIoAddr) {
@@ -850,7 +850,7 @@ System2200::cpu_ABS(uint8 byte)
 
 // output byte strobe
 void
-System2200::cpu_OBS(uint8 byte)
+system2200::cpu_OBS(uint8 byte)
 {
 // p 6-2 of the Wang 2200 Service Manual:
 // When the controller is selected (select latch set), the Ready/Busy
@@ -870,7 +870,7 @@ System2200::cpu_OBS(uint8 byte)
 
 // handles CBS strobes
 void
-System2200::cpu_CBS(uint8 byte)
+system2200::cpu_CBS(uint8 byte)
 {
     // each card handles CBS in its own way.
     //   * many cards simply ignore it
@@ -885,7 +885,7 @@ System2200::cpu_CBS(uint8 byte)
 
 // notify selected card when CPB changes
 void
-System2200::cpu_CPB(bool busy)
+system2200::cpu_CPB(bool busy)
 {
     if ((curIoAddr > 0) && (ioMap[curIoAddr].slot >= 0)) {
         // signal that we want to get something
@@ -896,7 +896,7 @@ System2200::cpu_CPB(bool busy)
 
 // the CPU can poll IB5 without any other strobe.  return that bit.
 int
-System2200::cpu_poll_IB()
+system2200::cpu_poll_IB()
 {
     if  ((curIoAddr > 0) && (ioMap[curIoAddr].slot >= 0)) {
         // signal that we want to get something
@@ -912,7 +912,7 @@ System2200::cpu_poll_IB()
 
 // register a handler for a key event to a given keyboard terminal
 void
-System2200::registerKb(int io_addr, int term_num, kbCallback cb) noexcept
+system2200::registerKb(int io_addr, int term_num, kbCallback cb) noexcept
 {
     assert(cb);
 
@@ -929,7 +929,7 @@ System2200::registerKb(int io_addr, int term_num, kbCallback cb) noexcept
 }
 
 void
-System2200::unregisterKb(int io_addr, int term_num) noexcept
+system2200::unregisterKb(int io_addr, int term_num) noexcept
 {
     for (auto it = begin(m_kb_routes); it != end(m_kb_routes); ++it) {
         if (io_addr == it->io_addr && term_num == it->term_num) {
@@ -943,7 +943,7 @@ System2200::unregisterKb(int io_addr, int term_num) noexcept
 
 // send a key event to the specified keyboard/terminal
 void
-System2200::kb_keystroke(int io_addr, int term_num, int keyvalue)
+system2200::kb_keystroke(int io_addr, int term_num, int keyvalue)
 {
     for (auto &kb : m_kb_routes) {
         if (io_addr == kb.io_addr && term_num == kb.term_num) {
@@ -967,7 +967,7 @@ System2200::kb_keystroke(int io_addr, int term_num, int keyvalue)
 
 // request the contents of a file to be fed in as a keyboard stream
 void
-System2200::kb_invokeScript(int io_addr, int term_num,
+system2200::kb_invokeScript(int io_addr, int term_num,
                      const std::string &filename)
 {
     if (kb_scriptModeActive(io_addr, term_num)) {
@@ -1005,7 +1005,7 @@ System2200::kb_invokeScript(int io_addr, int term_num,
 
 // indicates if a script is currently active on a given terminal
 bool
-System2200::kb_scriptModeActive(int io_addr, int term_num)
+system2200::kb_scriptModeActive(int io_addr, int term_num)
 {
     for (auto &kb : m_kb_routes) {
         if (io_addr == kb.io_addr && term_num == kb.term_num) {
@@ -1021,7 +1021,7 @@ System2200::kb_scriptModeActive(int io_addr, int term_num)
 // invoked with the next character from the script.  it returns true if
 // a script supplied a character.
 bool
-System2200::kb_keyReady(int io_addr, int term_num)
+system2200::kb_keyReady(int io_addr, int term_num)
 {
     for (auto &kb : m_kb_routes) {
         if (io_addr == kb.io_addr && term_num == kb.term_num) {
@@ -1052,7 +1052,7 @@ System2200::kb_keyReady(int io_addr, int term_num)
 // returns false if the slot is empty, otherwise true.
 // returns card type index and io address via pointers.
 bool
-System2200::getSlotInfo(int slot, int *cardtype_idx, int *addr) noexcept
+system2200::getSlotInfo(int slot, int *cardtype_idx, int *addr) noexcept
 {
     assert(0 <= slot && slot < NUM_IOSLOTS);
     if (!current_cfg->isSlotOccupied(slot)) {
@@ -1074,7 +1074,7 @@ System2200::getSlotInfo(int slot, int *cardtype_idx, int *addr) noexcept
 // returns the IO address of the n-th keyboard (0-based).
 // if (n >= # of keyboards), returns -1.
 int
-System2200::getKbIoAddr(int n) noexcept
+system2200::getKbIoAddr(int n) noexcept
 {
     int num = 0;
 
@@ -1094,7 +1094,7 @@ System2200::getKbIoAddr(int n) noexcept
 // returns the IO address of the n-th printer (0-based).
 // if (n >= # of printers), returns -1.
 int
-System2200::getPrinterIoAddr(int n) noexcept
+system2200::getPrinterIoAddr(int n) noexcept
 {
     int num = 0;
 
@@ -1115,7 +1115,7 @@ System2200::getPrinterIoAddr(int n) noexcept
 // FIXME: returning a raw pointer -- does all this need to be
 //        converted to shared_ptr?
 IoCard*
-System2200::getInstFromIoAddr(int io_addr) noexcept
+system2200::getInstFromIoAddr(int io_addr) noexcept
 {
     assert( (io_addr >= 0) && (io_addr <= 0xFFF) );
     return cardInSlot[ioMap[io_addr & 0xFF].slot].get();
@@ -1126,7 +1126,7 @@ System2200::getInstFromIoAddr(int io_addr) noexcept
 // FIXME: returning a raw pointer -- does all this need to be
 //        converted to shared_ptr?
 IoCard*
-System2200::getInstFromSlot(int slot) noexcept
+system2200::getInstFromSlot(int slot) noexcept
 {
     assert(slot >=0 && slot < NUM_IOSLOTS);
     return cardInSlot[slot].get();
@@ -1136,7 +1136,7 @@ System2200::getInstFromSlot(int slot) noexcept
 // find slot number of disk controller #n.
 // returns true if successful.
 bool
-System2200::findDiskController(const int n, int *slot)
+system2200::findDiskController(const int n, int *slot)
 {
     const int num_ioslots = NUM_IOSLOTS;
     int numfound = 0;
@@ -1161,7 +1161,7 @@ System2200::findDiskController(const int n, int *slot)
 // returns true if successful.
 // note: slot, drive, io_addr are optionally nullptr.
 bool
-System2200::findDisk(const std::string &filename,
+system2200::findDisk(const std::string &filename,
                      int *slot, int *drive, int *io_addr)
 {
     for (int controller=0; ; controller++) {
@@ -1206,7 +1206,7 @@ System2200::findDisk(const std::string &filename,
 // legal cpu system configurations
 // ------------------------------------------------------------------------
 
-const std::vector<System2200::cpuconfig_t> System2200::cpuConfigs = {
+const std::vector<system2200::cpuconfig_t> system2200::cpuConfigs = {
     // https://wang2200.org/docs/datasheet/2200ABC_CPU_DataSheet.700-3491.11-74.pdf
     {   Cpu2200::CPUTYPE_2200B,    // .cpuType
         "2200B",                   // .label
@@ -1258,10 +1258,10 @@ const std::vector<System2200::cpuconfig_t> System2200::cpuConfigs = {
     },
 };
 
-const System2200::cpuconfig_t*
-System2200::getCpuConfig(const std::string &configName) noexcept
+const system2200::cpuconfig_t*
+system2200::getCpuConfig(const std::string &configName) noexcept
 {
-    for (auto const &cfg : System2200::cpuConfigs) {
+    for (auto const &cfg : system2200::cpuConfigs) {
         if (cfg.label == configName) {
             return &cfg;
         }
@@ -1269,10 +1269,10 @@ System2200::getCpuConfig(const std::string &configName) noexcept
     return nullptr;
 }
 
-const System2200::cpuconfig_t*
-System2200::getCpuConfig(int configId) noexcept
+const system2200::cpuconfig_t*
+system2200::getCpuConfig(int configId) noexcept
 {
-    for (auto const &cfg : System2200::cpuConfigs) {
+    for (auto const &cfg : system2200::cpuConfigs) {
         if (cfg.cpuType == configId) {
             return &cfg;
         }

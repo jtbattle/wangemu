@@ -2,13 +2,13 @@
 // headers
 // ----------------------------------------------------------------------------
 
-#include "Host.h"
+#include "host.h"
 #include "IoCard.h"
 #include "Ui.h"                 // emulator interface
 #include "UiSystem.h"           // sharing info between UI_wxgui modules
 #include "DiskCtrlCfgState.h"
 #include "UiDiskCtrlCfgDlg.h"
-#include "System2200.h"
+#include "system2200.h"
 
 // ----------------------------------------------------------------------------
 // a simple static dialog to provide help on the DiskCtrlCfgDlg options
@@ -393,7 +393,7 @@ DiskCtrlCfgDlg::saveDefaults()
     const std::string subgroup("ui/diskcfgdlg");
 
     // save position and size
-    Host::ConfigWriteWinGeom(this, subgroup);
+    host::ConfigWriteWinGeom(this, subgroup);
 }
 
 
@@ -402,7 +402,7 @@ DiskCtrlCfgDlg::getDefaults()
 {
     // see if we've established a favored location and size
     const std::string subgroup("ui/diskcfgdlg");
-    Host::ConfigReadWinGeom(this, subgroup);
+    host::ConfigReadWinGeom(this, subgroup);
 }
 
 // vim: ts=8:et:sw=4:smarttab

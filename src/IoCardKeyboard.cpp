@@ -4,7 +4,7 @@
 #include "IoCardKeyboard.h"
 #include "Cpu2200.h"
 #include "Scheduler.h"
-#include "System2200.h"
+#include "system2200.h"
 
 #define NOISY  0        // turn on some debugging messages
 
@@ -28,7 +28,7 @@ IoCardKeyboard::IoCardKeyboard(std::shared_ptr<Scheduler> scheduler,
 {
     if (m_slot >= 0) {
         reset();
-        System2200::registerKb(
+        system2200::registerKb(
             m_baseaddr, 0,
             std::bind(&IoCardKeyboard::receiveKeystroke, this, std::placeholders::_1)
         );
@@ -40,7 +40,7 @@ IoCardKeyboard::~IoCardKeyboard()
 {
     if (m_slot >= 0) {
         reset();        // turns off handshakes in progress
-        System2200::unregisterKb(m_baseaddr, 0);
+        system2200::unregisterKb(m_baseaddr, 0);
     }
 }
 
@@ -156,7 +156,7 @@ IoCardKeyboard::receiveKeystroke(int keycode)
 
     if (keycode == KEYCODE_RESET) {
         // warm reset
-        System2200::reset(false);
+        system2200::reset(false);
     } else if (keycode == KEYCODE_HALT) {
         // halt/step
         m_key_ready = false;
@@ -172,7 +172,7 @@ IoCardKeyboard::receiveKeystroke(int keycode)
 // =================== private functions ===================
 
 // FIXME: if nothing else, the name is bad because IoCardKeyboard
-// no longer knows about scripts -- System2200 takes care of it.
+// no longer knows about scripts -- system2200 takes care of it.
 void
 IoCardKeyboard::tcbScript()
 {
@@ -202,7 +202,7 @@ void
 IoCardKeyboard::check_keyready()
 {
     if (!m_key_ready) {
-        bool script_active = System2200::kb_keyReady(m_baseaddr, 0);
+        bool script_active = system2200::kb_keyReady(m_baseaddr, 0);
         script_active = !script_active;  // make lint shut up
     }
 // FIXME: keyReady doesn't change m_selected, so the above call can't affect

@@ -4,7 +4,7 @@
 #include "Cpu2200.h"
 #include "IoCardKeyboard.h"
 #include "Scheduler.h"
-#include "System2200.h"
+#include "system2200.h"
 #include "ucode_2200.h"
 
 // if this is defined as 0, a few variables get initialized
@@ -582,7 +582,7 @@ Cpu2200t::mem_write(uint16 addr, uint4 wr_value, int write2) noexcept
 uint4
 Cpu2200t::read_st3() const
 {
-    const int k = System2200::cpu_poll_IB();
+    const int k = system2200::cpu_poll_IB();
     const int ib5 = (k >> 5) & 1;  // isolate bit 5
 
     return static_cast<uint4>(
@@ -602,7 +602,7 @@ Cpu2200t::set_st1(uint4 value)
     m_cpu.st1 = value;
 
     if (cpb_changed) {
-        System2200::cpu_CPB( !!(m_cpu.st1 & ST1_MASK_CPB) );
+        system2200::cpu_CPB( !!(m_cpu.st1 & ST1_MASK_CPB) );
     }
 }
 
@@ -782,7 +782,7 @@ Cpu2200t::Cpu2200t(std::shared_ptr<Scheduler> scheduler,
 
     // register for clock callback
     clkCallback cb = std::bind(&Cpu2200t::execOneOp, this);
-    System2200::registerClockedDevice(cb);
+    system2200::registerClockedDevice(cb);
 
 #if 0
     // disassemble all microcode
@@ -811,7 +811,7 @@ Cpu2200t::Cpu2200t(std::shared_ptr<Scheduler> scheduler,
 Cpu2200t::~Cpu2200t()
 {
     clkCallback cb = std::bind(&Cpu2200t::execOneOp, this);
-    System2200::unregisterClockedDevice(cb);
+    system2200::unregisterClockedDevice(cb);
 }
 
 
@@ -907,7 +907,7 @@ Cpu2200t::IoCardCbIbs(int data)
     assert( (m_cpu.st1 & ST1_MASK_CPB) == 0 );
     m_cpu.k = static_cast<uint8>(data & 0xFF);
     m_cpu.st1 |= ST1_MASK_CPB;      // CPU busy; inhibit IBS
-    System2200::cpu_CPB( true );    // the cpu is busy now
+    system2200::cpu_CPB( true );    // the cpu is busy now
 
     // return special status if it is a special function key
     if (data & IoCardKeyboard::KEYCODE_SF) {
@@ -1305,7 +1305,7 @@ Cpu2200t::execOneOp()
                     }
                 }
                 //UI_Info("CPU:CBS when AB=%02X, AB_SEL=%02X, K=%02X", m_cpu.ab, m_cpu.ab_sel, m_cpu.k);
-                System2200::cpu_CBS(m_cpu.k);  // control bus strobe
+                system2200::cpu_CBS(m_cpu.k);  // control bus strobe
                 break;
 
             case 0x20: // generate -OBS
@@ -1317,7 +1317,7 @@ Cpu2200t::execOneOp()
                     }
                 }
                 //UI_Info("CPU:OBS when AB=%02X, AB_SEL=%02X, K=%02X", m_cpu.ab, m_cpu.ab_sel, m_cpu.k);
-                System2200::cpu_OBS(m_cpu.k);  // output data bus strobe
+                system2200::cpu_OBS(m_cpu.k);  // output data bus strobe
                 break;
 
             case 0x40: // generate -ABS
@@ -1326,7 +1326,7 @@ Cpu2200t::execOneOp()
                     dbglog("-ABS with AB=%02X\n", m_cpu.ab_sel);
                 }
                 //UI_Info("CPU:ABS when AB=%02X", m_cpu.ab);
-                System2200::cpu_ABS(m_cpu.ab_sel);  // address bus strobe
+                system2200::cpu_ABS(m_cpu.ab_sel);  // address bus strobe
                 break;
 
             default:

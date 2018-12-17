@@ -55,7 +55,7 @@ void UI_printerChar(PrinterFrame *wnd, uint8 byte);
 // ---- system configuration ----
 
 // launch the system configuration dialog, which might eventually
-// call back into System2200.setConfig() function.
+// call back into system2200.setConfig() function.
 void UI_SystemConfigDlg();
 
 // configure a disk controller

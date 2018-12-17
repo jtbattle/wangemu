@@ -17,8 +17,8 @@ struct crt_state_t;
 // ----------------------------------------------------------------------------
 
 #include "Cpu2200.h"
-#include "Host.h"
-#include "System2200.h"
+#include "host.h"
+#include "system2200.h"
 #include "Ui.h"
 #include "UiSystem.h"
 #include "UiSystemConfigDlg.h"
@@ -60,10 +60,10 @@ TheApp::OnInit()
     }
 #endif
 
-    Host::initialize();
+    host::initialize();
 
-    System2200::initialize();  // build the world
-    System2200::reset(true);   // cold start
+    system2200::initialize();  // build the world
+    system2200::reset(true);   // cold start
 
     // must call base class version to get command line processing
     // if false, the app terminates
@@ -76,7 +76,7 @@ TheApp::OnInit()
 void
 TheApp::OnIdle(wxIdleEvent &event)
 {
-    if (System2200::onIdle()) {
+    if (system2200::onIdle()) {
         event.RequestMore(true);            // give more idle events
     }
 }
@@ -89,7 +89,7 @@ int
 TheApp::OnExit()
 {
     // clean up, which includes saving .ini file
-    Host::terminate();
+    host::terminate();
 
     return 0;
 }
@@ -123,7 +123,7 @@ TheApp::OnCmdLineParsed(wxCmdLineParser& parser)
         if (parser.Found("s", &filename)) {
             const int io_addr = 0x01;   // default keyboard device
             std::string fn(filename.c_str());
-            System2200::kb_invokeScript(io_addr, -1, fn);
+            system2200::kb_invokeScript(io_addr, -1, fn);
             bool success = true;  // FIXME: old invokeScript returned a boolean -- change new i/f to match?
             if (!success) {
                 const char *s = filename.c_str();
@@ -190,7 +190,7 @@ TheApp::OnHelp_Launcher(wxCommandEvent &event)
 
     wxString target_file = (absolute) ? helpfile
                                       : ( "file:" + sep + sep +
-                                          Host::getAppHome() +
+                                          host::getAppHome() +
                                           sep + helpfile );
 #ifdef __WXMSW__
     // wxLaunchDefaultBrowser()'s argument used to use windows-style paths,
@@ -288,7 +288,7 @@ CrtFrame*
 UI_displayInit(const int screen_type, const int io_addr, const int term_num,
                crt_state_t *crt_state)
 {
-    const int cputype = System2200::config().getCpuType();
+    const int cputype = system2200::config().getCpuType();
     const char *cpustr = (cputype == Cpu2200::CPUTYPE_2200B) ? "2200B" :
                          (cputype == Cpu2200::CPUTYPE_2200T) ? "2200T" :
                                                                "2200VP";
@@ -384,7 +384,7 @@ UI_printerChar(PrinterFrame *wnd, uint8 byte)
 // ---- system configuration wrapper ----
 
 // launch the system configuration dialog, which might eventually
-// call back into System2200.setConfig() function.
+// call back into system2200.setConfig() function.
 void
 UI_SystemConfigDlg()
 {

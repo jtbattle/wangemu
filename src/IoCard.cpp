@@ -4,7 +4,7 @@
 #include "Ui.h"
 #include "CardCfgState.h"
 #include "DiskCtrlCfgState.h"
-#include "Host.h"
+#include "host.h"
 #include "Cpu2200.h"
 #include "IoCardDisk.h"
 #include "IoCardDisplay.h"
@@ -12,7 +12,6 @@
 #include "IoCardPrinter.h"
 #include "IoCardTermMux.h"
 #include "Scheduler.h"
-#include "System2200.h"
 #include "SysCfgState.h"
 
 // ========================================================================

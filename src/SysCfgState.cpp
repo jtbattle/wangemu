@@ -5,9 +5,9 @@
 #include "CardCfgState.h"
 #include "CardInfo.h"
 #include "Cpu2200.h"
-#include "Host.h"
+#include "host.h"
 #include "IoCard.h"
-#include "System2200.h"
+#include "system2200.h"
 #include "SysCfgState.h"
 #include "Ui.h"                 // for UI_Alert
 
@@ -177,14 +177,14 @@ SysCfgState::loadIni()
         std::string sval;
 
         std::string defaultCpu = "2200T";
-        bool b = Host::ConfigReadStr(subgroup, "cpu", &sval, &defaultCpu);
+        bool b = host::ConfigReadStr(subgroup, "cpu", &sval, &defaultCpu);
         assert(b);
 
-        auto cpuCfg = System2200::getCpuConfig(sval);
+        auto cpuCfg = system2200::getCpuConfig(sval);
         if (cpuCfg == nullptr) {
             UI_Warn("The ini didn't specify a legal cpu type.\n"
                     "Delete your .ini and start over.");
-            cpuCfg = System2200::getCpuConfig("2200T");
+            cpuCfg = system2200::getCpuConfig("2200T");
         }
         setCpuType(cpuCfg->cpuType);
 
@@ -193,7 +193,7 @@ SysCfgState::loadIni()
         const int max_ram = cpuCfg->ramSizeOptions[ram_choices-1];
         const int dflt_ram = max_ram;
         int ival;
-        b = Host::ConfigReadInt(subgroup, "memsize", &ival, dflt_ram);
+        b = host::ConfigReadInt(subgroup, "memsize", &ival, dflt_ram);
         if (ival < min_ram) { ival = min_ram; }
         if (ival > max_ram) { ival = max_ram; }
         for (const int kb : cpuCfg->ramSizeOptions) {
@@ -206,7 +206,7 @@ SysCfgState::loadIni()
 
         // learn whether CPU speed is regulated or not
         regulateCpuSpeed(true);  // default
-        b = Host::ConfigReadStr(subgroup, "speed", &sval);
+        b = host::ConfigReadStr(subgroup, "speed", &sval);
         if (b && (sval == "unregulated")) {
             regulateCpuSpeed(false);
         }
@@ -222,8 +222,8 @@ SysCfgState::loadIni()
         IoCard::card_t cardtype = IoCard::card_t::none;
 
         int io_addr;
-        (void)Host::ConfigReadInt(subgroup, "addr", &io_addr, -1);  // -1 if not found
-        int b = Host::ConfigReadStr(subgroup, "type", &sval);
+        (void)host::ConfigReadInt(subgroup, "addr", &io_addr, -1);  // -1 if not found
+        int b = host::ConfigReadStr(subgroup, "type", &sval);
         if (b) {
             cardtype = CardInfo::getCardTypeFromName(sval);
         }
@@ -256,10 +256,10 @@ SysCfgState::loadIni()
         std::string subgroup("misc");
         bool bval;
 
-        Host::ConfigReadBool(subgroup, "disk_realtime", &bval, true);
+        host::ConfigReadBool(subgroup, "disk_realtime", &bval, true);
         setDiskRealtime( bval );  // default
 
-        Host::ConfigReadBool(subgroup, "warnio", &bval, true);
+        host::ConfigReadBool(subgroup, "warnio", &bval, true);
         setWarnIo( bval );  // default
     }
 
@@ -282,11 +282,11 @@ SysCfgState::saveIni() const
             char val[10];
             sprintf(&val[0], "0x%03X", m_slot[slot].addr);
             std::string cardname = CardInfo::getCardName(cardtype);
-            Host::ConfigWriteStr(subgroup, "type", cardname);
-            Host::ConfigWriteStr(subgroup, "addr", &val[0]);
+            host::ConfigWriteStr(subgroup, "type", cardname);
+            host::ConfigWriteStr(subgroup, "addr", &val[0]);
         } else {
-            Host::ConfigWriteStr(subgroup, "type", "");
-            Host::ConfigWriteStr(subgroup, "addr", "");
+            host::ConfigWriteStr(subgroup, "type", "");
+            host::ConfigWriteStr(subgroup, "addr", "");
         }
 
         if (m_slot[slot].cardCfg != nullptr) {
@@ -300,22 +300,22 @@ SysCfgState::saveIni() const
     {
         const std::string subgroup("cpu");
 
-        auto cpuCfg = System2200::getCpuConfig(m_cputype);
+        auto cpuCfg = system2200::getCpuConfig(m_cputype);
         assert(cpuCfg != nullptr);
         std::string cpuLabel = cpuCfg->label;
-        Host::ConfigWriteStr(subgroup, "cpu", cpuLabel.c_str());
+        host::ConfigWriteStr(subgroup, "cpu", cpuLabel.c_str());
 
-        Host::ConfigWriteInt(subgroup, "memsize", getRamKB());
+        host::ConfigWriteInt(subgroup, "memsize", getRamKB());
 
-        const char *foo = (System2200::isCpuSpeedRegulated()) ? "regulated" : "unregulated";
-        Host::ConfigWriteStr(subgroup, "speed", foo);
+        const char *foo = (system2200::isCpuSpeedRegulated()) ? "regulated" : "unregulated";
+        host::ConfigWriteStr(subgroup, "speed", foo);
     }
 
     // save misc other config bits
     {
         const std::string subgroup("misc");
-        Host::ConfigWriteBool(subgroup, "disk_realtime", getDiskRealtime());
-        Host::ConfigWriteBool(subgroup, "warnio",        getWarnIo());
+        host::ConfigWriteBool(subgroup, "disk_realtime", getDiskRealtime());
+        host::ConfigWriteBool(subgroup, "warnio",        getWarnIo());
     }
 }
 
@@ -447,7 +447,7 @@ SysCfgState::editCardConfig(int slot)
         // FIXME: this is a raw pointer from the m_cardInSlot[] unique_ptr.
         //        it is safe, but it feels dangerous to be using the raw ptr.
         //        all calls of getInstFromSlot() should be reviewed too.
-        auto inst = System2200::getInstFromSlot(slot);
+        auto inst = system2200::getInstFromSlot(slot);
         if (inst == nullptr) {
             // this must be a newly created slot that hasn't been put into
             // the IoMap yet.  create a temp object so we can edit the cardCfg.

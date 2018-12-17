@@ -70,7 +70,7 @@ lines of code are in the GUI code.
 
 
 ----------------------------------------------------------------------------
-Naming Conventions
+Coding Style Conventions
 ----------------------------------------------------------------------------
 
 As noted earlier, the code base was an ad-hoc evolution, not a design, which
@@ -83,6 +83,11 @@ is still plenty of room for improvement.
 Here then are some rules that I attempted to follow when reworking the code.
 There are certainly cases where it wasn't followed, but most code adheres
 to these rules.
+
+--- naming ---
+
+Namespace names are all lower-case, akin to how "std" is.  The corresponding
+filename should also be lowercase to match.
 
 Class names begin with Capital letters, and each word in the name starts
 with a cap.  No underscores.  In the case of acronyms that are normally
@@ -117,6 +122,48 @@ called "class Foo".  Some .cpp got so big that I split them into a few
 .cpp files.  For instance, UiCrt.cpp is the main code for class Crt, but
 UiCrt_Charset.cpp contains the bitmap font data, UiCrt_Keyboard.cpp holds
 the keyboard mapping tables and mapping logic.
+
+--- spacing ---
+
+Don't use tabs, only spaces.
+
+Indentation is 4 spaces per level.  Lines which cross multiple lines
+can use whatever indentation is desired to best convey the code intent.
+
+No spaces at the end of lines.  No blank lines at the start or end of
+a file.
+
+One or two blank lines between functions.
+
+Use comment lines to break code up into functional sections, perhaps with
+lightweight dividers that are just a single long line of dashes, and
+heaveyweight dividers which are like this:
+
+   // ==================================================================
+   // virtual file routines
+   // ==================================================================
+
+Generally try to keep code to 80 characters per line or less, but it is OK
+to go over somewhat on occasion.  But if the line gets over 100 characters,
+consider splitting it up.
+
+Parallel constructs can use spacing to align similar behavior across
+different lines of code even if in isolation any one line might be
+oddly formatted.  For example.
+    int file_size_KB = (foo->total_bytes + 1023) / 1024;
+    int words        =  foo->word_count;
+
+There should be one space between the keywords 'if', 'for', 'while', and
+'switch' and the following '('. Don't make them look like function calls.
+    for (int i=1; i<=10; i++) { ... }  <-- good
+    for(int i=1; i<=10; i++) { ... }   <-- bad
+
+Use the original K&R brace style unless there is some exceptional reason, eg
+    if (condition) {      <-- opening brace on same line as the condition
+       some code
+    } else {              <-- braces hug the else
+       other code
+    }                     <-- closing brace by itself, same indentation as if
 
 
 ----------------------------------------------------------------------------
@@ -198,9 +245,9 @@ parameter to specify which set of ROMs to use.
 
 The actual classes are Cpu2200t and Cpu2200vp.
 
----- Host ----
+---- host ----
 
-Host is a namespace encapsulating some host-dependent utility functions.
+host is a namespace encapsulating some host-dependent utility functions.
 Mainly, it is a means for saving and restoring the emulator configuration,
 for accessing files of various categories, and for getting real time
 information.
@@ -232,9 +279,9 @@ display the configuration state and possibilities to the user.
 class CardCfgState is a helper class that can contain state which is specific
 to a particular kind of card.
 
----- System2200 ----
+---- system2200 ----
 
-System2200 is the owner of the emulated computer system.  Before the 3.0
+system2200 is the owner of the emulated computer system.  Before the 3.0
 release, it was a "borg" singleton class, but in 3.0 it was converted to
 just be a namespace.  TheApp::OnInit() function is what calls
 System2200::initialized() to get the ball rolling.

@@ -30,10 +30,10 @@
 
 #include "DiskCtrlCfgState.h"
 #include "IoCardDisk.h"
-#include "Ui.h"         // for UI_Alert()
+#include "Ui.h"           // for UI_Alert()
 #include "Cpu2200.h"
 #include "Scheduler.h"
-#include "System2200.h"
+#include "system2200.h"   // for dbglog()
 #include "SysCfgState.h"
 #include "Wvd.h"
 

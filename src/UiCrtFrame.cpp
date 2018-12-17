@@ -2,11 +2,11 @@
 // headers
 // ----------------------------------------------------------------------------
 
-#include "Host.h"
+#include "host.h"
 #include "IoCardDisk.h"
 #include "IoCardKeyboard.h"     // to pick up core_* keyboard interface
 #include "IoCardPrinter.h"
-#include "System2200.h"
+#include "system2200.h"
 #include "TerminalState.h"
 #include "Ui.h"                 // emulator interface
 #include "UiSystem.h"
@@ -356,11 +356,11 @@ CrtFrame::makeMenubar(bool primary_crt, bool smart_term)
 
     // printer view
     wxMenu *menuPrinter = nullptr;
-    if (primary_crt && (System2200::getPrinterIoAddr(0) >= 0)) {
+    if (primary_crt && (system2200::getPrinterIoAddr(0) >= 0)) {
         // there is at least one printer
         menuPrinter = new wxMenu;
         for (int i=0; ; i++) {
-            const int io_addr = System2200::getPrinterIoAddr(i);
+            const int io_addr = system2200::getPrinterIoAddr(i);
             if (io_addr < 0) {
                 break;
             }
@@ -388,11 +388,11 @@ CrtFrame::makeMenubar(bool primary_crt, bool smart_term)
     if (primary_crt) {
         menuConfig->Append(Configure_Stats,      "Statistics",                "Toggle statistics on statusbar",      wxITEM_CHECK);
     }
-    if (System2200::getKbIoAddr(1) >= 0) {
+    if (system2200::getKbIoAddr(1) >= 0) {
         // there is more than one keyboard
         menuConfig->AppendSeparator();
         for (int i=0; ; i++) {
-            const int addr = System2200::getKbIoAddr(i);
+            const int addr = system2200::getKbIoAddr(i);
             if (addr < 0) {
                 break;
             }
@@ -436,13 +436,13 @@ CrtFrame::setMenuChecks(const wxMenu *menu)
 {
     // ----- file --------------------------------------
     if (isPrimaryCrt()) {
-        const bool script_running = System2200::kb_scriptModeActive(m_assoc_kb_addr, m_term_num);
+        const bool script_running = system2200::kb_scriptModeActive(m_assoc_kb_addr, m_term_num);
         m_menuBar->Enable(File_Script, !script_running);
     }
 
     // ----- cpu ---------------------------------------
     if (isPrimaryCrt()) {
-        const bool regulated = System2200::isCpuSpeedRegulated();
+        const bool regulated = system2200::isCpuSpeedRegulated();
         m_menuBar->Check( CPU_ActualSpeed,       regulated );
         m_menuBar->Check( CPU_UnregulatedSpeed, !regulated );
     }
@@ -467,10 +467,10 @@ CrtFrame::setMenuChecks(const wxMenu *menu)
         // see if there are any disk controllers
         for (int controller=0; ; controller++) {
             int slot, io_addr;
-            if (!System2200::findDiskController(controller, &slot)) {
+            if (!system2200::findDiskController(controller, &slot)) {
                 break;
             }
-            bool ok = System2200::getSlotInfo(slot, nullptr, &io_addr);
+            bool ok = system2200::getSlotInfo(slot, nullptr, &io_addr);
             assert(ok); ok=ok;
             for (int d=0; d<2; d++) {
                 const int stat = IoCardDisk::wvdDriveStatus(slot, d);
@@ -501,10 +501,10 @@ CrtFrame::setMenuChecks(const wxMenu *menu)
         if (isPrimaryCrt()) {
             m_menuBar->Check( Configure_Stats,   getShowStatistics() );
         }
-        if (System2200::getKbIoAddr(1) >= 0) {
+        if (system2200::getKbIoAddr(1) >= 0) {
             // there is more than one keyboard
             for (int i=0; ; i++) {
-                const int addr = System2200::getKbIoAddr(i);
+                const int addr = system2200::getKbIoAddr(i);
                 if (addr < 0) {
                     break;
                 }
@@ -747,38 +747,38 @@ CrtFrame::saveDefaults()
     std::string subgroup(sg.str());
 
     // save screen color
-    Host::ConfigWriteInt(subgroup, "colorscheme", getDisplayColorScheme());
+    host::ConfigWriteInt(subgroup, "colorscheme", getDisplayColorScheme());
 
     // save font choice
-    Host::ConfigWriteInt(subgroup, "fontsize",  m_fontsize[0]);
-    Host::ConfigWriteInt(subgroup, "fontsize2", m_fontsize[1]);
+    host::ConfigWriteInt(subgroup, "fontsize",  m_fontsize[0]);
+    host::ConfigWriteInt(subgroup, "fontsize2", m_fontsize[1]);
 
     // save contrast/brightness
-    Host::ConfigWriteInt(subgroup, "contrast",   m_crt->getDisplayContrast() );
-    Host::ConfigWriteInt(subgroup, "brightness", m_crt->getDisplayBrightness() );
+    host::ConfigWriteInt(subgroup, "contrast",   m_crt->getDisplayContrast() );
+    host::ConfigWriteInt(subgroup, "brightness", m_crt->getDisplayBrightness() );
 
     // save keyword mode
-    Host::ConfigWriteBool(subgroup, "keywordmode", getKeywordMode() );
+    host::ConfigWriteBool(subgroup, "keywordmode", getKeywordMode() );
 
     // save tied keyboard io address
     std::ostringstream tfoo;
     tfoo << "0x" << std::setw(2) << std::setfill('0') << std::uppercase << std::hex << m_assoc_kb_addr;
     std::string foo(tfoo.str());
-    Host::ConfigWriteStr(subgroup, "tied_keyboard", foo);
+    host::ConfigWriteStr(subgroup, "tied_keyboard", foo);
 
     // save position and size
     if (!m_fullscreen) {
-        Host::ConfigWriteWinGeom(this, subgroup);
+        host::ConfigWriteWinGeom(this, subgroup);
     }
 
     // save statistics display mode
-    Host::ConfigWriteBool(subgroup, "timingstats", getShowStatistics() );
+    host::ConfigWriteBool(subgroup, "timingstats", getShowStatistics() );
 
     // save toolbar status
-    Host::ConfigWriteBool(subgroup, "toolbar", m_toolBar->IsShown());
+    host::ConfigWriteBool(subgroup, "toolbar", m_toolBar->IsShown());
 
     // save fullscreen status
-    Host::ConfigWriteBool(subgroup, "fullscreen", m_fullscreen);
+    host::ConfigWriteBool(subgroup, "fullscreen", m_fullscreen);
 }
 
 
@@ -796,11 +796,11 @@ CrtFrame::getDefaults()
     std::string subgroup(sg.str());
 
     // pick up keyword mode (A/a vs Keyword/A)
-    Host::ConfigReadBool(subgroup, "keywordmode", &b, false);
+    host::ConfigReadBool(subgroup, "keywordmode", &b, false);
     setKeywordMode(b);
 
     // pick up tied keyboard io address
-    b = Host::ConfigReadInt(subgroup, "tied_keyboard", &v);
+    b = host::ConfigReadInt(subgroup, "tied_keyboard", &v);
     if (b && (v >= 0x00) && (v <= 0xFF)) {
         m_assoc_kb_addr = v;
     } else {
@@ -810,7 +810,7 @@ CrtFrame::getDefaults()
     int found = 0;
 // FIXME: why 10?  why not NUM_IOSLOTS?
     for (int i=0; i<10; i++) {
-        if (System2200::getKbIoAddr(i) == m_assoc_kb_addr) {
+        if (system2200::getKbIoAddr(i) == m_assoc_kb_addr) {
             found = 1;
             break;
         }
@@ -821,28 +821,28 @@ CrtFrame::getDefaults()
 
     // pick up statistics display mode
     bool showstats;
-    Host::ConfigReadBool(subgroup, "timingstats", &showstats, false );
+    host::ConfigReadBool(subgroup, "timingstats", &showstats, false );
     setShowStatistics(showstats);
 
     // save toolbar status
     bool show_toolbar;
-    Host::ConfigReadBool(subgroup, "toolbar", &show_toolbar, false );
+    host::ConfigReadBool(subgroup, "toolbar", &show_toolbar, false );
     m_toolBar->Show(show_toolbar);
 
     // pick up screen location and size
     wxRect default_geom(50,50,690,380);
-    Host::ConfigReadWinGeom(this, subgroup, &default_geom);
+    host::ConfigReadWinGeom(this, subgroup, &default_geom);
 
     // pick up fullscreen status
-    Host::ConfigReadBool(subgroup, "fullscreen", &m_fullscreen, false);
+    host::ConfigReadBool(subgroup, "fullscreen", &m_fullscreen, false);
 
     // this must be done before changing the color scheme
-    Host::ConfigReadInt(subgroup, "contrast", &v, 100 );
+    host::ConfigReadInt(subgroup, "contrast", &v, 100 );
     m_crt->setDisplayContrast(v);
-    Host::ConfigReadInt(subgroup, "brightness", &v, 0 );
+    host::ConfigReadInt(subgroup, "brightness", &v, 0 );
     m_crt->setDisplayBrightness(v);
 
-    (void)Host::ConfigReadInt(subgroup, "colorscheme", &v, 0);
+    (void)host::ConfigReadInt(subgroup, "colorscheme", &v, 0);
     if ((v >= 0) && (v < num_colorschemes)) {
         setDisplayColorScheme(v);
     } else {
@@ -851,11 +851,11 @@ CrtFrame::getDefaults()
 
     // pick up screen font size
     m_fontsize[0] = m_fontsize[1] = 2; // default
-    b = Host::ConfigReadInt(subgroup, "fontsize", &v);
+    b = host::ConfigReadInt(subgroup, "fontsize", &v);
     if (b && ((v >=1 && v <= 3) || (v >= 8 && v <= 28))) {
         m_fontsize[0] = v;
     }
-    (void)Host::ConfigReadInt(subgroup, "fontsize2", &v);
+    (void)host::ConfigReadInt(subgroup, "fontsize2", &v);
     if (b && ((v >=1 && v <= 3) || (v >= 8 && v <= 28))) {
         m_fontsize[1] = v;
     }
@@ -938,10 +938,10 @@ void
 CrtFrame::OnScript(wxCommandEvent& WXUNUSED(event))
 {
     std::string fullpath;
-    const int r = Host::fileReq(Host::FILEREQ_SCRIPT, "Script to execute", 1, &fullpath);
-    if (r == Host::FILEREQ_OK) {
+    const int r = host::fileReq(host::FILEREQ_SCRIPT, "Script to execute", 1, &fullpath);
+    if (r == host::FILEREQ_OK) {
         // tell the core emulator to redirect input for a while
-        System2200::kb_invokeScript(m_assoc_kb_addr, m_term_num, fullpath);
+        system2200::kb_invokeScript(m_assoc_kb_addr, m_term_num, fullpath);
     }
 }
 
@@ -953,8 +953,8 @@ CrtFrame::OnSnapshot(wxCommandEvent& WXUNUSED(event))
     // get the name of a file to execute
     std::string fullpath;
 
-    const int r = Host::fileReq(Host::FILEREQ_GRAB, "Filename of image", 0, &fullpath);
-    if (r == Host::FILEREQ_OK) {
+    const int r = host::fileReq(host::FILEREQ_GRAB, "Filename of image", 0, &fullpath);
+    if (r == host::FILEREQ_OK) {
         const wxBitmap* bitmap = m_crt->grabScreen();
         assert(bitmap != nullptr);
         bitmap->SaveFile(wxString(fullpath), wxBITMAP_TYPE_BMP);
@@ -969,9 +969,9 @@ CrtFrame::OnDump(wxCommandEvent& WXUNUSED(event))
 {
     // get the name of a file to execute
     std::string fullpath;
-    int r = Host::fileReq(Host::FILEREQ_GRAB, "Name of file to save to", 0, &fullpath);
+    int r = host::fileReq(host::FILEREQ_GRAB, "Name of file to save to", 0, &fullpath);
 
-    if (r == Host::FILEREQ_OK) {
+    if (r == host::FILEREQ_OK) {
         dump_ram(fullpath);
     }
 }
@@ -982,7 +982,7 @@ CrtFrame::OnDump(wxCommandEvent& WXUNUSED(event))
 void
 CrtFrame::OnQuit(wxCommandEvent& WXUNUSED(event))
 {
-    System2200::terminate(); // shut down all windows and exit
+    system2200::terminate(); // shut down all windows and exit
 }
 
 
@@ -993,12 +993,12 @@ CrtFrame::OnReset(wxCommandEvent &event)
         default:
             assert(false);
         case CPU_HardReset:
-            System2200::reset(true);  // hard reset
+            system2200::reset(true);  // hard reset
             break;
         case CPU_WarmReset:
             // route it through the keyboard handler because the MXD
             // filters out resets which aren't from terminal #1
-            System2200::kb_keystroke(getTiedAddr(), m_term_num, IoCardKeyboard::KEYCODE_RESET);
+            system2200::kb_keystroke(getTiedAddr(), m_term_num, IoCardKeyboard::KEYCODE_RESET);
             break;
     }
 }
@@ -1007,7 +1007,7 @@ CrtFrame::OnReset(wxCommandEvent &event)
 void
 CrtFrame::OnCpuSpeed(wxCommandEvent &event)
 {
-    System2200::regulateCpuSpeed( (event.GetId() == CPU_ActualSpeed) );
+    system2200::regulateCpuSpeed( (event.GetId() == CPU_ActualSpeed) );
 }
 
 
@@ -1016,8 +1016,8 @@ CrtFrame::OnDiskFactory(wxCommandEvent &event)
 {
     std::string filename("");
     if (event.GetId() == Disk_Inspect) {
-        if (Host::fileReq(Host::FILEREQ_DISK, "Virtual Disk Name", 1, &filename) !=
-                          Host::FILEREQ_OK) {
+        if (host::fileReq(host::FILEREQ_DISK, "Virtual Disk Name", 1, &filename) !=
+                          host::FILEREQ_OK) {
             return;     // canceled
         }
     }
@@ -1033,10 +1033,10 @@ CrtFrame::OnDiskFactory(wxCommandEvent &event)
 void
 CrtFrame::doInspect(const std::string &filename)
 {
-    System2200::freezeEmu(true);    // halt emulation
+    system2200::freezeEmu(true);    // halt emulation
 
     int slot, drive;
-    const bool in_use = System2200::findDisk(filename, &slot, &drive, nullptr);
+    const bool in_use = system2200::findDisk(filename, &slot, &drive, nullptr);
     if (in_use) {
         // close filehandles to the specified drive
         IoCardDisk::wvdFlush(slot, drive);
@@ -1045,7 +1045,7 @@ CrtFrame::doInspect(const std::string &filename)
     DiskFactory *factory = new DiskFactory(this, filename);
     factory->ShowModal();
 
-    System2200::freezeEmu(false);   // run emulation
+    system2200::freezeEmu(false);   // run emulation
 }
 
 
@@ -1053,8 +1053,8 @@ void
 CrtFrame::OnDiskFormat(wxCommandEvent& WXUNUSED(event))
 {
     std::string filename;
-    if (Host::fileReq(Host::FILEREQ_DISK, "Virtual Disk Name", 1, &filename) !=
-                      Host::FILEREQ_OK) {
+    if (host::fileReq(host::FILEREQ_DISK, "Virtual Disk Name", 1, &filename) !=
+                      host::FILEREQ_OK) {
         return; // cancelled
     }
 
@@ -1065,13 +1065,13 @@ CrtFrame::OnDiskFormat(wxCommandEvent& WXUNUSED(event))
 void
 CrtFrame::doFormat(const std::string &filename)
 {
-    System2200::freezeEmu(true);    // halt emulation
+    system2200::freezeEmu(true);    // halt emulation
 
     bool wp;
     bool ok = IoCardDisk::wvdGetWriteProtect(filename, &wp);
     if (ok) {
         int slot, drive, io_addr;
-        const bool in_use = System2200::findDisk(filename, &slot, &drive, &io_addr);
+        const bool in_use = system2200::findDisk(filename, &slot, &drive, &io_addr);
 
         wxString prompt = "";
         if (in_use) {
@@ -1098,7 +1098,7 @@ CrtFrame::doFormat(const std::string &filename)
         UI_Error("Error: operation failed");
     }
 
-    System2200::freezeEmu(false);   // run emulation
+    system2200::freezeEmu(false);   // run emulation
 }
 
 
@@ -1117,10 +1117,10 @@ CrtFrame::OnDisk(wxCommandEvent &event)
 
         case 0: // insert disk
         {   std::string fullpath;
-            if (Host::fileReq(Host::FILEREQ_DISK, "Disk to load", 1, &fullpath) ==
-                              Host::FILEREQ_OK) {
+            if (host::fileReq(host::FILEREQ_DISK, "Disk to load", 1, &fullpath) ==
+                              host::FILEREQ_OK) {
                 int drive2, io_addr2;
-                const bool b = System2200::findDisk(fullpath, nullptr, &drive2, &io_addr2);
+                const bool b = system2200::findDisk(fullpath, nullptr, &drive2, &io_addr2);
                 if (b) {
                     UI_Warn("Disk already in drive %c /%03x", "FC"[drive2], io_addr2);
                     return;
@@ -1167,8 +1167,8 @@ CrtFrame::OnDisplayFullscreen(wxCommandEvent& WXUNUSED(event))
 void
 CrtFrame::OnClose(wxCloseEvent& WXUNUSED(event))
 {
-    System2200::freezeEmu(true);
-    System2200::terminate(); // shut down all windows and exit
+    system2200::freezeEmu(true);
+    system2200::terminate(); // shut down all windows and exit
 }
 
 
@@ -1193,7 +1193,7 @@ CrtFrame::OnTimer(wxTimerEvent &event)
 void
 CrtFrame::OnConfigureDialog(wxCommandEvent& WXUNUSED(event)) noexcept
 {
-    System2200::reconfigure();
+    system2200::reconfigure();
 }
 
 void
@@ -1202,12 +1202,12 @@ CrtFrame::OnConfigureScreenDialog(wxCommandEvent& WXUNUSED(event))
     wxString title;
     title.Printf( "Display /%03X Configuration", m_crt_addr);
 
-    System2200::freezeEmu(true);    // halt emulation
+    system2200::freezeEmu(true);    // halt emulation
 
     CrtConfigDlg dlg(this, title);
     dlg.ShowModal();
 
-    System2200::freezeEmu(false);   // run emulation
+    system2200::freezeEmu(false);   // run emulation
 }
 
 
@@ -1245,7 +1245,7 @@ CrtFrame::OnConfigureKbTie(wxCommandEvent &event)
     assert( (id >= Configure_KB_Tie0) && (id <= Configure_KB_TieN) );
 
     const int idx = id - Configure_KB_Tie0;
-    const int new_addr = System2200::getKbIoAddr(idx);
+    const int new_addr = system2200::getKbIoAddr(idx);
     assert(new_addr >= 0);
 
     m_assoc_kb_addr = new_addr;
@@ -1260,8 +1260,8 @@ CrtFrame::OnPrinter(wxCommandEvent &event)
 
     // map chosen device to an I/O address
     const int idx = id - Printer_0;
-    const int io_addr = System2200::getPrinterIoAddr(idx);
-    const IoCard *inst = System2200::getInstFromIoAddr(io_addr);
+    const int io_addr = system2200::getPrinterIoAddr(idx);
+    const IoCard *inst = system2200::getInstFromIoAddr(io_addr);
     assert(inst != nullptr);
 
     // get the printer controller card handle
@@ -1281,17 +1281,17 @@ CrtFrame::OnPrintAndClear(wxCommandEvent& WXUNUSED(event))
     // loop through each printer and ask it to print and clear its contents.
     // the clear should only be invoked if the print was successful,
     // otherwise a warning message should be displayed.
-    if (System2200::getPrinterIoAddr(0) >= 0) {
+    if (system2200::getPrinterIoAddr(0) >= 0) {
 
         // there is at least one printer
         for (int i=0; ; i++) {
-            const int io_addr = System2200::getPrinterIoAddr(i);
+            const int io_addr = system2200::getPrinterIoAddr(i);
             if (io_addr < 0) {
                 break; // no more printers
             }
 
             // map device I/O address to card handle
-            const IoCard *inst = System2200::getInstFromIoAddr(io_addr);
+            const IoCard *inst = system2200::getInstFromIoAddr(io_addr);
             assert(inst != nullptr);
             const IoCardPrinter *card = dynamic_cast<const IoCardPrinter*>(inst);
             assert(card != nullptr);
@@ -1317,7 +1317,7 @@ CrtFrame::OnToolBarButton(wxCommandEvent &event)
                       : (shift)         ? (sf | (id - TB_SF0 + 16))
                                         : (sf | (id - TB_SF0));
 
-    System2200::kb_keystroke(getTiedAddr(), m_term_num, keycode);
+    system2200::kb_keystroke(getTiedAddr(), m_term_num, keycode);
 }
 
 

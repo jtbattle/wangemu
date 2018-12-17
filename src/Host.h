@@ -34,14 +34,14 @@
 class wxWindow;
 class wxRect;
 
-namespace Host
+namespace host
 {
     // must be called at time 0 to initialize things
     void initialize();
 
     // this should be called at the end of the world to really free resources.
     // this could be avoided by creating/destroying m_config object on each
-    // new Host, but that is excessive churn during start up / shut down, no?
+    // new host, but that is excessive churn during start up / shut down, no?
     void terminate();
 
     // ---- read or write an entry in the configuration file ----

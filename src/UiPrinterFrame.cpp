@@ -49,8 +49,8 @@
 // headers
 // ----------------------------------------------------------------------------
 
-#include "Host.h"
-#include "System2200.h"
+#include "host.h"
+#include "system2200.h"
 #include "Ui.h"                 // emulator interface
 #include "UiSystem.h"           // sharing info between UI_wxgui modules
 #include "UiPrinter.h"
@@ -200,7 +200,7 @@ PrinterFrame::PrinterFrame(const wxString& title, const int io_addr) :
 
     setupRealPrinter();
 
-    System2200::freezeEmu(false);
+    system2200::freezeEmu(false);
 }
 
 
@@ -331,27 +331,27 @@ PrinterFrame::saveDefaults()
     m_printer->getPageAttributes(llen, plen);
 
     // save position and size
-    Host::ConfigWriteWinGeom(this, subgroup);
+    host::ConfigWriteWinGeom(this, subgroup);
 
     // save page attributes
-    Host::ConfigWriteInt(subgroup,  "pagelength",       plen);
-    Host::ConfigWriteInt(subgroup,  "linelength",       llen);
-    Host::ConfigWriteInt(subgroup,  "fontsize",         m_fontsize);
-    Host::ConfigWriteBool(subgroup, "greenbar",         m_printer->getGreenbar() );
-    Host::ConfigWriteBool(subgroup, "autoshow",         m_printer->getAutoshow() );
-    Host::ConfigWriteBool(subgroup, "printasgo",        m_printer->getPrintasgo() );
-    Host::ConfigWriteBool(subgroup, "portdirect",       m_printer->getPortdirect() );
-    Host::ConfigWriteStr(subgroup,  "portstring",       m_printer->getPortstring() );
-    Host::ConfigWriteInt(subgroup,  "orientation",      static_cast<int>(m_printer->getOrientation()) );
-    Host::ConfigWriteStr(subgroup,  "papername",        m_printer->getPaperName() );
-    Host::ConfigWriteInt(subgroup,  "paperid",          m_printer->getPaperId() );
-    Host::ConfigWriteInt(subgroup,  "paperbin",         m_printer->getBin() );
-    Host::ConfigWriteInt(subgroup,  "marginleft",       left);
-    Host::ConfigWriteInt(subgroup,  "marginright",      right);
-    Host::ConfigWriteInt(subgroup,  "margintop",        top);
-    Host::ConfigWriteInt(subgroup,  "marginbottom",     bottom);
-    Host::ConfigWriteInt(subgroup,  "previewzoom",      m_previewzoom);
-    Host::ConfigWriteStr(subgroup,  "realprintername",  m_printer->getRealPrinterName() );
+    host::ConfigWriteInt(subgroup,  "pagelength",       plen);
+    host::ConfigWriteInt(subgroup,  "linelength",       llen);
+    host::ConfigWriteInt(subgroup,  "fontsize",         m_fontsize);
+    host::ConfigWriteBool(subgroup, "greenbar",         m_printer->getGreenbar() );
+    host::ConfigWriteBool(subgroup, "autoshow",         m_printer->getAutoshow() );
+    host::ConfigWriteBool(subgroup, "printasgo",        m_printer->getPrintasgo() );
+    host::ConfigWriteBool(subgroup, "portdirect",       m_printer->getPortdirect() );
+    host::ConfigWriteStr(subgroup,  "portstring",       m_printer->getPortstring() );
+    host::ConfigWriteInt(subgroup,  "orientation",      static_cast<int>(m_printer->getOrientation()) );
+    host::ConfigWriteStr(subgroup,  "papername",        m_printer->getPaperName() );
+    host::ConfigWriteInt(subgroup,  "paperid",          m_printer->getPaperId() );
+    host::ConfigWriteInt(subgroup,  "paperbin",         m_printer->getBin() );
+    host::ConfigWriteInt(subgroup,  "marginleft",       left);
+    host::ConfigWriteInt(subgroup,  "marginright",      right);
+    host::ConfigWriteInt(subgroup,  "margintop",        top);
+    host::ConfigWriteInt(subgroup,  "marginbottom",     bottom);
+    host::ConfigWriteInt(subgroup,  "previewzoom",      m_previewzoom);
+    host::ConfigWriteStr(subgroup,  "realprintername",  m_printer->getRealPrinterName() );
 }
 
 
@@ -370,53 +370,53 @@ PrinterFrame::getDefaults()
 
     // pick up screen location and size
     wxRect default_geom(50,50,690,380);
-    Host::ConfigReadWinGeom(this, subgroup, &default_geom);
+    host::ConfigReadWinGeom(this, subgroup, &default_geom);
 
     // pick up screen font size
-    b = Host::ConfigReadInt(subgroup, "fontsize", &v);
+    b = host::ConfigReadInt(subgroup, "fontsize", &v);
     m_fontsize = (b && (v >= 8) && (v <= 28)) ? v : 12;
     m_printer->setFontSize(m_fontsize);
 
-    Host::ConfigReadBool(subgroup, "greenbar", &b, true);
+    host::ConfigReadBool(subgroup, "greenbar", &b, true);
     m_printer->setGreenbar(b);
 
     // pick up page attributes
     int plen, llen;
-    Host::ConfigReadInt(subgroup, "pagelength", &plen, 66);
-    Host::ConfigReadInt(subgroup, "linelength", &llen, 80);
+    host::ConfigReadInt(subgroup, "pagelength", &plen, 66);
+    host::ConfigReadInt(subgroup, "linelength", &llen, 80);
     m_printer->setPageAttributes(llen, plen);
 
     // pick up autoshow attribute
-    Host::ConfigReadBool(subgroup, "autoshow", &b, true);
+    host::ConfigReadBool(subgroup, "autoshow", &b, true);
     m_printer->setAutoshow(b);
 
     // pick up printasgo attribute
-    Host::ConfigReadBool(subgroup, "printasgo", &b, false);
+    host::ConfigReadBool(subgroup, "printasgo", &b, false);
     m_printer->setPrintasgo(b);
 
     // pick up portdirect attribute
-    Host::ConfigReadBool(subgroup, "portdirect", &b, false);
+    host::ConfigReadBool(subgroup, "portdirect", &b, false);
     m_printer->setPortdirect(b);
 
     // pick up portstring attribute
     std::string portstring("LPT1");
-    b = Host::ConfigReadStr(subgroup, "portstring", &portstring);
+    b = host::ConfigReadStr(subgroup, "portstring", &portstring);
     m_printer->setPortstring(portstring);
 
     // pick up page margins
     int left, right, top, bottom;
-    Host::ConfigReadInt(subgroup, "margintop",    &top,    50);
-    Host::ConfigReadInt(subgroup, "marginbottom", &bottom, 50);
-    Host::ConfigReadInt(subgroup, "marginleft",   &left,   50);
-    Host::ConfigReadInt(subgroup, "marginright",  &right,  50);
+    host::ConfigReadInt(subgroup, "margintop",    &top,    50);
+    host::ConfigReadInt(subgroup, "marginbottom", &bottom, 50);
+    host::ConfigReadInt(subgroup, "marginleft",   &left,   50);
+    host::ConfigReadInt(subgroup, "marginright",  &right,  50);
     m_printer->setMargins(left, right, top, bottom);
 
     // pick up page preview zoom factor
-    Host::ConfigReadInt(subgroup, "previewzoom", &m_previewzoom, 70);
+    host::ConfigReadInt(subgroup, "previewzoom", &m_previewzoom, 70);
 
     // pick up orientation
     int orientation;
-    Host::ConfigReadInt(subgroup, "orientation", &orientation, wxPORTRAIT);
+    host::ConfigReadInt(subgroup, "orientation", &orientation, wxPORTRAIT);
     m_printer->setOrientation(static_cast<wxPrintOrientation>(orientation));
 
     // pick up paper id
@@ -424,7 +424,7 @@ PrinterFrame::getDefaults()
     // instead we recalc the paperid from the papername. The papername is what
     // is important the paperid is an enum that might change at some point.
     wxPaperSize paperid = wxPAPER_NONE;
-    b = Host::ConfigReadStr(subgroup, "papername", &valstr);
+    b = host::ConfigReadStr(subgroup, "papername", &valstr);
     if (b) {
         paperid = PaperSize(valstr);
     }
@@ -439,7 +439,7 @@ PrinterFrame::getDefaults()
 
     // pick up paper bin
     wxPrintBin paperbin = wxPRINTBIN_DEFAULT;
-    b = Host::ConfigReadStr(subgroup, "paperbin", &valstr);
+    b = host::ConfigReadStr(subgroup, "paperbin", &valstr);
     if (b) {
         paperbin = PaperBin(valstr);
     }
@@ -447,7 +447,7 @@ PrinterFrame::getDefaults()
 
     // pick up printer name
     std::string printername("");
-    b = Host::ConfigReadStr(subgroup, "realprintername", &printername);
+    b = host::ConfigReadStr(subgroup, "realprintername", &printername);
     m_printer->setRealPrinterName(printername);
 }
 
@@ -528,17 +528,17 @@ PrinterFrame::OnFileClose(wxCommandEvent& WXUNUSED(event))
 void
 PrinterFrame::OnFileSaveAs(wxCommandEvent& WXUNUSED(event))
 {
-    System2200::freezeEmu(true);
+    system2200::freezeEmu(true);
     m_printer->saveToFile();
-    System2200::freezeEmu(false);
+    system2200::freezeEmu(false);
 }
 
 void
 PrinterFrame::OnPrintClear(wxCommandEvent& WXUNUSED(event))
 {
-    System2200::freezeEmu(true);
+    system2200::freezeEmu(true);
     m_printer->printClear();
-    System2200::freezeEmu(false);
+    system2200::freezeEmu(false);
 }
 
 
@@ -547,7 +547,7 @@ void
 PrinterFrame::PP_OnClose(wxCloseEvent &event)
 {
     const std::string subgroup("ui/printpreview");
-    Host::ConfigWriteWinGeom(this, subgroup, false);
+    host::ConfigWriteWinGeom(this, subgroup, false);
 
     wxPreviewControlBar *controlBar = ((wxPreviewFrame*)this)->GetControlBar();
     assert(controlBar != nullptr);
@@ -562,7 +562,7 @@ PrinterFrame::PP_OnClose(wxCloseEvent &event)
 void
 PrinterFrame::OnPrintPreview(wxCommandEvent& WXUNUSED(event))
 {
-    System2200::freezeEmu(true);
+    system2200::freezeEmu(true);
 
     //Pass two printout objects: for preview, and possible printing
     wxPrintDialogData printDialogData(*m_printData);
@@ -593,7 +593,7 @@ PrinterFrame::OnPrintPreview(wxCommandEvent& WXUNUSED(event))
 
     const std::string subgroup("ui/printpreview");
     wxRect default_geom(100,100,600,650);
-    Host::ConfigReadWinGeom(frame, subgroup, &default_geom, false);
+    host::ConfigReadWinGeom(frame, subgroup, &default_geom, false);
 
     frame->Initialize();
 
@@ -611,14 +611,14 @@ PrinterFrame::OnPrintPreview(wxCommandEvent& WXUNUSED(event))
 
     frame->Show();
 
-    System2200::freezeEmu(false);
+    system2200::freezeEmu(false);
 }
 
 
 void
 PrinterFrame::OnPrint(wxCommandEvent& WXUNUSED(event))
 {
-    System2200::freezeEmu(true);
+    system2200::freezeEmu(true);
 
     wxPrintDialogData printDialogData(*m_printData);
     wxPrinter printer(& printDialogData);
@@ -636,14 +636,14 @@ PrinterFrame::OnPrint(wxCommandEvent& WXUNUSED(event))
         (*m_printData) = printer.GetPrintDialogData().GetPrintData();
     }
 
-    System2200::freezeEmu(false);
+    system2200::freezeEmu(false);
 }
 
 
 void
 PrinterFrame::OnPrintSetup(wxCommandEvent& WXUNUSED(event))
 {
-    System2200::freezeEmu(true);
+    system2200::freezeEmu(true);
 
     wxPrintDialogData printDialogData(*m_printData);
     wxPrintDialog printerDialog(this, &printDialogData);
@@ -654,7 +654,7 @@ PrinterFrame::OnPrintSetup(wxCommandEvent& WXUNUSED(event))
 
     (*m_printData) = printerDialog.GetPrintDialogData().GetPrintData();
 
-    System2200::freezeEmu(false);
+    system2200::freezeEmu(false);
 }
 
 
@@ -745,7 +745,7 @@ PrinterFrame::OnConfigureDialog(wxCommandEvent& WXUNUSED(event))
     // and variables together. Values are transferred between them behind
     // the scenes, so here we don't have to query the controls for their
     // values.
-    System2200::freezeEmu(true);    // halt emulation
+    system2200::freezeEmu(true);    // halt emulation
 
     PrinterDialogDataTransfer *data = new PrinterDialogDataTransfer();
 
@@ -789,7 +789,7 @@ PrinterFrame::OnConfigureDialog(wxCommandEvent& WXUNUSED(event))
 
     delete data;
 
-    System2200::freezeEmu(false);   // run emulation
+    system2200::freezeEmu(false);   // run emulation
 }
 
 
@@ -828,7 +828,7 @@ PrinterFrame::printAndClear()
         return;
     }
 
-    System2200::freezeEmu(true);
+    system2200::freezeEmu(true);
 
     // remember where the focus was so we can restore it
     wxWindow *winHasFocus = FindFocus();
@@ -856,7 +856,7 @@ PrinterFrame::printAndClear()
     winHasFocus->SetFocus();
     winHasFocus = nullptr;
 
-    System2200::freezeEmu(false);
+    system2200::freezeEmu(false);
 }
 
 // vim: ts=8:et:sw=4:smarttab

@@ -13,7 +13,7 @@
 #include "UiSystem.h"           // sharing info between UI_wxgui modules
 #include "UiPrinter.h"          // this module's defines
 #include "UiPrinterFrame.h"     // parent's defines
-#include "Host.h"               // for Config* functions
+#include "host.h"               // for Config* functions
 
 #include <algorithm>            // for std::max
 #include <fstream>
@@ -426,10 +426,10 @@ void
 Printer::saveToFile()
 {
     std::string fullpath;
-    const int r = Host::fileReq(Host::FILEREQ_PRINTER,
+    const int r = host::fileReq(host::FILEREQ_PRINTER,
                                 "Save printer log file", 0,
                                 &fullpath);
-    if (r == Host::FILEREQ_OK) {
+    if (r == host::FILEREQ_OK) {
 
         // save the file
         std::ofstream ofs(fullpath, std::ofstream::out   |  // we're writing

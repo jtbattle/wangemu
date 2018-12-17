@@ -8,7 +8,6 @@
 #include "UiCrtErrorDlg.h"      // error code decoder
 #include "UiCrtFrame.h"         // this module's owner
 #include "TerminalState.h"      // state needed to create crt image
-#include "System2200.h"         // for kb_keystroke()
 
 #include <wx/sound.h>           // "beep!"
 

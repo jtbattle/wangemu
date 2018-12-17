@@ -6,7 +6,7 @@
 #include "UiSystem.h"           // sharing info between UI_wxgui modules
 #include "UiCrtFrame.h"
 #include "UiCrtConfigDlg.h"
-#include "Host.h"               // for Config*()
+#include "host.h"               // for Config*()
 
 #include "wx/slider.h"
 
@@ -186,7 +186,7 @@ CrtConfigDlg::saveDefaults()
     const std::string subgroup("ui/configscndlg");
 
     // save position and size
-    Host::ConfigWriteWinGeom(this, subgroup);
+    host::ConfigWriteWinGeom(this, subgroup);
 }
 
 
@@ -195,7 +195,7 @@ CrtConfigDlg::getDefaults()
 {
     // see if we've established a favored location and size
     const std::string subgroup("ui/configscndlg");
-    Host::ConfigReadWinGeom(this, subgroup);
+    host::ConfigReadWinGeom(this, subgroup);
 }
 
 // vim: ts=8:et:sw=4:smarttab

@@ -3,7 +3,7 @@
 // ----------------------------------------------------------------------------
 
 #include "Cpu2200.h"
-#include "System2200.h"
+#include "system2200.h"
 #include "SysCfgState.h"
 #include "UiSystem.h"           // sharing info between UI_wxgui modules
 #include "UiMyStaticText.h"     // sharing info between UI_wxgui modules
@@ -42,7 +42,7 @@ CrtErrorDlg::CrtErrorDlg( wxWindow *parent,
     SetBackgroundColour(bgc);
 
     // determine which entry matches
-    const int cpuType = System2200::config().getCpuType();
+    const int cpuType = system2200::config().getCpuType();
     const bool vp_mode = (cpuType != Cpu2200::CPUTYPE_2200B)
                       && (cpuType != Cpu2200::CPUTYPE_2200T);
     const std::vector<errtable_t> &pet = (vp_mode) ? errtable_vp : errtable;

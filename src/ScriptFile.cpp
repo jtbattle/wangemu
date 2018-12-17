@@ -7,7 +7,7 @@
 // This started life in my "Solace" Sol-20 emulator as script.c,
 // but it has been nearly completely rewritten C++ style.
 
-#include "Host.h"               // for Config* functions
+#include "host.h"               // for Config* functions
 #include "IoCardKeyboard.h"
 #include "ScriptFile.h"
 #include "Ui.h"                 // needed for UI_Alert()
@@ -38,7 +38,7 @@ ScriptFile::ScriptFile(const std::string &filename,
         m_cur_char(0)
 {
     // put in canonical format
-    m_filename = Host::asAbsolutePath(filename);
+    m_filename = host::asAbsolutePath(filename);
 
     // attempt to open the file for reading; set m_opened_ok accordingly
     // if success, set m_curline=1, read first line, set pointers, set EOF state
@@ -464,7 +464,7 @@ ScriptFile::getNextByte(int *byte)
                 // if the include file name isn't absolute, turn it to an
                 // absolute path, relative to the location of the current script
                 std::string abs_inc_fname;
-                if (Host::isAbsolutePath(inc_fname)) {
+                if (host::isAbsolutePath(inc_fname)) {
                     abs_inc_fname = inc_fname;
                 } else {
                     // determine the path to the current script
@@ -476,7 +476,7 @@ ScriptFile::getNextByte(int *byte)
                     size_t last_sep = m_filename.find_last_of("/");
                     tmp_fname = m_filename.substr(0,last_sep+1) + inc_fname;
 #endif
-                    abs_inc_fname = Host::asAbsolutePath(tmp_fname);
+                    abs_inc_fname = host::asAbsolutePath(tmp_fname);
                 }
 
                 // do include processing ...

@@ -4,12 +4,12 @@
 
 #include "CardInfo.h"
 #include "Cpu2200.h"
-#include "Host.h"
+#include "host.h"
 #include "IoCard.h"
 #include "Ui.h"                 // emulator interface
 #include "UiSystem.h"           // sharing info between UI_wxgui modules
 #include "UiSystemConfigDlg.h"
-#include "System2200.h"
+#include "system2200.h"
 
 enum
 {
@@ -85,8 +85,8 @@ SystemConfigDlg::SystemConfigDlg(wxFrame *parent) :
         m_btnRevert(nullptr),
         m_btnOk(nullptr),
         m_btnCancel(nullptr),
-        m_oldcfg( System2200::config() ),  // the existing configuration
-        m_cfg   ( System2200::config() )   // the one we will be editing
+        m_oldcfg(system2200::config()),  // the existing configuration
+        m_cfg   (system2200::config())   // the one we will be editing
 {
     const int v_text_margin = 4;
     const int h_text_margin = 8;
@@ -96,7 +96,7 @@ SystemConfigDlg::SystemConfigDlg(wxFrame *parent) :
 
     // leaf controls for leftgrid
     m_cpuType = new wxChoice(this, ID_CPU_CHOICE);
-    for (auto &cpuCfg : System2200::cpuConfigs) {
+    for (auto &cpuCfg : system2200::cpuConfigs) {
         m_cpuType->Append(cpuCfg.label.c_str(), (void *)cpuCfg.cpuType);
     }
 
@@ -227,7 +227,7 @@ SystemConfigDlg::setMemsizeStrings()
     m_memSize->Clear();  // erase any existing strings
 
     const int cpuType = m_cfg.getCpuType();
-    auto cpuCfg = System2200::getCpuConfig(cpuType);
+    auto cpuCfg = system2200::getCpuConfig(cpuType);
     assert(cpuCfg != nullptr);
 
     for (auto const kb : cpuCfg->ramSizeOptions) {
@@ -248,8 +248,8 @@ SystemConfigDlg::updateDlg()
 {
     const int cpuType = m_cfg.getCpuType();
     bool found = false;
-    for (unsigned int n=0; n<System2200::cpuConfigs.size(); ++n) {
-        if (System2200::cpuConfigs[n].cpuType == cpuType) {
+    for (unsigned int n=0; n<system2200::cpuConfigs.size(); ++n) {
+        if (system2200::cpuConfigs[n].cpuType == cpuType) {
             m_cpuType->SetSelection(n);
             found = true;
             break;
@@ -327,7 +327,7 @@ SystemConfigDlg::OnCpuChoice( wxCommandEvent& WXUNUSED(event) )
     setMemsizeStrings();
 
     // try to map current memory size to legal one
-    auto cpuCfg = System2200::getCpuConfig(cputype);
+    auto cpuCfg = system2200::getCpuConfig(cputype);
     assert(cpuCfg != nullptr);
 
     const int ram_choices = cpuCfg->ramSizeOptions.size();
@@ -459,7 +459,7 @@ SystemConfigDlg::OnButton(wxCommandEvent &event)
         case wxID_OK:
             if (configStateOk(true)) {
                 saveDefaults();         // save location & size of dlg
-                System2200::setConfig(m_cfg);
+                system2200::setConfig(m_cfg);
                 EndModal(0);
             }
             break;
@@ -492,7 +492,7 @@ SystemConfigDlg::saveDefaults()
     const std::string subgroup("ui/configdlg");
 
     // save position and size
-    Host::ConfigWriteWinGeom(this, subgroup);
+    host::ConfigWriteWinGeom(this, subgroup);
 }
 
 
@@ -501,7 +501,7 @@ SystemConfigDlg::getDefaults()
 {
     // see if we've established a favored location and size
     const std::string subgroup("ui/configdlg");
-    Host::ConfigReadWinGeom(this, subgroup);
+    host::ConfigReadWinGeom(this, subgroup);
 }
 
 

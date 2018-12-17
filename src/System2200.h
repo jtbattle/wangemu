@@ -1,5 +1,5 @@
 // ======================================================================
-// System2200 contains the various components of the system:
+// system2200 contains the various components of the system:
 //    scheduler
 //    current cpu
 //    config state
@@ -26,7 +26,7 @@ typedef std::function<int()>     clkCallback;
 typedef std::function<void(int)> kbCallback;
 
 // fixed services related to the overall simulation
-namespace System2200
+namespace system2200
 {
     // because everything is static, we have to be told when
     // the sim is really starting and ending.
@@ -143,7 +143,7 @@ namespace System2200
 // ------------------------------------------------------------------------
 // logging utility function for debug purposes
 // ------------------------------------------------------------------------
-// exported by System2200.cpp
+// exported by system2200.cpp
 void dbglog(const char *fmt, ...);
 
 #endif // _INCLUDE_SYSTEM2200_H_

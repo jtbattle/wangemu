@@ -15,7 +15,7 @@
 #include "IoCardKeyboard.h"   // for key encodings
 #include "Cpu2200.h"
 #include "Scheduler.h"
-#include "System2200.h"
+#include "system2200.h"
 #include "Terminal.h"
 #include "i8080.h"
 
@@ -112,7 +112,7 @@ IoCardTermMux::IoCardTermMux(std::shared_ptr<Scheduler> scheduler,
     }
 
     int io_addr;
-    bool ok = System2200::getSlotInfo(cardslot, nullptr, &io_addr);
+    bool ok = system2200::getSlotInfo(cardslot, nullptr, &io_addr);
     assert(ok); ok=ok;
 
     m_i8080 = i8080_new(IoCardTermMux::i8080_rd_func,
@@ -125,7 +125,7 @@ IoCardTermMux::IoCardTermMux(std::shared_ptr<Scheduler> scheduler,
 
     // register the i8080 for clock callback
     clkCallback cb = std::bind(&IoCardTermMux::execOneOp, this);
-    System2200::registerClockedDevice(cb);
+    system2200::registerClockedDevice(cb);
 
     // FIXME: just one for now
     m_terms[0].terminal =
@@ -526,7 +526,7 @@ IoCardTermMux::i8080_out_func(int addr, int byte, void *user_data)
 
     case OUT_PRIME:
         // issue (warm) reset
-        System2200::reset(false);
+        system2200::reset(false);
         break;
 
     case OUT_HALT_STEP:
