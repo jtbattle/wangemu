@@ -391,7 +391,7 @@ Crt::explainError(const std::string &errcode, const wxPoint &orig)
 {
     // launch it as a popup
     CrtErrorDlg dlg(this, errcode, wxPoint(orig.x, orig.y));
-    (void)dlg.ShowModal();
+    dlg.ShowModal();
 }
 
 

@@ -234,7 +234,7 @@ UI_Error(const char *fmt, ...)
 {
     va_list args;
     va_start(args, fmt);
-    (void)UI_AlertMsg( wxICON_ERROR, "Error", fmt, args );
+    UI_AlertMsg( wxICON_ERROR, "Error", fmt, args );
     va_end(args);
 }
 
@@ -244,7 +244,7 @@ UI_Warn(const char *fmt, ...)
 {
     va_list args;
     va_start(args, fmt);
-    (void)UI_AlertMsg( wxICON_EXCLAMATION, "Warning", fmt, args );
+    UI_AlertMsg( wxICON_EXCLAMATION, "Warning", fmt, args );
     va_end(args);
 }
 
@@ -253,7 +253,7 @@ UI_Info(const char *fmt, ...)
 {
     va_list args;
     va_start(args, fmt);
-    (void)UI_AlertMsg( wxICON_INFORMATION, "Information", fmt, args );
+    UI_AlertMsg( wxICON_INFORMATION, "Information", fmt, args );
     va_end(args);
 }
 

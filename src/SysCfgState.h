@@ -71,7 +71,7 @@ public:
     bool getWarnIo() const noexcept;
 
     // retrieve the pointer to the per-card configuration state
-    const std::shared_ptr<CardCfgState> getCardConfig(int slot) const;
+    const std::shared_ptr<CardCfgState> getCardConfig(int slot) const noexcept;
 
     // twiddle the state of the card in the given slot
     void editCardConfig(int slot);

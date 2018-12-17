@@ -201,7 +201,7 @@ DiskCtrlCfgState::configOk(bool warn) const noexcept
 
 // returns true if the state has changed in a way that requires a reboot
 bool
-DiskCtrlCfgState::needsReboot(const CardCfgState &other) const
+DiskCtrlCfgState::needsReboot(const CardCfgState &other) const noexcept
 {
     const DiskCtrlCfgState oother( dynamic_cast<const DiskCtrlCfgState&>(other) );
 

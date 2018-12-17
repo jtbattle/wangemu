@@ -196,7 +196,7 @@ SysCfgState::loadIni()
         b = Host::ConfigReadInt(subgroup, "memsize", &ival, dflt_ram);
         if (ival < min_ram) { ival = min_ram; }
         if (ival > max_ram) { ival = max_ram; }
-        for(int kb : cpuCfg->ramSizeOptions) {
+        for(const int kb : cpuCfg->ramSizeOptions) {
             if (ival <= kb) {
                 // round up to the next biggest ram in the list of valid sizes
                 setRamKB(kb);
@@ -307,7 +307,7 @@ SysCfgState::saveIni() const
 
         Host::ConfigWriteInt(subgroup, "memsize", getRamKB());
 
-        char *foo = (System2200::isCpuSpeedRegulated()) ? "regulated" : "unregulated";
+        const char *foo = (System2200::isCpuSpeedRegulated()) ? "regulated" : "unregulated";
         Host::ConfigWriteStr(subgroup, "speed", foo);
     }
 
@@ -429,7 +429,7 @@ SysCfgState::getSlotCardAddr(int slot) const noexcept
 
 // retrieve the pointer to the per-card configuration state
 const std::shared_ptr<CardCfgState>
-SysCfgState::getCardConfig(int slot) const
+SysCfgState::getCardConfig(int slot) const noexcept
 {
     assert(isSlotOccupied(slot));
     return m_slot[slot].cardCfg;

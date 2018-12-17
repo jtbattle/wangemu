@@ -234,7 +234,7 @@ IoCardDisk::getCfgState()
 
 // modify the existing configuration state
 void
-IoCardDisk::setConfiguration(const CardCfgState &cfg)
+IoCardDisk::setConfiguration(const CardCfgState &cfg) noexcept
 {
     const DiskCtrlCfgState &ccfg( dynamic_cast<const DiskCtrlCfgState&>(cfg) );
 
@@ -334,7 +334,7 @@ IoCardDisk::OBS(int val)
 }
 
 void
-IoCardDisk::CBS(int val)
+IoCardDisk::CBS(int val) noexcept
 {
     int val8 = val & 0xFF;
     val8 = val8;  // lint
@@ -478,7 +478,7 @@ IoCardDisk::setBusyState(bool busy)
 
 // true=same timing as real disk, false=going fast
 bool
-IoCardDisk::realtime_disk()
+IoCardDisk::realtime_disk() noexcept
 {
     return System2200::config().getDiskRealtime();
 }
@@ -649,7 +649,7 @@ IoCardDisk::wvdSeekTrack(int64 nominal_ns)
 // sector.  it does so by setting the secwait sector value and
 // the tcbSector routine checks when that sector is reached.
 void
-IoCardDisk::wvdSeekSector()
+IoCardDisk::wvdSeekSector() noexcept
 {
     assert(m_drive >= 0 && m_drive < numDrives());
 
@@ -850,7 +850,7 @@ IoCardDisk::wvdGetFilename(const int slot,
 // given a slot and a drive number, return drive status
 // returns a bitwise 'or' of the WVD_STAT_DRIVE_* enums
 int
-IoCardDisk::wvdDriveStatus(int slot, int drive)
+IoCardDisk::wvdDriveStatus(int slot, int drive) noexcept
 {
     ASSERT_VALID_SLOT(slot);
     ASSERT_VALID_DRIVE(drive);
@@ -931,8 +931,8 @@ IoCardDisk::wvdFlush(int slot, int drive)
     ASSERT_VALID_SLOT(slot);
     ASSERT_VALID_DRIVE(drive);
 
-    IoCardDisk *tthis = dynamic_cast<IoCardDisk*>
-                                (System2200::getInstFromSlot(slot));
+    const IoCardDisk *tthis = dynamic_cast<IoCardDisk*>
+                                    (System2200::getInstFromSlot(slot));
     assert(tthis != nullptr);
 
     tthis->m_d[drive].wvd->flush();
@@ -1069,9 +1069,9 @@ IoCardDisk::iwvdInsertDisk(int drive,
                      &disk_rpm,
                      &m_d[drive].interleave );
 
-    m_d[drive].tracks_per_platter =
-        int( (num_sectors + m_d[drive].sectors_per_track - 1) /
-                            m_d[drive].sectors_per_track      ) ;
+    m_d[drive].tracks_per_platter = static_cast<int>(
+             (num_sectors + m_d[drive].sectors_per_track - 1) /
+                            m_d[drive].sectors_per_track      );
     m_d[drive].ns_per_track  = TIMER_MS(track_seek_ms);
     m_d[drive].ns_per_sector =
                 TIMER_MS(  60000.0 // ms per minute
@@ -1137,7 +1137,7 @@ IoCardDisk::iwvdReadSector()
     for(int i=0; i<256; i++) {
         cksum += m_buffer[i];
     }
-    m_buffer[256] = (uint8)(cksum & 0xFF);      // LRC byte
+    m_buffer[256] = static_cast<uint8>(cksum & 0xFF);  // LRC byte
 
     return ok;
 }
@@ -1285,7 +1285,7 @@ platterHasValidCatalog(Wvd *wvd, int p)
         bool unused_seen = false;
         const int first_idxoff = (idx == 0) ? 1 : 0;
         for(int idxoff = first_idxoff; idxoff < 16; idxoff++) {
-            uint8 *entry = &secbuffer[16*idxoff];
+            const uint8 *entry = &secbuffer[16*idxoff];
             // byte 0 of the index indicates if the file is unused (0x00),
             // valid (0x10), scratched (0x11), or reclaimed (0x21).
             // any other value is a problem.  also, once an unused entry is
@@ -1326,6 +1326,7 @@ platterHasValidCatalog(Wvd *wvd, int p)
 bool
 IoCardDisk::platterHasBit15Problem(Wvd *wvd, int p, bool fix_it)
 {
+    assert(wvd != nullptr);
     uint8 secbuffer[257]; // 256B of data plus an LRC byte
 
     // get sector 0 of the platter;

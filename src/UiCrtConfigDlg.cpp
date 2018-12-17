@@ -123,7 +123,7 @@ CrtConfigDlg::~CrtConfigDlg()
 void
 CrtConfigDlg::OnFontChoice( wxCommandEvent &event )
 {
-    const int size = (int)(event.GetClientData());
+    const int size = reinterpret_cast<int>(event.GetClientData());
     CrtFrame *pp = wxStaticCast(GetParent(), CrtFrame);
     pp->setFontSize(size);
 }
@@ -162,7 +162,7 @@ CrtConfigDlg::updateDlg()
     const int font_size = pp->getFontSize();
     int font_choice = -1;
     for(unsigned int i=0; i<m_FontChoice->GetCount(); i++) {
-        if ((int)(m_FontChoice->GetClientData(i)) == font_size) {
+        if (reinterpret_cast<int>(m_FontChoice->GetClientData(i)) == font_size) {
             font_choice = i;
         }
     }

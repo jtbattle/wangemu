@@ -75,7 +75,7 @@ IoCardKeyboard::getAddresses() const
 }
 
 void
-IoCardKeyboard::reset(bool hard_reset)
+IoCardKeyboard::reset(bool hard_reset) noexcept
 {
     m_tmr_script = nullptr;
 
@@ -118,7 +118,7 @@ IoCardKeyboard::OBS(int val)
 }
 
 void
-IoCardKeyboard::CBS(int val)
+IoCardKeyboard::CBS(int val) noexcept
 {
     int val8 = val & 0xFF;
 

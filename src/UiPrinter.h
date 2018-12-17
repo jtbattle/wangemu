@@ -44,7 +44,7 @@ public:
     void setPageAttributes(int  linelength, int  pagelength) noexcept;
     void getPageAttributes(int &linelength, int &pagelength) const noexcept;
 
-    void getCellAttributes(int &cell_w, int &cell_h) const;
+    void getCellAttributes(int &cell_w, int &cell_h) const noexcept;
 
     void setAutoshow(bool b) noexcept;
     bool getAutoshow() const noexcept;
@@ -193,9 +193,9 @@ public:
     bool OnPrintPage(int page) override;
     bool OnBeginDocument(int startPage, int endPage) override;
 
-    bool HasPage(int page) override;
+    bool HasPage(int page) noexcept override;
     void GetPageInfo(int *minPage, int *maxPage,
-                     int *selPageFrom, int *selPageTo) override;
+                     int *selPageFrom, int *selPageTo) noexcept override;
 
 private:
     std::shared_ptr<Printer> m_printer;

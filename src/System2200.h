@@ -34,7 +34,7 @@ namespace System2200
     void cleanup();     // Armageddon
 
     // shut down the application
-    void terminate();
+    void terminate() noexcept;
 
     // (un)register a callback function which advances with the clock
     void registerClockedDevice(clkCallback cb) noexcept;
@@ -53,8 +53,8 @@ namespace System2200
     void reset(bool cold_reset);
 
     // change/query the simulation speed
-    void regulateCpuSpeed(bool regulated);
-    bool isCpuSpeedRegulated();
+    void regulateCpuSpeed(bool regulated) noexcept;
+    bool isCpuSpeedRegulated() noexcept;
 
     // temporarily halt emulation
     void freezeEmu(bool freeze) noexcept;
@@ -99,15 +99,15 @@ namespace System2200
 
     // returns false if the slot is empty, otherwise true.
     // returns card type index and io address via pointers.
-    bool getSlotInfo(int slot, int *cardtype_idx, int *addr);
+    bool getSlotInfo(int slot, int *cardtype_idx, int *addr) noexcept;
 
     // returns the IO address of the n-th keyboard (0-based).
     // if (n >= # of keyboards), returns -1.
-    int getKbIoAddr(int n);
+    int getKbIoAddr(int n) noexcept;
 
     // returns the IO address of the n-th printer (0-based).
     // if (n >= # of printers), returns -1.
-    int getPrinterIoAddr(int n);
+    int getPrinterIoAddr(int n) noexcept;
 
     // return the instance handle of the device at the specified IO address
     // used by IoCardKeyboard.c
@@ -135,8 +135,8 @@ namespace System2200
     } cpuconfig_t;
 
     extern const std::vector<cpuconfig_t> cpuConfigs;
-    const cpuconfig_t* getCpuConfig(const std::string &configName);
-    const cpuconfig_t* getCpuConfig(int configId);
+    const cpuconfig_t* getCpuConfig(const std::string &configName) noexcept;
+    const cpuconfig_t* getCpuConfig(int configId) noexcept;
 };
 
 

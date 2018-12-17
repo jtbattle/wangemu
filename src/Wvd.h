@@ -110,8 +110,8 @@ public:
     // returns true on success, false on failure.
     // these only apply to real disk images, not those that
     // have been created but not yet saved.
-    bool readSector (int platter, int sector, uint8 *buffer);
-    bool writeSector(int platter, int sector, uint8 *buffer);
+    bool readSector (int platter, int sector, const uint8 *buffer);
+    bool writeSector(int platter, int sector, const uint8 *buffer);
 
     // flush any pending write and close the filehandle,
     // but keep the association (unlike close())

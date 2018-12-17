@@ -955,7 +955,7 @@ CrtFrame::OnSnapshot(wxCommandEvent& WXUNUSED(event))
 
     const int r = Host::fileReq(Host::FILEREQ_GRAB, "Filename of image", 0, &fullpath);
     if (r == Host::FILEREQ_OK) {
-        wxBitmap* bitmap = m_crt->grabScreen();
+        const wxBitmap* bitmap = m_crt->grabScreen();
         assert(bitmap != nullptr);
         bitmap->SaveFile(wxString(fullpath), wxBITMAP_TYPE_BMP);
     }
@@ -1191,7 +1191,7 @@ CrtFrame::OnTimer(wxTimerEvent &event)
 }
 
 void
-CrtFrame::OnConfigureDialog(wxCommandEvent& WXUNUSED(event))
+CrtFrame::OnConfigureDialog(wxCommandEvent& WXUNUSED(event)) noexcept
 {
     System2200::reconfigure();
 }
@@ -1205,7 +1205,7 @@ CrtFrame::OnConfigureScreenDialog(wxCommandEvent& WXUNUSED(event))
     System2200::freezeEmu(true);    // halt emulation
 
     CrtConfigDlg dlg(this, title);
-    (void)dlg.ShowModal();
+    dlg.ShowModal();
 
     System2200::freezeEmu(false);   // run emulation
 }
@@ -1261,11 +1261,11 @@ CrtFrame::OnPrinter(wxCommandEvent &event)
     // map chosen device to an I/O address
     const int idx = id - Printer_0;
     const int io_addr = System2200::getPrinterIoAddr(idx);
-    IoCard *inst = System2200::getInstFromIoAddr(io_addr);
+    const IoCard *inst = System2200::getInstFromIoAddr(io_addr);
     assert(inst != nullptr);
 
     // get the printer controller card handle
-    const IoCardPrinter *card = dynamic_cast<IoCardPrinter*>(inst);
+    const IoCardPrinter *card = dynamic_cast<const IoCardPrinter*>(inst);
     assert(card != nullptr);
     PrinterFrame *prtwnd = card->getGuiPtr();
     assert(prtwnd != nullptr);
@@ -1291,9 +1291,9 @@ CrtFrame::OnPrintAndClear(wxCommandEvent& WXUNUSED(event))
             }
 
             // map device I/O address to card handle
-            IoCard *inst = System2200::getInstFromIoAddr(io_addr);
+            const IoCard *inst = System2200::getInstFromIoAddr(io_addr);
             assert(inst != nullptr);
-            const IoCardPrinter *card = dynamic_cast<IoCardPrinter*>(inst);
+            const IoCardPrinter *card = dynamic_cast<const IoCardPrinter*>(inst);
             assert(card != nullptr);
 
             // fetch associated gui window pointer and use it

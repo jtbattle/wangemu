@@ -128,7 +128,7 @@ getTerminationState() noexcept
 
 // returns true if the slot contains a disk controller, 0 otherwise
 static bool
-isDiskController(int slot)
+isDiskController(int slot) noexcept
 {
     assert(slot >= 0 && slot < NUM_IOSLOTS);
 
@@ -350,7 +350,7 @@ System2200::cleanup()
 // as such, at this point nothing has been shut down.
 // after all windows have been shut down, we receive OnExit().
 void
-System2200::terminate()
+System2200::terminate() noexcept
 {
     setTerminationState(TERMINATING);
 }
@@ -531,7 +531,7 @@ System2200::reset(bool cold_reset)
 // turn cpu speed regulation on (true) or off (false)
 // this is a convenience function
 void
-System2200::regulateCpuSpeed(bool regulated)
+System2200::regulateCpuSpeed(bool regulated) noexcept
 {
     current_cfg->regulateCpuSpeed(regulated);
 
@@ -544,7 +544,7 @@ System2200::regulateCpuSpeed(bool regulated)
 // indicate if the CPU is throttled or not
 // this is a convenience function
 bool
-System2200::isCpuSpeedRegulated()
+System2200::isCpuSpeedRegulated() noexcept
 {
     return current_cfg->isCpuSpeedRegulated();
 }
@@ -722,7 +722,8 @@ System2200::emulateTimeslice(int ts_ms)
                     // of this vs min() and then later sorting the clocked devices.
                     // at the very least, special case having two devices,
                     // rather than all this generalized sorting for N devices.
-                    const uint32 clamp_ns = m_clocked_devices[order[1]].ns - m_clocked_devices[order[0]].ns;
+                    const uint32 clamp_ns = m_clocked_devices[order[1]].ns
+                                          - m_clocked_devices[order[0]].ns;
                     const uint32 delta_ns = std::min(op_ns, clamp_ns);
                     slice_ns -= delta_ns;
                     scheduler->TimerTick(delta_ns);
@@ -1051,7 +1052,7 @@ System2200::kb_keyReady(int io_addr, int term_num)
 // returns false if the slot is empty, otherwise true.
 // returns card type index and io address via pointers.
 bool
-System2200::getSlotInfo(int slot, int *cardtype_idx, int *addr)
+System2200::getSlotInfo(int slot, int *cardtype_idx, int *addr) noexcept
 {
     assert(0 <= slot && slot < NUM_IOSLOTS);
     if (!current_cfg->isSlotOccupied(slot)) {
@@ -1073,7 +1074,7 @@ System2200::getSlotInfo(int slot, int *cardtype_idx, int *addr)
 // returns the IO address of the n-th keyboard (0-based).
 // if (n >= # of keyboards), returns -1.
 int
-System2200::getKbIoAddr(int n)
+System2200::getKbIoAddr(int n) noexcept
 {
     int num = 0;
 
@@ -1093,7 +1094,7 @@ System2200::getKbIoAddr(int n)
 // returns the IO address of the n-th printer (0-based).
 // if (n >= # of printers), returns -1.
 int
-System2200::getPrinterIoAddr(int n)
+System2200::getPrinterIoAddr(int n) noexcept
 {
     int num = 0;
 
@@ -1258,7 +1259,7 @@ const std::vector<System2200::cpuconfig_t> System2200::cpuConfigs = {
 };
 
 const System2200::cpuconfig_t*
-System2200::getCpuConfig(const std::string &configName)
+System2200::getCpuConfig(const std::string &configName) noexcept
 {
     for(auto const &cfg : System2200::cpuConfigs) {
         if (cfg.label == configName) {
@@ -1269,7 +1270,7 @@ System2200::getCpuConfig(const std::string &configName)
 }
 
 const System2200::cpuconfig_t*
-System2200::getCpuConfig(int configId)
+System2200::getCpuConfig(int configId) noexcept
 {
     for(auto const &cfg : System2200::cpuConfigs) {
         if (cfg.cpuType == configId) {

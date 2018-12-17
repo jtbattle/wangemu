@@ -226,7 +226,7 @@ SystemConfigDlg::setMemsizeStrings()
 {
     m_memSize->Clear();  // erase any existing strings
 
-    int cpuType = m_cfg.getCpuType();
+    const int cpuType = m_cfg.getCpuType();
     auto cpuCfg = System2200::getCpuConfig(cpuType);
     assert(cpuCfg != nullptr);
 
@@ -237,7 +237,7 @@ SystemConfigDlg::setMemsizeStrings()
         } else {
             sprintf(&label[0], "%3d MB", kb/1024);
         }
-        m_memSize->Append(label, (void*)kb);
+        m_memSize->Append(&label[0], (void*)kb);
     }
 }
 
@@ -246,7 +246,7 @@ SystemConfigDlg::setMemsizeStrings()
 void
 SystemConfigDlg::updateDlg()
 {
-    int cpuType = m_cfg.getCpuType();
+    const int cpuType = m_cfg.getCpuType();
     bool found = false;
     for(unsigned int n=0; n<System2200::cpuConfigs.size(); ++n) {
         if (System2200::cpuConfigs[n].cpuType == cpuType) {
@@ -260,7 +260,7 @@ SystemConfigDlg::updateDlg()
     m_memSize->SetSelection(-1); // just in case there is no match, make it obvious
     const int ramsize = m_cfg.getRamKB();
     for(unsigned int i=0; i<m_memSize->GetCount(); i++) {
-        if ((int)(m_memSize->GetClientData(i)) == ramsize) {
+        if (reinterpret_cast<int>(m_memSize->GetClientData(i)) == ramsize) {
             m_memSize->SetSelection(i);
         }
     }
@@ -319,7 +319,7 @@ void
 SystemConfigDlg::OnCpuChoice( wxCommandEvent& WXUNUSED(event) )
 {
     const int selection = m_cpuType->GetSelection();
-    const int cputype   = (int)(m_cpuType->GetClientData(selection));
+    const int cputype   = reinterpret_cast<int>(m_cpuType->GetClientData(selection));
 
     m_cfg.setCpuType(cputype);
 
@@ -338,7 +338,7 @@ SystemConfigDlg::OnCpuChoice( wxCommandEvent& WXUNUSED(event) )
     if (cur_mem > max_ram) { cur_mem = max_ram; }
 
     int i = 0;
-    for(int kb : cpuCfg->ramSizeOptions) {
+    for(const int kb : cpuCfg->ramSizeOptions) {
         if (cur_mem <= kb) {
             // round up to the next biggest ram in the list of valid sizes
             m_memSize->SetSelection(i);
@@ -356,7 +356,7 @@ void
 SystemConfigDlg::OnMemsizeChoice( wxCommandEvent& WXUNUSED(event) )
 {
     const int selection = m_memSize->GetSelection();
-    m_cfg.setRamKB( (int)(m_memSize->GetClientData(selection)) );
+    m_cfg.setRamKB(reinterpret_cast<int>(m_memSize->GetClientData(selection)));
     updateButtons();
 }
 
@@ -386,7 +386,7 @@ SystemConfigDlg::OnCardChoice( wxCommandEvent &event )
     const wxChoice *hCtl = m_cardDesc[slot];
     assert(hCtl != nullptr);
     const int selection = hCtl->GetSelection();
-    int idx = (int)(hCtl->GetClientData(selection));
+    int idx = reinterpret_cast<int>(hCtl->GetClientData(selection));
     if (idx < 0) { idx = -1; }  // hack due to -2 hack earlier
     const IoCard::card_t cardtype = static_cast<IoCard::card_t>(idx);
 
@@ -406,9 +406,9 @@ SystemConfigDlg::OnAddrChoice( wxCommandEvent &event )
     const int id = event.GetId();
     assert(id >= ID_SLOT0_ADDR_CHOICE && id <= ID_SLOTN_ADDR_CHOICE);
     const int slot = id - ID_SLOT0_ADDR_CHOICE;
-    const int cardsel      =       m_cardDesc[slot]->GetSelection();
-    const int cardtype_idx = (int)(m_cardDesc[slot]->GetClientData(cardsel));
-    const int addrsel      =       m_cardAddr[slot]->GetSelection();
+    const int addrsel = m_cardAddr[slot]->GetSelection();
+    const int cardsel = m_cardDesc[slot]->GetSelection();
+    const int cardtype_idx = reinterpret_cast<int>(m_cardDesc[slot]->GetClientData(cardsel));
     assert(cardtype_idx >= 0);
 
     std::vector<int> base_addresses = CardInfo::getCardBaseAddresses(static_cast<IoCard::card_t>(cardtype_idx));

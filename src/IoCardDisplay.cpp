@@ -249,7 +249,7 @@ IoCardDisplay::CBS(int val)
 }
 
 int
-IoCardDisplay::getIB() const
+IoCardDisplay::getIB() const noexcept
 {
     // the system uses this to determine screen size so effectively either
     //    SELECT PRINT 005(64), CO 005(64), LIST 005(64)

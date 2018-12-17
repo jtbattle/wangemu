@@ -323,7 +323,7 @@ Terminal::checkKbBuffer()
     // characters if it was in danger of overrunning.  that would be a big
     // and ugly hammer.
     m_kb_recent.push_back(byte);
-    int fifo_size = m_kb_recent.size();
+    const int fifo_size = m_kb_recent.size();
     if (fifo_size > 7) {
         m_kb_recent.pop_front();
         if (m_script_active) {

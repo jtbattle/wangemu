@@ -382,8 +382,8 @@ PrinterFrame::getDefaults()
 
     // pick up page attributes
     int plen, llen;
-    (void)Host::ConfigReadInt(subgroup, "pagelength", &plen, 66);
-    (void)Host::ConfigReadInt(subgroup, "linelength", &llen, 80);
+    Host::ConfigReadInt(subgroup, "pagelength", &plen, 66);
+    Host::ConfigReadInt(subgroup, "linelength", &llen, 80);
     m_printer->setPageAttributes(llen, plen);
 
     // pick up autoshow attribute
@@ -405,18 +405,18 @@ PrinterFrame::getDefaults()
 
     // pick up page margins
     int left, right, top, bottom;
-    (void)Host::ConfigReadInt(subgroup, "margintop",    &top,    50);
-    (void)Host::ConfigReadInt(subgroup, "marginbottom", &bottom, 50);
-    (void)Host::ConfigReadInt(subgroup, "marginleft",   &left,   50);
-    (void)Host::ConfigReadInt(subgroup, "marginright",  &right,  50);
+    Host::ConfigReadInt(subgroup, "margintop",    &top,    50);
+    Host::ConfigReadInt(subgroup, "marginbottom", &bottom, 50);
+    Host::ConfigReadInt(subgroup, "marginleft",   &left,   50);
+    Host::ConfigReadInt(subgroup, "marginright",  &right,  50);
     m_printer->setMargins(left, right, top, bottom);
 
     // pick up page preview zoom factor
-    (void)Host::ConfigReadInt(subgroup, "previewzoom", &m_previewzoom, 70);
+    Host::ConfigReadInt(subgroup, "previewzoom", &m_previewzoom, 70);
 
     // pick up orientation
     int orientation;
-    (void)Host::ConfigReadInt(subgroup, "orientation", &orientation, wxPORTRAIT);
+    Host::ConfigReadInt(subgroup, "orientation", &orientation, wxPORTRAIT);
     m_printer->setOrientation(static_cast<wxPrintOrientation>(orientation));
 
     // pick up paper id

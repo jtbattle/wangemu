@@ -119,7 +119,7 @@ IoCardTermMux::IoCardTermMux(std::shared_ptr<Scheduler> scheduler,
                         IoCardTermMux::i8080_wr_func,
                         IoCardTermMux::i8080_in_func,
                         IoCardTermMux::i8080_out_func,
-                        static_cast<void*>(this));
+                        this);
     assert(m_i8080);
     i8080_reset(static_cast<i8080*>(m_i8080));
 
@@ -201,7 +201,7 @@ IoCardTermMux::getAddresses() const
 // interestingly, the reset pin on the i8251 uart (pin 21) is tied low
 // i.e., it doesn't have a hard reset.
 void
-IoCardTermMux::reset(bool hard_reset)
+IoCardTermMux::reset(bool hard_reset) noexcept
 {
     m_prime_seen = true;
     hard_reset = hard_reset;    // silence lint
@@ -283,7 +283,7 @@ IoCardTermMux::CBS(int val)
 // the term mux looks like a dumb terminal at 05, so it drives this to let
 // the ucode know it is 80x24.
 int
-IoCardTermMux::getIB() const
+IoCardTermMux::getIB() const noexcept
 {
     // TODO: do we need to give more status than this?
     // In the real hardware, IB is driven by the most recent
@@ -423,7 +423,7 @@ IoCardTermMux::i8080_wr_func(int addr, int byte, void *user_data) noexcept
 }
 
 int
-IoCardTermMux::i8080_in_func(int addr, void *user_data)
+IoCardTermMux::i8080_in_func(int addr, void *user_data) noexcept
 {
     IoCardTermMux *tthis = static_cast<IoCardTermMux*>(user_data);
     assert(tthis != nullptr);

@@ -27,7 +27,7 @@ public:
     bool operator!=(const CardCfgState &rhs) const override;
     std::shared_ptr<CardCfgState> clone() const override;
     bool configOk(bool warn) const noexcept override;
-    bool needsReboot(const CardCfgState &other) const override;
+    bool needsReboot(const CardCfgState &other) const noexcept override;
 
     // ------------ unique to DiskCtrlCfgState ------------
 

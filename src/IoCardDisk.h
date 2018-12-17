@@ -29,14 +29,14 @@ public:
 
     std::vector<int> getAddresses() const override;
 
-    void  setConfiguration(const CardCfgState &cfg) override;
+    void  setConfiguration(const CardCfgState &cfg) noexcept override;
     void  editConfiguration(CardCfgState *cfg) override;
 
     void  reset(bool hard_reset=true) override;
     void  select() override;
     void  deselect() override;
     void  OBS(int val) override;
-    void  CBS(int val) override;
+    void  CBS(int val) noexcept override;
     void  CPB(bool busy) override;
 
     // ----- IoCardDisk specific functions -----
@@ -67,7 +67,7 @@ public:
 
     // given a slot and a drive number, return drive status
     // returns a bitwise 'or' of the WVD_STAT_DRIVE_* enums
-    static int wvdDriveStatus(int slot, int drive);
+    static int wvdDriveStatus(int slot, int drive) noexcept;
 
     // returns false if something went wrong, true otherwise
     static bool wvdInsertDisk(int slot,
@@ -100,7 +100,7 @@ private:
     const std::string  getDescription() const override;
     const std::string  getName() const override;
     std::vector<int>   getBaseAddresses() const override;
-    bool               isConfigurable() const override { return true; }
+    bool               isConfigurable() const noexcept override { return true; }
     std::shared_ptr<CardCfgState> getCfgState() override;
 
     // ---- disk access functions, tied to an object ----
@@ -137,7 +137,7 @@ private:
     void wvdTickleMotorOffTimer();
 
     int64 wvdGetNsToTrack(int track);    // calc timing to step to target track
-    void wvdSeekSector();                // do interleave computation
+    void wvdSeekSector() noexcept;       // do interleave computation
     void wvdStepToTrack();               // step to track specified by command
     void wvdSeekTrack(int64 nominal_ns); // machinery to actually wait for track
 
@@ -159,12 +159,14 @@ private:
     // ---- internal state ----
 
     // number of attached drives (1-4)
-    int numDrives() const { return m_cfg.getNumDrives(); }
+    int numDrives() const noexcept
+        { return m_cfg.getNumDrives(); }
     // intelligence: dumb, intelligent, auto
-    DiskCtrlCfgState::disk_ctrl_intelligence_t
-        intelligence() { return m_cfg.getIntelligence(); }
+    DiskCtrlCfgState::disk_ctrl_intelligence_t intelligence() noexcept
+        { return m_cfg.getIntelligence(); }
     // issue warnings on media mismatch?
-    bool warnMismatch() { return m_cfg.getWarnMismatch(); }
+    bool warnMismatch() noexcept
+        { return m_cfg.getWarnMismatch(); }
 
     DiskCtrlCfgState m_cfg;                          // current configuration
     std::shared_ptr<Scheduler> m_scheduler;          // system event scheduler
@@ -296,7 +298,7 @@ private:
     };
 
     // true=same timing as real disk, false=going fast
-    static bool realtime_disk();
+    static bool realtime_disk() noexcept;
 
     // return true if this was a sw reset command and set state appropriately,
     // otherwise return false

@@ -107,7 +107,7 @@ private:
     void OnDisplayFullscreen(wxCommandEvent &event);
 
     // bring up configuration dialog
-    void OnConfigureDialog(wxCommandEvent &event);
+    void OnConfigureDialog(wxCommandEvent &event) noexcept;
 
     // bring up screen configuration dialog
     void OnConfigureScreenDialog(wxCommandEvent &event);

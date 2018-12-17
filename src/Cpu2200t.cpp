@@ -1379,7 +1379,7 @@ Cpu2200t::execOneOp()
     case OP_TP: // transfer PC to Aux
         r_field = (uop & 0xF);
         decode_M_field(uop, a_op);
-        m_cpu.aux[r_field] = static_cast<uint16>(m_cpu.pc + (int16)(puop->p16));
+        m_cpu.aux[r_field] = static_cast<uint16>(m_cpu.pc + static_cast<int16>(puop->p16));
         m_cpu.ic++;
         break;
 

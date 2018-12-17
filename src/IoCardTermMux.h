@@ -24,12 +24,12 @@ public:
 
     std::vector<int> getAddresses() const override;
 
-    void  reset(bool hard_reset=true) override;
+    void  reset(bool hard_reset=true) noexcept override;
     void  select() override;
     void  deselect() override;
     void  OBS(int val) override;
     void  CBS(int val) override;
-    int   getIB() const override;
+    int   getIB() const noexcept override;
     void  CPB(bool busy) override;
 
     // a keyboard event has happened
@@ -47,7 +47,7 @@ private:
     // i8080 hal interface
     static int  i8080_rd_func(int addr, void *user_data) noexcept;
     static void i8080_wr_func(int addr, int byte, void *user_data) noexcept;
-    static int  i8080_in_func(int addr, void *user_data);
+    static int  i8080_in_func(int addr, void *user_data) noexcept;
     static void i8080_out_func(int addr, int byte, void *user_data);
 
     // perform one i8080 instruction

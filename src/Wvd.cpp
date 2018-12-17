@@ -256,7 +256,7 @@ Wvd::setLabel(const std::string &newlabel)
 // logical sector read.
 // returns true on success, false on failure.
 bool
-Wvd::readSector(int platter, int sector, uint8 *buffer)
+Wvd::readSector(int platter, int sector, const uint8 *buffer)
 {
     assert(buffer != nullptr);
     refreshMetadata();
@@ -273,7 +273,7 @@ Wvd::readSector(int platter, int sector, uint8 *buffer)
 // logical sector write.
 // returns true on success, false on failure.
 bool
-Wvd::writeSector(int platter, int sector, uint8 *buffer)
+Wvd::writeSector(int platter, int sector, const uint8 *buffer)
 {
     assert(buffer != nullptr);
     refreshMetadata();
@@ -376,7 +376,7 @@ Wvd::rawWriteSector(const int sector, const uint8 *data)
     }
 
     // write them all
-    m_file->write((char*)data, 256);
+    m_file->write(reinterpret_cast<const char*>(data), 256);
     if (!m_file->good()) {
         UI_Error("Error writing to sector %d of '%s'",
                   sector, m_path.c_str());
@@ -402,7 +402,7 @@ Wvd::rawReadSector(const int sector, const uint8 *data)
     assert(m_file->is_open());
 
     // go to the start of the Nth sector
-    m_file->seekg( 256LL*sector);
+    m_file->seekg(256LL * sector);
     if (!m_file->good()) {
         UI_Error("Error seeking to read sector %d of '%s'",
                  sector, m_path.c_str());
@@ -410,7 +410,7 @@ Wvd::rawReadSector(const int sector, const uint8 *data)
         return false;
     }
 
-    m_file->read( (char*)data, 256 );
+    m_file->read((char*)data, 256);
     if (!m_file->good()) {
         UI_Error("Error reading from sector %d of '%s'",
                  sector, m_path.c_str());
@@ -472,20 +472,20 @@ Wvd::writeHeader()
     // the disk, so the read format is left at 0, but the write format number
     // is set to 1 so a new emulator knows if the seek time parameter is
     // usable.
-    data[5] = (uint8)0x00;      // write format version
-    data[6] = (uint8)0x00;      // read format version
+    data[5] = static_cast<uint8>(0x00);  // write format version
+    data[6] = static_cast<uint8>(0x00);  // read format version
 
-    data[7] = (uint8)(m_writeProtect ? 1 : 0);
+    data[7] = static_cast<uint8>(m_writeProtect ? 1 : 0);
 
     // number of sectors per platter
-    data[8] = (uint8)((m_numPlatterSectors >> 0) & 0xFF);
-    data[9] = (uint8)((m_numPlatterSectors >> 8) & 0xFF);
+    data[8] = static_cast<uint8>((m_numPlatterSectors >> 0) & 0xFF);
+    data[9] = static_cast<uint8>((m_numPlatterSectors >> 8) & 0xFF);
 
     data[10] = static_cast<uint8>(m_diskType);
 
     data[11] = static_cast<uint8>(m_numPlatters-1);
 
-    strncpy((char*)&data[16], m_label.c_str(), WVD_MAX_LABEL_LEN);
+    strncpy(reinterpret_cast<char*>(&data[16]), m_label.c_str(), WVD_MAX_LABEL_LEN);
 
     // write the header block -- first absolute sector of disk image
     return rawWriteSector(0, &data[0]);
@@ -555,7 +555,7 @@ Wvd::readHeader()
 
     const bool tmp_writeProtect = (data[7] != 0x00);
 
-    const int tmp_sectors = (int)((data[9] << 8) | data[8]);
+    const int tmp_sectors = static_cast<int>((data[9] << 8) | data[8]);
     if (tmp_sectors > WVD_MAX_SECTORS) {
         UI_Error("The disk claims to have more than %d platters", WVD_MAX_SECTORS);
         return false;
@@ -567,18 +567,18 @@ Wvd::readHeader()
         return false;
     }
 
-    const int tmp_platters = (int)data[11] + 1;
+    const int tmp_platters = static_cast<int>(data[11] + 1);
     if (tmp_platters > WVD_MAX_PLATTERS) {
         UI_Error("The disk claims to have more than %d platters", WVD_MAX_PLATTERS);
         return false;
     }
 
-    if (strlen((const char*)&data[16]) > WVD_MAX_LABEL_LEN-1) {
+    if (strlen(reinterpret_cast<const char*>(&data[16])) > WVD_MAX_LABEL_LEN-1) {
         UI_Error("The label appears to be too long.\n"
                  "Is the disk image corrupt?");
         return false;
     }
-    std::string tmp_label( (const char*)&data[16] );
+    std::string tmp_label(reinterpret_cast<const char*>(&data[16]));
 
     m_metaModified      = false;
     m_label             = tmp_label;

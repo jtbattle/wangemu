@@ -223,7 +223,7 @@ Printer::getPageAttributes(int &linelength, int &pagelength) const noexcept
 }
 
 void
-Printer::getCellAttributes(int &cell_w, int &cell_h) const
+Printer::getCellAttributes(int &cell_w, int &cell_h) const noexcept
 {
     cell_w = m_charcell_w;
     cell_h = m_charcell_h;
@@ -403,7 +403,7 @@ Printer::lptChar(uint8 byte)
     if ( (byte == 0x0A) ||   // line feed
          (byte == 0x0C) ||   // page feed
          (byte == 0x0D)) {   // carriage return
-        (void)fflush(m_fp_port);
+        fflush(m_fp_port);
     }
 }
 
@@ -502,7 +502,7 @@ Printer::generatePrintPage(wxDC *dc, int pagenum, float vertAdjust)
     // draw each row of the text
     for(int row = 0; row < m_pagelength; row++) {
 
-        if (size_t(startRow + row) < m_printstream.size() ) {
+        if (static_cast<size_t>(startRow + row) < m_printstream.size() ) {
             // the line exists
             line = m_printstream[startRow + row];
             line = line.substr(startCol, m_linelength - startCol);
@@ -992,7 +992,7 @@ Printout::OnPrintPage(int page)
 }
 
 bool
-Printout::HasPage(int page)
+Printout::HasPage(int page) noexcept
 {
     return (page <= m_printer->numberOfPages());
 }
@@ -1007,7 +1007,7 @@ Printout::OnBeginDocument(int startPage, int endPage)
 }
 
 void
-Printout::GetPageInfo(int *minPage, int *maxPage, int *selPageFrom, int * selPageTo)
+Printout::GetPageInfo(int *minPage, int *maxPage, int *selPageFrom, int * selPageTo) noexcept
 {
     assert(minPage     != nullptr);
     assert(maxPage     != nullptr);

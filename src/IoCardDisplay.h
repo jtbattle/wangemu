@@ -31,7 +31,7 @@ public:
     void  deselect() override;
     void  OBS(int val) override;
     void  CBS(int val) override;
-    int   getIB() const override;
+    int   getIB() const noexcept override;
     void  CPB(bool busy) override;
 
 private:

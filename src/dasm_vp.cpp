@@ -207,7 +207,7 @@ dasm_i4_field(char *buf, uint32 uop) noexcept
 {
     assert(buf != nullptr);
     const int field = (uop >> 4) & 0xF;
-    int len = dasm_hex(buf, field, 1);
+    const int len = dasm_hex(buf, field, 1);
     return len;
 }
 
@@ -219,7 +219,7 @@ dasm_i8_field(char *buf, uint32 uop) noexcept
 {
     assert(buf != nullptr);
     const int field = IMM8(uop);
-    int len = dasm_hex(buf, field, 2);
+    const int len = dasm_hex(buf, field, 2);
     return len;
 }
 
@@ -244,8 +244,8 @@ dasm_pcinc_field(char *buf, uint32 uop) noexcept
     const int minus = (uop >> 14) & 1;
     const int count = (uop >>  9) & 3;
     if (count > 0) {
-        *buf++ = (char)((minus) ? '-' : '+');
-        *buf++ = (char)('0' + count);
+        *buf++ = static_cast<char>((minus) ? '-' : '+');
+        *buf++ = static_cast<char>('0' + count);
         *buf = '\0';
         return 2;
     }
@@ -374,8 +374,8 @@ dasm_typeSHFT(char *buf, const char *mnemonic, bool &illegal, uint32 uop) noexce
 
     strcpy(buf, mnemonic);
     int len = strlen(buf);
-    buf[len++] = (char)(Hb ? 'H' : 'L');
-    buf[len++] = (char)(Ha ? 'H' : 'L');
+    buf[len++] = static_cast<char>(Hb ? 'H' : 'L');
+    buf[len++] = static_cast<char>(Ha ? 'H' : 'L');
     len += dasm_dd_field(&buf[len], uop);               // ,R/,W1/,W2
     len += pad_spaces(buf, len, PARAM_COL);
 
@@ -403,8 +403,8 @@ dasm_typeM(char *buf, const char *mnemonic, bool &illegal, uint32 uop) noexcept
 
     strcpy(buf, mnemonic);
     int len = strlen(buf);
-    buf[len++] = (char)(Hb ? 'H' : 'L');
-    buf[len++] = (char)(Ha ? 'H' : 'L');
+    buf[len++] = static_cast<char>(Hb ? 'H' : 'L');
+    buf[len++] = static_cast<char>(Ha ? 'H' : 'L');
     len += dasm_dd_field(&buf[len], uop);               // ,R/,W1/,W2
     len += pad_spaces(buf, len, PARAM_COL);
 
@@ -421,7 +421,7 @@ dasm_typeM(char *buf, const char *mnemonic, bool &illegal, uint32 uop) noexcept
 // disassemble ALU op with immediate
 // return the number of bytes printed out
 static int
-dasm_type2(char *buf, const char *mnemonic, bool &illegal, uint32 uop)
+dasm_type2(char *buf, const char *mnemonic, bool &illegal, uint32 uop) noexcept
 {
     assert(buf != nullptr);
     assert(mnemonic != nullptr);
@@ -445,7 +445,7 @@ dasm_type2(char *buf, const char *mnemonic, bool &illegal, uint32 uop)
 // return the number of bytes printed out.
 // "illegal" is an output parameter.
 static int
-dasm_type2a(char *buf, const char *mnemonic, bool &illegal, uint32 uop)
+dasm_type2a(char *buf, const char *mnemonic, bool &illegal, uint32 uop) noexcept
 {
     assert(buf != nullptr);
     assert(mnemonic != nullptr);
@@ -489,7 +489,7 @@ dasm_type2b(char *buf, const char *mnemonic, bool &illegal, uint32 uop) noexcept
 // return the number of bytes printed out.
 // "illegal" is an output parameter.
 static int
-dasm_typeMI(char *buf, const char *mnemonic, bool &illegal, uint32 uop)
+dasm_typeMI(char *buf, const char *mnemonic, bool &illegal, uint32 uop) noexcept
 {
     assert(buf != nullptr);
     assert(mnemonic != nullptr);
@@ -498,7 +498,7 @@ dasm_typeMI(char *buf, const char *mnemonic, bool &illegal, uint32 uop)
 
     strcpy(buf, mnemonic);
     int len = strlen(buf);
-    buf[len++] = (char)(Hb ? 'H' : 'L');
+    buf[len++] = static_cast<char>(Hb ? 'H' : 'L');
     len += dasm_dd_field(&buf[len], uop);               // ,R/,W1/,W2
     len += pad_spaces(buf, len, PARAM_COL);
 
@@ -515,7 +515,7 @@ dasm_typeMI(char *buf, const char *mnemonic, bool &illegal, uint32 uop)
 // disassemble conditional branch, reg to reg compare
 // return the number of bytes printed out
 static int
-dasm_type3(char *buf, const char *mnemonic, uint32 ic, uint32 uop)
+dasm_type3(char *buf, const char *mnemonic, uint32 ic, uint32 uop) noexcept
 {
     assert(buf != nullptr);
     assert(mnemonic != nullptr);
@@ -580,7 +580,7 @@ dasm_SH_bitfield(char *buf, uint8 bits) noexcept
 // disassemble conditional branch, reg vs immediate
 // return the number of bytes printed out
 static int
-dasm_type4(char *buf, const char *mnemonic, uint32 ic, uint32 uop)
+dasm_type4(char *buf, const char *mnemonic, uint32 ic, uint32 uop) noexcept
 {
     assert(buf != nullptr);
     assert(mnemonic != nullptr);
@@ -590,7 +590,7 @@ dasm_type4(char *buf, const char *mnemonic, uint32 ic, uint32 uop)
 
     strcpy(buf, mnemonic);
     int len = strlen(buf);
-    buf[len++] = (char)((Hb) ? 'H' : 'L');
+    buf[len++] = static_cast<char>((Hb) ? 'H' : 'L');
     len += pad_spaces(buf, len, PARAM_COL);
 
     len += dasm_i4_field(&buf[len], uop);
@@ -676,8 +676,8 @@ dasm_type7(char *buf, const char *mnemonic, uint32 uop) noexcept
 
 // disassemble one microinstruction into static buffer
 // return false if OK, true if error.
-bool
-dasm_op_vp(char *buf, uint16 ic, uint32 uop)
+static bool
+dasm_op_vp(char *buf, uint16 ic, uint32 uop) noexcept
 {
     assert(buf != nullptr);
 

@@ -3,8 +3,6 @@ Emulator TODO list
 ============================================================================
 
 *) master list of priorities:
-   add mvp/vlsi cpu and memory options; submit
-       - move cpuConfigs into System2200:: namespace
    get >1 MXD configuration working
    get >1 term per MXD configuration working
    decide on a consistent set of naming conventions and stick to them
@@ -22,9 +20,9 @@ Emulator TODO list
    - the secondary terminal doesn't have a status bar (known misfeature).
      it should at least allow the Kaps feature.
    - the concept of tied keyboards should not apply to such CrtFrames,
-     or at least it should be modified.
+     or at least it should be reviewed.
      the tied_keyboard setting is read during getDefaults() in UiCrtFrame.
-   - booting MVP 3.5, it gets to the partition editor start up and hangs.
+   - booting MVP 3.5, it gets to the loading BASIC-2 stage but hangs
 
 *) support MXD with more than one terminal
      - config dialog needs to allow term mux configurations,
