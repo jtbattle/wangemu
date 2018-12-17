@@ -205,11 +205,10 @@ private:
     // dump the most important contents of the uP state
     void dump_state(int fulldump);
 
-    // set SH register
     void set_sh(uint8 value);
-
-    // set SL register
     void set_sl(uint8 value) noexcept;
+    void set_bsr(uint8 value) noexcept;
+    void updateBankOffset() noexcept;
 
     // 9b result: carry out and 8b result
     uint16 decimal_add8(int a_op, int b_op, int ci) const noexcept;
@@ -272,6 +271,7 @@ private:
         uint8   ab_sel;         // ab at time of last ABS
         uint8   sh;             // high status reg
         uint8   sl;             // low  status reg
+        uint8   bsr;            // bank select register (microvp-2 feature)
         int     bank_offset;    // predecoded from sl
     } m_cpu;
 

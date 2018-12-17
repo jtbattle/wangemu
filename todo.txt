@@ -5,12 +5,6 @@ Emulator TODO list
 *) master list of priorities:
    add mvp/vlsi cpu and memory options; submit
        - move cpuConfigs into System2200:: namespace
-       - thoroughly test configuration options
-       - MicroVp barfs when I try to boot MVP 2.6.2 (maybe others)
-       - VLSI-2 puts an 8b register at output port 80 called BSR (bank select
-         reg); bit [7] of that register indicates if extended addressing
-         should use the SL register of if [6:0] provided 7b of extended
-         addressing. See MVP source code file BPMVP00.
    get >1 MXD configuration working
    get >1 term per MXD configuration working
    decide on a consistent set of naming conventions and stick to them
@@ -27,7 +21,8 @@ Emulator TODO list
         [wangemu/config-0/ui/MXD-PRT-{00,40,80,C0}-{1,2,3,4}]
    - the secondary terminal doesn't have a status bar (known misfeature).
      it should at least allow the Kaps feature.
-   - the concept of tied keyboards should not apply to such CrtFrames
+   - the concept of tied keyboards should not apply to such CrtFrames,
+     or at least it should be modified.
      the tied_keyboard setting is read during getDefaults() in UiCrtFrame.
    - booting MVP 3.5, it gets to the partition editor start up and hangs.
 

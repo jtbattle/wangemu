@@ -1247,15 +1247,14 @@ const std::vector<cpuconfig_t> cpuConfigs = {
         { 64 },                    // .ucodeSizeOptions
         true                       // .hasOneShot
     },
-#if 0 // FIXME: need to model the BSR (bank select reg) port
+
     // https://wang2200.org/docs/system/2200MicroVP_MaintenanceManual.741-1668.5-88.pdf
     {   Cpu2200::CPUTYPE_MICROVP,  // .cpuType
         "MicroVP",                 // .label
         { 128, 512, 1024, 2048 },  // .ramSizeOptions (4MB and 8MB were options too)
-        { 32 },                    // .ucodeSizeOptions
+        { 64 },                    // .ucodeSizeOptions
         true                       // .hasOneShot
     },
-#endif
 };
 
 const cpuconfig_t*

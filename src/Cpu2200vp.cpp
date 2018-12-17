@@ -471,22 +471,56 @@ Cpu2200vp::write_ucode(uint16 addr, uint32 uop, bool force) noexcept
 void
 Cpu2200vp::set_sl(uint8 value) noexcept
 {
-    m_cpu.sl = (value & 0xFF);
+    m_cpu.sl = value;
+    updateBankOffset();
+}
 
+
+// The BSR register is found only on the MicroVP VLSI-2.
+// It is write only, and is written by an OBS to port 80.
+void
+Cpu2200vp::set_bsr(uint8 value) noexcept
+{
+    m_cpu.bsr = value;
+    updateBankOffset();
+}
+
+
+// The information on the behavior of the BSR register was obtained
+// from the MVP 3.5 source code, specifically the file "JLMVP32L".
+//      bit 7: mode=0 -> bank[2:0] address comes from {SL[5],SL[7],SL[6]}
+//             mode=1 -> bank[2:0] address comes from BSR[2:0]
+void
+Cpu2200vp::updateBankOffset() noexcept
+{
+    const bool bsr_mode = (m_cpu.bsr & 0x80) == 0x80;
+
+    int bank_page = (m_cpu.bsr & 0x7F);
+    if (!bsr_mode) {
+        bank_page = (m_cpu.bsr & 0x78)        // bits [6:3] come from bsr
+                  | ((m_cpu.sl & 0x20) >> 3)  // bit  [2] is from sl[5]
+                  | ((m_cpu.sl & 0xc0) >> 6); // bits [1:0] are from sl[7:6]
+    }
+
+    // wrap it if it addresses non-existant memory
     const int memsize_KB = (m_memsize >> 10);
     if (memsize_KB <= 64) {
-        m_cpu.bank_offset = 0;
+        bank_page &= 0x00;
     } else if (memsize_KB <= 128) {
-        m_cpu.bank_offset = ((value >> 6) & 1) << 16; // bit [6]
+        bank_page &= 0x01;
     } else if (memsize_KB <= 256) {
-        m_cpu.bank_offset = ((value >> 6) & 3) << 16; // bits [7:6]
+        bank_page &= 0x03;
     } else if (memsize_KB <= 512) {
-        m_cpu.bank_offset = (((value >> 6) & 3) << 16)  // bits [7:6]
-                          | (((value >> 5) & 1) << 18); // bit [5]
-    } else {
-        assert(false);
-        m_cpu.bank_offset = 0;
+        bank_page &= 0x07;
+    } else if (memsize_KB <= 1024) {
+        bank_page &= 0x0f;
+    } else if (memsize_KB <= 2048) {
+        bank_page &= 0x1f;
+    } else if (memsize_KB <= 4096) {
+        bank_page &= 0x3f;
     }
+
+    m_cpu.bank_offset = (bank_page << 16);
 }
 
 
@@ -851,6 +885,10 @@ Cpu2200vp::reset(bool hard_reset) noexcept
 #endif
         set_sl(0);           // make sure bank select is 0
         m_cpu.sh &= ~0x80;   // only SH7 one bit is affected
+
+        // make sure this is initialized in case an older OS is running,
+        // as it won't know to set the mode bit to 0
+        set_bsr(static_cast<uint8>(0x00));
 
         if (m_hasOneShot) {
             // if the one-shot isn't stuffed, the status bit
@@ -1243,11 +1281,6 @@ Cpu2200vp::execOneOp()
         }
 
         switch (t_field) {
-            case 0x80: // IOBS
-                // undocumented, but the MVP source code mentions it
-                // TODO: if anything ever triggers this
-                UI_Info("doing CIO IOBS, AB=%02x, IC=%04X", m_cpu.ab, m_cpu.ic);
-                break;
             case 0x40: // ABS
                 m_cpu.ab_sel = m_cpu.ab;
                 if (m_dbg) {
@@ -1265,8 +1298,15 @@ Cpu2200vp::execOneOp()
                     }
                 }
                 //UI_Info("CPU:OBS when AB=%02X, AB_SEL=%02X, K=%02X", m_cpu.ab, m_cpu.ab_sel, m_cpu.k);
-                setDevRdy(false);  // (M)VP cpus do this, but not 2200T
-                System2200::cpu_OBS(m_cpu.k);  // output data bus strobe
+                if (   (m_cpu_subtype == Cpu2200::CPUTYPE_MICROVP)
+                    && (m_cpu.ab == 0x80)) {
+                    // the VLSI-2 version of the MicroVP added the BSR register
+                    // for large memory bank selection.
+                    set_bsr(m_cpu.k);
+                } else {
+                    setDevRdy(false);  // (M)VP cpus do this, but not 2200T
+                    System2200::cpu_OBS(m_cpu.k);  // output data bus strobe
+                }
                 break;
             case 0x10: // CBS
                 if (m_dbg) {
