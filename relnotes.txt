@@ -1,15 +1,17 @@
 ============================================================================
 		   Wang 2200 emulator release notes, v3.0-pre
-                               December 06, 2018
+                               December 16, 2018
 ============================================================================
 
 ---- What is It? ----
 
-This emulates a Wang 2200 system with a choice of three CPU architectures:
+This emulates a Wang 2200 system with a choice of five CPU architectures:
 
-    * 2200B CPU  (first generation 2200, with a somewhat limited command set)
-    * 2200T CPU  (the highest end of the first generation 2200's)
-    * 2200VP CPU (2nd generation 2200 CPU architecture)
+    * 2200B     CPU (first generation 2200, with a somewhat limited command set)
+    * 2200T     CPU (the highest end of the first generation 2200's)
+    * 2200VP    CPU (2nd generation CPU)
+    * 2200MVP-C CPU (2nd generation CPU, w/multiple users and 64K word ucode)
+    * MicroVP   CPU (3rd generation CPU, supporting up to 8MB of data RAM)
 
 and a number of peripherals:
 
@@ -26,7 +28,7 @@ is untested under Windows XP and probably does not run.
 
 Due to the contribution of Paul Heller, the emulator runs natively on Mac
 OS X (10.4.2 at least) as well.
-[ this is surely broken in the prerelease; it will be rectified when the
+[ this is surely broken in the pre-release; it will be rectified when the
   emulator makes it to release status ]
 
 The emulator very well might run on Linux via Wine, but it hasn't been tested.
@@ -39,6 +41,8 @@ The emulator very well might run on Linux via Wine, but it hasn't been tested.
    harder to accidentally hit this key, the mapping is now
        Shift-Alt-R --> hard reset
        Shift-Alt-W --> warm reset
+
+*) support for more system CPU and RAM configurations
 
 *) Added emulation of a MXD terminal mux and 2236DE terminal.
    Why MXD and not MXE? One good reason is that OS's before 2.4 would
@@ -91,18 +95,20 @@ The emulator very well might run on Linux via Wine, but it hasn't been tested.
    sectors/track, but this would cause an assertion, as 65535 is the maximum
    sector address which can be specified with a 16b number.
 
-*) attempting to configuring a VP with 16 KB or 48 KB of RAM would trigger
-   an assertion.  Now those sizes are disallowed.
+*) The legal sizes of data RAM for 2200VP CPUs was wrong, and is now matches
+   what was historically accurate.  It used to be configuring a VP in the
+   emulator with 16 KB or 48 KB of RAM would trigger an assertion.
 
 ---- Minor Tweaks and Implementation Changes ----
 
 *) compiled with the latest wxWidgets library release, 3.1.0,
-   and Microsoft Studio Community 2015 compiler.
+   and Microsoft Studio Community 2017 compiler.
 
 *) fixed a typo in errtable.cpp for error 73;
    it should read "SAVE DCF" instead of "SAVE SCF"
 
-*) get rid of unnecessary wx-isms; use modern c++11 features when it helps
+*) got rid of unnecessary wx-isms;
+   now using modern c++11 features when it simplifies the code
 
 ---- Known Bugs ----
 
@@ -110,5 +116,5 @@ The emulator very well might run on Linux via Wine, but it hasn't been tested.
    to performs memory refresh.  This isn't modeled in the emulator,
    so the emulator is about 3% faster than real-time.
 
-*) the prerelease is full of ugly code, incomplete features, and outright
+*) the pre-release is full of ugly code, incomplete features, and outright
    bugs that are on the FIXME/TODO list
