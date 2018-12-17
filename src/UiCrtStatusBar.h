@@ -33,10 +33,10 @@ class MyStaticBitmap : public wxStaticBitmap
 {
 public:
     CANT_ASSIGN_OR_COPY_CLASS(MyStaticBitmap);
-    MyStaticBitmap( wxWindow *parent, wxWindowID id, const wxBitmap &label,
-                    const wxPoint &pos = wxDefaultPosition,
-                    const wxSize &size = wxDefaultSize,
-                    long style = 0, const std::string &name = "staticBitmap" );
+    MyStaticBitmap(wxWindow *parent, wxWindowID id, const wxBitmap &label,
+                   const wxPoint &pos = wxDefaultPosition,
+                   const wxSize &size = wxDefaultSize,
+                   long style = 0, const std::string &name = "staticBitmap");
 private:
     void OnMouseBtnDown(wxMouseEvent &event);
 #if HANDLE_MSB_PAINT

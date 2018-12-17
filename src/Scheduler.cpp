@@ -2,7 +2,7 @@
 //
 // A routine desiring later notification at some specific time calls
 //
-//     auto tmr = TimerCreate(ticks, std::bind(&obj::fcn, &obj, arg) );
+//     auto tmr = TimerCreate(ticks, std::bind(&obj::fcn, &obj, arg));
 //
 // which causes 'fcn' to be called back with parameter arg after simulating
 // 'ticks' clock cycles.  The event is then removed from the active list.
@@ -63,7 +63,7 @@ TimerTestFoo::report1(int i)
 {
     printf("report1: got callback for timer %d after %d clocks\n", i, g_testtime);
     if (i == 2) {
-        (void)test_scheduler.TimerCreate( 4, std::bind(&TimerTestFoo::report1, &g_foo2, 5) );
+        (void)test_scheduler.TimerCreate(4, std::bind(&TimerTestFoo::report1, &g_foo2, 5));
     }
 }
 
@@ -82,11 +82,11 @@ TimerTest(void)
 
     // method 1: create a static timer object, then pass it to scheduler
     sched_callback_t cb1 = std::bind(&TimerTestFoo::report1, &foo, 1);
-    auto t1 = test_scheduler.TimerCreate( TIMER_US(3.0f), cb1 );
+    auto t1 = test_scheduler.TimerCreate(TIMER_US(3.0f), cb1);
 
     // method 2: like method 1, but all inline
-    auto t2 = test_scheduler.TimerCreate( 10, std::bind(&TimerTestFoo::report1, &foo, 2) );
-    auto t3 = test_scheduler.TimerCreate( 50, std::bind(&TimerTestFoo::report2, &foo, 3) );
+    auto t2 = test_scheduler.TimerCreate(10, std::bind(&TimerTestFoo::report1, &foo, 2));
+    auto t3 = test_scheduler.TimerCreate(50, std::bind(&TimerTestFoo::report2, &foo, 3));
 
     for (int n=0; n<100; n++) {
         if (n == 5) {
@@ -169,8 +169,8 @@ void Scheduler::TimerKill(Timer* tmr)
     // the fact that we have to do this lookup doesn't matter since
     // TimerKill is infrequently used.
     m_timer.erase(
-        std::remove_if( begin(m_timer), end(m_timer),
-                        [&tmr](auto q){ return (q.get() == tmr); }),
+        std::remove_if(begin(m_timer), end(m_timer),
+                       [&tmr](auto q){ return (q.get() == tmr); }),
         end(m_timer));
 #ifdef TMR_DEBUG
     UI_Error("Error: killing non-existent simulated timer");

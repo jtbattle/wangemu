@@ -92,7 +92,7 @@ SystemConfigDlg::SystemConfigDlg(wxFrame *parent) :
     const int h_text_margin = 8;
 
     // the grid on the left contains CPU related configuration
-    wxFlexGridSizer *leftgrid = new wxFlexGridSizer( 5, 2, 0, 0);
+    wxFlexGridSizer *leftgrid = new wxFlexGridSizer(5, 2, 0, 0);
 
     // leaf controls for leftgrid
     m_cpuType = new wxChoice(this, ID_CPU_CHOICE);
@@ -126,15 +126,15 @@ SystemConfigDlg::SystemConfigDlg(wxFrame *parent) :
                                    "Warn on Invalid IO Device Access");
 
     // and we get a box sizer to group all things on the left
-    wxBoxSizer *leftgroup = new wxBoxSizer( wxVERTICAL );
+    wxBoxSizer *leftgroup = new wxBoxSizer(wxVERTICAL);
     leftgroup->Add(leftgrid);
-    leftgroup->Add(m_diskRealtime, 0, wxTOP, 15 );
+    leftgroup->Add(m_diskRealtime, 0, wxTOP, 15);
     leftgroup->Add(m_warnIo, 0, wxTOP, 15);
 
     // the grid on the right contains Slot related configuration
-    wxFlexGridSizer *rightgrid = new wxFlexGridSizer( 1+NUM_IOSLOTS, 4, 0, 0);
-    rightgrid->AddGrowableCol(1,3); // col #1: description
-    rightgrid->AddGrowableCol(2,1); // col #2: address
+    wxFlexGridSizer *rightgrid = new wxFlexGridSizer(1+NUM_IOSLOTS, 4, 0, 0);
+    rightgrid->AddGrowableCol(1, 3); // col #1: description
+    rightgrid->AddGrowableCol(2, 1); // col #2: address
 
     rightgrid->Add(new wxStaticText(this, -1, ""), 0,
                 wxALIGN_CENTER | wxALIGN_CENTER_VERTICAL | wxRIGHT, h_text_margin);
@@ -156,7 +156,7 @@ SystemConfigDlg::SystemConfigDlg(wxFrame *parent) :
             const IoCard::card_t ct = IoCard::card_types[ctype];
             std::string cardname = CardInfo::getCardName(ct);
             std::string carddesc = CardInfo::getCardDesc(ct);
-            std::string str( cardname + " (" + carddesc + ")" );
+            std::string str(cardname + " (" + carddesc + ")");
             m_cardDesc[slot]->Append(str, (void*)ctype);
         }
 
@@ -165,7 +165,7 @@ SystemConfigDlg::SystemConfigDlg(wxFrame *parent) :
 
         // each row of the right grid has: label, description, ioaddr, config
         wxString label;
-        label.Printf( "Slot #%d", slot );
+        label.Printf("Slot #%d", slot);
         rightgrid->Add(new wxStaticText(this, -1, label), 0,
             wxALIGN_RIGHT | wxALIGN_CENTER_VERTICAL | wxRIGHT, h_text_margin);
         rightgrid->Add(m_cardDesc[slot], 2, wxGROW | wxALIGN_CENTER_VERTICAL);
@@ -174,20 +174,20 @@ SystemConfigDlg::SystemConfigDlg(wxFrame *parent) :
     }
 
     // group the CPU and IO configuration side by side
-    wxBoxSizer *LRsizer = new wxBoxSizer( wxHORIZONTAL );
+    wxBoxSizer *LRsizer = new wxBoxSizer(wxHORIZONTAL);
 
 #define PUT_BOX_AROUND_IO_CONFIG 0
 #if PUT_BOX_AROUND_IO_CONFIG
-    wxStaticBox      *rsb  = new wxStaticBox( this, -1, "io");
-    wxStaticBoxSizer *rsbs = new wxStaticBoxSizer( rsb, wxHORIZONTAL );
+    wxStaticBox      *rsb  = new wxStaticBox(this, -1, "io");
+    wxStaticBoxSizer *rsbs = new wxStaticBoxSizer(rsb, wxHORIZONTAL);
     rsbs->Add(rightgrid, 1, wxEXPAND);
 #endif
 
-    LRsizer->Add(leftgroup, 0, wxALL, 10 );     // horizontally unstretchable
+    LRsizer->Add(leftgroup, 0, wxALL, 10);     // horizontally unstretchable
 #if PUT_BOX_AROUND_IO_CONFIG
-    LRsizer->Add(rsbs,      1, wxALL, 10 );     // horizontally stretchable
+    LRsizer->Add(rsbs,      1, wxALL, 10);     // horizontally stretchable
 #else
-    LRsizer->Add(rightgrid, 1, wxALL, 10 );     // horizontally stretchable
+    LRsizer->Add(rightgrid, 1, wxALL, 10);     // horizontally stretchable
 #endif
 
     // put three buttons side by side
@@ -195,7 +195,7 @@ SystemConfigDlg::SystemConfigDlg(wxFrame *parent) :
     m_btnOk     = new wxButton(this, wxID_OK,       "OK");
     m_btnCancel = new wxButton(this, wxID_CANCEL,   "Cancel");
 
-    wxBoxSizer *button_sizer = new wxBoxSizer( wxHORIZONTAL );
+    wxBoxSizer *button_sizer = new wxBoxSizer(wxHORIZONTAL);
     button_sizer->Add(m_btnRevert, 0, wxALL, 10);
     button_sizer->Add(m_btnOk,     0, wxALL, 10);
     button_sizer->Add(m_btnCancel, 0, wxALL, 10);
@@ -205,7 +205,7 @@ SystemConfigDlg::SystemConfigDlg(wxFrame *parent) :
 #endif
 
     // config grids on top, confirmation buttons on the bottom
-    wxBoxSizer *topsizer = new wxBoxSizer( wxVERTICAL );
+    wxBoxSizer *topsizer = new wxBoxSizer(wxVERTICAL);
     topsizer->Add(LRsizer,      1, wxEXPAND);       // vertically stretchable
     topsizer->Add(button_sizer, 0, wxALIGN_RIGHT);  // vertically unstretchable
 
@@ -289,7 +289,7 @@ void
 SystemConfigDlg::updateButtons()
 {
     // if nothing has changed, disable the revert button
-    m_btnRevert->Enable( m_cfg != m_oldcfg );
+    m_btnRevert->Enable(m_cfg != m_oldcfg);
 
     // if the current configuration state isn't legal, change the button text.
     // we could disable it, but then the user couldn't hit OK and be told
@@ -316,7 +316,7 @@ SystemConfigDlg::updateButtons()
 
 
 void
-SystemConfigDlg::OnCpuChoice( wxCommandEvent& WXUNUSED(event) )
+SystemConfigDlg::OnCpuChoice(wxCommandEvent& WXUNUSED(event))
 {
     const int selection = m_cpuType->GetSelection();
     const int cputype   = reinterpret_cast<int>(m_cpuType->GetClientData(selection));
@@ -353,7 +353,7 @@ SystemConfigDlg::OnCpuChoice( wxCommandEvent& WXUNUSED(event) )
 
 
 void
-SystemConfigDlg::OnMemsizeChoice( wxCommandEvent& WXUNUSED(event) )
+SystemConfigDlg::OnMemsizeChoice(wxCommandEvent& WXUNUSED(event))
 {
     const int selection = m_memSize->GetSelection();
     m_cfg.setRamKB(reinterpret_cast<int>(m_memSize->GetClientData(selection)));
@@ -362,23 +362,23 @@ SystemConfigDlg::OnMemsizeChoice( wxCommandEvent& WXUNUSED(event) )
 
 
 void
-SystemConfigDlg::OnDiskRealtime( wxCommandEvent& WXUNUSED(event) )
+SystemConfigDlg::OnDiskRealtime(wxCommandEvent& WXUNUSED(event))
 {
     const bool checked = m_diskRealtime->IsChecked();
-    m_cfg.setDiskRealtime( checked );
+    m_cfg.setDiskRealtime(checked);
     updateButtons();
 }
 
 void
-SystemConfigDlg::OnWarnIo( wxCommandEvent& WXUNUSED(event) )
+SystemConfigDlg::OnWarnIo(wxCommandEvent& WXUNUSED(event))
 {
     const bool checked = m_warnIo->IsChecked();
-    m_cfg.setWarnIo( checked );
+    m_cfg.setWarnIo(checked);
     updateButtons();
 }
 
 void
-SystemConfigDlg::OnCardChoice( wxCommandEvent &event )
+SystemConfigDlg::OnCardChoice(wxCommandEvent &event)
 {
     const int id = event.GetId();
     assert(id >= ID_SLOT0_CARD_CHOICE && id <= ID_SLOTN_CARD_CHOICE);
@@ -401,7 +401,7 @@ SystemConfigDlg::OnCardChoice( wxCommandEvent &event )
 
 
 void
-SystemConfigDlg::OnAddrChoice( wxCommandEvent &event )
+SystemConfigDlg::OnAddrChoice(wxCommandEvent &event)
 {
     const int id = event.GetId();
     assert(id >= ID_SLOT0_ADDR_CHOICE && id <= ID_SLOTN_ADDR_CHOICE);
@@ -412,7 +412,7 @@ SystemConfigDlg::OnAddrChoice( wxCommandEvent &event )
     assert(cardtype_idx >= 0);
 
     std::vector<int> base_addresses = CardInfo::getCardBaseAddresses(static_cast<IoCard::card_t>(cardtype_idx));
-    m_cfg.setSlotCardAddr( slot, base_addresses[addrsel] );
+    m_cfg.setSlotCardAddr(slot, base_addresses[addrsel]);
 
     updateButtons();
 }
@@ -470,8 +470,8 @@ SystemConfigDlg::OnButton(wxCommandEvent &event)
             break;
 
         default:
-            if ( (event.GetId() >= ID_SLOT0_BTN_CONFIG) &&
-                 (event.GetId() <= ID_SLOTN_BTN_CONFIG) ) {
+            if ((event.GetId() >= ID_SLOT0_BTN_CONFIG) &&
+                (event.GetId() <= ID_SLOTN_BTN_CONFIG)) {
                 // one of the per-card configuration buttons was pressed
                 const int slot = event.GetId() - ID_SLOT0_BTN_CONFIG;
                 m_cfg.editCardConfig(slot);
@@ -528,7 +528,7 @@ SystemConfigDlg::setValidIoChoices(int slot, int cardtype_idx)
         for (unsigned int j=0; j<base_addresses.size(); j++) {
             const int io_addr = base_addresses[j];
             wxString str;
-            str.Printf( "0x%03X", io_addr);
+            str.Printf("0x%03X", io_addr);
             hAddrCtl->Append(str);
             if ((io_addr & 0xFF) == (m_cfg.getSlotCardAddr(slot) & 0xFF)) {
                 addr_mtch_idx = j;

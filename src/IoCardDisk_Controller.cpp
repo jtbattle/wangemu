@@ -349,10 +349,10 @@ IoCardDisk::advanceStateInt(disk_event_t event, const int val)
                                 // which might be a mix of dumb and smart),
                                 // but that comes after this WAKEUP phase.
                                 if (driveIsDumb(0) && driveIsDumb(1) &&
-                                    driveIsDumb(2) && driveIsDumb(3) ) {
+                                    driveIsDumb(2) && driveIsDumb(3)) {
                                     m_acting_intelligent = false;
                                 } else if (driveIsSmart(0) && driveIsSmart(1) &&
-                                           driveIsSmart(2) && driveIsSmart(3) ) {
+                                           driveIsSmart(2) && driveIsSmart(3)) {
                                     m_acting_intelligent = true;
                                 } else {
                                     // who knows what will happen?
@@ -1116,7 +1116,7 @@ disk operation
     case CTRL_FORMAT1:
         if (event == EVENT_OBS) {
             if ((NOISY > 0) && (val != 0x00)) {
-                UI_Warn("FORMAT1 was expecting a 0x00 padding byte, but got 0x%02x",val);
+                UI_Warn("FORMAT1 was expecting a 0x00 padding byte, but got 0x%02x", val);
             }
             if (m_drive >= numDrives()) {
                 // bad drive selection
@@ -1213,7 +1213,7 @@ disk operation
     case CTRL_MSECT_WR_START:
         if (event == EVENT_OBS) {
             if ((NOISY > 0) && (val != 0x00)) {
-                UI_Warn("MULTI-SECTOR-START was expecting a 0x00 padding byte, but got 0x%02x",val);
+                UI_Warn("MULTI-SECTOR-START was expecting a 0x00 padding byte, but got 0x%02x", val);
             }
             // m_multisector_mode = true;
         }
@@ -1240,7 +1240,7 @@ disk operation
     case CTRL_MSECT_WR_END1:
         if (event == EVENT_OBS) {
             if ((NOISY > 0) && (val != 0x00)) {
-                UI_Warn("MULTI-SECTOR-END was expecting a 0x00 padding byte, but got 0x%02x",val);
+                UI_Warn("MULTI-SECTOR-END was expecting a 0x00 padding byte, but got 0x%02x", val);
             }
             // m_multisector_mode = false;
             // setBusyState(true);
@@ -1346,7 +1346,7 @@ disk operation
     case CTRL_VERIFY_RANGE3:
         if (event == EVENT_OBS) {
             if ((NOISY > 0) && (val != 0x00)) {
-                UI_Warn("VERIFY_RANGE3 was expecting a 0x00 padding byte, but got 0x%02x",val);
+                UI_Warn("VERIFY_RANGE3 was expecting a 0x00 padding byte, but got 0x%02x", val);
             }
             setBusyState(true);
             m_state = CTRL_VERIFY_RANGE4;
@@ -1435,7 +1435,7 @@ disk operation
         if (event == EVENT_OBS) {
             int num_sectors = 0;
             if ((NOISY > 0) && (val != 0x00)) {
-                UI_Warn("READ_STATUS was expecting a 0x00 padding byte, but got 0x%02x",val);
+                UI_Warn("READ_STATUS was expecting a 0x00 padding byte, but got 0x%02x", val);
             }
             if (m_drive < numDrives()) {
                 num_sectors = m_d[m_drive].wvd->getNumSectors();

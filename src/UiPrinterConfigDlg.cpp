@@ -23,15 +23,15 @@
 // PrinterConfigDlg
 // ----------------------------------------------------------------------------
 
-PrinterConfigDlg::PrinterConfigDlg( wxWindow *parent, const wxString& title,
-                                    PrinterDialogDataTransfer *data,
-                                    const wxPoint& pos, const wxSize& size,
-                                    const long WXUNUSED(style)) :
+PrinterConfigDlg::PrinterConfigDlg(wxWindow *parent, const wxString& title,
+                                   PrinterDialogDataTransfer *data,
+                                   const wxPoint& pos, const wxSize& size,
+                                   const long WXUNUSED(style)) :
         wxDialog(parent, VALIDATE_DIALOG_ID, title, pos, size,
                  wxDEFAULT_DIALOG_STYLE|wxRESIZE_BORDER)
 {
     // Sizers automatically ensure a workable layout.
-    wxBoxSizer *mainsizer = new wxBoxSizer( wxVERTICAL );
+    wxBoxSizer *mainsizer = new wxBoxSizer(wxVERTICAL);
     wxFlexGridSizer *flexgridsizer = new wxFlexGridSizer(2, 2, 5, 5);
 
     // Create and add controls to sizers. Note that a member variable

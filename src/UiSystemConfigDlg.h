@@ -21,13 +21,13 @@ public:
 
 private:
     // ---- event handlers ----
-    void OnCpuChoice( wxCommandEvent& WXUNUSED(event) );
-    void OnMemsizeChoice( wxCommandEvent& WXUNUSED(event) );
-    void OnCardChoice( wxCommandEvent &event );
-    void OnAddrChoice( wxCommandEvent &event );
+    void OnCpuChoice(wxCommandEvent& WXUNUSED(event));
+    void OnMemsizeChoice(wxCommandEvent& WXUNUSED(event));
+    void OnCardChoice(wxCommandEvent &event);
+    void OnAddrChoice(wxCommandEvent &event);
     void OnButton(wxCommandEvent &event);
-    void OnDiskRealtime( wxCommandEvent& WXUNUSED(event) );
-    void OnWarnIo( wxCommandEvent& WXUNUSED(event) );
+    void OnDiskRealtime(wxCommandEvent& WXUNUSED(event));
+    void OnWarnIo(wxCommandEvent& WXUNUSED(event));
 
     wxChoice *m_cpuType;                // B/T/VP/MVP/VLSI
     wxChoice *m_memSize;                // main memory size

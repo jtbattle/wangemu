@@ -14,7 +14,7 @@ class Printer: public wxScrolledWindow
 {
 public:
     CANT_ASSIGN_OR_COPY_CLASS(Printer);
-    explicit Printer( PrinterFrame *parent );
+    explicit Printer(PrinterFrame *parent);
     ~Printer();
 
     // ---- setters/getters ----
@@ -107,7 +107,7 @@ private:
     void closePort();
 
     // refresh the screen display
-    void drawScreen(wxDC &dc, int startCol, int startRow );
+    void drawScreen(wxDC &dc, int startCol, int startRow);
 
     // update the bitmap of the screen image
     void generateScreen(int startCol, int startRow);

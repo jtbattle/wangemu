@@ -65,11 +65,11 @@ SysCfgState::operator=(const SysCfgState &rhs)
         }
     }
 
-    setCpuType( rhs.getCpuType() );
-    setRamKB( rhs.getRamKB() );
-    regulateCpuSpeed( rhs.isCpuSpeedRegulated() );
-    setDiskRealtime( rhs.getDiskRealtime() );
-    setWarnIo( rhs.getWarnIo() );
+    setCpuType(rhs.getCpuType());
+    setRamKB(rhs.getRamKB());
+    regulateCpuSpeed(rhs.isCpuSpeedRegulated());
+    setDiskRealtime(rhs.getDiskRealtime());
+    setWarnIo(rhs.getWarnIo());
 
     return *this;
 }
@@ -108,16 +108,16 @@ SysCfgState::operator==(const SysCfgState &rhs) const
     assert(rhs.m_initialized);
 
     for (int slot=0; slot<NUM_IOSLOTS; slot++) {
-        if ( (m_slot[slot].type    != rhs.m_slot[slot].type) ||
-             (m_slot[slot].addr    != rhs.m_slot[slot].addr) ||
-             ( (    m_slot[slot].cardCfg == nullptr) !=
-               (rhs.m_slot[slot].cardCfg == nullptr) ) ) {
+        if ((m_slot[slot].type    != rhs.m_slot[slot].type) ||
+            (m_slot[slot].addr    != rhs.m_slot[slot].addr) ||
+             ((    m_slot[slot].cardCfg == nullptr) !=
+              (rhs.m_slot[slot].cardCfg == nullptr))) {
             return false;
         }
 
-        if ( (    m_slot[slot].cardCfg != nullptr) &&
-             (rhs.m_slot[slot].cardCfg != nullptr) &&
-             (*m_slot[slot].cardCfg != *rhs.m_slot[slot].cardCfg) ) {
+        if ((    m_slot[slot].cardCfg != nullptr) &&
+            (rhs.m_slot[slot].cardCfg != nullptr) &&
+            (*m_slot[slot].cardCfg != *rhs.m_slot[slot].cardCfg)) {
             return false;
         }
     }
@@ -147,21 +147,21 @@ SysCfgState::setDefaults()
 
     // wipe out all cards
     for (int slot=0; slot < NUM_IOSLOTS; slot++) {
-        setSlotCardType( slot, IoCard::card_t::none );
-        setSlotCardAddr( slot, 0x000 );
+        setSlotCardType(slot, IoCard::card_t::none);
+        setSlotCardAddr(slot, 0x000);
     }
 
-    setSlotCardType( 0, IoCard::card_t::keyboard );
-    setSlotCardAddr( 0, 0x001 );
+    setSlotCardType(0, IoCard::card_t::keyboard);
+    setSlotCardAddr(0, 0x001);
 
-    setSlotCardType( 1, IoCard::card_t::disp_64x16 );
-    setSlotCardAddr( 1, 0x005 );
+    setSlotCardType(1, IoCard::card_t::disp_64x16);
+    setSlotCardAddr(1, 0x005);
 
-    setSlotCardType( 2, IoCard::card_t::disk );
-    setSlotCardAddr( 2, 0x310 );
+    setSlotCardType(2, IoCard::card_t::disk);
+    setSlotCardAddr(2, 0x310);
 
-    setSlotCardType( 3, IoCard::card_t::printer );
-    setSlotCardAddr( 3, 0x215 );
+    setSlotCardType(3, IoCard::card_t::printer);
+    setSlotCardAddr(3, 0x215);
 
     m_initialized = true;
 }
@@ -234,8 +234,8 @@ SysCfgState::loadIni()
                                  && ((0 <= io_addr)  && (io_addr <= 0xFFF));
 
         if (plausible_card) {
-            setSlotCardType( slot, cardtype );
-            setSlotCardAddr( slot, io_addr );
+            setSlotCardType(slot, cardtype);
+            setSlotCardAddr(slot, io_addr);
             // if cardtype isCardConfigurable(), make a new config object,
             // and try to load it from the ini
             if (CardInfo::isCardConfigurable(cardtype)) {
@@ -246,8 +246,8 @@ SysCfgState::loadIni()
             }
         } else {
             // the slot is empty
-            setSlotCardType( slot, IoCard::card_t::none );
-            setSlotCardAddr( slot, 0x000 );
+            setSlotCardType(slot, IoCard::card_t::none);
+            setSlotCardAddr(slot, 0x000);
         }
     }
 
@@ -257,10 +257,10 @@ SysCfgState::loadIni()
         bool bval;
 
         host::ConfigReadBool(subgroup, "disk_realtime", &bval, true);
-        setDiskRealtime( bval );  // default
+        setDiskRealtime(bval);  // default
 
         host::ConfigReadBool(subgroup, "warnio", &bval, true);
-        setWarnIo( bval );  // default
+        setWarnIo(bval);  // default
     }
 
     m_initialized = true;
@@ -480,25 +480,25 @@ SysCfgState::configOk(bool warn) const
         }
 
         // make sure we have a keyboard at 0x01
-        if ( (m_slot[slot].type == IoCard::card_t::keyboard) &&
-             (m_slot[slot].addr & 0xFF) == 0x01) {
+        if ((m_slot[slot].type == IoCard::card_t::keyboard) &&
+            (m_slot[slot].addr & 0xFF) == 0x01) {
             pri_kb_found = true;
         }
 
-        if ( (m_slot[slot].type == IoCard::card_t::term_mux) &&
-             (m_slot[slot].addr & 0xFF) == 0x00) {
+        if ((m_slot[slot].type == IoCard::card_t::term_mux) &&
+            (m_slot[slot].addr & 0xFF) == 0x00) {
             pri_kb_found = true;
         }
 
         // make sure we have a crt at 0x05
-        if ( ((m_slot[slot].type == IoCard::card_t::disp_64x16) ||
-              (m_slot[slot].type == IoCard::card_t::disp_80x24)) &&
-             (m_slot[slot].addr & 0xFF) == 0x05) {
+        if (   (   (m_slot[slot].type == IoCard::card_t::disp_64x16)
+                || (m_slot[slot].type == IoCard::card_t::disp_80x24))
+            && (m_slot[slot].addr & 0xFF) == 0x05) {
             pri_crt_found = true;
         }
 
-        if ( (m_slot[slot].type == IoCard::card_t::term_mux) &&
-             (m_slot[slot].addr & 0xFF) == 0x00) {
+        if (   (m_slot[slot].type == IoCard::card_t::term_mux)
+            && (m_slot[slot].addr & 0xFF) == 0x00) {
             pri_crt_found = true;
         }
 
@@ -578,13 +578,13 @@ SysCfgState::needsReboot(const SysCfgState &other) const
             return true;
         }
 
-        if ( (m_slot[slot].type != IoCard::card_t::none) &&
-             (m_slot[slot].addr & 0xFF) != (other.m_slot[slot].addr & 0xFF) ) {
+        if ((m_slot[slot].type != IoCard::card_t::none) &&
+            (m_slot[slot].addr & 0xFF) != (other.m_slot[slot].addr & 0xFF)) {
             return true;
         }
 
-        if ( (m_slot[slot].cardCfg != nullptr) &&
-              m_slot[slot].cardCfg->needsReboot(*other.m_slot[slot].cardCfg)) {
+        if ((m_slot[slot].cardCfg != nullptr) &&
+             m_slot[slot].cardCfg->needsReboot(*other.m_slot[slot].cardCfg)) {
             return true;
         }
     }

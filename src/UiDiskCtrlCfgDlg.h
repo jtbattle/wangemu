@@ -19,9 +19,9 @@ public:
 
 private:
     // ---- event handlers ----
-    void OnNumDrives( wxCommandEvent &event );
-    void OnIntelligence( wxCommandEvent &event );
-    void OnWarnMismatch( wxCommandEvent &event );
+    void OnNumDrives(wxCommandEvent &event);
+    void OnIntelligence(wxCommandEvent &event);
+    void OnWarnMismatch(wxCommandEvent &event);
     void OnButton(wxCommandEvent &event);
 
     wxRadioBox *m_rbNumDrives;      // number of attached disk drives

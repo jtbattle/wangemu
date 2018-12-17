@@ -40,13 +40,13 @@ Crt::Crt(CrtFrame *parent, crt_state_t *crt_state) :
     m_charcell_sx(1),
     m_charcell_sy(1),
     m_charcell_dy(1),
-    m_FGcolor( wxColor(0xff,0xff,0xff) ),
-    m_BGcolor( wxColor(0x00,0x00,0x00) ),
+    m_FGcolor(wxColor(0xff, 0xff, 0xff)),
+    m_BGcolor(wxColor(0x00, 0x00, 0x00)),
     m_display_contrast(100),
     m_display_brightness(0),
     m_scrpix_w(0),
     m_scrpix_h(0),
-    m_RCscreen(wxRect(0,0,0,0)),
+    m_RCscreen(wxRect(0, 0, 0, 0)),
     m_beep(nullptr)
 {
     create_beep();
@@ -179,7 +179,7 @@ Crt::OnPaint(wxPaintEvent &WXUNUSED(event))
     );
     memDC.SelectObject(wxNullBitmap);
 #else
-    dc.DrawBitmap( m_scrbits, m_RCscreen.GetX(), m_RCscreen.GetY() );
+    dc.DrawBitmap(m_scrbits, m_RCscreen.GetX(), m_RCscreen.GetY());
 
     // draw borders around active text area.
     // if we are doing an incremental update, supposedly
@@ -206,16 +206,16 @@ Crt::OnPaint(wxPaintEvent &WXUNUSED(event))
         dc.SetPen(wxPen(bg, 1, wxPENSTYLE_SOLID));
 
         if (top > 0) {  // top border is required
-            dc.DrawRectangle(0,0, m_scrpix_w,top);
+            dc.DrawRectangle(0, 0, m_scrpix_w, top);
         }
         if (bottom_h > 0) {     // bottom border is required
-            dc.DrawRectangle(0,bottom, m_scrpix_w,bottom_h);
+            dc.DrawRectangle(0, bottom, m_scrpix_w, bottom_h);
         }
         if (left > 0) { // left border is required
-            dc.DrawRectangle(0,top, left,bottom-top);
+            dc.DrawRectangle(0, top, left, bottom-top);
         }
         if (right_w) {  // right border is required
-            dc.DrawRectangle(right,top, right_w,bottom-top);
+            dc.DrawRectangle(right, top, right_w, bottom-top);
         }
 
         dc.SetPen(wxNullPen);
@@ -223,7 +223,7 @@ Crt::OnPaint(wxPaintEvent &WXUNUSED(event))
     }
 #endif
 
-    setFrameCount( getFrameCount() + 1 );
+    setFrameCount(getFrameCount() + 1);
 }
 
 
@@ -416,8 +416,8 @@ Crt::recalcBorders()
     // we can skip the malloc when the user simply changes the screen
     // size, or changes the font color, contrast, or brightness.
     // only a font change requires a new wxBitmap.
-    if ( !m_scrbits.IsOk() || (m_scrbits.GetWidth()  != width)  ||
-                              (m_scrbits.GetHeight() != height) ) {
+    if (!m_scrbits.IsOk() || (m_scrbits.GetWidth()  != width)  ||
+                             (m_scrbits.GetHeight() != height)) {
 #if !(__WXMAC__) && DRAW_WITH_RAWBMP
         m_scrbits = wxBitmap(width, height, 24);
 #else

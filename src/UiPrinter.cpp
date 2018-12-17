@@ -99,7 +99,7 @@ Printer::setFontSize(const int size)
     wxClientDC dc(this);
 
     m_font = wxFont(size, wxFONTFAMILY_MODERN, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL, false);
-    dc.SetFont( m_font );
+    dc.SetFont(m_font);
 
     m_fontsize   = size;
     m_charcell_w = dc.GetCharWidth();
@@ -400,9 +400,9 @@ Printer::lptChar(uint8 byte)
 
     fputc(byte, m_fp_port);
     m_printing_flag = true;
-    if ( (byte == 0x0A) ||   // line feed
-         (byte == 0x0C) ||   // page feed
-         (byte == 0x0D)) {   // carriage return
+    if ((byte == 0x0A) ||   // line feed
+        (byte == 0x0C) ||   // page feed
+        (byte == 0x0D)) {   // carriage return
         fflush(m_fp_port);
     }
 }
@@ -449,7 +449,7 @@ Printer::saveToFile()
             std::string tmpline(m_printstream[n] + "\n");
 #endif
             const int len = tmpline.length();
-            ofs.write( tmpline.c_str(), len );
+            ofs.write(tmpline.c_str(), len);
             if (!ofs.good()) {
                 UI_Error("Error writing to line %d of '%s'", n+1, fullpath.c_str());
                 ofs.close();
@@ -502,7 +502,7 @@ Printer::generatePrintPage(wxDC *dc, int pagenum, float vertAdjust)
     // draw each row of the text
     for (int row = 0; row < m_pagelength; row++) {
 
-        if (static_cast<size_t>(startRow + row) < m_printstream.size() ) {
+        if (static_cast<size_t>(startRow + row) < m_printstream.size()) {
             // the line exists
             line = m_printstream[startRow + row];
             line = line.substr(startCol, m_linelength - startCol);
@@ -512,7 +512,7 @@ Printer::generatePrintPage(wxDC *dc, int pagenum, float vertAdjust)
         }
 
         line = line.erase(length);
-        dc->DrawText(line, 0 ,row*m_charcell_h*vertAdjust);
+        dc->DrawText(line, 0, row*m_charcell_h*vertAdjust);
     }
 }
 
@@ -520,13 +520,13 @@ Printer::generatePrintPage(wxDC *dc, int pagenum, float vertAdjust)
 void
 Printer::scrollbarSet(int xpos, int ypos, bool redraw)
 {
-    SetScrollbars(  m_charcell_w,               // pixels per scroll unit x
-                    m_charcell_h,               // pixels per scroll unit y
-                    m_linelength + 2*hmargin,   // number of units x
-                    m_printstream.size(),       // number of units y,
-                    xpos,                       // x position in scroll units
-                    ypos,                       // y position in scroll units
-                    !redraw);                   // redraw the screen
+    SetScrollbars(m_charcell_w,              // pixels per scroll unit x
+                  m_charcell_h,              // pixels per scroll unit y
+                  m_linelength + 2*hmargin,  // number of units x
+                  m_printstream.size(),      // number of units y,
+                  xpos,                      // x position in scroll units
+                  ypos,                      // y position in scroll units
+                  !redraw);                  // redraw the screen
 }
 
 
@@ -633,7 +633,7 @@ Printer::drawScreen(wxDC& dc, int startCol, int startRow)
     generateScreen(startCol, startRow);
 
     // blast the image to the screen
-    dc.DrawBitmap(m_scrbits, 0,0);  // src, x,y
+    dc.DrawBitmap(m_scrbits, 0, 0);  // src, x,y
 }
 
 // update the pixmap of the screen image
@@ -662,7 +662,7 @@ Printer::generateScreen(int startCol, int startRow)
 
     // this code assumes that if the viewport is wider than the page,
     // there won't be any startCol offset
-    assert( (startCol == 0) || (left_edge < 0) );
+    assert((startCol == 0) || (left_edge < 0));
 
     wxMemoryDC imgDC(m_scrbits);
 
@@ -670,8 +670,8 @@ Printer::generateScreen(int startCol, int startRow)
     {
         imgDC.SetPen(*wxWHITE_PEN);
         imgDC.SetBrush(*wxWHITE_BRUSH);
-        imgDC.DrawRectangle( left_edge, 0,              // origin
-                             page_w, m_scrpix_h );      // width, height
+        imgDC.DrawRectangle(left_edge, 0,          // origin
+                             page_w, m_scrpix_h);  // width, height
     }
 
     // draw greyed out region on the right and left
@@ -679,21 +679,21 @@ Printer::generateScreen(int startCol, int startRow)
     if (right_bg_w >= 0) {
         imgDC.SetPen(*wxGREY_PEN);
         imgDC.SetBrush(*wxGREY_BRUSH);
-        imgDC.DrawRectangle( 0, 0,              // origin
-                             left_bg_w,         // width
-                             m_scrpix_h );      // height
-        imgDC.DrawRectangle( right_edge, 0,     // origin
-                             right_bg_w,        // width
-                             m_scrpix_h );      // height
+        imgDC.DrawRectangle(0, 0,            // origin
+                            left_bg_w,       // width
+                            m_scrpix_h);     // height
+        imgDC.DrawRectangle(right_edge, 0,   // origin
+                            right_bg_w,      // width
+                            m_scrpix_h);     // height
 
         // draw black edge to paper for emphasis
         imgDC.SetPen(*wxBLACK_PEN);
-        imgDC.DrawLine( left_edge-1, 0,         // origin
-                        left_edge-1,            // width
-                        m_scrpix_h);            // height
-        imgDC.DrawLine( right_edge-1, 0,        // origin
-                        right_edge-1,           // width
-                        m_scrpix_h);            // height
+        imgDC.DrawLine(left_edge-1, 0,       // origin
+                       left_edge-1,          // width
+                       m_scrpix_h);          // height
+        imgDC.DrawLine(right_edge-1, 0,      // origin
+                       right_edge-1,         // width
+                       m_scrpix_h);          // height
 
         imgDC.SetPen(wxNullPen);
         imgDC.SetBrush(wxNullBrush);
@@ -702,8 +702,8 @@ Printer::generateScreen(int startCol, int startRow)
     // if greenbar mode, draw green rounded rectangles
     if (m_greenbar) {
 
-        wxColor lightGreen = wxColour(0xB0,0xFF,0xB0);
-        wxColor darkGreen  = wxColour(0x00,0x80,0x00);
+        wxColor lightGreen = wxColour(0xB0, 0xFF, 0xB0);
+        wxColor darkGreen  = wxColour(0x00, 0x80, 0x00);
         wxBrush rectfill(lightGreen);
         wxPen   rectoutline(darkGreen);
         imgDC.SetPen(rectoutline);
@@ -719,7 +719,7 @@ Printer::generateScreen(int startCol, int startRow)
             const int width  = m_linelength * m_charcell_w     + m_charcell_w;    //  / on each side
             const int height = bar_h * m_charcell_h;
             const double radius = m_charcell_w * 0.5;
-            imgDC.DrawRoundedRectangle(xoff,yoff, width,height, radius);
+            imgDC.DrawRoundedRectangle(xoff, yoff, width, height, radius);
         }
 
         imgDC.SetPen(wxNullPen);
@@ -743,8 +743,8 @@ Printer::generateScreen(int startCol, int startRow)
             const int x_off = left_edge;
             const int y_off = m_charcell_h * (brk - startRow);
             const int x_end = left_edge + page_w;
-            imgDC.DrawLine( x_off, y_off,       // from (x,y)
-                            x_end, y_off);      // to   (x,y)
+            imgDC.DrawLine(x_off, y_off,   // from (x,y)
+                           x_end, y_off);  // to   (x,y)
         }
 
         imgDC.SetPen(wxNullPen);
@@ -985,7 +985,7 @@ Printout::OnPrintPage(int page)
     dc->SetDeviceOrigin(0, 0);
 #endif //approach 2
     m_printer->generatePrintPage(dc, page, vertAdjust);
-    dc->SetDeviceOrigin(0,0);
+    dc->SetDeviceOrigin(0, 0);
     dc->SetUserScale(1.0, 1.0);
 
     return true;

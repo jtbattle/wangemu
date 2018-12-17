@@ -54,7 +54,7 @@ DiskCtrlCfgState::DiskCtrlCfgState(const DiskCtrlCfgState &obj) noexcept
 bool
 DiskCtrlCfgState::operator==(const CardCfgState &rhs) const
 {
-    const DiskCtrlCfgState rrhs( dynamic_cast<const DiskCtrlCfgState&>(rhs) );
+    const DiskCtrlCfgState rrhs(dynamic_cast<const DiskCtrlCfgState&>(rhs));
 
     assert(     m_initialized);
     assert(rrhs.m_initialized);
@@ -75,9 +75,9 @@ DiskCtrlCfgState::operator!=(const CardCfgState &rhs) const
 void
 DiskCtrlCfgState::setDefaults()
 {
-    setNumDrives( 2 );
-    setIntelligence( DISK_CTRL_INTELLIGENT );
-    setWarnMismatch( true );
+    setNumDrives(2);
+    setIntelligence(DISK_CTRL_INTELLIGENT);
+    setWarnMismatch(true);
 }
 
 
@@ -91,20 +91,20 @@ DiskCtrlCfgState::loadIni(const std::string &subgroup)
         UI_Warn("config state messed up -- assuming something reasonable");
         ival = 2;
     }
-    setNumDrives( ival );
+    setNumDrives(ival);
 
-    setIntelligence( DISK_CTRL_INTELLIGENT );  // default
+    setIntelligence(DISK_CTRL_INTELLIGENT);  // default
     std::string sval;
     bool b = host::ConfigReadStr(subgroup, "intelligence", &sval);
     if (b) {
-             if (sval == "dumb")  { setIntelligence( DISK_CTRL_DUMB ); }
-        else if (sval == "smart") { setIntelligence( DISK_CTRL_INTELLIGENT ); }
-        else if (sval == "auto")  { setIntelligence( DISK_CTRL_AUTO ); }
+             if (sval == "dumb")  { setIntelligence(DISK_CTRL_DUMB); }
+        else if (sval == "smart") { setIntelligence(DISK_CTRL_INTELLIGENT); }
+        else if (sval == "auto")  { setIntelligence(DISK_CTRL_AUTO); }
     }
 
     bool bval;
     host::ConfigReadBool(subgroup, "warnMismatch", &bval, true);
-    setWarnMismatch( bval );
+    setWarnMismatch(bval);
 
     m_initialized = true;
 }
@@ -142,9 +142,9 @@ DiskCtrlCfgState::setNumDrives(int count) noexcept
 void
 DiskCtrlCfgState::setIntelligence(disk_ctrl_intelligence_t intelligence) noexcept
 {
-    assert( intelligence == DISK_CTRL_DUMB        ||
-            intelligence == DISK_CTRL_INTELLIGENT ||
-            intelligence == DISK_CTRL_AUTO        );
+    assert(intelligence == DISK_CTRL_DUMB        ||
+           intelligence == DISK_CTRL_INTELLIGENT ||
+           intelligence == DISK_CTRL_AUTO        );
 
     m_intelligence = intelligence;
 }
@@ -203,7 +203,7 @@ DiskCtrlCfgState::configOk(bool warn) const noexcept
 bool
 DiskCtrlCfgState::needsReboot(const CardCfgState &other) const noexcept
 {
-    const DiskCtrlCfgState oother( dynamic_cast<const DiskCtrlCfgState&>(other) );
+    const DiskCtrlCfgState oother(dynamic_cast<const DiskCtrlCfgState&>(other));
 
     return (getNumDrives() != oother.getNumDrives());
 }

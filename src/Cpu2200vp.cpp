@@ -216,9 +216,9 @@ Cpu2200vp::write_ucode(uint16 addr, uint32 uop, bool force) noexcept
         }
         m_ucode[addr].op  = OP_LPI;
         m_ucode[addr].p16 = static_cast<uint16>(
-                              ((uop >> 3) & 0xC000)     // [18:17] -> [15:14]
-                            | ((uop >> 2) & 0x3000)     // [15:14] -> [13:12]
-                            | ((uop >> 0) & 0x0FFF) );  // [11: 0] -> [11: 0]
+                              ((uop >> 3) & 0xC000)    // [18:17] -> [15:14]
+                            | ((uop >> 2) & 0x3000)    // [15:14] -> [13:12]
+                            | ((uop >> 0) & 0x0FFF));  // [11: 0] -> [11: 0]
 
     } else if (mini_op) {
 
@@ -378,14 +378,14 @@ Cpu2200vp::write_ucode(uint16 addr, uint32 uop, bool force) noexcept
                     m_ucode[addr].ucode |= FETCH_X;
                     m_ucode[addr].op  = static_cast<uint8>(
                                                 (op <= 0x11) ? OP_BLRX
-                                                             : OP_BLERX );
+                                                             : OP_BLERX);
                 } else {
                     m_ucode[addr].ucode |= FETCH_AB;
                     m_ucode[addr].op  = static_cast<uint8>(
                                                 (op <= 0x11) ? OP_BLR
                                               : (op <= 0x13) ? OP_BLER
                                               : (op == 0x14) ? OP_BER
-                                                             : OP_BNR );
+                                                             : OP_BNR);
                 }
                 m_ucode[addr].p8  = static_cast<uint8>(PC_ADJUST(a_field));
                 m_ucode[addr].p16 = PAGEBR(uop);
@@ -449,10 +449,10 @@ Cpu2200vp::write_ucode(uint16 addr, uint32 uop, bool force) noexcept
 #define CARRY_BIT ((m_cpu.sh & SH_MASK_CARRY)?1:0)
 
 // set the sh carry flag in accordance with bit 8 of v
-#define SET_CARRY(v)                                                     \
-    do {                                                                 \
-    m_cpu.sh = static_cast<uint8>( (m_cpu.sh & ~SH_MASK_CARRY) |         \
-                                   (((v) & 0x100) ? SH_MASK_CARRY : 0)); \
+#define SET_CARRY(v)                                                    \
+    do {                                                                \
+    m_cpu.sh = static_cast<uint8>((m_cpu.sh & ~SH_MASK_CARRY) |         \
+                                  (((v) & 0x100) ? SH_MASK_CARRY : 0)); \
     } while (false)
 
 // increment and decrement the ucode subroutine stack
@@ -539,7 +539,7 @@ Cpu2200vp::set_sh(uint8 value)
                                   | ( mask & m_cpu.sh));
 
     if (cpb_changed) {
-        system2200::cpu_CPB( !!(m_cpu.sh & SH_MASK_CPB) );
+        system2200::cpu_CPB(!!(m_cpu.sh & SH_MASK_CPB));
     }
 }
 
@@ -647,16 +647,16 @@ Cpu2200vp::decimal_sub8(int a_op, int b_op, int ci) const noexcept
 #else
     // store results into the specified register
     static void
-    store_c(unsigned int c_field, int val) { inlined_store_c(c_field,val); }
+    store_c(unsigned int c_field, int val) { inlined_store_c(c_field, val); }
 #endif
 
 
 // addresses < 8KB always refer to bank 0.
 // otherwise, add the bank offset, and force the addr to zero if it is too big
-#define inline_map_address(addr)   \
-    (   ((addr) < 8192) ? (addr)   \
-      : ((addr) + m_cpu.bank_offset < m_memsize) ? (m_cpu.bank_offset+(addr)) \
-      : (0) \
+#define inline_map_address(addr)  \
+    (  ((addr) < 8192) ? (addr)   \
+     : ((addr) + m_cpu.bank_offset < m_memsize) ? (m_cpu.bank_offset+(addr)) \
+     : (0) \
     )
 
 
@@ -730,9 +730,9 @@ Cpu2200vp::get_HbHa(int HbHa, int a_op, int b_op) const noexcept
 }
 
 
-#define inlined_get_Hb(Hb, b_op)                \
-    ( ((Hb)&1) ? (((b_op) >> 4) & 0xF)          \
-               : (((b_op) >> 0) & 0xF) )
+#define inlined_get_Hb(Hb, b_op)       \
+    (((Hb)&1) ? (((b_op) >> 4) & 0xF)  \
+              : (((b_op) >> 0) & 0xF))
 
 #if INLINE_GET_Hb
     #define get_Hb(Hb, b_op) inlined_get_Hb(Hb, b_op)
@@ -770,7 +770,7 @@ Cpu2200vp::get_HbHa(int HbHa, int a_op, int b_op) const noexcept
         } while (false)
 #else
     static void
-    perform_dd_op(uint32 uop, int wr_val) { inlined_perform_dd_op(uop,wr_val); }
+    perform_dd_op(uint32 uop, int wr_val) { inlined_perform_dd_op(uop, wr_val); }
 #endif
 
 
@@ -788,7 +788,7 @@ Cpu2200vp::Cpu2200vp(std::shared_ptr<Scheduler> scheduler,
     m_scheduler(scheduler),
     m_hasOneShot(false),
     m_tmr_30ms(nullptr),
-    m_ucode{{0,0,0,0}},
+    m_ucode{{0, 0, 0, 0}},
     m_memsize(ramsize),
     m_dbg(false)
 {
@@ -916,10 +916,10 @@ void
 Cpu2200vp::IoCardCbIbs(int data)
 {
     // we shouldn't receive an IBS while the cpu is busy
-    assert( (m_cpu.sh & SH_MASK_CPB) == 0 );
+    assert((m_cpu.sh & SH_MASK_CPB) == 0);
     m_cpu.k = static_cast<uint8>(data & 0xFF);
-    m_cpu.sh |= SH_MASK_CPB;            // CPU busy; inhibit IBS
-    system2200::cpu_CPB( true );        // we are busy now
+    m_cpu.sh |= SH_MASK_CPB;    // CPU busy; inhibit IBS
+    system2200::cpu_CPB(true);  // we are busy now
 
     // return special status if it is a special function key
     if (data & IoCardKeyboard::KEYCODE_SF) {
@@ -948,8 +948,8 @@ void
 Cpu2200vp::setDevRdy(bool ready) noexcept
 {
     m_cpu.sh = static_cast<uint8>(
-                   (ready) ? (m_cpu.sh |  SH_MASK_DEVRDY)      /* set */
-                           : (m_cpu.sh & ~SH_MASK_DEVRDY) );   /* clear */
+                   (ready) ? (m_cpu.sh |  SH_MASK_DEVRDY)     /* set */
+                           : (m_cpu.sh & ~SH_MASK_DEVRDY));   /* clear */
 }
 
 
@@ -994,7 +994,7 @@ Cpu2200vp::execOneOp()
     if (g_dbg_trace) {
         g_num_ops++;
         char buff[200];
-        dump_state( 1 );
+        dump_state(1);
         int illegal = dasm_one_vp(buff, m_cpu.ic, m_ucode[m_cpu.ic].ucode);
         dbglog("cycle %5d: %s", g_num_ops, buff);
     }
@@ -1235,7 +1235,7 @@ Cpu2200vp::execOneOp()
         break;
 
     case OP_RCM:
-        // SR,RCM (read control memory and subroutine return)
+        // SR, RCM (read control memory and subroutine return)
         INC_ICSP;
         tmp16 = m_cpu.icstack[m_cpu.icsp];
         m_cpu.k  = static_cast<uint8>((m_ucode[tmp16].ucode >> 16) & 0xFF);
@@ -1252,8 +1252,8 @@ Cpu2200vp::execOneOp()
         tmp16 = m_cpu.icstack[m_cpu.icsp];
         // BASIC-3/COBOL required larger control memories, but
         // the boot rom is still stuck in the middle
-        if ( (tmp16 < MAX_UCODE) &&
-             !((tmp16 >= 0x8000) && (tmp16 < 0x9000)) ) {
+        if ((tmp16 < MAX_UCODE) &&
+            !((tmp16 >= 0x8000) && (tmp16 < 0x9000))) {
             write_ucode(tmp16, ((~m_cpu.k & 0xFF) << 16) | m_cpu.pc);
         }
         // perform subroutine return
@@ -1364,8 +1364,8 @@ Cpu2200vp::execOneOp()
                 //         20 MS. MIN.
                 //         27 MS. AVE.
                 //         35 MS. MAX.
-                m_tmr_30ms = m_scheduler->TimerCreate( TIMER_MS(27),
-                                                       [&](){ tcb30msDone(); } );
+                m_tmr_30ms = m_scheduler->TimerCreate(TIMER_MS(27),
+                                                       [&](){ tcb30msDone(); });
             } else {
                 if (!g_30ms_warning) {
                     UI_Warn("Your system is configured with a 2200VP CPU,\n"
@@ -1490,7 +1490,7 @@ Cpu2200vp::execOneOp()
     case OP_DACX:
         PREAMBLE2;
         rslt  = decimal_add8(a_op,  b_op,  CARRY_BIT);
-        rslt2 = decimal_add8(a_op2, b_op2, ((rslt >> 8) & 1) );
+        rslt2 = decimal_add8(a_op2, b_op2, ((rslt >> 8) & 1));
         SET_CARRY(rslt2);
         POSTAMBLE2;
         break;
@@ -1498,7 +1498,7 @@ Cpu2200vp::execOneOp()
     case OP_DSCX:
         PREAMBLE2;
         rslt  = decimal_sub8(a_op,  b_op,  CARRY_BIT);
-        rslt2 = decimal_sub8(a_op2, b_op2, ((rslt >> 8) & 1) );
+        rslt2 = decimal_sub8(a_op2, b_op2, ((rslt >> 8) & 1));
         SET_CARRY(rslt2);
         POSTAMBLE2;
         break;
@@ -1694,7 +1694,7 @@ void
 Cpu2200vp::dump_ram(const std::string &filename)
 {
     // open the file, discarding contents of file if it already exists
-    std::ofstream ofs( filename.c_str(), std::ofstream::out | std::ofstream::trunc);
+    std::ofstream ofs(filename.c_str(), std::ofstream::out | std::ofstream::trunc);
     if (!ofs.is_open()) {
         UI_Error("Error writing to file '%s'", filename.c_str());
         return;

@@ -189,9 +189,9 @@ TheApp::OnHelp_Launcher(wxCommandEvent &event)
     }
 
     wxString target_file = (absolute) ? helpfile
-                                      : ( "file:" + sep + sep +
-                                          host::getAppHome() +
-                                          sep + helpfile );
+                                      : ("file:" + sep + sep +
+                                         host::getAppHome() +
+                                         sep + helpfile);
 #ifdef __WXMSW__
     // wxLaunchDefaultBrowser()'s argument used to use windows-style paths,
     // ie, backslash as a path separator.  however, at some point between
@@ -234,7 +234,7 @@ UI_Error(const char *fmt, ...)
 {
     va_list args;
     va_start(args, fmt);
-    UI_AlertMsg( wxICON_ERROR, "Error", fmt, args );
+    UI_AlertMsg(wxICON_ERROR, "Error", fmt, args);
     va_end(args);
 }
 
@@ -244,7 +244,7 @@ UI_Warn(const char *fmt, ...)
 {
     va_list args;
     va_start(args, fmt);
-    UI_AlertMsg( wxICON_EXCLAMATION, "Warning", fmt, args );
+    UI_AlertMsg(wxICON_EXCLAMATION, "Warning", fmt, args);
     va_end(args);
 }
 
@@ -253,7 +253,7 @@ UI_Info(const char *fmt, ...)
 {
     va_list args;
     va_start(args, fmt);
-    UI_AlertMsg( wxICON_INFORMATION, "Information", fmt, args );
+    UI_AlertMsg(wxICON_INFORMATION, "Information", fmt, args);
     va_end(args);
 }
 
@@ -267,7 +267,7 @@ UI_Confirm(const char *fmt, ...)
 
     va_list args;
     va_start(args, fmt);
-    const bool rv = UI_AlertMsg( style, "Question", fmt, args );
+    const bool rv = UI_AlertMsg(style, "Question", fmt, args);
     va_end(args);
 
     return rv;

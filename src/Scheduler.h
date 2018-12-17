@@ -61,8 +61,8 @@ public:
     //   void TimerTestFoo::report(int i)
     //   { printf("got callback for timer %d after %d clocks\n", i, g_testtime); }
     //
-    //   auto tmr = TimerCreate( 100,
-    //                           std::bind(&TimerTestFoo:report, &foo, 33) );
+    //   auto tmr = TimerCreate(100,
+    //                          std::bind(&TimerTestFoo:report, &foo, 33));
     //
     // After 100 clocks, foo.report(33) is called.
     std::shared_ptr<Timer> TimerCreate(int64 ns, const sched_callback_t &fcn);

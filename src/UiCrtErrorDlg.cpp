@@ -17,15 +17,15 @@
 
 // dialog events to catch
 BEGIN_EVENT_TABLE(CrtErrorDlg, wxDialog)
-    EVT_LEFT_DOWN   ( CrtErrorDlg::OnClick )
-    EVT_MIDDLE_DOWN ( CrtErrorDlg::OnClick )
-    EVT_RIGHT_DOWN  ( CrtErrorDlg::OnClick )
+    EVT_LEFT_DOWN   (CrtErrorDlg::OnClick)
+    EVT_MIDDLE_DOWN (CrtErrorDlg::OnClick)
+    EVT_RIGHT_DOWN  (CrtErrorDlg::OnClick)
 END_EVENT_TABLE()
 
 
-CrtErrorDlg::CrtErrorDlg( wxWindow *parent,
-                          const wxString &errcode,
-                          const wxPoint origin )
+CrtErrorDlg::CrtErrorDlg(wxWindow *parent,
+                         const wxString &errcode,
+                         const wxPoint origin)
         : wxDialog(parent, -1, "ERR " + errcode,
                    origin, wxDefaultSize,
                    wxDEFAULT_DIALOG_STYLE | wxRESIZE_BORDER)
@@ -37,7 +37,7 @@ CrtErrorDlg::CrtErrorDlg( wxWindow *parent,
     wxColor bgc("pale green");
 #else
     // same thing as bgc("pale green"); at least on windows
-    wxColor bgc(0x8F,0xBC,0x8F);
+    wxColor bgc(0x8F, 0xBC, 0x8F);
 #endif
     SetBackgroundColour(bgc);
 
@@ -58,10 +58,10 @@ CrtErrorDlg::CrtErrorDlg( wxWindow *parent,
     }
 
     // this is the font used for the example and correction code text
-    wxFont fixedfont = wxFont(  10,                       // point size
-                                wxFONTFAMILY_MODERN,
-                                wxFONTSTYLE_NORMAL,
-                                wxFONTWEIGHT_BOLD    );
+    wxFont fixedfont = wxFont(10,                   // point size
+                              wxFONTFAMILY_MODERN,
+                              wxFONTSTYLE_NORMAL,
+                              wxFONTWEIGHT_BOLD);
 
     // the FlexGridSizer is wrapped by a BoxSizer so we can put a margin
     // all the way around it so the text isn't flush with the window edges

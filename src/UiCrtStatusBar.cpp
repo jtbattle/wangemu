@@ -61,7 +61,7 @@ END_EVENT_TABLE()
 MyStaticBitmap::MyStaticBitmap(
                     wxWindow *parent, wxWindowID id, const wxBitmap &label,
                     const wxPoint &pos, const wxSize &size,
-                    long style, const std::string &name ) :
+                    long style, const std::string &name) :
         wxStaticBitmap (parent, id, label, pos, size, style, name),
         m_myid(id)
 {
@@ -79,7 +79,7 @@ MyStaticBitmap::OnMouseBtnDown(wxMouseEvent &event)
 
 #if HANDLE_MSB_PAINT
 void
-MyStaticBitmap::OnPaint(wxPaintEvent& WXUNUSED(event) )
+MyStaticBitmap::OnPaint(wxPaintEvent& WXUNUSED(event))
 {
     wxPaintDC dc(this); // must always be created, even if not used
 #ifdef __WXMSW__
@@ -95,11 +95,11 @@ MyStaticBitmap::OnPaint(wxPaintEvent& WXUNUSED(event) )
     wxMemoryDC memDC;
     memDC.SelectObject(img);
     //dc.SetBackgroundMode(wxTRANSPARENT);
-    dc.Blit( 0, 0, img.GetWidth(), img.GetHeight(),     // dest x,y,w,h
+    dc.Blit(0, 0, img.GetWidth(), img.GetHeight(),     // dest x,y,w,h
             &memDC, 0, 0,       // source image,x,y
             wxCOPY,             // logicalFunc
             true                // useMask
-             );
+           );
     memDC.SelectObject(wxNullBitmap);
 }
 #endif
@@ -173,7 +173,7 @@ CrtStatusBar::CrtStatusBar(CrtFrame *parent, bool smart_term, bool shown) :
 #else
     const wxSize icon_size(DISK_ICON_WIDTH+2, DISK_ICON_HEIGHT);
 #endif
-    wxBitmap dummy(1,1,1);
+    wxBitmap dummy(1, 1, 1);
 
     for (int ctrl=0; ctrl<m_num_disk_controllers; ctrl++) {
 
@@ -198,12 +198,12 @@ CrtStatusBar::CrtStatusBar(CrtFrame *parent, bool smart_term, bool shown) :
         // make a label to indicate the base address associated with drives
         wxString label;
         label.Printf("3%02X:", io & 0xff);
-        m_disklabel[2*ctrl+0] = std::make_unique<wxStaticText>( this, -1, label );
+        m_disklabel[2*ctrl+0] = std::make_unique<wxStaticText>(this, -1, label);
         const wxSize label_size0  = m_disklabel[2*ctrl+0]->GetSize();
         const int    label_width0 = label_size0.GetWidth();
 
         label.Printf("3%02X:", (io + 0x40) & 0xff);
-        m_disklabel[2*ctrl+1] = std::make_unique<wxStaticText>( this, -1, label );
+        m_disklabel[2*ctrl+1] = std::make_unique<wxStaticText>(this, -1, label);
         const wxSize label_size1 = m_disklabel[2*ctrl+1]->GetSize();
         int label_width1 = label_size1.GetWidth();
         if (m_num_drives[ctrl] <= 2) {
@@ -257,7 +257,7 @@ CrtStatusBar::CrtStatusBar(CrtFrame *parent, bool smart_term, bool shown) :
             //     here.  no worries, even if the later tooltip is narrower,
             //     the box will shrink to fit.
             wxString tmptip(wxChar(' '), 100);
-            m_diskicon[idx]->SetToolTip( tmptip + "\n" + tmptip );
+            m_diskicon[idx]->SetToolTip(tmptip + "\n" + tmptip);
 #endif
             SetDiskIcon(slot, drive);   // establish appropriate bitmap
         } // drive
@@ -348,8 +348,8 @@ CrtStatusBar::SetDiskIcon(const int slot, const int drive)
     // reassign and redraw the icon, but only if needed -- reduces flashing
     if (m_diskstate[idx] != state) {
         const wxRect icon_rect(
-                        (DISK_ICON_WIDTH*state), 0,             // x, y
-                         DISK_ICON_WIDTH, DISK_ICON_HEIGHT );   // w, h
+                        (DISK_ICON_WIDTH*state), 0,            // x, y
+                         DISK_ICON_WIDTH, DISK_ICON_HEIGHT);   // w, h
         const wxBitmap icon = m_icon_set->GetSubBitmap(icon_rect);
         m_diskstate[idx] = state;
         m_diskicon[idx]->SetBitmap(icon);

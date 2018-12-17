@@ -237,7 +237,7 @@ static void
 dbglog_open(const std::string &filename)
 {
     assert(!dbg_ofs.is_open());     // only one log at a time
-    dbg_ofs.open( filename.c_str(), std::ofstream::out | std::ofstream::trunc );
+    dbg_ofs.open(filename.c_str(), std::ofstream::out | std::ofstream::trunc);
     if (!dbg_ofs.good()) {
         UI_Error("Error opening '%s' for logging.\n", filename.c_str());
         exit(-1);
@@ -436,12 +436,12 @@ system2200::setConfig(const SysCfgState &newcfg)
             // fall through in non-debug build if config type is invalid
         case Cpu2200::CPUTYPE_2200B:
         case Cpu2200::CPUTYPE_2200T:
-            cpu = std::make_shared<Cpu2200t>( scheduler, ramsize, cpuType);
+            cpu = std::make_shared<Cpu2200t>(scheduler, ramsize, cpuType);
             break;
         case Cpu2200::CPUTYPE_VP:
         case Cpu2200::CPUTYPE_MVPC:
         case Cpu2200::CPUTYPE_MICROVP:
-            cpu = std::make_shared<Cpu2200vp>( scheduler, ramsize, cpuType);
+            cpu = std::make_shared<Cpu2200vp>(scheduler, ramsize, cpuType);
             break;
     }
     assert(cpu);
@@ -841,7 +841,7 @@ system2200::cpu_ABS(uint8 byte)
         const bool response = UI_Confirm(
                     "Warning: selected non-existent I/O device %02X\n"
                     "Should I warn you of further accesses to this device?",
-                    curIoAddr );
+                    curIoAddr);
         // suppress further warnings
         ioMap[curIoAddr].ignore = !response;
     }
@@ -1117,7 +1117,7 @@ system2200::getPrinterIoAddr(int n) noexcept
 IoCard*
 system2200::getInstFromIoAddr(int io_addr) noexcept
 {
-    assert( (io_addr >= 0) && (io_addr <= 0xFFF) );
+    assert((io_addr >= 0) && (io_addr <= 0xFFF));
     return cardInSlot[ioMap[io_addr & 0xFF].slot].get();
 }
 

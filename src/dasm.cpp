@@ -330,7 +330,7 @@ dasm_type1(char *buf, const char *mnemonic, bool &illegal, uint32 uop) noexcept
 
     const int b_field = (uop >> 10) & 0xF;
     const int mov = DASM_PSEUDO_OPS
-                 && !strcmp(mnemonic,"OR")
+                 && !strcmp(mnemonic, "OR")
                  && (b_field == 0xF); // OR a,0,c  --> MV a,c
     const char *mnem = (mov) ? "MV" : mnemonic;
 
@@ -370,8 +370,8 @@ dasm_type2(char *buf, const char *mnemonic, bool &illegal, uint32 uop) noexcept
     const int b_st3 = ( x_field && (b_field == 0x8)); // B is ST3
     const int c_st1 = (!x_field && (c_field == 0xA)); // C is ST1
     const int c_st3 = ( x_field && (c_field == 0x8)); // C is ST3
-    const int ori  = !strcmp(mnemonic,"ORI");
-    const int andi = !strcmp(mnemonic,"ANDI");
+    const int ori  = !strcmp(mnemonic, "ORI");
+    const int andi = !strcmp(mnemonic, "ANDI");
     const int mvi = DASM_PSEUDO_OPS
                  && ori && (b_field == 0xF);  // ORI imm,0,c  --> MVI imm,c
     const int mov = DASM_PSEUDO_OPS && !mvi

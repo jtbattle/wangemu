@@ -70,7 +70,7 @@ std::vector<int>
 IoCardKeyboard::getAddresses() const
 {
     std::vector<int> v;
-    v.push_back( m_baseaddr );
+    v.push_back(m_baseaddr);
     return v;
 }
 
@@ -152,7 +152,7 @@ IoCardKeyboard::CPB(bool busy)
 void
 IoCardKeyboard::receiveKeystroke(int keycode)
 {
-    assert( (keycode >= 0) );
+    assert((keycode >= 0));
 
     if (keycode == KEYCODE_RESET) {
         // warm reset
@@ -216,7 +216,7 @@ IoCardKeyboard::check_keyready()
             if (m_tmr_script == nullptr) {
                 m_tmr_script = m_scheduler->TimerCreate(
                         TIMER_US(50),     // 30 is OK, 20 is too little
-                        [&](){ tcbScript(); } );
+                        [&](){ tcbScript(); });
             }
         }
         m_cpu->setDevRdy(m_key_ready);

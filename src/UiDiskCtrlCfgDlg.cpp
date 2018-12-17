@@ -29,13 +29,12 @@ DiskCtrlCfgHelpDlg::DiskCtrlCfgHelpDlg(wxWindow *parent)
                    wxDEFAULT_DIALOG_STYLE | wxRESIZE_BORDER)
 {
     wxTextCtrl *txt = new wxTextCtrl(this, wxID_ANY, "",
-                               wxDefaultPosition, wxSize(480,400),
+                               wxDefaultPosition, wxSize(480, 400),
                                wxTE_RICH2 | wxTE_MULTILINE | wxTE_READONLY |
                                wxBORDER_NONE);
 
-    txt->SetBackgroundColour( // wxSystemSettings::GetColour(wxSYS_COLOUR_BTNFACE)
-                                 wxColour( 0xec, 0xe9, 0xd8 )
-                            );
+    txt->SetBackgroundColour(// wxSystemSettings::GetColour(wxSYS_COLOUR_BTNFACE)
+                                wxColour(0xec, 0xe9, 0xd8));
 
     // font for section headings
     wxFont section_font(12, wxFONTFAMILY_DEFAULT,
@@ -53,7 +52,7 @@ DiskCtrlCfgHelpDlg::DiskCtrlCfgHelpDlg(wxWindow *parent)
     wxFont body_font(10, wxFONTFAMILY_DEFAULT,
                          wxFONTSTYLE_NORMAL,
                          wxFONTWEIGHT_NORMAL);
-    wxColor body_color( wxColour(0x00, 0x00, 0xC0) );
+    wxColor body_color(wxColour(0x00, 0x00, 0xC0));
     wxTextAttr body_attr;
     body_attr.SetTextColour(body_color);
     body_attr.SetFont(body_font);
@@ -80,7 +79,7 @@ DiskCtrlCfgHelpDlg::DiskCtrlCfgHelpDlg(wxWindow *parent)
         "the four drives can be referenced as F/310, R/310, F/350, R/350.  "
         "Read the BASIC-2 disk reference manual for more details and "
         "options."
-        "\n\n" );
+        "\n\n");
 
     txt->SetDefaultStyle(section_attr);
     txt->AppendText("Controller Intelligence\n");
@@ -200,8 +199,8 @@ DiskCtrlCfgDlg::DiskCtrlCfgDlg(wxFrame *parent, DiskCtrlCfgState &cfg) :
         m_btnOk(nullptr),
         m_btnCancel(nullptr),
         m_btnHelp(nullptr),
-        m_oldcfg( cfg ),  // the existing configuration
-        m_cfg   ( cfg )   // we edit this, and it is the exact one passed to us
+        m_oldcfg(cfg),  // the existing configuration
+        m_cfg   (cfg)   // we edit this, and it is the exact one passed to us
 {
     const wxString choicesNumDrives[] = { "1", "2", "3", "4" };
     m_rbNumDrives = new wxRadioBox(this, ID_RB_NUM_DRIVES,
@@ -230,9 +229,9 @@ DiskCtrlCfgDlg::DiskCtrlCfgDlg(wxFrame *parent, DiskCtrlCfgState &cfg) :
                                       &choicesIntelligence[0],
                                       1, wxRA_SPECIFY_ROWS);
     m_rbIntelligence->SetItemToolTip(0, "Controller for single platter\n"
-                                        "drives with <= 32K sectors" );
+                                        "drives with <= 32K sectors");
     m_rbIntelligence->SetItemToolTip(1, "Controller for multiplatter drives\n"
-                                        "or drives with >32K sectors" );
+                                        "or drives with >32K sectors");
 #if SUPPORT_AUTO_INTELLIGENCE
     m_rbIntelligence->SetItemToolTip(2,
                                 "Try to adapt intelligence based on inserted\n"
@@ -249,7 +248,7 @@ DiskCtrlCfgDlg::DiskCtrlCfgDlg(wxFrame *parent, DiskCtrlCfgState &cfg) :
                 "large and small drives alike, but some small drives have a\n"
                 "disk catalog with the 16th bit of sector addresses set.\n"
                 "Dumb drives ignore this bit, but smart drives don't and\n"
-                "can cause problems." );
+                "can cause problems.");
 
     // put three buttons side by side
     m_btnHelp   = new wxButton(this, ID_BTN_HELP,   "Help");
@@ -257,7 +256,7 @@ DiskCtrlCfgDlg::DiskCtrlCfgDlg(wxFrame *parent, DiskCtrlCfgState &cfg) :
     m_btnOk     = new wxButton(this, wxID_OK,       "OK");
     m_btnCancel = new wxButton(this, wxID_CANCEL,   "Cancel");
 
-    wxBoxSizer *button_sizer = new wxBoxSizer( wxHORIZONTAL );
+    wxBoxSizer *button_sizer = new wxBoxSizer(wxHORIZONTAL);
     button_sizer->Add(m_btnHelp,   0, wxALL, 10);
     button_sizer->Add(m_btnRevert, 0, wxALL, 10);
     button_sizer->Add(m_btnOk,     0, wxALL, 10);
@@ -269,7 +268,7 @@ DiskCtrlCfgDlg::DiskCtrlCfgDlg(wxFrame *parent, DiskCtrlCfgState &cfg) :
     m_btnRevert->Disable();      // until something changes
 
     // all of it is stacked vertically
-    wxBoxSizer *topsizer = new wxBoxSizer( wxVERTICAL );
+    wxBoxSizer *topsizer = new wxBoxSizer(wxVERTICAL);
     topsizer->Add(m_rbNumDrives,    0, wxALIGN_LEFT | wxALL, 5);
     topsizer->Add(m_rbIntelligence, 0, wxALIGN_LEFT | wxALL, 5);
     topsizer->Add(m_warnMismatch,   0, wxALIGN_LEFT | wxALL, 5);
@@ -290,7 +289,7 @@ DiskCtrlCfgDlg::DiskCtrlCfgDlg(wxFrame *parent, DiskCtrlCfgState &cfg) :
 void
 DiskCtrlCfgDlg::updateDlg()
 {
-    m_rbNumDrives->SetSelection( m_cfg.getNumDrives()-1 );
+    m_rbNumDrives->SetSelection(m_cfg.getNumDrives()-1);
     switch (m_cfg.getIntelligence()) {
         case DiskCtrlCfgState::DISK_CTRL_DUMB:
                 m_rbIntelligence->SetSelection(0); break;
@@ -302,12 +301,12 @@ DiskCtrlCfgDlg::updateDlg()
 #endif
         default: assert(false);
     }
-    m_warnMismatch->SetValue( m_cfg.getWarnMismatch() );
+    m_warnMismatch->SetValue(m_cfg.getWarnMismatch());
 }
 
 
 void
-DiskCtrlCfgDlg::OnNumDrives( wxCommandEvent& WXUNUSED(event) )
+DiskCtrlCfgDlg::OnNumDrives(wxCommandEvent& WXUNUSED(event))
 {
     switch (m_rbNumDrives->GetSelection()) {
         case 0: m_cfg.setNumDrives(1); break;
@@ -316,12 +315,12 @@ DiskCtrlCfgDlg::OnNumDrives( wxCommandEvent& WXUNUSED(event) )
         case 3: m_cfg.setNumDrives(4); break;
         default: assert(false); break;
     }
-    m_btnRevert->Enable( m_cfg != m_oldcfg );
+    m_btnRevert->Enable(m_cfg != m_oldcfg);
 }
 
 
 void
-DiskCtrlCfgDlg::OnIntelligence( wxCommandEvent& WXUNUSED(event) )
+DiskCtrlCfgDlg::OnIntelligence(wxCommandEvent& WXUNUSED(event))
 {
     switch (m_rbIntelligence->GetSelection()) {
         case 0: m_cfg.setIntelligence(DiskCtrlCfgState::DISK_CTRL_DUMB); break;
@@ -331,16 +330,16 @@ DiskCtrlCfgDlg::OnIntelligence( wxCommandEvent& WXUNUSED(event) )
 #endif
         default: assert(false); break;
     }
-    m_btnRevert->Enable( m_cfg != m_oldcfg );
+    m_btnRevert->Enable(m_cfg != m_oldcfg);
 }
 
 
 void
-DiskCtrlCfgDlg::OnWarnMismatch( wxCommandEvent& WXUNUSED(event) )
+DiskCtrlCfgDlg::OnWarnMismatch(wxCommandEvent& WXUNUSED(event))
 {
     const bool checked = m_warnMismatch->IsChecked();
-    m_cfg.setWarnMismatch( checked );
-    m_btnRevert->Enable( m_cfg != m_oldcfg );
+    m_cfg.setWarnMismatch(checked);
+    m_btnRevert->Enable(m_cfg != m_oldcfg);
 }
 
 

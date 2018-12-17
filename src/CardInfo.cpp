@@ -46,7 +46,7 @@ CardInfo::getCardBaseAddresses(IoCard::card_t cardtype)
     assert(cardtype == IoCard::card_t::none || IoCard::legal_card_t(cardtype));
     std::unique_ptr<IoCard> tmpcard(IoCard::makeTmpCard(cardtype));
 
-    std::vector<int> addresses( tmpcard->getBaseAddresses() );
+    std::vector<int> addresses(tmpcard->getBaseAddresses());
     return addresses;
 }
 

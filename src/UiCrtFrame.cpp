@@ -147,9 +147,9 @@ static const int num_colorschemes = sizeof(colorscheme) / sizeof(colorscheme_t);
 // ----------------------------------------------------------------------------
 
 // what features are visible when in full screen mode
-#define FULLSCREEN_FLAGS ( wxFULLSCREEN_NOBORDER |              \
-                           wxFULLSCREEN_NOCAPTION |             \
-                           wxFULLSCREEN_NOSTATUSBAR )
+#define FULLSCREEN_FLAGS (wxFULLSCREEN_NOBORDER  |   \
+                          wxFULLSCREEN_NOCAPTION |   \
+                          wxFULLSCREEN_NOSTATUSBAR)
 
 // CrtFrame static members
 CrtFrame* CrtFrame::m_primaryFrame = nullptr;
@@ -206,11 +206,10 @@ END_EVENT_TABLE()
 
 
 // constructor
-CrtFrame::CrtFrame( const wxString& title,
-                    const int io_addr,
-                    const int term_num,
-                    crt_state_t *crt_state
-                  ) :
+CrtFrame::CrtFrame(const wxString& title,
+                   const int io_addr,
+                   const int term_num,
+                   crt_state_t *crt_state) :
        wxFrame((wxFrame *)nullptr, -1, title, wxDefaultPosition, wxDefaultSize,
                wxDEFAULT_FRAME_STYLE | wxNO_FULL_REPAINT_ON_RESIZE),
     m_menuBar(nullptr),
@@ -443,8 +442,8 @@ CrtFrame::setMenuChecks(const wxMenu *menu)
     // ----- cpu ---------------------------------------
     if (isPrimaryCrt()) {
         const bool regulated = system2200::isCpuSpeedRegulated();
-        m_menuBar->Check( CPU_ActualSpeed,       regulated );
-        m_menuBar->Check( CPU_UnregulatedSpeed, !regulated );
+        m_menuBar->Check(CPU_ActualSpeed,       regulated);
+        m_menuBar->Check(CPU_UnregulatedSpeed, !regulated);
     }
 
     // ----- disk --------------------------------------
@@ -452,7 +451,7 @@ CrtFrame::setMenuChecks(const wxMenu *menu)
     // we qualify this one and regenerate it only if we must.
     int DiskMenuPos = m_menuBar->FindMenu("Disk");
     if (isPrimaryCrt() && (DiskMenuPos >= 0)
-        && (menu == m_menuBar->GetMenu(DiskMenuPos)) ) {
+        && (menu == m_menuBar->GetMenu(DiskMenuPos))) {
         wxMenu *diskmenu = m_menuBar->GetMenu(DiskMenuPos);
         const int items = diskmenu->GetMenuItemCount();
 
@@ -496,10 +495,10 @@ CrtFrame::setMenuChecks(const wxMenu *menu)
     // ----- configure ---------------------------------
     int ConfigMenuPos = m_menuBar->FindMenu("Configure");
     if (menu == m_menuBar->GetMenu(ConfigMenuPos)) {
-        m_menuBar->Check( Configure_KeywordMode, getKeywordMode() );
-        m_menuBar->Check( Configure_SF_toolBar,  m_toolBar->IsShown() );
+        m_menuBar->Check(Configure_KeywordMode, getKeywordMode());
+        m_menuBar->Check(Configure_SF_toolBar,  m_toolBar->IsShown());
         if (isPrimaryCrt()) {
-            m_menuBar->Check( Configure_Stats,   getShowStatistics() );
+            m_menuBar->Check(Configure_Stats,   getShowStatistics());
         }
         if (system2200::getKbIoAddr(1) >= 0) {
             // there is more than one keyboard
@@ -508,7 +507,7 @@ CrtFrame::setMenuChecks(const wxMenu *menu)
                 if (addr < 0) {
                     break;
                 }
-                m_menuBar->Check( Configure_KB_Tie0+i, (m_assoc_kb_addr == addr) );
+                m_menuBar->Check(Configure_KB_Tie0+i, (m_assoc_kb_addr == addr));
             }
         }
     }
@@ -523,7 +522,7 @@ CrtFrame::initToolBar(wxToolBar *tb)
     wxBitmap img(sfkey_xpm);
     int w = img.GetWidth();
     int h = img.GetHeight();
-    tb->SetToolBitmapSize(wxSize(w,h));
+    tb->SetToolBitmapSize(wxSize(w, h));
 
     for (int i=0; i<17; i++) {
         wxString label, tooltip;
@@ -562,7 +561,7 @@ CrtFrame::initToolBar(wxToolBar *tb)
 
     wxMemoryDC memDC;
     memDC.SetFont(key_font);
-    wxBitmap tmpbm(1,1);
+    wxBitmap tmpbm(1, 1);
     memDC.SelectObject(tmpbm); // wxmac requires it even before GetTextExtent()
     wxCoord textH, textW;
     memDC.GetTextExtent("SF15", &textW, &textH); // widest string in use
@@ -616,7 +615,7 @@ CrtFrame::initToolBar(wxToolBar *tb)
     }
 #endif
 
-    tb->SetToolBitmapSize(wxSize(buttonW,buttonH));
+    tb->SetToolBitmapSize(wxSize(buttonW, buttonH));
 
     wxColor fg, bg;
     fg = wxSystemSettings::GetColour(wxSYS_COLOUR_BTNTEXT);
@@ -648,7 +647,7 @@ CrtFrame::initToolBar(wxToolBar *tb)
         m_sfkeyIcons[i] = wxBitmap(buttonW, buttonH, -1);
         memDC.SelectObject(m_sfkeyIcons[i]);
         memDC.SetPen(bgPen);
-        memDC.DrawRectangle(0,0, buttonW, buttonH); // clear it
+        memDC.DrawRectangle(0, 0, buttonW, buttonH); // clear it
 
         memDC.GetTextExtent(label, &textW, &textH);
         int btnOrigX((buttonW - textW)>>1);
@@ -754,11 +753,11 @@ CrtFrame::saveDefaults()
     host::ConfigWriteInt(subgroup, "fontsize2", m_fontsize[1]);
 
     // save contrast/brightness
-    host::ConfigWriteInt(subgroup, "contrast",   m_crt->getDisplayContrast() );
-    host::ConfigWriteInt(subgroup, "brightness", m_crt->getDisplayBrightness() );
+    host::ConfigWriteInt(subgroup, "contrast",   m_crt->getDisplayContrast());
+    host::ConfigWriteInt(subgroup, "brightness", m_crt->getDisplayBrightness());
 
     // save keyword mode
-    host::ConfigWriteBool(subgroup, "keywordmode", getKeywordMode() );
+    host::ConfigWriteBool(subgroup, "keywordmode", getKeywordMode());
 
     // save tied keyboard io address
     std::ostringstream tfoo;
@@ -772,7 +771,7 @@ CrtFrame::saveDefaults()
     }
 
     // save statistics display mode
-    host::ConfigWriteBool(subgroup, "timingstats", getShowStatistics() );
+    host::ConfigWriteBool(subgroup, "timingstats", getShowStatistics());
 
     // save toolbar status
     host::ConfigWriteBool(subgroup, "toolbar", m_toolBar->IsShown());
@@ -821,25 +820,25 @@ CrtFrame::getDefaults()
 
     // pick up statistics display mode
     bool showstats;
-    host::ConfigReadBool(subgroup, "timingstats", &showstats, false );
+    host::ConfigReadBool(subgroup, "timingstats", &showstats, false);
     setShowStatistics(showstats);
 
     // save toolbar status
     bool show_toolbar;
-    host::ConfigReadBool(subgroup, "toolbar", &show_toolbar, false );
+    host::ConfigReadBool(subgroup, "toolbar", &show_toolbar, false);
     m_toolBar->Show(show_toolbar);
 
     // pick up screen location and size
-    wxRect default_geom(50,50,690,380);
+    wxRect default_geom(50, 50, 690, 380);
     host::ConfigReadWinGeom(this, subgroup, &default_geom);
 
     // pick up fullscreen status
     host::ConfigReadBool(subgroup, "fullscreen", &m_fullscreen, false);
 
     // this must be done before changing the color scheme
-    host::ConfigReadInt(subgroup, "contrast", &v, 100 );
+    host::ConfigReadInt(subgroup, "contrast", &v, 100);
     m_crt->setDisplayContrast(v);
-    host::ConfigReadInt(subgroup, "brightness", &v, 0 );
+    host::ConfigReadInt(subgroup, "brightness", &v, 0);
     m_crt->setDisplayBrightness(v);
 
     (void)host::ConfigReadInt(subgroup, "colorscheme", &v, 0);
@@ -887,12 +886,12 @@ CrtFrame::setSimSeconds(int secs, float relative_speed)
     wxString format = (relative_speed >= 10.0f) ?
                       "Sim time: %d seconds, %3.0fx, %d fps"
                     : "Sim time: %d seconds, %3.1fx, %d fps";
-    str.Printf( format, secs, relative_speed, pf->m_fps );
+    str.Printf(format, secs, relative_speed, pf->m_fps);
 #else
     wxString format = (relative_speed >= 10.0f) ?
                       "Sim time: %d seconds, %3.0fx"
                     : "Sim time: %d seconds, %3.1fx";
-    str.Printf( format, secs, relative_speed );
+    str.Printf(format, secs, relative_speed);
 #endif
     if (pf->getShowStatistics()) {
         pf->m_statBar->SetStatusMessage(std::string(str));
@@ -1007,7 +1006,7 @@ CrtFrame::OnReset(wxCommandEvent &event)
 void
 CrtFrame::OnCpuSpeed(wxCommandEvent &event)
 {
-    system2200::regulateCpuSpeed( (event.GetId() == CPU_ActualSpeed) );
+    system2200::regulateCpuSpeed((event.GetId() == CPU_ActualSpeed));
 }
 
 
@@ -1200,7 +1199,7 @@ void
 CrtFrame::OnConfigureScreenDialog(wxCommandEvent& WXUNUSED(event))
 {
     wxString title;
-    title.Printf( "Display /%03X Configuration", m_crt_addr);
+    title.Printf("Display /%03X Configuration", m_crt_addr);
 
     system2200::freezeEmu(true);    // halt emulation
 
@@ -1242,7 +1241,7 @@ void
 CrtFrame::OnConfigureKbTie(wxCommandEvent &event)
 {
     const int id = event.GetId();
-    assert( (id >= Configure_KB_Tie0) && (id <= Configure_KB_TieN) );
+    assert((id >= Configure_KB_Tie0) && (id <= Configure_KB_TieN));
 
     const int idx = id - Configure_KB_Tie0;
     const int new_addr = system2200::getKbIoAddr(idx);
@@ -1256,7 +1255,7 @@ void
 CrtFrame::OnPrinter(wxCommandEvent &event)
 {
     const int id = event.GetId();
-    assert( (id >= Printer_0) && (id <= Printer_N) );
+    assert((id >= Printer_0) && (id <= Printer_N));
 
     // map chosen device to an I/O address
     const int idx = id - Printer_0;
@@ -1389,8 +1388,8 @@ CrtFrame::getFontSize() const noexcept
 void
 CrtFrame::setDisplayColorScheme(int n)
 {
-    assert( n >= 0 );
-    assert( n <  num_colorschemes );
+    assert(n >= 0);
+    assert(n <  num_colorschemes);
 
     wxColor FG = wxColor(colorscheme[n].fg_r, colorscheme[n].fg_g, colorscheme[n].fg_b);
     wxColor BG = wxColor(colorscheme[n].bg_r, colorscheme[n].bg_g, colorscheme[n].bg_b);

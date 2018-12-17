@@ -78,7 +78,7 @@ CrtConfigDlg::CrtConfigDlg(wxFrame *parent, const wxString &title) :
 #else
     const int vgap = 4;
 #endif
-    wxFlexGridSizer *hGrid = new wxFlexGridSizer( 0, 2, vgap, 0);
+    wxFlexGridSizer *hGrid = new wxFlexGridSizer(0, 2, vgap, 0);
 
     const int label_flags = wxALIGN_RIGHT | wxLEFT | wxRIGHT; // right aligned text with left and right margin
     const int ctl_flags   = wxALIGN_LEFT  | wxRIGHT;          // left aligned control with right margin
@@ -100,7 +100,7 @@ CrtConfigDlg::CrtConfigDlg(wxFrame *parent, const wxString &title) :
     hGrid->AddSpacer(5); hGrid->AddSpacer(5);
 
     // config grids on top, confirmation buttons on the bottom
-    wxBoxSizer *topsizer = new wxBoxSizer( wxVERTICAL );
+    wxBoxSizer *topsizer = new wxBoxSizer(wxVERTICAL);
     topsizer->Add(hGrid, 1, wxEXPAND);          // vertically stretchable
 
     updateDlg();        // select current options
@@ -121,7 +121,7 @@ CrtConfigDlg::~CrtConfigDlg()
 
 
 void
-CrtConfigDlg::OnFontChoice( wxCommandEvent &event )
+CrtConfigDlg::OnFontChoice(wxCommandEvent &event)
 {
     const int size = reinterpret_cast<int>(event.GetClientData());
     CrtFrame *pp = wxStaticCast(GetParent(), CrtFrame);
@@ -129,7 +129,7 @@ CrtConfigDlg::OnFontChoice( wxCommandEvent &event )
 }
 
 void
-CrtConfigDlg::OnColorChoice( wxCommandEvent& WXUNUSED(event) )
+CrtConfigDlg::OnColorChoice(wxCommandEvent& WXUNUSED(event))
 {
     const int selection = m_ColorChoice->GetSelection();
     CrtFrame *pp = wxStaticCast(GetParent(), CrtFrame);
@@ -137,7 +137,7 @@ CrtConfigDlg::OnColorChoice( wxCommandEvent& WXUNUSED(event) )
 }
 
 void
-CrtConfigDlg::OnContrastSlider( wxScrollEvent &event )
+CrtConfigDlg::OnContrastSlider(wxScrollEvent &event)
 {
     const int pos = event.GetPosition();
     CrtFrame *pp = wxStaticCast(GetParent(), CrtFrame);
@@ -145,7 +145,7 @@ CrtConfigDlg::OnContrastSlider( wxScrollEvent &event )
 }
 
 void
-CrtConfigDlg::OnBrightnessSlider( wxScrollEvent &event )
+CrtConfigDlg::OnBrightnessSlider(wxScrollEvent &event)
 {
     const int pos = event.GetPosition();
     CrtFrame *pp = wxStaticCast(GetParent(), CrtFrame);

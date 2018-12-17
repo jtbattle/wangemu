@@ -38,10 +38,10 @@ IoCard::makeTmpCard(card_t type, int baseaddr)
     std::shared_ptr<Cpu2200t>  dummy_cpu{nullptr};
     CardCfgState const * const dummy_config{nullptr};
 
-    return makeCardImpl( dummy_scheduler,
-                         dummy_cpu,
-                         type, baseaddr, -1,
-                         dummy_config );
+    return makeCardImpl(dummy_scheduler,
+                        dummy_cpu,
+                        type, baseaddr, -1,
+                        dummy_config);
 }
 
 
@@ -57,27 +57,27 @@ IoCard::makeCardImpl(std::shared_ptr<Scheduler> scheduler,
     switch (type) {
         case card_t::keyboard:
             crd = std::make_unique<IoCardKeyboard>(
-                            scheduler, cpu, baseaddr, cardslot );
+                            scheduler, cpu, baseaddr, cardslot);
             break;
         case card_t::disp_64x16:
             crd = std::make_unique<IoCardDisplay>(
                             scheduler, cpu,
-                            baseaddr, cardslot, UI_SCREEN_64x16 );
+                            baseaddr, cardslot, UI_SCREEN_64x16);
             break;
         case card_t::disp_80x24:
             crd = std::make_unique<IoCardDisplay>(
                             scheduler, cpu,
-                            baseaddr, cardslot, UI_SCREEN_80x24 );
+                            baseaddr, cardslot, UI_SCREEN_80x24);
             break;
         case card_t::term_mux:
-            crd = std::make_unique<IoCardTermMux>( scheduler, cpu, baseaddr, cardslot );
+            crd = std::make_unique<IoCardTermMux>(scheduler, cpu, baseaddr, cardslot);
             break;
         case card_t::printer:
-            crd = std::make_unique<IoCardPrinter>( cpu, baseaddr, cardslot );
+            crd = std::make_unique<IoCardPrinter>(cpu, baseaddr, cardslot);
             break;
         case card_t::disk:
             crd = std::make_unique<IoCardDisk>(
-                            scheduler, cpu, baseaddr, cardslot, cfg );
+                            scheduler, cpu, baseaddr, cardslot, cfg);
             break;
         default:
             assert(false);

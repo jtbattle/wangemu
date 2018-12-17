@@ -21,9 +21,9 @@
 // ============================================================================
 
 BEGIN_EVENT_TABLE(MyAboutDlg, wxDialog)
-    EVT_LEFT_DOWN   ( MyAboutDlg::OnClick )
-    EVT_MIDDLE_DOWN ( MyAboutDlg::OnClick )
-    EVT_RIGHT_DOWN  ( MyAboutDlg::OnClick )
+    EVT_LEFT_DOWN   (MyAboutDlg::OnClick)
+    EVT_MIDDLE_DOWN (MyAboutDlg::OnClick)
+    EVT_RIGHT_DOWN  (MyAboutDlg::OnClick)
 END_EVENT_TABLE()
 
 

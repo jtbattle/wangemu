@@ -695,7 +695,7 @@ Terminal::processCrtChar2(uint8 byte)
     assert(m_disp.screen_type == UI_SCREEN_2236DE);
     //wxLogMessage("processCrtChar2(0x%02x), m_input_cnt=%d", byte, m_input_cnt);
 
-    assert( m_input_cnt < sizeof(m_input_buf) );
+    assert(m_input_cnt < sizeof(m_input_buf));
 
     if (m_input_cnt == 0) {
         switch (byte) {
@@ -788,9 +788,9 @@ Terminal::processCrtChar2(uint8 byte)
         if (m_input_buf[4] != 0x0E && m_input_buf[4] != 0x0F) {
             return;  // TODO: ignore?
         }
-        m_attrs &= ~( char_attr_t::CHAR_ATTR_BRIGHT |
-                      char_attr_t::CHAR_ATTR_BLINK  |
-                      char_attr_t::CHAR_ATTR_INV    );
+        m_attrs &= ~(char_attr_t::CHAR_ATTR_BRIGHT |
+                     char_attr_t::CHAR_ATTR_BLINK  |
+                     char_attr_t::CHAR_ATTR_INV    );
         m_attr_under = false;
         if (m_input_buf[2] == 0x02 || m_input_buf[2] == 0x0B) {
             m_attrs |= (char_attr_t::CHAR_ATTR_BRIGHT);
@@ -999,9 +999,9 @@ Terminal::processCrtChar3(uint8 byte)
 
             // update char attributes in screen buffer
             const int old = m_disp.attr[m_disp.chars_w*m_disp.curs_y + m_disp.curs_x]
-                          & ( char_attr_t::CHAR_ATTR_LEFT  |
-                              char_attr_t::CHAR_ATTR_RIGHT |
-                              char_attr_t::CHAR_ATTR_VERT  );
+                          & (char_attr_t::CHAR_ATTR_LEFT  |
+                             char_attr_t::CHAR_ATTR_RIGHT |
+                             char_attr_t::CHAR_ATTR_VERT  );
 
             int attr_mask = 0;
             if (!m_attr_on && !m_attr_temp) {

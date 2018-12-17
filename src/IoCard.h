@@ -147,8 +147,8 @@ public:
 
     // make a temporary card in order to query its properties.
     // the IoCard* functions know to do only partial construction.
-    static std::unique_ptr<IoCard> makeTmpCard( card_t type,
-                                                int baseaddr=0x000);
+    static std::unique_ptr<IoCard> makeTmpCard(card_t type,
+                                               int baseaddr=0x000);
 
 protected:  // these are used by the CardInfo class
 

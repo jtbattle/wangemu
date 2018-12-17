@@ -90,7 +90,7 @@ Wvd::open(const std::string &filename)
     // set up a file handle
     m_file = std::make_unique<std::fstream>(
                                 filename.c_str(),
-                                std::fstream::in | std::fstream::out | std::fstream::binary );
+                                std::fstream::in | std::fstream::out | std::fstream::binary);
     if (!m_file) {
         return false;
     }

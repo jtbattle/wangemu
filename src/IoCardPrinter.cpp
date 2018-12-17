@@ -65,7 +65,7 @@ std::vector<int>
 IoCardPrinter::getAddresses() const
 {
     std::vector<int> v;
-    v.push_back( m_baseaddr );
+    v.push_back(m_baseaddr);
     return v;
 }
 

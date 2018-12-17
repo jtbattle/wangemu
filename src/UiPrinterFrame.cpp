@@ -337,21 +337,21 @@ PrinterFrame::saveDefaults()
     host::ConfigWriteInt(subgroup,  "pagelength",       plen);
     host::ConfigWriteInt(subgroup,  "linelength",       llen);
     host::ConfigWriteInt(subgroup,  "fontsize",         m_fontsize);
-    host::ConfigWriteBool(subgroup, "greenbar",         m_printer->getGreenbar() );
-    host::ConfigWriteBool(subgroup, "autoshow",         m_printer->getAutoshow() );
-    host::ConfigWriteBool(subgroup, "printasgo",        m_printer->getPrintasgo() );
-    host::ConfigWriteBool(subgroup, "portdirect",       m_printer->getPortdirect() );
-    host::ConfigWriteStr(subgroup,  "portstring",       m_printer->getPortstring() );
-    host::ConfigWriteInt(subgroup,  "orientation",      static_cast<int>(m_printer->getOrientation()) );
-    host::ConfigWriteStr(subgroup,  "papername",        m_printer->getPaperName() );
-    host::ConfigWriteInt(subgroup,  "paperid",          m_printer->getPaperId() );
-    host::ConfigWriteInt(subgroup,  "paperbin",         m_printer->getBin() );
+    host::ConfigWriteBool(subgroup, "greenbar",         m_printer->getGreenbar());
+    host::ConfigWriteBool(subgroup, "autoshow",         m_printer->getAutoshow());
+    host::ConfigWriteBool(subgroup, "printasgo",        m_printer->getPrintasgo());
+    host::ConfigWriteBool(subgroup, "portdirect",       m_printer->getPortdirect());
+    host::ConfigWriteStr(subgroup,  "portstring",       m_printer->getPortstring());
+    host::ConfigWriteInt(subgroup,  "orientation",      static_cast<int>(m_printer->getOrientation()));
+    host::ConfigWriteStr(subgroup,  "papername",        m_printer->getPaperName());
+    host::ConfigWriteInt(subgroup,  "paperid",          m_printer->getPaperId());
+    host::ConfigWriteInt(subgroup,  "paperbin",         m_printer->getBin());
     host::ConfigWriteInt(subgroup,  "marginleft",       left);
     host::ConfigWriteInt(subgroup,  "marginright",      right);
     host::ConfigWriteInt(subgroup,  "margintop",        top);
     host::ConfigWriteInt(subgroup,  "marginbottom",     bottom);
     host::ConfigWriteInt(subgroup,  "previewzoom",      m_previewzoom);
-    host::ConfigWriteStr(subgroup,  "realprintername",  m_printer->getRealPrinterName() );
+    host::ConfigWriteStr(subgroup,  "realprintername",  m_printer->getRealPrinterName());
 }
 
 
@@ -369,7 +369,7 @@ PrinterFrame::getDefaults()
     std::string subgroup(sg.str());
 
     // pick up screen location and size
-    wxRect default_geom(50,50,690,380);
+    wxRect default_geom(50, 50, 690, 380);
     host::ConfigReadWinGeom(this, subgroup, &default_geom);
 
     // pick up screen font size
@@ -588,11 +588,11 @@ PrinterFrame::OnPrintPreview(wxCommandEvent& WXUNUSED(event))
 
 #if 1
     // works in 2.5.4 and subsequent releases
-    frame->Connect( wxID_ANY, wxEVT_CLOSE_WINDOW,
-                    wxCloseEventHandler(PrinterFrame::PP_OnClose) );
+    frame->Connect(wxID_ANY, wxEVT_CLOSE_WINDOW,
+                   wxCloseEventHandler(PrinterFrame::PP_OnClose));
 
     const std::string subgroup("ui/printpreview");
-    wxRect default_geom(100,100,600,650);
+    wxRect default_geom(100, 100, 600, 650);
     host::ConfigReadWinGeom(frame, subgroup, &default_geom, false);
 
     frame->Initialize();

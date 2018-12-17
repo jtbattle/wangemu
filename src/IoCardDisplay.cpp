@@ -157,7 +157,7 @@ std::vector<int>
 IoCardDisplay::getAddresses() const
 {
     std::vector<int> v;
-    v.push_back( m_baseaddr );
+    v.push_back(m_baseaddr);
     return v;
 }
 
@@ -297,11 +297,11 @@ IoCardDisplay::tcbHsync(int arg)
 
     // retrigger the timer
 #if 0
-    m_tmr_hsync = m_scheduler->TimerCreate( new_period,
-                                            [&](){ tcbHsync(arg); } );
+    m_tmr_hsync = m_scheduler->TimerCreate(new_period,
+                                            [&](){ tcbHsync(arg); });
 #else
-    m_tmr_hsync = m_scheduler->TimerCreate( new_period,
-                            std::bind(&IoCardDisplay::tcbHsync, this, arg) );
+    m_tmr_hsync = m_scheduler->TimerCreate(new_period,
+                            std::bind(&IoCardDisplay::tcbHsync, this, arg));
 #endif
 
     // advance state machine

@@ -318,7 +318,7 @@ Cpu2200t::write_ucode(int addr, uint32 uop) noexcept
         m_ucode[addr].ucode |= FETCH_AB;
         REPACK_B2_FIELD(m_ucode[addr].ucode, uop);
         m_ucode[addr].op  = static_cast<uint8>((pcinc == 0) ? OP_BER : OP_BER_INC);
-        m_ucode[addr].p16 = BRANCH_TARGET(addr,uop);
+        m_ucode[addr].p16 = BRANCH_TARGET(addr, uop);
         break;
 
     case 0x12: case 0x13:       // BNR: branch if R[AAAA] != R[BBBB]
@@ -326,35 +326,35 @@ Cpu2200t::write_ucode(int addr, uint32 uop) noexcept
         m_ucode[addr].ucode |= FETCH_AB;
         REPACK_B2_FIELD(m_ucode[addr].ucode, uop);
         m_ucode[addr].op  = static_cast<uint8>((pcinc == 0) ? OP_BNR : OP_BNR_INC);
-        m_ucode[addr].p16 = BRANCH_TARGET(addr,uop);
+        m_ucode[addr].p16 = BRANCH_TARGET(addr, uop);
         break;
 
     case 0x1C: case 0x1D:       // BEQ: branch if == to mask
         m_ucode[addr].ucode |= FETCH_B;
         REPACK_B2_FIELD(m_ucode[addr].ucode, uop);
         m_ucode[addr].op  = static_cast<uint8>(OP_BEQ);
-        m_ucode[addr].p16 = BRANCH_TARGET(addr,uop);
+        m_ucode[addr].p16 = BRANCH_TARGET(addr, uop);
         break;
 
     case 0x1E: case 0x1F:       // BNE: branch if != to mask
         m_ucode[addr].ucode |= FETCH_B;
         REPACK_B2_FIELD(m_ucode[addr].ucode, uop);
         m_ucode[addr].op  = static_cast<uint8>(OP_BNE);
-        m_ucode[addr].p16 = BRANCH_TARGET(addr,uop);
+        m_ucode[addr].p16 = BRANCH_TARGET(addr, uop);
         break;
 
     case 0x18: case 0x19:       // BT: branch if true bittest
         m_ucode[addr].ucode |= FETCH_B;
         REPACK_B2_FIELD(m_ucode[addr].ucode, uop);
         m_ucode[addr].op  = static_cast<uint8>(OP_BT);
-        m_ucode[addr].p16 = BRANCH_TARGET(addr,uop);
+        m_ucode[addr].p16 = BRANCH_TARGET(addr, uop);
         break;
 
     case 0x1A: case 0x1B:       // BF: branch if false bittest
         m_ucode[addr].ucode |= FETCH_B;
         REPACK_B2_FIELD(m_ucode[addr].ucode, uop);
         m_ucode[addr].op  = static_cast<uint8>(OP_BF);
-        m_ucode[addr].p16 = BRANCH_TARGET(addr,uop);
+        m_ucode[addr].p16 = BRANCH_TARGET(addr, uop);
         break;
 
     case 0x14: case 0x15:       // subroutine branch (SB)
@@ -602,7 +602,7 @@ Cpu2200t::set_st1(uint4 value)
     m_cpu.st1 = value;
 
     if (cpb_changed) {
-        system2200::cpu_CPB( !!(m_cpu.st1 & ST1_MASK_CPB) );
+        system2200::cpu_CPB(!!(m_cpu.st1 & ST1_MASK_CPB));
     }
 }
 
@@ -742,10 +742,10 @@ Cpu2200t::Cpu2200t(std::shared_ptr<Scheduler> scheduler,
     m_scheduler(scheduler),  // unused by 2200t
     m_cpuType(cpu_subtype),
     m_ucode{0x00},
-    m_ucode_size( (m_cpuType == CPUTYPE_2200B) ? UCODE_WORDS_2200B
-                                               : UCODE_WORDS_2200T ),
-    m_krom_size(  (m_cpuType == CPUTYPE_2200B) ?  KROM_WORDS_2200B
-                                               :  KROM_WORDS_2200T ),
+    m_ucode_size((m_cpuType == CPUTYPE_2200B) ? UCODE_WORDS_2200B
+                                              : UCODE_WORDS_2200T),
+    m_krom_size( (m_cpuType == CPUTYPE_2200B) ?  KROM_WORDS_2200B
+                                              :  KROM_WORDS_2200T),
     m_memsize(ramsize),
     m_dbg(false)
 {
@@ -904,10 +904,10 @@ void
 Cpu2200t::IoCardCbIbs(int data)
 {
     // we shouldn't receive an IBS while the cpu is busy
-    assert( (m_cpu.st1 & ST1_MASK_CPB) == 0 );
+    assert((m_cpu.st1 & ST1_MASK_CPB) == 0);
     m_cpu.k = static_cast<uint8>(data & 0xFF);
-    m_cpu.st1 |= ST1_MASK_CPB;      // CPU busy; inhibit IBS
-    system2200::cpu_CPB( true );    // the cpu is busy now
+    m_cpu.st1 |= ST1_MASK_CPB;  // CPU busy; inhibit IBS
+    system2200::cpu_CPB(true);  // the cpu is busy now
 
     // return special status if it is a special function key
     if (data & IoCardKeyboard::KEYCODE_SF) {
@@ -937,8 +937,8 @@ Cpu2200t::halt() noexcept
 void
 Cpu2200t::setDevRdy(bool ready) noexcept
 {
-    m_cpu.st3 = static_cast<uint4>( (m_cpu.st3 & ~ST3_MASK_DEVRDY) |
-                                    (ready ? ST3_MASK_DEVRDY : 0) );
+    m_cpu.st3 = static_cast<uint4>((m_cpu.st3 & ~ST3_MASK_DEVRDY) |
+                                    (ready ? ST3_MASK_DEVRDY : 0));
 }
 
 
@@ -972,7 +972,7 @@ Cpu2200t::execOneOp()
         static int g_num_ops = 0;
         char buff[200];
         int illegal;
-        dump_state( 1 );
+        dump_state(1);
         illegal = dasm_one(buff, m_cpu.ic, m_ucode[m_cpu.ic].ucode & 0x000FFFFF);
         dbglog("cycle %5d: %s", g_num_ops, buff);
         g_num_ops++;

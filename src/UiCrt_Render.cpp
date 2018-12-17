@@ -97,13 +97,13 @@ Crt::intensityToColor(float f) const
         r = static_cast<int>(m_BGcolor.Red()   + diff_r + (brightness * 255.0) + 0.5f);
         g = static_cast<int>(m_BGcolor.Green() + diff_g + (brightness * 256.0) + 0.5f);
         b = static_cast<int>(m_BGcolor.Blue()  + diff_b + (brightness * 256.0) + 0.5f);
-#define CLAMP8(x) ( ((x)<0x00) ? 0x00 : ((x)>0xFF) ? 0xFF : (x) )
+#define CLAMP8(x) (((x)<0x00) ? 0x00 : ((x)>0xFF) ? 0xFF : (x))
         r = CLAMP8(r);
         g = CLAMP8(g);
         b = CLAMP8(b);
     }
 
-    return wxColor(r,g,b);
+    return wxColor(r, g, b);
 }
 
 
@@ -297,9 +297,9 @@ Crt::generateFontmap()
     //       6 : alt      yes      high
     //       7 : alt      yes      high
 #if !(__WXMAC__) && DRAW_WITH_RAWBMP
-    m_fontmap = wxBitmap( 256*m_charcell_w, 8*m_charcell_h, 24);   // use DIB
+    m_fontmap = wxBitmap(256*m_charcell_w, 8*m_charcell_h, 24);   // use DIB
 #else
-    m_fontmap = wxBitmap( 256*m_charcell_w, 8*m_charcell_h, wxBITMAP_SCREEN_DEPTH);
+    m_fontmap = wxBitmap(256*m_charcell_w, 8*m_charcell_h, wxBITMAP_SCREEN_DEPTH);
 #endif
     wxMemoryDC fdc(m_fontmap);  // create a dc for us to write to
 
@@ -320,7 +320,7 @@ Crt::generateFontmap()
     float f_blk(0.0f),   f_norm(1.0f),   f_intense(1.0f);
     if (m_crt_state->screen_type == UI_SCREEN_2236DE) {
         // diminish normal to differentiate it from bright intensity
-        norm = wxColor(0x70,0x70,0x70);  // only blue channel is used
+        norm = wxColor(0x70, 0x70, 0x70);  // only blue channel is used
         f_norm = 160.0f/255.0f;
     }
 
@@ -345,7 +345,7 @@ Crt::generateFontmap()
         if (fontsize >= FONT_NATIVE8) {
 // on windows, at least, the bold font is shifted slightly relative to
 // normal weight, so blink causes the characters to shift up/down. too bad.
-//          font = pickFont(fontsize, /*bold*/(inv==1) || (bright==1) );
+//          font = pickFont(fontsize, /*bold*/(inv==1) || (bright==1));
             font = pickFont(fontsize, /*bold*/(inv==1), "Courier New");
             charDC.SetFont(font);
         }
@@ -355,11 +355,11 @@ Crt::generateFontmap()
             // brightness modulation for native font rendering
             wxColor fg_eff = ( inv) ? blk : (bright) ? intense : norm;
             wxColor bg_eff = (!inv) ? blk : (bright) ? intense : norm;
-            charDC.SetBackground( wxBrush(bg_eff, wxBRUSHSTYLE_SOLID) );
+            charDC.SetBackground(wxBrush(bg_eff, wxBRUSHSTYLE_SOLID));
             charDC.SetTextBackground(bg_eff);
             charDC.SetTextForeground(fg_eff);
-            charDC.SetPen( wxPen(fg_eff, 1, wxPENSTYLE_SOLID) );
-            charDC.SetBrush( wxBrush(fg_eff, wxBRUSHSTYLE_SOLID) );
+            charDC.SetPen(wxPen(fg_eff, 1, wxPENSTYLE_SOLID));
+            charDC.SetBrush(wxBrush(fg_eff, wxBRUSHSTYLE_SOLID));
 
             for (int chr=0; chr<256; ++chr) {
                 const int ch = (chr & 0x7F);  // minus underline flag
@@ -535,8 +535,8 @@ Crt::generateFontmap()
 
                 // copy it to the final font bitmap
                 const int row_offset = m_charcell_h * (4*alt + 2*inv + bright);
-                fdc.DrawBitmap( wxBitmap(blur_img),    // source image
-                                chr*m_charcell_w, row_offset ); // dest x,y
+                fdc.DrawBitmap(wxBitmap(blur_img),            // source image
+                               chr*m_charcell_w, row_offset); // dest x,y
 
             } // for chr
 
@@ -571,7 +571,7 @@ Crt::generateScreen()
 #endif
     wxMemoryDC memDC(m_scrbits);
     if (!success) {
-        memDC.SetBackground( wxBrush(bg, wxBRUSHSTYLE_SOLID) );
+        memDC.SetBackground(wxBrush(bg, wxBRUSHSTYLE_SOLID));
         memDC.Clear();
         generateScreenByBlits(memDC);
     }
@@ -666,7 +666,7 @@ Crt::generateScreenCursor(wxMemoryDC &memDC)
     const int top   = m_charcell_h*(m_crt_state->curs_y+1) - (2 * m_charcell_sy*m_charcell_dy);
     const int left  = m_charcell_w* m_crt_state->curs_x;
     const int right = left + m_charcell_w - 1;
-    memDC.SetPen( wxPen(color, 1, wxPENSTYLE_SOLID) );
+    memDC.SetPen(wxPen(color, 1, wxPENSTYLE_SOLID));
     for (int y=0; y < 2; ++y) {
         for (int yy=0; yy<m_charcell_sy; ++yy) {
             const int yyy = top + y*m_charcell_dy*m_charcell_sy + yy;

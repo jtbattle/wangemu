@@ -520,7 +520,7 @@ dasm_type3(char *buf, const char *mnemonic, uint32 ic, uint32 uop) noexcept
     assert(buf != nullptr);
     assert(mnemonic != nullptr);
 
-    const uint32 newic = PAGEBR(ic,uop);
+    const uint32 newic = PAGEBR(ic, uop);
     const int x_field = (uop >> 18) & 1;
     // move the X bit from bit 18 to bit 17 for A and B field disassembly
     const uint32 munged_uop = (uop & noXbit) | (x_field << 17);
@@ -790,7 +790,7 @@ dasm_op_vp(char *buf, uint16 ic, uint32 uop) noexcept
 
     } else if (shft_op) {
 
-        assert( (uop & 0x010000) == 0x000000);
+        assert((uop & 0x010000) == 0x000000);
         len = dasm_typeSHFT(buf, "SH", illegal, uop);
 
     } else { // neither lpi nor mini_op
@@ -908,13 +908,13 @@ dasm_op_vp(char *buf, uint16 ic, uint32 uop) noexcept
 
             case 0x15:  // subroutine branch
                 newic = FULLBR(uop);
-                strcpy(buf,"SB"); len = 2;
+                strcpy(buf, "SB"); len = 2;
                 len += pad_spaces(buf, len, PARAM_COL);
                 len += dasm_addr(&buf[len], ic, newic);
                 break;
             case 0x17:  // unconditional branch
                 newic = FULLBR(uop);
-                strcpy(buf,"B"); len = 1;
+                strcpy(buf, "B"); len = 1;
                 len += pad_spaces(buf, len, PARAM_COL);
                 len += dasm_addr(&buf[len], ic, newic);
                 break;

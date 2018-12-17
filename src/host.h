@@ -49,28 +49,28 @@ namespace host
     // the ConfigRead* functions take a defaultval; this is the value returned
     // if the key for that subgroup isn't found in the config file.
 
-    bool ConfigReadStr(  const std::string &subgroup,
-                         const std::string &key,
-                         std::string *val,
-                         const std::string *defaultval = nullptr);
+    bool ConfigReadStr(const std::string &subgroup,
+                       const std::string &key,
+                       std::string *val,
+                       const std::string *defaultval = nullptr);
 
-    void ConfigWriteStr( const std::string &subgroup,
-                         const std::string &key,
-                         const std::string &val);
+    void ConfigWriteStr(const std::string &subgroup,
+                        const std::string &key,
+                        const std::string &val);
 
-    bool ConfigReadInt(  const std::string &subgroup,
-                         const std::string &key,
-                         int *val,
-                         const int defaultval = 0);
+    bool ConfigReadInt(const std::string &subgroup,
+                       const std::string &key,
+                       int *val,
+                       const int defaultval = 0);
 
-    void ConfigWriteInt( const std::string &subgroup,
-                         const std::string &key,
-                         const int val);
+    void ConfigWriteInt(const std::string &subgroup,
+                        const std::string &key,
+                        const int val);
 
-    void ConfigReadBool( const std::string &subgroup,
-                         const std::string &key,
-                         bool *val,
-                         const bool defaultval = false);
+    void ConfigReadBool(const std::string &subgroup,
+                        const std::string &key,
+                        bool *val,
+                        const bool defaultval = false);
 
     void ConfigWriteBool(const std::string &subgroup,
                          const std::string &key,
@@ -80,14 +80,14 @@ namespace host
     // of windows of various kinds: emulated terminals, dialog boxes.
     // the client_size flag indicates whether the geometry we are dealing
     // with is of the window or the client.
-    void ConfigReadWinGeom(  wxWindow          *wxwin,
-                             const std::string &subgroup,
-                             wxRect            *default_geom = nullptr,
-                             bool               client_size = true );
+    void ConfigReadWinGeom(wxWindow          *wxwin,
+                           const std::string &subgroup,
+                           wxRect            *default_geom = nullptr,
+                           bool               client_size = true);
 
-    void ConfigWriteWinGeom( wxWindow          *wxwin,
-                             const std::string &subgroup,
-                             bool               client_size = true );
+    void ConfigWriteWinGeom(wxWindow          *wxwin,
+                            const std::string &subgroup,
+                            bool               client_size = true);
 
     // ---- time functions ----
 

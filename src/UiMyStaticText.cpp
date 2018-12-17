@@ -5,10 +5,10 @@
 
 // dialog events to catch
 BEGIN_EVENT_TABLE(MyStaticText, wxStaticText)
-    EVT_KEY_DOWN    ( MyStaticText::OnKeyDown )
-    EVT_LEFT_DOWN   ( MyStaticText::OnMouseClick )
-    EVT_MIDDLE_DOWN ( MyStaticText::OnMouseClick )
-    EVT_RIGHT_DOWN  ( MyStaticText::OnMouseClick )
+    EVT_KEY_DOWN    (MyStaticText::OnKeyDown)
+    EVT_LEFT_DOWN   (MyStaticText::OnMouseClick)
+    EVT_MIDDLE_DOWN (MyStaticText::OnMouseClick)
+    EVT_RIGHT_DOWN  (MyStaticText::OnMouseClick)
 END_EVENT_TABLE()
 
 

@@ -42,7 +42,7 @@ ScriptFile::ScriptFile(const std::string &filename,
 
     // attempt to open the file for reading; set m_opened_ok accordingly
     // if success, set m_curline=1, read first line, set pointers, set EOF state
-    m_ifs = std::make_unique<std::ifstream>( m_filename.c_str(), std::ifstream::in );
+    m_ifs = std::make_unique<std::ifstream>(m_filename.c_str(), std::ifstream::in);
 
     if (m_ifs && m_ifs->fail()) {
         m_ifs = nullptr;
@@ -130,7 +130,7 @@ ScriptFile::m_prepare_next_line()
     if (m_ifs->fail()) {
         std::string location = getLineDescription();
         std::string msg = "Very long line in script at " + location;
-        UI_Warn( "%s", msg.c_str() );
+        UI_Warn("%s", msg.c_str());
         m_charbuf[MAX_EXPECTED_LINE_LENGTH] = '\0';  // make sure zero terminated
     }
 
@@ -419,8 +419,8 @@ ScriptFile::getNextByte(int *byte)
 
         // Escape case #2: "\xx" -> interpret as hex value of char
         if (m_metaflags & SCRIPT_META_HEX) {
-            if ( ishexdigit(m_charbuf[m_cur_char+0]) &&
-                 ishexdigit(m_charbuf[m_cur_char+1]) ) {
+            if (ishexdigit(m_charbuf[m_cur_char+0]) &&
+                ishexdigit(m_charbuf[m_cur_char+1])) {
                 int val = 16*hexval(m_charbuf[m_cur_char+0]) +
                              hexval(m_charbuf[m_cur_char+1]) ;
                 *byte = val;
@@ -433,7 +433,7 @@ ScriptFile::getNextByte(int *byte)
         if (m_metaflags & SCRIPT_META_KEY) {
             for (unsigned int i=0; i<sizeof(metakeytable)/sizeof(metakeytable_t); i++) {
                 const int len = strlen(metakeytable[i].name);
-                if (strncmp( &m_charbuf[m_cur_char], metakeytable[i].name, len) == 0) {
+                if (strncmp(&m_charbuf[m_cur_char], metakeytable[i].name, len) == 0) {
                     // we found a matcher
                     *byte = metakeytable[i].val;
                     m_cur_char += len;
@@ -446,9 +446,9 @@ ScriptFile::getNextByte(int *byte)
         // \<include filename.foo>
         // it must start a line in the first column.
         // any chars after the closing ">" are ignored.
-        if ( (m_metaflags & SCRIPT_META_INC) &&
-             (m_cur_depth < m_max_depth) &&
-             (strncmp( &m_charbuf[m_cur_char], "<include ", 9) == 0)) {
+        if ((m_metaflags & SCRIPT_META_INC) &&
+            (m_cur_depth < m_max_depth) &&
+            (strncmp(&m_charbuf[m_cur_char], "<include ", 9) == 0)) {
 
             // scan for either end of line or ">"
             m_cur_char += 9;
@@ -458,7 +458,7 @@ ScriptFile::getNextByte(int *byte)
             }
             if (m_charbuf[end_char] == '>') {
                 m_charbuf[end_char] = '\0';  // terminate filename
-                std::string inc_fname( &m_charbuf[m_cur_char] );
+                std::string inc_fname(&m_charbuf[m_cur_char]);
                 m_cur_char = end_char+1;
 
                 // if the include file name isn't absolute, turn it to an
@@ -471,10 +471,10 @@ ScriptFile::getNextByte(int *byte)
                     std::string tmp_fname;
 #if __WXMSW__
                     const size_t last_sep = m_filename.find_last_of("/\\");
-                    tmp_fname = m_filename.substr(0,last_sep+1) + inc_fname;
+                    tmp_fname = m_filename.substr(0, last_sep+1) + inc_fname;
 #else
                     size_t last_sep = m_filename.find_last_of("/");
-                    tmp_fname = m_filename.substr(0,last_sep+1) + inc_fname;
+                    tmp_fname = m_filename.substr(0, last_sep+1) + inc_fname;
 #endif
                     abs_inc_fname = host::asAbsolutePath(tmp_fname);
                 }
@@ -482,7 +482,7 @@ ScriptFile::getNextByte(int *byte)
                 // do include processing ...
                 m_subscript = std::make_unique<ScriptFile>(
                                     abs_inc_fname, m_metaflags,
-                                    m_max_depth, m_cur_depth+1 );
+                                    m_max_depth, m_cur_depth+1);
 
                 if (!m_subscript->openedOk()) {
                     m_subscript = nullptr;

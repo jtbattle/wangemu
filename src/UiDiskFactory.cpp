@@ -163,9 +163,9 @@ DiskFactory::DiskFactory(wxFrame *parent, const std::string &filename) :
     m_diskdata = std::make_shared<Wvd>();
     if (new_disk) {
         // blank disk, default type
-        m_diskdata->create( disk_choices[0].disk_type,
-                            disk_choices[0].platters,
-                            disk_choices[0].sectors_per_platter );
+        m_diskdata->create(disk_choices[0].disk_type,
+                           disk_choices[0].platters,
+                           disk_choices[0].sectors_per_platter);
     } else {
         // existing disk
         bool ok = m_diskdata->open(filename);
@@ -174,7 +174,7 @@ DiskFactory::DiskFactory(wxFrame *parent, const std::string &filename) :
 
     // the frame contains a panel containing a single notebook
     wxPanel    *panel    = new wxPanel(this, -1);
-    wxNotebook *notebook = new wxNotebook(panel, -1, wxDefaultPosition, wxSize(400,-1));
+    wxNotebook *notebook = new wxNotebook(panel, -1, wxDefaultPosition, wxSize(400, -1));
     wxBoxSizer *topsizer = new wxBoxSizer(wxVERTICAL);
 
     // the top part of topvbox is the notebook control; it might be the only item
@@ -191,13 +191,13 @@ DiskFactory::DiskFactory(wxFrame *parent, const std::string &filename) :
     wxBoxSizer *m_botbox = new wxBoxSizer(wxHORIZONTAL);
     m_butCancel = new wxButton(panel, ID_BTN_Cancel, "Cancel");
     m_butSave   = new wxButton(panel, new_disk ? ID_BTN_SaveAs : ID_BTN_Save,
-                                      new_disk ? "Save As" : "Save" );
-    m_botbox->Add(1, 1, 1);             // 1 pixel stretchable spacer
-    m_botbox->Add(m_butSave,   0 );     // non-stretchable
-    m_botbox->Add(15, 1, 0);            // 15 pixel non-stretchable spacer
-    m_botbox->Add(m_butCancel, 0 );     // non-stretchable
+                                      new_disk ? "Save As" : "Save");
+    m_botbox->Add(1, 1, 1);          // 1 pixel stretchable spacer
+    m_botbox->Add(m_butSave,   0);   // non-stretchable
+    m_botbox->Add(15, 1, 0);         // 15 pixel non-stretchable spacer
+    m_botbox->Add(m_butCancel, 0);   // non-stretchable
 #ifdef __WXMAC__
-    m_botbox->Add(20, 1, 0);            // make sure resizing grip doesn't overdraw cancel button
+    m_botbox->Add(20, 1, 0);         // make sure resizing grip doesn't overdraw cancel button
 #endif
 
     // add the buttons to the bottom of the top vbox
@@ -211,7 +211,7 @@ DiskFactory::DiskFactory(wxFrame *parent, const std::string &filename) :
 
     // pick up screen location and size
     const std::string subgroup("ui/disk_dialog");
-    wxRect default_geom(rc.GetX(),rc.GetY(),rc.GetWidth(),rc.GetHeight());
+    wxRect default_geom(rc.GetX(), rc.GetY(), rc.GetWidth(), rc.GetHeight());
     host::ConfigReadWinGeom(this, subgroup, &default_geom);
 
     updateDlg();
@@ -256,7 +256,7 @@ DiskFactory::updateDlg()
 void
 DiskFactory::OnButton_Save(wxCommandEvent& WXUNUSED(event))
 {
-    std::string name( m_diskdata->getPath() );
+    std::string name(m_diskdata->getPath());
     assert(!name.empty());
 
     m_diskdata->setLabel(m_tab2->getLabelString());
@@ -391,12 +391,11 @@ PropPanel::PropPanel(DiskFactory *df,
         for (int i=0; i<num_disk_types; i++) {
             type_choices[i] = disk_choices[i].description;
         }
-        m_disktype = new wxRadioBox( this, -1, "Disk Type",
-                                     wxDefaultPosition, wxDefaultSize,
-                                     num_disk_types,
-                                     &type_choices[0],
-                                     0, wxRA_SPECIFY_ROWS
-                                    );
+        m_disktype = new wxRadioBox(this, -1, "Disk Type",
+                                    wxDefaultPosition, wxDefaultSize,
+                                    num_disk_types,
+                                    &type_choices[0],
+                                    0, wxRA_SPECIFY_ROWS);
         boxh->Add(m_disktype, 0, wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL | margin_LRT, margin_pixels);
     }
 
@@ -484,10 +483,9 @@ PropPanel::refresh()
     int radio_sel = -1;
     if (new_disk) {
         for (int i=0; i < num_disk_types; i++) {
-            if ( (disk_type    == disk_choices[i].disk_type) &&
-                 (num_platters == disk_choices[i].platters)  &&
-                 (num_sectors  == disk_choices[i].sectors_per_platter)
-               ) {
+            if ((disk_type    == disk_choices[i].disk_type) &&
+                (num_platters == disk_choices[i].platters)  &&
+                (num_sectors  == disk_choices[i].sectors_per_platter)) {
                 radio_sel = i;
                 break;
             }

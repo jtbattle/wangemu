@@ -15,10 +15,10 @@ public:
 
 private:
     // ---- event handlers ----
-    void OnFontChoice( wxCommandEvent &event );
-    void OnColorChoice( wxCommandEvent& WXUNUSED(event) );
-    void OnContrastSlider( wxScrollEvent &event );
-    void OnBrightnessSlider( wxScrollEvent &event );
+    void OnFontChoice(wxCommandEvent &event);
+    void OnColorChoice(wxCommandEvent& WXUNUSED(event));
+    void OnContrastSlider(wxScrollEvent &event);
+    void OnBrightnessSlider(wxScrollEvent &event);
 
     // save/get dialog options to the config file
     void saveDefaults();

@@ -88,7 +88,7 @@ host::initialize()
 {
     // path to executable
     const wxStandardPathsBase &stdp = wxStandardPaths::Get();
-    wxFileName exe_path( stdp.GetExecutablePath() );
+    wxFileName exe_path(stdp.GetExecutablePath());
 
 #ifdef __VISUALC__
     // with ms visual c++, there is a Debug directory and a Release directory.
@@ -133,7 +133,7 @@ host::initialize()
     wxFileName ini_path("~/Library/Preferences/wangemu.ini");
     ini_path.Normalize();
   #else
-    wxFileName init_path( stdp.GetUserConfigDir() + "/wangemu.ini" );
+    wxFileName init_path(stdp.GetUserConfigDir() + "/wangemu.ini");
   #endif
     config = std::make_unique<wxFileConfig>("", "", ini_path.GetFullPath());
     wxConfigBase::Set(config);
@@ -271,7 +271,7 @@ host::ConfigReadStr(const std::string &subgroup,
 {
     assert(val != nullptr);
     wxString wxval;
-    config->SetPath( "/wangemu/config-0/" + subgroup);
+    config->SetPath("/wangemu/config-0/" + subgroup);
     bool b = config->Read(key, &wxval);
     if (!b && (defaultval != nullptr)) {
         *val = *defaultval;
@@ -309,7 +309,7 @@ host::ConfigReadBool(const std::string &subgroup,
 {
     assert(val != nullptr);
     int v;
-    const bool b = ConfigReadInt(subgroup, key, &v, ((defaultval) ? 1:0) );
+    const bool b = ConfigReadInt(subgroup, key, &v, ((defaultval) ? 1:0));
     if (b && (v >= 0) && (v <= 1)) {
         *val = (v==1);
     } else {
@@ -347,10 +347,10 @@ host::ConfigReadWinGeom(wxWindow *wxwin,
             b = str_x.IsNumber() && str_y.IsNumber() &&
                 str_w.IsNumber() && str_h.IsNumber();
             if (b) {
-                str_x.ToLong( &x, 0 );
-                str_y.ToLong( &y, 0 );
-                str_w.ToLong( &w, 0 );
-                str_h.ToLong( &h, 0 );
+                str_x.ToLong(&x, 0);
+                str_y.ToLong(&y, 0);
+                str_w.ToLong(&w, 0);
+                str_h.ToLong(&h, 0);
             }
         }
     }
@@ -386,8 +386,8 @@ host::ConfigReadWinGeom(wxWindow *wxwin,
     }
 
     // now move and resize the window
-    const wxPoint pt(x,y);
-    const wxSize  sz(w,h);
+    const wxPoint pt(x, y);
+    const wxSize  sz(w, h);
     wxwin->Move(pt);
     if (client_size) {
         wxwin->SetClientSize(sz);
@@ -405,7 +405,7 @@ host::ConfigWriteStr(const std::string &subgroup,
 {
     wxString wxKey(key);
     wxString wxVal(val);
-    config->SetPath( "/wangemu/config-0/" + subgroup);
+    config->SetPath("/wangemu/config-0/" + subgroup);
     bool b = config->Write(wxKey, wxVal);
     assert(b);
     b = b;      // keep lint happy
@@ -452,7 +452,7 @@ host::ConfigWriteWinGeom(wxWindow *wxwin,
     }
 
     wxString prop;
-    prop.Printf("%d,%d,%d,%d", x,y,w,h);
+    prop.Printf("%d,%d,%d,%d", x, y, w, h);
     ConfigWriteStr(subgroup, "window", std::string(prop));
 }
 

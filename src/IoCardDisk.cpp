@@ -133,7 +133,7 @@
 #define ASSERT_VALID_DRIVE(d) assert((d) >= 0 && (d) < 4)
 
 // the minimum number of ticks for a callback event
-const int64 DISK_MIN_TICKS = TIMER_US( 20 );
+const int64 DISK_MIN_TICKS = TIMER_US(20);
 
 // =====================================================
 //   public interface
@@ -213,10 +213,10 @@ std::vector<int>
 IoCardDisk::getAddresses() const
 {
     std::vector<int> v;
-    v.push_back( m_baseaddr + 0x00 );   // primary drive
-    v.push_back( m_baseaddr + 0x40 );   // secondary drive
-    v.push_back( m_baseaddr + 0x80 );   // hogged primary drive
-    v.push_back( m_baseaddr + 0xC0 );   // hogged secondary drive
+    v.push_back(m_baseaddr + 0x00);  // primary drive
+    v.push_back(m_baseaddr + 0x40);  // secondary drive
+    v.push_back(m_baseaddr + 0x80);  // hogged primary drive
+    v.push_back(m_baseaddr + 0xC0);  // hogged secondary drive
     return v;
 }
 
@@ -236,7 +236,7 @@ IoCardDisk::getCfgState()
 void
 IoCardDisk::setConfiguration(const CardCfgState &cfg) noexcept
 {
-    const DiskCtrlCfgState &ccfg( dynamic_cast<const DiskCtrlCfgState&>(cfg) );
+    const DiskCtrlCfgState &ccfg(dynamic_cast<const DiskCtrlCfgState&>(cfg));
 
     // FIXME: do sanity checking to make sure things don't change at a bad time?
     //        perhaps queue this change until the next WAKEUP phase?
@@ -248,8 +248,8 @@ IoCardDisk::setConfiguration(const CardCfgState &cfg) noexcept
 void
 IoCardDisk::editConfiguration(CardCfgState *cfg)
 {
-    DiskCtrlCfgState* pcfg( dynamic_cast<DiskCtrlCfgState*>(cfg) );
-    assert( pcfg != nullptr );
+    DiskCtrlCfgState* pcfg(dynamic_cast<DiskCtrlCfgState*>(cfg));
+    assert(pcfg != nullptr);
 
     UI_ConfigureCard(pcfg);
 };
@@ -496,8 +496,8 @@ IoCardDisk::wvdTickleMotorOffTimer()
 
     const int disktype = m_d[m_drive].wvd->getDiskType();
     if ((disktype == Wvd::DISKTYPE_FD5) || (disktype == Wvd::DISKTYPE_FD8)) {
-        m_tmr_motor_off = m_scheduler->TimerCreate( TEN_SECONDS,
-                                                    [&](){ tcbMotorOff(m_drive); } );
+        m_tmr_motor_off = m_scheduler->TimerCreate(TEN_SECONDS,
+                                                   [&](){ tcbMotorOff(m_drive); });
     }
 }
 
@@ -597,7 +597,7 @@ IoCardDisk::wvdSeekTrack(int64 nominal_ns)
         const int disktype = m_d[other_drive].wvd->getDiskType();
         const bool floppy = (disktype == Wvd::DISKTYPE_FD5) ||
                             (disktype == Wvd::DISKTYPE_FD8);
-        if ( (m_d[other_drive].state == DRIVE_SPINNING) && floppy) {
+        if ((m_d[other_drive].state == DRIVE_SPINNING) && floppy) {
             if (++m_d[other_drive].idle_cnt == 32) {
                 stopMotor(other_drive);
             }
@@ -628,7 +628,7 @@ IoCardDisk::wvdSeekTrack(int64 nominal_ns)
     if (!empty && (m_d[m_drive].tmr_sector == nullptr)) {
         m_d[m_drive].tmr_sector = m_scheduler->TimerCreate(
                                     m_d[m_drive].ns_per_sector,
-                                    [&](){ tcbSector(m_drive); } );
+                                    [&](){ tcbSector(m_drive); });
     }
 
     if (ns <= 0) {
@@ -639,8 +639,7 @@ IoCardDisk::wvdSeekTrack(int64 nominal_ns)
     }
 
     m_d[m_drive].tmr_track =
-        m_scheduler->TimerCreate( ns,
-                                  [&](){ tcbTrack(m_drive); } );
+        m_scheduler->TimerCreate(ns, [&](){ tcbTrack(m_drive); });
 }
 
 
@@ -703,17 +702,17 @@ IoCardDisk::tcbTrack(int arg)
         m_d[m_drive].state = DRIVE_SPINNING;
     }
 
-    if ( (m_command == CMD_SPECIAL) ||
+    if ((m_command == CMD_SPECIAL) ||
             // special commands do track-at-a-time processing,
             // so there is no need to call SeekSector()
-         empty ||
+        empty ||
             // when an access is made to an empty drive, the motor spins up,
             // as the way it senses the lack of disk is not seeing index holes
             // once this is determined, status is returned
-         (m_command == CMD_WRITE) ||
+        (m_command == CMD_WRITE) ||
             // the write command seeks to the given track, then sends status,
             // then receives data from the host, then does the sector seek
-         !realtime_disk()
+        !realtime_disk()
             // there is no desire to model sector level timing
        ) {
         advanceState(EVENT_DISK);
@@ -761,7 +760,7 @@ IoCardDisk::tcbSector(int arg)
     // retrigger the timer
     m_d[drive].tmr_sector = m_scheduler->TimerCreate(
                                     m_d[drive].ns_per_sector,
-                                    [&, drive](){ tcbSector(drive); } );
+                                    [&, drive](){ tcbSector(drive); });
     assert(m_d[drive].tmr_sector != nullptr);
 
     // advance to next sector, mod sectors per track
@@ -991,7 +990,7 @@ IoCardDisk::iwvdInsertDisk(int drive,
 
     char disk_loc[10];
     sprintf(&disk_loc[0],  "%c/3%02X", ((drive & 1) ? 'R' : 'F'),
-                          m_baseaddr + ((drive & 2) ? 0x40 : 0x00) );
+                          m_baseaddr + ((drive & 2) ? 0x40 : 0x00));
     const bool ok = m_d[drive].wvd->open(filename);
     if (!ok) {
         return false;
@@ -1063,11 +1062,11 @@ IoCardDisk::iwvdInsertDisk(int drive,
 
     // cache disk timing properties
     int track_seek_ms, disk_rpm;
-    getDiskGeometry( m_d[drive].wvd->getDiskType(),
-                     &m_d[drive].sectors_per_track,
-                     &track_seek_ms,
-                     &disk_rpm,
-                     &m_d[drive].interleave );
+    getDiskGeometry(m_d[drive].wvd->getDiskType(),
+                    &m_d[drive].sectors_per_track,
+                    &track_seek_ms,
+                    &disk_rpm,
+                    &m_d[drive].interleave);
 
     m_d[drive].tracks_per_platter = static_cast<int>(
              (num_sectors + m_d[drive].sectors_per_track - 1) /
@@ -1075,7 +1074,7 @@ IoCardDisk::iwvdInsertDisk(int drive,
     m_d[drive].ns_per_track  = TIMER_MS(track_seek_ms);
     m_d[drive].ns_per_sector =
                 TIMER_MS(  60000.0 // ms per minute
-                         / (double)((int64)disk_rpm * m_d[drive].sectors_per_track) );
+                         / (double)((int64)disk_rpm * m_d[drive].sectors_per_track));
 
     return true;
 }
@@ -1342,7 +1341,7 @@ IoCardDisk::platterHasBit15Problem(Wvd *wvd, int p, bool fix_it)
     // these might have bit 15 set, but even if it does, the remaining
     // 15 bits must be consistent
     bool bit_15 = false;
-    if ( (secbuffer[2] >= 0x80) || (secbuffer[4] >= 0x80) ) {
+    if ((secbuffer[2] >= 0x80) || (secbuffer[4] >= 0x80)) {
         bit_15 = true;
         if (fix_it) {
             secbuffer[2] &= 0x7f;  // msb of first unused sector location

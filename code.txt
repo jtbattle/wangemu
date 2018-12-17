@@ -153,10 +153,12 @@ oddly formatted.  For example.
     int file_size_KB = (foo->total_bytes + 1023) / 1024;
     int words        =  foo->word_count;
 
-There should be one space between the keywords 'if', 'for', 'while', and
-'switch' and the following '('. Don't make them look like function calls.
-    for (int i=1; i<=10; i++) { ... }  <-- good
+Functions don't have a space between the function name and following '('.
+
+One space between the keywords 'if', 'for', 'while', and 'switch' and the
+following '('. Don't make them look like function calls.
     for(int i=1; i<=10; i++) { ... }   <-- bad
+    for (int i=1; i<=10; i++) { ... }  <-- good
 
 Use the original K&R brace style unless there is some exceptional reason, eg
     if (condition) {      <-- opening brace on same line as the condition
@@ -165,6 +167,11 @@ Use the original K&R brace style unless there is some exceptional reason, eg
        other code
     }                     <-- closing brace by itself, same indentation as if
 
+Put a space after each comma in an argument list, and no padding spaces before
+the first or after the last argument, eg
+    result = function(one,two,three);      <-- bad
+    result = function(one, two, three);    <-- good
+    result = function( one, two, three );  <-- bad
 
 ----------------------------------------------------------------------------
 GUI / Core schism

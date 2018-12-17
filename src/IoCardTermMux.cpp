@@ -30,9 +30,8 @@ const int ns_per_tick = 561;
 
 // character transmission time, in nanoseconds
 const int64 serial_char_delay =
-            TIMER_US(  11.0              /* bits per character */
-                     * 1.0E6 / 19200.0   /* microseconds per bit */
-                    );
+            TIMER_US(  11.0               /* bits per character */
+                     * 1.0E6 / 19200.0);  /* microseconds per bit */
 
 // mxd eprom image
 #include "IoCardTermMux_eprom.h"
@@ -190,7 +189,7 @@ IoCardTermMux::getAddresses() const
 {
     std::vector<int> v;
     for (int i=1; i<8; i++) {
-        v.push_back( m_baseaddr + i );
+        v.push_back(m_baseaddr + i);
     }
     return v;
 }
