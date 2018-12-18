@@ -244,7 +244,7 @@ CrtFrame::CrtFrame(const wxString& title,
     makeMenubar();
 
     // create a status bar with two panes
-    m_statBar = new CrtStatusBar(this, m_smart_term, isPrimaryCrt());
+    m_statBar = new CrtStatusBar(this, m_smart_term, m_primary_crt);
     SetStatusBar(m_statBar);
     SetStatusBarPane(1);        // use second pane for menu help strings
 

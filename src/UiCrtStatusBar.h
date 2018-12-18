@@ -56,7 +56,7 @@ class CrtStatusBar : public wxStatusBar
 {
 public:
     CANT_ASSIGN_OR_COPY_CLASS(CrtStatusBar);
-    CrtStatusBar(CrtFrame *parent, bool smart_term, bool shown);
+    CrtStatusBar(CrtFrame *parent, bool smart_term, bool primary_crt);
     ~CrtStatusBar();
 
     void SetStatusMessage(const std::string &text);
@@ -92,8 +92,6 @@ private:
 
     int  m_num_disk_controllers;                // number of disk controllers
     int  m_num_drives[MAX_DISK_CONTROLLERS];    // drives per controller
-
-    bool m_shown;                               // whether statbar is hidden
 
     enum { unknown, insert_disk, eject_disk, inspect_disk, format_disk }
           m_popup_action;

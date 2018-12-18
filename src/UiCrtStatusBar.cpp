@@ -125,7 +125,8 @@ END_EVENT_TABLE()
 #define DISK_ICON_HEIGHT 13     // in pixels
 #define DISK_ICON_GAP    1      // space between icons in pair, in pixels
 
-CrtStatusBar::CrtStatusBar(CrtFrame *parent, bool smart_term, bool shown) :
+CrtStatusBar::CrtStatusBar(CrtFrame *parent,
+                           bool smart_term, bool primary_crt) :
         wxStatusBar(parent, -1),
         m_parent(parent),
         m_keyword_ctl(nullptr),
@@ -137,22 +138,26 @@ CrtStatusBar::CrtStatusBar(CrtFrame *parent, bool smart_term, bool shown) :
         m_icon_set(nullptr),
         m_num_disk_controllers(0),
         m_num_drives{0},
-        m_shown(shown),
         m_popup_action(unknown)
 {
-    // alpha/keyword button, status area, disk drives, dummy area
+    // max config: alpha/keyword button, status area, disk drives, dummy area
     int pane_widths[2+MAX_DISK_DRIVES+1];
     int pane_styles[2+MAX_DISK_DRIVES+1];
 
     m_icon_set = std::make_unique<wxBitmap>(icons_xpm);
 
     // determine how many disk controllers there are
-    int slt;
-    while (system2200::findDiskController(m_num_disk_controllers, &slt)) {
-        m_num_disk_controllers++;
+    if (primary_crt) {
+        int slt;  // unused
+        while (system2200::findDiskController(m_num_disk_controllers, &slt)) {
+            m_num_disk_controllers++;
+        }
     }
 
-    // the layout is keyboard button, text message, N disk controllers, dead space
+    // layout for the primary crt:
+    //     keyboard button, text message, N disk controllers, dead space
+    // layout for non-primary crts:
+    //     keyboard button, text message, dead space
     int panes = 0;
 #ifdef __WXMSW__
     pane_widths[panes] = 80;        // 80 pixels wide
@@ -286,10 +291,11 @@ CrtStatusBar::CrtStatusBar(CrtFrame *parent, bool smart_term, bool shown) :
     m_keyword_ctl = std::make_unique<wxCheckBox>(
                             this, ID_Keyword_Mode, label);
 
-    Show(shown);
+    Show(true);
 
     SetMinHeight(DISK_ICON_HEIGHT); // triggers an OnSize()
 }
+
 
 // set the appropriate icon for the disk, and refresh the associated tooltip
 void
