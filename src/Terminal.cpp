@@ -21,6 +21,7 @@
 //     important in the emulator where line loss is not a possibility.
 
 #include "Ui.h"
+#include "host.h"              // for dbglog()
 #include "IoCardKeyboard.h"
 #include "IoCardTermMux.h"
 #include "Scheduler.h"

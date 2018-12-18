@@ -79,6 +79,54 @@ saveConfigFileLocations()
 }
 
 
+// ------------------------------------------------------------------------
+//  a small logging facility, not in the host namespace
+// ------------------------------------------------------------------------
+
+#include <cstdarg>      // for var args
+#include <fstream>
+
+static std::ofstream dbg_ofs;
+
+#ifdef _DEBUG
+static void
+dbglog_open(const std::string &logname)
+{
+    assert(!dbg_ofs.is_open());     // only one log at a time
+    dbg_ofs.open(logname.c_str(), std::ofstream::out | std::ofstream::trunc);
+    if (!dbg_ofs.good()) {
+        UI_Error("Error opening '%s' for logging.\n", logname.c_str());
+        exit(-1);
+    }
+}
+
+static void
+dbglog_close()
+{
+    if (dbg_ofs.is_open()) {
+        dbg_ofs.close();
+    }
+}
+#endif
+
+void
+dbglog(const char *fmt, ...)
+{
+    char buff[1000];
+    va_list args;
+
+    va_start(args, fmt);
+    vsnprintf(&buff[0], sizeof(buff), fmt, args);
+    va_end(args);
+
+    if (dbg_ofs.good()) {
+        dbg_ofs << &buff[0];
+        // this is useful if we are getting assert()s, causing
+        // the last buffered block to not appear in the log.
+        dbg_ofs.flush();
+    }
+}
+
 // ============================================================================
 // "public" functions
 // ============================================================================
@@ -86,6 +134,10 @@ saveConfigFileLocations()
 void
 host::initialize()
 {
+#ifdef _DEBUG
+    dbglog_open("w2200dbg.log");
+#endif
+
     // path to executable
     const wxStandardPathsBase &stdp = wxStandardPaths::Get();
     wxFileName exe_path(stdp.GetExecutablePath());
@@ -189,6 +241,10 @@ host::terminate()
     }
     config    = nullptr;
     stopwatch = nullptr;
+
+#ifdef _DEBUG
+    dbglog_close();       // turn off logging
+#endif
 }
 
 

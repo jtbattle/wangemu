@@ -224,54 +224,6 @@ breakdown_cards(void) noexcept
 }
 
 // ------------------------------------------------------------------------
-//  a small logging facility
-// ------------------------------------------------------------------------
-
-#include <cstdarg>      // for var args
-#include <fstream>
-
-static std::ofstream dbg_ofs;
-
-#ifdef _DEBUG
-static void
-dbglog_open(const std::string &filename)
-{
-    assert(!dbg_ofs.is_open());     // only one log at a time
-    dbg_ofs.open(filename.c_str(), std::ofstream::out | std::ofstream::trunc);
-    if (!dbg_ofs.good()) {
-        UI_Error("Error opening '%s' for logging.\n", filename.c_str());
-        exit(-1);
-    }
-}
-
-static void
-dbglog_close()
-{
-    if (dbg_ofs.is_open()) {
-        dbg_ofs.close();
-    }
-}
-#endif
-
-void
-dbglog(const char *fmt, ...)
-{
-    char buff[1000];
-    va_list args;
-
-    va_start(args, fmt);
-    vsnprintf(&buff[0], sizeof(buff), fmt, args);
-    va_end(args);
-
-    if (dbg_ofs.good()) {
-        dbg_ofs << &buff[0];
-        // this is useful if we are getting assert()s, causing
-        // the last buffered block to not appear in the log.
-        dbg_ofs.flush();
-    }
-}
-
-// ------------------------------------------------------------------------
 // public members
 // ------------------------------------------------------------------------
 
@@ -279,10 +231,6 @@ dbglog(const char *fmt, ...)
 void
 system2200::initialize()
 {
-#ifdef _DEBUG
-    dbglog_open("w2200dbg.log");
-#endif
-
     // set up IO management
     for (auto &mapentry : ioMap) {
         mapentry.slot   = -1;    // unoccupied
@@ -339,10 +287,6 @@ system2200::cleanup()
 
     current_cfg->saveIni();  // save state to ini file
     current_cfg = nullptr;
-
-#ifdef _DEBUG
-    dbglog_close();       // turn off logging
-#endif
 }
 
 

@@ -127,6 +127,13 @@ namespace host
                 int readonly, std::string *fullpath);
 };
 
+
+// ------------------------------------------------------------------------
+// logging utility function for debug purposes
+// ------------------------------------------------------------------------
+// exported by host.cpp
+void dbglog(const char *fmt, ...);
+
 #endif _INCLUDE_HOST_H_
 
 // vim: ts=8:et:sw=4:smarttab

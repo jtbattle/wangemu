@@ -3,7 +3,7 @@
 // ------------------------------------------------------------------------
 
 #include "IoCardDisk.h"
-#include "system2200.h"    // for dbglog()
+#include "host.h"              // for dbglog()
 #include "Ui.h"
 #include "Wvd.h"
 

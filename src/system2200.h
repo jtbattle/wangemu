@@ -139,13 +139,6 @@ namespace system2200
     const cpuconfig_t* getCpuConfig(int configId) noexcept;
 };
 
-
-// ------------------------------------------------------------------------
-// logging utility function for debug purposes
-// ------------------------------------------------------------------------
-// exported by system2200.cpp
-void dbglog(const char *fmt, ...);
-
 #endif // _INCLUDE_SYSTEM2200_H_
 
 // vim: ts=8:et:sw=4:smarttab

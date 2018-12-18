@@ -29,11 +29,11 @@
 // difficulties for the user.
 
 #include "DiskCtrlCfgState.h"
+#include "host.h"         // for dbglog()
 #include "IoCardDisk.h"
 #include "Ui.h"           // for UI_Alert()
 #include "Cpu2200.h"
 #include "Scheduler.h"
-#include "system2200.h"   // for dbglog()
 #include "SysCfgState.h"
 #include "Wvd.h"
 
