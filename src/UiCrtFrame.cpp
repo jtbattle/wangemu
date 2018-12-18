@@ -230,6 +230,7 @@ CrtFrame::CrtFrame(const wxString& title,
     m_fps(0)
 {
     m_smart_term = (crt_state->screen_type == UI_SCREEN_2236DE);
+    m_small_crt  = (crt_state->chars_w == 64);
     m_primary_crt = (m_smart_term) ? ((m_crt_addr == 0x00) && (term_num == 0))
                                    : (m_crt_addr == 0x05);
 
@@ -838,7 +839,10 @@ CrtFrame::getDefaults()
     m_toolBar->Show(show_toolbar);
 
     // pick up screen location and size
-    wxRect default_geom(50, 50, 690, 380);
+    wxRect default_geom(50, 50, 680, 380);  // assume 64x16; x,y,w,h
+    if (!m_small_crt) {
+        default_geom = {50, 50, 840, 560};  // 80x24
+    }
     host::ConfigReadWinGeom(this, subgroup, &default_geom);
 
     // pick up fullscreen status

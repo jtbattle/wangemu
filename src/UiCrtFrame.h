@@ -186,6 +186,7 @@ private:
     int  m_term_num;            // 0 for dumb terms, 1-4 for muxed terms
     bool m_primary_crt;         // true for main crt
     bool m_smart_term;          // true for serial terminals
+    bool m_small_crt;           // true=64x16
 
     int  m_assoc_kb_addr;       // io address of associated keyboard
 

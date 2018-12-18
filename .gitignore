@@ -203,3 +203,4 @@ wvdutil/games.wvd
 wvdutil/lint.bat
 wvdutil/unscramble.py
 .vs/slnx.sqlite
+coding_notes.txt

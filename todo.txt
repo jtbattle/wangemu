@@ -16,10 +16,6 @@ Emulator TODO list
      can be no secondary keyboard to map to a CRT window.
    - booting MVP 3.5, it gets to the loading BASIC-2 stage but hangs
 
-*) when a new crtframe is created at an address which has never been seen
-   before the window is sized for a 64x16 screen.  The default initial size
-   should be larger for 80x24 screens.
-
 *) when there is more than one term, the windows task bar is not helpful 
    because all look the same:
      <wang icon> Wang 2200VP 2236D...
@@ -27,6 +23,10 @@ Emulator TODO list
    title?  If not, rearrange the titlebar items to be in an order to make
    it easier to identify which terminal is which, maybe
      <wang icon> MXD/00 Term 1 Wang 2200VP
+
+*) add a warning that if the user types ALT-R or ALT-W that they need
+   to use Shift-ALT-R or Shift-ALT-W if they want a reset.  Maybe have
+   a memory so it happens only once per emulator run.
 
 *) support MXD with more than one terminal
      - config dialog needs to allow term mux configurations,
@@ -47,15 +47,12 @@ Emulator TODO list
       a) 2200T    w/ 32KB RAM, printer, two disk drives, KB + 64x16 screen
       b) 2200VP   w/ 64KB RAM, printer, two disk drives, KB + 80x24 screen
       c) 2200MVPC w/512KB RAM, printer, two disk drives, 2236 MXD, one term
-      d) 2200VLSI w/  8MB RAM, printer, two disk drives, 2236 MXD, one term
    Expert mode would have the existing configuration dialog.
    - things are getting more confusing with the increased options.
      have a feature where hovering over the config button in the
-     "Not OK" state will pop up an explanation of the problem
-
-*) add a warning that if the user types ALT-R or ALT-W that they need
-   to use Shift-ALT-R or Shift-ALT-W if they want a reset.  Maybe have
-   a memory so it happens only once per emulator run.
+     "Not OK" state will pop up an explanation of the problem.  Currently
+     you have to hit the "Not OK" button to get the info. I think adding
+     the former is good for discoverability.
 
 *) on toolbar, add superscript to some SF keys in (M)VP mode:
      SF4: END
