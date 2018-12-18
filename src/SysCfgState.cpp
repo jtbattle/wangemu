@@ -177,9 +177,7 @@ SysCfgState::loadIni()
         std::string sval;
 
         std::string defaultCpu = "2200T";
-        bool b = host::ConfigReadStr(subgroup, "cpu", &sval, &defaultCpu);
-        assert(b);
-
+        host::ConfigReadStr(subgroup, "cpu", &sval, &defaultCpu);
         auto cpuCfg = system2200::getCpuConfig(sval);
         if (cpuCfg == nullptr) {
             UI_Warn("The ini didn't specify a legal cpu type.\n"
@@ -193,7 +191,7 @@ SysCfgState::loadIni()
         const int max_ram = cpuCfg->ramSizeOptions[ram_choices-1];
         const int dflt_ram = max_ram;
         int ival;
-        b = host::ConfigReadInt(subgroup, "memsize", &ival, dflt_ram);
+        host::ConfigReadInt(subgroup, "memsize", &ival, dflt_ram);
         if (ival < min_ram) { ival = min_ram; }
         if (ival > max_ram) { ival = max_ram; }
         for (const int kb : cpuCfg->ramSizeOptions) {
@@ -206,7 +204,7 @@ SysCfgState::loadIni()
 
         // learn whether CPU speed is regulated or not
         regulateCpuSpeed(true);  // default
-        b = host::ConfigReadStr(subgroup, "speed", &sval);
+        bool b = host::ConfigReadStr(subgroup, "speed", &sval);
         if (b && (sval == "unregulated")) {
             regulateCpuSpeed(false);
         }

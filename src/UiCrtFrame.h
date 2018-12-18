@@ -147,7 +147,7 @@ private:
     // ---- utility functions ----
 
     // create menubar
-    void makeMenubar(bool primary_crt, bool smart_term);
+    void makeMenubar();
 
     // return the primary CRTframe (/005)
     static CrtFrame *getPrimaryFrame() noexcept;
@@ -185,6 +185,7 @@ private:
     int  m_crt_addr;            // used to track configuration options
     int  m_term_num;            // 0 for dumb terms, 1-4 for muxed terms
     bool m_primary_crt;         // true for main crt
+    bool m_smart_term;          // true for serial terminals
 
     int  m_assoc_kb_addr;       // io address of associated keyboard
 

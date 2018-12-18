@@ -229,9 +229,9 @@ CrtFrame::CrtFrame(const wxString& title,
     m_blink_phase(0),
     m_fps(0)
 {
-    const bool smart_term = (crt_state->screen_type == UI_SCREEN_2236DE);
-    m_primary_crt = (smart_term) ? ((m_crt_addr == 0x00) && (term_num == 0))
-                                 : (m_crt_addr == 0x05);
+    m_smart_term = (crt_state->screen_type == UI_SCREEN_2236DE);
+    m_primary_crt = (m_smart_term) ? ((m_crt_addr == 0x00) && (term_num == 0))
+                                   : (m_crt_addr == 0x05);
 
     if (m_primary_crt) {
         assert(!m_primaryFrame);
@@ -241,10 +241,10 @@ CrtFrame::CrtFrame(const wxString& title,
     // set the frame icon
     SetIcon(&wang_xpm[0]);
 
-    makeMenubar(isPrimaryCrt(), smart_term);
+    makeMenubar();
 
     // create a status bar with two panes
-    m_statBar = new CrtStatusBar(this, smart_term, isPrimaryCrt());
+    m_statBar = new CrtStatusBar(this, m_smart_term, isPrimaryCrt());
     SetStatusBar(m_statBar);
     SetStatusBarPane(1);        // use second pane for menu help strings
 
@@ -267,7 +267,7 @@ CrtFrame::CrtFrame(const wxString& title,
 // FIXME: hack -- m_assoc_kb_addr defaults to 01, so if we attempt to
 //        route a key to a Terminal (which registers at registersKB at 0x00)
 //        it fails to find it.  so hack around it for now.
-if (smart_term) {
+if (m_smart_term) {
     m_assoc_kb_addr = 0x00;
 }
 #endif
@@ -323,22 +323,22 @@ CrtFrame::isPrimaryCrt() const noexcept
 #endif
 
 void
-CrtFrame::makeMenubar(bool primary_crt, bool smart_term)
+CrtFrame::makeMenubar()
 {
     wxMenu *menuFile = new wxMenu;
-    if (primary_crt) {
+    if (m_primary_crt) {
         menuFile->Append(File_Script,   "&Script...", "Redirect keyboard from a file");
     }
     menuFile->Append(File_Snapshot, "Screen &Grab...\t" ALT "+G", "Save an image of the screen to a file");
 #if HAVE_FILE_DUMP
-    if (primary_crt) {
+    if (m_primary_crt) {
         menuFile->Append(File_Dump,     "Dump Memory...", "Save an image of the system memory to a file");
     }
 #endif
     menuFile->Append(File_Quit,     "E&xit\t" ALT "+X", "Quit the program");
 
     wxMenu *menuCPU = nullptr;
-    if (primary_crt) {
+    if (m_primary_crt) {
         menuCPU = new wxMenu;
         menuCPU->Append(CPU_HardReset, "Hard Reset CPU\t" ALT2 "+R", "Perform a power-up reset");
         menuCPU->Append(CPU_WarmReset, "Warm Reset CPU\t" ALT2 "+W", "Perform a state-preserving reset");
@@ -348,14 +348,14 @@ CrtFrame::makeMenubar(bool primary_crt, bool smart_term)
     }
 
     wxMenu *menuDisk = nullptr;
-    if (primary_crt) {
+    if (m_primary_crt) {
         // nothing to do except add top -- it is added dynamically later
         menuDisk = new wxMenu;
     }
 
     // printer view
     wxMenu *menuPrinter = nullptr;
-    if (primary_crt && (system2200::getPrinterIoAddr(0) >= 0)) {
+    if (m_primary_crt && (system2200::getPrinterIoAddr(0) >= 0)) {
         // there is at least one printer
         menuPrinter = new wxMenu;
         for (int i=0; ; i++) {
@@ -373,18 +373,18 @@ CrtFrame::makeMenubar(bool primary_crt, bool smart_term)
     }
 
     wxMenu *menuConfig = new wxMenu;
-    if (primary_crt) {
+    if (m_primary_crt) {
         menuConfig->Append(Configure_Dialog,     "&Configure System...",      "Change I/O settings");
     }
     menuConfig->Append(Configure_Screen_Dialog,  "&Configure Screen...",      "Change display settings");
-    if (smart_term) {
+    if (m_smart_term) {
         menuConfig->Append(Configure_KeywordMode,    "&Kaps lock\t" ALT "+K",  "Toggle keyboard keyword mode",        wxITEM_CHECK);
     } else {
         menuConfig->Append(Configure_KeywordMode,    "&Keyword mode\t" ALT "+K",  "Toggle keyboard keyword mode",        wxITEM_CHECK);
     }
     menuConfig->Append(Configure_SF_toolBar,     "SF key toolbar",            "Toggle special function key toolbar", wxITEM_CHECK);
     menuConfig->Append(Configure_Fullscreen,     "Fullscreen\t" ALT "+Enter", "Toggle full screen display",          wxITEM_CHECK);
-    if (primary_crt) {
+    if (m_primary_crt) {
         menuConfig->Append(Configure_Stats,      "Statistics",                "Toggle statistics on statusbar",      wxITEM_CHECK);
     }
     if (system2200::getKbIoAddr(1) >= 0) {
@@ -736,14 +736,28 @@ CrtFrame::initToolBar(wxToolBar *tb)
     tb->Realize();
 }
 
+static std::string
+makeCrtIniGroup(bool smart_term, int io_addr, int term_num)
+{
+    std::ostringstream sg;
+    if (smart_term) {
+        // eg: ui/MXD-00-1/...  (MXD at addr 00, terminal 1)
+        // note: internall term_num is 0-based, but the ini is 1-based because
+        // the wang documentation calls the terminals 1 to 4.
+        sg << "ui/MXD-CRT-" << std::setw(2) << std::setfill('0') << std::hex << io_addr
+                            << "-" << std::setw(1) << (term_num+1);
+    } else {
+        // eg: ui/CRT-05/...  (dumb crt at addr 05)
+        sg << "ui/CRT-" << std::setw(2) << std::setfill('0') << std::hex << io_addr;
+    }
+    return sg.str();
+}
 
 // save Crt options to the config file
 void
 CrtFrame::saveDefaults()
 {
-    std::ostringstream sg;
-    sg << "ui/CRT-" << std::setw(2) << std::setfill('0') << std::hex << m_crt_addr;
-    std::string subgroup(sg.str());
+    std::string subgroup = makeCrtIniGroup(m_smart_term, m_crt_addr, m_term_num);
 
     // save screen color
     host::ConfigWriteInt(subgroup, "colorscheme", getDisplayColorScheme());
@@ -785,20 +799,15 @@ CrtFrame::saveDefaults()
 void
 CrtFrame::getDefaults()
 {
-    wxString valstr;
-    int v = 0;
-    bool b;
-
-    // pick up screen color scheme
-    std::ostringstream sg;
-    sg << "ui/CRT-" << std::setw(2) << std::setfill('0') << std::hex << m_crt_addr;
-    std::string subgroup(sg.str());
+    std::string subgroup = makeCrtIniGroup(m_smart_term, m_crt_addr, m_term_num);
 
     // pick up keyword mode (A/a vs Keyword/A)
+    bool b;
     host::ConfigReadBool(subgroup, "keywordmode", &b, false);
     setKeywordMode(b);
 
     // pick up tied keyboard io address
+    int v = 0;
     b = host::ConfigReadInt(subgroup, "tied_keyboard", &v);
     if (b && (v >= 0x00) && (v <= 0xFF)) {
         m_assoc_kb_addr = v;
