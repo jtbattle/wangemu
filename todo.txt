@@ -10,19 +10,23 @@ Emulator TODO list
    ... then review the priorities again
 
 *) support more than one MXD (each with one terminal)
-   - terminal save/restore state should be based on addr+term#
-     currently the tag is:
-        [wangemu/config-0/ui/CRT-05]
-        [wangemu/config-0/ui/Printer-215]  << shouldn't have (2)15
-     for mxd should be
-        [wangemu/config-0/ui/MXD-CRT-{00,40,80,C0}-{1,2,3,4}]
-        [wangemu/config-0/ui/MXD-PRT-{00,40,80,C0}-{1,2,3,4}]
-   - the secondary terminal doesn't have a status bar (known misfeature).
-     it should at least allow the Kaps feature.
-   - the concept of tied keyboards should not apply to such CrtFrames,
-     or at least it should be reviewed.
-     the tied_keyboard setting is read during getDefaults() in UiCrtFrame.
+   - the concept of tied keyboards does not apply to such CrtFrames
+     because if there is an MXD in the system, the first one must occupy
+     addr 01-07, and the keyboard controller only allows 01-04, so there
+     can be no secondary keyboard to map to a CRT window.
    - booting MVP 3.5, it gets to the loading BASIC-2 stage but hangs
+
+*) when a new crtframe is created at an address which has never been seen
+   before the window is sized for a 64x16 screen.  The default initial size
+   should be larger for 80x24 screens.
+
+*) when there is more than one term, the windows task bar is not helpful 
+   because all look the same:
+     <wang icon> Wang 2200VP 2236D...
+   Is there a way to make the taskbar title different than the titlebar
+   title?  If not, rearrange the titlebar items to be in an order to make
+   it easier to identify which terminal is which, maybe
+     <wang icon> MXD/00 Term 1 Wang 2200VP
 
 *) support MXD with more than one terminal
      - config dialog needs to allow term mux configurations,
@@ -42,8 +46,8 @@ Emulator TODO list
    these configuration options:
       a) 2200T    w/ 32KB RAM, printer, two disk drives, KB + 64x16 screen
       b) 2200VP   w/ 64KB RAM, printer, two disk drives, KB + 80x24 screen
-      c) 2200MVP  w/512KB RAM, printer, two disk drives, 2236 MXD, one term
-      d) 2200VLSI w/  4MB RAM, printer, two disk drives, 2236 MXD, one term
+      c) 2200MVPC w/512KB RAM, printer, two disk drives, 2236 MXD, one term
+      d) 2200VLSI w/  8MB RAM, printer, two disk drives, 2236 MXD, one term
    Expert mode would have the existing configuration dialog.
    - things are getting more confusing with the increased options.
      have a feature where hovering over the config button in the
@@ -85,18 +89,7 @@ Emulator TODO list
     C:/Users/Jim/Documents/wang2200/disk_protocol/notes.txt
 
 *) review coding convention
-    - after studying the following coding guidelines, modify/extend what is
-      written in code.txt for my own future reference, and for any potential
-      contributor.  then review all the code for conformance.
-      review some c++ style guides and pick a convention.
-                  Google: https://google.github.io/styleguide/cppguide.html
-       Sutter/Stroustrup: https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines
-    - review my naming convention. I haven't been consistent.
-      eg, some_are_like_this, someAreCamelCase.
-      eg, filenames UiCrt_Keyboard.cpp vs UiCrtRender.cpp
-    - there are few places were the code is using naked pointers.
-      the wxWidgets API can't avoid it, but other cases are in my control.
-      eg, look for "new" and "delete".
+   see coding_notes.txt
 
 *) do a memory leak check once in a while
 
