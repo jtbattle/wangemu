@@ -24,10 +24,6 @@ Emulator TODO list
    it easier to identify which terminal is which, maybe
      <wang icon> MXD/00 Term 1 Wang 2200VP
 
-*) add a warning that if the user types ALT-R or ALT-W that they need
-   to use Shift-ALT-R or Shift-ALT-W if they want a reset.  Maybe have
-   a memory so it happens only once per emulator run.
-
 *) support MXD with more than one terminal
      - config dialog needs to allow term mux configurations,
        just like disk controllers have a config editor

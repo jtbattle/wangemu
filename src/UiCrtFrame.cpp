@@ -339,10 +339,12 @@ CrtFrame::makeMenubar()
     menuFile->Append(File_Quit,     "E&xit\t" ALT "+X", "Quit the program");
 
     wxMenu *menuCPU = nullptr;
+    menuCPU = new wxMenu;
     if (m_primary_crt) {
-        menuCPU = new wxMenu;
         menuCPU->Append(CPU_HardReset, "Hard Reset CPU\t" ALT2 "+R", "Perform a power-up reset");
-        menuCPU->Append(CPU_WarmReset, "Warm Reset CPU\t" ALT2 "+W", "Perform a state-preserving reset");
+    }
+    menuCPU->Append(CPU_WarmReset, "Warm Reset CPU\t" ALT2 "+W", "Perform a state-preserving reset");
+    if (m_primary_crt) {
         menuCPU->AppendSeparator();
         menuCPU->Append(CPU_ActualSpeed,      "&Actual Speed",      "Run emulation at speed of the actual machine", wxITEM_CHECK);
         menuCPU->Append(CPU_UnregulatedSpeed, "&Unregulated Speed", "Run emulation at maximum speed", wxITEM_CHECK);
