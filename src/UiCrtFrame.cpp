@@ -232,7 +232,7 @@ CrtFrame::CrtFrame(const wxString& title,
     m_smart_term = (crt_state->screen_type == UI_SCREEN_2236DE);
     m_small_crt  = (crt_state->chars_w == 64);
     m_primary_crt = (m_smart_term) ? ((m_crt_addr == 0x00) && (term_num == 0))
-                                   : (m_crt_addr == 0x05);
+                                   :  (m_crt_addr == 0x05);
 
     if (m_primary_crt) {
         assert(!m_primaryFrame);
@@ -264,14 +264,6 @@ CrtFrame::CrtFrame(const wxString& title,
     m_crt = new Crt(this, crt_state);
 
     getDefaults();      // get configuration options, or supply defaults
-#if 1
-// FIXME: hack -- m_assoc_kb_addr defaults to 01, so if we attempt to
-//        route a key to a Terminal (which registers at registersKB at 0x00)
-//        it fails to find it.  so hack around it for now.
-if (m_smart_term) {
-    m_assoc_kb_addr = 0x00;
-}
-#endif
 
     // if I don't do this before ShowFullScreen, bad things happen when
     // switching later from fullscreen to !fullscreen in some circumstances
@@ -441,6 +433,7 @@ CrtFrame::setMenuChecks(const wxMenu *menu)
         const bool script_running = system2200::kb_scriptModeActive(m_assoc_kb_addr, m_term_num);
         m_menuBar->Enable(File_Script, !script_running);
     }
+// FIXME: we want to allow secondary MXD terminals to support script input too
 
     // ----- cpu ---------------------------------------
     if (isPrimaryCrt()) {
@@ -810,24 +803,34 @@ CrtFrame::getDefaults()
     setKeywordMode(b);
 
     // pick up tied keyboard io address
+    int default_kb_addr = 0x01;
+    if (m_smart_term) {
+        switch (m_crt_addr) {
+            case 0x00: default_kb_addr = 0x01; break;
+            case 0x40: default_kb_addr = 0x41; break;
+            case 0x80: default_kb_addr = 0x81; break;
+            case 0xC0: default_kb_addr = 0xC1; break;
+            default: assert(false);
+        }
+    }
     int v = 0;
     b = host::ConfigReadInt(subgroup, "tied_keyboard", &v);
     if (b && (v >= 0x00) && (v <= 0xFF)) {
         m_assoc_kb_addr = v;
-    } else {
-        m_assoc_kb_addr = 0x01; // default
+    }  else {
+        m_assoc_kb_addr = default_kb_addr;
     }
+
     // make sure that old mapping still makes sense
-    int found = 0;
-// FIXME: why 10?  why not NUM_IOSLOTS?
-    for (int i=0; i<10; i++) {
+    bool found = false;
+    for (int i=0; i<NUM_IOSLOTS; i++) {
         if (system2200::getKbIoAddr(i) == m_assoc_kb_addr) {
-            found = 1;
+            found = true;
             break;
         }
     }
     if (!found) {
-        m_assoc_kb_addr = 0x01; // old mapping doesn't exist; use default
+        m_assoc_kb_addr = default_kb_addr;
     }
 
     // pick up statistics display mode

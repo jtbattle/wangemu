@@ -10,10 +10,6 @@ Emulator TODO list
    ... then review the priorities again
 
 *) support more than one MXD (each with one terminal)
-   - the concept of tied keyboards does not apply to such CrtFrames
-     because if there is an MXD in the system, the first one must occupy
-     addr 01-07, and the keyboard controller only allows 01-04, so there
-     can be no secondary keyboard to map to a CRT window.
    - booting MVP 3.5, it gets to the loading BASIC-2 stage but hangs
 
 *) support MXD with more than one terminal
@@ -23,6 +19,7 @@ Emulator TODO list
            - baud rate?
            - in the future, real serial port?
      - in a few places, term_num is hardwired to 0.
+     - only the primary terminal gets script input.  fix that.
 
 *) print preview crashes now.  I'm not sure when it started happening.
    study F:\Jim\libs\wx-3.1.0\samples\printing
