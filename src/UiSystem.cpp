@@ -308,8 +308,8 @@ UI_displayInit(const int screen_type, const int io_addr, const int term_num,
         // smart terminal mux
         // internally, term_num is 0-indexed, but in Wang documentation,
         // the terminal number is 1-based
-        title.Printf("Wang %s %s CRT /0%02X term %d",
-                        cpustr, dispstr, io_addr, term_num+1);
+        title.Printf("MXD/%02X Term#%d Wang %s %s",
+                        io_addr, term_num+1, cpustr, dispstr);
     }
 
     // Create the main application window

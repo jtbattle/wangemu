@@ -16,14 +16,6 @@ Emulator TODO list
      can be no secondary keyboard to map to a CRT window.
    - booting MVP 3.5, it gets to the loading BASIC-2 stage but hangs
 
-*) when there is more than one term, the windows task bar is not helpful 
-   because all look the same:
-     <wang icon> Wang 2200VP 2236D...
-   Is there a way to make the taskbar title different than the titlebar
-   title?  If not, rearrange the titlebar items to be in an order to make
-   it easier to identify which terminal is which, maybe
-     <wang icon> MXD/00 Term 1 Wang 2200VP
-
 *) support MXD with more than one terminal
      - config dialog needs to allow term mux configurations,
        just like disk controllers have a config editor

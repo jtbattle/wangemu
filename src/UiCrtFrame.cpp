@@ -1214,7 +1214,11 @@ void
 CrtFrame::OnConfigureScreenDialog(wxCommandEvent& WXUNUSED(event))
 {
     wxString title;
-    title.Printf("Display /%03X Configuration", m_crt_addr);
+    if (m_smart_term) {
+        title.Printf("MXD/%02X, Term#%d Configuration", m_crt_addr, m_term_num+1);
+    } else {
+        title.Printf("Display /%3X Configuration", m_crt_addr);
+    }
 
     system2200::freezeEmu(true);    // halt emulation
 
