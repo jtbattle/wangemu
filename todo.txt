@@ -22,9 +22,11 @@ Emulator TODO list
      - only the primary terminal gets script input.  fix that.
 
 *) print preview crashes now.  I'm not sure when it started happening.
-   study F:\Jim\libs\wx-3.1.0\samples\printing
    trying to print fails too.
-   build a sample app which uses print dialog and see if it works there.
+   build the sample app and see if it works or not.
+   F:\Jim\libs\wx-3.1.0\samples\printing
+   running wangemu-before.exe fails.  (built with wx 3.0.2)
+   running wangemu-2.1.exe print preview works!  (built with wx 2.8.9)
 
 *) Have an easy config mode and an expert mode.
    The config dialog would have two tabs.  The "simple" tab would have
@@ -39,13 +41,7 @@ Emulator TODO list
      you have to hit the "Not OK" button to get the info. I think adding
      the former is good for discoverability.
 
-*) on toolbar, add superscript to some SF keys in (M)VP mode:
-     SF4: END
-     SF5: down arrow  (useful when the edited line wraps)
-     SF6: up arrow    (useful when the edited line wraps)
-     SF7: BEGIN
-
-   Document in the keyboard help file there are some new keys
+*) Document in the keyboard help file there are some new keys
      Shift-Alt-R is hard reset  (changed)
      Shift-Alt-W is warm reset  (changed)
      Up arrow is S.F. 06 (up a screen line)

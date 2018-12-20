@@ -562,7 +562,7 @@ CrtFrame::initToolBar(wxToolBar *tb)
     wxCoord textH, textW;
     memDC.GetTextExtent("SF15", &textW, &textH); // widest string in use
 #if BIG_BUTTONS
-    static const std::string sf_labels[17] = {
+    std::string sf_labels[17] = {
         "", "", "", "", // SF0-3
         "", "", "", "", // SF4-7
 #ifdef __WXMAC__
@@ -588,6 +588,13 @@ CrtFrame::initToolBar(wxToolBar *tb)
 #endif
         "",             // EDIT
     };
+
+    if (m_smart_term) {
+        sf_labels[4] = "End";
+        sf_labels[5] = "v";
+        sf_labels[6] = "^";
+        sf_labels[7] = "Begin";
+    }
 
     // see if any of the labels is wider than the SFxx string
     for (int ii=0; ii<17; ii++) {
@@ -653,9 +660,18 @@ CrtFrame::initToolBar(wxToolBar *tb)
         btnOrigX = (buttonW - textW) >> 1;
 
     #if GRAPHIC_ARROWS
-        int shaft_ticks;        // number of separators
-        int arrow_dir;          // arrow direction
+        bool vertical = false;  // false=horizontal
+        int shaft_ticks = 0;    // number of separators
+        int arrow_dir   = 0;    // arrow direction (+1 = right or down)
         switch (i) {
+            case 5: // down arrow
+                vertical = true;
+                arrow_dir = +1;
+                break;
+            case 6: // up arrow
+                vertical = true;
+                arrow_dir = -1;
+                break;
             case 11: // ---->
                 shaft_ticks = 4;
                 arrow_dir = +1;
@@ -673,11 +689,32 @@ CrtFrame::initToolBar(wxToolBar *tb)
                 arrow_dir = -1;
                 break;
             default:
-                shaft_ticks = 0;
-                arrow_dir   = 0;
                 break;
         }
-        if (shaft_ticks > 0) {
+        if (m_smart_term && vertical) {
+
+            wxPen pen(fg, 1, wxPENSTYLE_SOLID);
+            int shaft_len = buttonH/2;
+            const int shaft_x      = buttonW/2;
+            const int shaft_beg_y  = buttonH/4 - 2*(arrow_dir * shaft_len)/7;
+            const int shaft_end_y  = buttonH/4 + 2*(arrow_dir * shaft_len)/7;
+            const int head_delta_y = -arrow_dir * shaft_len/4;
+            const int head_delta_x =              shaft_len/4; // make it 45 degrees
+
+            // draw shaft
+            memDC.SetPen(fgPen);
+            memDC.DrawLine(shaft_x, shaft_beg_y, shaft_x, shaft_end_y);
+
+            // draw arrowhead
+            memDC.DrawLine(shaft_x, shaft_end_y,
+                           shaft_x + head_delta_x,
+                           shaft_end_y + head_delta_y);
+            memDC.DrawLine(shaft_x, shaft_end_y,
+                           shaft_x - head_delta_x,
+                           shaft_end_y + head_delta_y);
+
+        } else if (shaft_ticks > 0) {
+
             wxPen dashPen(fg, 1, wxPENSTYLE_SOLID);
             const wxDash dashes[] = { 4, 2 };
             int shaft_len = buttonW/5;
@@ -693,11 +730,11 @@ CrtFrame::initToolBar(wxToolBar *tb)
                           + (shaft_ticks-1)*dashes[1];
             }
 
-            const int shaft_y       = textH/2;
-            const int shaft_beg_x   = buttonW/2   - (arrow_dir * shaft_len)/2;
-            const int shaft_end_x   = shaft_beg_x + (arrow_dir * shaft_len);
-            const int arrow_delta_x = -arrow_dir * dashes[0];
-            const int arrow_delta_y =              dashes[0]; // make it 45 degrees
+            const int shaft_y      = textH/2;
+            const int shaft_beg_x  = buttonW/2   - (arrow_dir * shaft_len)/2;
+            const int shaft_end_x  = shaft_beg_x + (arrow_dir * shaft_len);
+            const int head_delta_x = -arrow_dir * dashes[0];
+            const int head_delta_y =              dashes[0]; // make it 45 degrees
 
             // draw shaft
             memDC.SetPen(dashPen);
@@ -706,11 +743,11 @@ CrtFrame::initToolBar(wxToolBar *tb)
             // draw arrowhead
             memDC.SetPen(fgPen);
             memDC.DrawLine(shaft_end_x, shaft_y,
-                           shaft_end_x + arrow_delta_x,
-                           shaft_y + arrow_delta_y);
+                           shaft_end_x + head_delta_x,
+                           shaft_y + head_delta_y);
             memDC.DrawLine(shaft_end_x, shaft_y,
-                           shaft_end_x + arrow_delta_x,
-                           shaft_y - arrow_delta_y);
+                           shaft_end_x + head_delta_x,
+                           shaft_y - head_delta_y);
         } else
     #endif
         {
@@ -722,7 +759,7 @@ CrtFrame::initToolBar(wxToolBar *tb)
 
         tb->AddTool(TB_SF0+i, label, m_sfkeyIcons[i], tooltip);
         memDC.SelectObject(wxNullBitmap);
-    }
+    } // for (i)
     #ifdef __WXMAC__
         break;  // we found a font size that works
     } // for (font_size)
