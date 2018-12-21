@@ -84,14 +84,9 @@ typedef struct {
     int         io_addr;
     int         term_num;       // 0..3 for smart terms; 0 for display controllers
     kbCallback  callback_fn;
-#if 0
-// TODO: figure out why this doesn't compile - (here and later on)
-//        complains about invoking deleted function
-    std::unique_ptr<ScriptFile>
-                script_handle;  // ID of which script stream we're processing
-#else
-    ScriptFile *script_handle;
-#endif
+    // can't use unique_ptr because it doesn't allow copy assignment
+    // (only move) and std::vector requires copy assignment.
+    std::shared_ptr<ScriptFile> script_handle;
 } kb_route_t;
 
 std::vector<kb_route_t> m_kb_routes;
@@ -925,15 +920,9 @@ system2200::kb_invokeScript(int io_addr, int term_num,
             const int flags = ScriptFile::SCRIPT_META_INC
                             | ScriptFile::SCRIPT_META_HEX
                             | ScriptFile::SCRIPT_META_KEY ;
-#if 0
-// TODO: figure out why this doesn't compile - (here and where kb struct is declared)
-//        complains about invoking deleted function
-            kb.script_handle = std::make_unique<ScriptFile>(
+            kb.script_handle = std::make_shared<ScriptFile>(
                                    filename, flags, 3 /*max nesting*/
                                );
-#else
-            kb.script_handle = new ScriptFile(filename, flags, 3);
-#endif
             if (!kb.script_handle->openedOk()) {
                 kb.script_handle = nullptr;
             } else {

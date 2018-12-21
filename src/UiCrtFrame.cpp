@@ -694,7 +694,7 @@ CrtFrame::initToolBar(wxToolBar *tb)
         if (m_smart_term && vertical) {
 
             wxPen pen(fg, 1, wxPENSTYLE_SOLID);
-            int shaft_len = buttonH/2;
+            const int shaft_len    = buttonH/2;
             const int shaft_x      = buttonW/2;
             const int shaft_beg_y  = buttonH/4 - 2*(arrow_dir * shaft_len)/7;
             const int shaft_end_y  = buttonH/4 + 2*(arrow_dir * shaft_len)/7;

@@ -66,7 +66,7 @@ TermMuxCfgState::operator!=(const CardCfgState &rhs) const
 void
 TermMuxCfgState::setDefaults()
 {
-    setNumTerminals(2);
+    setNumTerminals(1);
 }
 
 

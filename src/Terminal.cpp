@@ -357,7 +357,7 @@ Terminal::termToMxdCallback(int key)
 
     // poll for script input, but don't let it overrun the key buffer
     if (m_kb_buff.size() < 5) {
-        m_script_active = system2200::kb_keyReady(m_io_addr, m_term_num);
+        m_script_active = system2200::kb_keyReady(m_io_addr+0x01, m_term_num);
     }
 
     // see if any other chars are pending
