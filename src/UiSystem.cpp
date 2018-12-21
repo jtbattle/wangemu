@@ -24,6 +24,7 @@ struct crt_state_t;
 #include "UiSystemConfigDlg.h"
 #include "UiCrtFrame.h"
 #include "UiDiskCtrlCfgDlg.h"
+#include "UiTermMuxCfgDlg.h"
 #include "UiMyAboutDlg.h"
 #include "UiPrinterFrame.h"
 
@@ -392,12 +393,21 @@ UI_SystemConfigDlg()
 }
 
 
-// configure a disk controller
+// configure a card
+// FIXME: don't have two unique functions; there should be one
+// function that can figure out which dialog to invoke.
 void
 UI_ConfigureCard(DiskCtrlCfgState *cfg)
 {
     assert(cfg != nullptr);
     DiskCtrlCfgDlg(nullptr, *cfg).ShowModal();
+}
+
+void
+UI_ConfigureCard2(TermMuxCfgState *cfg)
+{
+    assert(cfg != nullptr);
+    TermMuxCfgDlg(nullptr, *cfg).ShowModal();
 }
 
 // vim: ts=8:et:sw=4:smarttab

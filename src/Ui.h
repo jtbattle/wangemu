@@ -10,9 +10,10 @@
 
 #include "w2200.h"
 
-class DiskCtrlCfgState;
 class CrtFrame;
+class DiskCtrlCfgState;
 class PrinterFrame;
+class TermMuxCfgState;
 struct crt_state_t;
 
 // =============================================================
@@ -60,6 +61,7 @@ void UI_SystemConfigDlg();
 
 // configure a disk controller
 void UI_ConfigureCard(DiskCtrlCfgState *cfg);
+void UI_ConfigureCard2(TermMuxCfgState *cfg);
 
 // ---- general status notification ----
 

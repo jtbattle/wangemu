@@ -202,7 +202,7 @@ void
 IoCardKeyboard::check_keyready()
 {
     if (!m_key_ready) {
-        bool script_active = system2200::kb_keyReady(m_baseaddr, 0);
+        bool script_active = system2200::kb_keyReady(m_baseaddr, 0); // FIXME: only one term can use scripts
         script_active = !script_active;  // make lint shut up
     }
 // FIXME: keyReady doesn't change m_selected, so the above call can't affect

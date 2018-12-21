@@ -165,6 +165,7 @@
     <ClCompile Include="src\SysCfgState.cpp" />
     <ClCompile Include="src\system2200.cpp" />
     <ClCompile Include="src\Terminal.cpp" />
+    <ClCompile Include="src\TermMuxCfgState.cpp" />
     <ClCompile Include="src\ucode_2200B.cpp" />
     <ClCompile Include="src\ucode_2200T.cpp" />
     <ClCompile Include="src\ucode_boot_vp.cpp" />
@@ -185,6 +186,7 @@
     <ClCompile Include="src\UiPrinterFrame.cpp" />
     <ClCompile Include="src\UiSystem.cpp" />
     <ClCompile Include="src\UiSystemConfigDlg.cpp" />
+    <ClCompile Include="src\UiTermMuxCfgDlg.cpp" />
     <ClCompile Include="src\Wvd.cpp" />
   </ItemGroup>
   <ItemGroup>

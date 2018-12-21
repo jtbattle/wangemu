@@ -4,6 +4,7 @@
 #define _INCLUDE_IOCARD_TERM_MUX_H_
 
 #include "IoCard.h"
+#include "TermMuxCfgState.h"
 
 class Cpu2200;
 class Scheduler;
@@ -19,10 +20,14 @@ public:
     // ----- common IoCard functions -----
     IoCardTermMux(std::shared_ptr<Scheduler> scheduler,
                   std::shared_ptr<Cpu2200> cpu,
-                  int baseaddr, int cardslot);
+                  int baseaddr, int cardslot,
+                  const CardCfgState *cfg);
     ~IoCardTermMux();
 
     std::vector<int> getAddresses() const override;
+
+    void  setConfiguration(const CardCfgState &cfg) noexcept override;
+    void  editConfiguration(CardCfgState *cfg) override;
 
     void  reset(bool hard_reset=true) noexcept override;
     void  select() override;
@@ -42,7 +47,9 @@ private:
     // ---- card properties ----
     const std::string getDescription() const override;
     const std::string getName() const override;
-    std::vector<int> getBaseAddresses() const override;
+    std::vector<int>  getBaseAddresses() const override;
+    bool              isConfigurable() const noexcept override { return true; }
+    std::shared_ptr<CardCfgState> getCfgState() override;
 
     // i8080 hal interface
     static int  i8080_rd_func(int addr, void *user_data) noexcept;
@@ -63,12 +70,15 @@ private:
     void mxdToTermCallback(int term_num, int byte);
 
     // ---- board state ----
+// FIXME: use smart pointer
+    TermMuxCfgState            m_cfg;       // current configuration
     std::shared_ptr<Scheduler> m_scheduler; // shared event scheduler
     std::shared_ptr<Cpu2200>   m_cpu;       // associated CPU
     void       *m_i8080;             // control processor
     uint8       m_ram[4096];         // i8080 RAM
     const int   m_baseaddr;          // the address the card is mapped to
     const int   m_slot;              // which slot the card is plugged into
+    int         m_num_terms;         // number of terminals attached to MXD
     bool        m_selected;          // the card is currently selected
     bool        m_cpb;               // the cpu is busy
     int         m_io_offset;         // (selected io addr & 7), for convenience

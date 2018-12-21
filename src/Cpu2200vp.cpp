@@ -1272,8 +1272,6 @@ Cpu2200vp::execOneOp()
         break;
 
     case OP_CIO:
-// FIXME: this is overly messy.  why break out the s_field and t_field?
-//
         s_field = (uop >> 11) & 0x1;
         t_field = (uop >>  4) & 0x7F;
 

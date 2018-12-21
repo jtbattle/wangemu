@@ -4,10 +4,17 @@ Emulator TODO list
 
 *) master list of priorities:
    get >1 MXD configuration working
-   get >1 term per MXD configuration working
    decide on a consistent set of naming conventions and stick to them
       hey, code.txt already has one.  study it.
    ... then review the priorities again
+
+*) support MXD with more than one terminal per MXD
+     - only the primary terminal gets script input.  fix that.
+     - the screen config dialog doesn't save its position, and is shared
+       by all terms. the contents are unique, but the position isn't
+     - the config dialog routing is hacky.  UiSystem.cpp shouldn't need
+       to have both UI_ConfigureCard() and UI_ConfigureCard2().  It should
+       just take a generic CardCfg type and figure out where to route it.
 
 *) support more than one MXD (each with one terminal)
    - booting MVP 3.5, it gets to the loading BASIC-2 stage but hangs
@@ -15,15 +22,6 @@ Emulator TODO list
      but the cause isn't apparent.  it would help to dump the symbols
      from the 3.5 source disks so I can figure out what section of code
      it is in when things diverge.
-
-*) support MXD with more than one terminal
-     - config dialog needs to allow term mux configurations,
-       just like disk controllers have a config editor
-           - # of terminals associated with MXD
-           - baud rate?
-           - in the future, real serial port?
-     - in a few places, term_num is hardwired to 0.
-     - only the primary terminal gets script input.  fix that.
 
 *) print preview crashes now.  I'm not sure when it started happening.
    trying to print fails too.

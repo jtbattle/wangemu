@@ -70,7 +70,8 @@ IoCard::makeCardImpl(std::shared_ptr<Scheduler> scheduler,
                             baseaddr, cardslot, UI_SCREEN_80x24);
             break;
         case card_t::term_mux:
-            crd = std::make_unique<IoCardTermMux>(scheduler, cpu, baseaddr, cardslot);
+            crd = std::make_unique<IoCardTermMux>(
+                            scheduler, cpu, baseaddr, cardslot, cfg);
             break;
         case card_t::printer:
             crd = std::make_unique<IoCardPrinter>(cpu, baseaddr, cardslot);

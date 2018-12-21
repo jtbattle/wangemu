@@ -63,7 +63,7 @@ Terminal::Terminal(std::shared_ptr<Scheduler> scheduler,
 
     reset(true);
 
-    m_wndhnd = UI_displayInit(UI_SCREEN_2236DE, m_io_addr, m_term_num, &m_disp);
+    m_wndhnd = UI_displayInit(screen_type, m_io_addr, m_term_num, &m_disp);
     assert(m_wndhnd);
 
     const bool smart_term = (screen_type == UI_SCREEN_2236DE);

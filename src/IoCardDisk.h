@@ -168,7 +168,7 @@ private:
     bool warnMismatch() noexcept
         { return m_cfg.getWarnMismatch(); }
 
-    DiskCtrlCfgState m_cfg;                          // current configuration
+    DiskCtrlCfgState           m_cfg;                // current configuration
     std::shared_ptr<Scheduler> m_scheduler;          // system event scheduler
     std::shared_ptr<Cpu2200>   m_cpu;                // associated CPU
     const int                  m_baseaddr;           // the address the card is mapped to

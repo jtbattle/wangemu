@@ -18,6 +18,7 @@
 #include "Scheduler.h"
 #include "system2200.h"
 #include "Terminal.h"
+#include "TermMuxCfgState.h"
 #include "Ui.h"
 
 bool do_dbg = false;
@@ -77,7 +78,8 @@ static const int OUT_UART_CMD  = 0x0E;  // write to selected uart command reg
 // instance constructor
 IoCardTermMux::IoCardTermMux(std::shared_ptr<Scheduler> scheduler,
                              std::shared_ptr<Cpu2200> cpu,
-                             int baseaddr, int cardslot) :
+                             int baseaddr, int cardslot,
+                             const CardCfgState *cfg) :
     m_scheduler(scheduler),
     m_cpu(cpu),
     m_i8080(nullptr),
@@ -99,6 +101,15 @@ IoCardTermMux::IoCardTermMux(std::shared_ptr<Scheduler> scheduler,
         // this is just a probe to query properties, so don't make a window
         return;
     }
+
+    // TermMux configuration state
+    assert(cfg != nullptr);
+    const TermMuxCfgState *cp = dynamic_cast<const TermMuxCfgState*>(cfg);
+    assert(cp != nullptr);
+    m_cfg = *cp;
+    // TODO: why have m_num_terms if we have access to m_cfg?
+    m_num_terms = cp->getNumTerminals();
+    assert(1 <= m_num_terms && m_num_terms <= 4);
 
     for (auto &t : m_terms) {
         t.terminal = nullptr;
@@ -127,10 +138,12 @@ IoCardTermMux::IoCardTermMux(std::shared_ptr<Scheduler> scheduler,
     clkCallback cb = std::bind(&IoCardTermMux::execOneOp, this);
     system2200::registerClockedDevice(cb);
 
-    // FIXME: just one for now
-    m_terms[0].terminal =
-        std::make_unique<Terminal>(scheduler, this,
-                                   io_addr, 0, UI_SCREEN_2236DE);
+    // create all the terminals
+    for(int n=0; n<m_num_terms; n++) {
+        m_terms[n].terminal =
+            std::make_unique<Terminal>(scheduler, this,
+                                       io_addr, n, UI_SCREEN_2236DE);
+    }
 }
 
 // perform on instruction and return the number of ns of elapsed time.
@@ -194,6 +207,45 @@ IoCardTermMux::getAddresses() const
     }
     return v;
 }
+
+// -----------------------------------------------------
+// configuration management
+// -----------------------------------------------------
+
+// subclass returns its own type of configuration object
+std::shared_ptr<CardCfgState>
+IoCardTermMux::getCfgState()
+{
+    return std::make_unique<TermMuxCfgState>();
+}
+
+
+// modify the existing configuration state
+void
+IoCardTermMux::setConfiguration(const CardCfgState &cfg) noexcept
+{
+    const TermMuxCfgState &ccfg(dynamic_cast<const TermMuxCfgState&>(cfg));
+
+    // FIXME: do sanity checking to make sure things don't change at a bad time?
+    //        perhaps queue this change until the next WAKEUP phase?
+    m_cfg = ccfg;
+};
+
+
+// invoke correct GUI to edit config state
+void
+IoCardTermMux::editConfiguration(CardCfgState *cfg)
+{
+    TermMuxCfgState* pcfg(dynamic_cast<TermMuxCfgState*>(cfg));
+    assert(pcfg != nullptr);
+
+    UI_ConfigureCard2(pcfg);
+};
+
+
+// -----------------------------------------------------
+// operational
+// -----------------------------------------------------
 
 // the MXD card has its own power-on-reset circuit. all !PRMS (prime reset)
 // does is set a latch that the 8080 can sample.  the latch is cleared
@@ -482,7 +534,7 @@ IoCardTermMux::i8080_in_func(int addr, void *user_data) noexcept
     case IN_UART_STATUS:
         {
         const bool tx_empty = term.tx_ready && !term.tx_tmr;
-        const bool dsr = (term_num < 1); // FIXME: tie it to the number of terminal instances
+        const bool dsr = (term_num < tthis->m_num_terms);
         rv = (term.tx_ready ? 0x01 : 0x00)  // [0] = tx fifo empty
            | (term.rx_ready ? 0x02 : 0x00)  // [1] = rx fifo has a byte
            | (tx_empty      ? 0x04 : 0x00)  // [2] = tx serializer and fifo empty
@@ -549,7 +601,7 @@ IoCardTermMux::i8080_out_func(int addr, int byte, void *user_data)
         break;
 
     case OUT_UART_DATA:
-        if (tthis->m_uart_sel == 0) {  // FIXME: only one term is supported
+        if (tthis->m_uart_sel < tthis->m_num_terms) {
             int term_num   = tthis->m_uart_sel;
             m_term_t &term = tthis->m_terms[term_num];
 #if defined(_DEBUG)
