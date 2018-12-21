@@ -12,9 +12,10 @@ Emulator TODO list
 *) support MXD with more than one terminal per MXD
      - the screen config dialog doesn't save its position, and is shared
        by all terms. the contents are unique, but the position isn't
-     - the config dialog routing is hacky.  UiSystem.cpp shouldn't need
-       to have both UI_ConfigureCard() and UI_ConfigureCard2().  It should
-       just take a generic CardCfg type and figure out where to route it.
+           The problem is the dialog doesn't know which term it is
+           associated with. It just receives a cfg object. Extend the
+           scheme so an optional ini subgroup string can be passed in,
+           which the dialog appends <basegroup>/configdlg
 
 *) support more than one MXD (each with one terminal)
    - booting MVP 3.5, it gets to the loading BASIC-2 stage but hangs

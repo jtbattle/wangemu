@@ -14,7 +14,7 @@ class TermMuxCfgDlg : public wxDialog
 {
 public:
     CANT_ASSIGN_OR_COPY_CLASS(TermMuxCfgDlg);
-    TermMuxCfgDlg(wxFrame *parent, TermMuxCfgState &cfg);
+    TermMuxCfgDlg(wxFrame *parent, CardCfgState *cfg);
     // ~TermMuxCfgDlg();
 
 private:
@@ -29,7 +29,7 @@ private:
     wxButton   *m_btnHelp;
 
     // system configuration state
-    TermMuxCfgState &m_cfg;         // the one being modified
+    TermMuxCfgState  m_cfg;         // the one being modified
     TermMuxCfgState  m_oldcfg;      // the existing configuration
 
     // helper routines

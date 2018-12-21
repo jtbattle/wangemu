@@ -249,10 +249,8 @@ IoCardDisk::setConfiguration(const CardCfgState &cfg) noexcept
 void
 IoCardDisk::editConfiguration(CardCfgState *cfg)
 {
-    DiskCtrlCfgState* pcfg(dynamic_cast<DiskCtrlCfgState*>(cfg));
-    assert(pcfg != nullptr);
-
-    UI_ConfigureCard(pcfg);
+    assert(cfg != nullptr);
+    UI_ConfigureCard(IoCard::card_t::disk, cfg);
 };
 
 

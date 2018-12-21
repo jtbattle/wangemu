@@ -236,10 +236,8 @@ IoCardTermMux::setConfiguration(const CardCfgState &cfg) noexcept
 void
 IoCardTermMux::editConfiguration(CardCfgState *cfg)
 {
-    TermMuxCfgState* pcfg(dynamic_cast<TermMuxCfgState*>(cfg));
-    assert(pcfg != nullptr);
-
-    UI_ConfigureCard2(pcfg);
+    assert(cfg != nullptr);
+    UI_ConfigureCard(IoCard::card_t::term_mux, cfg);
 };
 
 

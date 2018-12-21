@@ -9,11 +9,11 @@
 #define _INCLUDE_UI_H_
 
 #include "w2200.h"
+#include "IoCard.h"   // for IoCard::card_t enum
 
+class CardCfgState;
 class CrtFrame;
-class DiskCtrlCfgState;
 class PrinterFrame;
-class TermMuxCfgState;
 struct crt_state_t;
 
 // =============================================================
@@ -60,8 +60,7 @@ void UI_printerChar(PrinterFrame *wnd, uint8 byte);
 void UI_SystemConfigDlg();
 
 // configure a disk controller
-void UI_ConfigureCard(DiskCtrlCfgState *cfg);
-void UI_ConfigureCard2(TermMuxCfgState *cfg);
+void UI_ConfigureCard(IoCard::card_t card_type, CardCfgState *cfg);
 
 // ---- general status notification ----
 

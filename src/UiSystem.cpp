@@ -399,20 +399,23 @@ UI_SystemConfigDlg()
 
 
 // configure a card
-// FIXME: don't have two unique functions; there should be one
+// TODO: don't have two unique functions; there should be one
 // function that can figure out which dialog to invoke.
 void
-UI_ConfigureCard(DiskCtrlCfgState *cfg)
+UI_ConfigureCard(IoCard::card_t card_type, CardCfgState *cfg)
 {
     assert(cfg != nullptr);
-    DiskCtrlCfgDlg(nullptr, *cfg).ShowModal();
-}
 
-void
-UI_ConfigureCard2(TermMuxCfgState *cfg)
-{
-    assert(cfg != nullptr);
-    TermMuxCfgDlg(nullptr, *cfg).ShowModal();
+    switch (card_type) {
+        case IoCard::card_t::disk:
+            DiskCtrlCfgDlg(nullptr, cfg).ShowModal();
+            break;
+        case IoCard::card_t::term_mux:
+            TermMuxCfgDlg(nullptr, cfg).ShowModal();
+            break;
+        default:
+            assert(false);
+    }
 }
 
 // vim: ts=8:et:sw=4:smarttab

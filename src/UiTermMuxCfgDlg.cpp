@@ -120,7 +120,7 @@ END_EVENT_TABLE()
 //          +-- m_btnRevert
 //          +-- m_btnOk
 //          +-- m_btnCancel
-TermMuxCfgDlg::TermMuxCfgDlg(wxFrame *parent, TermMuxCfgState &cfg) :
+TermMuxCfgDlg::TermMuxCfgDlg(wxFrame *parent, CardCfgState *cfg) :
         wxDialog(parent, -1, "Terminal Mux Controller Configuration",
                  wxDefaultPosition, wxDefaultSize,
                  wxDEFAULT_DIALOG_STYLE | wxRESIZE_BORDER),
@@ -128,10 +128,13 @@ TermMuxCfgDlg::TermMuxCfgDlg(wxFrame *parent, TermMuxCfgState &cfg) :
         m_btnRevert(nullptr),
         m_btnOk(nullptr),
         m_btnCancel(nullptr),
-        m_btnHelp(nullptr),
-        m_oldcfg(cfg),  // the existing configuration
-        m_cfg   (cfg)   // we edit this, and it is the exact one passed to us
+        m_btnHelp(nullptr)
 {
+    TermMuxCfgState* pcfg(dynamic_cast<TermMuxCfgState*>(cfg));
+    assert(pcfg != nullptr);
+    m_oldcfg = *pcfg;  // the existing configuration
+    m_cfg    = *pcfg;  // we edit this, and it is the exact one passed to us
+
     const wxString choicesNumTerminals[] = { "1", "2", "3", "4" };
     m_rbNumTerminals = new wxRadioBox(this, ID_RB_NUM_TERMINALS,
                                       "Number of terminals",
@@ -239,6 +242,7 @@ TermMuxCfgDlg::OnButton(wxCommandEvent &event)
 void
 TermMuxCfgDlg::saveDefaults()
 {
+// FIXME: we need to receive the MXD-nn-CRT-m prefix subgroup
     const std::string subgroup("ui/termmuxcfgdlg");
 
     // save position and size
@@ -250,6 +254,7 @@ void
 TermMuxCfgDlg::getDefaults()
 {
     // see if we've established a favored location and size
+// FIXME: we need to receive the MXD-nn-CRT-m prefix subgroup
     const std::string subgroup("ui/termmuxcfgdlg");
     host::ConfigReadWinGeom(this, subgroup);
 }

@@ -14,7 +14,7 @@ class DiskCtrlCfgDlg : public wxDialog
 {
 public:
     CANT_ASSIGN_OR_COPY_CLASS(DiskCtrlCfgDlg);
-    DiskCtrlCfgDlg(wxFrame *parent, DiskCtrlCfgState &cfg);
+    DiskCtrlCfgDlg(wxFrame *parent, CardCfgState *cfg);
     // ~DiskCtrlCfgDlg();
 
 private:
@@ -33,7 +33,7 @@ private:
     wxButton   *m_btnHelp;
 
     // system configuration state
-    DiskCtrlCfgState &m_cfg;            // the one being modified
+    DiskCtrlCfgState  m_cfg;            // the one being modified
     DiskCtrlCfgState  m_oldcfg;         // the existing configuration
 
     // helper routines
