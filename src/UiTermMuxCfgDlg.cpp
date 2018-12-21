@@ -61,85 +61,24 @@ TermMuxCfgHelpDlg::TermMuxCfgHelpDlg(wxWindow *parent)
 
     // create the message
     txt->SetDefaultStyle(section_attr);
-    txt->AppendText("Number of Drives\n");
+    txt->AppendText("Number of Terminals\n");
 
     txt->SetDefaultStyle(body_attr);
     txt->AppendText(
         "\n"
-        "Each disk controller supports from one to four drives.  "
-        "The first two drives are the primary drives, while the "
-        "second two are the secondary drives.  The primary drives "
-        "are addressed using the base address of the card, eg /310, "
-        "while the secondary drives are addressed by adding hex 40, "
-        "e.g., /350.  The first of each pair is historically called "
-        "the fixed, or F, drive, and the second of each pair is the "
-        "removable, or R, drive."
+        "Each 2236MXD controller supports from one to four terminals. "
+        "Right now there is nothing else to configure, so there isn't "
+        "much to explain."
         "\n\n"
-        "Thus, if the base address of the controller is at hex 10, "
-        "the four drives can be referenced as F/310, R/310, F/350, R/350.  "
-        "Read the BASIC-2 disk reference manual for more details and "
-        "options."
-        "\n\n");
-
-    txt->SetDefaultStyle(section_attr);
-    txt->AppendText("Controller Intelligence\n");
-
-    txt->SetDefaultStyle(body_attr);
-    txt->AppendText(
-        "\n"
-        "In general, it is best to use the intelligent disk controller "
-        "mode.  The first generation CPUs, namely either 2220B or 2200T, "
-        "don't support the intelligent protocol, so intelligent disk "
-        "controllers pretend to be dumb anyway, making the choice moot."
+        "The MXD can be used by Wang VP and Wang MVP OS's, though "
+        "multiple terminals are supported by only the MVP OS's."
         "\n\n"
-        "The protocol used by dumb disk controllers only allows for up "
-        "to 32K sectors per platter, and only a single platter can be "
-        "addressed per drive.  This is sufficient for floppy drives as "
-        "well as 2260-style drives."
-        "\n\n"
-        "The protocol used by intelligent disk controllers allows for 64K "
-        "sectors per platter, and up to fourteen platters per drive."
-        "The protocol also allows for software-controlled disk formatting "
-        "and higher speed copying of sectors on a single platter or between "
-        "any two platters connected to the same disk controller."
-        "\n\n"
-        "At first blush it seems like there is no drawback to simply always "
-        "using the intelligent disk controller, but there is a fly in "
-        "the ointment.  For unknown reasons, Wang BASIC used in the first "
-        "generation of machines would set the high bit of the 16 bit "
-        "sector address on files stored in the disk catalog if the file "
-        "was in the 'R' drive."
-        "\n\n"
-        "Wang BASIC reads sector addresses from the disk, it ignores this "
-        "16th bit so no harm is done.  BASIC-2 also ignores this bit when "
-        "it is communicating with a dumb disk controller.  However, if one "
-        "uses a disk that was created on a dumb controller and inserts it "
-        "into the drive of an intelligent controller, that 16th bit is not "
-        "ignored, and confusion reigns."
-        "\n\n"
-        "If a disk with this 16th bit problem is inserted into a drive in "
-        "intelligent mode, a warning will be generated and optionally these "
-        "extraneous bits can be cleaned from the virtual disk image."
-#if SUPPORT_AUTO_INTELLIGENCE
-        "\n\n"
-        "Selecting the AUTO mode will cause the emulator to heuristically "
-        "pick dumb or intelligent mode based on the types of disk images "
-        "associated with a controller.  This precludes having to clear "
-        "the 16th bits from problem disks, but the heuristic isn't perfect."
-#endif
-        "\n\n");
-
-    txt->SetDefaultStyle(section_attr);
-    txt->AppendText("Warn when the media doesn't match the controller intelligence\n");
-
-    txt->SetDefaultStyle(body_attr);
-    txt->AppendText(
-        "\n"
-        "Checking this box will cause the emulator to warn the user if "
-        "a large disk is put into a dumb controller, or a small disk "
-        "that has the 16th bit problem is inserted into an intelligent "
-        "controller.  In the latter case, the user has the option of "
-        "automatically clearing these extraneous bits."
+        "The MXD can be used in a 2200B or 2200T as it mimics a "
+        "keyboard at I/O 001 and a CRT controller at I/O 005, though "
+        "the character set won't be exactly the same as a dumb "
+        "controller.  Also, because the link to the serial terminal "
+        "runs at 19200 baud, throughput can sometimes lag as compared "
+        "to a dumb CRT controller."
         "\n\n");
 
     // make sure the start of text is at the top
