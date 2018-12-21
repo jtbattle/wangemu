@@ -990,13 +990,13 @@ Cpu2200vp::execOneOp()
     int idx;
     uint16 tmp16;
 
-#if 0 && defined(_DEBUG)
+#if 1 && defined(_DEBUG)
     static int g_num_ops = 0;
     if (g_dbg_trace) {
         g_num_ops++;
         char buff[200];
-        dump_state(1);
-        int illegal = dasm_one_vp(buff, m_cpu.ic, m_ucode[m_cpu.ic].ucode);
+        dump_state(true);
+        bool illegal = dasm_one_vp(buff, m_cpu.ic, m_ucode[m_cpu.ic].ucode);
         dbglog("cycle %5d: %s", g_num_ops, buff);
     }
 #endif
@@ -1725,7 +1725,7 @@ Cpu2200vp::dump_ram(const std::string &filename)
 
 // dump the most important contents of the uP state
 void
-Cpu2200vp::dump_state(int fulldump)
+Cpu2200vp::dump_state(bool fulldump)
 {
     if (fulldump) {
         dbglog("---------------------------------------------\n");

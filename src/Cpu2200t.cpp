@@ -391,7 +391,7 @@ Cpu2200t::write_ucode(int addr, uint32 uop) noexcept
 #if 0
 // dump the most important contents of the uP state
 void
-Cpu2200t::dump_state(int fulldump)
+Cpu2200t::dump_state(bool fulldump)
 {
     if (fulldump) {
         dbglog("---------------------------------------------\n");
@@ -973,7 +973,7 @@ Cpu2200t::execOneOp()
         static int g_num_ops = 0;
         char buff[200];
         int illegal;
-        dump_state(1);
+        dump_state(true);
         illegal = dasm_one(buff, m_cpu.ic, m_ucode[m_cpu.ic].ucode & 0x000FFFFF);
         dbglog("cycle %5d: %s", g_num_ops, buff);
         g_num_ops++;

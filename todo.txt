@@ -11,6 +11,10 @@ Emulator TODO list
 
 *) support more than one MXD (each with one terminal)
    - booting MVP 3.5, it gets to the loading BASIC-2 stage but hangs
+     dumped debug_termmux_io_{dual,single}.log
+     but the cause isn't apparent.  it would help to dump the symbols
+     from the 3.5 source disks so I can figure out what section of code
+     it is in when things diverge.
 
 *) support MXD with more than one terminal
      - config dialog needs to allow term mux configurations,

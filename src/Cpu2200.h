@@ -89,7 +89,7 @@ private:
     void write_ucode(int addr, uint32 uop) noexcept;
 
     // dump the most important contents of the uP state
-    void dump_state(int fulldump);
+    void dump_state(bool fulldump);
 
     // dump a floating point number (16 nibbles)
     void dump_16n(int addr);
@@ -203,7 +203,7 @@ private:
     void write_ucode(uint16 addr, uint32 uop, bool force=false) noexcept;
 
     // dump the most important contents of the uP state
-    void dump_state(int fulldump);
+    void dump_state(bool fulldump);
 
     void set_sh(uint8 value);
     void set_sl(uint8 value) noexcept;

@@ -10,16 +10,17 @@
 // - Hand disassembly of MXD ROM image:
 //     https://wang2200.org/2200tech/wang_2236mxd.lst
 
-#include "Ui.h"
-#include "IoCardTermMux.h"
-#include "IoCardKeyboard.h"   // for key encodings
 #include "Cpu2200.h"
+#include "host.h"             // for dbglog()
+#include "i8080.h"
+#include "IoCardKeyboard.h"   // for key encodings
+#include "IoCardTermMux.h"
 #include "Scheduler.h"
 #include "system2200.h"
 #include "Terminal.h"
-#include "i8080.h"
+#include "Ui.h"
 
-#define NOISY  0        // turn on some debugging messages
+bool do_dbg = false;
 
 #ifdef _MSC_VER
 #pragma warning( disable: 4127 )  // conditional expression is constant
@@ -211,8 +212,8 @@ IoCardTermMux::select()
 {
     m_io_offset = (m_cpu->getAB() & 7);
 
-    if (NOISY) {
-        UI_Info("TermMux ABS %02x", m_baseaddr+m_io_offset);
+    if (do_dbg) {
+        dbglog("TermMux/%02x +ABS %02x\n", m_baseaddr, m_baseaddr+m_io_offset);
     }
 
     // offset 0 is not handled
@@ -227,8 +228,8 @@ IoCardTermMux::select()
 void
 IoCardTermMux::deselect()
 {
-    if (NOISY) {
-        UI_Info("TermMux -ABS %02x", m_baseaddr+m_io_offset);
+    if (do_dbg) {
+        dbglog("TermMux/%02x -ABS %02x\n", m_baseaddr, m_baseaddr+m_io_offset);
     }
     m_cpu->setDevRdy(false);
 
@@ -240,8 +241,8 @@ void
 IoCardTermMux::OBS(int val)
 {
     val &= 0xFF;
-    if (NOISY) {
-        UI_Info("TermMux OBS: byte 0x%02x", val);
+    if (do_dbg) {
+        dbglog("TermMux/%02x OBS: byte 0x%02x\n", m_baseaddr, val);
     }
 
     // any previous obs or cbs should have been serviced before we see another
@@ -263,8 +264,8 @@ void
 IoCardTermMux::CBS(int val)
 {
     val &= 0xFF;
-    if (NOISY) {
-        UI_Info("TermMux CBS: 0x%02x", val);
+    if (do_dbg) {
+        dbglog("TermMux/%02x CBS: byte 0x%02x\n", m_baseaddr, val);
     }
 
     // any previous obs or cbs should have been serviced before we see another
@@ -300,8 +301,8 @@ IoCardTermMux::CPB(bool busy)
 {
     // it appears that except for reset, ucode only ever clears it,
     // and of course the IBS sets it back.
-    if (NOISY) {
-        UI_Info("TermMux CPB%c", busy ? '+' : '-');
+    if (do_dbg) {
+        dbglog("TermMux/%02x CPB%c\n", m_baseaddr, busy ? '+' : '-');
     }
     m_cpb = busy;
 }
@@ -515,11 +516,17 @@ IoCardTermMux::i8080_out_func(int addr, int byte, void *user_data)
 
     case OUT_IB_N:
         byte = (~byte & 0xff);
+        if (do_dbg) {
+            dbglog("TermMux/%02x IB=%02x\n", tthis->m_baseaddr, byte);
+        }
         tthis->m_cpu->IoCardCbIbs(byte);
         break;
 
     case OUT_IB9_N:
         byte = (~byte & 0xff);
+        if (do_dbg) {
+            dbglog("TermMux/%02x IB=%03x\n", tthis->m_baseaddr, 0x100 | byte);
+        }
         tthis->m_cpu->IoCardCbIbs(0x100 | byte);
         break;
 
