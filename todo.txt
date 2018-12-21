@@ -9,10 +9,7 @@ Emulator TODO list
       hey, code.txt already has one.  study it.
    ... then review the priorities again
 
-*) script input in MXD mode is broken again
-
 *) support MXD with more than one terminal per MXD
-     - only the primary terminal gets script input.  fix that.
      - the screen config dialog doesn't save its position, and is shared
        by all terms. the contents are unique, but the position isn't
      - the config dialog routing is hacky.  UiSystem.cpp shouldn't need

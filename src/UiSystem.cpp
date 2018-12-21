@@ -290,9 +290,14 @@ UI_displayInit(const int screen_type, const int io_addr, const int term_num,
                crt_state_t *crt_state)
 {
     const int cputype = system2200::config().getCpuType();
-    const char *cpustr = (cputype == Cpu2200::CPUTYPE_2200B) ? "2200B" :
-                         (cputype == Cpu2200::CPUTYPE_2200T) ? "2200T" :
-                                                               "2200VP";
+    const char *cpustr = (cputype == Cpu2200::CPUTYPE_2200B)   ? "2200B"
+                       : (cputype == Cpu2200::CPUTYPE_2200T)   ? "2200T"
+                       : (cputype == Cpu2200::CPUTYPE_VP)      ? "2200VP"
+                       : (cputype == Cpu2200::CPUTYPE_MVP)     ? "2200MVP"
+                       : (cputype == Cpu2200::CPUTYPE_MVPC)    ? "2200MVP-C"
+                       : (cputype == Cpu2200::CPUTYPE_MICROVP) ? "MicroVP"
+                                                               : "unknown cpu";
+
     char *dispstr = "unknown";
     switch (screen_type) {
         case UI_SCREEN_64x16:  dispstr = "64x16"; break;

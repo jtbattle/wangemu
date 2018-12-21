@@ -319,7 +319,7 @@ void
 CrtFrame::makeMenubar()
 {
     wxMenu *menuFile = new wxMenu;
-    if (m_primary_crt) {
+    if (m_primary_crt || m_smart_term) {
         menuFile->Append(File_Script,   "&Script...", "Redirect keyboard from a file");
     }
     menuFile->Append(File_Snapshot, "Screen &Grab...\t" ALT "+G", "Save an image of the screen to a file");

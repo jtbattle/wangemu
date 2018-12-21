@@ -310,6 +310,13 @@ Terminal::checkKbBuffer()
     if (m_script_active) {
         delay *= ((byte == 0x0D) ? 100 : 4);
     }
+    // another complication: if two terminals are doing script processing
+    // at the same time, it slows down the MXD response time, and we again
+    // get overruns.
+    const int active_scripts = system2200::kb_scriptActiveCount(m_io_addr+0x01);
+    if (active_scripts > 1) {
+        delay *= active_scripts;
+    }
 
     // unfortunately, the "CLEAR" command (which starts all the scripts
     // distributed with wangemu) takes a long time to execute, and the

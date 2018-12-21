@@ -90,6 +90,9 @@ namespace system2200
     // indicates if a script is currently active on a given terminal
     bool kb_scriptModeActive(int io_addr, int term_num);
 
+    // return how many terminals at this io_addr have active scripts
+    int kb_scriptActiveCount(int io_addr);
+
     // when invoked on a terminal in script mode, causes key callback to be
     // invoked with the next character from the script.  it returns true if
     // a script supplied a character.

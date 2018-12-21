@@ -950,6 +950,19 @@ system2200::kb_scriptModeActive(int io_addr, int term_num)
     return false;
 }
 
+// return how many terminals at this io_addr have active scripts
+int
+system2200::kb_scriptActiveCount(int io_addr)
+{
+    int count = 0;
+    for (auto &kb : m_kb_routes) {
+        if (io_addr == kb.io_addr) {
+            count++;
+        }
+    }
+    return count;
+}
+
 // when invoked on a terminal in script mode, causes key callback to be
 // invoked with the next character from the script.  it returns true if
 // a script supplied a character.

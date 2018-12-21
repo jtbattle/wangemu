@@ -1,6 +1,6 @@
 ============================================================================
 		   Wang 2200 emulator release notes, v3.0-pre
-                               December 16, 2018
+                               December 21, 2018
 ============================================================================
 
 ---- What is It? ----
@@ -54,7 +54,7 @@ The emulator very well might run on Linux via Wine, but it hasn't been tested.
    terminals, TAB maps to the TAB or FN key (depending if DW or DE terminal).
 
 *) It is now possible to run MVP OS's, but of course the system configuration
-   must have at least one MXD terminal mux.
+   must have at least one 2236MXD terminal mux.
 
 *) Previously, printing HEX(07) produced a default bell-like sound.
    Now the emulator emits a sound very much like a real Wang terminal.
