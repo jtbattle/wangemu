@@ -106,16 +106,14 @@ private:
 
     wxMenuBar   *m_menuBar;     // menubar on frame
     wxStatusBar *m_statusBar;   // status bar on frame
-// FIXME: why not unique_ptr ?
     std::shared_ptr<Printer> m_printer; // emulated Printer display window
 
     int m_fontsize;             // eg 8 for 8 pt, 12 for 12 pt, etc
     int m_printer_addr;         // we use this to track configuration options
     int m_previewzoom;          // zoom factor for page preview
 
-// FIXME: why not unique_ptr ?
-    std::shared_ptr<wxPrintData>           m_printData;     // Print data
-    std::shared_ptr<wxPageSetupDialogData> m_pageSetupData; // Page setup data
+    std::unique_ptr<wxPrintData>           m_printData;     // Print data
+    std::unique_ptr<wxPageSetupDialogData> m_pageSetupData; // Page setup data
 
     DECLARE_EVENT_TABLE()
 };

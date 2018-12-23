@@ -32,7 +32,7 @@ public:
     void        setPaperId(wxPaperSize paperid) noexcept;
     wxPaperSize getPaperId() const noexcept;
 
-    void   setPaperName(const std::string &papername);
+    void        setPaperName(const std::string &papername);
     std::string getPaperName() const;
 
     void       setBin(wxPrintBin paperbin) noexcept;
@@ -187,7 +187,7 @@ class Printout : public wxPrintout
 {
 public:
     CANT_ASSIGN_OR_COPY_CLASS(Printout);
-    Printout(wxChar *title, std::shared_ptr<Printer> printer);
+    Printout(const wxString &title, std::shared_ptr<Printer> printer);
 
     // ---- event handlers ----
     bool OnPrintPage(int page) override;

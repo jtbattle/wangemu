@@ -190,9 +190,9 @@ PrinterFrame::PrinterFrame(const wxString& title, const int io_addr) :
 
     m_printer_addr = io_addr;   // we use this later during configuration
 
-    //Printer support
-    m_printData     = std::make_shared<wxPrintData>();
-    m_pageSetupData = std::make_shared<wxPageSetupDialogData>();
+    // Printer support
+    m_printData     = std::make_unique<wxPrintData>();
+    m_pageSetupData = std::make_unique<wxPageSetupDialogData>();
 
     m_printer = std::make_shared<Printer>(this);
     getDefaults();      // get configuration options, or supply defaults
@@ -227,7 +227,7 @@ PrinterFrame::makeMenubar()
     menuFile->AppendSeparator();
     menuFile->Append(File_PrintClear,    "Clear printer",   "Clear the printer");
     menuFile->Append(File_PrintPreview,  "Print preview",   "Preview the contents of the printer");
-    menuFile->Append(File_Print,         "Print\tCtrl+P",   "Print the contents of the printer");  //PHETODO alt-p?
+    menuFile->Append(File_Print,         "Print\tCtrl+P",   "Print the contents of the printer");  // PHETODO alt-p?
 
     wxMenu *menuDisplay = new wxMenu;
     menuDisplay->Append(Display_FontSize8,  "Font Size  8", "Set display font to  8 point", wxITEM_CHECK);
@@ -562,17 +562,16 @@ PrinterFrame::PP_OnClose(wxCloseEvent &event)
 void
 PrinterFrame::OnPrintPreview(wxCommandEvent& WXUNUSED(event))
 {
-    system2200::freezeEmu(true);
-
-    //Pass two printout objects: for preview, and possible printing
+    // Pass two printout objects: for preview, and possible printing
     wxPrintDialogData printDialogData(*m_printData);
-// JTB FIXME: it seems like a leak: who deletes *preview?
+    // NB: wx takes care of reclaiming the preview object and associated objs
     wxPrintPreview *preview = new wxPrintPreview(
-                                new Printout (_T(""), m_printer),   // preview
-                                new Printout (_T(""), m_printer),   // printout
+                                new Printout ("", m_printer),   // preview
+                                new Printout ("", m_printer),   // printout
                                 &printDialogData);
     if (!preview->IsOk()) {
         delete preview;
+        preview = nullptr;
         wxMessageBox("There was a problem previewing.\n"
                      "Perhaps your current printer is not set correctly?",
                      "Previewing", wxOK);
@@ -580,7 +579,7 @@ PrinterFrame::OnPrintPreview(wxCommandEvent& WXUNUSED(event))
     }
 
     std::string preview_title("Print Preview");
-// JTB FIXME: it seems like a leak: who deletes *frame?
+    // NB: wx framework takes care of reclaiming the frame object
     wxPreviewFrame *frame = new wxPreviewFrame(preview, this,
                                     preview_title,
                                     wxPoint(100, 100),  // default position
@@ -606,12 +605,9 @@ PrinterFrame::OnPrintPreview(wxCommandEvent& WXUNUSED(event))
     //        what all the code above is doing.
     frame->Centre(wxBOTH);
     frame->InitializeWithModality(wxPreviewFrame_AppModal);
-    frame->Show();
 #endif
 
     frame->Show();
-
-    system2200::freezeEmu(false);
 }
 
 
@@ -623,7 +619,7 @@ PrinterFrame::OnPrint(wxCommandEvent& WXUNUSED(event))
     wxPrintDialogData printDialogData(*m_printData);
     wxPrinter printer(& printDialogData);
 
-    Printout printout(_T(""), m_printer);
+    Printout printout("", m_printer);
     if (!printer.Print(this, &printout, true)) {
         if (wxPrinter::GetLastError() == wxPRINTER_ERROR) {
             wxMessageBox("There was a problem printing.\n"
@@ -734,7 +730,7 @@ PrinterFrame::OnDisplayGreenbar(wxCommandEvent& WXUNUSED(event))
 void
 PrinterFrame::OnClose(wxCloseEvent& WXUNUSED(event))
 {
-    Show(false);  //simply hide the window
+    Show(false);  // simply hide the window
 }
 
 
@@ -749,7 +745,7 @@ PrinterFrame::OnConfigureDialog(wxCommandEvent& WXUNUSED(event))
 
     PrinterDialogDataTransfer *data = new PrinterDialogDataTransfer();
 
-    //set data values here
+    // set data values here
     int linelength, pagelength;
     m_printer->getPageAttributes(linelength, pagelength);
 
@@ -838,7 +834,7 @@ PrinterFrame::printAndClear()
     printDialogData.SetToPage(m_printer->numberOfPages());
     wxPrinter printer(& printDialogData);
 
-    Printout printout(_T(""), m_printer);
+    Printout printout("", m_printer);
     if (!printer.Print(this, &printout, false)) {
         if (wxPrinter::GetLastError() == wxPRINTER_ERROR) {
             wxMessageBox("There was a problem printing.\n"
@@ -848,7 +844,7 @@ PrinterFrame::printAndClear()
             assert(false);    // this should never happen
         }
     } else {
-        //printing was ok. now clear the stream.
+        // printing was ok. now clear the stream.
         m_printer->printClear();
     }
 

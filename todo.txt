@@ -3,30 +3,9 @@ Emulator TODO list
 ============================================================================
 
 *) master list of priorities:
-   polish the >1 term per mxd issues
-   get >1 MXD configuration working
    decide on a consistent set of naming conventions and stick to them
       hey, code.txt already has one.  study it.
    ... then review the priorities again
-
-*) print preview crashes now.  I'm not sure when it started happening.
-   trying to print fails too.
-   running wangemu-before.exe fails.  (built with wx 3.0.2)
-   running wangemu-2.1.exe print preview works!  (built with wx 2.8.9)
-   build the sample app and see if it works or not.
-       F:\Jim\libs\wx-3.1.0\samples\printing
-   yes, it works!
-   so now study the code carefully and see what has changed.
-https://wiki.wxwidgets.org/Printing
-   class PrinterFrame is derived from wxFrame
-      complex members wxPrintData
-      complex members wxPageSetupDialogData
-   class Printout is derived from wxPrintout
-      only data member is a Printer*
-   class Printer is derived from wxScrolledWIndow
-      complex members wxPrintOrientation m_orientation;
-                      wxPaperSize m_paperid;
-                      wxPrintBin  m_paperbin;
 
 *) support more than one MXD (each with one terminal)
    - booting MVP 3.5, it gets to the loading BASIC-2 stage but hangs
@@ -66,10 +45,11 @@ https://wiki.wxwidgets.org/Printing
    Is that an OS thing or a bug in the emulator?
    MVP OS 2.6.2 is the same as 3.5.
 
-   For MVP 2.6/3.5, when in edit mode, HEX(0C) moves left OK,
-   but HEX(0D) (move right) causes the editing to break.  Editing in VP OS
-   works as expected. The keys are emitting the right code, so I'm not sure
-   what it is going on.
+   For MVP 2.6/3.5, when in edit mode, HEX(0C) moves left OK, but HEX(0D)
+   (move right) causes the editing to break.  Editing in VP OS works as
+   expected. The keys are emitting the right code, so I'm not sure what
+   is going on.  Do I have a bad copy of OS 3.5?  Or are my MXD ROM images
+   bad? Or is there some problem in my emulation (harder to explain)?
 
 *) I'm seeing new strobes to the disk controller in MVP OS.
    IoCardDisk::CBS() handler has comments saying OB8 and OB1
@@ -81,7 +61,12 @@ https://wiki.wxwidgets.org/Printing
 *) review coding convention
    see coding_notes.txt
    also,
-        - look for new, delete, wxDelete
+    - UiPrinterFrame uses new without delete, and raw pointers.
+    - look for std::shared_ptr which really can be std::unique_ptr
+    - the MSVC C++ guidelines point out some cases where a routing
+      takes a shared_ptr but a raw pointer or reference really would
+      be the appropriate choice, as the subroutine's life cannot
+      exceed that of the caller.  Or maybe it is confused.  Check anyway.
 
 *) do a memory leak check once in a while
 

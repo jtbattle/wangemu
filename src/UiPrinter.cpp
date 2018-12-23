@@ -105,10 +105,10 @@ Printer::setFontSize(const int size)
     m_charcell_w = dc.GetCharWidth();
     m_charcell_h = dc.GetCharHeight();
 
-    //set the number of rows in the view
+    // set the number of rows in the view
     m_chars_h = m_scrpix_h / m_charcell_h;
 
-    //set the number of columns in the view (fixed pitch font makes this easy)
+    // set the number of columns in the view (fixed pitch font makes this easy)
     m_chars_w = m_scrpix_w/m_charcell_w;
 
     updateView();
@@ -266,14 +266,14 @@ Printer::setPortdirect(bool b) noexcept
     m_portdirect = b;
 }
 
-//get portdirect attribute
+// get portdirect attribute
 bool
 Printer::getPortdirect() const noexcept
 {
     return m_portdirect;
 }
 
-//portstring attribute
+// portstring attribute
 void
 Printer::setPortstring(const std::string &name)
 {
@@ -483,6 +483,9 @@ int
 Printer::numberOfPages() const noexcept
 {
     const int num_rows = m_printstream.size();
+    if (num_rows == 0) {
+        return 1;
+    }
     return ((num_rows + m_pagelength-1) / m_pagelength);  // round up
 }
 
@@ -511,7 +514,9 @@ Printer::generatePrintPage(wxDC *dc, int pagenum, float vertAdjust)
             line = "";
         }
 
-        line = line.erase(length);
+        if (line.size() > length) {
+            line.erase(length);
+        }
         dc->DrawText(line, 0, row*m_charcell_h*vertAdjust);
     }
 }
@@ -548,14 +553,14 @@ Printer::destroyStreamCopy() noexcept
 void
 Printer::OnPaint(wxPaintEvent &WXUNUSED(event))
 {
-    //PHE: Note: I should disable the print menu at this time
+    // PHE: Note: I should disable the print menu at this time
     // because if there  is a lot to draw here and this drawing
     // is interrupted because of printing, then the reference
     // pointer used in here will get messed up
 
-    //PHE: freeze the emu?
+    // PHE: freeze the emu?
 
-    //have we scrolled?
+    // have we scrolled?
     int firstCol, firstLine;
     GetViewStart(&firstCol, &firstLine);
 
@@ -583,7 +588,7 @@ Printer::OnSize(wxSizeEvent &event)
     m_scrpix_w = width;
     m_scrpix_h = height;
 
-    //reset the number of rows in the view
+    // reset the number of rows in the view
     if (m_charcell_h != 0) {            // the first time through, when font has not initialized, it is zero
         m_chars_h = height / m_charcell_h;
     }
@@ -791,7 +796,7 @@ Printer::emitLine()
     m_linebuf_len = 0;
 
     if (m_autoshow) {
-        m_parent->Show(true);   //show the printer window if it is off (this should be a
+        m_parent->Show(true);   // show the printer window if it is off (this should be a
     }
 
     updateView();
@@ -880,7 +885,7 @@ Printer::updateStatusbar()
 // ----------------------------------------------------------------------------
 
 // constructor
-Printout::Printout(wxChar *title, std::shared_ptr<Printer> printer) :
+Printout::Printout(const wxString &title, std::shared_ptr<Printer> printer) :
         wxPrintout(title),
         m_printer(printer)
 {
@@ -910,7 +915,7 @@ Printout::OnPrintPage(int page)
     m_printer->getMargins(marginleft, marginright, margintop, marginbottom);
 
 #if 1
-    //approach 1
+    // approach 1
     float maxX = llen*cell_w;
     float maxY = plen*cell_h;
 
@@ -955,7 +960,7 @@ Printout::OnPrintPage(int page)
                         static_cast<long>(posY));
 
 #else
-    //approach 2
+    // approach 2
     // This scales the DC so that the printout roughly represents the
     // the screen scaling.
 
@@ -983,7 +988,7 @@ Printout::OnPrintPage(int page)
     // FIXME: Need to set device origin for approach 2 as well
     // For now assume 0,0
     dc->SetDeviceOrigin(0, 0);
-#endif //approach 2
+#endif // approach 2
     m_printer->generatePrintPage(dc, page, vertAdjust);
     dc->SetDeviceOrigin(0, 0);
     dc->SetUserScale(1.0, 1.0);
