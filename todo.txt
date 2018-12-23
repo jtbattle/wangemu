@@ -66,6 +66,11 @@ https://wiki.wxwidgets.org/Printing
    Is that an OS thing or a bug in the emulator?
    MVP OS 2.6.2 is the same as 3.5.
 
+   For MVP 2.6/3.5, when in edit mode, HEX(0C) moves left OK,
+   but HEX(0D) (move right) causes the editing to break.  Editing in VP OS
+   works as expected. The keys are emitting the right code, so I'm not sure
+   what it is going on.
+
 *) I'm seeing new strobes to the disk controller in MVP OS.
    IoCardDisk::CBS() handler has comments saying OB8 and OB1
    were used for various things.
@@ -75,6 +80,8 @@ https://wiki.wxwidgets.org/Printing
 
 *) review coding convention
    see coding_notes.txt
+   also,
+        - look for new, delete, wxDelete
 
 *) do a memory leak check once in a while
 

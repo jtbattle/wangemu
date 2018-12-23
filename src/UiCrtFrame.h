@@ -201,8 +201,8 @@ private:
     // the new window before the old one was destroyed.  as a result, the
     // destructor would stop the (static) timer that the new window had
     // just initiated.
-    wxTimer *m_RefreshTimer;    // triggers to cause a screen update
-    wxTimer *m_QSecTimer;       // 4 Hz event for blink & frames/sec calc
+    std::unique_ptr<wxTimer> m_RefreshTimer;  // triggers to cause a screen update
+    std::unique_ptr<wxTimer> m_QSecTimer;     // 4 Hz event for blink & frames/sec calc
     int      m_blink_phase;
     int      m_fps;             // most recent frames/sec count
 

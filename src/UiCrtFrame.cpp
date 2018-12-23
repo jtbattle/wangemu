@@ -278,8 +278,8 @@ CrtFrame::CrtFrame(const wxString& title,
     m_fps = 0;
 
     // only the primary has a status bar
-    m_RefreshTimer = new wxTimer(this, Timer_Frame);
-    m_QSecTimer    = new wxTimer(this, Timer_QSec);
+    m_RefreshTimer = std::make_unique<wxTimer>(this, Timer_Frame);
+    m_QSecTimer    = std::make_unique<wxTimer>(this, Timer_QSec);
 
     // it is hard to predict what the optimal refresh period
     // for a given system
@@ -291,10 +291,8 @@ CrtFrame::CrtFrame(const wxString& title,
 // destructor
 CrtFrame::~CrtFrame()
 {
-    m_RefreshTimer->Stop();
-    m_QSecTimer->Stop();
-    wxDELETE(m_RefreshTimer);
-    wxDELETE(m_QSecTimer);
+    m_RefreshTimer = nullptr;
+    m_QSecTimer    = nullptr;
 }
 
 
