@@ -267,7 +267,7 @@ if 0:
     term.at(12,35).attrUse(inv=False).sendhex('FFFF41FFFF').sendline()
     term.at(16,0)
 
-if 1:
+if 0:
     term.clear()
     term.sendline("Testing cursor escape codes")
     time.sleep(5)
@@ -296,6 +296,57 @@ if 1:
         term.sendline("Cursor is on again")
         term.cursor("on")
         time.sleep(5)
+
+# testing the bell
+if 1:
+    term.clear()
+    term.sendline("Testing the bell")
+
+    if 0:
+        for n in range(5):
+            term.sendline("One HEX(07)")
+            term.sendhex('07')
+            time.sleep(1)
+
+        for n in range(5):
+            term.sendline("Two HEX(07)")
+            term.sendhex('0707')
+            time.sleep(1)
+
+        for n in range(5):
+            term.sendline("Ten HEX(07)")
+            term.sendhex('07070707070707070707')
+            time.sleep(1)
+
+        for n in range(5):
+            term.sendline("Five HEX(070D)")
+            term.sendhex('070D070D070D070D070D')
+            time.sleep(1)
+
+        # up to this point, they all sound pretty much the same
+
+        # this sounds like about 50% duty cycle:
+        # one second of beeping, one second of silence
+        lots = '07' * 1400
+        for n in range(5):
+            term.sendline("Six hundred HEX(07)")
+            term.sendhex(lots)
+            time.sleep(1)
+
+    # how many dead characters do we need between beeps before we
+    # can hear a break between the beeps?
+    # the "2008" (space, backspace) to ensure every byte is transmitted
+    # and not just a run of one single character.
+    # no breakup at 85, but gaps at 90.
+    #    (180 chars)*(11bits/char)*(1 sec/19200 bits) = 0.103 sec
+    # so, yeah, each 07 fires a 0.1 sec one-shot
+    lots = '07' + '2008'*90
+    term.sendline("HEX(07) followed by 180 null characters")
+    for n in range(100):
+        term.sendhex(lots)
+
+    term.cursor("on")
+    time.sleep(5)
 
     # conclusion after trying various combinations:
     #  1: turning blink on and off attribute while the cursor is off

@@ -67,6 +67,7 @@ public:
 
     // create a bell (0x07) sound
     void ding();
+    void beepCallback();
 
 private:
     // ---- event handlers ----
@@ -76,6 +77,7 @@ private:
     void OnChar(wxKeyEvent &event);
     void OnSize(wxSizeEvent &event);
     void OnLeftDClick(wxMouseEvent &event);
+    void OnTimer(wxTimerEvent &event);
 
     // ---- utility functions ----
 
@@ -133,7 +135,8 @@ private:
 
     // sound for beep
     void create_beep();
-    std::shared_ptr<wxSound> m_beep;
+    std::unique_ptr<wxSound> m_beep;
+    std::unique_ptr<wxTimer> m_beep_tmr;
 
     DECLARE_EVENT_TABLE()
 };

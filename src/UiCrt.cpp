@@ -17,6 +17,10 @@
 // Crt
 // ----------------------------------------------------------------------------
 
+enum {
+    Timer_Beep = 100,
+};
+
 // connect the wxWindows events with the functions which process them
 BEGIN_EVENT_TABLE(Crt, wxWindow)
     EVT_ERASE_BACKGROUND (Crt::OnEraseBackground)
@@ -25,6 +29,7 @@ BEGIN_EVENT_TABLE(Crt, wxWindow)
     EVT_CHAR             (Crt::OnChar)
     EVT_SIZE             (Crt::OnSize)
     EVT_LEFT_DCLICK      (Crt::OnLeftDClick)
+    EVT_TIMER            (Timer_Beep, Crt::OnTimer)
 END_EVENT_TABLE()
 
 Crt::Crt(CrtFrame *parent, crt_state_t *crt_state) :
@@ -47,13 +52,16 @@ Crt::Crt(CrtFrame *parent, crt_state_t *crt_state) :
     m_scrpix_w(0),
     m_scrpix_h(0),
     m_RCscreen(wxRect(0, 0, 0, 0)),
-    m_beep(nullptr)
+    m_beep(nullptr),
+    m_beep_tmr(nullptr)
 {
     create_beep();
     if (!m_beep && false) {
         UI_Warn("Emulator was unable to create the beep sound.\n"
                 "HEX(07) will produce the host bell sound.");
     }
+
+    m_beep_tmr = std::make_unique<wxTimer>(this, Timer_Beep);
 }
 
 
@@ -432,8 +440,21 @@ Crt::ding()
     if (!m_beep) {
         wxBell();
     } else {
+        if (!m_beep_tmr->IsRunning()) {
+            // start it going
+            m_beep->Play(wxSOUND_ASYNC | wxSOUND_LOOP);
+        }
+        // schedule the beep end time
+        m_beep_tmr->Start(100, wxTIMER_ONE_SHOT);
+    }
+}
+
+// the beep timer is has ended
+void
+Crt::OnTimer(wxTimerEvent &event)
+{
+    if (event.GetId() == Timer_Beep) {
         m_beep->Stop();
-        m_beep->Play(wxSOUND_ASYNC);
     }
 }
 
@@ -496,14 +517,24 @@ typedef struct {
 void
 Crt::create_beep()
 {
-    const int sample_rate   = 16000;
-    const int samples_naive = sample_rate * 8/60;    // 8 vblank intervals
-    const int samples       = (samples_naive & ~3);  // multiple of 4
+    const float sample_rate = 44100.0f;
+
+    // the schematics for the dumb terminal seem to show about a 1100 Hz tone,
+    // while the 2336 I have on hand seems to be about 1940 Hz
+    const float target_freq =
+        (m_crt_state->screen_type == UI_SCREEN_2236DE) ? 1940.0f  // 2336
+                                                       : 1100.0f; // dumb crt schematics indicate this
+
+    // we want the buffer to have an integral number of complete cycles
+    // so fudge the buffer size to make that happen
+    const int   cycles_per_tenth = static_cast<int>(target_freq / 10.0f);
+    const int   num_samples = static_cast<int>(sample_rate * 0.1f);  // 1/10th of a second
+    const float act_freq    = 10.0 * cycles_per_tenth;
 
     const int total_bytes = sizeof(RIFF_t)
                           + sizeof(FormatChunk_t)
                           + sizeof(DataChunk_t)
-                          + 1*samples;  // 1 byte per sample
+                          + 1*num_samples;  // 1 byte per sample
 
     // chunk description
     RIFF_t RiffHdr;
@@ -525,7 +556,7 @@ Crt::create_beep()
     // second subchunk, data
     DataChunk_t DataHdr;
     DataHdr.chunkID   = static_cast<uint32>(BE32(dataID));
-    DataHdr.chunkSize = static_cast<uint32>(LE32(1*samples));
+    DataHdr.chunkSize = static_cast<uint32>(LE32(1*num_samples));
 
     // create a contiguous block, copy the headers into it,
     // then append the sample data
@@ -538,13 +569,14 @@ Crt::create_beep()
     memcpy(wp, &FormatHdr, sizeof(FormatHdr));  wp += sizeof(FormatHdr);
     memcpy(wp, &DataHdr,   sizeof(DataHdr));    wp += sizeof(DataHdr);
 
-    // make a clipped sin wave at 1 KHz
-    // the frequency has been chosen to match that of my real 2336DE terminal
-    const float freq_Hz     = 1940.0f;
-    const float phase_scale = 2*3.14159f * freq_Hz / sample_rate;
+    // make a clipped sine wave. the nominal 1940 Hz frequency was chosen
+    // to match my real 2336DE terminal. the frequency generated is stretched
+    // to ensure an exact number of cycles is generated to produce seamless
+    // looping.
+    const float phase_scale = 2*3.14159f * act_freq / sample_rate;
     const float clip        = 0.70f;  // chop off top/bottom of wave
     const float amplitude   = 40.0f;  // loudness
-    for (int n=0; n<samples; n++) {
+    for (int n=0; n<num_samples; n++) {
         float s = sin(phase_scale * n);
         s = (s >  clip) ?  clip
           : (s < -clip) ? -clip
@@ -553,7 +585,7 @@ Crt::create_beep()
         *wp++ = sample;
     }
 
-    m_beep = std::make_shared<wxSound>();
+    m_beep = std::make_unique<wxSound>();
     const bool success = m_beep->Create(total_bytes, wav);
     if (!success) {
         m_beep = nullptr;

@@ -9,13 +9,6 @@ Emulator TODO list
       hey, code.txt already has one.  study it.
    ... then review the priorities again
 
-*) support more than one MXD (each with one terminal)
-   - booting MVP 3.5, it gets to the loading BASIC-2 stage but hangs
-     dumped debug_termmux_io_{dual,single}.log
-     but the cause isn't apparent.  it would help to dump the symbols
-     from the 3.5 source disks so I can figure out what section of code
-     it is in when things diverge.
-
 *) print preview crashes now.  I'm not sure when it started happening.
    trying to print fails too.
    running wangemu-before.exe fails.  (built with wx 3.0.2)
@@ -34,6 +27,13 @@ https://wiki.wxwidgets.org/Printing
       complex members wxPrintOrientation m_orientation;
                       wxPaperSize m_paperid;
                       wxPrintBin  m_paperbin;
+
+*) support more than one MXD (each with one terminal)
+   - booting MVP 3.5, it gets to the loading BASIC-2 stage but hangs
+     dumped debug_termmux_io_{dual,single}.log
+     but the cause isn't apparent.  it would help to dump the symbols
+     from the 3.5 source disks so I can figure out what section of code
+     it is in when things diverge.
 
 *) Have an easy config mode and an expert mode.
    The config dialog would have two tabs.  The "simple" tab would have
@@ -154,57 +154,6 @@ https://wiki.wxwidgets.org/Printing
         - actual serial port connection
         - running via sockets, allowing local or remote connection
         - perhaps as a javascript app, with multiple terminals as tabs?
-
-*) 10 PRINT HEX(07);:GOTO 10
-   RUN
-   makes a choppy sound.  Doing PRINT HEX(0707070707070707070707) sounds
-   the same as PRINT HEX(07).  Is there something in the hardware which
-   ensures a given HEX(07) takes at least a certain amount of time?
-
-   Try sending a constant stream of 07's to the real 2236. what happens?
-   Answer: doing
-       for n in range(500):
-            term.sendhex('07' + '2008'*85)
-   is just a solid beep. (2008 is space/backspace to ensure compression
-   isn't used on the line).  increasing *85 to *90 causes it to start
-   breaking up.  doing the math:
-        (180 chars)*(11 bits/char)*(1 sec/19200 bits) = 0.103 sec
-   So it seems that each 07 retriggers a one-shot for 0.1 sec.
-
-   (looking at the schematic...)
-   Each HEX(07) (re)triggers a one-shot which gates a 1KHz 555 oscillator.
-   Change the logic to match by making the wav file play in a loop
-   continuously until stopped, and using a timer event to schedule when
-   to turn it off.  if another hex(07) arrives, cancel the timer and
-   reschedule it for the new longer duration.  (see UiCrt.cpp)
-
-   This means that the wav creation logic should not be as large as it
-   is, and instead it should be exactly one cycle with perfect begin/end
-   phase matching (no overlap).
-
-   7011.pdf shows that hex(07) causes a low to a 9602 retriggerable one-shot.
-   pin 11: active low trigger
-   pins 14/15: 10uF electrolytic
-   pin 14: 18K pullup
-   pulse width is 0.31*R*C ns, R in kohms, C in pF
-               == 0.3*18*10M = 97ms
-
-   that pulse lifts the reset pin of a 555.  The 555 is configured with
-      pin 7 pulled up to 5v by 1K
-      pin 6,8 with 0.1uF tantalum to ground
-      an 8.2K (maybe 6.2K) between pins 7 and 6/8
-   an online calculator says this should be 830Hz if R2 is 8.2K,
-                                         or 928Hz if R2 is 6.2K
-   A different calculator computed 1072 Hz for 6.2K.
-
-   The 7159 schematic (page 1, in the middle, at the bottom) is clearer.
-   The 9602 R=18K,C=18uF.  The 555 R1=1K, R2=8.2K, C=0.1uF.
-   That changes the timing a bit.
-
-   https://wang2200.org/docs/system/2200_SystemsMaintenanceManual.03-0025-0.1975.pdf
-   page 6-11 (pdf page 207) describes how long the bell lasts for the original
-   CRT controller, but it isn't clear without the corresponding schematic
-   exactly what it means.
 
 *) allow pasting text to the emulator from the clipboard.  should be easy.
    copying text from the screen is significantly more work, as I'd have
