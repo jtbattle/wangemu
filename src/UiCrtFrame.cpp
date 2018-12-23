@@ -1260,9 +1260,11 @@ CrtFrame::OnConfigureScreenDialog(wxCommandEvent& WXUNUSED(event))
         title.Printf("Display /%3X Configuration", m_crt_addr);
     }
 
+    std::string subgroup = makeCrtIniGroup(m_smart_term, m_crt_addr, m_term_num);
+
     system2200::freezeEmu(true);    // halt emulation
 
-    CrtConfigDlg dlg(this, title);
+    CrtConfigDlg dlg(this, title, subgroup);
     dlg.ShowModal();
 
     system2200::freezeEmu(false);   // run emulation

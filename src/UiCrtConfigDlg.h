@@ -10,7 +10,8 @@ class CrtConfigDlg : public wxDialog
 {
 public:
     CANT_ASSIGN_OR_COPY_CLASS(CrtConfigDlg);
-    CrtConfigDlg(wxFrame *parent, const wxString &title);
+    CrtConfigDlg(wxFrame *parent, const wxString &title, const wxString &subgroup);
+
     ~CrtConfigDlg();
 
 private:
@@ -31,6 +32,7 @@ private:
     wxChoice    *m_ColorChoice;         // fg/bg color scheme
     wxSlider    *m_ContrastSlider;      // display contrast
     wxSlider    *m_BrightnessSlider;    // display brightness
+    std::string  m_subgroup;            // ini file tag
 
     DECLARE_EVENT_TABLE()
 };

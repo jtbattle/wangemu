@@ -34,14 +34,16 @@ END_EVENT_TABLE()
 //      |
 //      +-- m_FontChoice
 //      +-- m_ColorChoice
-CrtConfigDlg::CrtConfigDlg(wxFrame *parent, const wxString &title) :
+CrtConfigDlg::CrtConfigDlg(wxFrame *parent, const wxString &title,
+                                            const wxString &subgroup) :
         wxDialog(parent, -1, title,
                  wxDefaultPosition, wxDefaultSize,
                  wxDEFAULT_DIALOG_STYLE | wxRESIZE_BORDER),
         m_FontChoice(nullptr),
         m_ColorChoice(nullptr),
         m_ContrastSlider(nullptr),
-        m_BrightnessSlider(nullptr)
+        m_BrightnessSlider(nullptr),
+        m_subgroup(subgroup)
 {
     const int h_text_margin = 8;
     CrtFrame *pp = wxStaticCast(GetParent(), CrtFrame);
@@ -183,8 +185,7 @@ CrtConfigDlg::updateDlg()
 void
 CrtConfigDlg::saveDefaults()
 {
-    const std::string subgroup("ui/configscndlg");
-
+    const std::string subgroup = m_subgroup + "/cfgscreendlg";
     // save position and size
     host::ConfigWriteWinGeom(this, subgroup);
 }
@@ -193,8 +194,8 @@ CrtConfigDlg::saveDefaults()
 void
 CrtConfigDlg::getDefaults()
 {
+    const std::string subgroup = m_subgroup + "/cfgscreendlg";
     // see if we've established a favored location and size
-    const std::string subgroup("ui/configscndlg");
     host::ConfigReadWinGeom(this, subgroup);
 }
 

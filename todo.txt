@@ -9,14 +9,6 @@ Emulator TODO list
       hey, code.txt already has one.  study it.
    ... then review the priorities again
 
-*) support MXD with more than one terminal per MXD
-     - the screen config dialog doesn't save its position, and is shared
-       by all terms. the contents are unique, but the position isn't
-           The problem is the dialog doesn't know which term it is
-           associated with. It just receives a cfg object. Extend the
-           scheme so an optional ini subgroup string can be passed in,
-           which the dialog appends <basegroup>/configdlg
-
 *) support more than one MXD (each with one terminal)
    - booting MVP 3.5, it gets to the loading BASIC-2 stage but hangs
      dumped debug_termmux_io_{dual,single}.log
@@ -26,10 +18,22 @@ Emulator TODO list
 
 *) print preview crashes now.  I'm not sure when it started happening.
    trying to print fails too.
-   build the sample app and see if it works or not.
-   F:\Jim\libs\wx-3.1.0\samples\printing
    running wangemu-before.exe fails.  (built with wx 3.0.2)
    running wangemu-2.1.exe print preview works!  (built with wx 2.8.9)
+   build the sample app and see if it works or not.
+       F:\Jim\libs\wx-3.1.0\samples\printing
+   yes, it works!
+   so now study the code carefully and see what has changed.
+https://wiki.wxwidgets.org/Printing
+   class PrinterFrame is derived from wxFrame
+      complex members wxPrintData
+      complex members wxPageSetupDialogData
+   class Printout is derived from wxPrintout
+      only data member is a Printer*
+   class Printer is derived from wxScrolledWIndow
+      complex members wxPrintOrientation m_orientation;
+                      wxPaperSize m_paperid;
+                      wxPrintBin  m_paperbin;
 
 *) Have an easy config mode and an expert mode.
    The config dialog would have two tabs.  The "simple" tab would have
@@ -153,13 +157,21 @@ Emulator TODO list
 
 *) 10 PRINT HEX(07);:GOTO 10
    RUN
-   doesn't make any sound and kind of hangs. CTRL-C eventually stops it,
-   but it takes a while.  Doing PRINT HEX(0707070707070707070707) sounds
+   makes a choppy sound.  Doing PRINT HEX(0707070707070707070707) sounds
    the same as PRINT HEX(07).  Is there something in the hardware which
    ensures a given HEX(07) takes at least a certain amount of time?
 
    Try sending a constant stream of 07's to the real 2236. what happens?
+   Answer: doing
+       for n in range(500):
+            term.sendhex('07' + '2008'*85)
+   is just a solid beep. (2008 is space/backspace to ensure compression
+   isn't used on the line).  increasing *85 to *90 causes it to start
+   breaking up.  doing the math:
+        (180 chars)*(11 bits/char)*(1 sec/19200 bits) = 0.103 sec
+   So it seems that each 07 retriggers a one-shot for 0.1 sec.
 
+   (looking at the schematic...)
    Each HEX(07) (re)triggers a one-shot which gates a 1KHz 555 oscillator.
    Change the logic to match by making the wav file play in a loop
    continuously until stopped, and using a timer event to schedule when
