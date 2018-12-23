@@ -408,10 +408,10 @@ UI_ConfigureCard(IoCard::card_t card_type, CardCfgState *cfg)
 
     switch (card_type) {
         case IoCard::card_t::disk:
-            DiskCtrlCfgDlg(nullptr, cfg).ShowModal();
+            DiskCtrlCfgDlg(nullptr, *cfg).ShowModal();
             break;
         case IoCard::card_t::term_mux:
-            TermMuxCfgDlg(nullptr, cfg).ShowModal();
+            TermMuxCfgDlg(nullptr, *cfg).ShowModal();
             break;
         default:
             assert(false);

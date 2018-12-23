@@ -188,7 +188,7 @@ END_EVENT_TABLE()
 //          +-- m_btnRevert
 //          +-- m_btnOk
 //          +-- m_btnCancel
-DiskCtrlCfgDlg::DiskCtrlCfgDlg(wxFrame *parent, CardCfgState *cfg) :
+DiskCtrlCfgDlg::DiskCtrlCfgDlg(wxFrame *parent, CardCfgState &cfg) :
         wxDialog(parent, -1, "Disk Controller Configuration",
                  wxDefaultPosition, wxDefaultSize,
                  wxDEFAULT_DIALOG_STYLE | wxRESIZE_BORDER),
@@ -198,13 +198,10 @@ DiskCtrlCfgDlg::DiskCtrlCfgDlg(wxFrame *parent, CardCfgState *cfg) :
         m_btnRevert(nullptr),
         m_btnOk(nullptr),
         m_btnCancel(nullptr),
-        m_btnHelp(nullptr)
+        m_btnHelp(nullptr),
+        m_oldcfg(dynamic_cast<DiskCtrlCfgState&>(cfg)),  // copy of original
+        m_cfg(dynamic_cast<DiskCtrlCfgState&>(cfg))      // edited version
 {
-    DiskCtrlCfgState* pcfg(dynamic_cast<DiskCtrlCfgState*>(cfg));
-    assert(pcfg != nullptr);
-    m_oldcfg = *pcfg;  // the existing configuration
-    m_cfg    = *pcfg;  // we edit this, and it is the exact one passed to us
-
     const wxString choicesNumDrives[] = { "1", "2", "3", "4" };
     m_rbNumDrives = new wxRadioBox(this, ID_RB_NUM_DRIVES,
                                    "Number of drives",

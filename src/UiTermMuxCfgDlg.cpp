@@ -120,7 +120,7 @@ END_EVENT_TABLE()
 //          +-- m_btnRevert
 //          +-- m_btnOk
 //          +-- m_btnCancel
-TermMuxCfgDlg::TermMuxCfgDlg(wxFrame *parent, CardCfgState *cfg) :
+TermMuxCfgDlg::TermMuxCfgDlg(wxFrame *parent, CardCfgState &cfg) :
         wxDialog(parent, -1, "Terminal Mux Controller Configuration",
                  wxDefaultPosition, wxDefaultSize,
                  wxDEFAULT_DIALOG_STYLE | wxRESIZE_BORDER),
@@ -128,13 +128,10 @@ TermMuxCfgDlg::TermMuxCfgDlg(wxFrame *parent, CardCfgState *cfg) :
         m_btnRevert(nullptr),
         m_btnOk(nullptr),
         m_btnCancel(nullptr),
-        m_btnHelp(nullptr)
+        m_btnHelp(nullptr),
+        m_oldcfg(dynamic_cast<TermMuxCfgState&>(cfg)),  // copy of original
+        m_cfg(dynamic_cast<TermMuxCfgState&>(cfg))      // edited version
 {
-    TermMuxCfgState* pcfg(dynamic_cast<TermMuxCfgState*>(cfg));
-    assert(pcfg != nullptr);
-    m_oldcfg = *pcfg;  // the existing configuration
-    m_cfg    = *pcfg;  // we edit this, and it is the exact one passed to us
-
     const wxString choicesNumTerminals[] = { "1", "2", "3", "4" };
     m_rbNumTerminals = new wxRadioBox(this, ID_RB_NUM_TERMINALS,
                                       "Number of terminals",
