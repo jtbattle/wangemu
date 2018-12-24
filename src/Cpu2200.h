@@ -271,6 +271,7 @@ private:
         uint8   ab_sel;         // ab at time of last ABS
         uint8   sh;             // high status reg
         uint8   sl;             // low  status reg
+        bool    bsr_mode;       // true=bsr register is active
         uint8   bsr;            // bank select register (microvp-2 feature)
         int     bank_offset;    // predecoded from sl
     } m_cpu;

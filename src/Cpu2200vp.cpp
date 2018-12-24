@@ -494,10 +494,10 @@ Cpu2200vp::set_bsr(uint8 value) noexcept
 void
 Cpu2200vp::updateBankOffset() noexcept
 {
-    const bool bsr_mode = (m_cpu.bsr & 0x80) == 0x80;
+    m_cpu.bsr_mode = (m_cpu.bsr & 0x80) == 0x80;
 
     int bank_page = (m_cpu.bsr & 0x7F);
-    if (!bsr_mode) {
+    if (!m_cpu.bsr_mode) {
         bank_page = (m_cpu.bsr & 0x78)        // bits [6:3] come from bsr
                   | ((m_cpu.sl & 0x20) >> 3)  // bit  [2] is from sl[5]
                   | ((m_cpu.sl & 0xc0) >> 6); // bits [1:0] are from sl[7:6]
@@ -654,10 +654,10 @@ Cpu2200vp::decimal_sub8(int a_op, int b_op, int ci) const noexcept
 
 // addresses < 8KB always refer to bank 0.
 // otherwise, add the bank offset, and force the addr to zero if it is too big
-#define inline_map_address(addr)  \
-    (  ((addr) < 8192) ? (addr)   \
+#define inline_map_address(addr)                                             \
+    (  ((addr) < 8192 && !m_cpu.bsr_mode) ? (addr)                           \
      : ((addr) + m_cpu.bank_offset < m_memsize) ? (m_cpu.bank_offset+(addr)) \
-     : (0) \
+     : (0)                                                                   \
     )
 
 
@@ -688,7 +688,7 @@ Cpu2200vp::decimal_sub8(int a_op, int b_op, int ci) const noexcept
 #define inlined_mem_write(addr,wr_value,write2)          \
     do {                                                 \
         int la = (addr);                                 \
-        if (la < 8192) {                                 \
+        if (la < 8192 && !m_cpu.bsr_mode) {              \
             la ^= write2;                                \
             m_RAM[la] = static_cast<uint8>(wr_value);    \
         } else if (la + m_cpu.bank_offset < m_memsize) { \
