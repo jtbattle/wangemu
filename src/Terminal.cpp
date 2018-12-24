@@ -36,6 +36,8 @@ const int64 serial_char_delay =
                      * 1.0E6 / 19200.0   /* microseconds per bit */
                     );
 
+bool do_debug = false;
+
 // ----------------------------------------------------------------------------
 // Terminal
 // ----------------------------------------------------------------------------
@@ -469,7 +471,10 @@ Terminal::processChar(uint8 byte)
         return;
     }
 
-    //dbglog("Terminal::processChar(0x%02x), m_raw_cnt=%d\n", byte, m_raw_cnt);
+    if (do_debug) {
+        char ch = (0x20 <= byte && byte <= 0x7E) ? byte : '.';
+        dbglog("Terminal::processChar(0x%02x/%c), m_raw_cnt=%d\n", byte, ch, m_raw_cnt);
+    }
 
     auto handler = (m_crt_sink) ? std::mem_fn(&Terminal::crtCharFifo)
                                 : std::mem_fn(&Terminal::prtCharFifo);
@@ -615,7 +620,10 @@ Terminal::processCrtChar1(uint8 byte)
     // it is a character run sequence: FB nn cc
     // where nn is the repetition count, and cc is the character
     if (m_raw_cnt == 3) {
-        //dbglog("Decompress run: cnt=%d, chr=0x%02x\n", m_raw_buf[1], m_raw_buf[2]);
+        if (do_debug) {
+            char ch = (0x20 <= m_raw_buf[2] && m_raw_buf[2] <= 0x7E) ? m_raw_buf[2] : '.';
+            dbglog("Decompress run: cnt=%d, chr=0x%02x/%c\n", m_raw_buf[1], m_raw_buf[2], ch);
+        }
         for (int i=0; i<m_raw_buf[1]; i++) {
             processCrtChar2(m_raw_buf[2]);
         }
@@ -627,13 +635,16 @@ Terminal::processCrtChar1(uint8 byte)
     assert(m_raw_cnt == 2);
 
     // FB nn, where 0x02 < count < 0x60, is a three byte sequence
-    if ((0x02 < m_raw_buf[1]) && (m_raw_buf[1] < 0x60)) {
+    // in practice, it can send a compression count of 1 (eg, SF12)
+    if (m_raw_buf[1] < 0x60) {
         return;
     }
 
     // FB nn, where nn >= 0x60 represents (nn-0x60) spaces in a row
     if ((0x60 <= m_raw_buf[1]) && (m_raw_buf[1] <= 0xBF)) {
-        //dbglog("Decompress spaces: cnt=%d\n", m_raw_buf[1]-0x60);
+        if (do_debug) {
+            dbglog("Decompress spaces: cnt=%d\n", m_raw_buf[1]-0x60);
+        }
         for (int i=0x60; i<m_raw_buf[1]; i++) {
             processCrtChar2(static_cast<uint8>(0x20));
         }
@@ -653,14 +664,18 @@ Terminal::processCrtChar1(uint8 byte)
                                  );
             assert(m_selectp_tmr != nullptr);
         }
-        //dbglog("Delay sequence: cnt=%d\n", m_raw_buf[1]);
+        if (do_debug) {
+            dbglog("Delay sequence: cnt=%d\n", m_raw_buf[1]);
+        }
         m_raw_cnt = 0;
         return;
     }
 
     // check for literal 0xFB byte: FB D0
     if (m_raw_buf[1] == 0xD0) {
-        //dbglog("Literal 0xFB byte\n");
+        if (do_debug) {
+            dbglog("Literal 0xFB byte\n");
+        }
         processCrtChar2(static_cast<uint8>(0xFB));
         m_raw_cnt = 0;
         return;
@@ -690,7 +705,9 @@ Terminal::processCrtChar1(uint8 byte)
 
     // TODO: what should happen with illegal sequences?
     // for now, I'm passing them through
-    //dbglog("Unexpected sequence: 0x%02x 0x%02x\n", m_raw_buf[0], m_raw_buf[1]);
+    if (do_debug) {
+        dbglog("Unexpected sequence: 0x%02x 0x%02x\n", m_raw_buf[0], m_raw_buf[1]);
+    }
     processCrtChar2(m_raw_buf[0]);
     processCrtChar2(m_raw_buf[1]);
     m_raw_cnt = 0;

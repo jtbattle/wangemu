@@ -7,6 +7,11 @@ Emulator TODO list
       hey, code.txt already has one.  study it.
    ... then review the priorities again
 
+*) sometimes when I configure the system to have an MXD for the first time,
+   and I pick the address, then I click on "Config" to set the number of
+   terminals, nothing happens.  after accepting the configuration, I can then
+   go back and change the number of terminals.
+
 *) support more than one MXD (each with one terminal)
    - booting MVP 3.5, it gets to the loading BASIC-2 stage but hangs
      dumped debug_termmux_io_{dual,single}.log
@@ -39,18 +44,6 @@ Emulator TODO list
    repeat except RESET, EDIT, and underline.  what implication does that
    have for the emulator?
 
-*) MXD mode, VP OS 2.4 and EDIT/RECALL works as expected -- EDIT causes
-   a leading "*".
-   But MVP OS 3.5, EDIT doesn't show the "*", though recall does recall.
-   Is that an OS thing or a bug in the emulator?
-   MVP OS 2.6.2 is the same as 3.5.
-
-   For MVP 2.6/3.5, when in edit mode, HEX(0C) moves left OK, but HEX(0D)
-   (move right) causes the editing to break.  Editing in VP OS works as
-   expected. The keys are emitting the right code, so I'm not sure what
-   is going on.  Do I have a bad copy of OS 3.5?  Or are my MXD ROM images
-   bad? Or is there some problem in my emulation (harder to explain)?
-
 *) I'm seeing new strobes to the disk controller in MVP OS.
    IoCardDisk::CBS() handler has comments saying OB8 and OB1
    were used for various things.
@@ -61,7 +54,6 @@ Emulator TODO list
 *) review coding convention
    see coding_notes.txt
    also,
-    - UiPrinterFrame uses new without delete, and raw pointers.
     - look for std::shared_ptr which really can be std::unique_ptr
     - the MSVC C++ guidelines point out some cases where a routing
       takes a shared_ptr but a raw pointer or reference really would
@@ -258,6 +250,23 @@ Emulator TODO list
          to the top level emulator directory
    see
     http://www.microsoft.com/communities/newsgroups/en-us/default.aspx?dg=microsoft.public.vstudio.general&tid=2d0b8055-3fe2-482b-9fb2-731eb51859ee&cat=&lang=en&cr=US&sloc=&p=1
+
+----------------------------------------------------------------------------
+small issues that it would be nice to figure out, but aren't release blockers
+----------------------------------------------------------------------------
+
+*) MXD mode, VP OS 2.4 and EDIT/RECALL works as expected -- EDIT causes
+   a leading "*".
+   But MVP OS 3.5, EDIT doesn't show the "*", though recall does recall.
+   Is that an OS thing or a bug in the emulator?
+   MVP OS 2.6.2 is the same as 3.5.
+
+*) when running diagnostics on MVP OS 3.4, the data memory test identifies
+   the CPU as VLSI-1 even though I thought I was modeling the MVP-C.
+   I'm not sure what it is keying on to make that determination.
+       512KB of RAM => it thinks it is VLSI-1
+       256KB of RAM => it thinks it is MVP
+       128KB of RAM => it thinks it is VLSI-1
 
 ----------------------------------------------------------------------------
 feature ideas which likely will never be implemented
