@@ -20,13 +20,6 @@
 // implementation
 // ============================================================================
 
-BEGIN_EVENT_TABLE(MyAboutDlg, wxDialog)
-    EVT_LEFT_DOWN   (MyAboutDlg::OnClick)
-    EVT_MIDDLE_DOWN (MyAboutDlg::OnClick)
-    EVT_RIGHT_DOWN  (MyAboutDlg::OnClick)
-END_EVENT_TABLE()
-
-
 MyAboutDlg::MyAboutDlg(wxWindow *parent) :
         wxDialog(parent, -1, "About Wang 2200 Emulator",
                    wxDefaultPosition, wxDefaultSize,
@@ -148,6 +141,11 @@ MyAboutDlg::MyAboutDlg(wxWindow *parent) :
 
     SetSizerAndFit(topsizer);
     CenterOnScreen();
+
+    // event routing table
+    Bind(wxEVT_LEFT_DOWN,   &MyAboutDlg::OnClick, this);
+    Bind(wxEVT_MIDDLE_DOWN, &MyAboutDlg::OnClick, this);
+    Bind(wxEVT_RIGHT_DOWN,  &MyAboutDlg::OnClick, this);
 }
 
 

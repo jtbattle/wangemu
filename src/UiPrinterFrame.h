@@ -33,7 +33,7 @@ public:
 
     // translation of paperbin (wxPrintBin) enum
     wxPrintBin PaperBin(const std::string &paperbinname) const noexcept;
-    std::string PaperBin(wxPrintBin paperbinval) const noexcept;
+    std::string PaperBin(wxPrintBin paperbinval) const;
 
     // emit a character to the display
     void printChar(uint8 byte);
@@ -114,8 +114,6 @@ private:
 
     std::unique_ptr<wxPrintData>           m_printData;     // Print data
     std::unique_ptr<wxPageSetupDialogData> m_pageSetupData; // Page setup data
-
-    DECLARE_EVENT_TABLE()
 };
 
 #endif _INCLUDE_UI_PRINTER_FRAME_H_

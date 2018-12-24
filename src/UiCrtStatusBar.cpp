@@ -50,14 +50,6 @@ enum {  ID_Keyword_Mode = 100,          // ID for status bar button
 //  was abandoned (2005-03-06)).  staticbitmaps don't capture mouse events,
 // thus this subclass.
 
-BEGIN_EVENT_TABLE(MyStaticBitmap, wxControl)
-    EVT_LEFT_DOWN  (MyStaticBitmap::OnMouseBtnDown)
-    EVT_RIGHT_DOWN (MyStaticBitmap::OnMouseBtnDown)
-#if HANDLE_MSB_PAINT
-    EVT_PAINT      (MyStaticBitmap::OnPaint)
-#endif
-END_EVENT_TABLE()
-
 MyStaticBitmap::MyStaticBitmap(
                     wxWindow *parent, wxWindowID id, const wxBitmap &label,
                     const wxPoint &pos, const wxSize &size,
@@ -65,6 +57,12 @@ MyStaticBitmap::MyStaticBitmap(
         wxStaticBitmap (parent, id, label, pos, size, style, name),
         m_myid(id)
 {
+    // event routing table
+    Bind(wxEVT_LEFT_DOWN,  &MyStaticBitmap::OnMouseBtnDown, this);
+    Bind(wxEVT_RIGHT_DOWN, &MyStaticBitmap::OnMouseBtnDown, this);
+#if HANDLE_MSB_PAINT
+    Bind(wxEVT_PAINT,      &MyStaticBitmap::OnPaint, this);
+#endif
 }
 
 void
@@ -108,18 +106,6 @@ MyStaticBitmap::OnPaint(wxPaintEvent& WXUNUSED(event))
 // ----------------------------------------------------------------------------
 // implementation
 // ----------------------------------------------------------------------------
-
-BEGIN_EVENT_TABLE(CrtStatusBar, wxStatusBar)
-    EVT_SIZE       (                    CrtStatusBar::OnSize)
-    EVT_CHECKBOX   (ID_Keyword_Mode,    CrtStatusBar::OnKeywordCtl)
-    EVT_LEFT_DOWN  (                    CrtStatusBar::OnDiskButton)
-    EVT_RIGHT_DOWN (                    CrtStatusBar::OnDiskButton)
-    EVT_MENU       (Disk_Popup_Insert,  CrtStatusBar::OnDiskPopup)
-    EVT_MENU       (Disk_Popup_Eject,   CrtStatusBar::OnDiskPopup)
-    EVT_MENU       (Disk_Popup_Inspect, CrtStatusBar::OnDiskPopup)
-    EVT_MENU       (Disk_Popup_Format,  CrtStatusBar::OnDiskPopup)
-END_EVENT_TABLE()
-
 
 #define DISK_ICON_WIDTH  22     // in pixels
 #define DISK_ICON_HEIGHT 13     // in pixels
@@ -294,6 +280,16 @@ CrtStatusBar::CrtStatusBar(CrtFrame *parent,
     Show(true);
 
     SetMinHeight(DISK_ICON_HEIGHT); // triggers an OnSize()
+
+    // event routing table
+    Bind(wxEVT_SIZE,       &CrtStatusBar::OnSize,       this);
+    Bind(wxEVT_CHECKBOX,   &CrtStatusBar::OnKeywordCtl, this, ID_Keyword_Mode);
+    Bind(wxEVT_LEFT_DOWN,  &CrtStatusBar::OnDiskButton, this);
+    Bind(wxEVT_RIGHT_DOWN, &CrtStatusBar::OnDiskButton, this);
+    Bind(wxEVT_MENU,       &CrtStatusBar::OnDiskPopup,  this, Disk_Popup_Insert);
+    Bind(wxEVT_MENU,       &CrtStatusBar::OnDiskPopup,  this, Disk_Popup_Eject);
+    Bind(wxEVT_MENU,       &CrtStatusBar::OnDiskPopup,  this, Disk_Popup_Inspect);
+    Bind(wxEVT_MENU,       &CrtStatusBar::OnDiskPopup,  this, Disk_Popup_Format);
 }
 
 

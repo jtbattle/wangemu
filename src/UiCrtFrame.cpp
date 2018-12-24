@@ -154,57 +154,6 @@ static const int num_colorschemes = sizeof(colorscheme) / sizeof(colorscheme_t);
 // CrtFrame static members
 CrtFrame* CrtFrame::m_primaryFrame = nullptr;
 
-// connect the wxWidgets events with the functions which process them
-BEGIN_EVENT_TABLE(CrtFrame, wxFrame)
-
-    EVT_MENU      (File_Script,           CrtFrame::OnScript)
-    EVT_MENU      (File_Snapshot,         CrtFrame::OnSnapshot)
-#if HAVE_FILE_DUMP
-    EVT_MENU      (File_Dump,             CrtFrame::OnDump)
-#endif
-    EVT_MENU      (File_Quit,             CrtFrame::OnQuit)
-
-    EVT_MENU      (CPU_HardReset,         CrtFrame::OnReset)
-    EVT_MENU      (CPU_WarmReset,         CrtFrame::OnReset)
-    EVT_MENU      (CPU_ActualSpeed,       CrtFrame::OnCpuSpeed)
-    EVT_MENU      (CPU_UnregulatedSpeed,  CrtFrame::OnCpuSpeed)
-
-    EVT_MENU      (Disk_New,              CrtFrame::OnDiskFactory)
-    EVT_MENU      (Disk_Inspect,          CrtFrame::OnDiskFactory)
-    EVT_MENU      (Disk_Format,           CrtFrame::OnDiskFormat)
-    EVT_COMMAND_RANGE(Disk_Insert, Disk_Insert+NUM_IOSLOTS*4-1,
-                wxEVT_COMMAND_MENU_SELECTED, CrtFrame::OnDisk)
-
-    EVT_MENU      (Configure_Dialog,         CrtFrame::OnConfigureDialog)
-    EVT_MENU      (Configure_Screen_Dialog,  CrtFrame::OnConfigureScreenDialog)
-    EVT_MENU      (Configure_KeywordMode,    CrtFrame::OnConfigureKeywordMode)
-    EVT_MENU      (Configure_SF_toolBar,     CrtFrame::OnConfigureSfToolbar)
-    EVT_MENU      (Configure_Fullscreen,     CrtFrame::OnDisplayFullscreen)
-    EVT_MENU      (Configure_Stats,          CrtFrame::OnConfigureStats)
-    EVT_COMMAND_RANGE(Configure_KB_Tie0, Configure_KB_TieN,
-                wxEVT_COMMAND_MENU_SELECTED, CrtFrame::OnConfigureKbTie)
-
-    // printer window support
-    EVT_COMMAND_RANGE(Printer_0, Printer_N,
-                wxEVT_COMMAND_MENU_SELECTED, CrtFrame::OnPrinter)
-
-    EVT_MENU      (Print_PrintAndClear,      CrtFrame::OnPrintAndClear)
-
-    // toolbar event handler
-    EVT_TOOL_RANGE(TB_SF0, TB_EDIT,          CrtFrame::OnToolBarButton)
-
-    // non-menu event handlers
-    EVT_MENU_OPEN (CrtFrame::OnMenuOpen)
-    EVT_CLOSE     (CrtFrame::OnClose)
-    EVT_TIMER     (Timer_Frame, CrtFrame::OnTimer)
-    EVT_TIMER     (Timer_QSec,  CrtFrame::OnTimer)
-
-    // help menu items do whatever they need to do
-    HELP_MENU_EVENT_MAPPINGS()
-
-END_EVENT_TABLE()
-
-
 // constructor
 CrtFrame::CrtFrame(const wxString& title,
                    const int io_addr,
@@ -285,6 +234,50 @@ CrtFrame::CrtFrame(const wxString& title,
     // for a given system
     m_RefreshTimer->Start(30, wxTIMER_CONTINUOUS);   // ~30 fps
     m_QSecTimer->Start(250, wxTIMER_CONTINUOUS);     // 4 Hz
+
+    // event routing table
+    Bind(wxEVT_MENU, &CrtFrame::OnScript,   this, File_Script);
+    Bind(wxEVT_MENU, &CrtFrame::OnSnapshot, this, File_Snapshot);
+#if HAVE_FILE_DUMP
+    Bind(wxEVT_MENU, &CrtFrame::OnDump,     this, File_Dump);
+#endif
+    Bind(wxEVT_MENU, &CrtFrame::OnQuit,     this, File_Quit);
+
+    Bind(wxEVT_MENU, &CrtFrame::OnReset,    this, CPU_HardReset);
+    Bind(wxEVT_MENU, &CrtFrame::OnReset,    this, CPU_WarmReset);
+    Bind(wxEVT_MENU, &CrtFrame::OnCpuSpeed, this, CPU_ActualSpeed);
+    Bind(wxEVT_MENU, &CrtFrame::OnCpuSpeed, this, CPU_UnregulatedSpeed);
+
+    Bind(wxEVT_MENU, &CrtFrame::OnDiskFactory, this, Disk_New);
+    Bind(wxEVT_MENU, &CrtFrame::OnDiskFactory, this, Disk_Inspect);
+    Bind(wxEVT_MENU, &CrtFrame::OnDiskFormat,  this, Disk_Format);
+    Bind(wxEVT_COMMAND_MENU_SELECTED, &CrtFrame::OnDisk, this,
+                            Disk_Insert, Disk_Insert+NUM_IOSLOTS*4-1);
+
+    Bind(wxEVT_MENU, &CrtFrame::OnConfigureDialog,       this, Configure_Dialog);
+    Bind(wxEVT_MENU, &CrtFrame::OnConfigureScreenDialog, this, Configure_Screen_Dialog);
+    Bind(wxEVT_MENU, &CrtFrame::OnConfigureKeywordMode,  this, Configure_KeywordMode);
+    Bind(wxEVT_MENU, &CrtFrame::OnConfigureSfToolbar,    this, Configure_SF_toolBar);
+    Bind(wxEVT_MENU, &CrtFrame::OnDisplayFullscreen,     this, Configure_Fullscreen);
+    Bind(wxEVT_MENU, &CrtFrame::OnConfigureStats,        this, Configure_Stats);
+    Bind(wxEVT_COMMAND_MENU_SELECTED, &CrtFrame::OnConfigureKbTie, this,
+                            Configure_KB_Tie0, Configure_KB_TieN);
+
+    // printer window support
+    Bind(wxEVT_COMMAND_MENU_SELECTED, &CrtFrame::OnPrinter, this,
+                            Printer_0, Printer_N);
+    Bind(wxEVT_MENU, &CrtFrame::OnPrintAndClear, this, Print_PrintAndClear);
+
+    // toolbar event handler
+    Bind(wxEVT_TOOL, &CrtFrame::OnToolBarButton, this, TB_SF0, TB_EDIT);
+
+    // non-menu event handlers
+    Bind(wxEVT_MENU_OPEN,    &CrtFrame::OnMenuOpen, this);
+    Bind(wxEVT_CLOSE_WINDOW, &CrtFrame::OnClose,    this);
+    Bind(wxEVT_TIMER,        &CrtFrame::OnTimer,    this, Timer_Frame);
+    Bind(wxEVT_TIMER,        &CrtFrame::OnTimer,    this, Timer_QSec);
+
+    TheApp::bindHelpMenuItems(this);
 }
 
 

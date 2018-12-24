@@ -208,8 +208,6 @@ private:
 
     // the one privileged CRT (/005 display, or term 1 of MXD at 0x00)
     static CrtFrame *m_primaryFrame;
-
-    DECLARE_EVENT_TABLE()
 };
 
 #endif _INCLUDE_UI_CRT_FRAME_H_

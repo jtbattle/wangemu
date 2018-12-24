@@ -38,8 +38,6 @@ private:
     LabelPanel *m_tab2;
     wxButton   *m_butCancel;
     wxButton   *m_butSave;
-
-    DECLARE_EVENT_TABLE()
 };
 
 #endif _INCLUDE_UI_DISK_FACTORY_H_

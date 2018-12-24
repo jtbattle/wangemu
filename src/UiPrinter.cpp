@@ -29,15 +29,6 @@ static const int hmargin = 3;   // number chars horizontal padding on page
 // Printer
 // ----------------------------------------------------------------------------
 
-// connect the wxWindows events with the functions which process them
-BEGIN_EVENT_TABLE(Printer, wxScrolledWindow)
-    EVT_PAINT                   (Printer::OnPaint)
-    EVT_ERASE_BACKGROUND        (Printer::OnEraseBackground)
-    EVT_SIZE                    (Printer::OnSize)
-    EVT_TIMER                   (-1, Printer::OnTimer)
-END_EVENT_TABLE()
-
-
 Printer::Printer(PrinterFrame *parent) :
         wxScrolledWindow(parent, -1, wxDefaultPosition, wxDefaultSize),
         m_parent(parent),
@@ -79,6 +70,12 @@ Printer::Printer(PrinterFrame *parent) :
     m_portTimer.SetOwner(this);
     m_portTimer.Start(500);     // set firing interval -- 1/2 second
     m_portTimer.Stop();         // but we don't want it just yet
+
+    // event routing table
+    Bind(wxEVT_PAINT,            &Printer::OnPaint,           this);
+    Bind(wxEVT_ERASE_BACKGROUND, &Printer::OnEraseBackground, this);
+    Bind(wxEVT_SIZE,             &Printer::OnSize,            this);
+    Bind(wxEVT_TIMER,            &Printer::OnTimer,           this, -1);
 }
 
 // free resources on destruction
@@ -207,7 +204,7 @@ Printer::getRealPrinterName() const
 }
 
 void
-Printer::setPageAttributes(int linelength, int pagelength) noexcept
+Printer::setPageAttributes(int linelength, int pagelength)
 {
     m_linelength = linelength;
     m_pagelength = pagelength;

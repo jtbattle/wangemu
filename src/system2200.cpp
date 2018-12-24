@@ -153,7 +153,7 @@ saveDiskMounts(void)
                     const int stat = IoCardDisk::wvdDriveStatus(slot, drive);
                     if (stat & IoCardDisk::WVD_STAT_DRIVE_OCCUPIED) {
                         bool ok = IoCardDisk::wvdGetFilename(slot, drive, &filename);
-                        assert(ok); ok=ok;
+                        assert(ok);
                     }
                 }
                 host::ConfigWriteStr(subgroup.str(), item.str(), filename);
@@ -181,15 +181,7 @@ restoreDiskMounts(void)
                 std::string filename;
                 bool b = host::ConfigReadStr(subgroup.str(), item.str(), &filename);
                 if (b && !filename.empty()) {
-                    bool bs = IoCardDisk::wvdInsertDisk(slot, drive, filename.c_str());
-            #if 0 // wvdInsertDisk() already generated a warning
-                    if (!bs) {
-                        UI_Warn("Problem loading '%s' into slot %d, drive %d",
-                                filename, slot, drive);
-                    }
-            #else
-                    bs = bs; // keep lint happy
-            #endif
+                    IoCardDisk::wvdInsertDisk(slot, drive, filename.c_str());
                 }
             } // for (drive)
         } // if (isDiskController)
@@ -1136,7 +1128,7 @@ system2200::findDisk(const std::string &filename,
                     }
                     if (io_addr) {
                         ok = getSlotInfo(slt, nullptr, io_addr);
-                        assert(ok); ok = ok;
+                        assert(ok);
                     }
                     return true;
                 }

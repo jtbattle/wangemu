@@ -137,8 +137,6 @@ private:
     void create_beep();
     std::unique_ptr<wxSound> m_beep;
     std::unique_ptr<wxTimer> m_beep_tmr;
-
-    DECLARE_EVENT_TABLE()
 };
 
 #endif _INCLUDE_UI_CRT_H_

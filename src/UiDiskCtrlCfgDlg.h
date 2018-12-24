@@ -42,8 +42,6 @@ private:
     // save/get dialog options to the config file
     void saveDefaults();
     void getDefaults();
-
-    DECLARE_EVENT_TABLE()
 };
 
 #endif _INCLUDE_UI_DISK_CONTROLLER_CFG_DLG_H_

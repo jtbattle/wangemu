@@ -21,17 +21,6 @@ enum {
     Timer_Beep = 100,
 };
 
-// connect the wxWindows events with the functions which process them
-BEGIN_EVENT_TABLE(Crt, wxWindow)
-    EVT_ERASE_BACKGROUND (Crt::OnEraseBackground)
-    EVT_PAINT            (Crt::OnPaint)
-    EVT_KEY_DOWN         (Crt::OnKeyDown)
-    EVT_CHAR             (Crt::OnChar)
-    EVT_SIZE             (Crt::OnSize)
-    EVT_LEFT_DCLICK      (Crt::OnLeftDClick)
-    EVT_TIMER            (Timer_Beep, Crt::OnTimer)
-END_EVENT_TABLE()
-
 Crt::Crt(CrtFrame *parent, crt_state_t *crt_state) :
     wxWindow(parent, -1, wxDefaultPosition, wxDefaultSize),
     m_parent(parent),
@@ -62,6 +51,15 @@ Crt::Crt(CrtFrame *parent, crt_state_t *crt_state) :
     }
 
     m_beep_tmr = std::make_unique<wxTimer>(this, Timer_Beep);
+
+    // event routing table
+    Bind(wxEVT_ERASE_BACKGROUND, &Crt::OnEraseBackground, this);
+    Bind(wxEVT_PAINT,            &Crt::OnPaint,           this);
+    Bind(wxEVT_KEY_DOWN,         &Crt::OnKeyDown,         this);
+    Bind(wxEVT_CHAR,             &Crt::OnChar,            this);
+    Bind(wxEVT_SIZE,             &Crt::OnSize,            this);
+    Bind(wxEVT_LEFT_DCLICK,      &Crt::OnLeftDClick,      this);
+    Bind(wxEVT_TIMER,            &Crt::OnTimer,           this, Timer_Beep);
 }
 
 

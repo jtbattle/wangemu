@@ -3,20 +3,15 @@
 #include "UiMyStaticText.h"     // sharing info between UI_wxgui modules
 
 
-// dialog events to catch
-BEGIN_EVENT_TABLE(MyStaticText, wxStaticText)
-    EVT_KEY_DOWN    (MyStaticText::OnKeyDown)
-    EVT_LEFT_DOWN   (MyStaticText::OnMouseClick)
-    EVT_MIDDLE_DOWN (MyStaticText::OnMouseClick)
-    EVT_RIGHT_DOWN  (MyStaticText::OnMouseClick)
-END_EVENT_TABLE()
-
-
 MyStaticText::MyStaticText(wxWindow* parent, wxWindowID id,
                                         const wxString &label)
     : wxStaticText(parent, id, label)
 {
-    // nothing to do!
+    // event routing table
+    Bind(wxEVT_KEY_DOWN,    &MyStaticText::OnKeyDown,    this);
+    Bind(wxEVT_LEFT_DOWN,   &MyStaticText::OnMouseClick, this);
+    Bind(wxEVT_MIDDLE_DOWN, &MyStaticText::OnMouseClick, this);
+    Bind(wxEVT_RIGHT_DOWN,  &MyStaticText::OnMouseClick, this);
 }
 
 

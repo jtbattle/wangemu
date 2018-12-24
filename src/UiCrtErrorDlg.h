@@ -20,8 +20,6 @@ public:
 private:
     // ---- event handlers ----
     void OnClick(wxMouseEvent& WXUNUSED(event));
-
-    DECLARE_EVENT_TABLE()
 };
 
 #endif _INCLUDE_UI_CRT_ERROR_DLG_H_

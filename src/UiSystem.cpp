@@ -42,10 +42,6 @@ struct crt_state_t;
 // right type (i.e. TheApp and not wxApp)
 IMPLEMENT_APP(TheApp)
 
-BEGIN_EVENT_TABLE(TheApp, wxApp)
-    EVT_IDLE (TheApp::OnIdle)
-END_EVENT_TABLE()
-
 // ----------------------------------------------------------------------------
 // the application class
 // ----------------------------------------------------------------------------
@@ -60,6 +56,9 @@ TheApp::OnInit()
         wxSystemOptions::SetOption("msw.remap", 2);
     }
 #endif
+
+    // event routing table
+    Bind(wxEVT_IDLE, &TheApp::OnIdle, this);
 
     host::initialize();
 
@@ -141,29 +140,24 @@ TheApp::OnCmdLineParsed(wxCmdLineParser& parser)
 // Help/About functions
 // ========================================================================
 
-wxMenu*
-TheApp::makeHelpMenu()
-{
-    wxMenu *menuHelp = new wxMenu;
-    menuHelp->Append(Help_Quickstart,  "&Quickstart",      "Information for new users of WangEmu");
-    menuHelp->Append(Help_Configure,   "&Configuration",   "Information about configuring the emulator");
-    menuHelp->Append(Help_Keyboard,    "&Keyboard",        "Information about how the 2200 keyboard is mapped onto yours");
-    menuHelp->Append(Help_Menus,       "&Menus",           "Information about the emulator menu system");
-    menuHelp->Append(Help_Printer,     "&Printer",         "Information about the using the emulated printer");
-    menuHelp->Append(Help_Script,      "&Script",          "Information about loading files into the emulator");
-    menuHelp->Append(Help_DiskFactory, "Disk &Factory",    "Information about creating and inspecting virtual disks");
-    menuHelp->Append(Help_DiskCheat,   "&Disk Cheatsheet", "Information about cataloging disks, loading and saving files");
-    menuHelp->Append(Help_Website,     "&Website",         "Open a browser to the emulator's web site");
-    menuHelp->AppendSeparator();
-    menuHelp->Append(Help_Relnotes,    "&Release notes...", "Detailed notes about this release");
-    menuHelp->Append(Help_About,       "&About...",         "Information about the program");
+// called by various frames to install the canonical help menu
+// these are menu IDs so that the OnHelp_Launcher() knows which item is chosen
+enum {
+        Help_Quickstart = 200,
+        Help_Configure,
+        Help_Keyboard,
+        Help_Menus,
+        Help_Printer,
+        Help_Script,
+        Help_DiskFactory,
+        Help_DiskCheat,
+        Help_Website,
+        Help_Relnotes,
+        Help_About = wxID_ABOUT,
+    };
 
-    return menuHelp;
-}
-
-
-void
-TheApp::OnHelp_Launcher(wxCommandEvent &event)
+static void
+OnHelp_Launcher(wxCommandEvent &event)
 {
     wxString helpfile;
     bool absolute = false;
@@ -204,11 +198,52 @@ TheApp::OnHelp_Launcher(wxCommandEvent &event)
 }
 
 
-void
-TheApp::OnHelp_About(wxCommandEvent& WXUNUSED(event))
+static void
+OnHelp_About(wxCommandEvent& WXUNUSED(event))
 {
     MyAboutDlg dlg(nullptr);
     dlg.ShowModal();
+}
+
+
+wxMenu*
+TheApp::makeHelpMenu()
+{
+    wxMenu *menuHelp = new wxMenu;
+    menuHelp->Append(Help_Quickstart,  "&Quickstart",      "Information for new users of WangEmu");
+    menuHelp->Append(Help_Configure,   "&Configuration",   "Information about configuring the emulator");
+    menuHelp->Append(Help_Keyboard,    "&Keyboard",        "Information about how the 2200 keyboard is mapped onto yours");
+    menuHelp->Append(Help_Menus,       "&Menus",           "Information about the emulator menu system");
+    menuHelp->Append(Help_Printer,     "&Printer",         "Information about the using the emulated printer");
+    menuHelp->Append(Help_Script,      "&Script",          "Information about loading files into the emulator");
+    menuHelp->Append(Help_DiskFactory, "Disk &Factory",    "Information about creating and inspecting virtual disks");
+    menuHelp->Append(Help_DiskCheat,   "&Disk Cheatsheet", "Information about cataloging disks, loading and saving files");
+    menuHelp->Append(Help_Website,     "&Website",         "Open a browser to the emulator's web site");
+    menuHelp->AppendSeparator();
+    menuHelp->Append(Help_Relnotes,    "&Release notes...", "Detailed notes about this release");
+    menuHelp->Append(Help_About,       "&About...",         "Information about the program");
+
+    return menuHelp;
+}
+
+
+// connect help menu items to the event map
+// TODO: maybe merge this into makeHelpMenu
+void
+TheApp::bindHelpMenuItems(wxWindow *win)
+{
+    assert(win);
+    win->Bind(wxEVT_MENU, &OnHelp_Launcher, Help_Quickstart);
+    win->Bind(wxEVT_MENU, &OnHelp_Launcher, Help_Configure);
+    win->Bind(wxEVT_MENU, &OnHelp_Launcher, Help_Keyboard);
+    win->Bind(wxEVT_MENU, &OnHelp_Launcher, Help_Menus);
+    win->Bind(wxEVT_MENU, &OnHelp_Launcher, Help_Printer);
+    win->Bind(wxEVT_MENU, &OnHelp_Launcher, Help_Script);
+    win->Bind(wxEVT_MENU, &OnHelp_Launcher, Help_DiskFactory);
+    win->Bind(wxEVT_MENU, &OnHelp_Launcher, Help_DiskCheat);
+    win->Bind(wxEVT_MENU, &OnHelp_Launcher, Help_Website);
+    win->Bind(wxEVT_MENU, &OnHelp_Launcher, Help_Relnotes);
+    win->Bind(wxEVT_MENU, &OnHelp_About,    Help_About);
 }
 
 

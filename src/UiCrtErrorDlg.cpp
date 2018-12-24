@@ -15,14 +15,6 @@
 
 #include "errtable.h"   // error explanations
 
-// dialog events to catch
-BEGIN_EVENT_TABLE(CrtErrorDlg, wxDialog)
-    EVT_LEFT_DOWN   (CrtErrorDlg::OnClick)
-    EVT_MIDDLE_DOWN (CrtErrorDlg::OnClick)
-    EVT_RIGHT_DOWN  (CrtErrorDlg::OnClick)
-END_EVENT_TABLE()
-
-
 CrtErrorDlg::CrtErrorDlg(wxWindow *parent,
                          const wxString &errcode,
                          const wxPoint origin)
@@ -129,6 +121,11 @@ CrtErrorDlg::CrtErrorDlg(wxWindow *parent,
         dlg_rect.Offset(screen_w-1 - dlg_rect.GetRight(), 0);
     }
     Move(dlg_rect.GetX(), dlg_rect.GetY());
+
+    // event routing table
+    Bind(wxEVT_LEFT_DOWN,   &CrtErrorDlg::OnClick, this);
+    Bind(wxEVT_MIDDLE_DOWN, &CrtErrorDlg::OnClick, this);
+    Bind(wxEVT_RIGHT_DOWN,  &CrtErrorDlg::OnClick, this);
 }
 
 

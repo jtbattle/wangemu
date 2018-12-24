@@ -35,23 +35,6 @@ enum
 };
 
 
-// dialog events to catch
-BEGIN_EVENT_TABLE(SystemConfigDlg, wxDialog)
-
-    EVT_CHOICE(ID_CPU_CHOICE,           SystemConfigDlg::OnCpuChoice)
-    EVT_CHOICE(ID_MEMSIZE_CHOICE,       SystemConfigDlg::OnMemsizeChoice)
-    EVT_CHECKBOX(ID_CHK_DISK_REALTIME,  SystemConfigDlg::OnDiskRealtime)
-    EVT_CHECKBOX(ID_CHK_WARN_IO,        SystemConfigDlg::OnWarnIo)
-
-    EVT_COMMAND_RANGE(ID_SLOT0_CARD_CHOICE, ID_SLOTN_CARD_CHOICE,
-        wxEVT_COMMAND_CHOICE_SELECTED, SystemConfigDlg::OnCardChoice)
-    EVT_COMMAND_RANGE(ID_SLOT0_ADDR_CHOICE, ID_SLOTN_ADDR_CHOICE,
-        wxEVT_COMMAND_CHOICE_SELECTED, SystemConfigDlg::OnAddrChoice)
-
-    EVT_BUTTON(-1, SystemConfigDlg::OnButton)
-END_EVENT_TABLE()
-
-
 // Layout:
 //      topsizer (V)
 //      |
@@ -217,6 +200,18 @@ SystemConfigDlg::SystemConfigDlg(wxFrame *parent) :
     topsizer->SetSizeHints(this);       // set size hints to honor minimum size
 
     getDefaults();  // get default size & location
+
+    // event routing table
+    Bind(wxEVT_CHOICE,   &SystemConfigDlg::OnCpuChoice,     this, ID_CPU_CHOICE);
+    Bind(wxEVT_CHOICE,   &SystemConfigDlg::OnMemsizeChoice, this, ID_MEMSIZE_CHOICE);
+    Bind(wxEVT_CHECKBOX, &SystemConfigDlg::OnDiskRealtime,  this, ID_CHK_DISK_REALTIME);
+    Bind(wxEVT_CHECKBOX, &SystemConfigDlg::OnWarnIo,        this, ID_CHK_WARN_IO);
+    Bind(wxEVT_BUTTON,   &SystemConfigDlg::OnButton,        this, -1);
+
+    Bind(wxEVT_COMMAND_CHOICE_SELECTED, &SystemConfigDlg::OnCardChoice, this,
+         ID_SLOT0_CARD_CHOICE, ID_SLOTN_CARD_CHOICE);
+    Bind(wxEVT_COMMAND_CHOICE_SELECTED, &SystemConfigDlg::OnAddrChoice, this,
+         ID_SLOT0_ADDR_CHOICE, ID_SLOTN_ADDR_CHOICE);
 }
 
 

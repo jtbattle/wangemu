@@ -661,7 +661,6 @@ IoCardDisk::wvdSeekSector() noexcept
 
     // make sure this was already taken care of before we got called
     assert(track == m_d[m_drive].track);
-    int foo = track; foo=foo; // keep lint happy
 
     m_d[m_drive].secwait = phys_sec;
 }

@@ -19,16 +19,6 @@ enum
 };
 
 
-// dialog events to catch
-BEGIN_EVENT_TABLE(CrtConfigDlg, wxDialog)
-    EVT_CHOICE(ID_FONT_CHOICE,          CrtConfigDlg::OnFontChoice)
-    EVT_CHOICE(ID_COLOR_CHOICE,         CrtConfigDlg::OnColorChoice)
-    EVT_CHOICE(ID_COLOR_CHOICE,         CrtConfigDlg::OnColorChoice)
-    EVT_COMMAND_SCROLL_THUMBTRACK(ID_CONTRAST_SLIDER,    CrtConfigDlg::OnContrastSlider)
-    EVT_COMMAND_SCROLL_THUMBTRACK(ID_BRIGHTNESS_SLIDER,  CrtConfigDlg::OnBrightnessSlider)
-END_EVENT_TABLE()
-
-
 // Layout:
 //      topsizer (V)
 //      |
@@ -112,6 +102,12 @@ CrtConfigDlg::CrtConfigDlg(wxFrame *parent, const wxString &title,
     topsizer->SetSizeHints(this);       // set size hints to honor minimum size
 
     getDefaults();              // get default size & location
+
+    // event routing table
+    Bind(wxEVT_CHOICE, &CrtConfigDlg::OnFontChoice,  this, ID_FONT_CHOICE);
+    Bind(wxEVT_CHOICE, &CrtConfigDlg::OnColorChoice, this, ID_COLOR_CHOICE);
+    Bind(wxEVT_SCROLL_THUMBTRACK, &CrtConfigDlg::OnContrastSlider,   this, ID_CONTRAST_SLIDER);
+    Bind(wxEVT_SCROLL_THUMBTRACK, &CrtConfigDlg::OnBrightnessSlider, this, ID_BRIGHTNESS_SLIDER);
 }
 
 

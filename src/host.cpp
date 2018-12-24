@@ -462,7 +462,6 @@ host::ConfigWriteStr(const std::string &subgroup,
     config->SetPath("/wangemu/config-0/" + subgroup);
     bool b = config->Write(wxKey, wxVal);
     assert(b);
-    b = b;      // keep lint happy
 }
 
 

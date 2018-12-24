@@ -19,8 +19,6 @@ public:
 private:
     void OnKeyDown(wxKeyEvent &event);
     void OnMouseClick(wxMouseEvent &event);
-
-    DECLARE_EVENT_TABLE()
 };
 
 #endif // _INCLUDE_UI_MYSTATICTEXT_H_

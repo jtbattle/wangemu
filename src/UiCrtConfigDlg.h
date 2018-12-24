@@ -33,8 +33,6 @@ private:
     wxSlider    *m_ContrastSlider;      // display contrast
     wxSlider    *m_BrightnessSlider;    // display brightness
     std::string  m_subgroup;            // ini file tag
-
-    DECLARE_EVENT_TABLE()
 };
 
 #endif _INCLUDE_UI_CRT_CONFIG_DLG_H_

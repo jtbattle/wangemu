@@ -167,15 +167,6 @@ enum
 };
 
 
-// dialog events to catch
-BEGIN_EVENT_TABLE(DiskCtrlCfgDlg, wxDialog)
-    EVT_RADIOBOX(ID_RB_NUM_DRIVES,      DiskCtrlCfgDlg::OnNumDrives)
-    EVT_RADIOBOX(ID_RB_INTELLIGENCE,    DiskCtrlCfgDlg::OnIntelligence)
-    EVT_CHECKBOX(ID_CHK_WARN_MISMATCH,  DiskCtrlCfgDlg::OnWarnMismatch)
-    EVT_BUTTON(-1,                      DiskCtrlCfgDlg::OnButton)
-END_EVENT_TABLE()
-
-
 // Layout:
 //      topsizer (V)
 //      |
@@ -282,6 +273,12 @@ DiskCtrlCfgDlg::DiskCtrlCfgDlg(wxFrame *parent, CardCfgState &cfg) :
     topsizer->SetSizeHints(this);       // set size hints to honor minimum size
 
     getDefaults();  // get default size & location
+
+    // event routing table
+    Bind(wxEVT_RADIOBOX, &DiskCtrlCfgDlg::OnNumDrives,    this, ID_RB_NUM_DRIVES);
+    Bind(wxEVT_RADIOBOX, &DiskCtrlCfgDlg::OnIntelligence, this, ID_RB_INTELLIGENCE);
+    Bind(wxEVT_CHECKBOX, &DiskCtrlCfgDlg::OnWarnMismatch, this, ID_CHK_WARN_MISMATCH);
+    Bind(wxEVT_BUTTON,   &DiskCtrlCfgDlg::OnButton,       this, -1);
 }
 
 

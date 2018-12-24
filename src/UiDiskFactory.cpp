@@ -94,8 +94,6 @@ private:
 
     // data
     std::shared_ptr<Wvd> m_diskdata;
-
-    DECLARE_EVENT_TABLE()
 };
 
 
@@ -126,24 +124,12 @@ private:
 
     // data
     std::shared_ptr<Wvd> m_diskdata;
-
-    DECLARE_EVENT_TABLE()
 };
 
 
 // ------------------------------------------------------------------------
 //  back to DiskFactory
 // ------------------------------------------------------------------------
-
-// dialog events to catch
-BEGIN_EVENT_TABLE(DiskFactory, wxDialog)
-    EVT_BUTTON    (ID_BTN_Cancel, DiskFactory::OnButton_Cancel)
-    EVT_BUTTON    (ID_BTN_Save,   DiskFactory::OnButton_Save)
-    EVT_BUTTON    (ID_BTN_SaveAs, DiskFactory::OnButton_SaveAs)
-    EVT_SIZE      (               DiskFactory::OnSize)
-    EVT_CLOSE     (               DiskFactory::OnClose)
-END_EVENT_TABLE()
-
 
 DiskFactory::DiskFactory(wxFrame *parent, const std::string &filename) :
         wxDialog(parent, -1, "Disk Factory",
@@ -169,7 +155,7 @@ DiskFactory::DiskFactory(wxFrame *parent, const std::string &filename) :
     } else {
         // existing disk
         bool ok = m_diskdata->open(filename);
-        assert(ok); ok=ok;
+        assert(ok);
     }
 
     // the frame contains a panel containing a single notebook
@@ -215,6 +201,13 @@ DiskFactory::DiskFactory(wxFrame *parent, const std::string &filename) :
     host::ConfigReadWinGeom(this, subgroup, &default_geom);
 
     updateDlg();
+
+    // event routing table
+    Bind(wxEVT_BUTTON,       &DiskFactory::OnButton_Cancel, this, ID_BTN_Cancel);
+    Bind(wxEVT_BUTTON,       &DiskFactory::OnButton_Save,   this, ID_BTN_Save);
+    Bind(wxEVT_BUTTON,       &DiskFactory::OnButton_SaveAs, this, ID_BTN_SaveAs);
+    Bind(wxEVT_SIZE,         &DiskFactory::OnSize,          this);
+    Bind(wxEVT_CLOSE_WINDOW, &DiskFactory::OnClose,         this);
 }
 
 
@@ -335,13 +328,6 @@ enum
     PROP_CHK_WP = 1,
 };
 
-// dialog events to catch
-BEGIN_EVENT_TABLE(PropPanel, wxPanel)
-    EVT_RADIOBOX (-1,                 PropPanel::OnDiskTypeButton)
-    EVT_CHECKBOX (PROP_CHK_WP,        PropPanel::OnWriteProt)
-END_EVENT_TABLE()
-
-
 // wxBoxSizer(v) *topsizer
 //    +-- wxStaticText *m_path
 //    +-- wxBoxSizer(h) *boxh
@@ -455,7 +441,12 @@ PropPanel::PropPanel(DiskFactory *df,
 
     SetSizerAndFit(topsizer);
     refresh();
+
+    // event routing table
+    Bind(wxEVT_RADIOBOX, &PropPanel::OnDiskTypeButton, this, -1);
+    Bind(wxEVT_CHECKBOX, &PropPanel::OnWriteProt,      this, PROP_CHK_WP);
 }
+
 
 void
 PropPanel::refresh()
@@ -480,8 +471,8 @@ PropPanel::refresh()
     IoCardDisk::getDiskGeometry(disk_type, &spt, &step, &rpm, nullptr);
 
     // scan the disk_choices[] table to find a match
-    int radio_sel = -1;
     if (new_disk) {
+        int radio_sel = -1;
         for (int i=0; i < num_disk_types; i++) {
             if ((disk_type    == disk_choices[i].disk_type) &&
                 (num_platters == disk_choices[i].platters)  &&
@@ -570,10 +561,6 @@ enum
     LABEL_EDIT_LABEL = 1,
 };
 
-BEGIN_EVENT_TABLE(LabelPanel, wxPanel)
-    EVT_TEXT     (LABEL_EDIT_LABEL,  LabelPanel::OnLabelEdit)
-END_EVENT_TABLE()
-
 LabelPanel::LabelPanel(DiskFactory *df,
                        wxWindow *parent,
                        std::shared_ptr<Wvd> diskdata) :
@@ -597,6 +584,9 @@ LabelPanel::LabelPanel(DiskFactory *df,
     wxBoxSizer *m_sizer = new wxBoxSizer(wxVERTICAL);
     m_sizer->Add(m_text, 1, wxEXPAND);
     SetSizerAndFit(m_sizer);
+
+    // event routing table
+    Bind(wxEVT_TEXT, &LabelPanel::OnLabelEdit, this, LABEL_EDIT_LABEL);
 }
 
 

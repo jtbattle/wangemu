@@ -137,36 +137,6 @@ const int PBMAX = sizeof(paperbinmap)/sizeof(paperbinmap_t);
 // PrinterFrame
 // ----------------------------------------------------------------------------
 
-// connect the wxWindows events with the functions which process them
-BEGIN_EVENT_TABLE(PrinterFrame, wxFrame)
-
-    EVT_MENU      (File_Close,            PrinterFrame::OnFileClose)
-    EVT_MENU      (File_SaveAs,           PrinterFrame::OnFileSaveAs)
-    EVT_MENU      (File_PrintClear,       PrinterFrame::OnPrintClear)
-    EVT_MENU      (File_PrintPreview,     PrinterFrame::OnPrintPreview)
-    EVT_MENU      (File_Print,            PrinterFrame::OnPrint)
-    EVT_MENU      (File_PrintSetup,       PrinterFrame::OnPrintSetup)
-    EVT_MENU      (File_PageSetup,        PrinterFrame::OnPageSetup)
-
-    EVT_MENU      (Display_FontSize8,     PrinterFrame::OnFontSize)
-    EVT_MENU      (Display_FontSize10,    PrinterFrame::OnFontSize)
-    EVT_MENU      (Display_FontSize12,    PrinterFrame::OnFontSize)
-    EVT_MENU      (Display_FontSize14,    PrinterFrame::OnFontSize)
-    EVT_MENU      (Display_FontSize18,    PrinterFrame::OnFontSize)
-    EVT_MENU      (Display_Greenbar,      PrinterFrame::OnDisplayGreenbar)
-
-    EVT_MENU      (Configure_Dialog,      PrinterFrame::OnConfigureDialog)
-
-    // non-menu event handlers
-    EVT_MENU_OPEN (PrinterFrame::OnMenuOpen)
-    EVT_CLOSE     (PrinterFrame::OnClose)
-
-    // help menu items do whatever they need to do
-    HELP_MENU_EVENT_MAPPINGS()
-
-END_EVENT_TABLE()
-
-
 // constructor
 PrinterFrame::PrinterFrame(const wxString& title, const int io_addr) :
         wxFrame((wxFrame *)nullptr, -1, title, wxDefaultPosition, wxDefaultSize,
@@ -201,6 +171,26 @@ PrinterFrame::PrinterFrame(const wxString& title, const int io_addr) :
     setupRealPrinter();
 
     system2200::freezeEmu(false);
+
+    // event routing table
+    Bind(wxEVT_MENU,         &PrinterFrame::OnFileClose,       this, File_Close);
+    Bind(wxEVT_MENU,         &PrinterFrame::OnFileSaveAs,      this, File_SaveAs);
+    Bind(wxEVT_MENU,         &PrinterFrame::OnPrintClear,      this, File_PrintClear);
+    Bind(wxEVT_MENU,         &PrinterFrame::OnPrintPreview,    this, File_PrintPreview);
+    Bind(wxEVT_MENU,         &PrinterFrame::OnPrint,           this, File_Print);
+    Bind(wxEVT_MENU,         &PrinterFrame::OnPrintSetup,      this, File_PrintSetup);
+    Bind(wxEVT_MENU,         &PrinterFrame::OnPageSetup,       this, File_PageSetup);
+    Bind(wxEVT_MENU,         &PrinterFrame::OnFontSize,        this, Display_FontSize8);
+    Bind(wxEVT_MENU,         &PrinterFrame::OnFontSize,        this, Display_FontSize10);
+    Bind(wxEVT_MENU,         &PrinterFrame::OnFontSize,        this, Display_FontSize12);
+    Bind(wxEVT_MENU,         &PrinterFrame::OnFontSize,        this, Display_FontSize14);
+    Bind(wxEVT_MENU,         &PrinterFrame::OnFontSize,        this, Display_FontSize18);
+    Bind(wxEVT_MENU,         &PrinterFrame::OnDisplayGreenbar, this, Display_Greenbar);
+    Bind(wxEVT_MENU,         &PrinterFrame::OnConfigureDialog, this, Configure_Dialog);
+    Bind(wxEVT_MENU_OPEN,    &PrinterFrame::OnMenuOpen,        this);
+    Bind(wxEVT_CLOSE_WINDOW, &PrinterFrame::OnClose,           this);
+
+    TheApp::bindHelpMenuItems(this);
 }
 
 
@@ -400,7 +390,7 @@ PrinterFrame::getDefaults()
 
     // pick up portstring attribute
     std::string portstring("LPT1");
-    b = host::ConfigReadStr(subgroup, "portstring", &portstring);
+    host::ConfigReadStr(subgroup, "portstring", &portstring);
     m_printer->setPortstring(portstring);
 
     // pick up page margins
@@ -503,7 +493,7 @@ PrinterFrame::PaperBin(const std::string &paperbinname) const noexcept
 
 // translate an enum pagesize to the appropriate string name
 std::string
-PrinterFrame::PaperBin(wxPrintBin paperbinval) const noexcept
+PrinterFrame::PaperBin(wxPrintBin paperbinval) const
 {
     // translate char to wxPaperSize
     for (int i=0; i< PBMAX; i++) {

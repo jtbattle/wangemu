@@ -18,44 +18,15 @@
 
 // ==================== exported by UiSystem.cpp ====================
 
-// a macro to cause the help menu to do something
-#define HELP_MENU_EVENT_MAPPINGS() \
-    EVT_MENU (TheApp::Help_Quickstart,      TheApp::OnHelp_Launcher) \
-    EVT_MENU (TheApp::Help_Configure,       TheApp::OnHelp_Launcher) \
-    EVT_MENU (TheApp::Help_Keyboard,        TheApp::OnHelp_Launcher) \
-    EVT_MENU (TheApp::Help_Menus,           TheApp::OnHelp_Launcher) \
-    EVT_MENU (TheApp::Help_Printer,         TheApp::OnHelp_Launcher) \
-    EVT_MENU (TheApp::Help_Script,          TheApp::OnHelp_Launcher) \
-    EVT_MENU (TheApp::Help_DiskFactory,     TheApp::OnHelp_Launcher) \
-    EVT_MENU (TheApp::Help_DiskCheat,       TheApp::OnHelp_Launcher) \
-    EVT_MENU (TheApp::Help_Website,         TheApp::OnHelp_Launcher) \
-    EVT_MENU (TheApp::Help_Relnotes,        TheApp::OnHelp_Launcher) \
-    EVT_MENU (TheApp::Help_About,           TheApp::OnHelp_About)
-
 // Define a new application type, each program should derive a class from wxApp
 class TheApp : public wxApp
 {
 public:
-    // called by various frames to install the canonical help menu
-    // these are menu IDs so that the OnHelp_Launcher() knows which item is chosen
-    enum {
-            Help_Quickstart = 200,
-            Help_Configure,
-            Help_Keyboard,
-            Help_Menus,
-            Help_Printer,
-            Help_Script,
-            Help_DiskFactory,
-            Help_DiskCheat,
-            Help_Website,
-            Help_Relnotes,
-            Help_About = wxID_ABOUT,
-        };
-    void OnHelp_Launcher(wxCommandEvent &event);
-    void OnHelp_About(wxCommandEvent &event);
-
     // create a help menu, used for all frames that care
     static wxMenu* makeHelpMenu();
+
+    // connect help menu items to the event map
+    static void bindHelpMenuItems(wxWindow *win);
 
     CANT_ASSIGN_CLASS(TheApp);
 
@@ -81,8 +52,6 @@ private:
 
     static void getGlobalDefaults();
     static void saveGlobalDefaults();
-
-    DECLARE_EVENT_TABLE()
 };
 
 #endif // _INCLUDE_UI_SYSTEM_H_

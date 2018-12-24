@@ -478,11 +478,11 @@ IoCardDisk::advanceStateInt(disk_event_t event, const int val)
                 // check that the disk in the indicated drive is compatible
                 // with the intelligence level we are operating at
                 if (m_acting_intelligent && driveIsDumb(m_drive)) {
-this is a good point to complain, but we don't want to complain on every
-disk operation
+// this is a good point to complain, but we don't want to complain on every
+// disk operation
                 } else if (!m_acting_intelligent && driveIsSmart(m_drive)) {
-this is a good point to complain, but we don't want to complain on every
-disk operation
+// this is a good point to complain, but we don't want to complain on every
+// disk operation
                 }
 #endif
             } else if (m_state_cnt == 1 && m_command == CMD_SPECIAL) {

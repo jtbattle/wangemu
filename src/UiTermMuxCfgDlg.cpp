@@ -103,13 +103,6 @@ enum
 };
 
 
-// dialog events to catch
-BEGIN_EVENT_TABLE(TermMuxCfgDlg, wxDialog)
-    EVT_RADIOBOX(ID_RB_NUM_TERMINALS,   TermMuxCfgDlg::OnNumTerminals)
-    EVT_BUTTON(-1,                      TermMuxCfgDlg::OnButton)
-END_EVENT_TABLE()
-
-
 // Layout:
 //      topsizer (V)
 //      |
@@ -168,6 +161,10 @@ TermMuxCfgDlg::TermMuxCfgDlg(wxFrame *parent, CardCfgState &cfg) :
     topsizer->SetSizeHints(this);       // set size hints to honor minimum size
 
     getDefaults();  // get default size & location
+
+    // event routing table
+    Bind(wxEVT_RADIOBOX, &TermMuxCfgDlg::OnNumTerminals, this, ID_RB_NUM_TERMINALS);
+    Bind(wxEVT_BUTTON,   &TermMuxCfgDlg::OnButton,       this, -1);
 }
 
 

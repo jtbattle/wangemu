@@ -41,7 +41,7 @@ public:
     void        setRealPrinterName(const std::string &name);
     std::string getRealPrinterName() const;
 
-    void setPageAttributes(int  linelength, int  pagelength) noexcept;
+    void setPageAttributes(int  linelength, int  pagelength);
     void getPageAttributes(int &linelength, int &pagelength) const noexcept;
 
     void getCellAttributes(int &cell_w, int &cell_h) const noexcept;
@@ -178,8 +178,6 @@ private:
 
     std::vector<std::string> m_printstream;       // represents the entire print stream
     std::vector<std::string> m_printstream_copy;  // this is a copy that is used for printing purposes
-
-    DECLARE_EVENT_TABLE()
 };
 
 

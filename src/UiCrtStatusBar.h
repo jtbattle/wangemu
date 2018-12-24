@@ -43,8 +43,6 @@ private:
     void OnPaint(wxPaintEvent& WXUNUSED(event));
 #endif
     int m_myid;
-
-    DECLARE_EVENT_TABLE()
 };
 
 // ----------------------------------------------------------------------------
@@ -95,8 +93,6 @@ private:
 
     enum { unknown, insert_disk, eject_disk, inspect_disk, format_disk }
           m_popup_action;
-
-    DECLARE_EVENT_TABLE()
 };
 
 #endif _INCLUDE_UI_CRT_STATUSBAR_H_
