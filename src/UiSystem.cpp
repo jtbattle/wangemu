@@ -206,9 +206,25 @@ OnHelp_About(wxCommandEvent& WXUNUSED(event))
 }
 
 
+// create a help menu, used for all frames that care
+// and connect help menu items to the window event map
 wxMenu*
-TheApp::makeHelpMenu()
+TheApp::makeHelpMenu(wxWindow *win)
 {
+    assert(win);
+
+    win->Bind(wxEVT_MENU, &OnHelp_Launcher, Help_Quickstart);
+    win->Bind(wxEVT_MENU, &OnHelp_Launcher, Help_Configure);
+    win->Bind(wxEVT_MENU, &OnHelp_Launcher, Help_Keyboard);
+    win->Bind(wxEVT_MENU, &OnHelp_Launcher, Help_Menus);
+    win->Bind(wxEVT_MENU, &OnHelp_Launcher, Help_Printer);
+    win->Bind(wxEVT_MENU, &OnHelp_Launcher, Help_Script);
+    win->Bind(wxEVT_MENU, &OnHelp_Launcher, Help_DiskFactory);
+    win->Bind(wxEVT_MENU, &OnHelp_Launcher, Help_DiskCheat);
+    win->Bind(wxEVT_MENU, &OnHelp_Launcher, Help_Website);
+    win->Bind(wxEVT_MENU, &OnHelp_Launcher, Help_Relnotes);
+    win->Bind(wxEVT_MENU, &OnHelp_About,    Help_About);
+
     wxMenu *menuHelp = new wxMenu;
     menuHelp->Append(Help_Quickstart,  "&Quickstart",      "Information for new users of WangEmu");
     menuHelp->Append(Help_Configure,   "&Configuration",   "Information about configuring the emulator");
@@ -224,26 +240,6 @@ TheApp::makeHelpMenu()
     menuHelp->Append(Help_About,       "&About...",         "Information about the program");
 
     return menuHelp;
-}
-
-
-// connect help menu items to the event map
-// TODO: maybe merge this into makeHelpMenu
-void
-TheApp::bindHelpMenuItems(wxWindow *win)
-{
-    assert(win);
-    win->Bind(wxEVT_MENU, &OnHelp_Launcher, Help_Quickstart);
-    win->Bind(wxEVT_MENU, &OnHelp_Launcher, Help_Configure);
-    win->Bind(wxEVT_MENU, &OnHelp_Launcher, Help_Keyboard);
-    win->Bind(wxEVT_MENU, &OnHelp_Launcher, Help_Menus);
-    win->Bind(wxEVT_MENU, &OnHelp_Launcher, Help_Printer);
-    win->Bind(wxEVT_MENU, &OnHelp_Launcher, Help_Script);
-    win->Bind(wxEVT_MENU, &OnHelp_Launcher, Help_DiskFactory);
-    win->Bind(wxEVT_MENU, &OnHelp_Launcher, Help_DiskCheat);
-    win->Bind(wxEVT_MENU, &OnHelp_Launcher, Help_Website);
-    win->Bind(wxEVT_MENU, &OnHelp_Launcher, Help_Relnotes);
-    win->Bind(wxEVT_MENU, &OnHelp_About,    Help_About);
 }
 
 

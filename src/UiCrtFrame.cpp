@@ -276,8 +276,6 @@ CrtFrame::CrtFrame(const wxString& title,
     Bind(wxEVT_CLOSE_WINDOW, &CrtFrame::OnClose,    this);
     Bind(wxEVT_TIMER,        &CrtFrame::OnTimer,    this, Timer_Frame);
     Bind(wxEVT_TIMER,        &CrtFrame::OnTimer,    this, Timer_QSec);
-
-    TheApp::bindHelpMenuItems(this);
 }
 
 
@@ -390,7 +388,7 @@ CrtFrame::makeMenubar()
     }
 
     // make the help menu (as if it isn't obvious below!)
-    wxMenu *menuHelp = TheApp::makeHelpMenu();
+    wxMenu *menuHelp = TheApp::makeHelpMenu(this);
 
     // now append the freshly created menu to the menu bar...
     m_menuBar = new wxMenuBar;

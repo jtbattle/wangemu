@@ -23,10 +23,8 @@ class TheApp : public wxApp
 {
 public:
     // create a help menu, used for all frames that care
-    static wxMenu* makeHelpMenu();
-
-    // connect help menu items to the event map
-    static void bindHelpMenuItems(wxWindow *win);
+    // and connect help menu items to the window event map
+    static wxMenu* makeHelpMenu(wxWindow *win);
 
     CANT_ASSIGN_CLASS(TheApp);
 

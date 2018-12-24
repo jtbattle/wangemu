@@ -189,8 +189,6 @@ PrinterFrame::PrinterFrame(const wxString& title, const int io_addr) :
     Bind(wxEVT_MENU,         &PrinterFrame::OnConfigureDialog, this, Configure_Dialog);
     Bind(wxEVT_MENU_OPEN,    &PrinterFrame::OnMenuOpen,        this);
     Bind(wxEVT_CLOSE_WINDOW, &PrinterFrame::OnClose,           this);
-
-    TheApp::bindHelpMenuItems(this);
 }
 
 
@@ -233,7 +231,7 @@ PrinterFrame::makeMenubar()
     menuConfig->Append(File_PageSetup,   "&Real printer setup...",     "Change settings of real printer");
 
     // make the help menu (as if it isn't obvious below!)
-    wxMenu *menuHelp = TheApp::makeHelpMenu();
+    wxMenu *menuHelp = TheApp::makeHelpMenu(this);
 
     // now append the freshly created menu to the menu bar...
     m_menuBar = new wxMenuBar;
