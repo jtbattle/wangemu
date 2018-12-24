@@ -7,30 +7,12 @@ Emulator TODO list
       hey, code.txt already has one.  study it.
    ... then review the priorities again
 
-*) sometimes when I configure the system to have an MXD for the first time,
-   and I pick the address, then I click on "Config" to set the number of
-   terminals, nothing happens.  after accepting the configuration, I can then
-   go back and change the number of terminals.
-
 *) support more than one MXD (each with one terminal)
    - booting MVP 3.5, it gets to the loading BASIC-2 stage but hangs
      dumped debug_termmux_io_{dual,single}.log
      but the cause isn't apparent.  it would help to dump the symbols
      from the 3.5 source disks so I can figure out what section of code
      it is in when things diverge.
-
-*) Have an easy config mode and an expert mode.
-   The config dialog would have two tabs.  The "simple" tab would have
-   these configuration options:
-      a) 2200T    w/ 32KB RAM, printer, two disk drives, KB + 64x16 screen
-      b) 2200VP   w/ 64KB RAM, printer, two disk drives, KB + 80x24 screen
-      c) 2200MVPC w/512KB RAM, printer, two disk drives, 2236 MXD, one term
-   Expert mode would have the existing configuration dialog.
-   - things are getting more confusing with the increased options.
-     have a feature where hovering over the config button in the
-     "Not OK" state will pop up an explanation of the problem.  Currently
-     you have to hit the "Not OK" button to get the info. I think adding
-     the former is good for discoverability.
 
 *) Document in the keyboard help file there are some new keys
      Shift-Alt-R is hard reset  (changed)
@@ -39,10 +21,6 @@ Emulator TODO list
      Down arrow is S.F. 05 (down a screen line)
      Ctrl-Left arrow is S.F. 07 (start of line)
      Ctrl-Right arrow is S.F. 04 (end of line)
-
-*) 2236DE_TerminalUserManual.700-5711B.6-81.pdf, page 15 says all keys
-   repeat except RESET, EDIT, and underline.  what implication does that
-   have for the emulator?
 
 *) I'm seeing new strobes to the disk controller in MVP OS.
    IoCardDisk::CBS() handler has comments saying OB8 and OB1
@@ -268,9 +246,26 @@ small issues that it would be nice to figure out, but aren't release blockers
        256KB of RAM => it thinks it is MVP
        128KB of RAM => it thinks it is VLSI-1
 
+*) 2236DE_TerminalUserManual.700-5711B.6-81.pdf, page 15 says all keys
+   repeat except RESET, EDIT, and underline.  what implication does that
+   have for the emulator?
+
 ----------------------------------------------------------------------------
 feature ideas which likely will never be implemented
 ----------------------------------------------------------------------------
+
+*) Have an easy config mode and an expert mode.
+   The config dialog would have two tabs.  The "simple" tab would have
+   these configuration options:
+      a) 2200T    w/ 32KB RAM, printer, two disk drives, KB + 64x16 screen
+      b) 2200VP   w/ 64KB RAM, printer, two disk drives, KB + 80x24 screen
+      c) 2200MVPC w/512KB RAM, printer, two disk drives, 2236 MXD, one term
+   Expert mode would have the existing configuration dialog.
+   - things are getting more confusing with the increased options.
+     have a feature where hovering over the config button in the
+     "Not OK" state will pop up an explanation of the problem.  Currently
+     you have to hit the "Not OK" button to get the info. I think adding
+     the former is good for discoverability.
 
 *) emulate "CPU running" light on keyboard (first-gen only)
    double check -- it is probably (cpu waiting for input && 01 selected)

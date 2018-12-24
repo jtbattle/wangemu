@@ -232,15 +232,6 @@ IoCardTermMux::setConfiguration(const CardCfgState &cfg) noexcept
 };
 
 
-// invoke correct GUI to edit config state
-void
-IoCardTermMux::editConfiguration(CardCfgState *cfg)
-{
-    assert(cfg != nullptr);
-    UI_ConfigureCard(IoCard::card_t::term_mux, cfg);
-};
-
-
 // -----------------------------------------------------
 // operational
 // -----------------------------------------------------

@@ -43,10 +43,6 @@ public:
     // change card configuration
     virtual void setConfiguration(const CardCfgState &) { };
 
-    // configuration management:
-    // invoke GUI to edit state handed to us
-    virtual void editConfiguration(CardCfgState *) { };
-
     // ------------------------ operational ------------------------
 
     // this is called when the machine is reset.

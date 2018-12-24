@@ -71,7 +71,7 @@ DiskCtrlCfgState::operator!=(const CardCfgState &rhs) const
 }
 
 
-// establish a reasonable default state
+// establish a reasonable default state on a newly minted card
 void
 DiskCtrlCfgState::setDefaults()
 {

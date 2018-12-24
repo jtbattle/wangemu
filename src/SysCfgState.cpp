@@ -439,21 +439,9 @@ void
 SysCfgState::editCardConfig(int slot)
 {
     assert(isSlotOccupied(slot));
-
     auto cardCfg = m_slot[slot].cardCfg;
     if (cardCfg != nullptr) {
-        // FIXME: this is a raw pointer from the m_cardInSlot[] unique_ptr.
-        //        it is safe, but it feels dangerous to be using the raw ptr.
-        //        all calls of getInstFromSlot() should be reviewed too.
-        auto inst = system2200::getInstFromSlot(slot);
-        if (inst == nullptr) {
-            // this must be a newly created slot that hasn't been put into
-            // the IoMap yet.  create a temp object so we can edit the cardCfg.
-            auto inst2 = IoCard::makeTmpCard(m_slot[slot].type);
-            inst2->editConfiguration(cardCfg.get());
-        } else {
-            inst->editConfiguration(cardCfg.get());
-        }
+        UI_ConfigureCard(m_slot[slot].type, cardCfg.get());
     }
 }
 

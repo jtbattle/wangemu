@@ -245,15 +245,6 @@ IoCardDisk::setConfiguration(const CardCfgState &cfg) noexcept
 };
 
 
-// invoke correct GUI to edit config state
-void
-IoCardDisk::editConfiguration(CardCfgState *cfg)
-{
-    assert(cfg != nullptr);
-    UI_ConfigureCard(IoCard::card_t::disk, cfg);
-};
-
-
 // -----------------------------------------------------
 // operational
 // -----------------------------------------------------

@@ -27,7 +27,6 @@ public:
     std::vector<int> getAddresses() const override;
 
     void  setConfiguration(const CardCfgState &cfg) noexcept override;
-    void  editConfiguration(CardCfgState *cfg) override;
 
     void  reset(bool hard_reset=true) noexcept override;
     void  select() override;
