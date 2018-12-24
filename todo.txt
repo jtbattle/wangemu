@@ -2,13 +2,14 @@
 Emulator TODO list
 ============================================================================
 
-*) master list of priorities:
-   decide on a consistent set of naming conventions and stick to them
-      hey, code.txt already has one.  study it.
-   ... then review the priorities again
-
-c:\users\jim\documents\wang2200\wangemu\src\diskctrlcfgstate.cpp(24): warning C26456: Operator 'DiskCtrlCfgState::operator=' hides a non-virtual operator 'CardCfgState::operator=' (c.128).
-should that function be declared virtual in the base class?
+*) review coding convention
+   see coding_notes.txt
+   also,
+    - look for std::shared_ptr which really can be std::unique_ptr
+    - the MSVC C++ guidelines point out some cases where a routing
+      takes a shared_ptr but a raw pointer or reference really would
+      be the appropriate choice, as the subroutine's life cannot
+      exceed that of the caller.  Or maybe it is confused.  Check anyway.
 
 *) support more than one MXD (each with one terminal)
    - booting MVP 3.5, it gets to the loading BASIC-2 stage but hangs
@@ -31,15 +32,6 @@ should that function be declared virtual in the base class?
 
 *) notes on disk protocol and unimplemented commands:
     C:/Users/Jim/Documents/wang2200/disk_protocol/notes.txt
-
-*) review coding convention
-   see coding_notes.txt
-   also,
-    - look for std::shared_ptr which really can be std::unique_ptr
-    - the MSVC C++ guidelines point out some cases where a routing
-      takes a shared_ptr but a raw pointer or reference really would
-      be the appropriate choice, as the subroutine's life cannot
-      exceed that of the caller.  Or maybe it is confused.  Check anyway.
 
 *) do a memory leak check once in a while
 
@@ -184,42 +176,12 @@ should that function be declared virtual in the base class?
         LIST DCT/D10  ==  LIST DCR/310
         LIST DCT/D11  ==  LIST DCF/310
         LIST DCT/D20  ==  LIST DCR/320
-        LIST DCT/D21  ==  LIST DCF/320  ? hmm crashes emulator
+        LIST DCT/D21  ==  LIST DCF/320
 
-*) Document how to work around this problem in the README.
-
-   the printer config allows picking either LPT1 or LPT2 as the real printer
-   to stream to.  This doesn't work if the computer has a USB printer.
-   using "net use LPT1: \\JIM-860\HP-920 /PERSISTENT:YES" does map LPT1 to the
-   named network printer, but at least in my case, the printer doesn't model a
-   simple ASCII printer.  It apparently is expecting some HP protocol or
-   something.
-
-   This guy wrote a lib to allow querying which printers are available,
-   and returning properties about a given printer.
-      http://hdrlab.org.nz/projects/wxwidgets-projects/custom-print-dialog-toolkit/
-   It doesn't address the above point, it seems.
-
-    + Go to "Devices and Printers" control panel.
-    + select the "Add a printer" menu at the top.
-    + specify "Add a local printer"
-    + under "Use an existing port:", select the one corresponding to your USB printer
-      ("USB001" in my case); press "Next"
-    + it now asks to install the printer driver.  Under Manufacturer, pick "Generic".
-      Under Printers, pick "Generic / Text Only"; press "Next"
-    + select "use the driver that is currently installed" (at least, that is what I did);
-      press "Next"
-    + time to create a printer name.  I made mine "USB-ASCII"; press "Next"
-    + from a dos prompt, type
-        NET USE LPT2: \\<machine_name>\USB-ASCII /PERSISTENT:YES
-      it should reply "The command completed successfully"
-    + from the Wang 2200 emulator printer windows, select LPT2 as the real printer to
-      direct output to
-    + in my case, I had to do "SELECT LIST 015" to get the wang to put out a
-      line feed after each carriage return.  The 215 device just ends each line
-      with a CR and no LF.
-    + if the program ends without filling the last page, you may need to send a
-      HEX(0C) (page feed) to the printer to flush out the partial page.
+*) This guy wrote a lib to allow querying which printers are available,
+   and returning properties about a given printer:
+   http://hdrlab.org.nz/projects/wxwidgets-projects/custom-print-dialog-toolkit/
+   Perhaps it could make for a more friendly "configure real printer" interface
 
 *) update the website (and build notes) with directions on how to make
    the thing such that it doesn't have DLL dependencies.  What a mess.
@@ -230,7 +192,7 @@ should that function be declared virtual in the base class?
             /Program Files/Microsoft Visual Studio 9.0/VC/redist/x86
          to the top level emulator directory
    see
-    http://www.microsoft.com/communities/newsgroups/en-us/default.aspx?dg=microsoft.public.vstudio.general&tid=2d0b8055-3fe2-482b-9fb2-731eb51859ee&cat=&lang=en&cr=US&sloc=&p=1
+     http://www.microsoft.com/communities/newsgroups/en-us/default.aspx?dg=microsoft.public.vstudio.general&tid=2d0b8055-3fe2-482b-9fb2-731eb51859ee&cat=&lang=en&cr=US&sloc=&p=1
 
 ----------------------------------------------------------------------------
 small issues that it would be nice to figure out, but aren't release blockers

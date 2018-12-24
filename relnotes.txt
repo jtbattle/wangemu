@@ -23,7 +23,7 @@ and a number of peripherals:
     * configurable printer controller
 
 The emulator is primarily written under Windows 7, but it should also run
-under Windows Vista, Windows 8, and Windows 10 as well.  This emulator
+under Windows Vista, Windows 8, and Windows 10 as well. This emulator
 is untested under Windows XP and probably does not run.
 
 Due to the contribution of Paul Heller, the emulator runs natively on Mac
@@ -37,7 +37,7 @@ The emulator very well might run on Linux via Wine, but it hasn't been tested.
 
 *) Previously, Alt-R would do a hard reset of the emulator, and Alt-W would
    do a warm reset, which is analogous to pressing the RESET button on a
-   2200T terminal or the SHIFT-RESET key on a serial terminal.  To make it
+   2200T terminal or the SHIFT-RESET key on a serial terminal. To make it
    harder to accidentally hit this key, the mapping is now
        Shift-Alt-R --> hard reset
        Shift-Alt-W --> warm reset
@@ -50,7 +50,7 @@ The emulator very well might run on Linux via Wine, but it hasn't been tested.
 
    When not emulating a smart terminal, the host computer's TAB key maps
    to the Wang BASIC "NEXT STMT" key, which in Wang BASIC inserts the next
-   highest unused line number (rounded up to the next 10).  For smart
+   highest unused line number (rounded up to the next 10). For smart
    terminals, TAB maps to the TAB or FN key (depending if DW or DE terminal).
 
 *) It is now possible to run MVP OS's, but of course the system configuration
@@ -63,40 +63,40 @@ The emulator very well might run on Linux via Wine, but it hasn't been tested.
 
 *) Wang disk controllers supported "hog mode", where a given CPU could
    lock a disk drive for exclusive use, mostly to ensure atomic r/w
-   behavior.  Wangemu doesn't emulate multiple systems, so there is no
+   behavior. Wangemu doesn't emulate multiple systems, so there is no
    need to emulate a disk mux, but there is one facet which was missing.
    One method of triggering hog mode was to address the drive with the
-   high bit of the address set, eg /310 would become /390.  So now the
+   high bit of the address set, eg /310 would become /390. So now the
    emulator ignores the most significant I/O address bit when doing
    address decode, but no other aspect of hog mode is emulated.
 
 *) Some disk controllers supported more advanced commands than just the
-   basic read sector, write sector, verify sector.  In fact, a few of
-   them were implemented for "intelligent" disk controller mode.  Recently
+   basic read sector, write sector, verify sector. In fact, a few of
+   them were implemented for "intelligent" disk controller mode. Recently
    unearthed internal Wang documentation showed that the VERIFY_SECTORS
    command response contained a three byte sector address, not two bytes,
-   as was previously emulated.  However, I've had a hard time triggering
+   as was previously emulated. However, I've had a hard time triggering
    BASIC to actually use this feature, so it is really not yet tested.
 
 *) If the disk controller receives a channel command which is either not
    implemented or is unknown, a warning dialog will appear stating as much,
    but a given bad command byte will only trigger the warning once, to
-   keep from becoming intrusive.  Also, in accordance with the Wang internal
+   keep from becoming intrusive. Also, in accordance with the Wang internal
    documentation, a bad command byte is echoed back with all bits inverted
    so that the microcode can detect it and abort the command.
 
 *) The disk controller would assert if it received an unexpected value for
-   the first byte of the command sequence.  Because $GIO programs can send
+   the first byte of the command sequence. Because $GIO programs can send
    anything at all, the assert was removed and the other values get mapped
    to assume a VP or MVP host if the first byte isn't 0x00.
 
 *) the "Disk/New Disk..." disk factory allowed specifying DS-112, DS-140,
-   or DS-224 disk drive types.  These attempted to create disks with 65536
+   or DS-224 disk drive types. These attempted to create disks with 65536
    sectors/track, but this would cause an assertion, as 65535 is the maximum
    sector address which can be specified with a 16b number.
 
 *) The legal sizes of data RAM for 2200VP CPUs was wrong, and is now matches
-   what was historically accurate.  It used to be configuring a VP in the
+   what was historically accurate. It used to be configuring a VP in the
    emulator with 16 KB or 48 KB of RAM would trigger an assertion.
 
 ---- Minor Tweaks and Implementation Changes ----
@@ -112,9 +112,48 @@ The emulator very well might run on Linux via Wine, but it hasn't been tested.
 
 ---- Known Bugs ----
 
-*) The real 2200 cpus occasionally insert dummy microinstruction cycles
-   to performs memory refresh.  This isn't modeled in the emulator,
+*) The real 2200 CPUs occasionally insert dummy microinstruction cycles
+   to performs memory refresh. This isn't modeled in the emulator,
    so the emulator is about 3% faster than real-time.
 
-*) the pre-release is full of ugly code, incomplete features, and outright
-   bugs that are on the FIXME/TODO list
+*) The emulator allows redirecting the printer output to a real, physically
+   attached printer. The dialog offers two choices: LPT1 and LPT2.
+   Just about now PCs these days support parallel ports. The following
+   instructions are now to map a USB port to one of those logical printer
+   ports. However, these directions worked on one PC in particular, and
+   may need tweaking to get it to work for other systems (or maybe doesn't
+   work at all):
+
+   From a command prompt, use the command
+       NET USE LPT1: \\JIM-580\HP-920 /PERSISTENT:YES
+   to map LPT1 to the named network printer. "JIM-580" is the network name
+   of my PC, and "HP-920" is the name of the attached USB printer.
+   Obviously change those for your situation.
+
+   However, this doesn't quite work because the emulator will send a
+   simple stream of ASCII characters as if it was talking to a dumb printer,
+   but the USB printer expects to receive some higher level (HP?) protocol.
+   The next part tells the PC to map it to whatever the printer is expecting.
+
+    + Go to "Devices and Printers" control panel.
+    + Select the "Add a printer" menu at the top.
+    + Specify "Add a local printer"
+    + Under "Use an existing port:", select the one corresponding to your USB
+      printer ("USB001" in my case); press "Next"
+    + It now asks to install the printer driver. Under Manufacturer, pick
+      "Generic". Under Printers, pick "Generic / Text Only"; press "Next"
+    + Select "use the driver that is currently installed"
+      (at least, that is what I did); press "Next"
+    + Time to create a printer name. I made mine "USB-ASCII"; press "Next"
+    + From a dos prompt, type
+        NET USE LPT2: \\<machine_name>\USB-ASCII /PERSISTENT:YES
+      It should reply "The command completed successfully".
+    + From the Wang 2200 emulator printer windows, select LPT2 as the real
+      printer to direct output to.
+    + In my case, I had to do "SELECT LIST 015" to get the Wang to put out a
+      line feed after each carriage return. The 215 device just ends each line
+      with a CR and no LF.
+    + If the program ends without filling the last page, you may need to send a
+      HEX(0C) (page feed) to the printer to flush out the partial page.
+
+
