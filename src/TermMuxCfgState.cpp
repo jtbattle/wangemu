@@ -45,7 +45,7 @@ TermMuxCfgState::TermMuxCfgState(const TermMuxCfgState &obj) noexcept
 
 // equality comparison
 bool
-TermMuxCfgState::operator==(const CardCfgState &rhs) const
+TermMuxCfgState::operator==(const CardCfgState &rhs) const noexcept
 {
     const TermMuxCfgState rrhs(dynamic_cast<const TermMuxCfgState&>(rhs));
 
@@ -56,7 +56,7 @@ TermMuxCfgState::operator==(const CardCfgState &rhs) const
 }
 
 bool
-TermMuxCfgState::operator!=(const CardCfgState &rhs) const
+TermMuxCfgState::operator!=(const CardCfgState &rhs) const noexcept
 {
     return !(*this == rhs);
 }
@@ -64,7 +64,7 @@ TermMuxCfgState::operator!=(const CardCfgState &rhs) const
 
 // establish a reasonable default state on a newly minted card
 void
-TermMuxCfgState::setDefaults()
+TermMuxCfgState::setDefaults() noexcept
 {
     setNumTerminals(1);
 }
@@ -75,7 +75,7 @@ void
 TermMuxCfgState::loadIni(const std::string &subgroup)
 {
     int ival;
-    (void)host::ConfigReadInt(subgroup, "numTerminals", &ival, 1);
+    host::ConfigReadInt(subgroup, "numTerminals", &ival, 1);
     if (ival < 1 || ival > 4) {
         UI_Warn("config state messed up -- assuming something reasonable");
         ival = 1;

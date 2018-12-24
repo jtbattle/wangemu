@@ -49,7 +49,7 @@ getConfigFileLocations()
     for (int i=0; i<host::FILEREQ_NUM; i++) {
 
         subgroup = iniGroup[i];
-        long v;
+        long v = 0;
 
         b = host::ConfigReadStr(subgroup, "directory", &foo);
         fileDir[i] = (b) ? foo : ".";
@@ -257,12 +257,10 @@ int
 host::fileReq(int requestor, std::string title, int readonly, std::string *fullpath)
 {
     assert(fullpath != nullptr);
-    int style;
-
     assert(requestor >= 0 && requestor < FILEREQ_NUM);
 
-    style = (readonly) ? (wxFD_OPEN | wxFD_FILE_MUST_EXIST)
-                       : (wxFD_SAVE | wxFD_OVERWRITE_PROMPT);
+    const int style = (readonly) ? (wxFD_OPEN | wxFD_FILE_MUST_EXIST)
+                                 : (wxFD_SAVE | wxFD_OVERWRITE_PROMPT);
 
     // get the name of a file to execute
     wxFileDialog dialog(
@@ -308,7 +306,7 @@ std::string
 host::asAbsolutePath(const std::string &name)
 {
     wxFileName fn(name);
-    (void)fn.MakeAbsolute();
+    fn.MakeAbsolute();
     std::string rv(fn.GetFullPath());
     return rv;
 }
@@ -364,7 +362,7 @@ host::ConfigReadBool(const std::string &subgroup,
                      const bool defaultval)
 {
     assert(val != nullptr);
-    int v;
+    int v = 0;
     const bool b = ConfigReadInt(subgroup, key, &v, ((defaultval) ? 1:0));
     if (b && (v >= 0) && (v <= 1)) {
         *val = (v==1);
@@ -385,7 +383,7 @@ host::ConfigReadBool(const std::string &subgroup,
 void
 host::ConfigReadWinGeom(wxWindow *wxwin,
                         const std::string &subgroup,
-                        wxRect *default_geom,
+                        wxRect * const default_geom,
                         bool client_size)
 {
     long x=0, y=0, w=0, h=0;    // just for lint
@@ -519,7 +517,7 @@ host::ConfigWriteWinGeom(wxWindow *wxwin,
 
 // return the time in milliseconds as a 64b signed integer
 int64
-host::getTimeMs(void)
+host::getTimeMs()
 {
     // newer api should provide more accurate measurement of time
     // NB: wxLongLong can't be mapped directly to "long long" type,

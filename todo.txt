@@ -7,6 +7,9 @@ Emulator TODO list
       hey, code.txt already has one.  study it.
    ... then review the priorities again
 
+c:\users\jim\documents\wang2200\wangemu\src\diskctrlcfgstate.cpp(24): warning C26456: Operator 'DiskCtrlCfgState::operator=' hides a non-virtual operator 'CardCfgState::operator=' (c.128).
+should that function be declared virtual in the base class?
+
 *) support more than one MXD (each with one terminal)
    - booting MVP 3.5, it gets to the loading BASIC-2 stage but hangs
      dumped debug_termmux_io_{dual,single}.log

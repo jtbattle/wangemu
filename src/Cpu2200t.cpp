@@ -609,8 +609,7 @@ Cpu2200t::set_st1(uint4 value)
 
 
 // store the 4b value to the place selected by the C field.
-// return a flag if the op is illegal.
-int
+void
 Cpu2200t::store_C_operand(uint32 uop, uint4 value)
 {
     const int xbit  = ((uop >> 14) & 0x1);
@@ -618,7 +617,7 @@ Cpu2200t::store_C_operand(uint32 uop, uint4 value)
 
     if (field < 8) {
         m_cpu.reg[field] = value;
-        return 0;       // legal
+        return;  // legal
     }
 
     if (xbit) {
@@ -637,9 +636,9 @@ Cpu2200t::store_C_operand(uint32 uop, uint4 value)
             case 10: m_cpu.pc  = static_cast<uint16>((m_cpu.pc & 0xFF0F) | (value <<  4)); break; // PC2
             case 11: m_cpu.pc  = static_cast<uint16>((m_cpu.pc & 0xF0FF) | (value <<  8)); break; // PC3
             case 12: m_cpu.pc  = static_cast<uint16>((m_cpu.pc & 0x0FFF) | (value << 12)); break; // PC4
-            case 13: return 1;  // illegal
-            case 14: return 1;  // illegal
-            case 15: break;     // dummy destination
+            case 13: return;  // illegal
+            case 14: return;  // illegal
+            case 15: break;   // dummy destination
         }
     } else {
         switch (field) {
@@ -648,13 +647,13 @@ Cpu2200t::store_C_operand(uint32 uop, uint4 value)
             case 10: set_st1(value); break;
             case 11: m_cpu.st2 = value; break;
             case 12: m_cpu.pc  = static_cast<uint16>((m_cpu.pc & 0xFFF0) | (value << 0)); break; // PC1
-            case 13: return 1;  // illegal
-            case 14: return 1;  // illegal
-            case 15: break;     // dummy destination
+            case 13: return;  // illegal
+            case 14: return;  // illegal
+            case 15: break;   // dummy destination
         }
     }
 
-    return 0;   // legal
+    return;   // legal
 }
 
 
@@ -791,13 +790,13 @@ Cpu2200t::Cpu2200t(std::shared_ptr<Scheduler> scheduler,
         char buff[200];
         uint16 pc;
         for (pc=0x0000; pc<m_ucode_size; pc++) {
-            (void)dasm_one(buff, pc, m_ucode[pc].ucode & 0x000FFFFF);
+            dasm_one(buff, pc, m_ucode[pc].ucode & 0x000FFFFF);
             dbglog(buff);
         }
         if (m_cpuType == CPUTYPE_2200B) {
             // disassemble the patch ROM
             for (pc=0x7E00; pc<0x7E00+UCODE_WORDS_2200BX; pc++) {
-                (void)dasm_one(buff, pc, m_ucode[pc].ucode & 0x000FFFFF);
+                dasm_one(buff, pc, m_ucode[pc].ucode & 0x000FFFFF);
                 dbglog(buff);
             }
         }
@@ -1066,7 +1065,7 @@ Cpu2200t::execOneOp()
     case OP_ILLEGAL:
         {
             char buff[200];
-            (void)dasm_one(&buff[0], m_cpu.ic, m_ucode[m_cpu.ic].ucode);
+            dasm_one(&buff[0], m_cpu.ic, m_ucode[m_cpu.ic].ucode);
             UI_Error("%s\nIllegal op at ic=%04X", &buff[0], m_cpu.ic);
         }
         m_status = CPU_HALTED;
@@ -1077,7 +1076,7 @@ Cpu2200t::execOneOp()
     case OP_OR:
         rslt = static_cast<uint8>(a_op | b_op);
         decode_M_field(uop, static_cast<uint4>(rslt));
-        (void)store_C_operand(uop, static_cast<uint4>(rslt));
+        store_C_operand(uop, static_cast<uint4>(rslt));
         NIBBLE_INC(m_cpu.pc, pcinc);
         // TODO: what happens if store_C_operand() twiddles pc
         //       AND the pc increment is non-zero?
@@ -1090,7 +1089,7 @@ Cpu2200t::execOneOp()
     case OP_XOR:
         rslt = static_cast<uint8>(a_op ^ b_op);
         decode_M_field(uop, static_cast<uint4>(rslt));
-        (void)store_C_operand(uop, static_cast<uint4>(rslt));
+        store_C_operand(uop, static_cast<uint4>(rslt));
         NIBBLE_INC(m_cpu.pc, pcinc);
         m_cpu.ic++;
         break;
@@ -1098,7 +1097,7 @@ Cpu2200t::execOneOp()
     case OP_AND:
         rslt = static_cast<uint8>(a_op & b_op);
         decode_M_field(uop, static_cast<uint4>(rslt));
-        (void)store_C_operand(uop, static_cast<uint4>(rslt));
+        store_C_operand(uop, static_cast<uint4>(rslt));
         NIBBLE_INC(m_cpu.pc, pcinc);
         m_cpu.ic++;
         break;
@@ -1108,7 +1107,7 @@ Cpu2200t::execOneOp()
         SET_CARRY(rslt);
         rslt &= 0xF;
         decode_M_field(uop, static_cast<uint4>(rslt));
-        (void)store_C_operand(uop, static_cast<uint4>(rslt));
+        store_C_operand(uop, static_cast<uint4>(rslt));
         NIBBLE_INC(m_cpu.pc, pcinc);
         m_cpu.ic++;
         break;
@@ -1117,7 +1116,7 @@ Cpu2200t::execOneOp()
         rslt  = static_cast<uint8>(a_op + b_op);
         rslt &= 0xF;
         decode_M_field(uop, static_cast<uint4>(rslt));
-        (void)store_C_operand(uop, static_cast<uint4>(rslt));
+        store_C_operand(uop, static_cast<uint4>(rslt));
         NIBBLE_INC(m_cpu.pc, pcinc);
         m_cpu.ic++;
         break;
@@ -1127,7 +1126,7 @@ Cpu2200t::execOneOp()
         SET_CARRY(rslt);
         rslt &= 0xF;
         decode_M_field(uop, static_cast<uint4>(rslt));
-        (void)store_C_operand(uop, static_cast<uint4>(rslt));
+        store_C_operand(uop, static_cast<uint4>(rslt));
         NIBBLE_INC(m_cpu.pc, pcinc);
         m_cpu.ic++;
         break;
@@ -1136,7 +1135,7 @@ Cpu2200t::execOneOp()
         rslt  = decimal_add(a_op, b_op, 0);
         rslt &= 0xF;
         decode_M_field(uop, static_cast<uint4>(rslt));
-        (void)store_C_operand(uop, static_cast<uint4>(rslt));
+        store_C_operand(uop, static_cast<uint4>(rslt));
         NIBBLE_INC(m_cpu.pc, pcinc);
         m_cpu.ic++;
         break;
@@ -1146,7 +1145,7 @@ Cpu2200t::execOneOp()
         SET_CARRY(rslt);
         rslt &= 0xF;
         decode_M_field(uop, static_cast<uint4>(rslt));
-        (void)store_C_operand(uop, static_cast<uint4>(rslt));
+        store_C_operand(uop, static_cast<uint4>(rslt));
         NIBBLE_INC(m_cpu.pc, pcinc);
         m_cpu.ic++;
         break;
@@ -1155,7 +1154,7 @@ Cpu2200t::execOneOp()
         a_op  = IMM4(uop);
         rslt  = static_cast<uint8>(a_op | b_op);
         decode_M_field(uop, static_cast<uint4>(rslt));
-        (void)store_C_operand(uop, static_cast<uint4>(rslt));
+        store_C_operand(uop, static_cast<uint4>(rslt));
         m_cpu.ic++;
         break;
 
@@ -1163,7 +1162,7 @@ Cpu2200t::execOneOp()
         a_op  = IMM4(uop);
         rslt  = static_cast<uint8>(a_op ^ b_op);
         decode_M_field(uop, static_cast<uint4>(rslt));
-        (void)store_C_operand(uop, static_cast<uint4>(rslt));
+        store_C_operand(uop, static_cast<uint4>(rslt));
         m_cpu.ic++;
         break;
 
@@ -1171,7 +1170,7 @@ Cpu2200t::execOneOp()
         a_op  = IMM4(uop);
         rslt  = static_cast<uint8>(a_op & b_op);
         decode_M_field(uop, static_cast<uint4>(rslt));
-        (void)store_C_operand(uop, static_cast<uint4>(rslt));
+        store_C_operand(uop, static_cast<uint4>(rslt));
         m_cpu.ic++;
         break;
 
@@ -1180,7 +1179,7 @@ Cpu2200t::execOneOp()
         rslt  = static_cast<uint8>(a_op + b_op);
         rslt &= 0xF;
         decode_M_field(uop, static_cast<uint4>(rslt));
-        (void)store_C_operand(uop, static_cast<uint4>(rslt));
+        store_C_operand(uop, static_cast<uint4>(rslt));
         m_cpu.ic++;
         break;
 
@@ -1190,7 +1189,7 @@ Cpu2200t::execOneOp()
         SET_CARRY(rslt);
         rslt &= 0xF;
         decode_M_field(uop, static_cast<uint4>(rslt));
-        (void)store_C_operand(uop, static_cast<uint4>(rslt));
+        store_C_operand(uop, static_cast<uint4>(rslt));
         m_cpu.ic++;
         break;
 
@@ -1199,7 +1198,7 @@ Cpu2200t::execOneOp()
         rslt  = decimal_add(a_op, b_op, 0);
         rslt &= 0xF;
         decode_M_field(uop, static_cast<uint4>(rslt));
-        (void)store_C_operand(uop, static_cast<uint4>(rslt));
+        store_C_operand(uop, static_cast<uint4>(rslt));
         m_cpu.ic++;
         break;
 
@@ -1209,7 +1208,7 @@ Cpu2200t::execOneOp()
         SET_CARRY(rslt);
         rslt &= 0xF;
         decode_M_field(uop, static_cast<uint4>(rslt));
-        (void)store_C_operand(uop, static_cast<uint4>(rslt));
+        store_C_operand(uop, static_cast<uint4>(rslt));
         m_cpu.ic++;
         break;
 

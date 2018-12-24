@@ -270,7 +270,7 @@ IoCardDisk::reset(bool hard_reset)
         stopMotor(drive);
     }
 
-    (void)advanceState(EVENT_RESET);
+    advanceState(EVENT_RESET);
     m_host_type = -1;
 
     hard_reset = hard_reset;    // silence lint
@@ -319,7 +319,7 @@ IoCardDisk::OBS(int val)
         dbglog("disk OBS(AB=0x%02x): byte=0x%02x\n", m_cpu->getAB(), val8);
     }
 
-    (void)advanceState(EVENT_OBS, val8);
+    advanceState(EVENT_OBS, val8);
     m_cpu->setDevRdy(!m_card_busy);
 }
 
@@ -1039,7 +1039,7 @@ IoCardDisk::iwvdInsertDisk(int drive,
                 "or click \"Yes\" below to automatically clear these bits.",
                 &disk_loc[0]);
             if (do_it) {
-                (void)diskHasBit15Problem(m_d[drive].wvd.get(), true);
+                diskHasBit15Problem(m_d[drive].wvd.get(), true);
             }
         }
     }

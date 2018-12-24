@@ -7,4 +7,7 @@
     <libraries>
         <library>wxwidgets</library>
     </libraries>
+    <suppressions>
+        <suppression>selfAssignment</suppression>
+    </suppressions>
 </project>

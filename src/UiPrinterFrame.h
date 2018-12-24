@@ -28,11 +28,11 @@ public:
     static void getGlobalDefaults();
 
     // translation of papersize (wxPaperSize) enum
-    wxPaperSize PaperSize(std::string papersizename);
+    wxPaperSize PaperSize(const std::string &papersizename);
     std::string PaperSize(wxPaperSize papersizeval) const;
 
     // translation of paperbin (wxPrintBin) enum
-    wxPrintBin PaperBin(std::string paperbinname) const noexcept;
+    wxPrintBin PaperBin(const std::string &paperbinname) const noexcept;
     std::string PaperBin(wxPrintBin paperbinval) const noexcept;
 
     // emit a character to the display

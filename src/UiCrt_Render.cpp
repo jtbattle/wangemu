@@ -440,7 +440,7 @@ Crt::generateFontmap()
 
                     for (int bmr=0; bmr<11; ++bmr) {  // bitmap row
 
-                        int pixrow;
+                        int pixrow = 0;
                         if (alt && (ch >= 0x40)) {
                             // alt character set, w/block graphics
                             // hardware maps it this way, so we do too
@@ -689,7 +689,7 @@ Crt::generateScreenOverlay(wxMemoryDC &memDC)
                         ? intensityToColor(0.6f)
                         : intensityToColor(1.0f);
     wxPen pen(fg, 1, wxPENSTYLE_USER_DASH);
-    wxDash dashpat[2];
+    wxDash dashpat[2] = {1, 1};
     if (m_charcell_sx == 1) {
         // rather than 1 on, 1 off, this looks like a solid line
         // but I can't find a work around to make it look right

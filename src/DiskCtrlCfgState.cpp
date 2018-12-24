@@ -52,7 +52,7 @@ DiskCtrlCfgState::DiskCtrlCfgState(const DiskCtrlCfgState &obj) noexcept
 
 // equality comparison
 bool
-DiskCtrlCfgState::operator==(const CardCfgState &rhs) const
+DiskCtrlCfgState::operator==(const CardCfgState &rhs) const noexcept
 {
     const DiskCtrlCfgState rrhs(dynamic_cast<const DiskCtrlCfgState&>(rhs));
 
@@ -65,7 +65,7 @@ DiskCtrlCfgState::operator==(const CardCfgState &rhs) const
 }
 
 bool
-DiskCtrlCfgState::operator!=(const CardCfgState &rhs) const
+DiskCtrlCfgState::operator!=(const CardCfgState &rhs) const noexcept
 {
     return !(*this == rhs);
 }
@@ -73,7 +73,7 @@ DiskCtrlCfgState::operator!=(const CardCfgState &rhs) const
 
 // establish a reasonable default state on a newly minted card
 void
-DiskCtrlCfgState::setDefaults()
+DiskCtrlCfgState::setDefaults() noexcept
 {
     setNumDrives(2);
     setIntelligence(DISK_CTRL_INTELLIGENT);
@@ -86,7 +86,7 @@ void
 DiskCtrlCfgState::loadIni(const std::string &subgroup)
 {
     int ival;
-    (void)host::ConfigReadInt(subgroup, "numDrives", &ival, 2);
+    host::ConfigReadInt(subgroup, "numDrives", &ival, 2);
     if (ival < 1 || ival > 4) {
         UI_Warn("config state messed up -- assuming something reasonable");
         ival = 2;

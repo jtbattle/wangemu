@@ -952,7 +952,7 @@ system2200::kb_scriptModeActive(int io_addr, int term_num)
 
 // return how many terminals at this io_addr have active scripts
 int
-system2200::kb_scriptActiveCount(int io_addr)
+system2200::kb_scriptActiveCount(int io_addr) noexcept
 {
     int count = 0;
     for (auto &kb : m_kb_routes) {
@@ -1082,7 +1082,7 @@ system2200::getInstFromSlot(int slot) noexcept
 // find slot number of disk controller #n.
 // returns true if successful.
 bool
-system2200::findDiskController(const int n, int *slot)
+system2200::findDiskController(const int n, int *slot) noexcept
 {
     const int num_ioslots = NUM_IOSLOTS;
     int numfound = 0;

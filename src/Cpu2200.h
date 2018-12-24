@@ -109,7 +109,7 @@ private:
 
     // store the 4b value to the place selected by the C field.
     // return a flag if the op is illegal.
-    int store_C_operand(uint32 uop, uint4 value);
+    void store_C_operand(uint32 uop, uint4 value);
 
     // add two BCD nibbles
     uint8 decimal_add(uint4 a_op, uint4 b_op, int ci) const noexcept;
@@ -281,8 +281,8 @@ private:
 };
 
 // microcode disassembly utilities
-bool dasm_one   (char *buff, uint16 ic, uint32 ucode);
-bool dasm_one_vp(char *buff, uint16 ic, uint32 ucode);
+bool dasm_one   (char *buff, uint16 ic, uint32 ucode) noexcept;
+bool dasm_one_vp(char *buff, uint16 ic, uint32 ucode) noexcept;
 
 #endif _INCLUDE_CPU2200_H_
 

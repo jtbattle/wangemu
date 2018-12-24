@@ -319,6 +319,7 @@ UI_displayInit(const int screen_type, const int io_addr, const int term_num,
     }
 
     // Create the main application window
+// FIXME: return a unique_ptr<CrtFrame> instead
     CrtFrame *crtptr = new CrtFrame(title, io_addr, term_num, crt_state);
     assert(crtptr != nullptr);
     return crtptr;

@@ -429,9 +429,9 @@ Terminal::scr_scroll() noexcept
     uint8 *d2 = d + m_disp.chars_w*(m_disp.chars_h2-1);  // first char of last row
 
     // scroll up the data
-    (void)memcpy(d, s, (m_disp.chars_h2-1)*m_disp.chars_w);
+    memcpy(d, s, (m_disp.chars_h2-1)*m_disp.chars_w);
     // blank the last line
-    (void)memset(d2, ' ', m_disp.chars_w);
+    memset(d2, ' ', m_disp.chars_w);
 
     // cake care of the attribute plane
     if (m_disp.screen_type == UI_SCREEN_2236DE) {
@@ -441,9 +441,9 @@ Terminal::scr_scroll() noexcept
         const uint8 attr_fill = 0;
 
         // scroll up the data
-        (void)memcpy(d, s, (m_disp.chars_h2-1)*m_disp.chars_w);
+        memcpy(d, s, (m_disp.chars_h2-1)*m_disp.chars_w);
         // blank the last line
-        (void)memset(d2, attr_fill, m_disp.chars_w);
+        memset(d2, attr_fill, m_disp.chars_w);
     }
 }
 
@@ -472,7 +472,7 @@ Terminal::processChar(uint8 byte)
     }
 
     if (do_debug) {
-        char ch = (0x20 <= byte && byte <= 0x7E) ? byte : '.';
+        const char ch = (0x20 <= byte && byte <= 0x7E) ? byte : '.';
         dbglog("Terminal::processChar(0x%02x/%c), m_raw_cnt=%d\n", byte, ch, m_raw_cnt);
     }
 
@@ -621,7 +621,7 @@ Terminal::processCrtChar1(uint8 byte)
     // where nn is the repetition count, and cc is the character
     if (m_raw_cnt == 3) {
         if (do_debug) {
-            char ch = (0x20 <= m_raw_buf[2] && m_raw_buf[2] <= 0x7E) ? m_raw_buf[2] : '.';
+            const char ch = (0x20 <= m_raw_buf[2] && m_raw_buf[2] <= 0x7E) ? m_raw_buf[2] : '.';
             dbglog("Decompress run: cnt=%d, chr=0x%02x/%c\n", m_raw_buf[1], m_raw_buf[2], ch);
         }
         for (int i=0; i<m_raw_buf[1]; i++) {

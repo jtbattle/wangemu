@@ -184,7 +184,7 @@ CrtStatusBar::CrtStatusBar(CrtFrame *parent,
 
         // gather info about this controller
         int slot;
-        (void)system2200::findDiskController(ctrl, &slot); // where is it plugged in?
+        system2200::findDiskController(ctrl, &slot); // where is it plugged in?
         int io;
         bool ok = system2200::getSlotInfo(slot, nullptr, &io);  // address it is mapped to
         assert(ok); ok = ok;
@@ -476,13 +476,13 @@ CrtStatusBar::OnDiskButton(wxMouseEvent &event)
     } else if (right_click && !drive_occupied) {
         wxMenu menu;
         menu.Append(Disk_Popup_Insert, "&Insert disk", "insert a virtual disk");
-        (void)PopupMenu(&menu);
+        PopupMenu(&menu);
     } else if (right_click &&  drive_occupied) {
         wxMenu menu;
         menu.Append(Disk_Popup_Eject,   "&Eject",   "eject the current disk");
         menu.Append(Disk_Popup_Inspect, "&Inspect", "inspect the disk contents");
         menu.Append(Disk_Popup_Format,  "&Format",  "reformat the disk");
-        (void)PopupMenu(&menu);
+        PopupMenu(&menu);
     } else {
         assert(false);
         return;

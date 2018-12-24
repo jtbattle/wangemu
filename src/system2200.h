@@ -91,7 +91,7 @@ namespace system2200
     bool kb_scriptModeActive(int io_addr, int term_num);
 
     // return how many terminals at this io_addr have active scripts
-    int kb_scriptActiveCount(int io_addr);
+    int kb_scriptActiveCount(int io_addr) noexcept;
 
     // when invoked on a terminal in script mode, causes key callback to be
     // invoked with the next character from the script.  it returns true if
@@ -121,7 +121,7 @@ namespace system2200
 
     // find slot number of disk controller #n (starting with 0).
     // returns true if successful.
-    bool findDiskController(const int n, int *slot);
+    bool findDiskController(const int n, int *slot) noexcept;
 
     // find slot,drive of any disk controller with disk matching name.
     // returns true if successful.

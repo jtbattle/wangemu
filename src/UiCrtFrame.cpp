@@ -894,7 +894,7 @@ CrtFrame::getDefaults()
     host::ConfigReadInt(subgroup, "brightness", &v, 0);
     m_crt->setDisplayBrightness(v);
 
-    (void)host::ConfigReadInt(subgroup, "colorscheme", &v, 0);
+    host::ConfigReadInt(subgroup, "colorscheme", &v, 0);
     if ((v >= 0) && (v < num_colorschemes)) {
         setDisplayColorScheme(v);
     } else {
@@ -907,7 +907,7 @@ CrtFrame::getDefaults()
     if (b && ((v >=1 && v <= 3) || (v >= 8 && v <= 28))) {
         m_fontsize[0] = v;
     }
-    (void)host::ConfigReadInt(subgroup, "fontsize2", &v);
+    host::ConfigReadInt(subgroup, "fontsize2", &v);
     if (b && ((v >=1 && v <= 3) || (v >= 8 && v <= 28))) {
         m_fontsize[1] = v;
     }

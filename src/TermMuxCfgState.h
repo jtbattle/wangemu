@@ -17,11 +17,11 @@ public:
     // ------------ common CardCfgState interface ------------
     // See CardCfgState.h for the use of these functions.
 
-    void setDefaults() override;
+    void setDefaults() noexcept override;
     void loadIni(const std::string &subgroup) override;
     void saveIni(const std::string &subgroup) const override;
-    bool operator==(const CardCfgState &rhs) const override;
-    bool operator!=(const CardCfgState &rhs) const override;
+    bool operator==(const CardCfgState &rhs) const noexcept override;
+    bool operator!=(const CardCfgState &rhs) const noexcept override;
     std::shared_ptr<CardCfgState> clone() const override;
     bool configOk(bool warn) const noexcept override;
     bool needsReboot(const CardCfgState &other) const noexcept override;

@@ -453,7 +453,7 @@ PrinterFrame::getDefaults()
 
 // translate a character pagesize to the appropriate enum value for wxPaperSize
 wxPaperSize
-PrinterFrame::PaperSize(std::string pagesizename)
+PrinterFrame::PaperSize(const std::string &pagesizename)
 {
     // translate char to wxPaperSize
 #if USEMYPAPER
@@ -489,7 +489,7 @@ PrinterFrame::PaperSize(wxPaperSize papersizeval) const
 
 // translate a character pagesize to the appropriate enum value for wxPaperSize
 wxPrintBin
-PrinterFrame::PaperBin(std::string paperbinname) const noexcept
+PrinterFrame::PaperBin(const std::string &paperbinname) const noexcept
 {
     // translate char to wxPrintBin
     for (int i=0; i< PBMAX; i++) {
@@ -587,6 +587,8 @@ PrinterFrame::OnPrintPreview(wxCommandEvent& WXUNUSED(event))
 
 #if 1
     // works in 2.5.4 and subsequent releases
+// FIXME: Connect() has been superceded by Bind()
+//        "and is better in every way" according to VZ
     frame->Connect(wxID_ANY, wxEVT_CLOSE_WINDOW,
                    wxCloseEventHandler(PrinterFrame::PP_OnClose));
 
@@ -700,7 +702,7 @@ PrinterFrame::OnPageSetup(wxCommandEvent& WXUNUSED(event))
 void
 PrinterFrame::OnFontSize(wxCommandEvent &event)
 {
-    int size;
+    int size = 12;
     switch (event.GetId()) {
         case Display_FontSize8:  size =  8; break;
         case Display_FontSize10: size = 10; break;

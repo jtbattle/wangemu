@@ -826,7 +826,7 @@ Cpu2200vp::Cpu2200vp(std::shared_ptr<Scheduler> scheduler,
         char buff[200];
         uint16 pc;
         for (pc=0x8000; pc<0x8400; pc++) {
-            (void)dasm_one_vp(buff, pc, m_ucode[pc].ucode);
+            dasm_one_vp(buff, pc, m_ucode[pc].ucode);
             dbglog(buff);
         }
     }
@@ -990,14 +990,14 @@ Cpu2200vp::execOneOp()
     int idx;
     uint16 tmp16;
 
-#if 1 && defined(_DEBUG)
+#if defined(_DEBUG)
     static int g_num_ops = 0;
     if (g_dbg_trace) {
         g_num_ops++;
         char buff[200];
         dump_state(true);
-        bool illegal = dasm_one_vp(buff, m_cpu.ic, m_ucode[m_cpu.ic].ucode);
-        dbglog("cycle %5d: %s", g_num_ops, buff);
+        /*bool illegal =*/ dasm_one_vp(&buff[0], m_cpu.ic, m_ucode[m_cpu.ic].ucode);
+        dbglog("cycle %5d: %s", g_num_ops, &buff[0]);
     }
 #endif
 
@@ -1183,7 +1183,7 @@ Cpu2200vp::execOneOp()
     case OP_ILLEGAL:
         {
             char buff[200];
-            (void)dasm_one_vp(&buff[0], m_cpu.ic, m_ucode[m_cpu.ic].ucode);
+            dasm_one_vp(&buff[0], m_cpu.ic, m_ucode[m_cpu.ic].ucode);
             UI_Error("%s\nIllegal op at ic=%04X", &buff[0], m_cpu.ic);
         }
         m_status = CPU_HALTED;
@@ -1208,7 +1208,7 @@ Cpu2200vp::execOneOp()
     case OP_TPA:
         perform_dd_op(uop, b_op);
         idx = (uop >> 4) & 0x1F;
-        m_cpu.aux[idx] = static_cast<uint16>(m_cpu.pc + (int16)puop->p16);
+        m_cpu.aux[idx] = static_cast<uint16>(m_cpu.pc + static_cast<int16>(puop->p16));
         m_cpu.ic++;
         break;
 
@@ -1216,14 +1216,14 @@ Cpu2200vp::execOneOp()
         perform_dd_op(uop, b_op);
         idx = (uop >> 4) & 0x1F;
         tmp16 = m_cpu.aux[idx];
-        m_cpu.aux[idx] = static_cast<uint16>(m_cpu.pc + (int16)puop->p16);
+        m_cpu.aux[idx] = static_cast<uint16>(m_cpu.pc + static_cast<int16>(puop->p16));
         m_cpu.pc = tmp16;
         m_cpu.ic++;
         break;
 
     case OP_TPS:
         perform_dd_op(uop, b_op);
-        m_cpu.icstack[m_cpu.icsp] = static_cast<uint16>(m_cpu.pc + (int16)puop->p16);
+        m_cpu.icstack[m_cpu.icsp] = static_cast<uint16>(m_cpu.pc + static_cast<int16>(puop->p16));
         DEC_ICSP;
         m_cpu.ic++;
         break;
@@ -1635,7 +1635,7 @@ Cpu2200vp::execOneOp()
         break;
 
     case OP_BLER:       // BLER: branch if R[AAAA] <= R[BBBB]
-        m_cpu.pc = static_cast<uint16>(m_cpu.pc + (int8)(puop->p8));
+        m_cpu.pc = static_cast<uint16>(m_cpu.pc + static_cast<int8>(puop->p8));
         if (a_op <= b_op) { m_cpu.ic = puop->p16; }
                      else { m_cpu.ic++; }
         break;
@@ -1651,13 +1651,13 @@ Cpu2200vp::execOneOp()
     case OP_BER:        // BEQ: branch if R[AAAA] == R[BBBB]
         if (a_op == b_op) { m_cpu.ic = puop->p16; }
                      else { m_cpu.ic++; }
-        m_cpu.pc = static_cast<uint16>(m_cpu.pc + (int8)(puop->p8));
+        m_cpu.pc = static_cast<uint16>(m_cpu.pc + static_cast<int8>(puop->p8));
         break;
 
     case OP_BNR:        // BNE: branch if R[AAAA] != R[BBBB]
         if (a_op != b_op) { m_cpu.ic = puop->p16; }
                      else { m_cpu.ic++; }
-        m_cpu.pc = static_cast<uint16>(m_cpu.pc + (int8)(puop->p8));
+        m_cpu.pc = static_cast<uint16>(m_cpu.pc + static_cast<int8>(puop->p8));
         break;
 
     case OP_SB:         // subroutine call
@@ -1712,7 +1712,7 @@ Cpu2200vp::dump_ram(const std::string &filename)
     ofs << "===============================================" << std::endl << std::endl;
     for (int addr=0; addr<0x8000; addr++) {
         char buff[200];
-        (void)dasm_one_vp(buff, addr, m_ucode[addr].ucode);
+        dasm_one_vp(buff, addr, m_ucode[addr].ucode);
         ofs << buff;
     }
 

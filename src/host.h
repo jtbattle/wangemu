@@ -82,7 +82,7 @@ namespace host
     // with is of the window or the client.
     void ConfigReadWinGeom(wxWindow          *wxwin,
                            const std::string &subgroup,
-                           wxRect            *default_geom = nullptr,
+                           wxRect * const     default_geom = nullptr,
                            bool               client_size = true);
 
     void ConfigWriteWinGeom(wxWindow          *wxwin,
@@ -92,7 +92,7 @@ namespace host
     // ---- time functions ----
 
     // return the time in milliseconds as a 64b signed integer
-    int64 getTimeMs(void);
+    int64 getTimeMs();
 
     // go to sleep for approximately ms milliseconds before returning
     void sleep(unsigned int ms);

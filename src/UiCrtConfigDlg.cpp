@@ -127,6 +127,7 @@ CrtConfigDlg::OnFontChoice(wxCommandEvent &event)
 {
     const int size = reinterpret_cast<int>(event.GetClientData());
     CrtFrame *pp = wxStaticCast(GetParent(), CrtFrame);
+    assert(pp);
     pp->setFontSize(size);
 }
 
@@ -135,6 +136,7 @@ CrtConfigDlg::OnColorChoice(wxCommandEvent& WXUNUSED(event))
 {
     const int selection = m_ColorChoice->GetSelection();
     CrtFrame *pp = wxStaticCast(GetParent(), CrtFrame);
+    assert(pp);
     pp->setDisplayColorScheme(selection);
 }
 
@@ -143,6 +145,7 @@ CrtConfigDlg::OnContrastSlider(wxScrollEvent &event)
 {
     const int pos = event.GetPosition();
     CrtFrame *pp = wxStaticCast(GetParent(), CrtFrame);
+    assert(pp);
     pp->setDisplayContrast(pos);
 }
 
@@ -151,6 +154,7 @@ CrtConfigDlg::OnBrightnessSlider(wxScrollEvent &event)
 {
     const int pos = event.GetPosition();
     CrtFrame *pp = wxStaticCast(GetParent(), CrtFrame);
+    assert(pp);
     pp->setDisplayBrightness(pos);
 }
 
@@ -158,7 +162,8 @@ CrtConfigDlg::OnBrightnessSlider(wxScrollEvent &event)
 void
 CrtConfigDlg::updateDlg()
 {
-    CrtFrame *pp = wxStaticCast(GetParent(), CrtFrame);
+    const CrtFrame * const pp = wxStaticCast(GetParent(), CrtFrame);
+    assert(pp);
 
     // figure out mapping of font size to index
     const int font_size = pp->getFontSize();

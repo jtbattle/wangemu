@@ -187,9 +187,9 @@ SysCfgState::loadIni()
         setCpuType(cpuCfg->cpuType);
 
         const int ram_choices = cpuCfg->ramSizeOptions.size();
-        const int min_ram = cpuCfg->ramSizeOptions[0];
-        const int max_ram = cpuCfg->ramSizeOptions[ram_choices-1];
-        const int dflt_ram = max_ram;
+        const int min_ram     = cpuCfg->ramSizeOptions[0];
+        const int max_ram     = cpuCfg->ramSizeOptions[ram_choices-1];
+        const int dflt_ram    = max_ram;
         int ival;
         host::ConfigReadInt(subgroup, "memsize", &ival, dflt_ram);
         if (ival < min_ram) { ival = min_ram; }
@@ -220,7 +220,7 @@ SysCfgState::loadIni()
         IoCard::card_t cardtype = IoCard::card_t::none;
 
         int io_addr;
-        (void)host::ConfigReadInt(subgroup, "addr", &io_addr, -1);  // -1 if not found
+        host::ConfigReadInt(subgroup, "addr", &io_addr, -1);  // -1 if not found
         int b = host::ConfigReadStr(subgroup, "type", &sval);
         if (b) {
             cardtype = CardInfo::getCardTypeFromName(sval);

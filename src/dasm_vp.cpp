@@ -949,7 +949,7 @@ dasm_op_vp(char *buf, uint16 ic, uint32 uop) noexcept
 
 
 bool
-dasm_one_vp(char *buff, uint16 ic, uint32 ucode)
+dasm_one_vp(char *buff, uint16 ic, uint32 ucode) noexcept
 {
     assert(buff != nullptr);
     char dasmtext[100];
