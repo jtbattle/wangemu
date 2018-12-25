@@ -15,7 +15,7 @@
 
 extern uint32 ucode_2200B[UCODE_WORDS_2200B];
 extern uint32 ucode_2200BX[UCODE_WORDS_2200BX];
-extern uint8 kROM_2200B[KROM_WORDS_2200B];
+extern uint8  kROM_2200B[KROM_WORDS_2200B];
 
 //------------------------------------------------------------------------------
 // 2200T microcode
@@ -27,7 +27,7 @@ extern uint8 kROM_2200B[KROM_WORDS_2200B];
 #define  KROM_WORDS_2200T   2048
 
 extern uint32 ucode_2200T[UCODE_WORDS_2200T];
-extern uint8 kROM_2200T[KROM_WORDS_2200T];
+extern uint8  kROM_2200T[KROM_WORDS_2200T];
 
 //------------------------------------------------------------------------------
 // 2200VP microcode

@@ -240,7 +240,7 @@ TermMuxCfgDlg::saveDefaults()
     const std::string subgroup("ui/termmuxcfgdlg");
 
     // save position and size
-    host::ConfigWriteWinGeom(this, subgroup);
+    host::configWriteWinGeom(this, subgroup);
 }
 
 
@@ -250,7 +250,7 @@ TermMuxCfgDlg::getDefaults()
     // see if we've established a favored location and size
 // FIXME: we need to receive the MXD-nn-CRT-m prefix subgroup
     const std::string subgroup("ui/termmuxcfgdlg");
-    host::ConfigReadWinGeom(this, subgroup);
+    host::configReadWinGeom(this, subgroup);
 }
 
 // vim: ts=8:et:sw=4:smarttab

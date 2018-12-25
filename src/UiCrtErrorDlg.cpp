@@ -37,7 +37,8 @@ CrtErrorDlg::CrtErrorDlg(wxWindow *parent,
     const int cpuType = system2200::config().getCpuType();
     const bool vp_mode = (cpuType != Cpu2200::CPUTYPE_2200B)
                       && (cpuType != Cpu2200::CPUTYPE_2200T);
-    const std::vector<errtable_t> &pet = (vp_mode) ? errtable_vp : errtable;
+    const std::vector<error_table_t> &pet = (vp_mode) ? error_table_vp
+                                                      : error_table;
 
     bool found = false;
     auto err = pet.cbegin();

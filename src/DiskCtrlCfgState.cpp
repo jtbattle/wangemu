@@ -86,7 +86,7 @@ void
 DiskCtrlCfgState::loadIni(const std::string &subgroup)
 {
     int ival;
-    host::ConfigReadInt(subgroup, "numDrives", &ival, 2);
+    host::configReadInt(subgroup, "numDrives", &ival, 2);
     if (ival < 1 || ival > 4) {
         UI_Warn("config state messed up -- assuming something reasonable");
         ival = 2;
@@ -95,7 +95,7 @@ DiskCtrlCfgState::loadIni(const std::string &subgroup)
 
     setIntelligence(DISK_CTRL_INTELLIGENT);  // default
     std::string sval;
-    bool b = host::ConfigReadStr(subgroup, "intelligence", &sval);
+    bool b = host::configReadStr(subgroup, "intelligence", &sval);
     if (b) {
              if (sval == "dumb")  { setIntelligence(DISK_CTRL_DUMB); }
         else if (sval == "smart") { setIntelligence(DISK_CTRL_INTELLIGENT); }
@@ -103,7 +103,7 @@ DiskCtrlCfgState::loadIni(const std::string &subgroup)
     }
 
     bool bval;
-    host::ConfigReadBool(subgroup, "warnMismatch", &bval, true);
+    host::configReadBool(subgroup, "warnMismatch", &bval, true);
     setWarnMismatch(bval);
 
     m_initialized = true;
@@ -116,7 +116,7 @@ DiskCtrlCfgState::saveIni(const std::string &subgroup) const
 {
     assert(m_initialized);
 
-    host::ConfigWriteInt(subgroup, "numDrives", getNumDrives());
+    host::configWriteInt(subgroup, "numDrives", getNumDrives());
 
     std::string foo;
     switch (m_intelligence) {
@@ -125,9 +125,9 @@ DiskCtrlCfgState::saveIni(const std::string &subgroup) const
         case DISK_CTRL_AUTO:        foo = "auto";  break;
         default: assert(false);     foo = "smart";  break;
     }
-    host::ConfigWriteStr(subgroup, "intelligence", foo);
+    host::configWriteStr(subgroup, "intelligence", foo);
 
-    host::ConfigWriteBool(subgroup, "warnMismatch", getWarnMismatch());
+    host::configWriteBool(subgroup, "warnMismatch", getWarnMismatch());
 }
 
 

@@ -7,20 +7,20 @@ implementation details.
 History
 ----------------------------------------------------------------------------
 
-Part of the structure of the program derives from its history.  When the
+Part of the structure of the program derives from its history. When the
 emulator was first written in 2002, there was no GUI, just a very simple
-DOS box console output.  It was purely C code.  This version was never
-released except to a couple individuals as a proof of progress.  The source
+DOS box console output. It was purely C code. This version was never
+released except to a couple individuals as a proof of progress. The source
 code was never snapshotted for this release.
 
 Wangemu 0.5 fleshed out the emulator with a GUI, and added feature that were
-not available from the simple DOS interface.  After a bit of investigation,
+not available from the simple DOS interface. After a bit of investigation,
 I selected the wxWindows library, later renamed to wxWidgets after Microsoft
-made a suggestion that it be renamed.  To be fair, they also donated some
-money to the wxWidgets effort.  wxWidgets uses C++ interfaces and logic,
-and to that point I'd never written any C++.  Also, the program was never
-designed, it just sprouted new features as I felt the interest.  All the
-while I kept the core emulator in C and the wx GUI in C++.  These combined
+made a suggestion that it be renamed. To be fair, they also donated some
+money to the wxWidgets effort. wxWidgets uses C++ interfaces and logic,
+and to that point I'd never written any C++. Also, the program was never
+designed, it just sprouted new features as I felt the interest. All the
+while I kept the core emulator in C and the wx GUI in C++. These combined
 to result in a very unstructured code base.
 
 Wangemu 1.0 added support for the 80x24 display adapter, was the first
@@ -30,17 +30,17 @@ html help pages.
 Wangemu 1.1 added emulated disk drives, and the ability to pop open a dialog
 to explain the meaning of the cryptic BASIC error codes.
 
-Wangemu 2.0 added support for the 2200VP mode of operation.  Paul Heller added
-emulated printer support, and also created the first wxMac port.  The CPU
-decoder was rewritten for a 2.5x speedup.  This was the first release to
-support the native CRT bitmap fonts, and also added fullscreen mode.  By this
+Wangemu 2.0 added support for the 2200VP mode of operation. Paul Heller added
+emulated printer support, and also created the first wxMac port. The CPU
+decoder was rewritten for a 2.5x speedup. This was the first release to
+support the native CRT bitmap fonts, and also added fullscreen mode. By this
 time, I realized that C++ wasn't just a fad and could even be useful, so all
-the core files were converted from .c to .cpp.  Most code remained most
-assuredly C in spirit, though.  Only the IoCard stuff took advantage of C++.
+the core files were converted from .c to .cpp. Most code remained most
+assuredly C in spirit, though. Only the IoCard stuff took advantage of C++.
 
-Wangemu 2.1 came out in December 2008.  The new user visible features were
+Wangemu 2.1 came out in December 2008. The new user visible features were
 support for the intelligent disk controller mode, better disk configuration
-options, and support for large disk drives.  Emulation of the 2200B CPU came
+options, and support for large disk drives. Emulation of the 2200B CPU came
 via the work of Eilert Brinkmeyer by dumping the ROMs on his 2200B machine.
 Beside some polish work, the largest amount of effort is invisible; the code
 base was heavily restructured to take better advantage of the power of C++,
@@ -48,7 +48,7 @@ and to make the class, function, and variable naming convention more
 consistent.
 
 In summary, here are the file and line counts for the various emulator
-releases.  These don't count the C files which contain the microcode dumps.
+releases. These don't count the C files which contain the microcode dumps.
 
     version   released  .h files               .c/cpp files
     -------   --------  ---------------------  ---------------------
@@ -62,10 +62,10 @@ releases.  These don't count the C files which contain the microcode dumps.
 One reason why there are many more files in 2.1 vs 2.0, while at the same
 time the line count hasn't increased that much is that the 2.0 code often
 had many classes declared in a single .h file, and sometimes a few classes
-defined in a single .cpp file.  With 2.1, there is mostly one .h and one .cpp
+defined in a single .cpp file. With 2.1, there is mostly one .h and one .cpp
 file for each class.
 
-One last statistic.  Of the 2.1 code base, 33% of the .h and 40% of the .cpp
+One last statistic. Of the 2.1 code base, 33% of the .h and 40% of the .cpp
 lines of code are in the GUI code.
 
 
@@ -75,9 +75,9 @@ Coding Style Conventions
 
 As noted earlier, the code base was an ad-hoc evolution, not a design, which
 was worked on over a number of years, and the code through version 2.0
-reflected that.  Version 2.1 attempted to rectify that, or at least
-significantly improve the situation.  If the code base for version 2.0 would
-receive a 2 on a scale of 10, version 2.1 would receive a 5, I hope.  There
+reflected that. Version 2.1 attempted to rectify that, or at least
+significantly improve the situation. If the code base for version 2.0 would
+receive a 2 on a scale of 10, version 2.1 would receive a 5, I hope. There
 is still plenty of room for improvement.
 
 Here then are some rules that I attempted to follow when reworking the code.
@@ -86,28 +86,44 @@ to these rules.
 
 --- naming ---
 
-Namespace names are all lower-case, akin to how "std" is.  The corresponding
+Ordinary variables use "snake case", that is, all letters are lower case with
+an underscore between each word (if there is more than one).  For example,
+     int num_tries = 1;   << yes
+     int numTries = 1;    << no
+
+Parameter names are named the same as ordinary variables, using snake case.
+
+Namespace names are all lower-case, akin to how "std" is. The corresponding
 filename should also be lowercase to match.
 
 Class names begin with Capital letters, and each word in the name starts
-with a cap.  No underscores.  In the case of acronyms that are normally
-all caps, only the first letter gets a cap; for instance "class CrtFrame",
-not "class CRTFrame".
+with a cap. No underscores. In the case of acronyms that are normally all
+caps, only the first letter gets a cap. For instance,
+    class CrtFrame     << yes
+    class CRTFrame     << no
 
-Member functions within a class start with a lower case letter, and use
-caps on each successive word.  This is counter to the wxWidgets convention,
+Class member functions are camel case, starting with a lower case letter.
+That is they start with a lower case letter, and use caps on each successive
+word and no underscores. This is counter to the wxWidgets convention,
 which has member functions starting with caps, just like class names.
-wxWidgets might use "GetFont()", while the emulator uses "getFont()".
+    int getFontSize()    << yes
+    int GetFontSize()    << no
+    int get_font_size()  << no
 
-Member data starts with "m_".  The first letter of multi-letter words
-is lower case, and the first letter of subsequent words is uppercase.
-The only underscore is in the initial "m_".  Example: m_numDrives.
+Member data names are snake case, like ordinary variables, but they start
+with the prefix "m_".
+    int m_beep_duration;  << yes
+    int m_beepDuration;   << no
 
-Symbolic #define constants and enum constants are in all upper case,
-with underscores between words.  For example "#define SOME_CONST 1234".
+Preprocessor #define constants and enum constants are in all upper case,
+with underscores between words. For example "#define SOME_CONST 1234".
+Other things which are acting in the same capacity should also use
+all caps with underscores too, eg,
+     const int MAX_SLOTS = 6;
+     slot_t m_slots[MAX_SLOTS];
 
 Each .h file starts with an inclusion lock to ensure the code is never
-included more than once in a given compilation unit.  For SomeFile.h,
+included more than once in a given compilation unit. For SomeFile.h,
 the locker looks like:
 
     #ifndef _INCLUDE_SOMEFILE_H_
@@ -115,11 +131,11 @@ the locker looks like:
     ... (declarations) ...
     #endif // _INCLUDE_SOMEFILE_H_
 
-For the most part, each class gets its own file.  "class IoCard" is found
-in IoCard.h and IoCard.cpp.  An exception is that all GUI code that knows
+For the most part, each class gets its own file. "class IoCard" is found
+in IoCard.h and IoCard.cpp. An exception is that all GUI code that knows
 about wx has a filename of UiFoo.h and UiFoo.cpp even though the class is
-called "class Foo".  Some .cpp got so big that I split them into a few
-.cpp files.  For instance, UiCrt.cpp is the main code for class Crt, but
+called "class Foo". Some .cpp got so big that I split them into a few
+.cpp files. For instance, UiCrt.cpp is the main code for class Crt, but
 UiCrt_Charset.cpp contains the bitmap font data, UiCrt_Keyboard.cpp holds
 the keyboard mapping tables and mapping logic.
 
@@ -127,10 +143,10 @@ the keyboard mapping tables and mapping logic.
 
 Don't use tabs, only spaces.
 
-Indentation is 4 spaces per level.  Lines which cross multiple lines
+Indentation is 4 spaces per level. Lines which cross multiple lines
 can use whatever indentation is desired to best convey the code intent.
 
-No spaces at the end of lines.  No blank lines at the start or end of
+No spaces at the end of lines. No blank lines at the start or end of
 a file.
 
 One or two blank lines between functions.
@@ -144,12 +160,12 @@ heaveyweight dividers which are like this:
    // ==================================================================
 
 Generally try to keep code to 80 characters per line or less, but it is OK
-to go over somewhat on occasion.  But if the line gets over 100 characters,
+to go over somewhat on occasion. But if the line gets over 100 characters,
 consider splitting it up.
 
 Parallel constructs can use spacing to align similar behavior across
 different lines of code even if in isolation any one line might be
-oddly formatted.  For example.
+oddly formatted. For example.
     int file_size_KB = (foo->total_bytes + 1023) / 1024;
     int words        =  foo->word_count;
 
@@ -179,52 +195,52 @@ GUI / Core schism
 
 As much as possible, the core logic and the GUI code are kept separate.
 None of the core emulator files has any dependency directly or indirectly
-on the wx library.  In theory, all the Ui* files could be replaced with
+on the wx library. In theory, all the Ui* files could be replaced with
 Qt functions and the core emulator files would never have to change.
 
 Another principle is to try and keep as much system-independent program
-logic in the core emulator as possible.  For instance, earlier versions
+logic in the core emulator as possible. For instance, earlier versions
 of the emulator had the CPU speed regulation done in the GUI code.
 Starting with wangemu 2.1, the GUI code is responsible for generating
 a call to a certain core function any time it is otherwise idle,
 and it exposes a function where the core can call and get the elapsed
-real-time.  With these two things, the simulation scheduling and speed
-regulation can live in the core emulation logic.  Likewise, the emulation
+real-time. With these two things, the simulation scheduling and speed
+regulation can live in the core emulation logic. Likewise, the emulation
 state is kept in the core, and the GUI does get/set calls to query and
 modify the state that lives in the core logic.
 
 Note that there is some state which lives in the GUI code, namely things
 which are strictly GUI related and not logically part of a Wang 2200
-compute system.  For instance, the choice of CRT fonts or screen size
+compute system. For instance, the choice of CRT fonts or screen size
 or color live in the GUI state.
 
 It was mentioned that it should be possible to completely replace the GUI
-code without touching the core emulator files.  This implies that the core
+code without touching the core emulator files. This implies that the core
 code has no dependency on the types and libraries specific to a given GUI
-library.  However, the reverse isn't true -- the GUI code is free to have
+library. However, the reverse isn't true -- the GUI code is free to have
 carnal knowledge of the core emulator structure, at least as far as the
-.h files expose it.  Of course it is always good programming practice to
+.h files expose it. Of course it is always good programming practice to
 keep things cleanly decoupled as much as is practical, but the point is
 the restriction in the core->GUI dependency case is absolutely forbidden,
 but GUI->core should simply be minimized.
 
 If the core emulator code can't be exposed to the GUI-specific types and
 libraries, how does the core make any calls to the GUI side of things?
-The answer is thunk code.  Thunks are simple interfaces, often C code,
+The answer is thunk code. Thunks are simple interfaces, often C code,
 that the core code can call for specific actions, and this thunk code
-has the dirty knowledge of the GUI libraries.  Note that these thunk
+has the dirty knowledge of the GUI libraries. Note that these thunk
 functions have no logic and no state -- they are just gateways with well
-defined GUI independent interfaces.  Many of them are declared in Ui.h.
+defined GUI independent interfaces. Many of them are declared in Ui.h.
 For instance, "void UI_diskEvent(int slot, int drive);"  Any time the
 disk controller has some type of major state change, say a disk is inserted
 or removed, or the LED light goes on or off, the core emulator calls this
-function indicating which slot and drive have changed.  UI_diskEvent()
+function indicating which slot and drive have changed. UI_diskEvent()
 notifies the proper GUI window(s), and these windows then query back to
 the core emulator to determine the new disk drive state, and update their
 display appropriately.
 
-There is one bit of ugly pointer casting, I must admit.  UI_gui_handle_t
-is a void pointer to a GUI window.  Perhaps the next revision of the
+There is one bit of ugly pointer casting, I must admit. UI_gui_handle_t
+is a void pointer to a GUI window. Perhaps the next revision of the
 emulator will clean up this bit of expediency with a more respectable
 mechanism.
 
@@ -234,19 +250,19 @@ Major Core Classes
 ----------------------------------------------------------------------------
 
 Although I've been writing C code for 20 years, my day job is being an
-electrical engineer.  I don't have great coding chops, but I do like to
-learn new things.  My understanding and sophistication in applying C++ 
-concepts grows with time.  One thing I don't foresee happening is the code
-turning into a Martin Fowler-like refactoring party.  I hate trying to read
+electrical engineer. I don't have great coding chops, but I do like to
+learn new things. My understanding and sophistication in applying C++ 
+concepts grows with time. One thing I don't foresee happening is the code
+turning into a Martin Fowler-like refactoring party. I hate trying to read
 C++ with hundreds of tiny classes, each one twenty lines long, each one
-delegating to another class, a dozens deep.  My classes tend to be flat,
-heavy, ponderous affairs, with dozens of member functions.  My brain likes
+delegating to another class, a dozens deep. My classes tend to be flat,
+heavy, ponderous affairs, with dozens of member functions. My brain likes
 to chunk concepts that way.
 
 ---- Cpu2200 ----
 
 Cpu2200 is an abstract class; it represents the 2200 CPU: one of 2200B,
-2200T, or 2200VP.  The 2200B and 2200T are so similar (just a different
+2200T, or 2200VP. The 2200B and 2200T are so similar (just a different
 set of microcode ROMs) they actually are the same class, with a configuration
 parameter to specify which set of ROMs to use.
 
@@ -262,18 +278,18 @@ information.
 ---- Scheduler ----
 
 Scheduler is a means of calling back a function after some number of emulated
-cycles has elapsed.  It isn't a singleton class, but there is only one
+cycles has elapsed. It isn't a singleton class, but there is only one
 instance of it used.
 
 Various consumers of its service register a callback function along with
-a parameter to call back with.  After the right number of cycles has elapsed,
-the callback function is called with the bound parameter.  The CPU calls the
+a parameter to call back with. After the right number of cycles has elapsed,
+the callback function is called with the bound parameter. The CPU calls the
 scheduler after each instruction to indicate how many cycles have elapsed.
 
 ---- IoCard ----
 
 IoCard is an abstract class and represents a card that can be plugged into
-the I/O backplane.  The cards which are currently supported are for a
+the I/O backplane. The cards which are currently supported are for a
 Crt controller/display, a disk controller, a printer, and a keyboard.
 Future devices might include a data cassette tape system, a plotter,
 and a terminal mux card.
@@ -288,35 +304,35 @@ to a particular kind of card.
 
 ---- system2200 ----
 
-system2200 is the owner of the emulated computer system.  Before the 3.0
+system2200 is the owner of the emulated computer system. Before the 3.0
 release, it was a "borg" singleton class, but in 3.0 it was converted to
-just be a namespace.  TheApp::OnInit() function is what calls
+just be a namespace. TheApp::OnInit() function is what calls
 System2200::initialized() to get the ball rolling.
 
 This namespace contains the objects for the Cpu, Scheduler, and the set of
-IoCards that are plugged in.  It also holds a SysCfgState object; this object
+IoCards that are plugged in. It also holds a SysCfgState object; this object
 represents the current system configuration from which the system can be built
 up with real objects.
 
 System2200 as owner of the I/O cards also holds the mapping of I/O address
-to card.  When the CPU performs, say, an OBS (output byte strobe), System2200
+to card. When the CPU performs, say, an OBS (output byte strobe), System2200
 knows which address was the last one selected (with an ABS strobe), and
-routes the OBS information to the currently selected I/O card.  If there is
+routes the OBS information to the currently selected I/O card. If there is
 no card at that address, an alert box pops up warning the user of the
 situation, and offers to give or suppress warnings of accesses to this
 address in the future.
 
 System2200 also contains a keystroke router, which allows decoupling the
-GUI code from the card which ultimately handles the information.  Each
+GUI code from the card which ultimately handles the information. Each
 keyboard (either standalone or as part of a smart terminal) registers
 a callback function to let system2200 know which device is associated
-with each logical keyboard address.  Just knowing the slot isn't enough
+with each logical keyboard address. Just knowing the slot isn't enough
 because, in theory, one MXD terminal mux can handle four different keyboard
 streams.
 
-One interesting feature is the freezeEmu(bool) function.  Emulated time
+One interesting feature is the freezeEmu(bool) function. Emulated time
 is simulated as the result of an OnIdle event, and OnIdle events occur even
-when a modal dialog box is open.  To prevent the emulator from continuing
+when a modal dialog box is open. To prevent the emulator from continuing
 to run while modal dialogs are open, freezeEmu(true) and freezeEmu(false)
 must bracket the call to open the modal dialog box.
 
@@ -327,23 +343,23 @@ Major GUI Classes
 ---- CrtFrame ----
 
 CrtFrame is the class that controls what a user would see as the application
-window.  In implementation, CrtFrame manages the menu and status bar, but
+window. In implementation, CrtFrame manages the menu and status bar, but
 everything else, such as receiving keyboard input and drawing characters in
-the emulated CRT, are done in the component Crt (described next).  The Crt
-class is not exposed outside of CrtFrame.  Instead, CrtFrame just proxies
-requests down to Crt.  It could have been done differently, but it was done
+the emulated CRT, are done in the component Crt (described next). The Crt
+class is not exposed outside of CrtFrame. Instead, CrtFrame just proxies
+requests down to Crt. It could have been done differently, but it was done
 this way.
 
 ---- Crt ----
 
-The Crt class takes care of drawing characters on the screen.  In violation
+The Crt class takes care of drawing characters on the screen. In violation
 of keeping core emulated state in the core logic and having the GUI only
-present the data, Crt broke that convention.  Each time an OBS strobe is
+present the data, Crt broke that convention. Each time an OBS strobe is
 received by the IoCardDisplay, it simply forwards the byte to the Crt class
-via the emitChar() function.  This was done for reasons of efficiency, as
+via the emitChar() function. This was done for reasons of efficiency, as
 once upon a time the Crt class updated the display incrementally as each
-byte was received.  That technique was lost a while back, but the interface
-remains.  Perhaps a future version of the emulator will put the 80x24
+byte was received. That technique was lost a while back, but the interface
+remains. Perhaps a future version of the emulator will put the 80x24
 character store and the logic to update this state and the cursor state
 into IoCardDisplay and just pass the finished product to the display when
 it was time to refresh.
@@ -351,25 +367,25 @@ it was time to refresh.
 ---- PrinterFrame ----
 
 Analagous to CrtFrame, PrinterFrame handles the menu and status bar for the
-window that represents a printer.  The actual paper surface is proxied to
+window that represents a printer. The actual paper surface is proxied to
 the Printer class to actually draw an update the display.
 
 ---- Printer ----
 
 Analagous to the Crt class, Printer receives a stream of bytes as they would
-have appeared on a centronics interface.  Printer builds up this stream into
-an array of strings, specifically a wxArrayString.  Printer is different than
+have appeared on a centronics interface. Printer builds up this stream into
+an array of strings, specifically a wxArrayString. Printer is different than
 Crt also in that this wxArrayString can get longer than the display length,
 such that a scrollbar (managed by PrinterFrame) is usually required.
 
 When the user prefers the output be sent directly to an line printer connected
 to the host computer, the bytes are streamed out to the LPT port (windows
-only).  The port is opened on demand, but if the stream of activity stops
-for more than half a second, the port is closed.  This ensures both that
+only). The port is opened on demand, but if the stream of activity stops
+for more than half a second, the port is closed. This ensures both that
 the emulator doesn't hog the port (so other applications can use the LPT
 port after the emulator is done with it) and it also makes sure that if
 an application prints a partial line (say, at an INPUT prompt) the data
-will be sent to the printer quickly.  To prevent the data from queueing up
+will be sent to the printer quickly. To prevent the data from queueing up
 for too long before being sent to the printer, the emulator also flushes the
 output port any time it receives a carriage return (HEX(OD)), line feed
 (HEX(0A)), or page feed (HEX(0C)).
@@ -380,13 +396,13 @@ This class is in a file (UiSystem.cpp) with the wrong name; it evolved into
 this state and should have been cleaned up, but it wasn't, so it will have
 to be cleaned up next time.
 
-TheApp::OnInit() is where the user code first start executing.  The command
+TheApp::OnInit() is where the user code first start executing. The command
 line is parsed shortly after the emulated system is first constructed.
 
 This class also has a few utility functions that probably belong somwhere
-else, but they don't have any natural home.  Any window can get a standard
-Help menu.  OnIdle() is called by the wx event system whenever its event
-queue goes empty.  TheApp doesn't do anything with it directly; instead,
+else, but they don't have any natural home. Any window can get a standard
+Help menu. OnIdle() is called by the wx event system whenever its event
+queue goes empty. TheApp doesn't do anything with it directly; instead,
 it is simply reflected to the System2200::onIdle() function.
 
 The UI_Alert() and UI_Confirm() functions can be called from UI code as well
@@ -397,7 +413,7 @@ part of TheApp class.
 ---- SystemConfigDlg ----
 
 SystemConfigDlg is the interface that is used to manipulate the System2200's
-SysCfgState.  This allows a user to add or remove devices, or in the case of
+SysCfgState. This allows a user to add or remove devices, or in the case of
 a IoCardDisk device, bring up a dialog to edit the state specific to the
 particular card.
 
@@ -406,11 +422,11 @@ particular card.
 Configuration Management
 ----------------------------------------------------------------------------
 
-There are two types of configuration state.  One set of state corresponds to
+There are two types of configuration state. One set of state corresponds to
 the state of what would be found in a real Wang 2200 system, such as the
 CPU type, the amount of memory, the number and type of I/O cards.
 
-This state is systematically managed by the SysCfgState object.  This object
+This state is systematically managed by the SysCfgState object. This object
 is first initialized in one of two ways: if the state can be read from the
 configuration .ini file, it is, otherwise a default system state is created.
 
@@ -418,34 +434,34 @@ This configuration object is then used to guide System2200 in creating the
 right object instances to populate the emulator devices.
 
 When the user asks to change the system configuration, SystemConfigDlg is
-the GUI class that presents the user with a dialog to change things.  This
-is where the SysCfgState object pays off.  A copy is made of the SysCfgState
-representing the current system configuration.  As the user twiddles the
+the GUI class that presents the user with a dialog to change things. This
+is where the SysCfgState object pays off. A copy is made of the SysCfgState
+representing the current system configuration. As the user twiddles the
 configuration via the GUI, the SystemConfigDlg is modified to correspond.
 If the user hits the "Revert" button, the original configuration state is
 simply re-copied to the working SysCfgState object.
 
 After any state change, the original SysCfgState object is compared to the 
-modified one.  If they match exactly, the user has either not made any
+modified one. If they match exactly, the user has either not made any
 changes or has made a set of changes that ended back up to the original state.
 In this case, the dialog disables the "Revert" button as a means of indicating
-this information.  If they don't match, the types of changes are inspected
+this information. If they don't match, the types of changes are inspected
 to know if the change requires a major reconfiguration of the emulator state,
 aka a reboot, or if the state can simply be changed without perturbing the
-system objects.  An example of a major change would be adding or removing
-a card, or changing how much memory the system has.  An example of the minor
+system objects. An example of a major change would be adding or removing
+a card, or changing how much memory the system has. An example of the minor
 case is when the user asks to turn CPU speed regulation on or off.
 
-Ultimately, the use will either hit Cancel or OK.  If it is Cancel, then
-the modified copy of the state is simply discarded.  If OK is chosen, then
-minor changes will just copy the new state to the current state.   If a major
+Ultimately, the use will either hit Cancel or OK. If it is Cancel, then
+the modified copy of the state is simply discarded. If OK is chosen, then
+minor changes will just copy the new state to the current state.  If a major
 change is required, System2200 will first tear down all objects, then
 copy the modified SysCfgState object to the "current" state and rebuild the
 system, using the same code that builds the system when the emulator is
 first launched.
 
 One complication is that individual card types are allowed to have their
-own configuration state.  Currently the only one that does is the IoCardDisk,
+own configuration state. Currently the only one that does is the IoCardDisk,
 which uses a DiskCtrlCfgState object, derived from the abstract CardCfgState
 type, to perform the same kind of copy state/modify state/compare state/
 accept or reject state change paradigm that is used at the system level.
@@ -457,15 +473,15 @@ Start Up
 
 wxWidget programs don't have an explicit main() program entry point.
 Instead it is hidden behind a macro called IMPLEMENT_APP(), found inside
-UiSystem.cpp.  This dives into wx library code, and control resurfaces back
+UiSystem.cpp. This dives into wx library code, and control resurfaces back
 to the user code in the TheApp::OnInit() function.
 
-TheApp::OnInit() calls System2200::initialize().  That function then takes
+TheApp::OnInit() calls System2200::initialize(). That function then takes
 care of setting up the rest of the emulator, including building the
 SysCfgState object from the .ini file, described earlier.
 
-At some point OnInitCmdLine() is called.  This gives the code a chance to
-parse the command line.  Currently the only thing that is checked is if
+At some point OnInitCmdLine() is called. This gives the code a chance to
+parse the command line. Currently the only thing that is checked is if
 the user has asked to read in a script file.
 
 
@@ -474,40 +490,40 @@ Speed Regulation
 ----------------------------------------------------------------------------
 
 If the emulator simply interpreted microinstructions as fast as it could,
-two bad things could result.  First, the application would hog all the host
-CPU cycles and would make the user interface seem unresponsive.  Second,
+two bad things could result. First, the application would hog all the host
+CPU cycles and would make the user interface seem unresponsive. Second,
 many applications depend on running in near real-time.
 
 The emulator solves the first problem by periodically calling wxSleep(0)
 every so often, giving the windows event loop a chance to take care of
-work for other applications.  The second problem is to give the user control
+work for other applications. The second problem is to give the user control
 of whether the application should attempt to run at the same speed as a real
 Wang 2200, or to try and run as fast as possible.
 
 TheApp::OnIdle() is called by the wx event system whenever there are no
-pending events.  This gets communicated to the System2200::onIdle() function.
+pending events. This gets communicated to the System2200::onIdle() function.
 onIdle() calls the CPU to run one time slice's worth of microinstructions.
 The size of a time slice is a compile time constant, and is currently set at
-30 ms.  On modern PC systems, the emulation can run many times faster than
-the real system it is attempting to model.  The code keeps track of the
+30 ms. On modern PC systems, the emulation can run many times faster than
+the real system it is attempting to model. The code keeps track of the
 start and end time of the past few time slices in terms of the real wall
 clock time.
 
 If the system is running behind where it should be, wxSleep(0) is called.
 This asks the host computer to do whatever processing it has pending, but
-to return back to the emulator as soon as possible.  This prevents the
-emulator from hogging all the CPU cycles.  If the time calculations show
-that the emulator is N milliseconds, wxSleep(N/2) is called.  On Windows,
+to return back to the emulator as soon as possible. This prevents the
+emulator from hogging all the CPU cycles. If the time calculations show
+that the emulator is N milliseconds, wxSleep(N/2) is called. On Windows,
 at least, the host's underlying sleep() is very coarse (on the order of
-18 ms).  By under requesting, it prevents us from accidentally falling
-behind.  Even if we do sleep only N/2 milliseconds instead of N milliseconds,
+18 ms). By under requesting, it prevents us from accidentally falling
+behind. Even if we do sleep only N/2 milliseconds instead of N milliseconds,
 it just means the next time slice we will calculate an even larger N, so we
-will sleep longer than the previous time.  Eventually this will converge to
+will sleep longer than the previous time. Eventually this will converge to
 the point where we are at some stable N ms delay ahead.
 
-There is one real oddity that I haven't fully pieced out.  There is some
+There is one real oddity that I haven't fully pieced out. There is some
 interaction between the granularity of the wxSleep() function, the size of
-the time slice chosen, and the display refresh rate.  Often small changes in
+the time slice chosen, and the display refresh rate. Often small changes in
 one of them can have a dramatic effect on the reported speed of the CPU
-when running in unregulated CPU mode.  They have been chosen to be good for
-my particular system, but this might not be right for other systems.  Sorry.
+when running in unregulated CPU mode. They have been chosen to be good for
+my particular system, but this might not be right for other systems. Sorry.

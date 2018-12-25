@@ -55,6 +55,7 @@ TermMuxCfgState::operator==(const CardCfgState &rhs) const noexcept
     return (getNumTerminals() == rrhs.getNumTerminals());
 }
 
+
 bool
 TermMuxCfgState::operator!=(const CardCfgState &rhs) const noexcept
 {
@@ -75,7 +76,7 @@ void
 TermMuxCfgState::loadIni(const std::string &subgroup)
 {
     int ival;
-    host::ConfigReadInt(subgroup, "numTerminals", &ival, 1);
+    host::configReadInt(subgroup, "numTerminals", &ival, 1);
     if (ival < 1 || ival > 4) {
         UI_Warn("config state messed up -- assuming something reasonable");
         ival = 1;
@@ -90,7 +91,7 @@ void
 TermMuxCfgState::saveIni(const std::string &subgroup) const
 {
     assert(m_initialized);
-    host::ConfigWriteInt(subgroup, "numTerminals", getNumTerminals());
+    host::configWriteInt(subgroup, "numTerminals", getNumTerminals());
 }
 
 
@@ -102,11 +103,13 @@ TermMuxCfgState::setNumTerminals(int count) noexcept
     m_initialized = true;
 }
 
+
 int
 TermMuxCfgState::getNumTerminals() const noexcept
 {
     return m_num_terms;
 }
+
 
 // return a copy of self
 std::shared_ptr<CardCfgState>
@@ -120,14 +123,13 @@ TermMuxCfgState::clone() const
 // if returning false, this routine first calls UI_Alert() describing what
 // is wrong.
 bool
-TermMuxCfgState::configOk(bool warn) const noexcept
+TermMuxCfgState::configOk(bool /*warn*/) const noexcept
 {
     assert(m_initialized);
     if (!m_initialized) {
         return false;
     }
 
-    warn = warn;  // keep lint happy
     return true;  // pretty hard to screw it up
 }
 

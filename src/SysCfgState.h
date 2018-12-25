@@ -96,13 +96,13 @@ private:
     // -------------- information about slots --------------
     // a list of which cards are plugged into each slot of the IO backplane
     struct {
-        IoCard::card_t                type;    // what is plugged into the slot
-        int                           addr;    // where it will be located (only 8 lsb matter on match)
-        std::shared_ptr<CardCfgState> cardCfg; // per-card configuration state, or nullptr
+        IoCard::card_t                type;     // what is plugged into the slot
+        int                           addr;     // where it will be located (only 8 lsb matter on match)
+        std::shared_ptr<CardCfgState> card_cfg; // per-card configuration state, or nullptr
     } m_slot[NUM_IOSLOTS];
 
     // -------------- misc information --------------
-    int  m_cputype;          // which CPU type
+    int  m_cpu_type;         // which CPU type
     int  m_ramsize;          // amount of memory in CPU
     bool m_speed_regulated;  // emulation speed throttling
     bool m_disk_realtime;    // boolean whether disk emulation is realtime or not

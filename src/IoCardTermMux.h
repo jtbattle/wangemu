@@ -31,10 +31,10 @@ public:
     void  reset(bool hard_reset=true) noexcept override;
     void  select() override;
     void  deselect() override;
-    void  OBS(int val) override;
-    void  CBS(int val) override;
+    void  strobeOBS(int val) override;
+    void  strobeCBS(int val) override;
     int   getIB() const noexcept override;
-    void  CPB(bool busy) override;
+    void  setCpuBusy(bool busy) override;
 
     // a keyboard event has happened
     void receiveKeystroke(int term_num, int keycode);

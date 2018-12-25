@@ -105,7 +105,7 @@ IoCardPrinter::deselect()
 }
 
 void
-IoCardPrinter::OBS(int val)
+IoCardPrinter::strobeOBS(int val)
 {
     const uint8 val8 = val & 0xFF;
 
@@ -119,14 +119,14 @@ IoCardPrinter::OBS(int val)
 }
 
 void
-IoCardPrinter::CBS(int val)
+IoCardPrinter::strobeCBS(int val)
 {
-    OBS(val);
+    strobeOBS(val);
 }
 
 // change of CPU Busy state
 void
-IoCardPrinter::CPB(bool busy)
+IoCardPrinter::setCpuBusy(bool busy)
 {
     // it appears that except for reset, ucode only ever clears it,
     // and of course the IBS sets it back.

@@ -143,7 +143,7 @@ enum {
 };
 
 // swap the two nibbles of a byte
-#define nibble_swap(v) \
+#define NIBBLE_SWAP(v) \
     static_cast<uint8>((((v)&0xF)<<4) | (((v)>>4)&0xF))
 
 // decode the M field and if a memory op is going to occur,
@@ -179,11 +179,12 @@ enum {
 #define BRANCH_TARGET(ic,uop) \
     static_cast<uint16>(((ic) & 0xFF00) | (((uop) >> 4) & 0xF0) | ((uop) & 0x0F))
 
+
 // store the microcode word to the given microstore address.
 // the microinstruction is checked for validity and the instruction is
 // predecoded to make subsequent interpretation faster.
 void
-Cpu2200t::write_ucode(int addr, uint32 uop) noexcept
+Cpu2200t::writeUcode(int addr, uint32 uop) noexcept
 {
     static const int8 pc_adjust_tbl[16] = {
          0,  0,  0,  0,  0,  0,  0,  0,
@@ -196,8 +197,8 @@ Cpu2200t::write_ucode(int addr, uint32 uop) noexcept
     const int a_field = (uop >>  4) & 0xF;
     const int c_field = (uop >>  0) & 0xF;
 
-    int illegal = 0;    // innocent until proven guilty
-    int8 pcinc = 0;
+    bool illegal = false;  // innocent until proven guilty
+    int8 pc_inc = 0;
 
     assert(addr >=0 && addr < MAX_UCODE);
 
@@ -307,7 +308,7 @@ Cpu2200t::write_ucode(int addr, uint32 uop) noexcept
             break;
 
         default:
-            illegal = 1;
+            illegal = true;
             break;
         }
         break;
@@ -315,18 +316,18 @@ Cpu2200t::write_ucode(int addr, uint32 uop) noexcept
     // branch instructions:
 
     case 0x10: case 0x11:       // BER: branch if R[AAAA] == R[BBBB]
-        pcinc = PC_ADJUST(a_field);
+        pc_inc = PC_ADJUST(a_field);
         m_ucode[addr].ucode |= FETCH_AB;
         REPACK_B2_FIELD(m_ucode[addr].ucode, uop);
-        m_ucode[addr].op  = static_cast<uint8>((pcinc == 0) ? OP_BER : OP_BER_INC);
+        m_ucode[addr].op  = static_cast<uint8>((pc_inc == 0) ? OP_BER : OP_BER_INC);
         m_ucode[addr].p16 = BRANCH_TARGET(addr, uop);
         break;
 
     case 0x12: case 0x13:       // BNR: branch if R[AAAA] != R[BBBB]
-        pcinc = PC_ADJUST(a_field);
+        pc_inc = PC_ADJUST(a_field);
         m_ucode[addr].ucode |= FETCH_AB;
         REPACK_B2_FIELD(m_ucode[addr].ucode, uop);
-        m_ucode[addr].op  = static_cast<uint8>((pcinc == 0) ? OP_BNR : OP_BNR_INC);
+        m_ucode[addr].op  = static_cast<uint8>((pc_inc == 0) ? OP_BNR : OP_BNR_INC);
         m_ucode[addr].p16 = BRANCH_TARGET(addr, uop);
         break;
 
@@ -369,7 +370,7 @@ Cpu2200t::write_ucode(int addr, uint32 uop) noexcept
         break;
 
     default:
-        illegal = 1;
+        illegal = true;
         break;
     }
 
@@ -391,15 +392,15 @@ Cpu2200t::write_ucode(int addr, uint32 uop) noexcept
 #if 0
 // dump the most important contents of the uP state
 void
-Cpu2200t::dump_state(bool fulldump)
+Cpu2200t::dumpState(bool full_dump)
 {
-    if (fulldump) {
+    if (full_dump) {
         dbglog("---------------------------------------------\n");
     }
 
     dbglog("ic=%04X, pc=%04X, c=%02X, k=%02X, ab=%02X, ab_sel=%02X, cy=%X\n",
         m_cpu.ic, m_cpu.pc, m_cpu.c, m_cpu.k, m_cpu.ab, m_cpu.ab_sel, CARRY_BIT);
-    if (!fulldump) {
+    if (!full_dump) {
         return;
     }
 
@@ -435,14 +436,14 @@ Cpu2200t::dump_state(bool fulldump)
 #if 0
 // dump a floating point number (16 nibbles)
 void
-Cpu2200t::dump_16n(int addr)
+Cpu2200t::dump16n(int addr)
 {
     char buff[30];
     int i;
     addr &= ~1;
     sprintf(buff, "RAM[%04X] = ", addr);
     for (i=0; i<8; i++) {
-        sprintf(&buff[12+i],"%X", nibble_swap(m_RAM[addr+i]));
+        sprintf(&buff[12+i],"%X", NIBBLE_SWAP(m_ram[addr+i]));
     }
     dbglog("%s\n", buff);
 }
@@ -462,7 +463,7 @@ Cpu2200t::dump_16n(int addr)
 // there are two memory spaces: ROM and RAM
 // for RAM, there are two modes: "horizontal" and "vertical".
 uint8
-Cpu2200t::mem_read(uint16 addr) const noexcept
+Cpu2200t::readMem(uint16 addr) const noexcept
 {
     uint8 rv;
 
@@ -473,7 +474,7 @@ Cpu2200t::mem_read(uint16 addr) const noexcept
             rv = m_kROM[ROMaddr];
         } else {
             // yes, we swap in the even case, not the odd case
-            rv = nibble_swap(m_kROM[ROMaddr]);
+            rv = NIBBLE_SWAP(m_kROM[ROMaddr]);
         }
 #if 0
         if (rv < 32) {
@@ -501,22 +502,22 @@ Cpu2200t::mem_read(uint16 addr) const noexcept
         // addressed by complementing addr bit 4.
 
         const int RAMaddr = (addr >> 1);
-        assert(RAMaddr < m_memsize);
+        assert(RAMaddr < m_mem_size);
 
         if (m_cpu.st3 & ST3_MASK_HORZ) {
             // horizontal addressing
-            rv = (addr & 1) ? nibble_swap(m_RAM[RAMaddr])
-                            : m_RAM[RAMaddr];
+            rv = (addr & 1) ? NIBBLE_SWAP(m_ram[RAMaddr])
+                            : m_ram[RAMaddr];
         } else {
             // vertical addressing
             if (addr & 1) {
                 // read the upper nibble from two bytes 8 bytes apart
-                rv = ((m_RAM[RAMaddr^0x0] & 0xF0) >> 4)
-                   | ((m_RAM[RAMaddr^0x8] & 0xF0) >> 0);
+                rv = ((m_ram[RAMaddr^0x0] & 0xF0) >> 4)
+                   | ((m_ram[RAMaddr^0x8] & 0xF0) >> 0);
             } else {
                 // read the lower nibble from two bytes 8 bytes apart
-                rv = ((m_RAM[RAMaddr^0x0] & 0x0F) << 0)
-                   | ((m_RAM[RAMaddr^0x8] & 0x0F) << 4);
+                rv = ((m_ram[RAMaddr^0x0] & 0x0F) << 0)
+                   | ((m_ram[RAMaddr^0x8] & 0x0F) << 4);
             }
         }
     }
@@ -537,7 +538,7 @@ Cpu2200t::mem_read(uint16 addr) const noexcept
 // WRITE2 flips A0 in horizontal mode.
 // WRITE2 flips A4 in vertical mode.
 void
-Cpu2200t::mem_write(uint16 addr, uint4 wr_value, int write2) noexcept
+Cpu2200t::writeMem(uint16 addr, uint4 wr_value, int write2) noexcept
 {
     if (m_cpu.st1 & ST1_MASK_ROM) {
         // ROM address space
@@ -550,14 +551,14 @@ Cpu2200t::mem_write(uint16 addr, uint4 wr_value, int write2) noexcept
         }
 
         const int RAMaddr = (addr >> 1);
-        assert(RAMaddr < m_memsize);
+        assert(RAMaddr < m_mem_size);
 
         if (addr & 1) {
-            m_RAM[RAMaddr] = static_cast<uint8>((m_RAM[RAMaddr]&0x0F) | (wr_value<<4));
+            m_ram[RAMaddr] = static_cast<uint8>((m_ram[RAMaddr]&0x0F) | (wr_value<<4));
         } else {
-            m_RAM[RAMaddr] = static_cast<uint8>((m_RAM[RAMaddr]&0xF0) | (wr_value<<0));
+            m_ram[RAMaddr] = static_cast<uint8>((m_ram[RAMaddr]&0xF0) | (wr_value<<0));
         }
-        // dbglog("WR%d %04X, RAM[0x%04X] = 0x%02X\n", 1+write2, addr, RAMaddr, m_RAM[RAMaddr]);
+        // dbglog("WR%d %04X, RAM[0x%04X] = 0x%02X\n", 1+write2, addr, RAMaddr, m_ram[RAMaddr]);
     }
 }
 
@@ -581,9 +582,9 @@ Cpu2200t::mem_write(uint16 addr, uint4 wr_value, int write2) noexcept
 //        support this, there needs to be a different mechanism
 //        in the emulator, or a very specific hack must be used.
 uint4
-Cpu2200t::read_st3() const
+Cpu2200t::readSt3() const
 {
-    const int k = system2200::cpu_poll_IB();
+    const int k = system2200::cpuPollIB();
     const int ib5 = (k >> 5) & 1;  // isolate bit 5
 
     return static_cast<uint4>(
@@ -597,7 +598,7 @@ Cpu2200t::read_st3() const
 
 // setting ST1.1 can have more complicated side effects
 void
-Cpu2200t::set_st1(uint4 value)
+Cpu2200t::setSt1(uint4 value)
 {
     const int cpb_changed = ((m_cpu.st1 ^ value) & ST1_MASK_CPB);
     m_cpu.st1 = value;
@@ -610,7 +611,7 @@ Cpu2200t::set_st1(uint4 value)
 
 // store the 4b value to the place selected by the C field.
 void
-Cpu2200t::store_C_operand(uint32 uop, uint4 value)
+Cpu2200t::storeOperandC(uint32 uop, uint4 value)
 {
     const int xbit  = ((uop >> 14) & 0x1);
     const int field = ((uop >>  0) & 0xF);
@@ -644,7 +645,7 @@ Cpu2200t::store_C_operand(uint32 uop, uint4 value)
         switch (field) {
             case  8: m_cpu.k   = static_cast<uint8>((m_cpu.k & 0x0F) | (value << 4)); break;   // KH
             case  9: m_cpu.k   = static_cast<uint8>((m_cpu.k & 0xF0) | (value << 0)); break;   // KL
-            case 10: set_st1(value); break;
+            case 10: setSt1(value); break;
             case 11: m_cpu.st2 = value; break;
             case 12: m_cpu.pc  = static_cast<uint16>((m_cpu.pc & 0xFFF0) | (value << 0)); break; // PC1
             case 13: return;  // illegal
@@ -660,25 +661,27 @@ Cpu2200t::store_C_operand(uint32 uop, uint4 value)
 // decode the M field.
 // if it is a read, the data goes into the C data read register.
 // if it is a write, the data written comes from wr_value.
-#define decode_M_field(uop, wr_value)                   \
+#define DECODE_M_FIELD(uop, wr_value)                   \
     do {                                                \
         switch (((uop) >> 8) & 0x3) {                   \
              case 0:    /* no memory op */              \
                 break;                                  \
              case 1:    /* memory read */               \
-                m_cpu.c = mem_read(m_cpu.pc);           \
+                m_cpu.c = readMem(m_cpu.pc);            \
                 break;                                  \
              case 2:    /* write MEML */                \
-                mem_write(m_cpu.pc, (wr_value), 0);     \
+                writeMem(m_cpu.pc, (wr_value), 0);      \
                 break;                                  \
              case 3:    /* write MEMH */                \
-                mem_write(m_cpu.pc, (wr_value), 1);     \
+                writeMem(m_cpu.pc, (wr_value), 1);      \
                 break;                                  \
         }                                               \
     } while (false)
 
-uint8
-Cpu2200t::decimal_add(uint4 a_op, uint4 b_op, int ci) const noexcept
+
+// add two BCD nibbles
+static uint8
+decimalAdd(uint4 a_op, uint4 b_op, int ci) noexcept
 {
     #ifdef _DEBUG
     // these are known to fire (eg, running diags), yet something
@@ -704,8 +707,8 @@ Cpu2200t::decimal_add(uint4 a_op, uint4 b_op, int ci) const noexcept
 //  active high data/controls, the carry in & out are then
 //  active low).
 // cy=1 effectively means no borrow; cy=0 means borrow
-uint8
-Cpu2200t::decimal_sub(uint4 a_op, uint4 b_op, int ci) const noexcept
+static uint8
+decimalSub(uint4 a_op, uint4 b_op, int ci) noexcept
 {
     #ifdef _DEBUG
     // these are known to fire (eg, running diags), yet something
@@ -714,9 +717,9 @@ Cpu2200t::decimal_sub(uint4 a_op, uint4 b_op, int ci) const noexcept
     assert(b_op < 10);
     #endif
 
-    const uint4 ninecomp = 9-b_op;  // form 9's complement
+    const uint4 nines_comp = 9-b_op;  // form 9's complement
 
-    return decimal_add(a_op, ninecomp, ci);
+    return decimalAdd(a_op, nines_comp, ci);
 }
 
 
@@ -746,7 +749,7 @@ Cpu2200t::Cpu2200t(std::shared_ptr<Scheduler> scheduler,
                                               : UCODE_WORDS_2200T),
     m_krom_size( (m_cpuType == CPUTYPE_2200B) ?  KROM_WORDS_2200B
                                               :  KROM_WORDS_2200T),
-    m_memsize(ramsize),
+    m_mem_size(ramsize),
     m_dbg(false)
 {
     #define K *1024
@@ -756,23 +759,22 @@ Cpu2200t::Cpu2200t(std::shared_ptr<Scheduler> scheduler,
 
     // initialize ucode store from built-in image
     switch (m_cpuType) {
-        int i;
         case CPUTYPE_2200B:
-            for (i=0; i<m_ucode_size; i++) {
-                write_ucode(i, ucode_2200B[i]);
+            for (int i=0; i<m_ucode_size; i++) {
+                writeUcode(i, ucode_2200B[i]);
             }
-            for (i=0; i<UCODE_WORDS_2200BX; i++) {
-                write_ucode(0x7E00+i, ucode_2200BX[i]);
+            for (int i=0; i<UCODE_WORDS_2200BX; i++) {
+                writeUcode(0x7E00+i, ucode_2200BX[i]);
             }
-            for (i=0; i<m_krom_size; i++) {
+            for (int i=0; i<m_krom_size; i++) {
                 m_kROM[i] = kROM_2200B[i];
             }
             break;
         case CPUTYPE_2200T:
-            for (i=0; i<m_ucode_size; i++) {
-                write_ucode(i, ucode_2200T[i]);
+            for (int i=0; i<m_ucode_size; i++) {
+                writeUcode(i, ucode_2200T[i]);
             }
-            for (i=0; i<m_krom_size; i++) {
+            for (int i=0; i<m_krom_size; i++) {
                 m_kROM[i] = kROM_2200T[i];
             }
             break;
@@ -790,13 +792,13 @@ Cpu2200t::Cpu2200t(std::shared_ptr<Scheduler> scheduler,
         char buff[200];
         uint16 pc;
         for (pc=0x0000; pc<m_ucode_size; pc++) {
-            dasm_one(buff, pc, m_ucode[pc].ucode & 0x000FFFFF);
+            dasmOneOp(buff, pc, m_ucode[pc].ucode & 0x000FFFFF);
             dbglog(buff);
         }
         if (m_cpuType == CPUTYPE_2200B) {
             // disassemble the patch ROM
             for (pc=0x7E00; pc<0x7E00+UCODE_WORDS_2200BX; pc++) {
-                dasm_one(buff, pc, m_ucode[pc].ucode & 0x000FFFFF);
+                dasmOneOp(buff, pc, m_ucode[pc].ucode & 0x000FFFFF);
                 dbglog(buff);
             }
         }
@@ -863,8 +865,8 @@ Cpu2200t::reset(bool hard_reset) noexcept
 
     // real hardware doesn't reset memory, but the emulator does
     if (hard_reset) {
-        for (int i=0; i<m_memsize; i++) {
-            m_RAM[i] = 0xFF;
+        for (int i=0; i<m_mem_size; i++) {
+            m_ram[i] = 0xFF;
             // it appears that either bit 0 or bit 4 must be set
             // otherwise bad things happen.
             // 0x00 causes "SYSTEM ERROR!"
@@ -901,7 +903,7 @@ Cpu2200t::reset(bool hard_reset) noexcept
 // for 7 uS via a one-shot.  In the emulator, the strobe is effectively
 // instantaneous.
 void
-Cpu2200t::IoCardCbIbs(int data)
+Cpu2200t::ioCardCbIbs(int data)
 {
     // we shouldn't receive an IBS while the cpu is busy
     assert((m_cpu.st1 & ST1_MASK_CPB) == 0);
@@ -964,16 +966,16 @@ Cpu2200t::execOneOp()
     uint16 tmp_pc;
     uint4 a_op, b_op;
     uint8 rslt;
-    uint16 newic;
-    int pcinc;
+    uint16 new_ic;
+    int pc_inc;
 
 #if 0
     if (m_dbg) {
         static int g_num_ops = 0;
         char buff[200];
         int illegal;
-        dump_state(true);
-        illegal = dasm_one(buff, m_cpu.ic, m_ucode[m_cpu.ic].ucode & 0x000FFFFF);
+        dumpState(true);
+        illegal = dasmOneOp(buff, m_cpu.ic, m_ucode[m_cpu.ic].ucode & 0x000FFFFF);
         dbglog("cycle %5d: %s", g_num_ops, buff);
         g_num_ops++;
         if (illegal) {
@@ -988,30 +990,30 @@ Cpu2200t::execOneOp()
 
         case 0: case 1: case 2: case 3:
         case 4: case 5: case 6: case 7:
-            pcinc = 0;
+            pc_inc = 0;
             a_op = m_cpu.reg[field];
             break;
 
-        case  8: pcinc =  0; a_op = static_cast<uint4>((m_cpu.c >> 4) & 0xF);      break;  // CH
-        case  9: pcinc = -1; a_op = static_cast<uint4>((m_cpu.c >> 4) & 0xF);      break;  // CH
-        case 10: pcinc = +1; a_op = static_cast<uint4>((m_cpu.c >> 4) & 0xF);      break;  // CH
-        case 11: pcinc = -1; a_op = static_cast<uint4>(0x0);                       break;  // dummy
-        case 12: pcinc =  0; a_op = static_cast<uint4>((m_cpu.c >> 0) & 0xF);      break;  // CL
-        case 13: pcinc = -1; a_op = static_cast<uint4>((m_cpu.c >> 0) & 0xF);      break;  // CL
-        case 14: pcinc = +1; a_op = static_cast<uint4>((m_cpu.c >> 0) & 0xF);      break;  // CL
-        case 15: pcinc = +1; a_op = static_cast<uint4>(0x0);                       break;  // dummy
+        case  8: pc_inc =  0; a_op = static_cast<uint4>((m_cpu.c >> 4) & 0xF);      break;  // CH
+        case  9: pc_inc = -1; a_op = static_cast<uint4>((m_cpu.c >> 4) & 0xF);      break;  // CH
+        case 10: pc_inc = +1; a_op = static_cast<uint4>((m_cpu.c >> 4) & 0xF);      break;  // CH
+        case 11: pc_inc = -1; a_op = static_cast<uint4>(0x0);                       break;  // dummy
+        case 12: pc_inc =  0; a_op = static_cast<uint4>((m_cpu.c >> 0) & 0xF);      break;  // CL
+        case 13: pc_inc = -1; a_op = static_cast<uint4>((m_cpu.c >> 0) & 0xF);      break;  // CL
+        case 14: pc_inc = +1; a_op = static_cast<uint4>((m_cpu.c >> 0) & 0xF);      break;  // CL
+        case 15: pc_inc = +1; a_op = static_cast<uint4>(0x0);                       break;  // dummy
 
         default:
             assert(false);
-            pcinc = 0;
+            pc_inc = 0;
             a_op  = static_cast<uint4>(0x0);
             break;
         }
     }
 #if NO_LINT_WARNINGS
     else {
-        pcinc = 0;
-        a_op  = 0;
+        pc_inc = 0;
+        a_op   = 0;
     }
 #endif
 
@@ -1038,7 +1040,7 @@ Cpu2200t::execOneOp()
             b_op = m_cpu.reg[field-16];
             break;
 
-        case 24: b_op = read_st3();                                 break;  // ST3
+        case 24: b_op = readSt3();                                  break;  // ST3
         case 25: b_op = m_cpu.st4;                                  break;  // ST4
         case 26: b_op = static_cast<uint4>((m_cpu.pc >>  4) & 0xF); break;  // PC2
         case 27: b_op = static_cast<uint4>((m_cpu.pc >>  8) & 0xF); break;  // PC3
@@ -1065,7 +1067,7 @@ Cpu2200t::execOneOp()
     case OP_ILLEGAL:
         {
             char buff[200];
-            dasm_one(&buff[0], m_cpu.ic, m_ucode[m_cpu.ic].ucode);
+            dasmOneOp(&buff[0], m_cpu.ic, m_ucode[m_cpu.ic].ucode);
             UI_Error("%s\nIllegal op at ic=%04X", &buff[0], m_cpu.ic);
         }
         m_status = CPU_HALTED;
@@ -1075,12 +1077,12 @@ Cpu2200t::execOneOp()
 
     case OP_OR:
         rslt = static_cast<uint8>(a_op | b_op);
-        decode_M_field(uop, static_cast<uint4>(rslt));
-        store_C_operand(uop, static_cast<uint4>(rslt));
-        NIBBLE_INC(m_cpu.pc, pcinc);
-        // TODO: what happens if store_C_operand() twiddles pc
+        DECODE_M_FIELD(uop, static_cast<uint4>(rslt));
+        storeOperandC(uop, static_cast<uint4>(rslt));
+        NIBBLE_INC(m_cpu.pc, pc_inc);
+        // TODO: what happens if storeOperandC() twiddles pc
         //       AND the pc increment is non-zero?
-        // switching the order of store_C_operand() and NIBBLE_INC() didn't
+        // switching the order of storeOperandC() and NIBBLE_INC() didn't
         // cause any problems when running the 2200T diagnostic suite.  it
         // probably never happens, but it would be nice to have an assertion.
         m_cpu.ic++;
@@ -1088,36 +1090,36 @@ Cpu2200t::execOneOp()
 
     case OP_XOR:
         rslt = static_cast<uint8>(a_op ^ b_op);
-        decode_M_field(uop, static_cast<uint4>(rslt));
-        store_C_operand(uop, static_cast<uint4>(rslt));
-        NIBBLE_INC(m_cpu.pc, pcinc);
+        DECODE_M_FIELD(uop, static_cast<uint4>(rslt));
+        storeOperandC(uop, static_cast<uint4>(rslt));
+        NIBBLE_INC(m_cpu.pc, pc_inc);
         m_cpu.ic++;
         break;
 
     case OP_AND:
         rslt = static_cast<uint8>(a_op & b_op);
-        decode_M_field(uop, static_cast<uint4>(rslt));
-        store_C_operand(uop, static_cast<uint4>(rslt));
-        NIBBLE_INC(m_cpu.pc, pcinc);
+        DECODE_M_FIELD(uop, static_cast<uint4>(rslt));
+        storeOperandC(uop, static_cast<uint4>(rslt));
+        NIBBLE_INC(m_cpu.pc, pc_inc);
         m_cpu.ic++;
         break;
 
     case OP_DSC:        // decimal subtract w/ carry
-        rslt  = decimal_sub(a_op, b_op, CARRY_BIT);
+        rslt  = decimalSub(a_op, b_op, CARRY_BIT);
         SET_CARRY(rslt);
         rslt &= 0xF;
-        decode_M_field(uop, static_cast<uint4>(rslt));
-        store_C_operand(uop, static_cast<uint4>(rslt));
-        NIBBLE_INC(m_cpu.pc, pcinc);
+        DECODE_M_FIELD(uop, static_cast<uint4>(rslt));
+        storeOperandC(uop, static_cast<uint4>(rslt));
+        NIBBLE_INC(m_cpu.pc, pc_inc);
         m_cpu.ic++;
         break;
 
     case OP_A:          // binary add
         rslt  = static_cast<uint8>(a_op + b_op);
         rslt &= 0xF;
-        decode_M_field(uop, static_cast<uint4>(rslt));
-        store_C_operand(uop, static_cast<uint4>(rslt));
-        NIBBLE_INC(m_cpu.pc, pcinc);
+        DECODE_M_FIELD(uop, static_cast<uint4>(rslt));
+        storeOperandC(uop, static_cast<uint4>(rslt));
+        NIBBLE_INC(m_cpu.pc, pc_inc);
         m_cpu.ic++;
         break;
 
@@ -1125,52 +1127,52 @@ Cpu2200t::execOneOp()
         rslt  = static_cast<uint8>(a_op + b_op + CARRY_BIT);
         SET_CARRY(rslt);
         rslt &= 0xF;
-        decode_M_field(uop, static_cast<uint4>(rslt));
-        store_C_operand(uop, static_cast<uint4>(rslt));
-        NIBBLE_INC(m_cpu.pc, pcinc);
+        DECODE_M_FIELD(uop, static_cast<uint4>(rslt));
+        storeOperandC(uop, static_cast<uint4>(rslt));
+        NIBBLE_INC(m_cpu.pc, pc_inc);
         m_cpu.ic++;
         break;
 
     case OP_DA:         // decimal add
-        rslt  = decimal_add(a_op, b_op, 0);
+        rslt  = decimalAdd(a_op, b_op, 0);
         rslt &= 0xF;
-        decode_M_field(uop, static_cast<uint4>(rslt));
-        store_C_operand(uop, static_cast<uint4>(rslt));
-        NIBBLE_INC(m_cpu.pc, pcinc);
+        DECODE_M_FIELD(uop, static_cast<uint4>(rslt));
+        storeOperandC(uop, static_cast<uint4>(rslt));
+        NIBBLE_INC(m_cpu.pc, pc_inc);
         m_cpu.ic++;
         break;
 
     case OP_DAC:        // decimal add w/ carry
-        rslt  = decimal_add(a_op, b_op, CARRY_BIT);
+        rslt  = decimalAdd(a_op, b_op, CARRY_BIT);
         SET_CARRY(rslt);
         rslt &= 0xF;
-        decode_M_field(uop, static_cast<uint4>(rslt));
-        store_C_operand(uop, static_cast<uint4>(rslt));
-        NIBBLE_INC(m_cpu.pc, pcinc);
+        DECODE_M_FIELD(uop, static_cast<uint4>(rslt));
+        storeOperandC(uop, static_cast<uint4>(rslt));
+        NIBBLE_INC(m_cpu.pc, pc_inc);
         m_cpu.ic++;
         break;
 
     case OP_ORI:        // or immediate
         a_op  = IMM4(uop);
         rslt  = static_cast<uint8>(a_op | b_op);
-        decode_M_field(uop, static_cast<uint4>(rslt));
-        store_C_operand(uop, static_cast<uint4>(rslt));
+        DECODE_M_FIELD(uop, static_cast<uint4>(rslt));
+        storeOperandC(uop, static_cast<uint4>(rslt));
         m_cpu.ic++;
         break;
 
     case OP_XORI:       // xor immediate
         a_op  = IMM4(uop);
         rslt  = static_cast<uint8>(a_op ^ b_op);
-        decode_M_field(uop, static_cast<uint4>(rslt));
-        store_C_operand(uop, static_cast<uint4>(rslt));
+        DECODE_M_FIELD(uop, static_cast<uint4>(rslt));
+        storeOperandC(uop, static_cast<uint4>(rslt));
         m_cpu.ic++;
         break;
 
     case OP_ANDI:       // and immediate
         a_op  = IMM4(uop);
         rslt  = static_cast<uint8>(a_op & b_op);
-        decode_M_field(uop, static_cast<uint4>(rslt));
-        store_C_operand(uop, static_cast<uint4>(rslt));
+        DECODE_M_FIELD(uop, static_cast<uint4>(rslt));
+        storeOperandC(uop, static_cast<uint4>(rslt));
         m_cpu.ic++;
         break;
 
@@ -1178,8 +1180,8 @@ Cpu2200t::execOneOp()
         a_op  = IMM4(uop);
         rslt  = static_cast<uint8>(a_op + b_op);
         rslt &= 0xF;
-        decode_M_field(uop, static_cast<uint4>(rslt));
-        store_C_operand(uop, static_cast<uint4>(rslt));
+        DECODE_M_FIELD(uop, static_cast<uint4>(rslt));
+        storeOperandC(uop, static_cast<uint4>(rslt));
         m_cpu.ic++;
         break;
 
@@ -1188,41 +1190,41 @@ Cpu2200t::execOneOp()
         rslt  = static_cast<uint8>(a_op + b_op + CARRY_BIT);
         SET_CARRY(rslt);
         rslt &= 0xF;
-        decode_M_field(uop, static_cast<uint4>(rslt));
-        store_C_operand(uop, static_cast<uint4>(rslt));
+        DECODE_M_FIELD(uop, static_cast<uint4>(rslt));
+        storeOperandC(uop, static_cast<uint4>(rslt));
         m_cpu.ic++;
         break;
 
     case OP_DAI:        // decimal add immediate
         a_op  = IMM4(uop);
-        rslt  = decimal_add(a_op, b_op, 0);
+        rslt  = decimalAdd(a_op, b_op, 0);
         rslt &= 0xF;
-        decode_M_field(uop, static_cast<uint4>(rslt));
-        store_C_operand(uop, static_cast<uint4>(rslt));
+        DECODE_M_FIELD(uop, static_cast<uint4>(rslt));
+        storeOperandC(uop, static_cast<uint4>(rslt));
         m_cpu.ic++;
         break;
 
     case OP_DACI:       // decimal add immediate w/ carry
         a_op  = IMM4(uop);
-        rslt  = decimal_add(a_op, b_op, CARRY_BIT);
+        rslt  = decimalAdd(a_op, b_op, CARRY_BIT);
         SET_CARRY(rslt);
         rslt &= 0xF;
-        decode_M_field(uop, static_cast<uint4>(rslt));
-        store_C_operand(uop, static_cast<uint4>(rslt));
+        DECODE_M_FIELD(uop, static_cast<uint4>(rslt));
+        storeOperandC(uop, static_cast<uint4>(rslt));
         m_cpu.ic++;
         break;
 
     // branch instructions:
 
     case OP_BER_INC:    // branch if R[AAAA] == R[BBBB]
-        NIBBLE_INC(m_cpu.pc, pcinc);
+        NIBBLE_INC(m_cpu.pc, pc_inc);
     case OP_BER:        // branch if R[AAAA] == R[BBBB]
         if (a_op == b_op) { m_cpu.ic = static_cast<uint16>(puop->p16); }
                      else { m_cpu.ic++; }
         break;
 
     case OP_BNR_INC:    // branch if R[AAAA] != R[BBBB]
-        NIBBLE_INC(m_cpu.pc, pcinc);
+        NIBBLE_INC(m_cpu.pc, pc_inc);
     case OP_BNR:        // branch if R[AAAA] != R[BBBB]
         if (a_op != b_op) { m_cpu.ic = static_cast<uint16>(puop->p16); }
                      else { m_cpu.ic++; }
@@ -1270,16 +1272,16 @@ Cpu2200t::execOneOp()
         } else {
             // the ic stack pointer is post decremented.
             // it is preincremented on subroutine return.
-            newic = FULL_TARGET(uop);
+            new_ic = FULL_TARGET(uop);
             m_cpu.icstack[m_cpu.icsp] = m_cpu.ic;
             m_cpu.icsp = (m_cpu.icsp - 1) & ICSTACK_MASK;   // wraps
-            m_cpu.ic = newic;
+            m_cpu.ic = new_ic;
         }
         break;
 
     case OP_B:  // unconditional branch
-        newic = FULL_TARGET(uop);
-        m_cpu.ic = newic;
+        new_ic = FULL_TARGET(uop);
+        m_cpu.ic = new_ic;
         break;
 
     // miniop instructions:
@@ -1332,12 +1334,12 @@ Cpu2200t::execOneOp()
             default:
                 break;
         }
-        decode_M_field(uop, 0x0);
+        DECODE_M_FIELD(uop, 0x0);
         m_cpu.ic++;
         break;
 
     case OP_SR: // subroutine return
-        decode_M_field(uop, a_op);
+        DECODE_M_FIELD(uop, a_op);
         m_cpu.icsp = (m_cpu.icsp + 1) & ICSTACK_MASK;       // wraps
 #if 1
         // the real design pushes the address of the calling ucode
@@ -1355,12 +1357,12 @@ Cpu2200t::execOneOp()
         break;
 
     case OP_TPI: // transfer PC to IC
-        decode_M_field(uop, a_op);
+        DECODE_M_FIELD(uop, a_op);
         m_cpu.ic = m_cpu.pc;
         break;
 
     case OP_TIP: // transfer IC to PC
-        decode_M_field(uop, a_op);
+        DECODE_M_FIELD(uop, a_op);
         m_cpu.pc = m_cpu.ic;
         m_cpu.ic++;
         break;
@@ -1371,14 +1373,14 @@ Cpu2200t::execOneOp()
         //   4K = 000,  8K=001, 12K=010, 16K=011
         //  20K = 100, 24K=101, 28K=110, 32K=111
         // that is, it should be (#4K blocks - 1)
-        decode_M_field(uop, a_op);
-        m_cpu.pc = static_cast<uint16>((((m_memsize>>12)-1) << 13) | (1<<12));
+        DECODE_M_FIELD(uop, a_op);
+        m_cpu.pc = static_cast<uint16>((((m_mem_size>>12)-1) << 13) | (1<<12));
         m_cpu.ic++;
         break;
 
     case OP_TP: // transfer PC to Aux
         r_field = (uop & 0xF);
-        decode_M_field(uop, a_op);
+        DECODE_M_FIELD(uop, a_op);
         m_cpu.aux[r_field] = static_cast<uint16>(m_cpu.pc + static_cast<int16>(puop->p16));
         m_cpu.ic++;
         break;
@@ -1386,7 +1388,7 @@ Cpu2200t::execOneOp()
     case OP_TA: // transfer Aux to PC
         r_field = (uop & 0xF);
         // NOTE: PC must be updated *after* memory access
-        decode_M_field(uop, a_op);
+        DECODE_M_FIELD(uop, a_op);
         m_cpu.pc = m_cpu.aux[r_field];
         m_cpu.ic++;
         break;
@@ -1394,7 +1396,7 @@ Cpu2200t::execOneOp()
     case OP_XP: // exchange PC and Aux
         r_field = (uop & 0xF);
         // NOTE: PC must be updated *after* memory access
-        decode_M_field(uop, a_op);
+        DECODE_M_FIELD(uop, a_op);
         // swap
         tmp_pc = m_cpu.pc;
         m_cpu.pc = m_cpu.aux[r_field];

@@ -319,27 +319,27 @@ PrinterFrame::saveDefaults()
     m_printer->getPageAttributes(llen, plen);
 
     // save position and size
-    host::ConfigWriteWinGeom(this, subgroup);
+    host::configWriteWinGeom(this, subgroup);
 
     // save page attributes
-    host::ConfigWriteInt(subgroup,  "pagelength",       plen);
-    host::ConfigWriteInt(subgroup,  "linelength",       llen);
-    host::ConfigWriteInt(subgroup,  "fontsize",         m_fontsize);
-    host::ConfigWriteBool(subgroup, "greenbar",         m_printer->getGreenbar());
-    host::ConfigWriteBool(subgroup, "autoshow",         m_printer->getAutoshow());
-    host::ConfigWriteBool(subgroup, "printasgo",        m_printer->getPrintasgo());
-    host::ConfigWriteBool(subgroup, "portdirect",       m_printer->getPortdirect());
-    host::ConfigWriteStr(subgroup,  "portstring",       m_printer->getPortstring());
-    host::ConfigWriteInt(subgroup,  "orientation",      static_cast<int>(m_printer->getOrientation()));
-    host::ConfigWriteStr(subgroup,  "papername",        m_printer->getPaperName());
-    host::ConfigWriteInt(subgroup,  "paperid",          m_printer->getPaperId());
-    host::ConfigWriteInt(subgroup,  "paperbin",         m_printer->getBin());
-    host::ConfigWriteInt(subgroup,  "marginleft",       left);
-    host::ConfigWriteInt(subgroup,  "marginright",      right);
-    host::ConfigWriteInt(subgroup,  "margintop",        top);
-    host::ConfigWriteInt(subgroup,  "marginbottom",     bottom);
-    host::ConfigWriteInt(subgroup,  "previewzoom",      m_previewzoom);
-    host::ConfigWriteStr(subgroup,  "realprintername",  m_printer->getRealPrinterName());
+    host::configWriteInt(subgroup,  "pagelength",       plen);
+    host::configWriteInt(subgroup,  "linelength",       llen);
+    host::configWriteInt(subgroup,  "fontsize",         m_fontsize);
+    host::configWriteBool(subgroup, "greenbar",         m_printer->getGreenbar());
+    host::configWriteBool(subgroup, "autoshow",         m_printer->getAutoshow());
+    host::configWriteBool(subgroup, "printasgo",        m_printer->getPrintasgo());
+    host::configWriteBool(subgroup, "portdirect",       m_printer->getPortdirect());
+    host::configWriteStr(subgroup,  "portstring",       m_printer->getPortstring());
+    host::configWriteInt(subgroup,  "orientation",      static_cast<int>(m_printer->getOrientation()));
+    host::configWriteStr(subgroup,  "papername",        m_printer->getPaperName());
+    host::configWriteInt(subgroup,  "paperid",          m_printer->getPaperId());
+    host::configWriteInt(subgroup,  "paperbin",         m_printer->getBin());
+    host::configWriteInt(subgroup,  "marginleft",       left);
+    host::configWriteInt(subgroup,  "marginright",      right);
+    host::configWriteInt(subgroup,  "margintop",        top);
+    host::configWriteInt(subgroup,  "marginbottom",     bottom);
+    host::configWriteInt(subgroup,  "previewzoom",      m_previewzoom);
+    host::configWriteStr(subgroup,  "realprintername",  m_printer->getRealPrinterName());
 }
 
 
@@ -358,53 +358,53 @@ PrinterFrame::getDefaults()
 
     // pick up screen location and size
     wxRect default_geom(50, 50, 690, 380);
-    host::ConfigReadWinGeom(this, subgroup, &default_geom);
+    host::configReadWinGeom(this, subgroup, &default_geom);
 
     // pick up screen font size
-    b = host::ConfigReadInt(subgroup, "fontsize", &v);
+    b = host::configReadInt(subgroup, "fontsize", &v);
     m_fontsize = (b && (v >= 8) && (v <= 28)) ? v : 12;
     m_printer->setFontSize(m_fontsize);
 
-    host::ConfigReadBool(subgroup, "greenbar", &b, true);
+    host::configReadBool(subgroup, "greenbar", &b, true);
     m_printer->setGreenbar(b);
 
     // pick up page attributes
     int plen, llen;
-    host::ConfigReadInt(subgroup, "pagelength", &plen, 66);
-    host::ConfigReadInt(subgroup, "linelength", &llen, 80);
+    host::configReadInt(subgroup, "pagelength", &plen, 66);
+    host::configReadInt(subgroup, "linelength", &llen, 80);
     m_printer->setPageAttributes(llen, plen);
 
     // pick up autoshow attribute
-    host::ConfigReadBool(subgroup, "autoshow", &b, true);
+    host::configReadBool(subgroup, "autoshow", &b, true);
     m_printer->setAutoshow(b);
 
     // pick up printasgo attribute
-    host::ConfigReadBool(subgroup, "printasgo", &b, false);
+    host::configReadBool(subgroup, "printasgo", &b, false);
     m_printer->setPrintasgo(b);
 
     // pick up portdirect attribute
-    host::ConfigReadBool(subgroup, "portdirect", &b, false);
+    host::configReadBool(subgroup, "portdirect", &b, false);
     m_printer->setPortdirect(b);
 
     // pick up portstring attribute
     std::string portstring("LPT1");
-    host::ConfigReadStr(subgroup, "portstring", &portstring);
+    host::configReadStr(subgroup, "portstring", &portstring);
     m_printer->setPortstring(portstring);
 
     // pick up page margins
     int left, right, top, bottom;
-    host::ConfigReadInt(subgroup, "margintop",    &top,    50);
-    host::ConfigReadInt(subgroup, "marginbottom", &bottom, 50);
-    host::ConfigReadInt(subgroup, "marginleft",   &left,   50);
-    host::ConfigReadInt(subgroup, "marginright",  &right,  50);
+    host::configReadInt(subgroup, "margintop",    &top,    50);
+    host::configReadInt(subgroup, "marginbottom", &bottom, 50);
+    host::configReadInt(subgroup, "marginleft",   &left,   50);
+    host::configReadInt(subgroup, "marginright",  &right,  50);
     m_printer->setMargins(left, right, top, bottom);
 
     // pick up page preview zoom factor
-    host::ConfigReadInt(subgroup, "previewzoom", &m_previewzoom, 70);
+    host::configReadInt(subgroup, "previewzoom", &m_previewzoom, 70);
 
     // pick up orientation
     int orientation;
-    host::ConfigReadInt(subgroup, "orientation", &orientation, wxPORTRAIT);
+    host::configReadInt(subgroup, "orientation", &orientation, wxPORTRAIT);
     m_printer->setOrientation(static_cast<wxPrintOrientation>(orientation));
 
     // pick up paper id
@@ -412,7 +412,7 @@ PrinterFrame::getDefaults()
     // instead we recalc the paperid from the papername. The papername is what
     // is important the paperid is an enum that might change at some point.
     wxPaperSize paperid = wxPAPER_NONE;
-    b = host::ConfigReadStr(subgroup, "papername", &valstr);
+    b = host::configReadStr(subgroup, "papername", &valstr);
     if (b) {
         paperid = PaperSize(valstr);
     }
@@ -427,7 +427,7 @@ PrinterFrame::getDefaults()
 
     // pick up paper bin
     wxPrintBin paperbin = wxPRINTBIN_DEFAULT;
-    b = host::ConfigReadStr(subgroup, "paperbin", &valstr);
+    b = host::configReadStr(subgroup, "paperbin", &valstr);
     if (b) {
         paperbin = PaperBin(valstr);
     }
@@ -435,7 +435,7 @@ PrinterFrame::getDefaults()
 
     // pick up printer name
     std::string printername("");
-    b = host::ConfigReadStr(subgroup, "realprintername", &printername);
+    b = host::configReadStr(subgroup, "realprintername", &printername);
     m_printer->setRealPrinterName(printername);
 }
 
@@ -535,7 +535,7 @@ void
 PrinterFrame::PP_OnClose(wxCloseEvent &event)
 {
     const std::string subgroup("ui/printpreview");
-    host::ConfigWriteWinGeom(this, subgroup, false);
+    host::configWriteWinGeom(this, subgroup, false);
 
     wxPreviewControlBar *controlBar = ((wxPreviewFrame*)this)->GetControlBar();
     assert(controlBar != nullptr);
@@ -582,7 +582,7 @@ PrinterFrame::OnPrintPreview(wxCommandEvent& WXUNUSED(event))
 
     const std::string subgroup("ui/printpreview");
     wxRect default_geom(100, 100, 600, 650);
-    host::ConfigReadWinGeom(frame, subgroup, &default_geom, false);
+    host::configReadWinGeom(frame, subgroup, &default_geom, false);
 
     frame->Initialize();
 

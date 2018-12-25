@@ -79,7 +79,7 @@ Terminal::Terminal(std::shared_ptr<Scheduler> scheduler,
 
         // A real 2336 sends the sequence E4 F8 about a second after
         // it powers up (the second is to run self tests).
-        m_init_tmr = m_scheduler->TimerCreate(
+        m_init_tmr = m_scheduler->createTimer(
                        TIMER_MS(700),
                        std::bind(&Terminal::SendInitSeq, this)
                      );
@@ -350,7 +350,7 @@ Terminal::checkKbBuffer()
         }
     }
 
-    m_tx_tmr = m_scheduler->TimerCreate(
+    m_tx_tmr = m_scheduler->createTimer(
                    delay,
                    std::bind(&Terminal::termToMxdCallback, this, byte)
                );
@@ -658,7 +658,7 @@ Terminal::processCrtChar1(uint8 byte)
         assert(m_selectp_tmr == nullptr);
         if (delay_ms > 0) {
 //UI_Info("Got FB Cn, delay=%d ms", delay_ms);
-            m_selectp_tmr = m_scheduler->TimerCreate(
+            m_selectp_tmr = m_scheduler->createTimer(
                                    TIMER_MS(delay_ms),
                                    std::bind(&Terminal::selectPCallback, this)
                                  );

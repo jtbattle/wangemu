@@ -410,7 +410,7 @@ UI_printerDestroy(PrinterFrame *wnd)
 }
 
 
-// this is called only from IoCardPrinter::OBS()
+// this is called only from IoCardPrinter::strobeOBS()
 // emit a character to the display
 void
 UI_printerChar(PrinterFrame *wnd, uint8 byte)

@@ -20,16 +20,16 @@
 // default constructor
 SysCfgState::SysCfgState() :
     m_initialized(false),
-    m_cputype(Cpu2200::CPUTYPE_2200T),
+    m_cpu_type(Cpu2200::CPUTYPE_2200T),
     m_ramsize(32),
     m_speed_regulated(true),
     m_disk_realtime(true),
     m_warn_io(true)
 {
     for (auto &slot : m_slot) {
-        slot.type    = IoCard::card_t::none;
-        slot.addr    = -1;
-        slot.cardCfg = nullptr;
+        slot.type     = IoCard::card_t::none;
+        slot.addr     = -1;
+        slot.card_cfg = nullptr;
     }
 }
 
@@ -38,7 +38,7 @@ SysCfgState::~SysCfgState()
 {
     // drop all attached cards
     for (auto &slot : m_slot) {
-        slot.cardCfg = nullptr;
+        slot.card_cfg = nullptr;
     }
 }
 
@@ -59,9 +59,9 @@ SysCfgState::operator=(const SysCfgState &rhs)
         m_slot[slot].type = rhs.m_slot[slot].type;
         m_slot[slot].addr = rhs.m_slot[slot].addr;
         // here we must do a deep copy:
-        m_slot[slot].cardCfg = nullptr;
-        if (rhs.m_slot[slot].cardCfg != nullptr) {
-            m_slot[slot].cardCfg = rhs.m_slot[slot].cardCfg->clone();
+        m_slot[slot].card_cfg = nullptr;
+        if (rhs.m_slot[slot].card_cfg != nullptr) {
+            m_slot[slot].card_cfg = rhs.m_slot[slot].card_cfg->clone();
         }
     }
 
@@ -84,14 +84,14 @@ SysCfgState::SysCfgState(const SysCfgState &obj)
         m_slot[slot].type = obj.m_slot[slot].type;
         m_slot[slot].addr = obj.m_slot[slot].addr;
         // here we must do a deep copy:
-        if (obj.m_slot[slot].cardCfg != nullptr) {
-            m_slot[slot].cardCfg = obj.m_slot[slot].cardCfg->clone();
+        if (obj.m_slot[slot].card_cfg != nullptr) {
+            m_slot[slot].card_cfg = obj.m_slot[slot].card_cfg->clone();
         } else {
-            m_slot[slot].cardCfg = nullptr;
+            m_slot[slot].card_cfg = nullptr;
         }
     }
 
-    m_cputype         = obj.m_cputype;
+    m_cpu_type        = obj.m_cpu_type;
     m_ramsize         = obj.m_ramsize;
     m_speed_regulated = obj.m_speed_regulated;
     m_disk_realtime   = obj.m_disk_realtime;
@@ -110,24 +110,25 @@ SysCfgState::operator==(const SysCfgState &rhs) const
     for (int slot=0; slot<NUM_IOSLOTS; slot++) {
         if ((m_slot[slot].type    != rhs.m_slot[slot].type) ||
             (m_slot[slot].addr    != rhs.m_slot[slot].addr) ||
-             ((    m_slot[slot].cardCfg == nullptr) !=
-              (rhs.m_slot[slot].cardCfg == nullptr))) {
+             ((    m_slot[slot].card_cfg == nullptr) !=
+              (rhs.m_slot[slot].card_cfg == nullptr))) {
             return false;
         }
 
-        if ((    m_slot[slot].cardCfg != nullptr) &&
-            (rhs.m_slot[slot].cardCfg != nullptr) &&
-            (*m_slot[slot].cardCfg != *rhs.m_slot[slot].cardCfg)) {
+        if ((    m_slot[slot].card_cfg != nullptr) &&
+            (rhs.m_slot[slot].card_cfg != nullptr) &&
+            (*m_slot[slot].card_cfg != *rhs.m_slot[slot].card_cfg)) {
             return false;
         }
     }
 
-    return (m_cputype         == rhs.m_cputype)         &&
+    return (m_cpu_type        == rhs.m_cpu_type)        &&
            (m_ramsize         == rhs.m_ramsize)         &&
            (m_speed_regulated == rhs.m_speed_regulated) &&
            (m_disk_realtime   == rhs.m_disk_realtime)   &&
            (m_warn_io         == rhs.m_warn_io)         ;
 }
+
 
 bool
 SysCfgState::operator!=(const SysCfgState &rhs) const
@@ -177,7 +178,7 @@ SysCfgState::loadIni()
         std::string sval;
 
         std::string defaultCpu = "2200T";
-        host::ConfigReadStr(subgroup, "cpu", &sval, &defaultCpu);
+        host::configReadStr(subgroup, "cpu", &sval, &defaultCpu);
         auto cpuCfg = system2200::getCpuConfig(sval);
         if (cpuCfg == nullptr) {
             UI_Warn("The ini didn't specify a legal cpu type.\n"
@@ -191,7 +192,7 @@ SysCfgState::loadIni()
         const int max_ram     = cpuCfg->ramSizeOptions[ram_choices-1];
         const int dflt_ram    = max_ram;
         int ival;
-        host::ConfigReadInt(subgroup, "memsize", &ival, dflt_ram);
+        host::configReadInt(subgroup, "memsize", &ival, dflt_ram);
         if (ival < min_ram) { ival = min_ram; }
         if (ival > max_ram) { ival = max_ram; }
         for (const int kb : cpuCfg->ramSizeOptions) {
@@ -204,7 +205,7 @@ SysCfgState::loadIni()
 
         // learn whether CPU speed is regulated or not
         regulateCpuSpeed(true);  // default
-        bool b = host::ConfigReadStr(subgroup, "speed", &sval);
+        bool b = host::configReadStr(subgroup, "speed", &sval);
         if (b && (sval == "unregulated")) {
             regulateCpuSpeed(false);
         }
@@ -217,30 +218,30 @@ SysCfgState::loadIni()
         osf << "io/slot-" << slot;
         std::string subgroup(osf.str());
         std::string sval;
-        IoCard::card_t cardtype = IoCard::card_t::none;
+        IoCard::card_t card_type = IoCard::card_t::none;
 
         int io_addr;
-        host::ConfigReadInt(subgroup, "addr", &io_addr, -1);  // -1 if not found
-        int b = host::ConfigReadStr(subgroup, "type", &sval);
+        host::configReadInt(subgroup, "addr", &io_addr, -1);  // -1 if not found
+        int b = host::configReadStr(subgroup, "type", &sval);
         if (b) {
-            cardtype = CardInfo::getCardTypeFromName(sval);
+            card_type = CardInfo::getCardTypeFromName(sval);
         }
 
         // TODO: ideally, we'd check the card type against the list of
         //       addresses allowed for that card type
-        const bool plausible_card = IoCard::legal_card_t(cardtype)
+        const bool plausible_card = IoCard::legal_card_t(card_type)
                                  && ((0 <= io_addr)  && (io_addr <= 0xFFF));
 
         if (plausible_card) {
-            setSlotCardType(slot, cardtype);
+            setSlotCardType(slot, card_type);
             setSlotCardAddr(slot, io_addr);
-            // if cardtype isCardConfigurable(), make a new config object,
+            // if card_type isCardConfigurable(), make a new config object,
             // and try to load it from the ini
-            if (CardInfo::isCardConfigurable(cardtype)) {
+            if (CardInfo::isCardConfigurable(card_type)) {
                 std::string cardsubgroup("io/slot-" + std::to_string(slot) + "/cardcfg");
-                m_slot[slot].cardCfg = nullptr;  // dump any existing cardCfg
-                m_slot[slot].cardCfg = CardInfo::getCardCfgState(cardtype);
-                m_slot[slot].cardCfg->loadIni(cardsubgroup);
+                m_slot[slot].card_cfg = nullptr;  // dump any existing card_cfg
+                m_slot[slot].card_cfg = CardInfo::getCardCfgState(card_type);
+                m_slot[slot].card_cfg->loadIni(cardsubgroup);
             }
         } else {
             // the slot is empty
@@ -254,10 +255,10 @@ SysCfgState::loadIni()
         std::string subgroup("misc");
         bool bval;
 
-        host::ConfigReadBool(subgroup, "disk_realtime", &bval, true);
+        host::configReadBool(subgroup, "disk_realtime", &bval, true);
         setDiskRealtime(bval);  // default
 
-        host::ConfigReadBool(subgroup, "warnio", &bval, true);
+        host::configReadBool(subgroup, "warnio", &bval, true);
         setWarnIo(bval);  // default
     }
 
@@ -275,21 +276,21 @@ SysCfgState::saveIni() const
     for (int slot=0; slot<NUM_IOSLOTS; slot++) {
         std::string subgroup("io/slot-" + std::to_string(slot));
 
-        const IoCard::card_t cardtype = m_slot[slot].type;
-        if (cardtype != IoCard::card_t::none) {
+        const IoCard::card_t card_type = m_slot[slot].type;
+        if (card_type != IoCard::card_t::none) {
             char val[10];
             sprintf(&val[0], "0x%03X", m_slot[slot].addr);
-            std::string cardname = CardInfo::getCardName(cardtype);
-            host::ConfigWriteStr(subgroup, "type", cardname);
-            host::ConfigWriteStr(subgroup, "addr", &val[0]);
+            std::string cardname = CardInfo::getCardName(card_type);
+            host::configWriteStr(subgroup, "type", cardname);
+            host::configWriteStr(subgroup, "addr", &val[0]);
         } else {
-            host::ConfigWriteStr(subgroup, "type", "");
-            host::ConfigWriteStr(subgroup, "addr", "");
+            host::configWriteStr(subgroup, "type", "");
+            host::configWriteStr(subgroup, "addr", "");
         }
 
-        if (m_slot[slot].cardCfg != nullptr) {
+        if (m_slot[slot].card_cfg != nullptr) {
             std::string cardsubgroup("io/slot-" + std::to_string(slot) + "/cardcfg");
-            m_slot[slot].cardCfg->saveIni(cardsubgroup);
+            m_slot[slot].card_cfg->saveIni(cardsubgroup);
         }
 
     } // for (slot=NUM_IOSLOTS)
@@ -298,22 +299,22 @@ SysCfgState::saveIni() const
     {
         const std::string subgroup("cpu");
 
-        auto cpuCfg = system2200::getCpuConfig(m_cputype);
+        auto cpuCfg = system2200::getCpuConfig(m_cpu_type);
         assert(cpuCfg != nullptr);
-        std::string cpuLabel = cpuCfg->label;
-        host::ConfigWriteStr(subgroup, "cpu", cpuLabel.c_str());
+        std::string cpu_label = cpuCfg->label;
+        host::configWriteStr(subgroup, "cpu", cpu_label.c_str());
 
-        host::ConfigWriteInt(subgroup, "memsize", getRamKB());
+        host::configWriteInt(subgroup, "memsize", getRamKB());
 
         const char *foo = (system2200::isCpuSpeedRegulated()) ? "regulated" : "unregulated";
-        host::ConfigWriteStr(subgroup, "speed", foo);
+        host::configWriteStr(subgroup, "speed", foo);
     }
 
     // save misc other config bits
     {
         const std::string subgroup("misc");
-        host::ConfigWriteBool(subgroup, "disk_realtime", getDiskRealtime());
-        host::ConfigWriteBool(subgroup, "warnio",        getWarnIo());
+        host::configWriteBool(subgroup, "disk_realtime", getDiskRealtime());
+        host::configWriteBool(subgroup, "warnio",        getWarnIo());
     }
 }
 
@@ -321,9 +322,10 @@ SysCfgState::saveIni() const
 void
 SysCfgState::setCpuType(int type) noexcept
 {
-    m_cputype = type;
+    m_cpu_type = type;
     m_initialized = true;
 }
+
 
 void
 SysCfgState::regulateCpuSpeed(bool regulated) noexcept
@@ -332,12 +334,14 @@ SysCfgState::regulateCpuSpeed(bool regulated) noexcept
     m_initialized = true;
 }
 
+
 void
 SysCfgState::setRamKB(int kb) noexcept
 {
     m_ramsize = kb;
     m_initialized = true;
 }
+
 
 void
 SysCfgState::setDiskRealtime(bool realtime) noexcept
@@ -346,6 +350,7 @@ SysCfgState::setDiskRealtime(bool realtime) noexcept
     m_initialized = true;
 }
 
+
 void
 SysCfgState::setWarnIo(bool warn) noexcept
 {
@@ -353,7 +358,8 @@ SysCfgState::setWarnIo(bool warn) noexcept
     m_initialized = true;
 }
 
-// set the card type.  if the card type is configurable, set up a cardCfg
+
+// set the card type.  if the card type is configurable, set up a card_cfg
 // object of the appropriate type, discarding whatever was there before.
 void
 SysCfgState::setSlotCardType(int slot, IoCard::card_t type)
@@ -362,12 +368,13 @@ SysCfgState::setSlotCardType(int slot, IoCard::card_t type)
 
     // create a config state object if the card type needs one
     if ((type != IoCard::card_t::none) && (CardInfo::isCardConfigurable(type))) {
-        m_slot[slot].cardCfg = nullptr;  // kill any existing card
-        m_slot[slot].cardCfg = CardInfo::getCardCfgState(type);
-        m_slot[slot].cardCfg->setDefaults();
+        m_slot[slot].card_cfg = nullptr;  // kill any existing card
+        m_slot[slot].card_cfg = CardInfo::getCardCfgState(type);
+        m_slot[slot].card_cfg->setDefaults();
     }
     m_initialized = true;
 }
+
 
 void
 SysCfgState::setSlotCardAddr(int slot, int addr) noexcept
@@ -376,11 +383,13 @@ SysCfgState::setSlotCardAddr(int slot, int addr) noexcept
     m_initialized = true;
 }
 
+
 int
 SysCfgState::getCpuType() const noexcept
 {
-    return m_cputype;
+    return m_cpu_type;
 }
+
 
 bool
 SysCfgState::isCpuSpeedRegulated() const noexcept
@@ -388,11 +397,13 @@ SysCfgState::isCpuSpeedRegulated() const noexcept
     return m_speed_regulated;
 }
 
+
 int
 SysCfgState::getRamKB() const noexcept
 {
     return m_ramsize;
 }
+
 
 bool
 SysCfgState::getDiskRealtime() const noexcept
@@ -400,11 +411,13 @@ SysCfgState::getDiskRealtime() const noexcept
     return m_disk_realtime;
 }
 
+
 bool
 SysCfgState::getWarnIo() const noexcept
 {
     return m_warn_io;
 }
+
 
 IoCard::card_t
 SysCfgState::getSlotCardType(int slot) const noexcept
@@ -412,11 +425,13 @@ SysCfgState::getSlotCardType(int slot) const noexcept
     return m_slot[slot].type;
 }
 
+
 bool
 SysCfgState::isSlotOccupied(int slot) const noexcept
 {
     return m_slot[slot].type != IoCard::card_t::none;
 }
+
 
 int
 SysCfgState::getSlotCardAddr(int slot) const noexcept
@@ -430,7 +445,7 @@ const std::shared_ptr<CardCfgState>
 SysCfgState::getCardConfig(int slot) const noexcept
 {
     assert(isSlotOccupied(slot));
-    return m_slot[slot].cardCfg;
+    return m_slot[slot].card_cfg;
 }
 
 
@@ -439,9 +454,9 @@ void
 SysCfgState::editCardConfig(int slot)
 {
     assert(isSlotOccupied(slot));
-    auto cardCfg = m_slot[slot].cardCfg;
-    if (cardCfg != nullptr) {
-        UI_ConfigureCard(m_slot[slot].type, cardCfg.get());
+    auto card_cfg = m_slot[slot].card_cfg;
+    if (card_cfg != nullptr) {
+        UI_ConfigureCard(m_slot[slot].type, card_cfg.get());
     }
 }
 
@@ -550,7 +565,7 @@ SysCfgState::needsReboot(const SysCfgState &other) const
     }
 
     // check for things that do require a reset
-    if (m_cputype != other.m_cputype) {
+    if (m_cpu_type != other.m_cpu_type) {
         return true;
     }
 
@@ -569,8 +584,8 @@ SysCfgState::needsReboot(const SysCfgState &other) const
             return true;
         }
 
-        if ((m_slot[slot].cardCfg != nullptr) &&
-             m_slot[slot].cardCfg->needsReboot(*other.m_slot[slot].cardCfg)) {
+        if ((m_slot[slot].card_cfg != nullptr) &&
+             m_slot[slot].card_cfg->needsReboot(*other.m_slot[slot].card_cfg)) {
             return true;
         }
     }

@@ -782,38 +782,38 @@ CrtFrame::saveDefaults()
     std::string subgroup = makeCrtIniGroup(m_smart_term, m_crt_addr, m_term_num);
 
     // save screen color
-    host::ConfigWriteInt(subgroup, "colorscheme", getDisplayColorScheme());
+    host::configWriteInt(subgroup, "colorscheme", getDisplayColorScheme());
 
     // save font choice
-    host::ConfigWriteInt(subgroup, "fontsize",  m_fontsize[0]);
-    host::ConfigWriteInt(subgroup, "fontsize2", m_fontsize[1]);
+    host::configWriteInt(subgroup, "fontsize",  m_fontsize[0]);
+    host::configWriteInt(subgroup, "fontsize2", m_fontsize[1]);
 
     // save contrast/brightness
-    host::ConfigWriteInt(subgroup, "contrast",   m_crt->getDisplayContrast());
-    host::ConfigWriteInt(subgroup, "brightness", m_crt->getDisplayBrightness());
+    host::configWriteInt(subgroup, "contrast",   m_crt->getDisplayContrast());
+    host::configWriteInt(subgroup, "brightness", m_crt->getDisplayBrightness());
 
     // save keyword mode
-    host::ConfigWriteBool(subgroup, "keywordmode", getKeywordMode());
+    host::configWriteBool(subgroup, "keywordmode", getKeywordMode());
 
     // save tied keyboard io address
     std::ostringstream tfoo;
     tfoo << "0x" << std::setw(2) << std::setfill('0') << std::uppercase << std::hex << m_assoc_kb_addr;
     std::string foo(tfoo.str());
-    host::ConfigWriteStr(subgroup, "tied_keyboard", foo);
+    host::configWriteStr(subgroup, "tied_keyboard", foo);
 
     // save position and size
     if (!m_fullscreen) {
-        host::ConfigWriteWinGeom(this, subgroup);
+        host::configWriteWinGeom(this, subgroup);
     }
 
     // save statistics display mode
-    host::ConfigWriteBool(subgroup, "timingstats", getShowStatistics());
+    host::configWriteBool(subgroup, "timingstats", getShowStatistics());
 
     // save toolbar status
-    host::ConfigWriteBool(subgroup, "toolbar", m_toolBar->IsShown());
+    host::configWriteBool(subgroup, "toolbar", m_toolBar->IsShown());
 
     // save fullscreen status
-    host::ConfigWriteBool(subgroup, "fullscreen", m_fullscreen);
+    host::configWriteBool(subgroup, "fullscreen", m_fullscreen);
 }
 
 
@@ -825,7 +825,7 @@ CrtFrame::getDefaults()
 
     // pick up keyword mode (A/a vs Keyword/A)
     bool b;
-    host::ConfigReadBool(subgroup, "keywordmode", &b, false);
+    host::configReadBool(subgroup, "keywordmode", &b, false);
     setKeywordMode(b);
 
     // pick up tied keyboard io address
@@ -840,7 +840,7 @@ CrtFrame::getDefaults()
         }
     }
     int v = 0;
-    b = host::ConfigReadInt(subgroup, "tied_keyboard", &v);
+    b = host::configReadInt(subgroup, "tied_keyboard", &v);
     if (b && (v >= 0x00) && (v <= 0xFF)) {
         m_assoc_kb_addr = v;
     }  else {
@@ -861,12 +861,12 @@ CrtFrame::getDefaults()
 
     // pick up statistics display mode
     bool showstats;
-    host::ConfigReadBool(subgroup, "timingstats", &showstats, false);
+    host::configReadBool(subgroup, "timingstats", &showstats, false);
     setShowStatistics(showstats);
 
     // save toolbar status
     bool show_toolbar;
-    host::ConfigReadBool(subgroup, "toolbar", &show_toolbar, false);
+    host::configReadBool(subgroup, "toolbar", &show_toolbar, false);
     m_toolBar->Show(show_toolbar);
 
     // pick up screen location and size
@@ -874,18 +874,18 @@ CrtFrame::getDefaults()
     if (!m_small_crt) {
         default_geom = {50, 50, 840, 560};  // 80x24
     }
-    host::ConfigReadWinGeom(this, subgroup, &default_geom);
+    host::configReadWinGeom(this, subgroup, &default_geom);
 
     // pick up fullscreen status
-    host::ConfigReadBool(subgroup, "fullscreen", &m_fullscreen, false);
+    host::configReadBool(subgroup, "fullscreen", &m_fullscreen, false);
 
     // this must be done before changing the color scheme
-    host::ConfigReadInt(subgroup, "contrast", &v, 100);
+    host::configReadInt(subgroup, "contrast", &v, 100);
     m_crt->setDisplayContrast(v);
-    host::ConfigReadInt(subgroup, "brightness", &v, 0);
+    host::configReadInt(subgroup, "brightness", &v, 0);
     m_crt->setDisplayBrightness(v);
 
-    host::ConfigReadInt(subgroup, "colorscheme", &v, 0);
+    host::configReadInt(subgroup, "colorscheme", &v, 0);
     if ((v >= 0) && (v < num_colorschemes)) {
         setDisplayColorScheme(v);
     } else {
@@ -894,11 +894,11 @@ CrtFrame::getDefaults()
 
     // pick up screen font size
     m_fontsize[0] = m_fontsize[1] = 2; // default
-    b = host::ConfigReadInt(subgroup, "fontsize", &v);
+    b = host::configReadInt(subgroup, "fontsize", &v);
     if (b && ((v >=1 && v <= 3) || (v >= 8 && v <= 28))) {
         m_fontsize[0] = v;
     }
-    host::ConfigReadInt(subgroup, "fontsize2", &v);
+    host::configReadInt(subgroup, "fontsize2", &v);
     if (b && ((v >=1 && v <= 3) || (v >= 8 && v <= 28))) {
         m_fontsize[1] = v;
     }
@@ -1015,7 +1015,7 @@ CrtFrame::OnDump(wxCommandEvent& WXUNUSED(event))
     int r = host::fileReq(host::FILEREQ_GRAB, "Name of file to save to", 0, &fullpath);
 
     if (r == host::FILEREQ_OK) {
-        dump_ram(fullpath);
+        dumpRam(fullpath);
     }
 }
 #endif

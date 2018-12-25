@@ -110,7 +110,7 @@ IoCardKeyboard::deselect()
 }
 
 void
-IoCardKeyboard::OBS(int val)
+IoCardKeyboard::strobeOBS(int val)
 {
     if (NOISY) {
         UI_Warn("unexpected keyboard OBS: Output of byte 0x%02x", val);
@@ -118,7 +118,7 @@ IoCardKeyboard::OBS(int val)
 }
 
 void
-IoCardKeyboard::CBS(int val) noexcept
+IoCardKeyboard::strobeCBS(int val) noexcept
 {
     int val8 = val & 0xFF;
     val8 = val8;  // lint
@@ -132,7 +132,7 @@ IoCardKeyboard::CBS(int val) noexcept
 
 // change of CPU Busy state
 void
-IoCardKeyboard::CPB(bool busy)
+IoCardKeyboard::setCpuBusy(bool busy)
 {
     if (NOISY) {
         UI_Info("keyboard CPB%c", busy?'+':'-');
@@ -177,7 +177,7 @@ IoCardKeyboard::tcbScript()
     if (m_selected) {
         assert(!m_cpb);
         if (m_key_ready) {
-            m_cpu->IoCardCbIbs(m_key_code);
+            m_cpu->ioCardCbIbs(m_key_code);
             m_key_ready = false;
         }
         m_cpu->setDevRdy(m_key_ready);
@@ -212,7 +212,7 @@ IoCardKeyboard::check_keyready()
             // we can't return IBS right away -- apparently there
             // must be some delay otherwise the handshake breaks
             if (m_tmr_script == nullptr) {
-                m_tmr_script = m_scheduler->TimerCreate(
+                m_tmr_script = m_scheduler->createTimer(
                         TIMER_US(50),     // 30 is OK, 20 is too little
                         [&](){ tcbScript(); });
             }

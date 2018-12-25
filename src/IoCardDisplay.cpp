@@ -171,7 +171,7 @@ IoCardDisplay::reset(bool hard_reset)
 
     // get the horizontal sync timer going
     if (m_tmr_hsync != nullptr) {
-        m_tmr_hsync->Kill();
+        m_tmr_hsync->kill();
     }
     m_tmr_hsync = nullptr;
     m_hsync_count = 0;
@@ -203,7 +203,7 @@ IoCardDisplay::deselect()
 }
 
 void
-IoCardDisplay::OBS(int val)
+IoCardDisplay::strobeOBS(int val)
 {
     assert(m_busy_state == busy_state::IDLE);
 
@@ -234,7 +234,7 @@ IoCardDisplay::OBS(int val)
 }
 
 void
-IoCardDisplay::CBS(int val)
+IoCardDisplay::strobeCBS(int val)
 {
     val &= 0xFF;
 
@@ -263,7 +263,7 @@ IoCardDisplay::getIB() const noexcept
 // because the display is write-only, we don't expect the CPU
 // to poll us for input.
 void
-IoCardDisplay::CPB(bool busy)
+IoCardDisplay::setCpuBusy(bool busy)
 {
     busy = busy; // make lint happy
 
@@ -294,10 +294,10 @@ IoCardDisplay::tcbHsync(int arg)
 
     // retrigger the timer
 #if 0
-    m_tmr_hsync = m_scheduler->TimerCreate(new_period,
+    m_tmr_hsync = m_scheduler->createTimer(new_period,
                                             [&](){ tcbHsync(arg); });
 #else
-    m_tmr_hsync = m_scheduler->TimerCreate(new_period,
+    m_tmr_hsync = m_scheduler->createTimer(new_period,
                             std::bind(&IoCardDisplay::tcbHsync, this, arg));
 #endif
 

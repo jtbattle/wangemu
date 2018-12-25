@@ -2,7 +2,7 @@
 //
 // A routine desiring later notification at some specific time calls
 //
-//     auto tmr = TimerCreate(ticks, std::bind(&obj::fcn, &obj, arg));
+//     auto tmr = createTimer(ticks, std::bind(&obj::fcn, &obj, arg));
 //
 // which causes 'fcn' to be called back with parameter arg after simulating
 // 'ticks' clock cycles.  The event is then removed from the active list.
@@ -12,7 +12,7 @@
 //
 // A timer can be canceled early like this:
 //
-//     tmr->Kill();
+//     tmr->kill();
 
 // History:
 //    2000-2001: originally developed Solace, a sol-20 emulator for win32
@@ -27,7 +27,7 @@
 // all timers are checked as more than one might expire. All expiring timers
 // are put on a retirement list, then all retired timers perform their
 // callbacks. This retirement list is to prevent confusing reentrancy issues,
-// as a callback may result in a call to TimerCreate().
+// as a callback may result in a call to createTimer().
 
 #include "Scheduler.h"
 #include "Ui.h"         // needed for UI_Error()
@@ -43,7 +43,7 @@
 // set up some events and check that they trigger properly
 #if TEST_TIMER
 static Scheduler test_scheduler;
-static void TimerTest(void);
+static void timerTest(void);
 static int g_testtime;
 
 class TimerTestFoo
@@ -58,14 +58,16 @@ public:
 
 TimerTestFoo g_foo2;
 
+
 void
 TimerTestFoo::report1(int i)
 {
     printf("report1: got callback for timer %d after %d clocks\n", i, g_testtime);
     if (i == 2) {
-        (void)test_scheduler.TimerCreate(4, std::bind(&TimerTestFoo::report1, &g_foo2, 5));
+        (void)test_scheduler.createTimer(4, std::bind(&TimerTestFoo::report1, &g_foo2, 5));
     }
 }
+
 
 void
 TimerTestFoo::report2(int i)
@@ -73,8 +75,9 @@ TimerTestFoo::report2(int i)
     printf("report2: got callback for timer %d after %d clocks\n", i, g_testtime);
 }
 
+
 static void
-TimerTest(void)
+timerTest(void)
 {
     TimerTestFoo foo;
 
@@ -82,17 +85,17 @@ TimerTest(void)
 
     // method 1: create a static timer object, then pass it to scheduler
     sched_callback_t cb1 = std::bind(&TimerTestFoo::report1, &foo, 1);
-    auto t1 = test_scheduler.TimerCreate(TIMER_US(3.0f), cb1);
+    auto t1 = test_scheduler.createTimer(TIMER_US(3.0f), cb1);
 
     // method 2: like method 1, but all inline
-    auto t2 = test_scheduler.TimerCreate(10, std::bind(&TimerTestFoo::report1, &foo, 2));
-    auto t3 = test_scheduler.TimerCreate(50, std::bind(&TimerTestFoo::report2, &foo, 3));
+    auto t2 = test_scheduler.createTimer(10, std::bind(&TimerTestFoo::report1, &foo, 2));
+    auto t3 = test_scheduler.createTimer(50, std::bind(&TimerTestFoo::report2, &foo, 3));
 
     for (int n=0; n<100; n++) {
         if (n == 5) {
-            t1->Kill();
+            t1->kill();
         }
-        test_scheduler.TimerTick(1);
+        test_scheduler.timerTick(1);
     }
 }
 #endif
@@ -109,25 +112,17 @@ Scheduler::Scheduler() :
 {
 #if TEST_TIMER
     if (this == &test_scheduler) {
-        TimerTest();
+        timerTest();
     }
 #endif
 };
 
 
-// free allocated data
-Scheduler::~Scheduler()
-{
-    // TODO: unnecessary? won't the vector container destroy all members?
-    m_timer.clear();
-};
-
-
 // return a timer object; the caller doesn't destroy this object,
-// but calls Kill() if it wants to terminate it.
+// but calls kill() if it wants to terminate it.
 // 'ns' is the number of nanoseconds in the future when the callback fires.
 std::shared_ptr<Timer>
-Scheduler::TimerCreate(int64 ns, const sched_callback_t &fcn)
+Scheduler::createTimer(int64 ns, const sched_callback_t &fcn)
 {
     // catch dumb bugs
     assert(ns >= 1);
@@ -140,14 +135,15 @@ Scheduler::TimerCreate(int64 ns, const sched_callback_t &fcn)
     auto tmr = std::make_shared<Timer>(this, event_ns, fcn);
 
     m_timer.push_back(tmr);
-    m_trigger_ns = FirstEvent();
+    m_trigger_ns = firstEvent();
 
     // return timer handle
     return tmr;
 }
 
+
 int64
-Scheduler::FirstEvent() noexcept
+Scheduler::firstEvent() noexcept
 {
     int64 rv = MAX_TIME;
     for (auto &t : m_timer) {
@@ -158,16 +154,17 @@ Scheduler::FirstEvent() noexcept
     return rv;
 }
 
+
 // kill a timer.  the timer number passed to this function
-// is the one returned by the TimerCreate function.
+// is the one returned by the createTimer function.
 // if we happen to be killing the timer nearest to completion,
 // we don't bother messing with updating m_countdown.
 // instead, we just let that countdown expire, nothing will
 // be triggered, and a new countdown will be established then.
-void Scheduler::TimerKill(Timer* tmr)
+void Scheduler::killTimer(Timer* tmr)
 {
     // the fact that we have to do this lookup doesn't matter since
-    // TimerKill is infrequently used.
+    // killTimer is infrequently used.
     m_timer.erase(
         std::remove_if(begin(m_timer), end(m_timer),
                        [&tmr](auto q){ return (q.get() == tmr); }),
@@ -177,10 +174,11 @@ void Scheduler::TimerKill(Timer* tmr)
 #endif
 }
 
+
 // the m_trigger_ns threshold has been exceeded.  check all timers and invoke
 // callback all those which have expired.
 // this shouldn't need to be called very frequently.
-void Scheduler::TimerCredit(void)
+void Scheduler::creditTimer(void)
 {
     if (m_timer.empty()) {
         // don't trigger this fcn again until there is real work to do
@@ -218,7 +216,7 @@ void Scheduler::TimerCredit(void)
     }
 
     // find the next event
-    m_trigger_ns = FirstEvent();
+    m_trigger_ns = firstEvent();
 
     // sort retired events in order they expired
     std::sort(begin(retired), end(retired),
@@ -238,9 +236,9 @@ void Scheduler::TimerCredit(void)
 // ======================================================================
 
 // kill off this timer
-void Timer::Kill()
+void Timer::kill()
 {
-    s->TimerKill(this);
+    s->killTimer(this);
 }
 
 // vim: ts=8:et:sw=4:smarttab

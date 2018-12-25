@@ -389,7 +389,7 @@ DiskCtrlCfgDlg::saveDefaults()
     const std::string subgroup("ui/diskcfgdlg");
 
     // save position and size
-    host::ConfigWriteWinGeom(this, subgroup);
+    host::configWriteWinGeom(this, subgroup);
 }
 
 
@@ -398,7 +398,7 @@ DiskCtrlCfgDlg::getDefaults()
 {
     // see if we've established a favored location and size
     const std::string subgroup("ui/diskcfgdlg");
-    host::ConfigReadWinGeom(this, subgroup);
+    host::configReadWinGeom(this, subgroup);
 }
 
 // vim: ts=8:et:sw=4:smarttab

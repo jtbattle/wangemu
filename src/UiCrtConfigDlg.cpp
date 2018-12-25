@@ -188,7 +188,7 @@ CrtConfigDlg::saveDefaults()
 {
     const std::string subgroup = m_subgroup + "/cfgscreendlg";
     // save position and size
-    host::ConfigWriteWinGeom(this, subgroup);
+    host::configWriteWinGeom(this, subgroup);
 }
 
 
@@ -197,7 +197,7 @@ CrtConfigDlg::getDefaults()
 {
     const std::string subgroup = m_subgroup + "/cfgscreendlg";
     // see if we've established a favored location and size
-    host::ConfigReadWinGeom(this, subgroup);
+    host::configReadWinGeom(this, subgroup);
 }
 
 // vim: ts=8:et:sw=4:smarttab

@@ -17,16 +17,20 @@
 // module state
 // ============================================================================
 
-std::string                   app_home;            // path to application home directory
-std::unique_ptr<wxFileConfig> config    = nullptr; // configuration file object
-std::unique_ptr<wxStopWatch>  stopwatch = nullptr; // time program started
+static std::string                   app_home;            // path to application home directory
+static std::unique_ptr<wxFileConfig> config    = nullptr; // configuration file object
+static std::unique_ptr<wxStopWatch>  stopwatch = nullptr; // time program started
 
 // remember where certain files are located
-std::string fileDir[host::FILEREQ_NUM];         // dir where files come from
-std::string filename[host::FILEREQ_NUM];        // most recently chosen
-std::string fileFilter[host::FILEREQ_NUM];      // suffix filter string
-int         fileFilterIdx[host::FILEREQ_NUM];   // which filter was chosen
-std::string iniGroup[host::FILEREQ_NUM];        // name in .ini file
+struct file_group_t {
+    std::string  dir;         // dir where files come from
+    std::string  name;        // most recently chosen
+    std::string  filter;      // suffix filter string
+    int          filter_idx;  // which filter was chosen
+    std::string  ini_group;   // name in .ini file
+};
+
+static file_group_t file_group[host::FILEREQ_NUM];
 
 // ============================================================================
 // file-local functions
@@ -39,7 +43,7 @@ getConfigFileLocations()
     std::string subgroup("..");
     std::string foo;
 
-    bool b = host::ConfigReadStr(subgroup, "configversion", &foo);
+    bool b = host::configReadStr(subgroup, "configversion", &foo);
     if (b && (foo != "1")) {
         UI_Warn("Configuration file version '%s' found.\n"
                  "Version '1' expected.\n"
@@ -48,16 +52,16 @@ getConfigFileLocations()
 
     for (int i=0; i<host::FILEREQ_NUM; i++) {
 
-        subgroup = iniGroup[i];
+        subgroup = file_group[i].ini_group;
         long v = 0;
 
-        b = host::ConfigReadStr(subgroup, "directory", &foo);
-        fileDir[i] = (b) ? foo : ".";
+        b = host::configReadStr(subgroup, "directory", &foo);
+        file_group[i].dir = (b) ? foo : ".";
 
-        b = host::ConfigReadStr(subgroup, "filterindex", &foo);
-        fileFilterIdx[i] = (b && wxString(foo).ToLong(&v)) ? v : 0;
+        b = host::configReadStr(subgroup, "filterindex", &foo);
+        file_group[i].filter_idx = (b && wxString(foo).ToLong(&v)) ? v : 0;
 
-        filename[i] = "";     // intentionally don't save this
+        file_group[i].name = "";     // intentionally don't save this
     }
 }
 
@@ -69,12 +73,12 @@ saveConfigFileLocations()
     std::string subgroup("..");
     std::string version("1");
 
-    host::ConfigWriteStr(subgroup, "configversion", version);
+    host::configWriteStr(subgroup, "configversion", version);
 
     for (int i=0; i<host::FILEREQ_NUM; i++) {
-        subgroup = iniGroup[i];
-        host::ConfigWriteStr(subgroup, "directory",   fileDir[i]);
-        host::ConfigWriteInt(subgroup, "filterindex", fileFilterIdx[i]);
+        subgroup = file_group[i].ini_group;
+        host::configWriteStr(subgroup, "directory",   file_group[i].dir);
+        host::configWriteInt(subgroup, "filterindex", file_group[i].filter_idx);
     }
 }
 
@@ -99,6 +103,7 @@ dbglog_open(const std::string &logname)
         exit(-1);
     }
 }
+
 
 static void
 dbglog_close()
@@ -126,6 +131,7 @@ dbglog(const char *fmt, ...)
         dbg_ofs.flush();
     }
 }
+
 
 // ============================================================================
 // "public" functions
@@ -196,34 +202,42 @@ host::initialize()
     stopwatch->Start(0);
 
     // default file locations
-    fileDir[FILEREQ_SCRIPT]       = ".";
-    filename[FILEREQ_SCRIPT]      = "";
-    fileFilterIdx[FILEREQ_SCRIPT] = 0;
-    fileFilter[FILEREQ_SCRIPT]    = "script files (*.w22)"
-                                    "|*.w22|text files (*.txt)"
-                                    "|*.txt|All files (*.*)|*.*";
-    iniGroup[FILEREQ_SCRIPT]      = "ui/script";
+    file_group[FILEREQ_SCRIPT] = {
+        ".",                            // dir
+        "",                             // name
+        "script files (*.w22)"          // filter
+        "|*.w22|text files (*.txt)"
+        "|*.txt|All files (*.*)|*.*",
+        0,                              // filter_idx
+        "ui/script"                     // ini_group
+    };
 
-    fileDir[FILEREQ_GRAB]         = ".";
-    filename[FILEREQ_GRAB]        = "";
-    fileFilterIdx[FILEREQ_GRAB]   = 0;
-    fileFilter[FILEREQ_GRAB]      = "BMP (*.bmp)|*.bmp"
-                                    "|Any file (*.*)|*.*";
-    iniGroup[FILEREQ_GRAB]        = "ui/screengrab";
+    file_group[FILEREQ_GRAB] = {
+        ".",                            // dir
+        "",                             // name
+        "BMP (*.bmp)|*.bmp"             // filter
+        "|Any file (*.*)|*.*",
+        0,                              // filter_idx
+        "ui/screengrab"                 // ini_group
+    };
 
-    fileDir[FILEREQ_DISK]         = ".";
-    filename[FILEREQ_DISK]        = "";
-    fileFilterIdx[FILEREQ_DISK]   = 0;
-    fileFilter[FILEREQ_DISK]      = "wang virtual disk (*.wvd)|*.wvd"
-                                    "|All files (*.*)|*.*";
-    iniGroup[FILEREQ_DISK]        = "ui/disk";
+    file_group[FILEREQ_DISK] = {
+        ".",                                // dir
+        "",                                 // name
+        "wang virtual disk (*.wvd)|*.wvd"   // filter
+        "|All files (*.*)|*.*",
+        0,                                  // filter_idx
+        "ui/disk"                           // ini_group
+    };
 
-    fileDir[FILEREQ_PRINTER]       = ".";
-    filename[FILEREQ_PRINTER]      = "";
-    fileFilterIdx[FILEREQ_PRINTER] = 0;
-    fileFilter[FILEREQ_PRINTER]    = "Text Files (*.txt)|*.txt"
-                                     "|All files (*.*)|*.*";
-    iniGroup[FILEREQ_PRINTER]      = "ui/printer";
+    file_group[FILEREQ_PRINTER] = {
+        ".",                                // dir
+        "",                                 // name
+        "Text Files (*.txt)|*.txt"          // filter
+        "|All files (*.*)|*.*",
+        0,                                  // filter_idx
+        "ui/printer"                        // ini_group
+    };
 
     // now try and read in defaults from ini file
     getConfigFileLocations();
@@ -266,17 +280,17 @@ host::fileReq(int requestor, std::string title, int readonly, std::string *fullp
     wxFileDialog dialog(
             nullptr,
             title.c_str(),
-            fileDir[requestor],       // default directory
-            filename[requestor],      // default file
-            fileFilter[requestor],    // file suffix filter
+            file_group[requestor].dir,       // default directory
+            file_group[requestor].name,      // default file
+            file_group[requestor].filter,    // file suffix filter
             style);
-    dialog.SetFilterIndex(fileFilterIdx[requestor]);
+    dialog.SetFilterIndex(file_group[requestor].filter_idx);
 
     if (dialog.ShowModal() == wxID_OK) {
         // remember what and where we selected
-        fileDir[requestor]       = dialog.GetDirectory();
-        filename[requestor]      = dialog.GetFilename();
-        fileFilterIdx[requestor] = dialog.GetFilterIndex();
+        file_group[requestor].dir       = dialog.GetDirectory();
+        file_group[requestor].name      = dialog.GetFilename();
+        file_group[requestor].filter_idx = dialog.GetFilterIndex();
         *fullpath = dialog.GetPath();
         return FILEREQ_OK;
     }
@@ -318,7 +332,7 @@ host::asAbsolutePath(const std::string &name)
 
 // fetch an association from the configuration file
 bool
-host::ConfigReadStr(const std::string &subgroup,
+host::configReadStr(const std::string &subgroup,
                     const std::string &key,
                     std::string *val,
                     const std::string *defaultval)
@@ -337,14 +351,14 @@ host::ConfigReadStr(const std::string &subgroup,
 
 
 bool
-host::ConfigReadInt(const std::string &subgroup,
+host::configReadInt(const std::string &subgroup,
                     const std::string &key,
                     int *val,
                     const int defaultval)
 {
     assert(val != nullptr);
     std::string valstr;
-    bool b = ConfigReadStr(subgroup, key, &valstr);
+    bool b = configReadStr(subgroup, key, &valstr);
     long v = 0;
     if (b) {
         wxString wxv(valstr);
@@ -356,14 +370,14 @@ host::ConfigReadInt(const std::string &subgroup,
 
 
 void
-host::ConfigReadBool(const std::string &subgroup,
+host::configReadBool(const std::string &subgroup,
                      const std::string &key,
                      bool *val,
                      const bool defaultval)
 {
     assert(val != nullptr);
     int v = 0;
-    const bool b = ConfigReadInt(subgroup, key, &v, ((defaultval) ? 1:0));
+    const bool b = configReadInt(subgroup, key, &v, ((defaultval) ? 1:0));
     if (b && (v >= 0) && (v <= 1)) {
         *val = (v==1);
     } else {
@@ -381,7 +395,7 @@ host::ConfigReadBool(const std::string &subgroup,
 // for people who already had a .ini file, it would have messed up their
 // settings a bit on the changeover.
 void
-host::ConfigReadWinGeom(wxWindow *wxwin,
+host::configReadWinGeom(wxWindow *wxwin,
                         const std::string &subgroup,
                         wxRect * const default_geom,
                         bool client_size)
@@ -389,7 +403,7 @@ host::ConfigReadWinGeom(wxWindow *wxwin,
     long x=0, y=0, w=0, h=0;    // just for lint
     std::string valstr;
 
-    bool b = ConfigReadStr(subgroup, "window", &valstr);
+    bool b = configReadStr(subgroup, "window", &valstr);
     if (b) {
         wxStringTokenizer stkn(valstr, ",");
         b = (stkn.CountTokens() == 4);  // there should be four items
@@ -453,7 +467,7 @@ host::ConfigReadWinGeom(wxWindow *wxwin,
 
 // send a string association to the configuration file
 void
-host::ConfigWriteStr(const std::string &subgroup,
+host::configWriteStr(const std::string &subgroup,
                      const std::string &key,
                      const std::string &val)
 {
@@ -467,30 +481,30 @@ host::ConfigWriteStr(const std::string &subgroup,
 
 // send an integer association to the configuration file
 void
-host::ConfigWriteInt(const std::string &subgroup,
+host::configWriteInt(const std::string &subgroup,
                      const std::string &key,
                      const int val)
 {
     wxString foo;
     foo.Printf("%d", val);
-    ConfigWriteStr(subgroup, key, std::string(foo));
+    configWriteStr(subgroup, key, std::string(foo));
 }
 
 
 // send a boolean association to the configuration file
 void
-host::ConfigWriteBool(const std::string &subgroup,
+host::configWriteBool(const std::string &subgroup,
                       const std::string &key,
                       const bool val)
 {
     const int foo = (val) ? 1 : 0;
-    ConfigWriteInt(subgroup, key, foo);
+    configWriteInt(subgroup, key, foo);
 }
 
 
 // write out the geometry for a window
 void
-host::ConfigWriteWinGeom(wxWindow *wxwin,
+host::configWriteWinGeom(wxWindow *wxwin,
                          const std::string &subgroup,
                          bool client_size)
 {
@@ -506,7 +520,7 @@ host::ConfigWriteWinGeom(wxWindow *wxwin,
 
     wxString prop;
     prop.Printf("%d,%d,%d,%d", x, y, w, h);
-    ConfigWriteStr(subgroup, "window", std::string(prop));
+    configWriteStr(subgroup, "window", std::string(prop));
 }
 
 

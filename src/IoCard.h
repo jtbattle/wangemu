@@ -59,7 +59,7 @@ public:
     virtual void deselect() = 0;
 
     // a byte, has been output to device.
-    virtual void OBS(int val) = 0;
+    virtual void strobeOBS(int val) = 0;
 
     // a request to return status.
     // the manual says that a card receiving CBS is expected to
@@ -69,7 +69,7 @@ public:
     // it as a secondary OBS strobe to allow sending data to a
     // second register.  each IoCard will have to figure out what
     // is appropriate for that card.
-    virtual void CBS(int val) = 0;
+    virtual void strobeCBS(int val) = 0;
 
     // a request to return IB5.
     // this feature supports an ugly hack.  I'm quite surprised
@@ -96,8 +96,8 @@ public:
     // the data on the In bus is clocked into the K register.  when
     // the microcode sees CPB again, it knows that K contains valid
     // data from the selected device.  the device uses the function
-    // IoCardCbIbs() to supply the IBS data to the CPU.
-    virtual void CPB(bool busy) = 0;
+    // ioCardCbIbs() to supply the IBS data to the CPU.
+    virtual void setCpuBusy(bool busy) = 0;
 
     // --------------- static member functions ---------------
 

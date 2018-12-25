@@ -13,6 +13,7 @@
 #include "Ui.h"                 // needed for UI_Alert()
 #include "tokens.h"             // predigested keyword tokens
 
+#include <cctype>
 #include <sstream>
 
 // =========================================================================
@@ -29,12 +30,12 @@ ScriptFile::ScriptFile(const std::string &filename,
         m_filename(""),
         m_opened_ok(false),
         m_eof(false),
-        m_metaflags(metaflags),
+        m_meta_flags(metaflags),
         m_cur_depth(cur_nesting_depth),
         m_max_depth(max_nesting_depth),
         m_cur_line(0),
         m_subscript(nullptr),
-        m_charbuf{0x00},
+        m_line_buf{0x00},
         m_cur_char(0)
 {
     // put in canonical format
@@ -55,7 +56,7 @@ ScriptFile::ScriptFile(const std::string &filename,
     m_opened_ok = true;
 
     // attempt to read the first line of the file
-    m_prepare_next_line();
+    prepareNextLine();
 }
 
 // =========================================================================
@@ -112,11 +113,11 @@ ScriptFile::getLineDescription() const
 // does necessary manipulations to read next line of text and sets flags
 
 void
-ScriptFile::m_prepare_next_line()
+ScriptFile::prepareNextLine()
 {
-    m_ifs->getline(&m_charbuf[0], MAX_EXPECTED_LINE_LENGTH);
+    m_ifs->getline(&m_line_buf[0], MAX_EXPECTED_LINE_LENGTH);
     if (m_ifs->gcount() == 0) {
-        m_charbuf[0] = '\0';
+        m_line_buf[0] = '\0';
         m_eof = true;
         return;
     }
@@ -131,13 +132,13 @@ ScriptFile::m_prepare_next_line()
         std::string location = getLineDescription();
         std::string msg = "Very long line in script at " + location;
         UI_Warn("%s", msg.c_str());
-        m_charbuf[MAX_EXPECTED_LINE_LENGTH] = '\0';  // make sure zero terminated
+        m_line_buf[MAX_EXPECTED_LINE_LENGTH] = '\0';  // make sure zero terminated
     }
 
     // remove any combination of trailing CRs and LFs from buffer
-    int len = strlen(&m_charbuf[0]);
-    while ((m_charbuf[len-1] == '\n' || m_charbuf[len-1] == '\r') && len>0) {
-        m_charbuf[len-1] = '\0';
+    int len = strlen(&m_line_buf[0]);
+    while ((m_line_buf[len-1] == '\n' || m_line_buf[len-1] == '\r') && len>0) {
+        m_line_buf[len-1] = '\0';
         len--;
     }
 
@@ -148,27 +149,12 @@ ScriptFile::m_prepare_next_line()
 // =========================================================================
 // helper functions
 
-bool
-ScriptFile::ishexdigit(char ch) const noexcept
+static int
+hexval(char ch) noexcept
 {
-    return (ch >= '0' && ch <= '9') ||
-           (ch >= 'A' && ch <= 'F') ||
-           (ch >= 'a' && ch <= 'f');
-}
-
-
-int
-ScriptFile::hexval(char ch) const noexcept
-{
-    if (ch >= '0' && ch <= '9') {
-        return ch - '0';
-    }
-    if (ch >= 'A' && ch <= 'F') {
-        return ch - 'A' + 10;
-    }
-    if (ch >= 'a' && ch <= 'f') {
-        return ch - 'a' + 10;
-    }
+    if (ch >= '0' && ch <= '9') { return ch - '0'; }
+    if (ch >= 'A' && ch <= 'F') { return ch - 'A' + 10; }
+    if (ch >= 'a' && ch <= 'f') { return ch - 'a' + 10; }
     return -1;
 }
 
@@ -395,14 +381,14 @@ ScriptFile::getNextByte(int *byte)
             return false;
         }
 
-        if (m_charbuf[m_cur_char] == 0) {
+        if (m_line_buf[m_cur_char] == 0) {
             // we hit the end of line
             *byte = 0x0D;   // carriage return
-            m_prepare_next_line();
+            prepareNextLine();
             return true;
         }
 
-        char ch = m_charbuf[m_cur_char++];
+        char ch = m_line_buf[m_cur_char++];
 
         // look for literal characters
         if (ch != '\\') {
@@ -411,18 +397,18 @@ ScriptFile::getNextByte(int *byte)
         }
 
         // Escape case #1: "\\" -> "\"
-        if (m_charbuf[m_cur_char] == '\\') {
+        if (m_line_buf[m_cur_char] == '\\') {
             *byte = '\\';
             m_cur_char++;
             return true;
         }
 
         // Escape case #2: "\xx" -> interpret as hex value of char
-        if (m_metaflags & SCRIPT_META_HEX) {
-            if (ishexdigit(m_charbuf[m_cur_char+0]) &&
-                ishexdigit(m_charbuf[m_cur_char+1])) {
-                int val = 16*hexval(m_charbuf[m_cur_char+0]) +
-                             hexval(m_charbuf[m_cur_char+1]) ;
+        if (m_meta_flags & SCRIPT_META_HEX) {
+            if (isxdigit(m_line_buf[m_cur_char+0]) &&
+                isxdigit(m_line_buf[m_cur_char+1])) {
+                int val = 16*hexval(m_line_buf[m_cur_char+0]) +
+                             hexval(m_line_buf[m_cur_char+1]) ;
                 *byte = val;
                 m_cur_char += 2;
                 return true;
@@ -430,10 +416,10 @@ ScriptFile::getNextByte(int *byte)
         }
 
         // Escape case #3: "\<label>" -> map using symbol table
-        if (m_metaflags & SCRIPT_META_KEY) {
+        if (m_meta_flags & SCRIPT_META_KEY) {
             for (unsigned int i=0; i<sizeof(metakeytable)/sizeof(metakeytable_t); i++) {
                 const int len = strlen(metakeytable[i].name);
-                if (strncmp(&m_charbuf[m_cur_char], metakeytable[i].name, len) == 0) {
+                if (strncmp(&m_line_buf[m_cur_char], metakeytable[i].name, len) == 0) {
                     // we found a matcher
                     *byte = metakeytable[i].val;
                     m_cur_char += len;
@@ -446,19 +432,19 @@ ScriptFile::getNextByte(int *byte)
         // \<include filename.foo>
         // it must start a line in the first column.
         // any chars after the closing ">" are ignored.
-        if ((m_metaflags & SCRIPT_META_INC) &&
+        if ((m_meta_flags & SCRIPT_META_INC) &&
             (m_cur_depth < m_max_depth) &&
-            (strncmp(&m_charbuf[m_cur_char], "<include ", 9) == 0)) {
+            (strncmp(&m_line_buf[m_cur_char], "<include ", 9) == 0)) {
 
             // scan for either end of line or ">"
             m_cur_char += 9;
             int end_char;
-            for (end_char = m_cur_char; m_charbuf[end_char] && m_charbuf[end_char]!='>'; end_char++) {
+            for (end_char = m_cur_char; m_line_buf[end_char] && m_line_buf[end_char]!='>'; end_char++) {
                 ;
             }
-            if (m_charbuf[end_char] == '>') {
-                m_charbuf[end_char] = '\0';  // terminate filename
-                std::string inc_fname(&m_charbuf[m_cur_char]);
+            if (m_line_buf[end_char] == '>') {
+                m_line_buf[end_char] = '\0';  // terminate filename
+                std::string inc_fname(&m_line_buf[m_cur_char]);
                 m_cur_char = end_char+1;
 
                 // if the include file name isn't absolute, turn it to an
@@ -481,7 +467,7 @@ ScriptFile::getNextByte(int *byte)
 
                 // do include processing ...
                 m_subscript = std::make_unique<ScriptFile>(
-                                    abs_inc_fname, m_metaflags,
+                                    abs_inc_fname, m_meta_flags,
                                     m_max_depth, m_cur_depth+1);
 
                 if (!m_subscript->openedOk()) {
@@ -490,7 +476,7 @@ ScriptFile::getNextByte(int *byte)
                     std::string msg("Error opening file '" + abs_inc_fname +
                                     "',\nincluded from " + location);
                     UI_Error("%s", msg.c_str());
-                    m_prepare_next_line();
+                    prepareNextLine();
                     continue;  // try next line of input
                 }
 

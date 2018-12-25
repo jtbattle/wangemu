@@ -22,9 +22,9 @@ public:
     void  reset(bool hard_reset=true) noexcept override;
     void  select() override;
     void  deselect() override;
-    void  OBS(int val) override;
-    void  CBS(int val) override;
-    void  CPB(bool busy) override;
+    void  strobeOBS(int val) override;
+    void  strobeCBS(int val) override;
+    void  setCpuBusy(bool busy) override;
 
     // give access to associated gui window
     PrinterFrame *getGuiPtr() const noexcept;

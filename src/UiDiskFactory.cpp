@@ -198,7 +198,7 @@ DiskFactory::DiskFactory(wxFrame *parent, const std::string &filename) :
     // pick up screen location and size
     const std::string subgroup("ui/disk_dialog");
     wxRect default_geom(rc.GetX(), rc.GetY(), rc.GetWidth(), rc.GetHeight());
-    host::ConfigReadWinGeom(this, subgroup, &default_geom);
+    host::configReadWinGeom(this, subgroup, &default_geom);
 
     updateDlg();
 
@@ -214,7 +214,7 @@ DiskFactory::DiskFactory(wxFrame *parent, const std::string &filename) :
 DiskFactory::~DiskFactory()
 {
     const std::string subgroup("ui/disk_dialog");
-    host::ConfigWriteWinGeom(this, subgroup);
+    host::configWriteWinGeom(this, subgroup);
 
     m_diskdata = nullptr;
 }

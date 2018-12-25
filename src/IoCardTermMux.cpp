@@ -279,7 +279,7 @@ IoCardTermMux::deselect()
 }
 
 void
-IoCardTermMux::OBS(int val)
+IoCardTermMux::strobeOBS(int val)
 {
     val &= 0xFF;
     if (do_dbg) {
@@ -302,7 +302,7 @@ IoCardTermMux::OBS(int val)
 }
 
 void
-IoCardTermMux::CBS(int val)
+IoCardTermMux::strobeCBS(int val)
 {
     val &= 0xFF;
     if (do_dbg) {
@@ -338,7 +338,7 @@ IoCardTermMux::getIB() const noexcept
 
 // change of CPU Busy state
 void
-IoCardTermMux::CPB(bool busy)
+IoCardTermMux::setCpuBusy(bool busy)
 {
     // it appears that except for reset, ucode only ever clears it,
     // and of course the IBS sets it back.
@@ -401,7 +401,7 @@ IoCardTermMux::checkTxBuffer(int term_num)
         return;
     }
 
-    term.tx_tmr = m_scheduler->TimerCreate(
+    term.tx_tmr = m_scheduler->createTimer(
                       serial_char_delay,
                       std::bind(&IoCardTermMux::mxdToTermCallback, this, term_num, term.tx_byte)
                   );
@@ -560,7 +560,7 @@ IoCardTermMux::i8080_out_func(int addr, int byte, void *user_data)
         if (do_dbg) {
             dbglog("TermMux/%02x IB=%02x\n", tthis->m_baseaddr, byte);
         }
-        tthis->m_cpu->IoCardCbIbs(byte);
+        tthis->m_cpu->ioCardCbIbs(byte);
         break;
 
     case OUT_IB9_N:
@@ -568,7 +568,7 @@ IoCardTermMux::i8080_out_func(int addr, int byte, void *user_data)
         if (do_dbg) {
             dbglog("TermMux/%02x IB=%03x\n", tthis->m_baseaddr, 0x100 | byte);
         }
-        tthis->m_cpu->IoCardCbIbs(0x100 | byte);
+        tthis->m_cpu->ioCardCbIbs(0x100 | byte);
         break;
 
     case OUT_PRIME:

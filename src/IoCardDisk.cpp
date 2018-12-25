@@ -262,7 +262,7 @@ IoCardDisk::reset(bool hard_reset)
 
     // reset drive state
     if (m_tmr_motor_off != nullptr) {
-        m_tmr_motor_off->Kill();
+        m_tmr_motor_off->kill();
         m_tmr_motor_off = nullptr;
     }
 
@@ -311,7 +311,7 @@ IoCardDisk::deselect()
 }
 
 void
-IoCardDisk::OBS(int val)
+IoCardDisk::strobeOBS(int val)
 {
     const int val8 = val & 0xFF;
 
@@ -324,7 +324,7 @@ IoCardDisk::OBS(int val)
 }
 
 void
-IoCardDisk::CBS(int val) noexcept
+IoCardDisk::strobeCBS(int val) noexcept
 {
     int val8 = val & 0xFF;
     val8 = val8;  // lint
@@ -362,7 +362,7 @@ IoCardDisk::CBS(int val) noexcept
 
 // change of CPU Busy state
 void
-IoCardDisk::CPB(bool val)
+IoCardDisk::setCpuBusy(bool val)
 {
     // it appears that except for reset, ucode only ever clears it,
     // and of course the IBS sets it back.
@@ -391,11 +391,11 @@ IoCardDisk::stopMotor(int drive)
     m_d[drive].idle_cnt   = 0;    // number of operations done w/o this drive
     m_d[drive].secwait    = -1;
     if (m_d[drive].tmr_track != nullptr) {
-        m_d[drive].tmr_track->Kill();
+        m_d[drive].tmr_track->kill();
         m_d[drive].tmr_track = nullptr;
     }
     if (m_d[drive].tmr_sector != nullptr) {
-        m_d[drive].tmr_sector->Kill();
+        m_d[drive].tmr_sector->kill();
         m_d[drive].tmr_sector = nullptr;
     }
 
@@ -436,7 +436,7 @@ IoCardDisk::checkDiskReady()
                 if (DBG > 2) {
                     dbglog("disk IBS of 0x%02x\n", m_byte_to_send);
                 }
-                m_cpu->IoCardCbIbs(m_byte_to_send);
+                m_cpu->ioCardCbIbs(m_byte_to_send);
             }
         }
         m_cpu->setDevRdy(!m_card_busy);
@@ -486,7 +486,7 @@ IoCardDisk::wvdTickleMotorOffTimer()
 
     const int disktype = m_d[m_drive].wvd->getDiskType();
     if ((disktype == Wvd::DISKTYPE_FD5) || (disktype == Wvd::DISKTYPE_FD8)) {
-        m_tmr_motor_off = m_scheduler->TimerCreate(TEN_SECONDS,
+        m_tmr_motor_off = m_scheduler->createTimer(TEN_SECONDS,
                                                    [&](){ tcbMotorOff(m_drive); });
     }
 }
@@ -616,7 +616,7 @@ IoCardDisk::wvdSeekTrack(int64 nominal_ns)
 
     // start sector timer
     if (!empty && (m_d[m_drive].tmr_sector == nullptr)) {
-        m_d[m_drive].tmr_sector = m_scheduler->TimerCreate(
+        m_d[m_drive].tmr_sector = m_scheduler->createTimer(
                                     m_d[m_drive].ns_per_sector,
                                     [&](){ tcbSector(m_drive); });
     }
@@ -629,7 +629,7 @@ IoCardDisk::wvdSeekTrack(int64 nominal_ns)
     }
 
     m_d[m_drive].tmr_track =
-        m_scheduler->TimerCreate(ns, [&](){ tcbTrack(m_drive); });
+        m_scheduler->createTimer(ns, [&](){ tcbTrack(m_drive); });
 }
 
 
@@ -747,7 +747,7 @@ IoCardDisk::tcbSector(int arg)
     }
 
     // retrigger the timer
-    m_d[drive].tmr_sector = m_scheduler->TimerCreate(
+    m_d[drive].tmr_sector = m_scheduler->createTimer(
                                     m_d[drive].ns_per_sector,
                                     [&, drive](){ tcbSector(drive); });
     assert(m_d[drive].tmr_sector != nullptr);

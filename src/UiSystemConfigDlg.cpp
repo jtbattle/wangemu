@@ -487,7 +487,7 @@ SystemConfigDlg::saveDefaults()
     const std::string subgroup("ui/configdlg");
 
     // save position and size
-    host::ConfigWriteWinGeom(this, subgroup);
+    host::configWriteWinGeom(this, subgroup);
 }
 
 
@@ -496,7 +496,7 @@ SystemConfigDlg::getDefaults()
 {
     // see if we've established a favored location and size
     const std::string subgroup("ui/configdlg");
-    host::ConfigReadWinGeom(this, subgroup);
+    host::configReadWinGeom(this, subgroup);
 }
 
 

@@ -22,10 +22,10 @@ public:
     void  reset(bool hard_reset=true) override;
     void  select() override;
     void  deselect() override;
-    void  OBS(int val) override;
-    void  CBS(int val) override;
+    void  strobeOBS(int val) override;
+    void  strobeCBS(int val) override;
     int   getIB() const override;
-    void  CPB(bool busy) override;
+    void  setCpuBusy(bool busy) override;
 
     // ----- IoCardXxx specific functions -----
     // ...

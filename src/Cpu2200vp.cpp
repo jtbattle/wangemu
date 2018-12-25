@@ -20,11 +20,11 @@
 
 // control which functions get inlined
 #define INLINE_STORE_C 1
-#define INLINE_MEM_RD  1  // FIXME: this doesn't work, due to static declaration
-#define INLINE_DD_OP   1  // FIXME: this doesn't work, due to static declaration
+#define INLINE_MEM_RD  1  // FIXME: 0 doesn't work, due to static declaration
+#define INLINE_DD_OP   1  // FIXME: 0 doesn't work, due to static declaration
 #define INLINE_GET_Hb  1
 
-bool g_dbg_trace = false;
+static bool g_dbg_trace = false;
 
 // give a one-time warning about a misconfigured system
 static bool g_30ms_warning = false;
@@ -88,7 +88,7 @@ enum { SH_MASK_CARRY  = 0x01,   // CARRY (H/M)
 #define TRAP_POWER 0x8003       // cold start
 
 // ------------------------------------------------------------------------
-// write_ucode() must be called to write anything to the ucode store.
+// writeUcode() must be called to write anything to the ucode store.
 // besides setting the specified entry to the specified value, some
 // predecoding is performed and saved to speed up instruction cracking.
 // ------------------------------------------------------------------------
@@ -159,17 +159,17 @@ enum {
 };
 
 // 10b page branch target address
-#define PAGEBR(uop) \
+#define PAGE_BR(uop) \
     static_cast<uint16>(((addr) & 0xFC00) | (((uop) >> 8) & 0x03FF))
 // 16b full branch target address
-#define FULLBR(uop) \
+#define FULL_BR(uop) \
     static_cast<uint16>((((uop) >> 8) & 0x03FF) | (((uop) << 8) & 0xFC00))
 
 // 8b immediate
 #define IMM8(uop) ((((uop) >> 10) & 0xF0) | (((uop) >> 4) & 0xF))
 
 void
-Cpu2200vp::write_ucode(uint16 addr, uint32 uop, bool force) noexcept
+Cpu2200vp::writeUcode(uint16 addr, uint32 uop, bool force) noexcept
 {
     static const int pc_adjust_tbl[16] = {
          0,  0, 0, 0,  0,  0,  0,  0,
@@ -177,7 +177,7 @@ Cpu2200vp::write_ucode(uint16 addr, uint32 uop, bool force) noexcept
     #define PC_ADJUST(a_field) (pc_adjust_tbl[(a_field)])
 
     // 3b field map to adjust pc on store
-    static const int incmap[8] = { 0, +1, +2, +3, 0, -1, -2, -3 };
+    static const int inc_map[8] = { 0, +1, +2, +3, 0, -1, -2, -3 };
 
     const int a_field = (uop >>  4) & 0xF;
     const int c_field = (uop >>  8) & 0xF;
@@ -187,11 +187,11 @@ Cpu2200vp::write_ucode(uint16 addr, uint32 uop, bool force) noexcept
     const int mini_op = ((uop & 0x618000) == 0x018000);
     const int shft_op = ((uop & 0x71C000) == 0x004000);
 
-    int illegal = 0;    // innocent until proven guilty
+    bool illegal = false;  // innocent until proven guilty
 
     uop &= 0x00FFFFFF;  // only 24b are meaningful
 
-    if (addr >= m_ucodeWords && !force) {
+    if (addr >= m_ucode_words && !force) {
         // it is a noop
         return;
     }
@@ -206,6 +206,7 @@ Cpu2200vp::write_ucode(uint16 addr, uint32 uop, bool force) noexcept
            fold ^= (fold << 4);
            fold ^= (fold << 2);
            fold ^= (fold << 1);
+
     if (~fold & 0x80000000) {
 
         m_ucode[addr].op  = OP_PECM;    // bad parity
@@ -223,7 +224,7 @@ Cpu2200vp::write_ucode(uint16 addr, uint32 uop, bool force) noexcept
 
     } else if (mini_op) {
 
-        int inc;
+        int inc = 0;
 
         switch ((uop >> 17) & 0xF) {
 
@@ -243,7 +244,7 @@ Cpu2200vp::write_ucode(uint16 addr, uint32 uop, bool force) noexcept
                     m_ucode[addr].ucode |= FETCH_B;
                 }
                 m_ucode[addr].op  = OP_TPA;
-                m_ucode[addr].p16 = static_cast<uint16>(incmap[inc]);
+                m_ucode[addr].p16 = static_cast<uint16>(inc_map[inc]);
                 break;
 
             case 0x1:   // XPA
@@ -254,7 +255,7 @@ Cpu2200vp::write_ucode(uint16 addr, uint32 uop, bool force) noexcept
                     m_ucode[addr].ucode |= FETCH_B;
                 }
                 m_ucode[addr].op  = OP_XPA;
-                m_ucode[addr].p16 = static_cast<uint16>(incmap[inc]);
+                m_ucode[addr].p16 = static_cast<uint16>(inc_map[inc]);
                 break;
 
             case 0x2:   // TPS
@@ -265,7 +266,7 @@ Cpu2200vp::write_ucode(uint16 addr, uint32 uop, bool force) noexcept
                     m_ucode[addr].ucode |= FETCH_B;
                 }
                 m_ucode[addr].op  = OP_TPS;
-                m_ucode[addr].p16 = static_cast<uint16>(incmap[inc]);
+                m_ucode[addr].p16 = static_cast<uint16>(inc_map[inc]);
                 break;
 
             case 0x6:   // TSP
@@ -290,7 +291,7 @@ Cpu2200vp::write_ucode(uint16 addr, uint32 uop, bool force) noexcept
                     }
                     m_ucode[addr].op  = OP_SR;
                 } else {
-                    illegal = 1;
+                    illegal = true;
                     m_ucode[addr].op  = OP_ILLEGAL;
                 }
                 break;
@@ -301,7 +302,7 @@ Cpu2200vp::write_ucode(uint16 addr, uint32 uop, bool force) noexcept
                 break;
 
             default:
-                illegal = 1;
+                illegal = true;
                 break;
         }
 
@@ -323,7 +324,7 @@ Cpu2200vp::write_ucode(uint16 addr, uint32 uop, bool force) noexcept
     } else { // neither lpi nor mini_op nor shift
 
         const int op = (uop >> 18) & 0x1F;
-        int x_field;
+        int x_field = 0;
         switch (op) {
 
         // register instructions:
@@ -389,18 +390,18 @@ Cpu2200vp::write_ucode(uint16 addr, uint32 uop, bool force) noexcept
                                                              : OP_BNR);
                 }
                 m_ucode[addr].p8  = static_cast<uint8>(PC_ADJUST(a_field));
-                m_ucode[addr].p16 = PAGEBR(uop);
+                m_ucode[addr].p16 = PAGE_BR(uop);
                 break;
 
         // branch instructions:
 
             case 0x15:  // subroutine branch
                 m_ucode[addr].op  = OP_SB;
-                m_ucode[addr].p16 = FULLBR(uop);
+                m_ucode[addr].p16 = FULL_BR(uop);
                 break;
             case 0x17:  // unconditional branch
                 m_ucode[addr].op  = OP_B;
-                m_ucode[addr].p16 = FULLBR(uop);
+                m_ucode[addr].p16 = FULL_BR(uop);
                 break;
 
         // mask branch instructions:
@@ -408,22 +409,22 @@ Cpu2200vp::write_ucode(uint16 addr, uint32 uop, bool force) noexcept
             case 0x18: case 0x19:       // branch if true
                 m_ucode[addr].ucode |= FETCH_B;
                 m_ucode[addr].op  = OP_BT;
-                m_ucode[addr].p16 = PAGEBR(uop);
+                m_ucode[addr].p16 = PAGE_BR(uop);
                 break;
             case 0x1A: case 0x1B:       // branch if false
                 m_ucode[addr].ucode |= FETCH_B;
                 m_ucode[addr].op  = OP_BF;
-                m_ucode[addr].p16 = PAGEBR(uop);
+                m_ucode[addr].p16 = PAGE_BR(uop);
                 break;
             case 0x1C: case 0x1D:       // branch if = to mask
                 m_ucode[addr].ucode |= FETCH_B;
                 m_ucode[addr].op  = OP_BEQ;
-                m_ucode[addr].p16 = PAGEBR(uop);
+                m_ucode[addr].p16 = PAGE_BR(uop);
                 break;
             case 0x1E: case 0x1F:       // branch if != to mask
                 m_ucode[addr].ucode |= FETCH_B;
                 m_ucode[addr].op  = OP_BNE;
-                m_ucode[addr].p16 = PAGEBR(uop);
+                m_ucode[addr].p16 = PAGE_BR(uop);
                 break;
 
             default: // impossible
@@ -470,7 +471,7 @@ Cpu2200vp::write_ucode(uint16 addr, uint32 uop, bool force) noexcept
 // setting SL can have more complicated side effects.
 // we keep shadow state of the memory bank addressing bits.
 void
-Cpu2200vp::set_sl(uint8 value) noexcept
+Cpu2200vp::setSL(uint8 value) noexcept
 {
     m_cpu.sl = value;
     updateBankOffset();
@@ -480,7 +481,7 @@ Cpu2200vp::set_sl(uint8 value) noexcept
 // The BSR register is found only on the MicroVP VLSI-2.
 // It is write only, and is written by an OBS to port 80.
 void
-Cpu2200vp::set_bsr(uint8 value) noexcept
+Cpu2200vp::setBSR(uint8 value) noexcept
 {
     m_cpu.bsr = value;
     updateBankOffset();
@@ -504,7 +505,7 @@ Cpu2200vp::updateBankOffset() noexcept
     }
 
     // wrap it if it addresses non-existant memory
-    const int memsize_KB = (m_memsize >> 10);
+    const int memsize_KB = (m_mem_size >> 10);
     if (memsize_KB <= 64) {
         bank_page &= 0x00;
     } else if (memsize_KB <= 128) {
@@ -528,7 +529,7 @@ Cpu2200vp::updateBankOffset() noexcept
 // setting SH can have more complicated side effects.
 // also, microcode can't affect certain bits.
 void
-Cpu2200vp::set_sh(uint8 value)
+Cpu2200vp::setSH(uint8 value)
 {
     const int cpb_changed = ((m_cpu.sh ^ value) & SH_MASK_CPB);
 
@@ -546,8 +547,8 @@ Cpu2200vp::set_sh(uint8 value)
 
 
 // 9b result: carry out and 8b result
-uint16
-Cpu2200vp::decimal_add8(int a_op, int b_op, int ci) const noexcept
+static uint16
+decimalAdd(int a_op, int b_op, int ci) noexcept
 {
     const int a_op_low  = (a_op >> 0) & 0xF;
     const int b_op_low  = (b_op >> 0) & 0xF;
@@ -580,8 +581,8 @@ Cpu2200vp::decimal_add8(int a_op, int b_op, int ci) const noexcept
 // if ci is 0, it means compute a-b.
 // if ci is 1, it means compute a-b-1.
 // msb of result is new carry bit: 1=borrow, 0=no borrow
-uint16
-Cpu2200vp::decimal_sub8(int a_op, int b_op, int ci) const noexcept
+static uint16
+decimalSub(int a_op, int b_op, int ci) noexcept
 {
     const int a_op_low  = (a_op >> 0) & 0xF;
     const int a_op_high = (a_op >> 4) & 0xF;
@@ -623,7 +624,7 @@ Cpu2200vp::decimal_sub8(int a_op, int b_op, int ci) const noexcept
 
 
 // store results into the specified register
-#define inlined_store_c(c_field, val)                                   \
+#define INLINED_STORE_C(c_field, val)                                   \
     do {                                                                \
         const int v = (val) & 0xFF; /* often 9b from carry out */       \
         const int cf  = c_field;                                        \
@@ -636,45 +637,44 @@ Cpu2200vp::decimal_sub8(int a_op, int b_op, int ci) const noexcept
             case  9: m_cpu.pc = static_cast<uint16>((m_cpu.pc & 0x00FF) | (v<<8)); break; /* PH */ \
             case 10: break;     /* CL; illegal */                       \
             case 11: break;     /* CH; illegal */                       \
-            case 12: set_sl(static_cast<uint8>(v)); break;              \
-            case 13: set_sh(static_cast<uint8>(v)); break;              \
+            case 12: setSL(static_cast<uint8>(v)); break;               \
+            case 13: setSH(static_cast<uint8>(v)); break;               \
             case 14: m_cpu.k = static_cast<uint8>(v); break;            \
             case 15: break;     /* dummy (don't save results) */        \
         }                                                               \
     } while (false)
 
 #if INLINE_STORE_C
-    #define store_c(c_field,val) inlined_store_c(c_field,val)
+    #define store_c(c_field,val) INLINED_STORE_C(c_field,val)
 #else
     // store results into the specified register
     static void
-    store_c(unsigned int c_field, int val) { inlined_store_c(c_field, val); }
+    store_c(unsigned int c_field, int val) { INLINED_STORE_C(c_field, val); }
 #endif
 
 
 // addresses < 8KB always refer to bank 0.
 // otherwise, add the bank offset, and force the addr to zero if it is too big
-#define inline_map_address(addr)                                             \
-    (  ((addr) < 8192 && !m_cpu.bsr_mode) ? (addr)                           \
-     : ((addr) + m_cpu.bank_offset < m_memsize) ? (m_cpu.bank_offset+(addr)) \
-     : (0)                                                                   \
+#define INLINE_MAP_ADDRESS(addr)                                              \
+    (  ((addr) < 8192 && !m_cpu.bsr_mode) ? (addr)                            \
+     : ((addr) + m_cpu.bank_offset < m_mem_size) ? (m_cpu.bank_offset+(addr)) \
+     : (0)                                                                    \
     )
 
 
 // read from the specified address
-#define inlined_mem_read8(addr) m_RAM[inline_map_address(addr)]
+#define INLINE_MEM_READ8(addr) m_ram[INLINE_MAP_ADDRESS(addr)]
 
 #if INLINE_MEM_RD
-    #define mem_read8(addr) inlined_mem_read8(addr)
+    #define mem_read8(addr) INLINE_MEM_READ8(addr)
 #else
     static uint8
     mem_read8(int addr)
     {
-        int rv;
         assert(addr >= 0);
-        rv = inlined_mem_read8(addr);
+        uint8 rv = INLINE_MEM_READ8(addr);
         //dbglog("READ RAM[0x%04X] = 0x%02X\n", addr, rv);
-        return static_cast<uint8>(rv);
+        return rv;
     }
 #endif
 
@@ -685,23 +685,23 @@ Cpu2200vp::decimal_sub8(int a_op, int b_op, int ci) const noexcept
 // there are two modes: write 1 and write 2
 // write1 means write to the specified address.
 // write2 means write to (address ^ 1).
-#define inlined_mem_write(addr,wr_value,write2)          \
-    do {                                                 \
-        int la = (addr);                                 \
-        if (la < 8192 && !m_cpu.bsr_mode) {              \
-            la ^= write2;                                \
-            m_RAM[la] = static_cast<uint8>(wr_value);    \
-        } else if (la + m_cpu.bank_offset < m_memsize) { \
-            la += m_cpu.bank_offset;                     \
-            la ^= write2;                                \
-            m_RAM[la] = static_cast<uint8>(wr_value);    \
-        }                                                \
+#define INLINE_MEM_WRITE(addr,wr_value,write2)            \
+    do {                                                  \
+        int la = (addr);                                  \
+        if (la < 8192 && !m_cpu.bsr_mode) {               \
+            la ^= write2;                                 \
+            m_ram[la] = static_cast<uint8>(wr_value);     \
+        } else if (la + m_cpu.bank_offset < m_mem_size) { \
+            la += m_cpu.bank_offset;                      \
+            la ^= write2;                                 \
+            m_ram[la] = static_cast<uint8>(wr_value);     \
+        }                                                 \
     } while (false)
 
 // return the chosen bits of B and A, returns with the bits
 // of b in [7:4] and the bits of A in [3:0]
 uint8
-Cpu2200vp::get_HbHa(int HbHa, int a_op, int b_op) const noexcept
+Cpu2200vp::getHbHa(int HbHa, int a_op, int b_op) const noexcept
 {
     int rslt;
 
@@ -731,47 +731,47 @@ Cpu2200vp::get_HbHa(int HbHa, int a_op, int b_op) const noexcept
 }
 
 
-#define inlined_get_Hb(Hb, b_op)       \
+#define INLINED_GET_Hb(Hb, b_op)        \
     (((Hb)&1) ? (((b_op) >> 4) & 0xF)  \
               : (((b_op) >> 0) & 0xF))
 
 #if INLINE_GET_Hb
-    #define get_Hb(Hb, b_op) inlined_get_Hb(Hb, b_op)
+    #define get_Hb(Hb, b_op) INLINED_GET_Hb(Hb, b_op)
 #else
     static int
     get_Hb(int Hb, int b_op)
     {
-        return inlined_get_Hb(Hb, b_op);
+        return INLINED_GET_Hb(Hb, b_op);
     }
 #endif
 
 
 
 // decode the DD field and perform memory rd/wr op if specified
-#define inlined_perform_dd_op(uop,wr_val)                       \
-    {                                                           \
-        const int d_field = ((uop) >> 12) & 0x3;                \
-        switch (d_field) {                                      \
-            case 0: /* nothing */                               \
-                break;                                          \
-            case 1: /* read */                                  \
-                m_cpu.ch = mem_read8(m_cpu.orig_pc);            \
-                m_cpu.cl = mem_read8(m_cpu.orig_pc ^ 1);        \
-                break;                                          \
-            default:                                            \
-                inlined_mem_write(m_cpu.orig_pc, wr_val, d_field==3); \
-                break;                                          \
-        }                                                       \
+#define INLINE_PERFORM_DD_OP(uop,wr_val)                             \
+    {                                                                \
+        const int d_field = ((uop) >> 12) & 0x3;                     \
+        switch (d_field) {                                           \
+            case 0: /* nothing */                                    \
+                break;                                               \
+            case 1: /* read */                                       \
+                m_cpu.ch = mem_read8(m_cpu.orig_pc);                 \
+                m_cpu.cl = mem_read8(m_cpu.orig_pc ^ 1);             \
+                break;                                               \
+            default:                                                 \
+                INLINE_MEM_WRITE(m_cpu.orig_pc, wr_val, d_field==3); \
+                break;                                               \
+        }                                                            \
     }
 
 #if INLINE_DD_OP
     #define perform_dd_op(uop,wr_val)           \
         do {                                    \
-            inlined_perform_dd_op(uop,wr_val)   \
+            INLINE_PERFORM_DD_OP(uop,wr_val)    \
         } while (false)
 #else
     static void
-    perform_dd_op(uint32 uop, int wr_val) { inlined_perform_dd_op(uop, wr_val); }
+    perform_dd_op(uint32 uop, int wr_val) { INLINE_PERFORM_DD_OP(uop, wr_val); }
 #endif
 
 
@@ -787,33 +787,33 @@ Cpu2200vp::Cpu2200vp(std::shared_ptr<Scheduler> scheduler,
     Cpu2200(),  // init base class
     m_cpu_subtype(cpu_subtype),
     m_scheduler(scheduler),
-    m_hasOneShot(false),
+    m_has_oneshot(false),
     m_tmr_30ms(nullptr),
     m_ucode{{0, 0, 0, 0}},
-    m_memsize(ramsize),
+    m_mem_size(ramsize),
     m_dbg(false)
 {
     // find which configuration options are available/legal for this CPU
-    auto cpuCfg = system2200::getCpuConfig(cpu_subtype);
-    assert(cpuCfg != nullptr);
+    auto cpu_cfg = system2200::getCpuConfig(cpu_subtype);
+    assert(cpu_cfg != nullptr);
     bool ram_found = false;
-    for (auto const kb : cpuCfg->ramSizeOptions) {
+    for (auto const kb : cpu_cfg->ramSizeOptions) {
         ram_found |= (ramsize == 1024*kb);
     }
     assert(ram_found);
     // supporting this would require extra GUI work
     // and the user experience complexity isn't worth it
-    assert(cpuCfg->ucodeSizeOptions.size() == 1);
-    m_ucodeWords = cpuCfg->ucodeSizeOptions[0] * 1024;
-    m_hasOneShot = cpuCfg->hasOneShot;
+    assert(cpu_cfg->ucodeSizeOptions.size() == 1);
+    m_ucode_words = cpu_cfg->ucodeSizeOptions[0] * 1024;
+    m_has_oneshot = cpu_cfg->hasOneShot;
 
     // init microcode
     for (int i=0; i<MAX_UCODE; i++) {
-        write_ucode(static_cast<uint16>(i), 0, true);
+        writeUcode(static_cast<uint16>(i), 0, true);
     }
     // TODO: have different boot images for different CPU types?
     for (int i=0; i<1024; i++) {
-        write_ucode(static_cast<uint16>(0x8000+i), ucode_2200vp[i], true);
+        writeUcode(static_cast<uint16>(0x8000+i), ucode_2200vp[i], true);
     }
 
     // register for clock callback
@@ -826,7 +826,7 @@ Cpu2200vp::Cpu2200vp(std::shared_ptr<Scheduler> scheduler,
         char buff[200];
         uint16 pc;
         for (pc=0x8000; pc<0x8400; pc++) {
-            dasm_one_vp(buff, pc, m_ucode[pc].ucode);
+            dasmOneVpOp(buff, pc, m_ucode[pc].ucode);
             dbglog(buff);
         }
     }
@@ -862,20 +862,19 @@ Cpu2200vp::reset(bool hard_reset) noexcept
     m_cpu.icsp = STACKSIZE-1;
 
     if (hard_reset) {
-        int i;
-        for (i=0; i<m_memsize; i++) {
-            m_RAM[i] = 0xFF;
+        for (int i=0; i<m_mem_size; i++) {
+            m_ram[i] = 0xFF;
         }
 #if 0
         m_cpu.pc = 0;
         m_cpu.orig_pc;
-        for (i=0; i<32; i++) {
+        for (int i=0; i<32; i++) {
             m_cpu.aux[32];
         }
-        for (i=0; i<8; i++) {
+        for (int i=0; i<8; i++) {
             m_cpu.reg[i];
         }
-        for (i=0; i<STACKSIZE; i++) {
+        for (int i=0; i<STACKSIZE; i++) {
             m_cpu.icstack[i] = 0;
         }
         m_cpu.ch = 0;
@@ -884,14 +883,14 @@ Cpu2200vp::reset(bool hard_reset) noexcept
         m_cpu.ab = 0;
         m_cpu.ab_sel = 0;
 #endif
-        set_sl(0);           // make sure bank select is 0
+        setSL(0);            // make sure bank select is 0
         m_cpu.sh &= ~0x80;   // only SH7 one bit is affected
 
         // make sure this is initialized in case an older OS is running,
         // as it won't know to set the mode bit to 0
-        set_bsr(static_cast<uint8>(0x00));
+        setBSR(static_cast<uint8>(0x00));
 
-        if (m_hasOneShot) {
+        if (m_has_oneshot) {
             // if the one-shot isn't stuffed, the status bit
             // probably floats high
             m_cpu.sh |= SH_MASK_30MS;
@@ -899,7 +898,7 @@ Cpu2200vp::reset(bool hard_reset) noexcept
             // actually, the one-shot isn't reset, but let's be safe
             m_cpu.sh &= ~SH_MASK_30MS;
             if (m_tmr_30ms != nullptr) {
-                m_tmr_30ms->Kill();
+                m_tmr_30ms->kill();
                 m_tmr_30ms = nullptr;
             }
         }
@@ -914,7 +913,7 @@ Cpu2200vp::reset(bool hard_reset) noexcept
 // for 7 uS via a one-shot.  In the emulator, the strobe is effectively
 // instantaneous.
 void
-Cpu2200vp::IoCardCbIbs(int data)
+Cpu2200vp::ioCardCbIbs(int data)
 {
     // we shouldn't receive an IBS while the cpu is busy
     assert((m_cpu.sh & SH_MASK_CPB) == 0);
@@ -966,9 +965,9 @@ Cpu2200vp::getAB() const noexcept
 
 // this callback occurs when the 30 ms timeslicing one-shot times out.
 void
-Cpu2200vp::tcb30msDone() noexcept
+Cpu2200vp::oneShot30msCallback() noexcept
 {
-    assert(m_hasOneShot);
+    assert(m_has_oneshot);
     m_cpu.sh &= ~SH_MASK_30MS;    // one shot output falls
     m_tmr_30ms = nullptr;         // dead timer
 }
@@ -995,8 +994,8 @@ Cpu2200vp::execOneOp()
     if (g_dbg_trace) {
         g_num_ops++;
         char buff[200];
-        dump_state(true);
-        /*bool illegal =*/ dasm_one_vp(&buff[0], m_cpu.ic, m_ucode[m_cpu.ic].ucode);
+        dumpState(true);
+        /*bool illegal =*/ dasmOneVpOp(&buff[0], m_cpu.ic, m_ucode[m_cpu.ic].ucode);
         dbglog("cycle %5d: %s", g_num_ops, &buff[0]);
     }
 #endif
@@ -1183,7 +1182,7 @@ Cpu2200vp::execOneOp()
     case OP_ILLEGAL:
         {
             char buff[200];
-            dasm_one_vp(&buff[0], m_cpu.ic, m_ucode[m_cpu.ic].ucode);
+            dasmOneVpOp(&buff[0], m_cpu.ic, m_ucode[m_cpu.ic].ucode);
             UI_Error("%s\nIllegal op at ic=%04X", &buff[0], m_cpu.ic);
         }
         m_status = CPU_HALTED;
@@ -1255,7 +1254,7 @@ Cpu2200vp::execOneOp()
         // the boot rom is still stuck in the middle
         if ((tmp16 < MAX_UCODE) &&
             !((tmp16 >= 0x8000) && (tmp16 < 0x9000))) {
-            write_ucode(tmp16, ((~m_cpu.k & 0xFF) << 16) | m_cpu.pc);
+            writeUcode(tmp16, ((~m_cpu.k & 0xFF) << 16) | m_cpu.pc);
         }
         // perform subroutine return
         INC_ICSP;
@@ -1301,7 +1300,7 @@ Cpu2200vp::execOneOp()
                     && (m_cpu.ab == 0x80)) {
                     // the VLSI-2 version of the MicroVP added the BSR register
                     // for large memory bank selection.
-                    set_bsr(m_cpu.k);
+                    setBSR(m_cpu.k);
                 } else {
                     setDevRdy(false);  // (M)VP cpus do this, but not 2200T
                     system2200::cpu_OBS(m_cpu.k);  // output data bus strobe
@@ -1328,7 +1327,7 @@ Cpu2200vp::execOneOp()
                 //     978080 : CIO       ??? (ILLEGAL)
                 // this corresponds to a mask of 0x08.
 //UI_Info("doing CIO STATUS_REQUEST, AB=%02x, IC=%04X", m_cpu.ab, m_cpu.ic);
-                m_cpu.k = static_cast<uint8>(system2200::cpu_poll_IB());
+                m_cpu.k = static_cast<uint8>(system2200::cpuPollIB());
                 // Paul Szudzik's SDS_Wang2200.pdf arch manual says
                 //    Fire internal IBS one shot (SRS).  Sets CPB.  Basically
                 //    used for Status Requests from MUXD.
@@ -1348,14 +1347,14 @@ Cpu2200vp::execOneOp()
         } // t_field
 
         if ((uop & 0xC) == 0xC) {
-            if (m_hasOneShot) {
+            if (m_has_oneshot) {
                 // this is not documented in the arch manual, but it appears
                 // in the MVP CPU schematic.  if ucode bits 3:2 are both one,
                 // the 30 ms one shot gets retriggered.
                 m_cpu.sh |= SH_MASK_30MS;     // one shot output rises
                 if (m_tmr_30ms != nullptr) {
                     // kill pending timer before starting a new one
-                    m_tmr_30ms->Kill();
+                    m_tmr_30ms->kill();
                     m_tmr_30ms = nullptr;
                 }
                 // BPMVP14A says
@@ -1363,8 +1362,8 @@ Cpu2200vp::execOneOp()
                 //         20 MS. MIN.
                 //         27 MS. AVE.
                 //         35 MS. MAX.
-                m_tmr_30ms = m_scheduler->TimerCreate(TIMER_MS(27),
-                                                       [&](){ tcb30msDone(); });
+                m_tmr_30ms = m_scheduler->createTimer(TIMER_MS(27),
+                                                       [&](){ oneShot30msCallback(); });
             } else {
                 if (!g_30ms_warning) {
                     UI_Warn("Your system is configured with a 2200VP CPU,\n"
@@ -1414,14 +1413,14 @@ Cpu2200vp::execOneOp()
 
     case OP_DAC: // decimal add w/ carry
         PREAMBLE1;
-        rslt = decimal_add8(a_op, b_op, CARRY_BIT);
+        rslt = decimalAdd(a_op, b_op, CARRY_BIT);
         SET_CARRY(rslt);
         POSTAMBLE1;
         break;
 
     case OP_DSC: // decimal subtract w/ carry
         PREAMBLE1;
-        rslt = decimal_sub8(a_op, b_op, CARRY_BIT);
+        rslt = decimalSub(a_op, b_op, CARRY_BIT);
         SET_CARRY(rslt);
         POSTAMBLE1;
         break;
@@ -1436,7 +1435,7 @@ Cpu2200vp::execOneOp()
     case OP_M:
         PREAMBLE1;
         HbHa    = (uop >> 14) & 3;
-        rslt = get_HbHa(HbHa, a_op, b_op);
+        rslt = getHbHa(HbHa, a_op, b_op);
         rslt = ((rslt>>4)&0xF) * (rslt&0xF);
         POSTAMBLE1;
         break;
@@ -1444,7 +1443,7 @@ Cpu2200vp::execOneOp()
     case OP_SH:
         PREAMBLE1;
         HbHa = (uop >> 18) & 3;
-        rslt = get_HbHa(HbHa, a_op, b_op);
+        rslt = getHbHa(HbHa, a_op, b_op);
         POSTAMBLE1;
         break;
 
@@ -1488,16 +1487,16 @@ Cpu2200vp::execOneOp()
 
     case OP_DACX:
         PREAMBLE2;
-        rslt  = decimal_add8(a_op,  b_op,  CARRY_BIT);
-        rslt2 = decimal_add8(a_op2, b_op2, ((rslt >> 8) & 1));
+        rslt  = decimalAdd(a_op,  b_op,  CARRY_BIT);
+        rslt2 = decimalAdd(a_op2, b_op2, ((rslt >> 8) & 1));
         SET_CARRY(rslt2);
         POSTAMBLE2;
         break;
 
     case OP_DSCX:
         PREAMBLE2;
-        rslt  = decimal_sub8(a_op,  b_op,  CARRY_BIT);
-        rslt2 = decimal_sub8(a_op2, b_op2, ((rslt >> 8) & 1));
+        rslt  = decimalSub(a_op,  b_op,  CARRY_BIT);
+        rslt2 = decimalSub(a_op2, b_op2, ((rslt >> 8) & 1));
         SET_CARRY(rslt2);
         POSTAMBLE2;
         break;
@@ -1513,8 +1512,8 @@ Cpu2200vp::execOneOp()
     case OP_MX:
         PREAMBLE2;
         HbHa = (uop >> 14) & 3;
-        rslt  = get_HbHa(HbHa, a_op, b_op);
-        rslt2 = get_HbHa(HbHa, a_op2, b_op2);
+        rslt  = getHbHa(HbHa, a_op, b_op);
+        rslt2 = getHbHa(HbHa, a_op2, b_op2);
         rslt  = ((rslt >>4)&0xF) * (rslt &0xF);
         rslt2 = ((rslt2>>4)&0xF) * (rslt2&0xF);
         POSTAMBLE2;
@@ -1523,8 +1522,8 @@ Cpu2200vp::execOneOp()
     case OP_SHX:
         PREAMBLE2;
         HbHa = (uop >> 18) & 3;
-        rslt  = get_HbHa(HbHa, a_op,  b_op);
-        rslt2 = get_HbHa(HbHa, a_op2, b_op2);
+        rslt  = getHbHa(HbHa, a_op,  b_op);
+        rslt2 = getHbHa(HbHa, a_op2, b_op2);
         POSTAMBLE2;
         break;
 
@@ -1565,14 +1564,14 @@ Cpu2200vp::execOneOp()
 
     case OP_DACI:       // decimal add immediate w/ carry
         PREAMBLE3;
-        rslt = decimal_add8(imm, b_op, CARRY_BIT);
+        rslt = decimalAdd(imm, b_op, CARRY_BIT);
         SET_CARRY(rslt);
         POSTAMBLE3;
         break;
 
     case OP_DSCI:       // decimal subtract immediate w/ carry
         PREAMBLE3;
-        rslt = decimal_sub8(imm, b_op, CARRY_BIT);
+        rslt = decimalSub(imm, b_op, CARRY_BIT);
         SET_CARRY(rslt);
         POSTAMBLE3;
         break;
@@ -1690,7 +1689,7 @@ Cpu2200vp::execOneOp()
 #include <iomanip>
 
 void
-Cpu2200vp::dump_ram(const std::string &filename)
+Cpu2200vp::dumpRam(const std::string &filename)
 {
     // open the file, discarding contents of file if it already exists
     std::ofstream ofs(filename.c_str(), std::ofstream::out | std::ofstream::trunc);
@@ -1700,10 +1699,10 @@ Cpu2200vp::dump_ram(const std::string &filename)
     }
 
     ofs.fill('0');
-    for (int addr=0; addr < m_memsize; addr += 16) {
+    for (int addr=0; addr < m_mem_size; addr += 16) {
         ofs << std::setw(4) << std::hex << std::uppercase << addr << ":";
         for (int i=0; i<16; i++) {
-            ofs << " " << std::setw(2) << std::hex << std::uppercase << int(m_RAM[addr+i]);
+            ofs << " " << std::setw(2) << std::hex << std::uppercase << int(m_ram[addr+i]);
         }
         ofs << std::endl;
     }
@@ -1712,7 +1711,7 @@ Cpu2200vp::dump_ram(const std::string &filename)
     ofs << "===============================================" << std::endl << std::endl;
     for (int addr=0; addr<0x8000; addr++) {
         char buff[200];
-        dasm_one_vp(buff, addr, m_ucode[addr].ucode);
+        dasmOneVpOp(buff, addr, m_ucode[addr].ucode);
         ofs << buff;
     }
 
@@ -1723,9 +1722,9 @@ Cpu2200vp::dump_ram(const std::string &filename)
 
 // dump the most important contents of the uP state
 void
-Cpu2200vp::dump_state(bool fulldump)
+Cpu2200vp::dumpState(bool full_dump)
 {
-    if (fulldump) {
+    if (full_dump) {
         dbglog("---------------------------------------------\n");
     }
 
@@ -1738,7 +1737,7 @@ Cpu2200vp::dump_state(bool fulldump)
     dbglog("    AB=%02X, AB_SEL=%02X, cy=%d\n",
             m_cpu.ab, m_cpu.ab_sel, CARRY_BIT);
 
-    if (!fulldump) {
+    if (!full_dump) {
         return;
     }
 

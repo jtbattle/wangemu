@@ -17,7 +17,7 @@ typedef struct {
     const char *action;     // eg "Test for zero before dividing"
     const char *example;    // eg, "10 D=0\n20 PRINT 5/D"
     const char *fix;        // eg, "10 D=0\n20 IF D=0 THEN 30:PRINT 5/D"
-} errtable_t;
+} error_table_t;
 
 // for vp errors, the meaning is different
 //typedef struct {
@@ -27,10 +27,10 @@ typedef struct {
 //    const char *recovery;   // eg "Test for zero before dividing"
 //    const char *dummy;      // unused
 //    const char *dummy;      // unused
-//} errtable_t;
+//} error_table_t;
 
-extern const std::vector<errtable_t> errtable;
-extern const std::vector<errtable_t> errtable_vp;
+extern const std::vector<error_table_t> error_table;
+extern const std::vector<error_table_t> error_table_vp;
 
 #endif _INCLUDE_ERRTABLE_H_
 

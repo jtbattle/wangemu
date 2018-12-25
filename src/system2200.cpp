@@ -156,7 +156,7 @@ saveDiskMounts(void)
                         assert(ok);
                     }
                 }
-                host::ConfigWriteStr(subgroup.str(), item.str(), filename);
+                host::configWriteStr(subgroup.str(), item.str(), filename);
             } // drive
         } // if (isDiskController)
     } // slot
@@ -179,7 +179,7 @@ restoreDiskMounts(void)
                 std::ostringstream item;
                 item << "filename-" << drive;
                 std::string filename;
-                bool b = host::ConfigReadStr(subgroup.str(), item.str(), &filename);
+                bool b = host::configReadStr(subgroup.str(), item.str(), &filename);
                 if (b && !filename.empty()) {
                     IoCardDisk::wvdInsertDisk(slot, drive, filename.c_str());
                 }
@@ -599,7 +599,7 @@ system2200::emulateTimeslice(int ts_ms)
                 } else  {
                     // the guard is to skip this if the device signals error
                     slice_ns -= op_ns;
-                    scheduler->TimerTick(op_ns);
+                    scheduler->timerTick(op_ns);
                 }
             }
         } else {
@@ -657,7 +657,7 @@ system2200::emulateTimeslice(int ts_ms)
                                           - m_clocked_devices[order[0]].ns;
                     const uint32 delta_ns = std::min(op_ns, clamp_ns);
                     slice_ns -= delta_ns;
-                    scheduler->TimerTick(delta_ns);
+                    scheduler->timerTick(delta_ns);
                     const uint32 new_ns = (m_clocked_devices[order[0]].ns += op_ns);
                     auto entry0 = order[0];
                     int i;
@@ -793,7 +793,7 @@ system2200::cpu_OBS(uint8 byte)
 // has been strobed by !OBS, the CPU output strobe.
     if (curIoAddr > 0) {
         if (ioMap[curIoAddr].slot >= 0) {
-            cardInSlot[ioMap[curIoAddr].slot]->OBS(byte);
+            cardInSlot[ioMap[curIoAddr].slot]->strobeOBS(byte);
         }
     }
 }
@@ -809,7 +809,7 @@ system2200::cpu_CBS(uint8 byte)
     //     of command word
     //   * some cards use it to trigger an IBS strobe
     if ((curIoAddr > 0) && (ioMap[curIoAddr].slot >= 0)) {
-        cardInSlot[ioMap[curIoAddr].slot]->CBS(byte);
+        cardInSlot[ioMap[curIoAddr].slot]->strobeCBS(byte);
     }
 }
 
@@ -820,14 +820,14 @@ system2200::cpu_CPB(bool busy)
 {
     if ((curIoAddr > 0) && (ioMap[curIoAddr].slot >= 0)) {
         // signal that we want to get something
-        cardInSlot[ioMap[curIoAddr].slot]->CPB(busy);
+        cardInSlot[ioMap[curIoAddr].slot]->setCpuBusy(busy);
     }
 }
 
 
 // the CPU can poll IB5 without any other strobe.  return that bit.
 int
-system2200::cpu_poll_IB()
+system2200::cpuPollIB()
 {
     if  ((curIoAddr > 0) && (ioMap[curIoAddr].slot >= 0)) {
         // signal that we want to get something

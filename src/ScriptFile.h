@@ -54,7 +54,7 @@ private:
     bool            m_opened_ok;    // residual state of attempt to open the script file
     bool            m_eof;          // we've hit the end of file
 
-    int             m_metaflags;    // which escapes to recognize
+    int             m_meta_flags;   // which escapes to recognize
 
     int             m_cur_depth;    // now deeply nested we are (starting at 1)
     int             m_max_depth;    // how deeply nesting is allowed
@@ -64,13 +64,9 @@ private:
     std::unique_ptr<ScriptFile> m_subscript;    // the file we are pending on (or 0 if none)
 
     // does necessary manipulations to read next line of text and sets flags
-    void            m_prepare_next_line();
-    char            m_charbuf[MAX_EXPECTED_LINE_LENGTH+1];  // +1 for termination
+    void            prepareNextLine();
+    char            m_line_buf[MAX_EXPECTED_LINE_LENGTH+1];  // +1 for termination
     int             m_cur_char;     // which character to return next
-
-    // helpers
-    bool ishexdigit(char ch) const noexcept;
-    int  hexval(char ch) const noexcept;
 };
 
 #endif // ifdef _INCLUDE_SCRIPT_H_

@@ -72,7 +72,7 @@ namespace system2200
     void cpu_OBS(uint8 byte);   // output byte strobe
     void cpu_CBS(uint8 byte);   // control byte strobes
     void cpu_CPB(bool busy);    // notify selected card when CPB changes
-    int  cpu_poll_IB();         // the CPU can poll IB without any other strobe
+    int  cpuPollIB();           // the CPU can poll IB without any other strobe
 
     // ---- keyboard input routing ----
 

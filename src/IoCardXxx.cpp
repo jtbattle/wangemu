@@ -108,7 +108,7 @@ IoCardXxx::deselect()
 }
 
 void
-IoCardXxx::OBS(int val)
+IoCardXxx::strobeOBS(int val)
 {
     val &= 0xFF;
 
@@ -121,7 +121,7 @@ IoCardXxx::OBS(int val)
 }
 
 void
-IoCardXxx::CBS(int val)
+IoCardXxx::strobeCBS(int val)
 {
     val &= 0xFF;
 
@@ -143,7 +143,7 @@ IoCardXxx::GetIB5() const
 
 // change of CPU Busy state
 void
-IoCardXxx::CPB(bool busy)
+IoCardXxx::setCpuBusy(bool busy)
 {
     assert(val == 0 || val == 1);
 

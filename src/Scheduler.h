@@ -32,13 +32,14 @@ public:
     ~Timer() { };
 
     // kill off this timer
-    void Kill();
+    void kill();
 
 private:
     Scheduler       * const s;      // pointer to owning scheduler
     int64             expires_ns;   // tick count until expiration
     sched_callback_t  callback;     // registered callback function
 };
+
 
 // ======================================================================
 // this class manages event-driven behavior for the emulator.
@@ -48,11 +49,10 @@ private:
 
 class Scheduler
 {
-    friend class Timer;  // so timer can see TimerKill()
+    friend class Timer;  // so timer can see killTimer()
 
 public:
      Scheduler();
-    ~Scheduler();
 
     // create a new timer
     // ticks is the number of clock ticks before the callback fires,
@@ -61,35 +61,39 @@ public:
     //   void TimerTestFoo::report(int i)
     //   { printf("got callback for timer %d after %d clocks\n", i, g_testtime); }
     //
-    //   auto tmr = TimerCreate(100,
+    //   auto tmr = createTimer(100,
     //                          std::bind(&TimerTestFoo:report, &foo, 33));
     //
     // After 100 clocks, foo.report(33) is called.
-    std::shared_ptr<Timer> TimerCreate(int64 ns, const sched_callback_t &fcn);
+    std::shared_ptr<Timer> createTimer(int64 ns, const sched_callback_t &fcn);
 
     // let 'ns' nanoseconds of simulated time go past
-    inline void TimerTick(int ns)
+    inline void timerTick(int ns)
     {
         m_time_ns += ns;
         if (m_time_ns >= m_trigger_ns) {
-            TimerCredit();
+            creditTimer();
         }
     }
 
 private:
+    // not strictly necesssary to place a limit, but it is useful to
+    // detect runaway conditions
+    static const int MAX_TIMERS = 30;
+
     // transfer accumulated timer deficit to each active timer.
     // n is added to the already elapsed time.
     // this shouldn't need to be called very frequently.
-    void TimerCredit();
+    void creditTimer();
 
     // remove a pending timer event by passing the timer object
-    // (called only from Timer.Kill())
+    // (called only from Timer.kill())
     // Alternately, just set the timer pointer to null.  If the only ref
     // to the timer is the active timer list, it will be treated as dead.
-    void TimerKill(Timer* tmr);
+    void killTimer(Timer* tmr);
 
     // returns, in absolute ns, the time of the soonest event on the timer list
-    int64 FirstEvent() noexcept;
+    int64 firstEvent() noexcept;
 
     int64 m_time_ns;        // simulated absolute time (in ns)
     int64 m_trigger_ns;     // time next event expires
@@ -97,13 +101,9 @@ private:
     // list of callbacks to invoke when m_time_ns exceeds the expiration time
     // embedded in the timer.
     std::vector<std::shared_ptr<Timer>> m_timer;
-
-    // not strictly necesssary to place a limit, but it is useful to
-    // detect runaway conditions
-    static const int MAX_TIMERS = 30;
 };
 
-// scale us/ms to ns, which is what TimerCreate() expects
+// scale us/ms to ns, which is what createTimer() expects
 constexpr int64 TIMER_US(double f) { return static_cast<int64>(   1000.0*f+0.5); }
 constexpr int64 TIMER_MS(double f) { return static_cast<int64>(1000000.0*f+0.5); }
 

@@ -48,7 +48,7 @@ public:
     // when a card gets an IOhdlr_getbyte and it decides to return the data
     // request, this function is called to return that data.  it also takes
     // care of the necessary low-level handshake emulation.
-    virtual void IoCardCbIbs(int data) = 0;
+    virtual void ioCardCbIbs(int data) = 0;
 
     // run for ticks*100ns
     virtual int execOneOp() = 0;
@@ -78,7 +78,7 @@ public:
     void  reset(bool hard_reset) noexcept override;
     uint8 getAB() const noexcept override;
     void  setDevRdy(bool ready) noexcept override;
-    void  IoCardCbIbs(int data) override;
+    void  ioCardCbIbs(int data) override;
     int   execOneOp() override;  // simulate one instruction
     void  halt() noexcept override;
 
@@ -86,36 +86,30 @@ private:
     // ---- member functions ----
 
     // store the microcode word to the given microstore address
-    void write_ucode(int addr, uint32 uop) noexcept;
+    void writeUcode(int addr, uint32 uop) noexcept;
 
     // dump the most important contents of the uP state
-    void dump_state(bool fulldump);
+    void dumpState(bool full_dump);
 
     // dump a floating point number (16 nibbles)
-    void dump_16n(int addr);
+    void dump16n(int addr);
 
     // read from the specified address
-    uint8 mem_read(uint16 addr) const noexcept;
+    uint8 readMem(uint16 addr) const noexcept;
 
     // write to the specified address.
-    void mem_write(uint16 addr, uint4 wr_value, int write2) noexcept;
+    void writeMem(uint16 addr, uint4 wr_value, int write2) noexcept;
 
     // reading ST3 is a subroutine because it must return state that wasn't
     // what was written
-    uint4 read_st3() const;
+    uint4 readSt3() const;
 
     // setting ST1.1 can have more complicated side effects
-    void set_st1(uint4 value);
+    void setSt1(uint4 value);
 
     // store the 4b value to the place selected by the C field.
     // return a flag if the op is illegal.
-    void store_C_operand(uint32 uop, uint4 value);
-
-    // add two BCD nibbles
-    uint8 decimal_add(uint4 a_op, uint4 b_op, int ci) const noexcept;
-
-    // subtract two BCD nibbles
-    uint8 decimal_sub(uint4 a_op, uint4 b_op, int ci) const noexcept;
+    void storeOperandC(uint32 uop, uint4 value);
 
     // ---- data members ----
 
@@ -151,8 +145,8 @@ private:
     // We pack RAM[addr][3:0] = {WANGRAM[2*addr+1],WANGRAM[2*addr+0]}
     // That is, each byte of this RAM holds consecutive WANG RAM nibbles,
     // with the lower addressed nibble in the lsbs of the RAM byte.
-    const int m_memsize;        // size, in bytes
-    uint8     m_RAM[MAX_RAM];
+    const int m_mem_size;       // size, in bytes
+    uint8     m_ram[MAX_RAM];
 
     // this contains the CPU state
     struct cpu2200_t {
@@ -191,7 +185,7 @@ public:
     void  reset(bool hard_reset) noexcept override;
     uint8 getAB() const noexcept override;
     void  setDevRdy(bool ready) noexcept override;
-    void  IoCardCbIbs(int data) override;
+    void  ioCardCbIbs(int data) override;
     int   execOneOp() override;  // simulate one instruction
     void  halt() noexcept override;
 
@@ -200,42 +194,33 @@ public:
 private:
     // ---- member functions ----
     // predecode uinstruction and write it to store
-    void write_ucode(uint16 addr, uint32 uop, bool force=false) noexcept;
+    void writeUcode(uint16 addr, uint32 uop, bool force=false) noexcept;
 
     // dump the most important contents of the uP state
-    void dump_state(bool fulldump);
+    void dumpState(bool full_dump);
 
-    void set_sh(uint8 value);
-    void set_sl(uint8 value) noexcept;
-    void set_bsr(uint8 value) noexcept;
+    void setSH(uint8 value);
+    void setSL(uint8 value) noexcept;
+    void setBSR(uint8 value) noexcept;
     void updateBankOffset() noexcept;
-
-    // 9b result: carry out and 8b result
-    uint16 decimal_add8(int a_op, int b_op, int ci) const noexcept;
-
-    // 9b result: carry out and 8b result
-    // if ci is 0, it means compute a-b.
-    // if ci is 1, it means compute a-b-1.
-    // msb of result is new carry bit: 1=borrow, 0=no borrow
-    uint16 decimal_sub8(int a_op, int b_op, int ci) const noexcept;
 
     // return the chosen bits of B and A, returns with the bits
     // of b in [7:4] and the bits of A in [3:0]
-    uint8 get_HbHa(int HbHa, int a_op, int b_op) const noexcept;
+    uint8 getHbHa(int HbHa, int a_op, int b_op) const noexcept;
 
     // this callback occurs when the 30 ms timeslicing one-shot times out.
-    void tcb30msDone() noexcept;
+    void oneShot30msCallback() noexcept;
 
 #ifdef HAVE_FILE_DUMP
-    void dump_ram(const std::string &filename);
+    void dumpRam(const std::string &filename);
 #endif
 
     // ---- data members ----
 
     const int                   m_cpu_subtype;
-    std::shared_ptr<Scheduler>  m_scheduler;  // shared system timing scheduler object
-    bool                        m_hasOneShot; // this cpu supports timeslicing
-    std::shared_ptr<Timer>      m_tmr_30ms;   // time slice 30 ms one shot
+    std::shared_ptr<Scheduler>  m_scheduler;   // shared system timing scheduler object
+    bool                        m_has_oneshot; // this cpu supports timeslicing
+    std::shared_ptr<Timer>      m_tmr_30ms;    // time slice 30 ms one shot
 
     static const int MAX_RAM   = 8192*1024; // max # bytes of main memory
     static const int MAX_UCODE =   64*1024; // max # words in ucode store
@@ -249,11 +234,11 @@ private:
         uint8  p8;          // predecode: instruction specific
         uint16 p16;         // predecode: instruction specific
     } m_ucode[MAX_UCODE];
-    int m_ucodeWords;       // number of implemented words
+    int m_ucode_words;      // number of implemented words
 
     // main memory
-    const int m_memsize;        // size, in bytes
-    uint8     m_RAM[MAX_RAM];
+    const int m_mem_size;       // size, in bytes
+    uint8     m_ram[MAX_RAM];
 
     // this contains the CPU state
     struct cpu2200vp_t {
@@ -281,8 +266,8 @@ private:
 };
 
 // microcode disassembly utilities
-bool dasm_one   (char *buff, uint16 ic, uint32 ucode) noexcept;
-bool dasm_one_vp(char *buff, uint16 ic, uint32 ucode) noexcept;
+bool dasmOneOp  (char *buff, uint16 ic, uint32 ucode) noexcept;
+bool dasmOneVpOp(char *buff, uint16 ic, uint32 ucode) noexcept;
 
 #endif _INCLUDE_CPU2200_H_
 
