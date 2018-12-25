@@ -1115,7 +1115,7 @@ system2200::findDisk(const std::string &filename,
 {
     for (int controller=0; ; controller++) {
 
-        int slt;
+        int slt = 0;
         if (!findDiskController(controller, &slt)) {
             break;
         }
@@ -1129,7 +1129,7 @@ system2200::findDisk(const std::string &filename,
             if (stat & IoCardDisk::WVD_STAT_DRIVE_OCCUPIED) {
                 std::string fname;
                 bool ok = IoCardDisk::wvdGetFilename(slt, d, &fname);
-                assert(ok); ok=ok;
+                assert(ok);
                 if (filename == fname) {
                     if (slot) {
                         *slot = slt;

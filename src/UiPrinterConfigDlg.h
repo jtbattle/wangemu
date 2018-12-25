@@ -17,15 +17,14 @@
 class PrinterDialogDataTransfer
 {
 public:
-//    MyData();
     // These data members are designed for transfer to and from
     // controls, via validators.
-    wxString m_string_pagelength;
-    wxString m_string_linelength;
-    bool     m_checkbox_autoshow;
-    bool     m_checkbox_printasgo;
-    bool     m_checkbox_portdirect;
-    wxString m_choice_portstring;
+    wxString m_page_length;
+    wxString m_line_length;
+    bool     m_cb_auto_show;
+    bool     m_cb_print_as_go;
+    bool     m_cb_port_direct;
+    wxString m_port_string;
 };
 
 

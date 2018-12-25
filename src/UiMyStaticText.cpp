@@ -2,7 +2,6 @@
 #include "UiSystem.h"           // sharing info between Ui* wxgui modules
 #include "UiMyStaticText.h"     // sharing info between UI_wxgui modules
 
-
 MyStaticText::MyStaticText(wxWindow* parent, wxWindowID id,
                                         const wxString &label)
     : wxStaticText(parent, id, label)

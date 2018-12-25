@@ -28,10 +28,10 @@ private:
     void updateDlg();   // make dialog reflect system state
 
     // data member
-    wxChoice    *m_FontChoice;          // font type and size
-    wxChoice    *m_ColorChoice;         // fg/bg color scheme
-    wxSlider    *m_ContrastSlider;      // display contrast
-    wxSlider    *m_BrightnessSlider;    // display brightness
+    wxChoice    *m_font_choice;         // font type and size
+    wxChoice    *m_color_choice;        // fg/bg color scheme
+    wxSlider    *m_contrast_slider;     // display contrast
+    wxSlider    *m_brightness_slider;   // display brightness
     std::string  m_subgroup;            // ini file tag
 };
 

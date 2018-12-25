@@ -31,8 +31,8 @@ PrinterConfigDlg::PrinterConfigDlg(wxWindow *parent, const wxString& title,
                  wxDEFAULT_DIALOG_STYLE|wxRESIZE_BORDER)
 {
     // Sizers automatically ensure a workable layout.
-    wxBoxSizer *mainsizer = new wxBoxSizer(wxVERTICAL);
-    wxFlexGridSizer *flexgridsizer = new wxFlexGridSizer(2, 2, 5, 5);
+    wxBoxSizer *main_sizer = new wxBoxSizer(wxVERTICAL);
+    wxFlexGridSizer *flexgrid_sizer = new wxFlexGridSizer(2, 2, 5, 5);
 
     // Create and add controls to sizers. Note that a member variable
     // of data is bound to each control upon construction. There is
@@ -41,61 +41,62 @@ PrinterConfigDlg::PrinterConfigDlg(wxWindow *parent, const wxString& title,
 
     // Pointers to the first text control is saved
     // so that we can use them elsewhere to set focus
-    flexgridsizer->Add(new wxStaticText(this, wxID_ANY, "Page Length"));
+    flexgrid_sizer->Add(new wxStaticText(this, wxID_ANY, "Page Length"));
     text = new wxTextCtrl(this, VALIDATE_TEXT_PAGELENGTH, "",
     wxPoint(10, 10), wxSize(120, -1), 0,
-    wxTextValidator(wxFILTER_NUMERIC, &data->m_string_pagelength));
-    flexgridsizer->Add(text);
-    flexgridsizer->Add(new wxStaticText(this, wxID_ANY, "Line Length"));
-    flexgridsizer->Add(new wxTextCtrl(this, VALIDATE_TEXT_LINELENGTH, "",
+    wxTextValidator(wxFILTER_NUMERIC, &data->m_page_length));
+    flexgrid_sizer->Add(text);
+    flexgrid_sizer->Add(new wxStaticText(this, wxID_ANY, "Line Length"));
+    flexgrid_sizer->Add(new wxTextCtrl(this, VALIDATE_TEXT_LINELENGTH, "",
     wxPoint(10, 10), wxSize(120, -1), 0,
-    wxTextValidator(wxFILTER_NUMERIC, &data->m_string_linelength)));
+    wxTextValidator(wxFILTER_NUMERIC, &data->m_line_length)));
 
-    mainsizer->Add(flexgridsizer, 1, wxGROW | wxALL, 10);
+    main_sizer->Add(flexgrid_sizer, 1, wxGROW | wxALL, 10);
 
-    wxBoxSizer *checksizer = new wxBoxSizer(wxVERTICAL);
+    wxBoxSizer *check_sizer = new wxBoxSizer(wxVERTICAL);
 
-    checksizer->Add(new wxCheckBox(this, VALIDATE_CHECK_AUTOSHOW, "Auto show printer view",
+    check_sizer->Add(new wxCheckBox(this, VALIDATE_CHECK_AUTOSHOW, "Auto show printer view",
         wxDefaultPosition, wxDefaultSize, 0,
-        wxGenericValidator(&data->m_checkbox_autoshow)), 0, wxALL, 5);
+        wxGenericValidator(&data->m_cb_auto_show)), 0, wxALL, 5);
 
-    checksizer->Add(new wxCheckBox(this, VALIDATE_CHECK_PRINTASGO, "Auto print full pages",
+    check_sizer->Add(new wxCheckBox(this, VALIDATE_CHECK_PRINTASGO, "Auto print full pages",
         wxDefaultPosition, wxDefaultSize, 0,
-        wxGenericValidator(&data->m_checkbox_printasgo)), 0, wxALL, 5);
+        wxGenericValidator(&data->m_cb_print_as_go)), 0, wxALL, 5);
 
 #if !defined(__WXMAC__)
-    wxBoxSizer *portsizer = new wxBoxSizer(wxHORIZONTAL);
-    portsizer->Add(new wxCheckBox(this, VALIDATE_CHECK_PORTDIRECT, "Print directly to port",
+    wxBoxSizer *port_sizer = new wxBoxSizer(wxHORIZONTAL);
+    port_sizer->Add(new wxCheckBox(this, VALIDATE_CHECK_PORTDIRECT, "Print directly to port",
         wxDefaultPosition, wxDefaultSize, 0,
-        wxGenericValidator(&data->m_checkbox_portdirect)), 0, wxLEFT | wxTOP | wxRIGHT, 5);
+        wxGenericValidator(&data->m_cb_port_direct)), 0, wxLEFT | wxTOP | wxRIGHT, 5);
 
     // leaf controls for leftgrid
-    wxChoice *portstring = new wxChoice(this, VALIDATE_PORTSTRING_CHOICE,
-                                        wxDefaultPosition, wxDefaultSize,
-                                        0, nullptr, 0,
-                                wxGenericValidator(&data->m_choice_portstring));
-    portstring->Append("LPT1", new wxStringClientData("LPT1"));
-    portstring->Append("LPT2", new wxStringClientData("LPT2"));
+    wxChoice *port_string = new wxChoice(this, VALIDATE_PORTSTRING_CHOICE,
+                                         wxDefaultPosition, wxDefaultSize,
+                                         0, nullptr, 0,
+                                wxGenericValidator(&data->m_port_string));
+    port_string->Append("LPT1", new wxStringClientData("LPT1"));
+    port_string->Append("LPT2", new wxStringClientData("LPT2"));
 
-    portsizer->Add(portstring, 1, wxGROW | wxALL);
-    checksizer->Add(portsizer, 1, wxGROW | wxALL);
+    port_sizer->Add(port_string, 1, wxGROW | wxALL);
+    check_sizer->Add(port_sizer, 1, wxGROW | wxALL);
 #else
-    data->m_checkbox_portdirect = false;
+    data->m_cb_port_direct = false;
 #endif
-    mainsizer->Add(checksizer, 1, wxGROW | wxALL);
+    main_sizer->Add(check_sizer, 1, wxGROW | wxALL);
 
-    wxGridSizer *gridsizer = new wxGridSizer(2, 2, 5, 5);
+    wxGridSizer *grid_sizer = new wxGridSizer(2, 2, 5, 5);
 
     wxButton *ok_button = new wxButton(this, wxID_OK, "OK", wxPoint(250, 70), wxSize(80, 30));
     ok_button->SetDefault();
-    gridsizer->Add(ok_button);
-    gridsizer->Add(new wxButton(this, wxID_CANCEL, "Cancel", wxPoint(250, 100), wxSize(80, 30)));
+    grid_sizer->Add(ok_button);
+    grid_sizer->Add(new wxButton(this, wxID_CANCEL, "Cancel", wxPoint(250, 100), wxSize(80, 30)));
 
-    mainsizer->Add(gridsizer, 0, wxGROW | wxALL, 10);
+    main_sizer->Add(grid_sizer, 0, wxGROW | wxALL, 10);
 
-    SetSizer(mainsizer);
-    mainsizer->SetSizeHints(this);
+    SetSizer(main_sizer);
+    main_sizer->SetSizeHints(this);
 }
+
 
 bool
 PrinterConfigDlg::TransferDataToWindow()

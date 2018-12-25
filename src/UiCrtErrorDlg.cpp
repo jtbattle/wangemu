@@ -26,12 +26,12 @@ CrtErrorDlg::CrtErrorDlg(wxWindow *parent,
     // I also messed around with SetBackgroundStyle, ClearBackground, Refresh,
     // but none had the desired effect.
 #if 1
-    wxColor bgc("pale green");
+    wxColor bg_color("pale green");
 #else
-    // same thing as bgc("pale green"); at least on windows
-    wxColor bgc(0x8F, 0xBC, 0x8F);
+    // same thing as bg_color("pale green"); at least on windows
+    wxColor bg_color(0x8F, 0xBC, 0x8F);
 #endif
-    SetBackgroundColour(bgc);
+    SetBackgroundColour(bg_color);
 
     // determine which entry matches
     const int cpu_type = system2200::config().getCpuType();
@@ -102,12 +102,12 @@ CrtErrorDlg::CrtErrorDlg(wxWindow *parent,
     }
 
     // need to wrap it all in a sizer to make the dlg stretchable
-    wxBoxSizer *topsizer = new wxBoxSizer(wxVERTICAL);
-//  topsizer->AddStretchSpacer(1);
-    topsizer->Add(grid, 0, wxALL, edge_margin);
-//  topsizer->AddStretchSpacer(1);
-    topsizer->SetSizeHints(this);       // honor minimum size
-    SetSizer(topsizer);
+    wxBoxSizer *top_sizer = new wxBoxSizer(wxVERTICAL);
+//  top_sizer->AddStretchSpacer(1);
+    top_sizer->Add(grid, 0, wxALL, edge_margin);
+//  top_sizer->AddStretchSpacer(1);
+    top_sizer->SetSizeHints(this);       // honor minimum size
+    SetSizer(top_sizer);
     SetAutoLayout(true);
 
     // make sure it is on the screen

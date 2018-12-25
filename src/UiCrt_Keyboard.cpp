@@ -291,7 +291,7 @@ Crt::OnKeyDown(wxKeyEvent &event)
     const int ctrl  = event.ControlDown();
     int key = 0x00;    // key value we stuff into emulator
 
-    bool foundmap = false;
+    bool found_map = false;
     for (auto const &kkey : keydown_keymap_table) {
         if (kkey.wxKey != wxKey) {
             continue;
@@ -309,7 +309,7 @@ Crt::OnKeyDown(wxKeyEvent &event)
             continue;
         }
         key = kkey.wangKey;
-        foundmap = true;
+        found_map = true;
     }
 
 #if 0
@@ -328,7 +328,7 @@ Crt::OnKeyDown(wxKeyEvent &event)
     }
 #endif
 
-    if (foundmap) {
+    if (found_map) {
         system2200::dispatchKeystroke(m_parent->getTiedAddr(),
                                       m_parent->getTermNum(),
                                       key);
@@ -353,13 +353,13 @@ Crt::OnChar(wxKeyEvent &event)
     const int wxKey = event.GetKeyCode();
 
     const bool keyword_mode = m_parent->getKeywordMode();
-    bool foundmap = false;
+    bool found_map = false;
     int key = 0x00;
     if (smart_term) {
         // the 2236 doesn't support keyword mode, just caps lock
         if (keyword_mode && ('a' <= wxKey && wxKey <= 'z')) {
             key = wxKey - 'a' + 'A';  // force to uppercase
-            foundmap = true;
+            found_map = true;
         }
     } else {
         // the first generation keyboards had a keyword associated with
@@ -368,19 +368,19 @@ Crt::OnChar(wxKeyEvent &event)
             if (kkey.wxKey == wxKey) {
                 key = (keyword_mode) ? kkey.wangKey_KW_mode
                                      : kkey.wangKey_Aa_mode;
-                foundmap = true;
+                found_map = true;
                 break;
             }
         }
     }
 
-    if (!foundmap && (wxKey >= 32) && (wxKey < 128)) {
+    if (!found_map && (wxKey >= 32) && (wxKey < 128)) {
         // non-mapped simple ASCII key
         key = wxKey;
-        foundmap = true;
+        found_map = true;
     }
 
-    if (foundmap) {
+    if (found_map) {
         system2200::dispatchKeystroke(m_parent->getTiedAddr(),
                                       m_parent->getTermNum(),
                                       key);

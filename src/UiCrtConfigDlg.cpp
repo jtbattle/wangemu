@@ -20,45 +20,43 @@ enum
 
 
 // Layout:
-//      topsizer (V)
+//      top_sizer (V)
 //      |
-//      +-- m_FontChoice
-//      +-- m_ColorChoice
+//      +-- m_font_choice
+//      +-- m_color_choice
 CrtConfigDlg::CrtConfigDlg(wxFrame *parent, const wxString &title,
                                             const wxString &subgroup) :
         wxDialog(parent, -1, title,
                  wxDefaultPosition, wxDefaultSize,
                  wxDEFAULT_DIALOG_STYLE | wxRESIZE_BORDER),
-        m_FontChoice(nullptr),
-        m_ColorChoice(nullptr),
-        m_ContrastSlider(nullptr),
-        m_BrightnessSlider(nullptr),
+        m_font_choice(nullptr),
+        m_color_choice(nullptr),
+        m_contrast_slider(nullptr),
+        m_brightness_slider(nullptr),
         m_subgroup(subgroup)
 {
     const int h_text_margin = 8;
     CrtFrame *pp = wxStaticCast(GetParent(), CrtFrame);
-    pp = pp;    // MSVC++ 6.0 complains that pp isn't referenced
-                // because the accesses below are static functions
 
-    m_FontChoice = new wxChoice(this, ID_FONT_CHOICE);
+    m_font_choice = new wxChoice(this, ID_FONT_CHOICE);
     // FIXME: the encodings should come from the enum
     for (int i=0; i<pp->getNumFonts(); i++) {
         int         size  = pp->getFontNumber(i);
         std::string label = pp->getFontName(i);
-        m_FontChoice->Append(label, (void*)size);
+        m_font_choice->Append(label, (void*)size);
     }
 
-    m_ColorChoice = new wxChoice(this, ID_COLOR_CHOICE);
+    m_color_choice = new wxChoice(this, ID_COLOR_CHOICE);
     for (int j=0; j<pp->getNumColorSchemes(); j++) {
         std::string label = pp->getColorSchemeName(j);
-        m_ColorChoice->Append(label, (void*)j);
+        m_color_choice->Append(label, (void*)j);
     }
 
-    m_ContrastSlider = new wxSlider(this, ID_CONTRAST_SLIDER,
+    m_contrast_slider = new wxSlider(this, ID_CONTRAST_SLIDER,
                                 100,            // initial value
                                 0, 200);        // min, max
 
-    m_BrightnessSlider = new wxSlider(this, ID_BRIGHTNESS_SLIDER,
+    m_brightness_slider = new wxSlider(this, ID_BRIGHTNESS_SLIDER,
                                 0,              // initial value
                                 0, 80);         // min, max
 
@@ -75,31 +73,33 @@ CrtConfigDlg::CrtConfigDlg(wxFrame *parent, const wxString &title,
     const int label_flags = wxALIGN_RIGHT | wxLEFT | wxRIGHT; // right aligned text with left and right margin
     const int ctl_flags   = wxALIGN_LEFT  | wxRIGHT;          // left aligned control with right margin
 
-    hGrid->AddSpacer(5); hGrid->AddSpacer(5);
+    hGrid->AddSpacer(5);
+    hGrid->AddSpacer(5);
 
     hGrid->Add(new wxStaticText(this, -1, "CRT Font"), 0, label_flags, h_text_margin);
-    hGrid->Add(m_FontChoice, 1, ctl_flags, h_text_margin);
+    hGrid->Add(m_font_choice, 1, ctl_flags, h_text_margin);
 
     hGrid->Add(new wxStaticText(this, -1, "CRT Color"), 0, label_flags, h_text_margin);
-    hGrid->Add(m_ColorChoice, 1, ctl_flags, h_text_margin);
+    hGrid->Add(m_color_choice, 1, ctl_flags, h_text_margin);
 
     hGrid->Add(new wxStaticText(this, -1, "Contrast"), 0, label_flags, h_text_margin);
-    hGrid->Add(m_ContrastSlider, 1, ctl_flags, h_text_margin);
+    hGrid->Add(m_contrast_slider, 1, ctl_flags, h_text_margin);
 
     hGrid->Add(new wxStaticText(this, -1, "Brightness"), 0, label_flags, h_text_margin);
-    hGrid->Add(m_BrightnessSlider, 1, ctl_flags, h_text_margin);
+    hGrid->Add(m_brightness_slider, 1, ctl_flags, h_text_margin);
 
-    hGrid->AddSpacer(5); hGrid->AddSpacer(5);
+    hGrid->AddSpacer(5);
+    hGrid->AddSpacer(5);
 
     // config grids on top, confirmation buttons on the bottom
-    wxBoxSizer *topsizer = new wxBoxSizer(wxVERTICAL);
-    topsizer->Add(hGrid, 1, wxEXPAND);          // vertically stretchable
+    wxBoxSizer *top_sizer = new wxBoxSizer(wxVERTICAL);
+    top_sizer->Add(hGrid, 1, wxEXPAND);          // vertically stretchable
 
     updateDlg();        // select current options
 
     // tell the thing to get to work
-    SetSizerAndFit(topsizer);           // use the sizer for layout
-    topsizer->SetSizeHints(this);       // set size hints to honor minimum size
+    SetSizerAndFit(top_sizer);          // use the sizer for layout
+    top_sizer->SetSizeHints(this);      // set size hints to honor minimum size
 
     getDefaults();              // get default size & location
 
@@ -127,14 +127,16 @@ CrtConfigDlg::OnFontChoice(wxCommandEvent &event)
     pp->setFontSize(size);
 }
 
+
 void
 CrtConfigDlg::OnColorChoice(wxCommandEvent& WXUNUSED(event))
 {
-    const int selection = m_ColorChoice->GetSelection();
+    const int selection = m_color_choice->GetSelection();
     CrtFrame *pp = wxStaticCast(GetParent(), CrtFrame);
     assert(pp);
     pp->setDisplayColorScheme(selection);
 }
+
 
 void
 CrtConfigDlg::OnContrastSlider(wxScrollEvent &event)
@@ -145,6 +147,7 @@ CrtConfigDlg::OnContrastSlider(wxScrollEvent &event)
     pp->setDisplayContrast(pos);
 }
 
+
 void
 CrtConfigDlg::OnBrightnessSlider(wxScrollEvent &event)
 {
@@ -153,6 +156,7 @@ CrtConfigDlg::OnBrightnessSlider(wxScrollEvent &event)
     assert(pp);
     pp->setDisplayBrightness(pos);
 }
+
 
 // update the display to reflect the current state
 void
@@ -164,21 +168,21 @@ CrtConfigDlg::updateDlg()
     // figure out mapping of font size to index
     const int font_size = pp->getFontSize();
     int font_choice = -1;
-    for (unsigned int i=0; i<m_FontChoice->GetCount(); i++) {
-        if (reinterpret_cast<int>(m_FontChoice->GetClientData(i)) == font_size) {
+    for (unsigned int i=0; i<m_font_choice->GetCount(); i++) {
+        if (reinterpret_cast<int>(m_font_choice->GetClientData(i)) == font_size) {
             font_choice = i;
         }
     }
-    m_FontChoice->SetSelection(font_choice);
+    m_font_choice->SetSelection(font_choice);
 
     const int color_choice = pp->getDisplayColorScheme();
-    m_ColorChoice->SetSelection(color_choice);
+    m_color_choice->SetSelection(color_choice);
 
     const int contrast = pp->getDisplayContrast();
-    m_ContrastSlider->SetValue(contrast);
+    m_contrast_slider->SetValue(contrast);
 
     const int brightness = pp->getDisplayBrightness();
-    m_BrightnessSlider->SetValue(brightness);
+    m_brightness_slider->SetValue(brightness);
 }
 
 

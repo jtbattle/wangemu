@@ -28,12 +28,12 @@ public:
     static void getGlobalDefaults();
 
     // translation of papersize (wxPaperSize) enum
-    wxPaperSize PaperSize(const std::string &papersizename);
-    std::string PaperSize(wxPaperSize papersizeval) const;
+    wxPaperSize paperSize(const std::string &papersize_name);
+    std::string paperSize(wxPaperSize papersize_val) const;
 
     // translation of paperbin (wxPrintBin) enum
-    wxPrintBin PaperBin(const std::string &paperbinname) const noexcept;
-    std::string PaperBin(wxPrintBin paperbinval) const;
+    wxPrintBin paperBin(const std::string &paperbin_name) const noexcept;
+    std::string paperBin(wxPrintBin paperbin_val) const;
 
     // emit a character to the display
     void printChar(uint8 byte);
@@ -104,16 +104,16 @@ private:
 
     // ---- data members ----
 
-    wxMenuBar   *m_menuBar;     // menubar on frame
-    wxStatusBar *m_statusBar;   // status bar on frame
+    wxMenuBar   *m_menubar;     // menubar on frame
+    wxStatusBar *m_statusbar;   // status bar on frame
     std::shared_ptr<Printer> m_printer; // emulated Printer display window
 
-    int m_fontsize;             // eg 8 for 8 pt, 12 for 12 pt, etc
+    int m_font_size;            // eg 8 for 8 pt, 12 for 12 pt, etc
     int m_printer_addr;         // we use this to track configuration options
-    int m_previewzoom;          // zoom factor for page preview
+    int m_preview_zoom;         // zoom factor for page preview
 
-    std::unique_ptr<wxPrintData>           m_printData;     // Print data
-    std::unique_ptr<wxPageSetupDialogData> m_pageSetupData; // Page setup data
+    std::unique_ptr<wxPrintData>           m_printData;
+    std::unique_ptr<wxPageSetupDialogData> m_pageSetupData;
 };
 
 #endif _INCLUDE_UI_PRINTER_FRAME_H_

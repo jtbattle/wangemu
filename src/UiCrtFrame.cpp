@@ -116,7 +116,7 @@ const int num_fonts = (sizeof(font_table) / sizeof(font_table_t));
 static const struct colorscheme_t {
     unsigned char fg_r, fg_g, fg_b;     // foreground color
     unsigned char bg_r, bg_g, bg_b;     // background color
-    std::string menuHelp;               // string as it appears on statusbar
+    std::string menu_help;              // string as it appears on statusbar
 } colorscheme[] = {
     {
 #ifdef __WXMAC__
@@ -152,7 +152,7 @@ static const int num_colorschemes = sizeof(colorscheme) / sizeof(colorscheme_t);
                           wxFULLSCREEN_NOSTATUSBAR)
 
 // CrtFrame static members
-CrtFrame* CrtFrame::m_primaryFrame = nullptr;
+CrtFrame* CrtFrame::m_primary_frame = nullptr;
 
 // constructor
 CrtFrame::CrtFrame(const wxString& title,
@@ -161,31 +161,31 @@ CrtFrame::CrtFrame(const wxString& title,
                    crt_state_t *crt_state) :
        wxFrame((wxFrame *)nullptr, -1, title, wxDefaultPosition, wxDefaultSize,
                wxDEFAULT_FRAME_STYLE | wxNO_FULL_REPAINT_ON_RESIZE),
-    m_menuBar(nullptr),
-    m_statBar(nullptr),
-    m_toolBar(nullptr),
+    m_menubar(nullptr),
+    m_statusbar(nullptr),
+    m_toolbar(nullptr),
     m_crt(nullptr),
     m_fullscreen(false),
-    m_showstats(false),
+    m_show_stats(false),
     m_colorsel(0),
-    m_fontsize{0},
+    m_font_size{0},
     m_crt_addr(io_addr),
     m_term_num(term_num),
     m_primary_crt(false),
     m_assoc_kb_addr(-1),
-    m_RefreshTimer(nullptr),
-    m_QSecTimer(nullptr),
+    m_refresh_tmr(nullptr),
+    m_quarter_sec_tmr(nullptr),
     m_blink_phase(0),
     m_fps(0)
 {
-    m_smart_term = (crt_state->screen_type == UI_SCREEN_2236DE);
-    m_small_crt  = (crt_state->chars_w == 64);
+    m_smart_term  = (crt_state->screen_type == UI_SCREEN_2236DE);
+    m_small_crt   = (crt_state->chars_w == 64);
     m_primary_crt = (m_smart_term) ? ((m_crt_addr == 0x00) && (term_num == 0))
                                    :  (m_crt_addr == 0x05);
 
     if (m_primary_crt) {
-        assert(!m_primaryFrame);
-        m_primaryFrame = this;
+        assert(!m_primary_frame);
+        m_primary_frame = this;
     }
 
     // set the frame icon
@@ -194,8 +194,8 @@ CrtFrame::CrtFrame(const wxString& title,
     makeMenubar();
 
     // create a status bar with two panes
-    m_statBar = new CrtStatusBar(this, m_smart_term, m_primary_crt);
-    SetStatusBar(m_statBar);
+    m_statusbar = new CrtStatusBar(this, m_smart_term, m_primary_crt);
+    SetStatusBar(m_statusbar);
     SetStatusBarPane(1);        // use second pane for menu help strings
 
     // create toolbar
@@ -205,10 +205,9 @@ CrtFrame::CrtFrame(const wxString& title,
 #else
     const long tb_style = wxNO_BORDER | wxHORIZONTAL | wxTB_FLAT;
 #endif
-            ;
-    m_toolBar = CreateToolBar(tb_style, TB_TOOLBAR);
-    initToolBar(m_toolBar);
-    m_toolBar->Show(false); // can get changed in GetDefaults()
+    m_toolbar = CreateToolBar(tb_style, TB_TOOLBAR);
+    initToolBar(m_toolbar);
+    m_toolbar->Show(false); // can get changed in GetDefaults()
 
     m_crt = new Crt(this, crt_state);
 
@@ -227,13 +226,13 @@ CrtFrame::CrtFrame(const wxString& title,
     m_fps = 0;
 
     // only the primary has a status bar
-    m_RefreshTimer = std::make_unique<wxTimer>(this, Timer_Frame);
-    m_QSecTimer    = std::make_unique<wxTimer>(this, Timer_QSec);
+    m_refresh_tmr     = std::make_unique<wxTimer>(this, Timer_Frame);
+    m_quarter_sec_tmr = std::make_unique<wxTimer>(this, Timer_QSec);
 
     // it is hard to predict what the optimal refresh period
     // for a given system
-    m_RefreshTimer->Start(30, wxTIMER_CONTINUOUS);   // ~30 fps
-    m_QSecTimer->Start(250, wxTIMER_CONTINUOUS);     // 4 Hz
+    m_refresh_tmr->Start(30, wxTIMER_CONTINUOUS);       // ~30 fps
+    m_quarter_sec_tmr->Start(250, wxTIMER_CONTINUOUS);  // 4 Hz
 
     // event routing table
     Bind(wxEVT_MENU, &CrtFrame::OnScript,   this, File_Script);
@@ -279,14 +278,6 @@ CrtFrame::CrtFrame(const wxString& title,
 }
 
 
-// destructor
-CrtFrame::~CrtFrame()
-{
-    m_RefreshTimer = nullptr;
-    m_QSecTimer    = nullptr;
-}
-
-
 // indicate if this is device 005 or not
 bool
 CrtFrame::isPrimaryCrt() const noexcept
@@ -307,73 +298,73 @@ CrtFrame::isPrimaryCrt() const noexcept
 void
 CrtFrame::makeMenubar()
 {
-    wxMenu *menuFile = new wxMenu;
+    wxMenu *menu_file = new wxMenu;
     if (m_primary_crt || m_smart_term) {
-        menuFile->Append(File_Script,   "&Script...", "Redirect keyboard from a file");
+        menu_file->Append(File_Script,   "&Script...", "Redirect keyboard from a file");
     }
-    menuFile->Append(File_Snapshot, "Screen &Grab...\t" ALT "+G", "Save an image of the screen to a file");
+    menu_file->Append(File_Snapshot, "Screen &Grab...\t" ALT "+G", "Save an image of the screen to a file");
 #if HAVE_FILE_DUMP
     if (m_primary_crt) {
-        menuFile->Append(File_Dump,     "Dump Memory...", "Save an image of the system memory to a file");
+        menu_file->Append(File_Dump,     "Dump Memory...", "Save an image of the system memory to a file");
     }
 #endif
-    menuFile->Append(File_Quit,     "E&xit\t" ALT "+X", "Quit the program");
+    menu_file->Append(File_Quit,     "E&xit\t" ALT "+X", "Quit the program");
 
-    wxMenu *menuCPU = nullptr;
-    menuCPU = new wxMenu;
+    wxMenu *menu_cpu = nullptr;
+    menu_cpu = new wxMenu;
     if (m_primary_crt) {
-        menuCPU->Append(CPU_HardReset, "Hard Reset CPU\t" ALT2 "+R", "Perform a power-up reset");
+        menu_cpu->Append(CPU_HardReset, "Hard Reset CPU\t" ALT2 "+R", "Perform a power-up reset");
     }
-    menuCPU->Append(CPU_WarmReset, "Warm Reset CPU\t" ALT2 "+W", "Perform a state-preserving reset");
+    menu_cpu->Append(CPU_WarmReset, "Warm Reset CPU\t" ALT2 "+W", "Perform a state-preserving reset");
     if (m_primary_crt) {
-        menuCPU->AppendSeparator();
-        menuCPU->Append(CPU_ActualSpeed,      "&Actual Speed",      "Run emulation at speed of the actual machine", wxITEM_CHECK);
-        menuCPU->Append(CPU_UnregulatedSpeed, "&Unregulated Speed", "Run emulation at maximum speed", wxITEM_CHECK);
+        menu_cpu->AppendSeparator();
+        menu_cpu->Append(CPU_ActualSpeed,      "&Actual Speed",      "Run emulation at speed of the actual machine", wxITEM_CHECK);
+        menu_cpu->Append(CPU_UnregulatedSpeed, "&Unregulated Speed", "Run emulation at maximum speed", wxITEM_CHECK);
     }
 
-    wxMenu *menuDisk = nullptr;
+    wxMenu *menu_disk = nullptr;
     if (m_primary_crt) {
         // nothing to do except add top -- it is added dynamically later
-        menuDisk = new wxMenu;
+        menu_disk = new wxMenu;
     }
 
     // printer view
-    wxMenu *menuPrinter = nullptr;
+    wxMenu *menu_printer = nullptr;
     if (m_primary_crt && (system2200::getPrinterIoAddr(0) >= 0)) {
         // there is at least one printer
-        menuPrinter = new wxMenu;
+        menu_printer = new wxMenu;
         for (int i=0; ; i++) {
             const int io_addr = system2200::getPrinterIoAddr(i);
             if (io_addr < 0) {
                 break;
             }
             wxString label;
-            wxString help;
             label.Printf("Show Printer /%03X", io_addr);
+            wxString help;
             help.Printf("Show view for printer /%03X", io_addr);
-            menuPrinter->Append(Printer_0+i, label, help);
+            menu_printer->Append(Printer_0+i, label, help);
         }
-        menuPrinter->Append(Print_PrintAndClear, "Print and Clear All",   "Print and clear all printer logs");
+        menu_printer->Append(Print_PrintAndClear, "Print and Clear All",   "Print and clear all printer logs");
     }
 
-    wxMenu *menuConfig = new wxMenu;
+    wxMenu *menu_config = new wxMenu;
     if (m_primary_crt) {
-        menuConfig->Append(Configure_Dialog,     "&Configure System...",      "Change I/O settings");
+        menu_config->Append(Configure_Dialog,     "&Configure System...",      "Change I/O settings");
     }
-    menuConfig->Append(Configure_Screen_Dialog,  "&Configure Screen...",      "Change display settings");
+    menu_config->Append(Configure_Screen_Dialog,  "&Configure Screen...",      "Change display settings");
     if (m_smart_term) {
-        menuConfig->Append(Configure_KeywordMode,    "&Kaps lock\t" ALT "+K",  "Toggle keyboard keyword mode",        wxITEM_CHECK);
+        menu_config->Append(Configure_KeywordMode,    "&Kaps lock\t" ALT "+K",  "Toggle keyboard keyword mode",        wxITEM_CHECK);
     } else {
-        menuConfig->Append(Configure_KeywordMode,    "&Keyword mode\t" ALT "+K",  "Toggle keyboard keyword mode",        wxITEM_CHECK);
+        menu_config->Append(Configure_KeywordMode,    "&Keyword mode\t" ALT "+K",  "Toggle keyboard keyword mode",        wxITEM_CHECK);
     }
-    menuConfig->Append(Configure_SF_toolBar,     "SF key toolbar",            "Toggle special function key toolbar", wxITEM_CHECK);
-    menuConfig->Append(Configure_Fullscreen,     "Fullscreen\t" ALT "+Enter", "Toggle full screen display",          wxITEM_CHECK);
+    menu_config->Append(Configure_SF_toolBar,     "SF key toolbar",            "Toggle special function key toolbar", wxITEM_CHECK);
+    menu_config->Append(Configure_Fullscreen,     "Fullscreen\t" ALT "+Enter", "Toggle full screen display",          wxITEM_CHECK);
     if (m_primary_crt) {
-        menuConfig->Append(Configure_Stats,      "Statistics",                "Toggle statistics on statusbar",      wxITEM_CHECK);
+        menu_config->Append(Configure_Stats,      "Statistics",                "Toggle statistics on statusbar",      wxITEM_CHECK);
     }
     if (system2200::getKbIoAddr(1) >= 0) {
         // there is more than one keyboard
-        menuConfig->AppendSeparator();
+        menu_config->AppendSeparator();
         for (int i=0; ; i++) {
             const int addr = system2200::getKbIoAddr(i);
             if (addr < 0) {
@@ -383,31 +374,31 @@ CrtFrame::makeMenubar()
             wxString help;
             label.Printf("Tie keyboard to /%03X", addr);
             help.Printf("Tie keyboard to IO device /%03X", addr);
-            menuConfig->Append(Configure_KB_Tie0+i, label, help, wxITEM_CHECK);
+            menu_config->Append(Configure_KB_Tie0+i, label, help, wxITEM_CHECK);
         }
     }
 
     // make the help menu (as if it isn't obvious below!)
-    wxMenu *menuHelp = TheApp::makeHelpMenu(this);
+    wxMenu *menu_help = TheApp::makeHelpMenu(this);
 
     // now append the freshly created menu to the menu bar...
-    m_menuBar = new wxMenuBar;
+    m_menubar = new wxMenuBar;
 
-    m_menuBar->Append(menuFile, "&File");
-    if (menuCPU != nullptr) {
-        m_menuBar->Append(menuCPU, "C&PU");
+    m_menubar->Append(menu_file, "&File");
+    if (menu_cpu != nullptr) {
+        m_menubar->Append(menu_cpu, "C&PU");
     }
-    if (menuDisk != nullptr) {
-        m_menuBar->Append(menuDisk, "&Disk");
+    if (menu_disk != nullptr) {
+        m_menubar->Append(menu_disk, "&Disk");
     }
-    if (menuPrinter != nullptr) {
-        m_menuBar->Append(menuPrinter, "&Printer");
+    if (menu_printer != nullptr) {
+        m_menubar->Append(menu_printer, "&Printer");
     }
-    m_menuBar->Append(menuConfig, "&Configure");
-    m_menuBar->Append(menuHelp, "&Help");
+    m_menubar->Append(menu_config, "&Configure");
+    m_menubar->Append(menu_help, "&Help");
 
     // ... and attach this menu bar to the frame
-    SetMenuBar(m_menuBar);
+    SetMenuBar(m_menubar);
 }
 
 
@@ -420,32 +411,32 @@ CrtFrame::setMenuChecks(const wxMenu *menu)
     // ----- file --------------------------------------
     if (isPrimaryCrt()) {
         const bool script_running = system2200::isScriptModeActive(m_assoc_kb_addr, m_term_num);
-        m_menuBar->Enable(File_Script, !script_running);
+        m_menubar->Enable(File_Script, !script_running);
     }
 // FIXME: we want to allow secondary MXD terminals to support script input too
 
     // ----- cpu ---------------------------------------
     if (isPrimaryCrt()) {
         const bool regulated = system2200::isCpuSpeedRegulated();
-        m_menuBar->Check(CPU_ActualSpeed,       regulated);
-        m_menuBar->Check(CPU_UnregulatedSpeed, !regulated);
+        m_menubar->Check(CPU_ActualSpeed,       regulated);
+        m_menubar->Check(CPU_UnregulatedSpeed, !regulated);
     }
 
     // ----- disk --------------------------------------
     // dynamically generate the menu each time.
     // we qualify this one and regenerate it only if we must.
-    int DiskMenuPos = m_menuBar->FindMenu("Disk");
-    if (isPrimaryCrt() && (DiskMenuPos >= 0)
-        && (menu == m_menuBar->GetMenu(DiskMenuPos))) {
-        wxMenu *diskmenu = m_menuBar->GetMenu(DiskMenuPos);
-        const int items = diskmenu->GetMenuItemCount();
+    int disk_menu_pos = m_menubar->FindMenu("Disk");
+    if (isPrimaryCrt() && (disk_menu_pos >= 0)
+        && (menu == m_menubar->GetMenu(disk_menu_pos))) {
+        wxMenu *disk_menu = m_menubar->GetMenu(disk_menu_pos);
+        const int items = disk_menu->GetMenuItemCount();
 
         // the entire Disk menu used to be recreated and replaced each time,
         // but that caused problems on wxMAC, so now instead all the menu
         // items get removed and replaced each time.
         for (int i=items-1; i>=0; i--) {
-            wxMenuItem *item = diskmenu->FindItemByPosition(i);
-            diskmenu->Delete(item);
+            wxMenuItem *item = disk_menu->FindItemByPosition(i);
+            disk_menu->Delete(item);
         }
 
         // see if there are any disk controllers
@@ -455,35 +446,35 @@ CrtFrame::setMenuChecks(const wxMenu *menu)
                 break;
             }
             bool ok = system2200::getSlotInfo(slot, nullptr, &io_addr);
-            assert(ok); ok=ok;
+            assert(ok);
             for (int d=0; d<2; d++) {
                 const int stat = IoCardDisk::wvdDriveStatus(slot, d);
                 if (stat & IoCardDisk::WVD_STAT_DRIVE_OCCUPIED) {
                     wxString str1, str2;
                     str1.Printf("Drive %c/%03X: Remove", d?'R':'F', io_addr);
                     str2.Printf("Remove the disk from drive %d, unit /%03X", d, io_addr);
-                    diskmenu->Append(Disk_Remove+4*slot+2*d, str1, str2, wxITEM_CHECK);
+                    disk_menu->Append(Disk_Remove+4*slot+2*d, str1, str2, wxITEM_CHECK);
                 } else {
                     wxString str1, str2;
                     str1.Printf("Drive %c/%03X: Insert", d?'R':'F', io_addr);
                     str2.Printf("Insert a disk into drive %d, unit /%03X", d, io_addr);
-                    diskmenu->Append(Disk_Insert+4*slot+2*d, str1, str2, wxITEM_CHECK);
+                    disk_menu->Append(Disk_Insert+4*slot+2*d, str1, str2, wxITEM_CHECK);
                 }
             }
-            diskmenu->AppendSeparator();
+            disk_menu->AppendSeparator();
         }
-        diskmenu->Append(Disk_New,     "&New Disk...",     "Create virtual disk");
-        diskmenu->Append(Disk_Inspect, "&Inspect Disk...", "Inspect/modify virtual disk");
-        diskmenu->Append(Disk_Format,  "&Format Disk...",  "Format existing virtual disk");
+        disk_menu->Append(Disk_New,     "&New Disk...",     "Create virtual disk");
+        disk_menu->Append(Disk_Inspect, "&Inspect Disk...", "Inspect/modify virtual disk");
+        disk_menu->Append(Disk_Format,  "&Format Disk...",  "Format existing virtual disk");
     }
 
     // ----- configure ---------------------------------
-    int ConfigMenuPos = m_menuBar->FindMenu("Configure");
-    if (menu == m_menuBar->GetMenu(ConfigMenuPos)) {
-        m_menuBar->Check(Configure_KeywordMode, getKeywordMode());
-        m_menuBar->Check(Configure_SF_toolBar,  m_toolBar->IsShown());
+    int ConfigMenuPos = m_menubar->FindMenu("Configure");
+    if (menu == m_menubar->GetMenu(ConfigMenuPos)) {
+        m_menubar->Check(Configure_KeywordMode, getKeywordMode());
+        m_menubar->Check(Configure_SF_toolBar,  m_toolbar->IsShown());
         if (isPrimaryCrt()) {
-            m_menuBar->Check(Configure_Stats,   getShowStatistics());
+            m_menubar->Check(Configure_Stats,   getShowStatistics());
         }
         if (system2200::getKbIoAddr(1) >= 0) {
             // there is more than one keyboard
@@ -492,7 +483,7 @@ CrtFrame::setMenuChecks(const wxMenu *menu)
                 if (addr < 0) {
                     break;
                 }
-                m_menuBar->Check(Configure_KB_Tie0+i, (m_assoc_kb_addr == addr));
+                m_menubar->Check(Configure_KB_Tie0+i, (m_assoc_kb_addr == addr));
             }
         }
     }
@@ -544,12 +535,12 @@ CrtFrame::initToolBar(wxToolBar *tb)
     assert(key_font != wxNullFont);
     //key_font.SetNoAntiAliasing();
 
-    wxMemoryDC memDC;
-    memDC.SetFont(key_font);
+    wxMemoryDC mem_dc;
+    mem_dc.SetFont(key_font);
     wxBitmap tmpbm(1, 1);
-    memDC.SelectObject(tmpbm); // wxmac requires it even before GetTextExtent()
+    mem_dc.SelectObject(tmpbm); // wxmac requires it even before GetTextExtent()
     wxCoord textH, textW;
-    memDC.GetTextExtent("SF15", &textW, &textH); // widest string in use
+    mem_dc.GetTextExtent("SF15", &textW, &textH); // widest string in use
 #if BIG_BUTTONS
     std::string sf_labels[17] = {
         "", "", "", "", // SF0-3
@@ -588,7 +579,7 @@ CrtFrame::initToolBar(wxToolBar *tb)
     // see if any of the labels is wider than the SFxx string
     for (int ii=0; ii<17; ii++) {
         int width, height;
-        memDC.GetTextExtent(sf_labels[ii], &width, &height);
+        mem_dc.GetTextExtent(sf_labels[ii], &width, &height);
         if (width > textW) {
             textW = width;
         }
@@ -614,15 +605,15 @@ CrtFrame::initToolBar(wxToolBar *tb)
     bg = wxSystemSettings::GetColour(wxSYS_COLOUR_BTNFACE);
 
     wxBitmap img(buttonW, buttonH, -1);
-    wxPen fgPen(fg, 1, wxPENSTYLE_SOLID);
-    wxPen bgPen(bg, 1, wxPENSTYLE_SOLID);
+    wxPen fg_pen(fg, 1, wxPENSTYLE_SOLID);
+    wxPen bg_pen(bg, 1, wxPENSTYLE_SOLID);
 
-    memDC.SelectObject(img);
-    memDC.SetBrush(wxBrush(bg, wxBRUSHSTYLE_SOLID));
-    memDC.SetBackgroundMode(wxSOLID);
-    memDC.SetTextForeground(fg);
-    memDC.SetTextBackground(bg);
-    memDC.SelectObject(wxNullBitmap);
+    mem_dc.SelectObject(img);
+    mem_dc.SetBrush(wxBrush(bg, wxBRUSHSTYLE_SOLID));
+    mem_dc.SetBackgroundMode(wxSOLID);
+    mem_dc.SetTextForeground(fg);
+    mem_dc.SetTextBackground(bg);
+    mem_dc.SelectObject(wxNullBitmap);
 
     for (int i=0; i<17; i++) {
         wxString label, tooltip;
@@ -636,17 +627,17 @@ CrtFrame::initToolBar(wxToolBar *tb)
         }
 
         // print a horizontally centered label on the button bitmap
-        m_sfkeyIcons[i] = wxBitmap(buttonW, buttonH, -1);
-        memDC.SelectObject(m_sfkeyIcons[i]);
-        memDC.SetPen(bgPen);
-        memDC.DrawRectangle(0, 0, buttonW, buttonH); // clear it
+        m_sf_key_icons[i] = wxBitmap(buttonW, buttonH, -1);
+        mem_dc.SelectObject(m_sf_key_icons[i]);
+        mem_dc.SetPen(bg_pen);
+        mem_dc.DrawRectangle(0, 0, buttonW, buttonH); // clear it
 
-        memDC.GetTextExtent(label, &textW, &textH);
-        int btnOrigX((buttonW - textW)>>1);
+        mem_dc.GetTextExtent(label, &textW, &textH);
+        int button_x_origin((buttonW - textW)>>1);
 #if BIG_BUTTONS
-        memDC.DrawText(label, btnOrigX, textH);
-        memDC.GetTextExtent(sf_labels[i], &textW, &textH);
-        btnOrigX = (buttonW - textW) >> 1;
+        mem_dc.DrawText(label, button_x_origin, textH);
+        mem_dc.GetTextExtent(sf_labels[i], &textW, &textH);
+        button_x_origin = (buttonW - textW) >> 1;
 
     #if GRAPHIC_ARROWS
         bool vertical = false;  // false=horizontal
@@ -691,28 +682,28 @@ CrtFrame::initToolBar(wxToolBar *tb)
             const int head_delta_x =              shaft_len/4; // make it 45 degrees
 
             // draw shaft
-            memDC.SetPen(fgPen);
-            memDC.DrawLine(shaft_x, shaft_beg_y, shaft_x, shaft_end_y);
+            mem_dc.SetPen(fg_pen);
+            mem_dc.DrawLine(shaft_x, shaft_beg_y, shaft_x, shaft_end_y);
 
             // draw arrowhead
-            memDC.DrawLine(shaft_x, shaft_end_y,
-                           shaft_x + head_delta_x,
-                           shaft_end_y + head_delta_y);
-            memDC.DrawLine(shaft_x, shaft_end_y,
-                           shaft_x - head_delta_x,
-                           shaft_end_y + head_delta_y);
+            mem_dc.DrawLine(shaft_x, shaft_end_y,
+                            shaft_x + head_delta_x,
+                            shaft_end_y + head_delta_y);
+            mem_dc.DrawLine(shaft_x, shaft_end_y,
+                            shaft_x - head_delta_x,
+                            shaft_end_y + head_delta_y);
 
         } else if (shaft_ticks > 0) {
 
-            wxPen dashPen(fg, 1, wxPENSTYLE_SOLID);
+            wxPen dash_pen(fg, 1, wxPENSTYLE_SOLID);
             const wxDash dashes[] = { 4, 2 };
             int shaft_len = buttonW/5;
             if (shaft_ticks > 1) {
 #if __WXMSW__
                 // the USER_DASH style doesn't seem to work as I'd expect
                 // (as of wxWidgets 2.6.0)
-                dashPen.SetStyle(wxPENSTYLE_USER_DASH);
-                dashPen.SetDashes(2, &dashes[0]);
+                dash_pen.SetStyle(wxPENSTYLE_USER_DASH);
+                dash_pen.SetDashes(2, &dashes[0]);
 #endif
                 // four dashes, three spaces
                 shaft_len = (shaft_ticks  )*dashes[0]
@@ -726,28 +717,28 @@ CrtFrame::initToolBar(wxToolBar *tb)
             const int head_delta_y =              dashes[0]; // make it 45 degrees
 
             // draw shaft
-            memDC.SetPen(dashPen);
-            memDC.DrawLine(shaft_beg_x, shaft_y, shaft_end_x, shaft_y);
+            mem_dc.SetPen(dash_pen);
+            mem_dc.DrawLine(shaft_beg_x, shaft_y, shaft_end_x, shaft_y);
 
             // draw arrowhead
-            memDC.SetPen(fgPen);
-            memDC.DrawLine(shaft_end_x, shaft_y,
-                           shaft_end_x + head_delta_x,
-                           shaft_y + head_delta_y);
-            memDC.DrawLine(shaft_end_x, shaft_y,
-                           shaft_end_x + head_delta_x,
-                           shaft_y - head_delta_y);
+            mem_dc.SetPen(fg_pen);
+            mem_dc.DrawLine(shaft_end_x, shaft_y,
+                            shaft_end_x + head_delta_x,
+                            shaft_y + head_delta_y);
+            mem_dc.DrawLine(shaft_end_x, shaft_y,
+                            shaft_end_x + head_delta_x,
+                            shaft_y - head_delta_y);
         } else
     #endif
         {
-            memDC.DrawText(sf_labels[i], btnOrigX, 0);
+            mem_dc.DrawText(sf_labels[i], button_x_origin, 0);
         }
 #else
-        memDC.DrawText(label, btnOrigX, 0);
+        mem_dc.DrawText(label, button_x_origin, 0);
 #endif
 
-        tb->AddTool(TB_SF0+i, label, m_sfkeyIcons[i], tooltip);
-        memDC.SelectObject(wxNullBitmap);
+        tb->AddTool(TB_SF0+i, label, m_sf_key_icons[i], tooltip);
+        mem_dc.SelectObject(wxNullBitmap);
     } // for (i)
     #ifdef __WXMAC__
         break;  // we found a font size that works
@@ -757,6 +748,7 @@ CrtFrame::initToolBar(wxToolBar *tb)
 
     tb->Realize();
 }
+
 
 static std::string
 makeCrtIniGroup(bool smart_term, int io_addr, int term_num)
@@ -775,6 +767,7 @@ makeCrtIniGroup(bool smart_term, int io_addr, int term_num)
     return sg.str();
 }
 
+
 // save Crt options to the config file
 void
 CrtFrame::saveDefaults()
@@ -785,8 +778,8 @@ CrtFrame::saveDefaults()
     host::configWriteInt(subgroup, "colorscheme", getDisplayColorScheme());
 
     // save font choice
-    host::configWriteInt(subgroup, "fontsize",  m_fontsize[0]);
-    host::configWriteInt(subgroup, "fontsize2", m_fontsize[1]);
+    host::configWriteInt(subgroup, "fontsize",  m_font_size[0]);
+    host::configWriteInt(subgroup, "fontsize2", m_font_size[1]);
 
     // save contrast/brightness
     host::configWriteInt(subgroup, "contrast",   m_crt->getDisplayContrast());
@@ -810,7 +803,7 @@ CrtFrame::saveDefaults()
     host::configWriteBool(subgroup, "timingstats", getShowStatistics());
 
     // save toolbar status
-    host::configWriteBool(subgroup, "toolbar", m_toolBar->IsShown());
+    host::configWriteBool(subgroup, "toolbar", m_toolbar->IsShown());
 
     // save fullscreen status
     host::configWriteBool(subgroup, "fullscreen", m_fullscreen);
@@ -860,14 +853,14 @@ CrtFrame::getDefaults()
     }
 
     // pick up statistics display mode
-    bool showstats;
-    host::configReadBool(subgroup, "timingstats", &showstats, false);
-    setShowStatistics(showstats);
+    bool show_stats;
+    host::configReadBool(subgroup, "timingstats", &show_stats, false);
+    setShowStatistics(show_stats);
 
     // save toolbar status
     bool show_toolbar;
     host::configReadBool(subgroup, "toolbar", &show_toolbar, false);
-    m_toolBar->Show(show_toolbar);
+    m_toolbar->Show(show_toolbar);
 
     // pick up screen location and size
     wxRect default_geom(50, 50, 680, 380);  // assume 64x16; x,y,w,h
@@ -893,17 +886,17 @@ CrtFrame::getDefaults()
     }
 
     // pick up screen font size
-    m_fontsize[0] = m_fontsize[1] = 2; // default
+    m_font_size[0] = m_font_size[1] = 2; // default
     b = host::configReadInt(subgroup, "fontsize", &v);
     if (b && ((v >=1 && v <= 3) || (v >= 8 && v <= 28))) {
-        m_fontsize[0] = v;
+        m_font_size[0] = v;
     }
     host::configReadInt(subgroup, "fontsize2", &v);
     if (b && ((v >=1 && v <= 3) || (v >= 8 && v <= 28))) {
-        m_fontsize[1] = v;
+        m_font_size[1] = v;
     }
 
-    m_crt->setFontSize(m_fontsize[m_fullscreen]);
+    m_crt->setFontSize(m_font_size[m_fullscreen]);
 }
 
 
@@ -938,9 +931,9 @@ CrtFrame::setSimSeconds(int secs, float relative_speed)
     str.Printf(format, secs, relative_speed);
 #endif
     if (pf->getShowStatistics()) {
-        pf->m_statBar->SetStatusMessage(std::string(str));
+        pf->m_statusbar->SetStatusMessage(std::string(str));
     } else {
-        pf->m_statBar->SetStatusMessage("");
+        pf->m_statusbar->SetStatusMessage("");
     }
 }
 
@@ -957,6 +950,7 @@ CrtFrame::getTextBlinkPhase() const noexcept
     return (m_blink_phase & 1) == 1;
 }
 
+
 bool
 CrtFrame::getCursorBlinkPhase() const noexcept
 {
@@ -964,6 +958,7 @@ CrtFrame::getCursorBlinkPhase() const noexcept
     // but the 2336 definitely has a 75% duty cycle
     return (m_blink_phase < 3);
 }
+
 
 // create a bell (0x07) sound
 void
@@ -980,11 +975,11 @@ CrtFrame::ding()
 void
 CrtFrame::OnScript(wxCommandEvent& WXUNUSED(event))
 {
-    std::string fullpath;
-    const int r = host::fileReq(host::FILEREQ_SCRIPT, "Script to execute", 1, &fullpath);
+    std::string full_path;
+    const int r = host::fileReq(host::FILEREQ_SCRIPT, "Script to execute", 1, &full_path);
     if (r == host::FILEREQ_OK) {
         // tell the core emulator to redirect input for a while
-        system2200::invokeKbScript(m_assoc_kb_addr, m_term_num, fullpath);
+        system2200::invokeKbScript(m_assoc_kb_addr, m_term_num, full_path);
     }
 }
 
@@ -994,13 +989,13 @@ void
 CrtFrame::OnSnapshot(wxCommandEvent& WXUNUSED(event))
 {
     // get the name of a file to execute
-    std::string fullpath;
+    std::string full_path;
 
-    const int r = host::fileReq(host::FILEREQ_GRAB, "Filename of image", 0, &fullpath);
+    const int r = host::fileReq(host::FILEREQ_GRAB, "Filename of image", 0, &full_path);
     if (r == host::FILEREQ_OK) {
         const wxBitmap* bitmap = m_crt->grabScreen();
         assert(bitmap != nullptr);
-        bitmap->SaveFile(wxString(fullpath), wxBITMAP_TYPE_BMP);
+        bitmap->SaveFile(wxString(full_path), wxBITMAP_TYPE_BMP);
     }
 }
 
@@ -1011,11 +1006,11 @@ void
 CrtFrame::OnDump(wxCommandEvent& WXUNUSED(event))
 {
     // get the name of a file to execute
-    std::string fullpath;
-    int r = host::fileReq(host::FILEREQ_GRAB, "Name of file to save to", 0, &fullpath);
+    std::string full_path;
+    int r = host::fileReq(host::FILEREQ_GRAB, "Name of file to save to", 0, &full_path);
 
     if (r == host::FILEREQ_OK) {
-        dumpRam(fullpath);
+        dumpRam(full_path);
     }
 }
 #endif
@@ -1160,16 +1155,16 @@ CrtFrame::OnDisk(wxCommandEvent &event)
     switch (type) {
 
         case 0: // insert disk
-        {   std::string fullpath;
-            if (host::fileReq(host::FILEREQ_DISK, "Disk to load", 1, &fullpath) ==
+        {   std::string full_path;
+            if (host::fileReq(host::FILEREQ_DISK, "Disk to load", 1, &full_path) ==
                               host::FILEREQ_OK) {
                 int drive2, io_addr2;
-                const bool b = system2200::findDisk(fullpath, nullptr, &drive2, &io_addr2);
+                const bool b = system2200::findDisk(full_path, nullptr, &drive2, &io_addr2);
                 if (b) {
                     UI_warn("Disk already in drive %c /%03x", "FC"[drive2], io_addr2);
                     return;
                 } else {
-                    ok = IoCardDisk::wvdInsertDisk(slot, drive, fullpath);
+                    ok = IoCardDisk::wvdInsertDisk(slot, drive, full_path);
                 }
             }
         }   break;
@@ -1203,7 +1198,7 @@ CrtFrame::OnDisplayFullscreen(wxCommandEvent& WXUNUSED(event))
 {
     m_fullscreen = !m_fullscreen;
     ShowFullScreen(m_fullscreen, FULLSCREEN_FLAGS);
-    m_crt->setFontSize(m_fontsize[m_fullscreen]);
+    m_crt->setFontSize(m_font_size[m_fullscreen]);
 }
 
 
@@ -1240,6 +1235,7 @@ CrtFrame::OnConfigureDialog(wxCommandEvent& WXUNUSED(event)) noexcept
     system2200::reconfigure();
 }
 
+
 void
 CrtFrame::OnConfigureScreenDialog(wxCommandEvent& WXUNUSED(event))
 {
@@ -1264,16 +1260,16 @@ CrtFrame::OnConfigureScreenDialog(wxCommandEvent& WXUNUSED(event))
 void
 CrtFrame::OnConfigureKeywordMode(wxCommandEvent& WXUNUSED(event))
 {
-    const bool state = m_statBar->getKeywordMode();
-    m_statBar->setKeywordMode(!state);
+    const bool state = m_statusbar->getKeywordMode();
+    m_statusbar->setKeywordMode(!state);
 }
 
 
 void
 CrtFrame::OnConfigureSfToolbar(wxCommandEvent& WXUNUSED(event))
 {
-    const bool state = m_toolBar->IsShown();
-    m_toolBar->Show(!state);
+    const bool state = m_toolbar->IsShown();
+    m_toolbar->Show(!state);
     SendSizeEvent();
 }
 
@@ -1317,12 +1313,13 @@ CrtFrame::OnPrinter(wxCommandEvent &event)
     // get the printer controller card handle
     const IoCardPrinter *card = dynamic_cast<const IoCardPrinter*>(inst);
     assert(card != nullptr);
-    PrinterFrame *prtwnd = card->getGuiPtr();
-    assert(prtwnd != nullptr);
+    PrinterFrame *prt_wnd = card->getGuiPtr();
+    assert(prt_wnd != nullptr);
 
-    prtwnd->Show(true);
-    prtwnd->Raise();
+    prt_wnd->Show(true);
+    prt_wnd->Raise();
 }
+
 
 // print all printer contents, and then clear all printers
 void
@@ -1347,9 +1344,9 @@ CrtFrame::OnPrintAndClear(wxCommandEvent& WXUNUSED(event))
             assert(card != nullptr);
 
             // fetch associated gui window pointer and use it
-            PrinterFrame *prtwnd = card->getGuiPtr();
-            assert(prtwnd != nullptr);
-            prtwnd->printAndClear();
+            PrinterFrame *prt_wnd = card->getGuiPtr();
+            assert(prt_wnd != nullptr);
+            prt_wnd->printAndClear();
         }
     }
 }
@@ -1386,6 +1383,7 @@ CrtFrame::getNumFonts() noexcept
     return num_fonts;
 }
 
+
 // allow discovery of allowed values
 // as idx ranges from 0 to n, return the font size constant.
 int
@@ -1394,6 +1392,7 @@ CrtFrame::getFontNumber(int idx) noexcept
     assert(idx >= 0 && idx < num_fonts);
     return font_table[idx].size;
 }
+
 
 // as idx ranges from 0 to n, return the font name string.
 std::string
@@ -1411,12 +1410,13 @@ CrtFrame::getNumColorSchemes() noexcept
     return num_colorschemes;
 }
 
+
 // as idx ranges from 0 to n, return the font name string.
 std::string
 CrtFrame::getColorSchemeName(int idx)
 {
     assert(idx >= 0 && idx < num_colorschemes);
-    return colorscheme[idx].menuHelp;
+    return colorscheme[idx].menu_help;
 }
 
 // -------- Crt display set/get --------
@@ -1424,15 +1424,16 @@ CrtFrame::getColorSchemeName(int idx)
 void
 CrtFrame::setFontSize(int size)
 {
-    m_fontsize[m_fullscreen] = size;
+    m_font_size[m_fullscreen] = size;
     // pass it through
     m_crt->setFontSize(size);
 }
 
+
 int
 CrtFrame::getFontSize() const noexcept
 {
-    return m_fontsize[m_fullscreen];
+    return m_font_size[m_fullscreen];
 }
 
 
@@ -1442,13 +1443,14 @@ CrtFrame::setDisplayColorScheme(int n)
     assert(n >= 0);
     assert(n <  num_colorschemes);
 
-    wxColor FG = wxColor(colorscheme[n].fg_r, colorscheme[n].fg_g, colorscheme[n].fg_b);
-    wxColor BG = wxColor(colorscheme[n].bg_r, colorscheme[n].bg_g, colorscheme[n].bg_b);
-    m_crt->setColor(FG, BG);
+    wxColor fg = wxColor(colorscheme[n].fg_r, colorscheme[n].fg_g, colorscheme[n].fg_b);
+    wxColor bg = wxColor(colorscheme[n].bg_r, colorscheme[n].bg_g, colorscheme[n].bg_b);
+    m_crt->setColor(fg, bg);
     // this is required if we are using deep font bitmaps to store the fontmap
-    m_crt->setFontSize(m_fontsize[m_fullscreen]);
+    m_crt->setFontSize(m_font_size[m_fullscreen]);
     m_colorsel = n;
 }
+
 
 int
 CrtFrame::getDisplayColorScheme() const noexcept
@@ -1463,17 +1465,20 @@ CrtFrame::setDisplayContrast(int n)
     m_crt->setDisplayContrast(n);
 }
 
+
 int
 CrtFrame::getDisplayContrast() const noexcept
 {
     return m_crt->getDisplayContrast();
 }
 
+
 void
 CrtFrame::setDisplayBrightness(int n)
 {
     m_crt->setDisplayBrightness(n);
 }
+
 
 int
 CrtFrame::getDisplayBrightness() const noexcept
@@ -1485,34 +1490,37 @@ CrtFrame::getDisplayBrightness() const noexcept
 void
 CrtFrame::setShowStatistics(bool show)
 {
-    m_showstats = show;
+    m_show_stats = show;
     CrtFrame *pf = getPrimaryFrame();
     if ((pf != nullptr) && isPrimaryCrt()) {
         if (getShowStatistics()) {
-            pf->m_statBar->SetStatusMessage("(Performance statistics will appear here)");
+            pf->m_statusbar->SetStatusMessage("(Performance statistics will appear here)");
         } else {
-            pf->m_statBar->SetStatusMessage("");
+            pf->m_statusbar->SetStatusMessage("");
         }
     }
 }
 
+
 bool
 CrtFrame::getShowStatistics() const noexcept
 {
-    return m_showstats;
+    return m_show_stats;
 }
+
 
 // set the keyword state from the statbar
 void
 CrtFrame::setKeywordMode(bool b)
 {
-    m_statBar->setKeywordMode(b);
+    m_statusbar->setKeywordMode(b);
 }
+
 
 bool
 CrtFrame::getKeywordMode() const
 {
-    return m_statBar->getKeywordMode();
+    return m_statusbar->getKeywordMode();
 }
 
 
@@ -1522,6 +1530,7 @@ CrtFrame::getTiedAddr() const noexcept
 {
     return m_assoc_kb_addr;
 }
+
 
 int
 CrtFrame::getTermNum() const noexcept
@@ -1540,8 +1549,8 @@ CrtFrame::destroyWindow()
     saveDefaults();     // save config options
 
     // if this is the primary frame, forget about it now
-    if (m_primaryFrame == this) {
-        m_primaryFrame = nullptr;
+    if (m_primary_frame == this) {
+        m_primary_frame = nullptr;
     }
 
     // close this window (system may defer it for a while)
@@ -1556,7 +1565,7 @@ CrtFrame::destroyWindow()
 CrtFrame *
 CrtFrame::getPrimaryFrame() noexcept
 {
-    return m_primaryFrame;
+    return m_primary_frame;
 }
 
 
@@ -1580,7 +1589,7 @@ CrtFrame::diskEvent(int controller, int drive)
 {
     CrtFrame *pf = getPrimaryFrame();
     if (pf != nullptr) {
-        pf->m_statBar->diskEvent(controller, drive);
+        pf->m_statusbar->diskEvent(controller, drive);
     }
 }
 

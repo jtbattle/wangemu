@@ -1,6 +1,3 @@
-// ----------------------------------------------------------------------------
-// headers
-// ----------------------------------------------------------------------------
 
 #include "host.h"
 #include "IoCard.h"
@@ -104,61 +101,61 @@ enum
 
 
 // Layout:
-//      topsizer (V)
+//      top_sizer (V)
 //      |
 //      +-- num drives radiobox (H)
 //      +-- button_sizer (H)
 //          |
-//          +-- m_btnHelp
-//          +-- m_btnRevert
-//          +-- m_btnOk
-//          +-- m_btnCancel
+//          +-- m_btn_help
+//          +-- m_btn_revert
+//          +-- m_btn_ok
+//          +-- m_btn_cancel
 TermMuxCfgDlg::TermMuxCfgDlg(wxFrame *parent, CardCfgState &cfg) :
         wxDialog(parent, -1, "Terminal Mux Controller Configuration",
                  wxDefaultPosition, wxDefaultSize,
                  wxDEFAULT_DIALOG_STYLE | wxRESIZE_BORDER),
-        m_rbNumTerminals(nullptr),
-        m_btnRevert(nullptr),
-        m_btnOk(nullptr),
-        m_btnCancel(nullptr),
-        m_btnHelp(nullptr),
-        m_oldcfg(dynamic_cast<TermMuxCfgState&>(cfg)),  // copy of original
-        m_cfg(dynamic_cast<TermMuxCfgState&>(cfg))      // edited version
+        m_rb_num_terminals(nullptr),
+        m_btn_revert(nullptr),
+        m_btn_ok(nullptr),
+        m_btn_cancel(nullptr),
+        m_btn_help(nullptr),
+        m_cfg(dynamic_cast<TermMuxCfgState&>(cfg)),     // edited version
+        m_old_cfg(dynamic_cast<TermMuxCfgState&>(cfg))  // copy of original
 {
     const wxString choicesNumTerminals[] = { "1", "2", "3", "4" };
-    m_rbNumTerminals = new wxRadioBox(this, ID_RB_NUM_TERMINALS,
-                                      "Number of terminals",
-                                      wxDefaultPosition, wxDefaultSize,
-                                      4, &choicesNumTerminals[0],
-                                      1, wxRA_SPECIFY_ROWS);
+    m_rb_num_terminals = new wxRadioBox(this, ID_RB_NUM_TERMINALS,
+                                        "Number of terminals",
+                                        wxDefaultPosition, wxDefaultSize,
+                                        4, &choicesNumTerminals[0],
+                                        1, wxRA_SPECIFY_ROWS);
 
     // put three buttons side by side
-    m_btnHelp   = new wxButton(this, ID_BTN_HELP,   "Help");
-    m_btnRevert = new wxButton(this, ID_BTN_REVERT, "Revert");
-    m_btnOk     = new wxButton(this, wxID_OK,       "OK");
-    m_btnCancel = new wxButton(this, wxID_CANCEL,   "Cancel");
+    m_btn_help   = new wxButton(this, ID_BTN_HELP,   "Help");
+    m_btn_revert = new wxButton(this, ID_BTN_REVERT, "Revert");
+    m_btn_ok     = new wxButton(this, wxID_OK,       "OK");
+    m_btn_cancel = new wxButton(this, wxID_CANCEL,   "Cancel");
 
     wxBoxSizer *button_sizer = new wxBoxSizer(wxHORIZONTAL);
-    button_sizer->Add(m_btnHelp,   0, wxALL, 10);
-    button_sizer->Add(m_btnRevert, 0, wxALL, 10);
-    button_sizer->Add(m_btnOk,     0, wxALL, 10);
-    button_sizer->Add(m_btnCancel, 0, wxALL, 10);
+    button_sizer->Add(m_btn_help,   0, wxALL, 10);
+    button_sizer->Add(m_btn_revert, 0, wxALL, 10);
+    button_sizer->Add(m_btn_ok,     0, wxALL, 10);
+    button_sizer->Add(m_btn_cancel, 0, wxALL, 10);
 #ifdef __WXMAC__
     // the cancel button was running into the window resizing grip
     button_sizer->AddSpacer(10);
 #endif
-    m_btnRevert->Disable();      // until something changes
+    m_btn_revert->Disable();      // until something changes
 
     // all of it is stacked vertically
-    wxBoxSizer *topsizer = new wxBoxSizer(wxVERTICAL);
-    topsizer->Add(m_rbNumTerminals, 0, wxALIGN_LEFT | wxALL, 5);
-    topsizer->Add(button_sizer,     0, wxALIGN_RIGHT | wxALL, 5);
+    wxBoxSizer *top_sizer = new wxBoxSizer(wxVERTICAL);
+    top_sizer->Add(m_rb_num_terminals, 0, wxALIGN_LEFT  | wxALL, 5);
+    top_sizer->Add(button_sizer,       0, wxALIGN_RIGHT | wxALL, 5);
 
     updateDlg();                        // select current options
 
     // tell the thing to get to work
-    SetSizer(topsizer);                 // use the sizer for layout
-    topsizer->SetSizeHints(this);       // set size hints to honor minimum size
+    SetSizer(top_sizer);                 // use the sizer for layout
+    top_sizer->SetSizeHints(this);       // set size hints to honor minimum size
 
     getDefaults();  // get default size & location
 
@@ -172,21 +169,21 @@ TermMuxCfgDlg::TermMuxCfgDlg(wxFrame *parent, CardCfgState &cfg) :
 void
 TermMuxCfgDlg::updateDlg()
 {
-    m_rbNumTerminals->SetSelection(m_cfg.getNumTerminals()-1);
+    m_rb_num_terminals->SetSelection(m_cfg.getNumTerminals()-1);
 }
 
 
 void
 TermMuxCfgDlg::OnNumTerminals(wxCommandEvent& WXUNUSED(event))
 {
-    switch (m_rbNumTerminals->GetSelection()) {
+    switch (m_rb_num_terminals->GetSelection()) {
         case 0: m_cfg.setNumTerminals(1); break;
         case 1: m_cfg.setNumTerminals(2); break;
         case 2: m_cfg.setNumTerminals(3); break;
         case 3: m_cfg.setNumTerminals(4); break;
         default: assert(false); break;
     }
-    m_btnRevert->Enable(m_cfg != m_oldcfg);
+    m_btn_revert->Enable(m_cfg != m_old_cfg);
 }
 
 
@@ -204,9 +201,9 @@ TermMuxCfgDlg::OnButton(wxCommandEvent &event)
             break;
 
         case ID_BTN_REVERT:
-            m_cfg = m_oldcfg;           // revert state
+            m_cfg = m_old_cfg;          // revert state
             updateDlg();                // select current options
-            m_btnRevert->Disable();
+            m_btn_revert->Disable();
             break;
 
         case wxID_OK:

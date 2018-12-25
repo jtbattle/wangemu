@@ -32,14 +32,12 @@ enum {  ID_Keyword_Mode = 100,          // ID for status bar button
         // ... up to four drives per controller
     };
 
-
 // ----------------------------------------------------------------------------
 // resources
 // ----------------------------------------------------------------------------
 
 // icon set for disk images in the statusbar
 #include "icons.xpm"
-
 
 // ----------------------------------------------------------------------------
 // MyStaticBitmap
@@ -65,6 +63,7 @@ MyStaticBitmap::MyStaticBitmap(
 #endif
 }
 
+
 void
 MyStaticBitmap::OnMouseBtnDown(wxMouseEvent &event)
 {
@@ -74,6 +73,7 @@ MyStaticBitmap::OnMouseBtnDown(wxMouseEvent &event)
     event.ResumePropagation(1);         // event was flagged to not propagate
     event.Skip();
 }
+
 
 #if HANDLE_MSB_PAINT
 void
@@ -90,18 +90,17 @@ MyStaticBitmap::OnPaint(wxPaintEvent& WXUNUSED(event))
     wxBitmap img = this->GetBitmap();   // everything is a bitmap
 #endif
 
-    wxMemoryDC memDC;
-    memDC.SelectObject(img);
+    wxMemoryDC mem_dc;
+    mem_dc.SelectObject(img);
     //dc.SetBackgroundMode(wxTRANSPARENT);
     dc.Blit(0, 0, img.GetWidth(), img.GetHeight(),     // dest x,y,w,h
-            &memDC, 0, 0,       // source image,x,y
+            &mem_dc, 0, 0,      // source image,x,y
             wxCOPY,             // logicalFunc
             true                // useMask
            );
-    memDC.SelectObject(wxNullBitmap);
+    mem_dc.SelectObject(wxNullBitmap);
 }
 #endif
-
 
 // ----------------------------------------------------------------------------
 // implementation
@@ -116,11 +115,11 @@ CrtStatusBar::CrtStatusBar(CrtFrame *parent,
         wxStatusBar(parent, -1),
         m_parent(parent),
         m_keyword_ctl(nullptr),
-        m_disklabel{nullptr},
-        m_diskicon{nullptr},
-        m_disklabel_xoff{0},
-        m_diskicon_xoff{0},
-        m_diskstate{-1},
+        m_disk_label{nullptr},
+        m_disk_icon{nullptr},
+        m_disk_label_xoff{0},
+        m_disk_icon_xoff{0},
+        m_disk_state{-1},
         m_icon_set(nullptr),
         m_num_disk_controllers(0),
         m_num_drives{0},
@@ -169,11 +168,11 @@ CrtStatusBar::CrtStatusBar(CrtFrame *parent,
     for (int ctrl=0; ctrl<m_num_disk_controllers; ctrl++) {
 
         // gather info about this controller
-        int slot;
+        int slot = 0;
         system2200::findDiskController(ctrl, &slot); // where is it plugged in?
-        int io;
+        int io = 0;
         bool ok = system2200::getSlotInfo(slot, nullptr, &io);  // address it is mapped to
-        assert(ok); ok = ok;
+        assert(ok);
 
         // figure out how many drives are attached to this controller
         m_num_drives[ctrl] = 0;
@@ -189,31 +188,31 @@ CrtStatusBar::CrtStatusBar(CrtFrame *parent,
         // make a label to indicate the base address associated with drives
         wxString label;
         label.Printf("3%02X:", io & 0xff);
-        m_disklabel[2*ctrl+0] = std::make_unique<wxStaticText>(this, -1, label);
-        const wxSize label_size0  = m_disklabel[2*ctrl+0]->GetSize();
+        m_disk_label[2*ctrl+0] = std::make_unique<wxStaticText>(this, -1, label);
+        const wxSize label_size0  = m_disk_label[2*ctrl+0]->GetSize();
         const int    label_width0 = label_size0.GetWidth();
 
         label.Printf("3%02X:", (io + 0x40) & 0xff);
-        m_disklabel[2*ctrl+1] = std::make_unique<wxStaticText>(this, -1, label);
-        const wxSize label_size1 = m_disklabel[2*ctrl+1]->GetSize();
+        m_disk_label[2*ctrl+1] = std::make_unique<wxStaticText>(this, -1, label);
+        const wxSize label_size1 = m_disk_label[2*ctrl+1]->GetSize();
         int label_width1 = label_size1.GetWidth();
         if (m_num_drives[ctrl] <= 2) {
             // not needed
-            m_disklabel[2*ctrl+1]->Hide();
+            m_disk_label[2*ctrl+1]->Hide();
             label_width1 = 0;
         }
 
         // position of items within the pane
-        m_disklabel_xoff[2*ctrl+0] = 2;
-        m_disklabel_xoff[2*ctrl+1] = m_disklabel_xoff[2*ctrl+0]
-                                   + label_width0
-                                   + 2*(DISK_ICON_WIDTH+4*DISK_ICON_GAP);
+        m_disk_label_xoff[2*ctrl+0] = 2;
+        m_disk_label_xoff[2*ctrl+1] = m_disk_label_xoff[2*ctrl+0]
+                                    + label_width0
+                                    + 2*(DISK_ICON_WIDTH+4*DISK_ICON_GAP);
 
         // create the icons for the drives
         for (int drive=0; drive<m_num_drives[ctrl]; drive++) {
             int idx = 4*ctrl + drive;
 
-            m_diskicon[idx] = std::make_unique<MyStaticBitmap>(
+            m_disk_icon[idx] = std::make_unique<MyStaticBitmap>(
                                     this,
                                     ID_Button_DiskCtrl0_FDrive + idx, // wxWindowID
                                     dummy,              // gets overridden later
@@ -221,17 +220,17 @@ CrtStatusBar::CrtStatusBar(CrtFrame *parent,
                                     icon_size,
                                     0                   // draw flat -- not wxBU_AUTODRAW
                                 );
-            m_diskstate[idx] = -1;      // force update
+            m_disk_state[idx] = -1;      // force update
             if (drive < 2) {
-                m_diskicon_xoff[idx] = m_disklabel_xoff[2*ctrl+0]
-                                     + label_width0
-                                     + DISK_ICON_GAP
-                                     + ((drive == 1) ? (DISK_ICON_WIDTH+DISK_ICON_GAP) : 0);
+                m_disk_icon_xoff[idx] = m_disk_label_xoff[2*ctrl+0]
+                                      + label_width0
+                                      + DISK_ICON_GAP
+                                      + ((drive == 1) ? (DISK_ICON_WIDTH+DISK_ICON_GAP) : 0);
             } else {
-                m_diskicon_xoff[idx] = m_disklabel_xoff[2*ctrl+1]
-                                     + label_width1
-                                     + DISK_ICON_GAP
-                                     + ((drive == 3) ? (DISK_ICON_WIDTH+DISK_ICON_GAP) : 0);
+                m_disk_icon_xoff[idx] = m_disk_label_xoff[2*ctrl+1]
+                                      + label_width1
+                                      + DISK_ICON_GAP
+                                      + ((drive == 3) ? (DISK_ICON_WIDTH+DISK_ICON_GAP) : 0);
             }
 
 #ifdef __WXMSW__
@@ -248,13 +247,13 @@ CrtStatusBar::CrtStatusBar(CrtFrame *parent,
             //     here.  no worries, even if the later tooltip is narrower,
             //     the box will shrink to fit.
             wxString tmptip(wxChar(' '), 100);
-            m_diskicon[idx]->SetToolTip(tmptip + "\n" + tmptip);
+            m_disk_icon[idx]->SetToolTip(tmptip + "\n" + tmptip);
 #endif
             SetDiskIcon(slot, drive);   // establish appropriate bitmap
         } // drive
 
         // allocate space for up to four drives, and one label per pair of drives
-        pane_widths[panes] = m_diskicon_xoff[4*ctrl + m_num_drives[ctrl]-1]
+        pane_widths[panes] = m_disk_icon_xoff[4*ctrl + m_num_drives[ctrl]-1]
                            + DISK_ICON_WIDTH
                            + DISK_ICON_GAP;
         pane_styles[panes] = wxSB_NORMAL;
@@ -274,6 +273,7 @@ CrtStatusBar::CrtStatusBar(CrtFrame *parent,
     // move it into position later.  this member should be set last as
     // some methods test it to know if initialization is done yet.
     std::string label = (smart_term) ? "A/A" : "Keyword";
+// FIXME: should I take ownership like this, or does the wx object it is attached to?
     m_keyword_ctl = std::make_unique<wxCheckBox>(
                             this, ID_Keyword_Mode, label);
 
@@ -299,7 +299,7 @@ CrtStatusBar::SetDiskIcon(const int slot, const int drive)
 {
     int io_addr;        // address of this slot
     bool ok = system2200::getSlotInfo(slot, nullptr, &io_addr);
-    assert(ok); ok=ok;
+    assert(ok);
 
     // figure out if disk is empty, idle, or running
     const int stat = IoCardDisk::wvdDriveStatus(slot, drive);
@@ -308,26 +308,27 @@ CrtStatusBar::SetDiskIcon(const int slot, const int drive)
     const bool selected = !!(stat & IoCardDisk::WVD_STAT_DRIVE_SELECTED);  // unit is being addressed
 
     // figure out which disk controller this maps to
-    int controller;
-    for (controller=0; ; controller++) {
+    int controller = 0;
+    while (true) {
         int thisslot;
         ok = system2200::findDiskController(controller, &thisslot);
-        assert(ok); ok = ok;
+        assert(ok);
         if (thisslot == slot) {
             break;
         }
+        controller++;
     }
     int idx = 4*controller+drive;
     const int mod_addr = io_addr + ((drive >= 2) ? 0x40 : 0x00);
 
     wxString tip;
-    bool harddisk = false;  // until proven otherwise
+    bool hard_disk = false;  // until proven otherwise
     if (!empty) {
-        int disktype;
-        ok = IoCardDisk::wvdGetDiskType(slot, drive, &disktype);
+        int disk_type;
+        ok = IoCardDisk::wvdGetDiskType(slot, drive, &disk_type);
         assert(ok);
-        harddisk = (disktype == Wvd::DISKTYPE_HD60) ||
-                   (disktype == Wvd::DISKTYPE_HD80);
+        hard_disk = (disk_type == Wvd::DISKTYPE_HD60)
+                 || (disk_type == Wvd::DISKTYPE_HD80);
         std::string filename;
         ok = IoCardDisk::wvdGetFilename(slot, drive, &filename);
         assert(ok);
@@ -338,24 +339,24 @@ CrtStatusBar::SetDiskIcon(const int slot, const int drive)
         tip.Printf("Click to load drive %c /%03X", drive ? 'R':'F', mod_addr);
     }
 
-    m_diskicon[idx]->SetToolTip(tip);
+    m_disk_icon[idx]->SetToolTip(tip);
 
     // 0: hard disk,       1: selected hard disk
     // 2: occupied floppy, 3: selected occupied floppy
     // 4: empty floppy,    5: selected empty floppy
-    const int state = empty    ? ((selected) ? 5 : 4)
-                    : harddisk ? ((selected) ? 1 : 0)
-                               : ((selected) ? 3 : 2);
+    const int state = empty     ? ((selected) ? 5 : 4)
+                    : hard_disk ? ((selected) ? 1 : 0)
+                                : ((selected) ? 3 : 2);
 
     // reassign and redraw the icon, but only if needed -- reduces flashing
-    if (m_diskstate[idx] != state) {
+    if (m_disk_state[idx] != state) {
         const wxRect icon_rect(
                         (DISK_ICON_WIDTH*state), 0,            // x, y
                          DISK_ICON_WIDTH, DISK_ICON_HEIGHT);   // w, h
         const wxBitmap icon = m_icon_set->GetSubBitmap(icon_rect);
-        m_diskstate[idx] = state;
-        m_diskicon[idx]->SetBitmap(icon);
-        m_diskicon[idx]->Refresh();
+        m_disk_state[idx] = state;
+        m_disk_icon[idx]->SetBitmap(icon);
+        m_disk_icon[idx]->Refresh();
     }
 }
 
@@ -365,10 +366,10 @@ CrtStatusBar::~CrtStatusBar()
     m_keyword_ctl = nullptr;
 
     for (int ctrl=0; ctrl<m_num_disk_controllers; ctrl++) {
-        m_disklabel[2*ctrl+0] = nullptr;
-        m_disklabel[2*ctrl+1] = nullptr;
+        m_disk_label[2*ctrl+0] = nullptr;
+        m_disk_label[2*ctrl+1] = nullptr;
         for (int drive=0; drive<m_num_drives[ctrl]; drive++) {
-            m_diskicon[4*ctrl+drive] = nullptr;
+            m_disk_icon[4*ctrl+drive] = nullptr;
         }
     }
 
@@ -401,21 +402,21 @@ CrtStatusBar::OnSize(wxSizeEvent &event)
         const int y_off = (status_rect.height - DISK_ICON_HEIGHT) / 2;
 
         // move the labels for the primary and optional secondary drives
-        m_disklabel[2*ctrl+0]->Move(
-                status_rect.GetX() + m_disklabel_xoff[2*ctrl+0],
+        m_disk_label[2*ctrl+0]->Move(
+                status_rect.GetX() + m_disk_label_xoff[2*ctrl+0],
                 status_rect.GetY() + y_off
             );
         if (m_num_drives[ctrl] > 2) {
-            m_disklabel[2*ctrl+1]->Move(
-                    status_rect.GetX() + m_disklabel_xoff[2*ctrl+1],
+            m_disk_label[2*ctrl+1]->Move(
+                    status_rect.GetX() + m_disk_label_xoff[2*ctrl+1],
                     status_rect.GetY() + y_off
                 );
         }
 
         // move the disk icons
         for (int drive=0; drive<m_num_drives[ctrl]; drive++) {
-            m_diskicon[4*ctrl+drive]->Move(
-                    status_rect.GetX() + m_diskicon_xoff[4*ctrl+drive],
+            m_disk_icon[4*ctrl+drive]->Move(
+                    status_rect.GetX() + m_disk_icon_xoff[4*ctrl+drive],
                     status_rect.GetY() + y_off
                 );
         }
@@ -457,7 +458,7 @@ CrtStatusBar::OnDiskButton(wxMouseEvent &event)
 
     int slot;
     bool ok = system2200::findDiskController(controller, &slot);
-    assert(ok); ok=ok;
+    assert(ok);
     const int stat = IoCardDisk::wvdDriveStatus(slot, drive);
     const bool drive_occupied = !!(stat & IoCardDisk::WVD_STAT_DRIVE_OCCUPIED);
 
@@ -509,7 +510,7 @@ CrtStatusBar::OnDiskButton(wxMouseEvent &event)
         case inspect_disk: {
             std::string filename;
             ok = IoCardDisk::wvdGetFilename(slot, drive, &filename);
-            assert(ok); ok=ok;
+            assert(ok);
             m_parent->doInspect(filename);
             }
             break;
@@ -517,7 +518,7 @@ CrtStatusBar::OnDiskButton(wxMouseEvent &event)
         case format_disk: {
             std::string filename;
             ok = IoCardDisk::wvdGetFilename(slot, drive, &filename);
-            assert(ok); ok=ok;
+            assert(ok);
             m_parent->doFormat(filename);
             }
             break;

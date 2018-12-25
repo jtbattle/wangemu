@@ -114,9 +114,9 @@ bool
 TheApp::OnCmdLineParsed(wxCmdLineParser& parser)
 {
     // let base class handle its defaults
-    const bool OK = wxApp::OnCmdLineParsed(parser);
+    const bool ok = wxApp::OnCmdLineParsed(parser);
 
-    if (OK) {
+    if (ok) {
         // do my processing here
         // UI_info("Command line items: %d", parser.GetParamCount());
         wxString filename;
@@ -132,7 +132,7 @@ TheApp::OnCmdLineParsed(wxCmdLineParser& parser)
         }
     }
 
-    return OK;
+    return ok;
 }
 
 
@@ -260,6 +260,7 @@ UI_AlertMsg(long style, std::string title, const char *fmt, va_list &args)
     return (rv == wxID_YES);
 }
 
+
 // error icon
 void
 UI_error(const char *fmt, ...)
@@ -270,6 +271,7 @@ UI_error(const char *fmt, ...)
     va_end(args);
 }
 
+
 // exclamation icon
 void
 UI_warn(const char *fmt, ...)
@@ -279,6 +281,7 @@ UI_warn(const char *fmt, ...)
     UI_AlertMsg(wxICON_EXCLAMATION, "Warning", fmt, args);
     va_end(args);
 }
+
 
 void
 UI_info(const char *fmt, ...)
@@ -305,7 +308,6 @@ UI_confirm(const char *fmt, ...)
     return rv;
 }
 
-
 // ========================================================================
 // interface between core and UI routines
 //
@@ -320,40 +322,40 @@ CrtFrame*
 UI_displayInit(const int screen_type, const int io_addr, const int term_num,
                crt_state_t *crt_state)
 {
-    const int cputype = system2200::config().getCpuType();
-    const char *cpustr = (cputype == Cpu2200::CPUTYPE_2200B)   ? "2200B"
-                       : (cputype == Cpu2200::CPUTYPE_2200T)   ? "2200T"
-                       : (cputype == Cpu2200::CPUTYPE_VP)      ? "2200VP"
-                       : (cputype == Cpu2200::CPUTYPE_MVP)     ? "2200MVP"
-                       : (cputype == Cpu2200::CPUTYPE_MVPC)    ? "2200MVP-C"
-                       : (cputype == Cpu2200::CPUTYPE_MICROVP) ? "MicroVP"
-                                                               : "unknown cpu";
+    const int cpu_type = system2200::config().getCpuType();
+    const char *cpu_str = (cpu_type == Cpu2200::CPUTYPE_2200B)   ? "2200B"
+                        : (cpu_type == Cpu2200::CPUTYPE_2200T)   ? "2200T"
+                        : (cpu_type == Cpu2200::CPUTYPE_VP)      ? "2200VP"
+                        : (cpu_type == Cpu2200::CPUTYPE_MVP)     ? "2200MVP"
+                        : (cpu_type == Cpu2200::CPUTYPE_MVPC)    ? "2200MVP-C"
+                        : (cpu_type == Cpu2200::CPUTYPE_MICROVP) ? "MicroVP"
+                                                                 : "unknown cpu";
 
-    char *dispstr = "unknown";
+    char *disp_str = "unknown";
     switch (screen_type) {
-        case UI_SCREEN_64x16:  dispstr = "64x16"; break;
-        case UI_SCREEN_80x24:  dispstr = "80x24"; break;
-        case UI_SCREEN_2236DE: dispstr = "2236DE"; break;
+        case UI_SCREEN_64x16:  disp_str = "64x16"; break;
+        case UI_SCREEN_80x24:  disp_str = "80x24"; break;
+        case UI_SCREEN_2236DE: disp_str = "2236DE"; break;
         default: assert(false);
     }
 
     wxString title;
     if (screen_type != UI_SCREEN_2236DE) {
         // old style display
-        title.Printf("Wang %s %s CRT /0%02X", cpustr, dispstr, io_addr);
+        title.Printf("Wang %s %s CRT /0%02X", cpu_str, disp_str, io_addr);
     } else {
         // smart terminal mux
         // internally, term_num is 0-indexed, but in Wang documentation,
         // the terminal number is 1-based
         title.Printf("MXD/%02X Term#%d Wang %s %s",
-                        io_addr, term_num+1, cpustr, dispstr);
+                        io_addr, term_num+1, cpu_str, disp_str);
     }
 
     // Create the main application window
 // FIXME: return a unique_ptr<CrtFrame> instead
-    CrtFrame *crtptr = new CrtFrame(title, io_addr, term_num, crt_state);
-    assert(crtptr != nullptr);
-    return crtptr;
+    CrtFrame *crt_ptr = new CrtFrame(title, io_addr, term_num, crt_state);
+    assert(crt_ptr != nullptr);
+    return crt_ptr;
 }
 
 
@@ -392,6 +394,7 @@ UI_diskEvent(int controller, int drive)
 // ---- printer wrappers ----
 
 // called at the start of time to create the actual display
+// FIXME: return a unique_ptr?
 PrinterFrame*
 UI_printerInit(int io_addr)
 {
@@ -430,9 +433,7 @@ UI_systemConfigDlg()
 }
 
 
-// configure a card
-// TODO: don't have two unique functions; there should be one
-// function that can figure out which dialog to invoke.
+// invoke the appropriate card configuration dialog
 void
 UI_configureCard(IoCard::card_t card_type, CardCfgState *cfg)
 {

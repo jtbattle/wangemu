@@ -29,20 +29,20 @@ public:
     void               setOrientation(wxPrintOrientation orientation) noexcept;
     wxPrintOrientation getOrientation() const noexcept;
 
-    void        setPaperId(wxPaperSize paperid) noexcept;
+    void        setPaperId(wxPaperSize paper_id) noexcept;
     wxPaperSize getPaperId() const noexcept;
 
-    void        setPaperName(const std::string &papername);
+    void        setPaperName(const std::string &paper_name);
     std::string getPaperName() const;
 
-    void       setBin(wxPrintBin paperbin) noexcept;
+    void       setBin(wxPrintBin paper_bin) noexcept;
     wxPrintBin getBin() const noexcept;
 
     void        setRealPrinterName(const std::string &name);
     std::string getRealPrinterName() const;
 
-    void setPageAttributes(int  linelength, int  pagelength);
-    void getPageAttributes(int &linelength, int &pagelength) const noexcept;
+    void setPageAttributes(int  line_length, int  page_length);
+    void getPageAttributes(int &line_length, int &page_length) const noexcept;
 
     void getCellAttributes(int &cell_w, int &cell_h) const noexcept;
 
@@ -133,8 +133,8 @@ private:
 
     // this holds the dimensions of the visible area we have to draw on,
     // which is entirely independent of the logical Printer dimensions.
-    int         m_scrpix_w;             // display dimension, in pixels
-    int         m_scrpix_h;             // display dimension, in pixels
+    int         m_screen_pix_w;         // display dimension, in pixels
+    int         m_screen_pix_h;         // display dimension, in pixels
 
     wxBitmap    m_scrbits;              // image of the display
 
@@ -142,7 +142,7 @@ private:
     int         m_chars_h;              // screen dimension, in characters
 
     wxFont      m_font;                 // font in use
-    int         m_fontsize;             // size of font (in points)
+    int         m_font_size;            // size of font (in points)
     int         m_charcell_w;           // width of one character cell
     int         m_charcell_h;           // height of one character cell
 
@@ -154,20 +154,20 @@ private:
     int         m_marginright;
     int         m_marginbottom;
 
-    std::string m_realprintername;      // name of the real printer
+    std::string m_real_printer_name;    // name of the real printer
     wxPrintOrientation m_orientation;   // page orientation (wxPORTRAIT or wxLANDSCAPE)
-    wxPaperSize m_paperid;              // paper id (wxPAPER_LETTER, etc.)
-    std::string m_papername;            // the name of the paperid
-    wxPrintBin  m_paperbin;             // paper bin (wxPRINTBIN_DEFAULT, etc.)
+    wxPaperSize m_paper_id;             // paper id (wxPAPER_LETTER, etc.)
+    std::string m_paper_name;           // the name of the paperid
+    wxPrintBin  m_paper_bin;            // paper bin (wxPRINTBIN_DEFAULT, etc.)
 
-    int         m_linelength;           // the line length of the logical printer
-    int         m_pagelength;           // the page length of the logical printer
-    bool        m_autoshow;             // indicates if view should automatically when new print stream is received
-    bool        m_printasgo;            // indicates if each page of the stream should be printed automatically, then cleared, as it fills up
-    bool        m_portdirect;           // indicates printing directly to parallel port (windows only). All other printing settings are ignored
+    int         m_line_length;          // the line length of the logical printer
+    int         m_page_length;          // the page length of the logical printer
+    bool        m_auto_show;            // indicates if view should automatically when new print stream is received
+    bool        m_print_as_go;          // indicates if each page of the stream should be printed automatically, then cleared, as it fills up
+    bool        m_port_direct;          // indicates printing directly to parallel port (windows only). All other printing settings are ignored
                                         //   and output is dumped directly to the port
-    std::string m_portstring;           // contains the name of the parallel port (windows only)
-    wxTimer     m_portTimer;            // control closing of LPT port
+    std::string m_port_string;          // contains the name of the parallel port (windows only)
+    wxTimer     m_port_timer;           // control closing of LPT port
 
     // place to accumulate characters until we have a full line.
     // a char array is used instead of a wxString to avoid tons

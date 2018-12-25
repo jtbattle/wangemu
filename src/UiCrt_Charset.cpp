@@ -2814,6 +2814,7 @@ wxString unicode_xlat_char_alt[64] = {
 };
 
 #elif defined(__WXMAC__)
+
 // this table translates the wang character set to the closest representation
 // in the courier font that is used by wxWidgets on the mac.  I think it is
 // a latin-1 encoding. of course the core ascii characters are unchanged,
@@ -2928,6 +2929,7 @@ uint8 xlat_char_alt[64] = {
     0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20,
 
 };
+
 #else
     ERROR: undefined port
 #endif

@@ -23,9 +23,6 @@ public:
              const int term_num,     // 0 if dumb, 1-4 if term mux
              crt_state_t *crt_state);
 
-    // destructor
-    ~CrtFrame();
-
     // make CRT the focus of further keyboard events
     void refocus();
 
@@ -170,17 +167,18 @@ private:
 
     // ---- data members ----
 
-    wxMenuBar    *m_menuBar;
-    CrtStatusBar *m_statBar;
-    wxToolBar    *m_toolBar;
+    wxMenuBar    *m_menubar;
+    CrtStatusBar *m_statusbar;
+    wxToolBar    *m_toolbar;
 
-    Crt             *m_crt;       // emulated CRT display window
+// FIXME: use unique_ptr?
+    Crt *m_crt;                 // emulated CRT display window
 
     bool m_fullscreen;          // currently fullscreen or not
-    bool m_showstats;           // show timing statistics
+    bool m_show_stats;          // show timing statistics
 
     int  m_colorsel;            // index of selected color scheme
-    int  m_fontsize[2];         // [1]=fullscreen, [0]=not fullscreen
+    int  m_font_size[2];        // [1]=fullscreen, [0]=not fullscreen
 
     int  m_crt_addr;            // used to track configuration options
     int  m_term_num;            // 0 for dumb terms, 1-4 for muxed terms
@@ -192,7 +190,7 @@ private:
 
 #if BIG_BUTTONS
     // holds the icons for the toolbar buttons
-    wxBitmap m_sfkeyIcons[17];
+    wxBitmap m_sf_key_icons[17];
 #endif
 
     // triggers display refresh for all windows
@@ -201,13 +199,13 @@ private:
     // the new window before the old one was destroyed.  as a result, the
     // destructor would stop the (static) timer that the new window had
     // just initiated.
-    std::unique_ptr<wxTimer> m_RefreshTimer;  // triggers to cause a screen update
-    std::unique_ptr<wxTimer> m_QSecTimer;     // 4 Hz event for blink & frames/sec calc
+    std::unique_ptr<wxTimer> m_refresh_tmr;     // triggers to cause a screen update
+    std::unique_ptr<wxTimer> m_quarter_sec_tmr; // 4 Hz event for blink & frames/sec calc
     int      m_blink_phase;
     int      m_fps;             // most recent frames/sec count
 
     // the one privileged CRT (/005 display, or term 1 of MXD at 0x00)
-    static CrtFrame *m_primaryFrame;
+    static CrtFrame *m_primary_frame;
 };
 
 #endif _INCLUDE_UI_CRT_FRAME_H_

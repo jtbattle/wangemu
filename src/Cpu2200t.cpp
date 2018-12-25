@@ -743,12 +743,12 @@ Cpu2200t::Cpu2200t(std::shared_ptr<Scheduler> scheduler,
                    int ramsize, int cpu_subtype) :
     Cpu2200(),  // init base class
     m_scheduler(scheduler),  // unused by 2200t
-    m_cpuType(cpu_subtype),
+    m_cpu_type(cpu_subtype),
     m_ucode{0x00},
-    m_ucode_size((m_cpuType == CPUTYPE_2200B) ? UCODE_WORDS_2200B
-                                              : UCODE_WORDS_2200T),
-    m_krom_size( (m_cpuType == CPUTYPE_2200B) ?  KROM_WORDS_2200B
-                                              :  KROM_WORDS_2200T),
+    m_ucode_size((m_cpu_type == CPUTYPE_2200B) ? UCODE_WORDS_2200B
+                                               : UCODE_WORDS_2200T),
+    m_krom_size( (m_cpu_type == CPUTYPE_2200B) ?  KROM_WORDS_2200B
+                                               :  KROM_WORDS_2200T),
     m_mem_size(ramsize),
     m_dbg(false)
 {
@@ -758,7 +758,7 @@ Cpu2200t::Cpu2200t(std::shared_ptr<Scheduler> scheduler,
     #undef K
 
     // initialize ucode store from built-in image
-    switch (m_cpuType) {
+    switch (m_cpu_type) {
         case CPUTYPE_2200B:
             for (int i=0; i<m_ucode_size; i++) {
                 writeUcode(i, ucode_2200B[i]);
@@ -795,7 +795,7 @@ Cpu2200t::Cpu2200t(std::shared_ptr<Scheduler> scheduler,
             dasmOneOp(buff, pc, m_ucode[pc].ucode & 0x000FFFFF);
             dbglog(buff);
         }
-        if (m_cpuType == CPUTYPE_2200B) {
+        if (m_cpu_type == CPUTYPE_2200B) {
             // disassemble the patch ROM
             for (pc=0x7E00; pc<0x7E00+UCODE_WORDS_2200BX; pc++) {
                 dasmOneOp(buff, pc, m_ucode[pc].ucode & 0x000FFFFF);
@@ -821,7 +821,7 @@ Cpu2200t::~Cpu2200t()
 int
 Cpu2200t::getCpuType() const noexcept
 {
-    return m_cpuType;
+    return m_cpu_type;
 }
 
 

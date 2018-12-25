@@ -17,7 +17,6 @@ public:
     CANT_ASSIGN_OR_COPY_CLASS(Crt);
 
     Crt(CrtFrame *parent, crt_state_t *crt_state);
-    ~Crt();
 
     // ---- setters/getters ----
 
@@ -60,7 +59,7 @@ public:
 
     // redraw entire screen, or just the text region
     void invalidateAll()  { Refresh(false); }
-    void invalidateText() { Refresh(false, &m_RCscreen); }
+    void invalidateText() { Refresh(false, &m_screen_rc); }
 
     // return a pointer to the screen image
     wxBitmap* grabScreen();
@@ -84,7 +83,7 @@ private:
     wxFont pickFont(int pointsize, int bold, const std::string &facename="");
     int getFontSize() const noexcept;
 
-    // rebuild m_fontmap
+    // rebuild m_font_map
     void generateFontmap();
 
     // recalculate where the active part of the screen is then
@@ -113,28 +112,28 @@ private:
     int           m_frame_count;    // for tracking refresh fps
     bool          m_dirty;          // need to refresh display
 
-    wxBitmap      m_fontmap;        // image of the font in use
-    int           m_fontsize;       // size of font (in points)
-    bool          m_fontdirty;      // font/color/contrast/brightness changed
+    wxBitmap      m_font_map;       // image of the font in use
+    int           m_font_size;      // size of font (in points)
+    bool          m_font_dirty;     // font/color/contrast/brightness changed
     int           m_charcell_w;     // width of one character cell
     int           m_charcell_h;     // height of one character cell
     int           m_charcell_sx;    // real x pixels per logical pixel
     int           m_charcell_sy;    // # real y pixels per logical pixel
     int           m_charcell_dy;    // row skipping factor
 
-    wxColor       m_FGcolor;        // screen phosphor color
-    wxColor       m_BGcolor;        // screen background color
+    wxColor       m_fg_color;       // screen phosphor color
+    wxColor       m_bg_color;       // screen background color
     int           m_display_contrast;
     int           m_display_brightness;
 
     // this holds the dimensions of the visible area we have to draw on,
     // which is entirely independent of the logical CRT dimensions.
-    int           m_scrpix_w;       // display dimension, in pixels
-    int           m_scrpix_h;       // display dimension, in pixels
-    wxRect        m_RCscreen;       // active text area
+    int           m_screen_pix_w;   // display dimension, in pixels
+    int           m_screen_pix_h;   // display dimension, in pixels
+    wxRect        m_screen_rc;      // active text area
 
     // sound for beep
-    void create_beep();
+    void createBeep();
     std::unique_ptr<wxSound> m_beep;
     std::unique_ptr<wxTimer> m_beep_tmr;
 };

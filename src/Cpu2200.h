@@ -114,7 +114,7 @@ private:
     // ---- data members ----
 
     std::shared_ptr<Scheduler>  m_scheduler;  // shared system event scheduler
-    const int                   m_cpuType;    // type cpu flavor, eg CPUTYPE_2200T
+    const int                   m_cpu_type;   // type cpu flavor, eg CPUTYPE_2200T
 
     // these shouldn't have to be changed; they are just symbolic defines
     // to make the code more readable.

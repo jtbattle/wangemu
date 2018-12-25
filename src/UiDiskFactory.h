@@ -32,12 +32,12 @@ private:
     void updateDlg();
 
     // member data
-    std::shared_ptr<Wvd> m_diskdata;
-    wxMenuBar  *m_menuBar;
+    std::shared_ptr<Wvd> m_disk_data;
+    wxMenuBar  *m_menubar;
     PropPanel  *m_tab1;
     LabelPanel *m_tab2;
-    wxButton   *m_butCancel;
-    wxButton   *m_butSave;
+    wxButton   *m_btn_cancel;
+    wxButton   *m_btn_save;
 };
 
 #endif _INCLUDE_UI_DISK_FACTORY_H_

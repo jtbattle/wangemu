@@ -27,24 +27,24 @@ Crt::Crt(CrtFrame *parent, crt_state_t *crt_state) :
     m_crt_state(crt_state),
     m_frame_count(0),
     m_dirty(true),
-    m_fontsize(FONT_MATRIX12),
-    m_fontdirty(true),          // must be regenerated
+    m_font_size(FONT_MATRIX12),
+    m_font_dirty(true),         // must be regenerated
     m_charcell_w(1),            // until SetFontSize overrides.  this prevents
     m_charcell_h(1),            // problems when m_scrbits is first allocated.
     m_charcell_sx(1),
     m_charcell_sy(1),
     m_charcell_dy(1),
-    m_FGcolor(wxColor(0xff, 0xff, 0xff)),
-    m_BGcolor(wxColor(0x00, 0x00, 0x00)),
+    m_fg_color(wxColor(0xff, 0xff, 0xff)),
+    m_bg_color(wxColor(0x00, 0x00, 0x00)),
     m_display_contrast(100),
     m_display_brightness(0),
-    m_scrpix_w(0),
-    m_scrpix_h(0),
-    m_RCscreen(wxRect(0, 0, 0, 0)),
+    m_screen_pix_w(0),
+    m_screen_pix_h(0),
+    m_screen_rc(wxRect(0, 0, 0, 0)),
     m_beep(nullptr),
     m_beep_tmr(nullptr)
 {
-    create_beep();
+    createBeep();
     if (!m_beep && false) {
         UI_warn("Emulator was unable to create the beep sound.\n"
                 "HEX(07) will produce the host bell sound.");
@@ -63,15 +63,10 @@ Crt::Crt(CrtFrame *parent, crt_state_t *crt_state) :
 }
 
 
-// free resources on destruction
-Crt::~Crt()
-{
-}
-
 void
 Crt::setFontDirty(bool dirty)
 {
-    m_fontdirty = dirty;
+    m_font_dirty = dirty;
     m_dirty |= dirty;
 
     if (dirty) {
@@ -80,10 +75,11 @@ Crt::setFontDirty(bool dirty)
     }
 }
 
+
 bool
 Crt::isFontDirty() const noexcept
 {
-    return m_fontdirty;
+    return m_font_dirty;
 };
 
 
@@ -91,14 +87,15 @@ Crt::isFontDirty() const noexcept
 void
 Crt::setFontSize(const int size)
 {
-    m_fontsize = size;
+    m_font_size = size;
     setFontDirty();
 }
+
 
 int
 Crt::getFontSize() const noexcept
 {
-    return m_fontsize;
+    return m_font_size;
 }
 
 
@@ -110,6 +107,7 @@ Crt::setDisplayContrast(int n)
     setFontDirty();
 }
 
+
 void
 Crt::setDisplayBrightness(int n)
 {
@@ -117,12 +115,13 @@ Crt::setDisplayBrightness(int n)
     setFontDirty();
 }
 
+
 // set the display fg/bg colors
 void
 Crt::setColor(const wxColor &FG, const wxColor &BG)
 {
-    m_FGcolor = FG;
-    m_BGcolor = BG;
+    m_fg_color = FG;
+    m_bg_color = BG;
     setFontDirty();
 }
 
@@ -175,47 +174,47 @@ Crt::OnPaint(wxPaintEvent &WXUNUSED(event))
     dc.StretchBlit(
             0,                       // xdest
             0,                       // ydest
-            m_scrpix_w,              // dstWidth
-            m_scrpix_h,              // dstHeight
+            m_screen_pix_w,          // dstWidth
+            m_screen_pix_h,          // dstHeight
             &memDC,                  // source
             0,                       // xsrc
             0,                       // ysrc
-            m_RCscreen.GetWidth(),   // srcWidth
-            m_RCscreen.GetHeight()   // srcHeight
+            m_screen_rc.GetWidth(),  // srcWidth
+            m_screen_rc.GetHeight()  // srcHeight
     );
     memDC.SelectObject(wxNullBitmap);
 #else
-    dc.DrawBitmap(m_scrbits, m_RCscreen.GetX(), m_RCscreen.GetY());
+    dc.DrawBitmap(m_scrbits, m_screen_rc.GetX(), m_screen_rc.GetY());
 
     // draw borders around active text area.
     // if we are doing an incremental update, supposedly
     // this all gets clipped against the damaged region,
     // so we don't actually draw it if it isn't necessary.
     {
-        const int left     = m_RCscreen.GetLeft();
-        const int top      = m_RCscreen.GetTop();
-        const int bottom   = m_RCscreen.GetBottom() + 1;
-        const int right    = m_RCscreen.GetRight() + 1;
+        const int left     = m_screen_rc.GetLeft();
+        const int top      = m_screen_rc.GetTop();
+        const int bottom   = m_screen_rc.GetBottom() + 1;
+        const int right    = m_screen_rc.GetRight() + 1;
 // hmm, I was wondering how the bottom & right edges were treated.
-// dumping various m_RCscreen.GetFoo() calls, I got this example:
+// dumping various m_screen_rc.GetFoo() calls, I got this example:
 //     top=12, bottom=300, height=289.
 // Thus, height isn't (bottom-top).  the bottom returned appears to be
 // included in the height.  when drawing, though, I think it isn't included.
-// When I set up m_RCscreen, I set top and height.  thus, the use of
+// When I set up m_screen_rc, I set top and height.  thus, the use of
 // Bottom (and Right) are suspect here.  bottom and right are inclusive
 // of the active text area.  I fix that by adding 1 to bottom and right.
-        const int bottom_h = (m_scrpix_h - bottom);
-        const int right_w  = (m_scrpix_w - right);
+        const int bottom_h = (m_screen_pix_h - bottom);
+        const int right_w  = (m_screen_pix_w - right);
 
         wxColor bg(intensityToColor(0.0f));
         dc.SetBrush(wxBrush(bg, wxBRUSHSTYLE_SOLID));
         dc.SetPen(wxPen(bg, 1, wxPENSTYLE_SOLID));
 
         if (top > 0) {  // top border is required
-            dc.DrawRectangle(0, 0, m_scrpix_w, top);
+            dc.DrawRectangle(0, 0, m_screen_pix_w, top);
         }
         if (bottom_h > 0) {     // bottom border is required
-            dc.DrawRectangle(0, bottom, m_scrpix_w, bottom_h);
+            dc.DrawRectangle(0, bottom, m_screen_pix_w, bottom_h);
         }
         if (left > 0) { // left border is required
             dc.DrawRectangle(0, top, left, bottom-top);
@@ -239,8 +238,8 @@ Crt::OnSize(wxSizeEvent &event)
     int width, height;
     GetClientSize(&width, &height);
 
-    m_scrpix_w = width;
-    m_scrpix_h = height;
+    m_screen_pix_w = width;
+    m_screen_pix_h = height;
 
     recalcBorders();
     invalidateAll();
@@ -257,6 +256,7 @@ Crt::OnEraseBackground(wxEraseEvent &WXUNUSED(event))
     // do nothing
 }
 
+
 // the user has double clicked on the screen.
 // see if the line contains a Wang BASIC error code, and if so
 // pop open a help message describing the error in more detail.
@@ -270,8 +270,8 @@ Crt::OnLeftDClick(wxMouseEvent &event)
         return;
     }
 
-    const int cell_x = (pos.x - m_RCscreen.GetX()) / m_charcell_w;
-    const int cell_y = (pos.y - m_RCscreen.GetY()) / m_charcell_h;
+    const int cell_x = (pos.x - m_screen_rc.GetX()) / m_charcell_w;
+    const int cell_y = (pos.y - m_screen_rc.GetY()) / m_charcell_h;
 
     if (cell_x < 0 || cell_x > m_crt_state->chars_w) {
         return;
@@ -408,15 +408,15 @@ Crt::recalcBorders()
     // figure out where the active drawing area is
     const int width  = m_charcell_w*m_crt_state->chars_w;
     const int height = m_charcell_h*m_crt_state->chars_h2;
-    const int orig_x = (width  < m_scrpix_w) ? (m_scrpix_w-width)/2  : 0;
-    const int orig_y = (height < m_scrpix_h) ? (m_scrpix_h-height)/2 : 0;
+    const int orig_x = (width  < m_screen_pix_w) ? (m_screen_pix_w-width)/2  : 0;
+    const int orig_y = (height < m_screen_pix_h) ? (m_screen_pix_h-height)/2 : 0;
 
     assert(width >= 0 && width < 4096 && height >= 0 && height < 4096);
 
-    m_RCscreen.SetX(orig_x);
-    m_RCscreen.SetY(orig_y);
-    m_RCscreen.SetWidth(width);
-    m_RCscreen.SetHeight(height);
+    m_screen_rc.SetX(orig_x);
+    m_screen_rc.SetY(orig_y);
+    m_screen_rc.SetWidth(width);
+    m_screen_rc.SetHeight(height);
 
     // resize the bitmap for the new screen dimensions.
     // we can skip the malloc when the user simply changes the screen
@@ -432,6 +432,7 @@ Crt::recalcBorders()
     }
 }
 
+
 void
 Crt::ding()
 {
@@ -446,6 +447,7 @@ Crt::ding()
         m_beep_tmr->Start(100, wxTIMER_ONE_SHOT);
     }
 }
+
 
 // the beep timer is has ended
 void
@@ -513,7 +515,7 @@ typedef struct {
 
 // create a beep sound which chr(0x07) produces
 void
-Crt::create_beep()
+Crt::createBeep()
 {
     const float sample_rate = 44100.0f;
 

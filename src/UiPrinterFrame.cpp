@@ -59,7 +59,7 @@
 
 #include "wx/printdlg.h"        // print preview interfaces
 #include "wx/paper.h"           // pick up paper database
-                                // (for translation of enums - see PaperSize)
+                                // (for translation of enums - see paperSize)
 #include <sstream>
 #include <iomanip>
 
@@ -91,45 +91,45 @@ enum
 };
 
 #if USEMYPAPER
-
-// map of enums for some of the paper sizes (wxPaperSize). Used for load/save to config file
-// not all are implemented. See exPaperSize in defs.h for a complete list/
+// Map of enums for some of the paper sizes (wxPaperSize). Used for load/save
+// to config file not all are implemented. See exPaperSize in defs.h for a
+// complete list.
 struct papersizemap_t {
-    wxPaperSize papersizeval;
-    std::string papersizename;
+    wxPaperSize papersize_val;
+    std::string papersize_name;
 } papersizemap[] = {
-    {wxPAPER_NONE,       "NONE" },         /*  Use specific dimensions */
-    {wxPAPER_LETTER,     "LETTER" },       /*  Letter, 8 1/2 by 11 inches */
-    {wxPAPER_LEGAL,      "LEGAL" },        /*  Legal, 8 1/2 by 14 inches */
-    {wxPAPER_A4,         "A4" },           /*  A4 Sheet, 210 by 297 millimeters */
-    {wxPAPER_A3,         "A3" },           /*  A3 sheet, 297 by 420 millimeters */
-    {wxPAPER_10X14,      "10X14" },        /*  10-by-14-inch sheet */
-    {wxPAPER_11X17,      "11x17" },        /*  11-by-17-inch sheet */
-    {wxPAPER_FANFOLD_US, "US Std Fanfold"} /*  US Std Fanfold, 14 7/8 by 11 inches */
+    { wxPAPER_NONE,       "NONE" },         // Use specific dimensions
+    { wxPAPER_LETTER,     "LETTER" },       // Letter, 8 1/2 by 11 inches
+    { wxPAPER_LEGAL,      "LEGAL" },        // Legal, 8 1/2 by 14 inches
+    { wxPAPER_A4,         "A4" },           // A4 Sheet, 210 by 297 millimeters
+    { wxPAPER_A3,         "A3" },           // A3 sheet, 297 by 420 millimeters
+    { wxPAPER_10X14,      "10X14" },        // 10-by-14-inch sheet
+    { wxPAPER_11X17,      "11x17" },        // 11-by-17-inch sheet
+    { wxPAPER_FANFOLD_US, "US Std Fanfold"} // US Std Fanfold, 14 7/8 by 11 inches
 };
 const int PSMAX = sizeof(papersizemap)/sizeof(papersizemap_t);
 #endif
 
 // map of enums for some of the paper bins (wxPrintBin). Used for load/save to config file
 struct paperbinmap_t {
-    wxPrintBin paperbinval;
-    std::string paperbinname;
+    wxPrintBin paperbin_val;
+    std::string paperbin_name;
 } paperbinmap[] = {
-    {wxPRINTBIN_DEFAULT,        "DEFAULT" },
-    {wxPRINTBIN_ONLYONE,        "ONLYONE" },
-    {wxPRINTBIN_LOWER,          "LOWER" },
-    {wxPRINTBIN_MIDDLE,         "MIDDLE" },
-    {wxPRINTBIN_MANUAL,         "MANUAL" },
-    {wxPRINTBIN_ENVELOPE,       "ENVELOPE" },
-    {wxPRINTBIN_ENVMANUAL,      "ENVMANUAL" },
-    {wxPRINTBIN_AUTO,           "AUTO" },
-    {wxPRINTBIN_TRACTOR,        "TRACTOR" },
-    {wxPRINTBIN_SMALLFMT,       "SMALLFMT" },
-    {wxPRINTBIN_LARGEFMT,       "LARGEFMT" },
-    {wxPRINTBIN_LARGECAPACITY,  "LARGECAPACITY" },
-    {wxPRINTBIN_CASSETTE,       "CASSETTE" },
-    {wxPRINTBIN_FORMSOURCE,     "FORMSOURCE" },
-    {wxPRINTBIN_USER,           "USER" }
+    { wxPRINTBIN_DEFAULT,        "DEFAULT" },
+    { wxPRINTBIN_ONLYONE,        "ONLYONE" },
+    { wxPRINTBIN_LOWER,          "LOWER" },
+    { wxPRINTBIN_MIDDLE,         "MIDDLE" },
+    { wxPRINTBIN_MANUAL,         "MANUAL" },
+    { wxPRINTBIN_ENVELOPE,       "ENVELOPE" },
+    { wxPRINTBIN_ENVMANUAL,      "ENVMANUAL" },
+    { wxPRINTBIN_AUTO,           "AUTO" },
+    { wxPRINTBIN_TRACTOR,        "TRACTOR" },
+    { wxPRINTBIN_SMALLFMT,       "SMALLFMT" },
+    { wxPRINTBIN_LARGEFMT,       "LARGEFMT" },
+    { wxPRINTBIN_LARGECAPACITY,  "LARGECAPACITY" },
+    { wxPRINTBIN_CASSETTE,       "CASSETTE" },
+    { wxPRINTBIN_FORMSOURCE,     "FORMSOURCE" },
+    { wxPRINTBIN_USER,           "USER" }
 };
 const int PBMAX = sizeof(paperbinmap)/sizeof(paperbinmap_t);
 
@@ -141,12 +141,12 @@ const int PBMAX = sizeof(paperbinmap)/sizeof(paperbinmap_t);
 PrinterFrame::PrinterFrame(const wxString& title, const int io_addr) :
         wxFrame((wxFrame *)nullptr, -1, title, wxDefaultPosition, wxDefaultSize,
                 wxDEFAULT_FRAME_STYLE | wxNO_FULL_REPAINT_ON_RESIZE),
-        m_menuBar(nullptr),
-        m_statusBar(nullptr),
+        m_menubar(nullptr),
+        m_statusbar(nullptr),
         m_printer(nullptr),
-        m_fontsize(12),
+        m_font_size(12),
         m_printer_addr(-1),
-        m_previewzoom(25),
+        m_preview_zoom(25),
         m_printData(nullptr),
         m_pageSetupData(nullptr)
 {
@@ -234,14 +234,14 @@ PrinterFrame::makeMenubar()
     wxMenu *menuHelp = TheApp::makeHelpMenu(this);
 
     // now append the freshly created menu to the menu bar...
-    m_menuBar = new wxMenuBar;
-    m_menuBar->Append(menuFile,    "&File");
-    m_menuBar->Append(menuDisplay, "&Display");
-    m_menuBar->Append(menuConfig,  "&Configure");
-    m_menuBar->Append(menuHelp,    "&Help");
+    m_menubar = new wxMenuBar;
+    m_menubar->Append(menuFile,    "&File");
+    m_menubar->Append(menuDisplay, "&Display");
+    m_menubar->Append(menuConfig,  "&Configure");
+    m_menubar->Append(menuHelp,    "&Help");
 
     // ... and attach this menu bar to the frame
-    SetMenuBar(m_menuBar);
+    SetMenuBar(m_menubar);
 }
 
 
@@ -249,7 +249,7 @@ PrinterFrame::makeMenubar()
 void
 PrinterFrame::makeStatusbar()
 {
-    m_statusBar = CreateStatusBar();
+    m_statusbar = CreateStatusBar();
 }
 
 
@@ -294,13 +294,13 @@ PrinterFrame::setMenuChecks()
 {
     // ----- display -----------------------------------
     const bool greenbar = m_printer->getGreenbar();
-    m_menuBar->Check(Display_Greenbar, greenbar);
+    m_menubar->Check(Display_Greenbar, greenbar);
 
-    m_menuBar->Check(Display_FontSize8,  m_fontsize ==  8);
-    m_menuBar->Check(Display_FontSize10, m_fontsize == 10);
-    m_menuBar->Check(Display_FontSize12, m_fontsize == 12);
-    m_menuBar->Check(Display_FontSize14, m_fontsize == 14);
-    m_menuBar->Check(Display_FontSize18, m_fontsize == 18);
+    m_menubar->Check(Display_FontSize8,  m_font_size ==  8);
+    m_menubar->Check(Display_FontSize10, m_font_size == 10);
+    m_menubar->Check(Display_FontSize12, m_font_size == 12);
+    m_menubar->Check(Display_FontSize14, m_font_size == 14);
+    m_menubar->Check(Display_FontSize18, m_font_size == 18);
 }
 
 
@@ -324,7 +324,7 @@ PrinterFrame::saveDefaults()
     // save page attributes
     host::configWriteInt(subgroup,  "pagelength",       plen);
     host::configWriteInt(subgroup,  "linelength",       llen);
-    host::configWriteInt(subgroup,  "fontsize",         m_fontsize);
+    host::configWriteInt(subgroup,  "fontsize",         m_font_size);
     host::configWriteBool(subgroup, "greenbar",         m_printer->getGreenbar());
     host::configWriteBool(subgroup, "autoshow",         m_printer->getAutoshow());
     host::configWriteBool(subgroup, "printasgo",        m_printer->getPrintasgo());
@@ -338,7 +338,7 @@ PrinterFrame::saveDefaults()
     host::configWriteInt(subgroup,  "marginright",      right);
     host::configWriteInt(subgroup,  "margintop",        top);
     host::configWriteInt(subgroup,  "marginbottom",     bottom);
-    host::configWriteInt(subgroup,  "previewzoom",      m_previewzoom);
+    host::configWriteInt(subgroup,  "previewzoom",      m_preview_zoom);
     host::configWriteStr(subgroup,  "realprintername",  m_printer->getRealPrinterName());
 }
 
@@ -362,8 +362,8 @@ PrinterFrame::getDefaults()
 
     // pick up screen font size
     b = host::configReadInt(subgroup, "fontsize", &v);
-    m_fontsize = (b && (v >= 8) && (v <= 28)) ? v : 12;
-    m_printer->setFontSize(m_fontsize);
+    m_font_size = (b && (v >= 8) && (v <= 28)) ? v : 12;
+    m_printer->setFontSize(m_font_size);
 
     host::configReadBool(subgroup, "greenbar", &b, true);
     m_printer->setGreenbar(b);
@@ -400,7 +400,7 @@ PrinterFrame::getDefaults()
     m_printer->setMargins(left, right, top, bottom);
 
     // pick up page preview zoom factor
-    host::configReadInt(subgroup, "previewzoom", &m_previewzoom, 70);
+    host::configReadInt(subgroup, "previewzoom", &m_preview_zoom, 70);
 
     // pick up orientation
     int orientation;
@@ -414,13 +414,13 @@ PrinterFrame::getDefaults()
     wxPaperSize paperid = wxPAPER_NONE;
     b = host::configReadStr(subgroup, "papername", &valstr);
     if (b) {
-        paperid = PaperSize(valstr);
+        paperid = paperSize(valstr);
     }
-    std::string papername(PaperSize(paperid));
+    std::string papername(paperSize(paperid));
     if (papername.empty()) {
         // we did not find a match. use none
         paperid = wxPAPER_NONE;
-        papername = PaperSize(paperid);
+        papername = paperSize(paperid);
     }
     m_printer->setPaperId(paperid);
     m_printer->setPaperName(papername);
@@ -429,7 +429,7 @@ PrinterFrame::getDefaults()
     wxPrintBin paperbin = wxPRINTBIN_DEFAULT;
     b = host::configReadStr(subgroup, "paperbin", &valstr);
     if (b) {
-        paperbin = PaperBin(valstr);
+        paperbin = paperBin(valstr);
     }
     m_printer->setBin(paperbin);
 
@@ -439,64 +439,65 @@ PrinterFrame::getDefaults()
     m_printer->setRealPrinterName(printername);
 }
 
+
 // translate a character pagesize to the appropriate enum value for wxPaperSize
 wxPaperSize
-PrinterFrame::PaperSize(const std::string &pagesizename)
+PrinterFrame::paperSize(const std::string &pagesizename)
 {
     // translate char to wxPaperSize
 #if USEMYPAPER
     for (int i=0; i< PSMAX; i++) {
-        if (papersizemap[i].papersizename == pagesizename) {
-            return papersizemap[i].papersizeval;
+        if (papersizemap[i].papersize_name == pagesizename) {
+            return papersizemap[i].papersize_val;
         }
     }
-
     return wxPAPER_NONE;  // default
 #else
     return wxThePrintPaperDatabase->ConvertNameToId(pagesizename);
 #endif
 }
 
+
 // translate an enum pagesize to the appropriate string name
 std::string
-PrinterFrame::PaperSize(wxPaperSize papersizeval) const
+PrinterFrame::paperSize(wxPaperSize papersize_val) const
 {
     // translate char to wxPaperSize
 #if USEMYPAPER
     for (int i=0; i< PSMAX; i++) {
-        if (papersizemap[i].papersizeval == papersizeval) {
-            return papersizemap[i].papersizename;
+        if (papersizemap[i].papersize_val == papersizeval) {
+            return papersizemap[i].papersize_name;
         }
     }
-
     return "LETTER"; // default
 #else
-    return std::string(wxThePrintPaperDatabase->ConvertIdToName(papersizeval));
+    return std::string(wxThePrintPaperDatabase->ConvertIdToName(papersize_val));
 #endif
 }
 
+
 // translate a character pagesize to the appropriate enum value for wxPaperSize
 wxPrintBin
-PrinterFrame::PaperBin(const std::string &paperbinname) const noexcept
+PrinterFrame::paperBin(const std::string &paperbin_name) const noexcept
 {
     // translate char to wxPrintBin
     for (int i=0; i< PBMAX; i++) {
-        if (paperbinmap[i].paperbinname == paperbinname) {
-            return paperbinmap[i].paperbinval;
+        if (paperbinmap[i].paperbin_name == paperbin_name) {
+            return paperbinmap[i].paperbin_val;
         }
     }
-
     return wxPRINTBIN_DEFAULT;  // default
 }
 
+
 // translate an enum pagesize to the appropriate string name
 std::string
-PrinterFrame::PaperBin(wxPrintBin paperbinval) const
+PrinterFrame::paperBin(wxPrintBin paperbin_val) const
 {
     // translate char to wxPaperSize
     for (int i=0; i< PBMAX; i++) {
-        if (paperbinmap[i].paperbinval == paperbinval) {
-            return paperbinmap[i].paperbinname;
+        if (paperbinmap[i].paperbin_val == paperbin_val) {
+            return paperbinmap[i].paperbin_name;
         }
     }
 
@@ -512,6 +513,7 @@ PrinterFrame::OnFileClose(wxCommandEvent& WXUNUSED(event))
     Show(false);  // hide the window for now
 }
 
+
 // save the contents of the virtual printer
 void
 PrinterFrame::OnFileSaveAs(wxCommandEvent& WXUNUSED(event))
@@ -520,6 +522,7 @@ PrinterFrame::OnFileSaveAs(wxCommandEvent& WXUNUSED(event))
     m_printer->saveToFile();
     system2200::freezeEmu(false);
 }
+
 
 void
 PrinterFrame::OnPrintClear(wxCommandEvent& WXUNUSED(event))
@@ -541,7 +544,7 @@ PrinterFrame::PP_OnClose(wxCloseEvent &event)
     assert(controlBar != nullptr);
     PrinterFrame *parent = dynamic_cast<PrinterFrame*>(GetParent());
     assert(parent != nullptr);
-    parent->m_previewzoom = controlBar->GetZoomControl();
+    parent->m_preview_zoom = controlBar->GetZoomControl();
 
     event.Skip();
 }
@@ -588,8 +591,8 @@ PrinterFrame::OnPrintPreview(wxCommandEvent& WXUNUSED(event))
 
     // it appears that these both have to be set -- setting one doesn't
     // automatically refresh the other
-    frame->GetControlBar()->SetZoomControl(m_previewzoom);
-    preview->SetZoom(m_previewzoom);
+    frame->GetControlBar()->SetZoomControl(m_preview_zoom);
+    preview->SetZoom(m_preview_zoom);
 #else
     // FIXME: this is how the printing sample ends it -- study this to see
     //        what all the code above is doing.
@@ -667,11 +670,11 @@ PrinterFrame::OnPageSetup(wxCommandEvent& WXUNUSED(event))
     m_printer->setPaperId(m_printData->GetPaperId());
 
     // (re)set paper name
-    std::string papername(PaperSize(m_printer->getPaperId()));
+    std::string papername(paperSize(m_printer->getPaperId()));
     if (papername.empty()) {
         // we did not find a match. use letter, and issue warning
         m_printer->setPaperId(wxPAPER_NONE);
-        papername = PaperSize(wxPAPER_NONE);
+        papername = paperSize(wxPAPER_NONE);
         //UI_warn("Paper Type is not supported. Assuming None.");
     }
     m_printer->setPaperName(papername);
@@ -703,7 +706,7 @@ PrinterFrame::OnFontSize(wxCommandEvent &event)
             size = 12;
             break;
     }
-    m_fontsize = size;
+    m_font_size = size;
     m_printer->setFontSize(size);
 }
 
@@ -739,12 +742,12 @@ PrinterFrame::OnConfigureDialog(wxCommandEvent& WXUNUSED(event))
     int linelength, pagelength;
     m_printer->getPageAttributes(linelength, pagelength);
 
-    data->m_string_linelength   = std::to_string(linelength);
-    data->m_string_pagelength   = std::to_string(pagelength);
-    data->m_checkbox_autoshow   = m_printer->getAutoshow();
-    data->m_checkbox_printasgo  = m_printer->getPrintasgo();
-    data->m_checkbox_portdirect = m_printer->getPortdirect();
-    data->m_choice_portstring   = m_printer->getPortstring();
+    data->m_line_length    = std::to_string(linelength);
+    data->m_page_length    = std::to_string(pagelength);
+    data->m_cb_auto_show   = m_printer->getAutoshow();
+    data->m_cb_print_as_go = m_printer->getPrintasgo();
+    data->m_cb_port_direct = m_printer->getPortdirect();
+    data->m_port_string    = m_printer->getPortstring();
 
     PrinterConfigDlg dialog(this, "Printer Configuration", data);
 
@@ -754,14 +757,14 @@ PrinterFrame::OnConfigureDialog(wxCommandEvent& WXUNUSED(event))
         // 'OK' was pressed, so controls that have validators are
         // automatically transferred to the variables we specified
         // when we created the validators.
-        long longllength = std::stol(std::string(data->m_string_linelength));
-        long longplength = std::stol(std::string(data->m_string_pagelength));
+        long longllength = std::stol(std::string(data->m_line_length));
+        long longplength = std::stol(std::string(data->m_page_length));
 
         m_printer->setPageAttributes(longllength, longplength);
-        m_printer->setAutoshow(data->m_checkbox_autoshow);
-        m_printer->setPrintasgo(data->m_checkbox_printasgo);
-        m_printer->setPortdirect(data->m_checkbox_portdirect);
-        m_printer->setPortstring(std::string(data->m_choice_portstring));
+        m_printer->setAutoshow(data->m_cb_auto_show);
+        m_printer->setPrintasgo(data->m_cb_print_as_go);
+        m_printer->setPortdirect(data->m_cb_port_direct);
+        m_printer->setPortstring(std::string(data->m_port_string));
 
 #if 0
         // PHE: clear the printer log because any previous printing
@@ -805,6 +808,7 @@ PrinterFrame::destroyWindow()
     saveDefaults();
     Destroy();
 }
+
 
 // print the contents of the stream, then clear it (if successful)
 void

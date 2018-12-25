@@ -24,17 +24,17 @@ private:
     void OnWarnMismatch(wxCommandEvent &event);
     void OnButton(wxCommandEvent &event);
 
-    wxRadioBox *m_rbNumDrives;      // number of attached disk drives
-    wxRadioBox *m_rbIntelligence;   // dumb, smart, auto intelligence
-    wxCheckBox *m_warnMismatch;     // warn if media & intelligence don't match
-    wxButton   *m_btnRevert;
-    wxButton   *m_btnOk;
-    wxButton   *m_btnCancel;
-    wxButton   *m_btnHelp;
+    wxRadioBox *m_rb_num_drives;     // number of attached disk drives
+    wxRadioBox *m_rb_intelligence;   // dumb, smart, auto intelligence
+    wxCheckBox *m_warn_mismatch;     // warn if media & intelligence don't match
+    wxButton   *m_btn_revert;
+    wxButton   *m_btn_ok;
+    wxButton   *m_btn_cancel;
+    wxButton   *m_btn_help;
 
     // system configuration state
     DiskCtrlCfgState &m_cfg;        // the one being modified
-    DiskCtrlCfgState  m_oldcfg;     // a copy of the starting state
+    DiskCtrlCfgState  m_old_cfg;    // a copy of the starting state
 
     // helper routines
     void updateDlg();

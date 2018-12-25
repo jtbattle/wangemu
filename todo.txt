@@ -10,6 +10,23 @@ Emulator TODO list
       takes a shared_ptr but a raw pointer or reference really would
       be the appropriate choice, as the subroutine's life cannot
       exceed that of the caller.  Or maybe it is confused.  Check anyway.
+    - move const int64 SERIAL_CHAR_DELAY
+        from IoCardTermMux.cpp
+        from Terminal.cpp
+    - rename this file and fix include callouts
+         ++ errtable.cpp     <<-- should rename the file "error_table.*"
+         ++ errtable.h       <<-- should rename the file "error_table.*"
+    - IoCardDisk_Controller.cpp
+      IoCardDisk::advanceState has
+        const bool poll_before = (!m_cpb && !m_card_busy);  << the same!
+        const bool poll_after  = (!m_cpb && !m_card_busy);  << the same!
+        ...
+        if (!poll_before && poll_after) {  << impossible condition
+     - UiCrtFrame.h has a raw pointer to its crt.  since the frame is
+       the owner, it should be unique_ptr
+     - I need to review when wx owns pointers attached to windows and
+       when I should take ownership.  eg, UiCrtStatusBar m_keyword_ctl
+       should be a dumb pointer if wx owns it.
 
 *) support more than one MXD (each with one terminal)
    - booting MVP 3.5, it gets to the loading BASIC-2 stage but hangs

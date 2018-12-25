@@ -93,7 +93,7 @@ private:
     wxCheckBox   *m_write_prot; // write protect checkbox
 
     // data
-    std::shared_ptr<Wvd> m_diskdata;
+    std::shared_ptr<Wvd> m_disk_data;
 };
 
 
@@ -123,7 +123,7 @@ private:
     wxTextCtrl  *m_text;
 
     // data
-    std::shared_ptr<Wvd> m_diskdata;
+    std::shared_ptr<Wvd> m_disk_data;
 };
 
 
@@ -135,64 +135,64 @@ DiskFactory::DiskFactory(wxFrame *parent, const std::string &filename) :
         wxDialog(parent, -1, "Disk Factory",
                  wxDefaultPosition, wxDefaultSize,
                  wxDEFAULT_DIALOG_STYLE | wxRESIZE_BORDER),
-        m_menuBar(nullptr),
+        m_menubar(nullptr),
         m_tab1(nullptr),
         m_tab2(nullptr),
-        m_diskdata(nullptr),
-        m_butCancel(nullptr),
-        m_butSave(nullptr)
+        m_disk_data(nullptr),
+        m_btn_cancel(nullptr),
+        m_btn_save(nullptr)
 {
     const bool new_disk = filename.empty();
-    m_butCancel = nullptr;
-    m_butSave   = nullptr;
+    m_btn_cancel = nullptr;
+    m_btn_save   = nullptr;
 
-    m_diskdata = std::make_shared<Wvd>();
+    m_disk_data = std::make_shared<Wvd>();
     if (new_disk) {
         // blank disk, default type
-        m_diskdata->create(disk_choices[0].disk_type,
-                           disk_choices[0].platters,
-                           disk_choices[0].sectors_per_platter);
+        m_disk_data->create(disk_choices[0].disk_type,
+                            disk_choices[0].platters,
+                            disk_choices[0].sectors_per_platter);
     } else {
         // existing disk
-        bool ok = m_diskdata->open(filename);
+        bool ok = m_disk_data->open(filename);
         assert(ok);
     }
 
     // the frame contains a panel containing a single notebook
-    wxPanel    *panel    = new wxPanel(this, -1);
-    wxNotebook *notebook = new wxNotebook(panel, -1, wxDefaultPosition, wxSize(400, -1));
-    wxBoxSizer *topsizer = new wxBoxSizer(wxVERTICAL);
+    wxPanel    *panel     = new wxPanel(this, -1);
+    wxNotebook *notebook  = new wxNotebook(panel, -1, wxDefaultPosition, wxSize(400, -1));
+    wxBoxSizer *top_sizer = new wxBoxSizer(wxVERTICAL);
 
     // the top part of topvbox is the notebook control; it might be the only item
-    topsizer->Add(notebook, 1, wxEXPAND | wxALL, 4);    // add 4px padding all around
+    top_sizer->Add(notebook, 1, wxEXPAND | wxALL, 4);    // add 4px padding all around
 
     // add tabs to the notebook
-    m_tab1 = new PropPanel(this, notebook, m_diskdata);
+    m_tab1 = new PropPanel(this, notebook, m_disk_data);
     notebook->AddPage(m_tab1, "Properties", true);
-    m_tab2 = new LabelPanel(this, notebook, m_diskdata);
+    m_tab2 = new LabelPanel(this, notebook, m_disk_data);
     notebook->AddPage(m_tab2, "Label", true);
     notebook->SetSelection(0);
 
     // create buttons along the bottom, aligned to the right
     wxBoxSizer *m_botbox = new wxBoxSizer(wxHORIZONTAL);
-    m_butCancel = new wxButton(panel, ID_BTN_Cancel, "Cancel");
-    m_butSave   = new wxButton(panel, new_disk ? ID_BTN_SaveAs : ID_BTN_Save,
-                                      new_disk ? "Save As" : "Save");
+    m_btn_cancel = new wxButton(panel, ID_BTN_Cancel, "Cancel");
+    m_btn_save   = new wxButton(panel, new_disk ? ID_BTN_SaveAs : ID_BTN_Save,
+                                       new_disk ? "Save As" : "Save");
     m_botbox->Add(1, 1, 1);          // 1 pixel stretchable spacer
-    m_botbox->Add(m_butSave,   0);   // non-stretchable
+    m_botbox->Add(m_btn_save, 0);    // non-stretchable
     m_botbox->Add(15, 1, 0);         // 15 pixel non-stretchable spacer
-    m_botbox->Add(m_butCancel, 0);   // non-stretchable
+    m_botbox->Add(m_btn_cancel, 0);  // non-stretchable
 #ifdef __WXMAC__
     m_botbox->Add(20, 1, 0);         // make sure resizing grip doesn't overdraw cancel button
 #endif
 
     // add the buttons to the bottom of the top vbox
-    topsizer->Add(m_botbox, 0, wxEXPAND | wxALL, 4);    // add 4px padding all around
+    top_sizer->Add(m_botbox, 0, wxEXPAND | wxALL, 4);    // add 4px padding all around
 
     // make the dialog autosizing
-    panel->SetSizer(topsizer);
-    topsizer->Fit(this);
-    topsizer->SetSizeHints(this);
+    panel->SetSizer(top_sizer);
+    top_sizer->Fit(this);
+    top_sizer->SetSizeHints(this);
     const wxRect rc = GetRect();  // window size as declared by sizer
 
     // pick up screen location and size
@@ -216,7 +216,7 @@ DiskFactory::~DiskFactory()
     const std::string subgroup("ui/disk_dialog");
     host::configWriteWinGeom(this, subgroup);
 
-    m_diskdata = nullptr;
+    m_disk_data = nullptr;
 }
 
 
@@ -229,10 +229,10 @@ void
 DiskFactory::updateButtons()
 {
     // disable the Save or SaveAs button if there have been no changes
-    const bool new_disk = m_diskdata->getPath().empty();
-    const bool modified = m_diskdata->isModified();
-    if (m_butSave) {
-        m_butSave->Enable(new_disk || modified);
+    const bool new_disk = m_disk_data->getPath().empty();
+    const bool modified = m_disk_data->isModified();
+    if (m_btn_save) {
+        m_btn_save->Enable(new_disk || modified);
     }
 }
 
@@ -249,11 +249,11 @@ DiskFactory::updateDlg()
 void
 DiskFactory::OnButton_Save(wxCommandEvent& WXUNUSED(event))
 {
-    std::string name(m_diskdata->getPath());
+    std::string name(m_disk_data->getPath());
     assert(!name.empty());
 
-    m_diskdata->setLabel(m_tab2->getLabelString());
-    m_diskdata->save();
+    m_disk_data->setLabel(m_tab2->getLabelString());
+    m_disk_data->save();
     Close();
 }
 
@@ -278,8 +278,8 @@ DiskFactory::OnButton_SaveAs(wxCommandEvent& WXUNUSED(event))
         return;
     }
 
-    m_diskdata->setLabel(m_tab2->getLabelString());
-    m_diskdata->save(name);
+    m_disk_data->setLabel(m_tab2->getLabelString());
+    m_disk_data->save(name);
 
     Close();
 }
@@ -306,7 +306,7 @@ DiskFactory::OnSize(wxSizeEvent &event)
 void
 DiskFactory::OnClose(wxCloseEvent& WXUNUSED(event))
 {
-    bool ok = !m_diskdata->isModified();
+    bool ok = !m_disk_data->isModified();
 
     if (!ok) {
         ok = UI_confirm("You will lose unsaved changes.\n"
@@ -328,7 +328,7 @@ enum
     PROP_CHK_WP = 1,
 };
 
-// wxBoxSizer(v) *topsizer
+// wxBoxSizer(v) *top_sizer
 //    +-- wxStaticText *m_path
 //    +-- wxBoxSizer(h) *boxh
 //    |    +-- wxRadioBox *m_disktype
@@ -355,18 +355,18 @@ PropPanel::PropPanel(DiskFactory *df,
         m_st_steptime(nullptr),
         m_st_rpm(nullptr),
         m_write_prot(nullptr),
-        m_diskdata(diskdata)
+        m_disk_data(diskdata)
 {
     const int margin_pixels = 6;
     const int margin_LRT = wxLEFT | wxRIGHT | wxTOP;
 
-    wxBoxSizer *topsizer = new wxBoxSizer(wxVERTICAL);
+    wxBoxSizer *top_sizer = new wxBoxSizer(wxVERTICAL);
 
     // ----- row 1: path to virtual disk file, if it exists -----
-    bool new_disk = (m_diskdata->getPath()).empty();
+    bool new_disk = (m_disk_data->getPath()).empty();
     if (!new_disk) {
         m_path = new wxStaticText(this, -1, "../path/to/file/...");
-        topsizer->Add(m_path, 0, wxEXPAND | wxALIGN_LEFT | margin_LRT, margin_pixels);
+        top_sizer->Add(m_path, 0, wxEXPAND | wxALIGN_LEFT | margin_LRT, margin_pixels);
     }
 
     // ----- row 2: disk type box | disk properties -----
@@ -430,16 +430,16 @@ PropPanel::PropPanel(DiskFactory *df,
                         | ((new_disk) ? wxLEFT : 0);
         boxh->Add(prop_sizer, 0, flags, margin_pixels);
     }
-    topsizer->Add(boxh, 0, wxALIGN_LEFT | margin_LRT, margin_pixels);
+    top_sizer->Add(boxh, 0, wxALIGN_LEFT | margin_LRT, margin_pixels);
 
     // ----- spacer -----
-    topsizer->AddSpacer(6);
+    top_sizer->AddSpacer(6);
 
     // ----- row 3: write protect -----
     m_write_prot = new wxCheckBox(this, PROP_CHK_WP, "Write Protected");
-    topsizer->Add(m_write_prot, 0, wxALIGN_LEFT | wxALL, margin_pixels);
+    top_sizer->Add(m_write_prot, 0, wxALIGN_LEFT | wxALL, margin_pixels);
 
-    SetSizerAndFit(topsizer);
+    SetSizerAndFit(top_sizer);
     refresh();
 
     // event routing table
@@ -451,21 +451,21 @@ PropPanel::PropPanel(DiskFactory *df,
 void
 PropPanel::refresh()
 {
-    assert(m_diskdata);
+    assert(m_disk_data);
 
-    const bool new_disk = (m_diskdata->getPath()).empty();
-    const bool modified = m_diskdata->isModified();
+    const bool new_disk = (m_disk_data->getPath()).empty();
+    const bool modified = m_disk_data->isModified();
 
     // update path to disk
     if (!new_disk) {
-        std::string label = "Path: " + m_diskdata->getPath();
+        std::string label = "Path: " + m_disk_data->getPath();
         m_path->SetLabel(label);
     }
 
     // based on the disk type, print some other information
-    const int num_platters = m_diskdata->getNumPlatters();
-    const int num_sectors  = m_diskdata->getNumSectors();
-    const int disk_type    = m_diskdata->getDiskType();
+    const int num_platters = m_disk_data->getNumPlatters();
+    const int num_sectors  = m_disk_data->getNumSectors();
+    const int disk_type    = m_disk_data->getDiskType();
 
     int spt, step, rpm;
     IoCardDisk::getDiskGeometry(disk_type, &spt, &step, &rpm, nullptr);
@@ -517,12 +517,12 @@ PropPanel::refresh()
     label = std::to_string(rpm) + " RPM";
     m_st_rpm->SetLabel(label);
 
-    m_write_prot->SetValue(m_diskdata->getWriteProtect());
+    m_write_prot->SetValue(m_disk_data->getWriteProtect());
 
     // refreshing the # of sectors triggers the EVT_TEXT action,
     // which set the modified bit.  since we just did an update,
     // set it back to what it was before the update.
-    m_diskdata->setModified(modified);
+    m_disk_data->setModified(modified);
 
     m_parent->updateButtons();
 }
@@ -535,9 +535,9 @@ PropPanel::OnDiskTypeButton(wxCommandEvent& WXUNUSED(event))
     const int choice = m_disktype->GetSelection();
     assert(choice < num_disk_types);
 
-    m_diskdata->setDiskType   (disk_choices[choice].disk_type);
-    m_diskdata->setNumPlatters(disk_choices[choice].platters);
-    m_diskdata->setNumSectors (disk_choices[choice].sectors_per_platter);
+    m_disk_data->setDiskType   (disk_choices[choice].disk_type);
+    m_disk_data->setNumPlatters(disk_choices[choice].platters);
+    m_disk_data->setNumSectors (disk_choices[choice].sectors_per_platter);
 
     refresh();
 }
@@ -547,7 +547,7 @@ PropPanel::OnDiskTypeButton(wxCommandEvent& WXUNUSED(event))
 void
 PropPanel::OnWriteProt(wxCommandEvent& WXUNUSED(event))
 {
-    m_diskdata->setWriteProtect(m_write_prot->GetValue());
+    m_disk_data->setWriteProtect(m_write_prot->GetValue());
     refresh();
 }
 
@@ -567,7 +567,7 @@ LabelPanel::LabelPanel(DiskFactory *df,
         wxPanel(parent, -1),
         m_parent(df),
         m_text(nullptr),
-        m_diskdata(diskdata)
+        m_disk_data(diskdata)
 {
     const int style = wxTE_MULTILINE;
     m_text = new wxTextCtrl(this, LABEL_EDIT_LABEL, "",
@@ -577,8 +577,8 @@ LabelPanel::LabelPanel(DiskFactory *df,
     wxFont fontstyle = wxFont(10, wxFONTFAMILY_MODERN, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL);  // fixed pitch
     m_text->SetFont(fontstyle);
     m_text->SetMaxLength(WVD_MAX_LABEL_LEN-1);
-    m_text->SetValue(m_diskdata->getLabel());
-    m_diskdata->setModified(false);
+    m_text->SetValue(m_disk_data->getLabel());
+    m_disk_data->setModified(false);
 
     // put a sizer around it
     wxBoxSizer *m_sizer = new wxBoxSizer(wxVERTICAL);
@@ -593,12 +593,12 @@ LabelPanel::LabelPanel(DiskFactory *df,
 void
 LabelPanel::refresh()
 {
-    const bool modified = m_diskdata->isModified();
+    const bool modified = m_disk_data->isModified();
 
     // refreshing the label triggers the EVT_TEXT action,
     // which set the modified bit.  since we just did an update,
     // set it back to what it was before the update.
-    m_diskdata->setModified(modified);
+    m_disk_data->setModified(modified);
 
     // I tried doing this in the constructor, but all the text was
     // always selected by default.  oh, well, better than nothing.
@@ -623,7 +623,7 @@ LabelPanel::OnLabelEdit(wxCommandEvent &event)
     switch (event.GetId()) {
 
         case LABEL_EDIT_LABEL:
-            m_diskdata->setModified(true);      // note that it has changed
+            m_disk_data->setModified(true);      // note that it has changed
             m_parent->updateButtons();
             break;
 

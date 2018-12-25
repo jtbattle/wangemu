@@ -14,7 +14,7 @@ class MyStaticText : public wxStaticText
 {
 public:
     CANT_ASSIGN_OR_COPY_CLASS(MyStaticText);
-     MyStaticText(wxWindow* parent, wxWindowID id, const wxString &label);
+    MyStaticText(wxWindow* parent, wxWindowID id, const wxString &label);
 
 private:
     void OnKeyDown(wxKeyEvent &event);

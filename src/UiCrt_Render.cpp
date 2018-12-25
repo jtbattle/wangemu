@@ -9,7 +9,7 @@
 // Any time the user changes a display setting (font, color, brightness,
 // contrast) generateFontmap() is called.  This function uses either the
 // chosen native font or it consults the Wang character set bitmap in
-// UiCrt_Charset.cpp to render each character set into the m_fontmap image.
+// UiCrt_Charset.cpp to render each character set into the m_font_map image.
 // The image contains 8 rows of 256 characters per row; the first 128
 // characters are the non-underlined version, and the last 128 are the
 // same characters but underlined.  There are 8 rows of characters, one
@@ -22,13 +22,13 @@
 //
 //   1) [ generateScreenByBlits() ]
 //      Nested for() loops sweep through the 64x16 or 80x24 screen array
-//      and uses a blit to copy the appropriate part of m_fontmap to a
+//      and uses a blit to copy the appropriate part of m_font_map to a
 //      given screen location in m_scrbits.
 //
 //   2) [ generateScreenByRawBmp() ]
 //      Nested for() loops sweep through the 64x16 or 80x24 screen array
 //      and uses a nest inner pair of for() loops to manually copy the
-//      appropriate part m_fontmap to m_scrbits one pixel at a time.
+//      appropriate part m_font_map to m_scrbits one pixel at a time.
 //
 //      One would think this is slower than case #1, but at least as of
 //      wxWidgets 2.9.5 on OSX, each character blit required an expensive
@@ -69,9 +69,9 @@ Crt::intensityToColor(float f) const
     const float contrast   = getDisplayContrast()   * 0.01f * 1.3f;
     const float brightness = getDisplayBrightness() * 0.01f;
 
-    const bool black_bg = (m_BGcolor.Red()   == 0x00)
-                       && (m_BGcolor.Green() == 0x00)
-                       && (m_BGcolor.Blue()  == 0x00);
+    const bool black_bg = (m_bg_color.Red()   == 0x00)
+                       && (m_bg_color.Green() == 0x00)
+                       && (m_bg_color.Blue()  == 0x00);
 
     int r=0x00, g=0x00, b=0x00;
     if (black_bg) {
@@ -80,9 +80,9 @@ Crt::intensityToColor(float f) const
         float v = brightness + f*contrast;
         v = (v < 0.0f) ? 0.0f
           : (v > 1.0f) ? 1.0f : v;
-        r = static_cast<int>(v * m_FGcolor.Red()   + 0.5f);
-        g = static_cast<int>(v * m_FGcolor.Green() + 0.5f);
-        b = static_cast<int>(v * m_FGcolor.Blue()  + 0.5f);
+        r = static_cast<int>(v * m_fg_color.Red()   + 0.5f);
+        g = static_cast<int>(v * m_fg_color.Green() + 0.5f);
+        b = static_cast<int>(v * m_fg_color.Blue()  + 0.5f);
     } else {
         // FG/BG both have colors.  The monochromatic model doesn't apply.
         // Instead what we do is use the intensity to interpolate between
@@ -90,13 +90,13 @@ Crt::intensityToColor(float f) const
         // the interpolation factor, and brighness adds a constant offset
         // to each component.
         const float weight = f * contrast;
-        const float diff_r = weight * (m_FGcolor.Red()   - m_BGcolor.Red());
-        const float diff_g = weight * (m_FGcolor.Green() - m_BGcolor.Green());
-        const float diff_b = weight * (m_FGcolor.Blue()  - m_BGcolor.Blue());
+        const float diff_r = weight * (m_fg_color.Red()   - m_bg_color.Red());
+        const float diff_g = weight * (m_fg_color.Green() - m_bg_color.Green());
+        const float diff_b = weight * (m_fg_color.Blue()  - m_bg_color.Blue());
 
-        r = static_cast<int>(m_BGcolor.Red()   + diff_r + (brightness * 255.0) + 0.5f);
-        g = static_cast<int>(m_BGcolor.Green() + diff_g + (brightness * 256.0) + 0.5f);
-        b = static_cast<int>(m_BGcolor.Blue()  + diff_b + (brightness * 256.0) + 0.5f);
+        r = static_cast<int>(m_bg_color.Red()   + diff_r + (brightness * 255.0) + 0.5f);
+        g = static_cast<int>(m_bg_color.Green() + diff_g + (brightness * 256.0) + 0.5f);
+        b = static_cast<int>(m_bg_color.Blue()  + diff_b + (brightness * 256.0) + 0.5f);
 #define CLAMP8(x) (((x)<0x00) ? 0x00 : ((x)>0xFF) ? 0xFF : (x))
         r = CLAMP8(r);
         g = CLAMP8(g);
@@ -144,7 +144,7 @@ Crt::intensityToColor(float f) const
 wxFont Crt::pickFont(int pointsize, int bold, const std::string &facename)
 {
     wxFont font;
-    const auto fontweight = (bold) ? wxFONTWEIGHT_BOLD : wxFONTWEIGHT_NORMAL;
+    const auto font_weight = (bold) ? wxFONTWEIGHT_BOLD : wxFONTWEIGHT_NORMAL;
     const bool underline = false;
 
     if (facename != "") {
@@ -152,7 +152,7 @@ wxFont Crt::pickFont(int pointsize, int bold, const std::string &facename)
         font = wxFont(pointsize,
                       wxFONTFAMILY_MODERN,  // fixed pitch
                       wxFONTSTYLE_NORMAL,
-                      fontweight,
+                      font_weight,
                       underline,
                       facename
                 );
@@ -162,27 +162,28 @@ wxFont Crt::pickFont(int pointsize, int bold, const std::string &facename)
     if (!font.IsOk()) {
         font = wxFont(pointsize, wxFONTFAMILY_MODERN,
                                  wxFONTSTYLE_NORMAL,
-                                 fontweight);
+                                 font_weight);
         // debugging: std::string name = font.GetFaceName();
     }
 
     return font;
 }
 
+
 void
 Crt::generateFontmap()
 {
     wxClientDC dc(this);
-    wxMemoryDC charDC;
+    wxMemoryDC char_dc;
     wxFont font;    // for prerendering native font
     int sx = 0,     // bitmap replication factor in x
         sy = 0,     // bitmap replication factor in y
         dy = 0;     // step in y (allows skipping rows)
     int filter = 0; // which filter kernel to use
 
-    const int fontsize = getFontSize();
+    const int font_size = getFontSize();
 
-    switch (fontsize) {
+    switch (font_size) {
         default: // just in case someone has diddled the ini file with a bad value
         case FONT_MATRIX12:     // this is closest to the original
                 sx = 1; sy = 1; dy = 2;
@@ -208,11 +209,11 @@ Crt::generateFontmap()
         case FONT_NATIVE14:
         case FONT_NATIVE18:
         case FONT_NATIVE24:
-                font = pickFont(fontsize, /*bold*/false, "Courier New");
+                font = pickFont(font_size, /*bold*/false, "Courier New");
                 assert(font != wxNullFont);
-                charDC.SetFont(font);
-                m_charcell_w = charDC.GetCharWidth();
-                m_charcell_h = charDC.GetCharHeight()
+                char_dc.SetFont(font);
+                m_charcell_w = char_dc.GetCharWidth();
+                m_charcell_h = char_dc.GetCharHeight()
                              + 3;  // make room for underline, cursor, blank
                 sx = sy = dy = 1; // keep lint happy
 
@@ -297,11 +298,11 @@ Crt::generateFontmap()
     //       6 : alt      yes      high
     //       7 : alt      yes      high
 #if !(__WXMAC__) && DRAW_WITH_RAWBMP
-    m_fontmap = wxBitmap(256*m_charcell_w, 8*m_charcell_h, 24);   // use DIB
+    m_font_map = wxBitmap(256*m_charcell_w, 8*m_charcell_h, 24);   // use DIB
 #else
-    m_fontmap = wxBitmap(256*m_charcell_w, 8*m_charcell_h, wxBITMAP_SCREEN_DEPTH);
+    m_font_map = wxBitmap(256*m_charcell_w, 8*m_charcell_h, wxBITMAP_SCREEN_DEPTH);
 #endif
-    wxMemoryDC fdc(m_fontmap);  // create a dc for us to write to
+    wxMemoryDC fdc(m_font_map);  // create a dc for us to write to
 
     // allocate a temp bitmap for working on one character.
     // it has a one pixel border all around so we can do 3x3 convolution
@@ -313,8 +314,8 @@ Crt::generateFontmap()
     wxBitmap char_bitmap(img_w, img_h, 32);
     std::vector<std::vector<float>> char_intensity(img_h, std::vector<float>(img_w, 0.0f));
 
-    charDC.SelectObject(char_bitmap);
-    charDC.SetBackgroundMode(wxSOLID);
+    char_dc.SelectObject(char_bitmap);
+    char_dc.SetBackgroundMode(wxSOLID);
 
     wxColor blk(*wxBLACK), norm(*wxWHITE), intense(*wxWHITE);
     float f_blk(0.0f),   f_norm(1.0f),   f_intense(1.0f);
@@ -326,11 +327,11 @@ Crt::generateFontmap()
 
     // mapping from filtered image intensity to a color
     // FIMXE: gamma compensation?
-    wxColor colormap[256];
+    wxColor color_map[256];
     for (int n=0; n<256; ++n) {
         const float w = n * (1.0f/256.0f);
         const wxColor c = intensityToColor(w);
-        colormap[n].Set(c.Red(), c.Green(), c.Blue());
+        color_map[n].Set(c.Red(), c.Green(), c.Blue());
     }
 
     // boundaries for drawing graphics chars
@@ -342,12 +343,12 @@ Crt::generateFontmap()
     for (int inv=0; inv<2; ++inv) {
 
         // using bold font helps make black on white readability
-        if (fontsize >= FONT_NATIVE8) {
+        if (font_size >= FONT_NATIVE8) {
 // on windows, at least, the bold font is shifted slightly relative to
 // normal weight, so blink causes the characters to shift up/down. too bad.
-//          font = pickFont(fontsize, /*bold*/(inv==1) || (bright==1));
-            font = pickFont(fontsize, /*bold*/(inv==1), "Courier New");
-            charDC.SetFont(font);
+//          font = pickFont(font_size, /*bold*/(inv==1) || (bright==1));
+            font = pickFont(font_size, /*bold*/(inv==1), "Courier New");
+            char_dc.SetFont(font);
         }
 
         for (int alt=0; alt<2; ++alt) {
@@ -355,19 +356,19 @@ Crt::generateFontmap()
             // brightness modulation for native font rendering
             wxColor fg_eff = ( inv) ? blk : (bright) ? intense : norm;
             wxColor bg_eff = (!inv) ? blk : (bright) ? intense : norm;
-            charDC.SetBackground(wxBrush(bg_eff, wxBRUSHSTYLE_SOLID));
-            charDC.SetTextBackground(bg_eff);
-            charDC.SetTextForeground(fg_eff);
-            charDC.SetPen(wxPen(fg_eff, 1, wxPENSTYLE_SOLID));
-            charDC.SetBrush(wxBrush(fg_eff, wxBRUSHSTYLE_SOLID));
+            char_dc.SetBackground(wxBrush(bg_eff, wxBRUSHSTYLE_SOLID));
+            char_dc.SetTextBackground(bg_eff);
+            char_dc.SetTextForeground(fg_eff);
+            char_dc.SetPen(wxPen(fg_eff, 1, wxPENSTYLE_SOLID));
+            char_dc.SetBrush(wxBrush(fg_eff, wxBRUSHSTYLE_SOLID));
 
             for (int chr=0; chr<256; ++chr) {
                 const int ch = (chr & 0x7F);  // minus underline flag
 
-                if (fontsize >= FONT_NATIVE8) {
+                if (font_size >= FONT_NATIVE8) {
 
                     // prepare by blanking out everything
-                    charDC.Clear();
+                    char_dc.Clear();
 
                     if (alt && (ch >= 0x40)) {
                         // box graphics characters
@@ -376,7 +377,7 @@ Crt::generateFontmap()
                                 const int shift = 2*yy + xx;
                                 if ((chr >> shift) & 1) {
                                     // x,y,w,h
-                                    charDC.DrawRectangle(
+                                    char_dc.DrawRectangle(
                                         boxx[xx],
                                         boxy[yy],
                                         boxx[xx+1] - boxx[xx] + 1,
@@ -391,14 +392,14 @@ Crt::generateFontmap()
 #else
                         wxString text(unicode_xlat_char_alt[ch]);
 #endif
-                        charDC.DrawText(text, offset, offset);
+                        char_dc.DrawText(text, offset, offset);
                     } else {
 #if 0
                         wxString text((wxChar)(xlat_char[ch]));
 #else
                         wxString text(unicode_xlat_char[ch]);
 #endif
-                        charDC.DrawText(text, offset, offset);
+                        char_dc.DrawText(text, offset, offset);
                     }
 
                     // convert to float intensity
@@ -416,7 +417,7 @@ Crt::generateFontmap()
                     if (chr >= 0x80) {
                         const float dot_bg = blk.Blue() / 255.0f;
                         const float dot_fg = norm.Blue() / 255.0f;
-                        const int thickness = (fontsize > FONT_NATIVE10) ? 2 : 1;
+                        const int thickness = (font_size > FONT_NATIVE10) ? 2 : 1;
                         for (int yy=0; yy<thickness; ++yy) {
                             const int row = offset + (m_charcell_h-sy) + yy - thickness+1;
                             for (int x=0; x<m_charcell_w; ++x) {
@@ -527,7 +528,7 @@ Crt::generateFontmap()
                         : (idx > 0xFF) ? 0xFF
                                        : idx;
 
-                    wxColor rgb = colormap[idx];
+                    wxColor rgb = color_map[idx];
                     blur_img.SetRGB(x-offset, y-offset,
                                     rgb.Red(), rgb.Green(), rgb.Blue());
 
@@ -544,8 +545,8 @@ Crt::generateFontmap()
 
     } } // inv, bright
 
-    fdc.SelectObject(wxNullBitmap);  // release m_fontmap
-    charDC.SelectObject(wxNullBitmap);  // release char_bitmap
+    fdc.SelectObject(wxNullBitmap);  // release m_font_map
+    char_dc.SelectObject(wxNullBitmap);  // release char_bitmap
 
     setFontDirty(false);
 }
@@ -592,8 +593,8 @@ void
 Crt::generateScreenByBlits(wxMemoryDC &memDC)
 {
     // draw each character from the fontmap
-    wxMemoryDC fontmapDC;
-    fontmapDC.SelectObjectAsSource(m_fontmap);
+    wxMemoryDC font_map_dc;
+    font_map_dc.SelectObjectAsSource(m_font_map);
 
     const bool text_blink_enable = m_parent->getTextBlinkPhase();
 
@@ -621,7 +622,7 @@ Crt::generateScreenByBlits(wxMemoryDC &memDC)
                     const int font_row = m_charcell_h * (alt + inv + bright);
                     memDC.Blit(col*m_charcell_w, row*m_charcell_h,  // dest x,y
                                m_charcell_w, m_charcell_h,          // w,h
-                               &fontmapDC,                          // src image
+                               &font_map_dc,                        // src image
                                chr*m_charcell_w, font_row);         // src x,y
                 }
             }
@@ -634,14 +635,14 @@ Crt::generateScreenByBlits(wxMemoryDC &memDC)
                 if ((chr >= 0x10) && (chr != 0x20)) {  // if (non-blank character)
                     memDC.Blit(col*m_charcell_w, row*m_charcell_h,  // dest x,y
                                m_charcell_w, m_charcell_h,          // w,h
-                               &fontmapDC,                          // src image
+                               &font_map_dc,                        // src image
                                chr*m_charcell_w, 0);                // src x,y
                 }
             }
         }
     }
 
-    fontmapDC.SelectObject(wxNullBitmap);
+    font_map_dc.SelectObject(wxNullBitmap);
 }
 
 
@@ -774,7 +775,7 @@ bool
 Crt::generateScreenByRawBmp(wxColor fg, wxColor bg)
 {
 // this is very hacky, and for windows it works only if the m_scrbits and
-// m_fontmap bitmaps are declared with depth 24, instead of 32 or -1.
+// m_font_map bitmaps are declared with depth 24, instead of 32 or -1.
 // enabling it for windows is mostly useful for debugging
 #if __WXMAC__
   #define TT_t wxAlphaPixelData
@@ -796,7 +797,7 @@ Crt::generateScreenByRawBmp(wxColor fg, wxColor bg)
         return false;
     }
 
-    TT_t raw_font(m_fontmap);
+    TT_t raw_font(m_font_map);
     if (!raw_font) {
         return false;
     }

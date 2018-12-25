@@ -32,7 +32,7 @@ MyAboutDlg::MyAboutDlg(wxWindow *parent) :
     const int left_indent = 50;
 
     // the hierarchy is:
-    //    topsizer(V)
+    //    top_sizer(V)
     //       + hsizer(H)
     //       |    + icon
     //       |    + vsizer(V)
@@ -41,11 +41,11 @@ MyAboutDlg::MyAboutDlg(wxWindow *parent) :
     //       + blah
     //       + thanks
     //       + blah2
-    //       + comevisit
+    //       + come_visit
     //       + url
-    wxSizer *topsizer = new wxBoxSizer(wxVERTICAL);
+    wxSizer *top_sizer = new wxBoxSizer(wxVERTICAL);
 
-    topsizer->AddSpacer(5);
+    top_sizer->AddSpacer(5);
 
     wxSizer *hsizer = new wxBoxSizer(wxHORIZONTAL);
 
@@ -59,10 +59,10 @@ MyAboutDlg::MyAboutDlg(wxWindow *parent) :
     MyStaticText *version = new MyStaticText(this, wxID_ANY,
         "Wang 2200 Emulator\n"
         "Version 3.0-pre; December 23, 2018");
-    wxFont boldfont(*wxNORMAL_FONT);
-    boldfont.SetPointSize(boldfont.GetPointSize() + 2);
-    boldfont.SetWeight(wxFONTWEIGHT_BOLD);
-    version->SetFont(boldfont);
+    wxFont bold_font(*wxNORMAL_FONT);
+    bold_font.SetPointSize(bold_font.GetPointSize() + 2);
+    bold_font.SetWeight(wxFONTWEIGHT_BOLD);
+    version->SetFont(bold_font);
     vsizer->Add(version, 0, wxEXPAND | wxRIGHT, side_margin);
 
     vsizer->AddSpacer(8);
@@ -74,8 +74,8 @@ MyAboutDlg::MyAboutDlg(wxWindow *parent) :
 
     hsizer->Add(vsizer, 0);
 
-    topsizer->Add(hsizer);
-    topsizer->AddSpacer(12);
+    top_sizer->Add(hsizer);
+    top_sizer->AddSpacer(12);
 
     MyStaticText *blah = new MyStaticText(this, wxID_ANY,
         "This software was developed as a hobby activity solely for the fun\n"
@@ -86,9 +86,9 @@ MyAboutDlg::MyAboutDlg(wxWindow *parent) :
         "Use it at your own risk.\n"
         "\n"
         "Thanks for crucial information and encouragement:");
-    topsizer->Add(blah, 0, wxLEFT | wxRIGHT, side_margin);
+    top_sizer->Add(blah, 0, wxLEFT | wxRIGHT, side_margin);
 
-    topsizer->AddSpacer(8);
+    top_sizer->AddSpacer(8);
 
     MyStaticText *thanks = new MyStaticText(this, wxID_ANY,
         "Mike Bahia\n"
@@ -105,22 +105,22 @@ MyAboutDlg::MyAboutDlg(wxWindow *parent) :
         "Jan Van de Veen\n"
         "Alexander Demin (i8080 model)"
         );
-    topsizer->Add(thanks, 0, wxLEFT | wxRIGHT, left_indent);
+    top_sizer->Add(thanks, 0, wxLEFT | wxRIGHT, left_indent);
 
-    topsizer->AddSpacer(12);
+    top_sizer->AddSpacer(12);
 
     wxString msg;
     msg.Printf("Built with %s", wxVERSION_STRING);
     MyStaticText *blah2 = new MyStaticText(this, wxID_ANY, msg);
-    topsizer->Add(blah2, 0, wxLEFT, side_margin);
+    top_sizer->Add(blah2, 0, wxLEFT, side_margin);
 
-    topsizer->AddSpacer(8);
+    top_sizer->AddSpacer(8);
 
-    MyStaticText *comevisit = new MyStaticText(this, wxID_ANY,
+    MyStaticText *come_visit = new MyStaticText(this, wxID_ANY,
         "Visit this website to get news, manuals, and updates:");
-    topsizer->Add(comevisit, 0, wxLEFT | wxRIGHT, side_margin);
+    top_sizer->Add(come_visit, 0, wxLEFT | wxRIGHT, side_margin);
 
-    topsizer->AddSpacer(5);
+    top_sizer->AddSpacer(5);
 
 #if USE_HYPERLINK
     wxHyperlinkCtrl *url = new wxHyperlinkCtrl(this, wxID_ANY,
@@ -135,11 +135,11 @@ MyAboutDlg::MyAboutDlg(wxWindow *parent) :
     urlFont.SetFamily(wxFONTFAMILY_SWISS);
     urlFont.SetWeight(wxFONTWEIGHT_BOLD);
     url->SetFont(urlFont);
-    topsizer->Add(url, 0, wxALIGN_CENTER);
+    top_sizer->Add(url, 0, wxALIGN_CENTER);
 
-    topsizer->AddSpacer(16);
+    top_sizer->AddSpacer(16);
 
-    SetSizerAndFit(topsizer);
+    SetSizerAndFit(top_sizer);
     CenterOnScreen();
 
     // event routing table

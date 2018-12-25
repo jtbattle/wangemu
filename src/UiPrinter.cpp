@@ -34,11 +34,11 @@ Printer::Printer(PrinterFrame *parent) :
         m_parent(parent),
         m_printing_flag(false),
         m_fp_port(nullptr),
-        m_scrpix_w(0),
-        m_scrpix_h(0),
+        m_screen_pix_w(0),
+        m_screen_pix_h(0),
         m_chars_w(0),
         m_chars_h(0),
-        m_fontsize(12),
+        m_font_size(12),
         m_charcell_w(0),
         m_charcell_h(0),
         m_greenbar(true),
@@ -46,17 +46,17 @@ Printer::Printer(PrinterFrame *parent) :
         m_margintop(0),
         m_marginright(0),
         m_marginbottom(0),
-        m_realprintername(""),
+        m_real_printer_name(""),
         m_orientation(wxPORTRAIT),
-        m_paperid(wxPAPER_LETTER),          // default
-        m_papername(""),
-        m_paperbin(wxPRINTBIN_DEFAULT),     // default
-        m_linelength(80),                   // default
-        m_pagelength(66),                   // default
-        m_autoshow(true),                   // default
-        m_printasgo(true),                  // default
-        m_portdirect(false),                // default
-        m_portstring("LPT1"),               // default
+        m_paper_id(wxPAPER_LETTER),         // default
+        m_paper_name(""),
+        m_paper_bin(wxPRINTBIN_DEFAULT),    // default
+        m_line_length(80),                  // default
+        m_page_length(66),                  // default
+        m_auto_show(true),                  // default
+        m_print_as_go(true),                // default
+        m_port_direct(false),               // default
+        m_port_string("LPT1"),              // default
         m_linebuf_len(0),
         m_linebuf{0}
 {
@@ -67,9 +67,9 @@ Printer::Printer(PrinterFrame *parent) :
     printClear();
 
     // create a timer to close LPT in a timely fashion
-    m_portTimer.SetOwner(this);
-    m_portTimer.Start(500);     // set firing interval -- 1/2 second
-    m_portTimer.Stop();         // but we don't want it just yet
+    m_port_timer.SetOwner(this);
+    m_port_timer.Start(500);     // set firing interval -- 1/2 second
+    m_port_timer.Stop();         // but we don't want it just yet
 
     // event routing table
     Bind(wxEVT_PAINT,            &Printer::OnPaint,           this);
@@ -98,15 +98,15 @@ Printer::setFontSize(const int size)
     m_font = wxFont(size, wxFONTFAMILY_MODERN, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL, false);
     dc.SetFont(m_font);
 
-    m_fontsize   = size;
+    m_font_size  = size;
     m_charcell_w = dc.GetCharWidth();
     m_charcell_h = dc.GetCharHeight();
 
     // set the number of rows in the view
-    m_chars_h = m_scrpix_h / m_charcell_h;
+    m_chars_h = m_screen_pix_h / m_charcell_h;
 
     // set the number of columns in the view (fixed pitch font makes this easy)
-    m_chars_w = m_scrpix_w/m_charcell_w;
+    m_chars_w = m_screen_pix_w/m_charcell_w;
 
     updateView();
 }
@@ -156,67 +156,67 @@ Printer::getOrientation() const noexcept
 }
 
 void
-Printer::setPaperId(wxPaperSize paperid) noexcept
+Printer::setPaperId(wxPaperSize paper_id) noexcept
 {
-    m_paperid = paperid;
+    m_paper_id = paper_id;
 }
 
 wxPaperSize
 Printer::getPaperId() const noexcept
 {
-    return m_paperid;
+    return m_paper_id;
 }
 
 void
-Printer::setPaperName(const std::string &papername)
+Printer::setPaperName(const std::string &paper_name)
 {
-    m_papername = papername;
+    m_paper_name = paper_name;
 }
 
 std::string
 Printer::getPaperName() const
 {
-    return m_papername;
+    return m_paper_name;
 }
 
 void
-Printer::setBin(wxPrintBin paperbin) noexcept
+Printer::setBin(wxPrintBin paper_bin) noexcept
 {
-    m_paperbin = paperbin;
+    m_paper_bin = paper_bin;
 }
 
 wxPrintBin
 Printer::getBin() const noexcept
 {
-    return m_paperbin;
+    return m_paper_bin;
 }
 
 void
 Printer::setRealPrinterName(const std::string &name)
 {
-    m_realprintername = name;
+    m_real_printer_name = name;
 }
 
 std::string
 Printer::getRealPrinterName() const
 {
-    return m_realprintername;
+    return m_real_printer_name;
 }
 
 void
-Printer::setPageAttributes(int linelength, int pagelength)
+Printer::setPageAttributes(int line_length, int page_length)
 {
-    m_linelength = linelength;
-    m_pagelength = pagelength;
+    m_line_length = line_length;
+    m_page_length = page_length;
     updateView();
 }
 
 
 void
-Printer::getPageAttributes(int &linelength, int &pagelength) const noexcept
+Printer::getPageAttributes(int &line_length, int &page_length) const noexcept
 {
-    linelength = m_linelength;
-    pagelength = m_pagelength;
+    line_length = m_line_length;
+    page_length = m_page_length;
 }
 
 void
@@ -230,7 +230,7 @@ Printer::getCellAttributes(int &cell_w, int &cell_h) const noexcept
 void
 Printer::setAutoshow(bool b) noexcept
 {
-    m_autoshow = b;
+    m_auto_show = b;
 }
 
 
@@ -238,14 +238,14 @@ Printer::setAutoshow(bool b) noexcept
 bool
 Printer::getAutoshow() const noexcept
 {
-    return m_autoshow;
+    return m_auto_show;
 }
 
 // set printasgo attribute
 void
 Printer::setPrintasgo(bool b) noexcept
 {
-    m_printasgo = b;
+    m_print_as_go = b;
 }
 
 
@@ -253,34 +253,34 @@ Printer::setPrintasgo(bool b) noexcept
 bool
 Printer::getPrintasgo() const noexcept
 {
-    return m_printasgo;
+    return m_print_as_go;
 }
 
 // set portdirect attribute
 void
 Printer::setPortdirect(bool b) noexcept
 {
-    m_portdirect = b;
+    m_port_direct = b;
 }
 
 // get portdirect attribute
 bool
 Printer::getPortdirect() const noexcept
 {
-    return m_portdirect;
+    return m_port_direct;
 }
 
 // portstring attribute
 void
 Printer::setPortstring(const std::string &name)
 {
-    m_portstring = name;
+    m_port_string = name;
 }
 
 std::string
 Printer::getPortstring() const
 {
-    return m_portstring;
+    return m_port_string;
 }
 
 
@@ -290,7 +290,7 @@ Printer::printChar(uint8 byte)
 {
     byte &= 0x7F;
 
-    if (m_portdirect) {
+    if (m_port_direct) {
         lptChar(byte);
         return;
     }
@@ -389,10 +389,10 @@ Printer::lptChar(uint8 byte)
 {
     if (m_fp_port == nullptr) {
         // port is closed.  open it and set timer to close if port goes idle.
-        assert(m_portstring != "");
-        // UI_info("opening %s", m_portstring.c_str());
-        m_fp_port = fopen(m_portstring.c_str(), "wb");
-        m_portTimer.Start();  // period was set in the constructor
+        assert(m_port_string != "");
+        // UI_info("opening %s", m_port_string.c_str());
+        m_fp_port = fopen(m_port_string.c_str(), "wb");
+        m_port_timer.Start();  // period was set in the constructor
     }
 
     fputc(byte, m_fp_port);
@@ -409,7 +409,7 @@ Printer::lptChar(uint8 byte)
 void
 Printer::closePort()
 {
-    m_portTimer.Stop();
+    m_port_timer.Stop();
 
     if (m_fp_port != nullptr) {
         fclose(m_fp_port);
@@ -437,9 +437,8 @@ Printer::saveToFile()
             return;
         }
 
-        const int maxn = m_printstream.size();
-
-        for (int n = 0; n < maxn; n++) {
+        const int num_lines = m_printstream.size();
+        for (int n = 0; n < num_lines; n++) {
 #ifdef __WXMSW__
             std::string tmpline(m_printstream[n] + "\r\n");
 #else
@@ -483,7 +482,7 @@ Printer::numberOfPages() const noexcept
     if (num_rows == 0) {
         return 1;
     }
-    return ((num_rows + m_pagelength-1) / m_pagelength);  // round up
+    return ((num_rows + m_page_length-1) / m_page_length);  // round up
 }
 
 // create a page image
@@ -492,20 +491,20 @@ Printer::generatePrintPage(wxDC *dc, int pagenum, float vertAdjust)
 {
     assert(dc != nullptr);
 
-    const size_t length = m_linelength;
-    const int startRow = ((pagenum - 1) * m_pagelength);
+    const size_t length = m_line_length;
+    const int startRow = ((pagenum - 1) * m_page_length);
     const int startCol = 0;
     std::string line;
 
     dc->SetFont(m_font);
 
     // draw each row of the text
-    for (int row = 0; row < m_pagelength; row++) {
+    for (int row = 0; row < m_page_length; row++) {
 
         if (static_cast<size_t>(startRow + row) < m_printstream.size()) {
             // the line exists
             line = m_printstream[startRow + row];
-            line = line.substr(startCol, m_linelength - startCol);
+            line = line.substr(startCol, m_line_length - startCol);
         } else {
             // use empty line
             line = "";
@@ -524,7 +523,7 @@ Printer::scrollbarSet(int xpos, int ypos, bool redraw)
 {
     SetScrollbars(m_charcell_w,              // pixels per scroll unit x
                   m_charcell_h,              // pixels per scroll unit y
-                  m_linelength + 2*hmargin,  // number of units x
+                  m_line_length + 2*hmargin, // number of units x
                   m_printstream.size(),      // number of units y,
                   xpos,                      // x position in scroll units
                   ypos,                      // y position in scroll units
@@ -555,8 +554,6 @@ Printer::OnPaint(wxPaintEvent &WXUNUSED(event))
     // is interrupted because of printing, then the reference
     // pointer used in here will get messed up
 
-    // PHE: freeze the emu?
-
     // have we scrolled?
     int firstCol, firstLine;
     GetViewStart(&firstCol, &firstLine);
@@ -576,14 +573,15 @@ Printer::OnPaint(wxPaintEvent &WXUNUSED(event))
     updateStatusbar();
 }
 
+
 void
 Printer::OnSize(wxSizeEvent &event)
 {
     int width, height;
     GetClientSize(&width, &height);
 
-    m_scrpix_w = width;
-    m_scrpix_h = height;
+    m_screen_pix_w = width;
+    m_screen_pix_h = height;
 
     // reset the number of rows in the view
     if (m_charcell_h != 0) {            // the first time through, when font has not initialized, it is zero
@@ -593,7 +591,7 @@ Printer::OnSize(wxSizeEvent &event)
         m_chars_w = width / m_charcell_w;
     }
 
-    m_scrpix_h = m_scrpix_h + m_charcell_h; // add one extra row to make scrolling work
+    m_screen_pix_h += m_charcell_h; // add one extra row to make scrolling work
 
     if (width > 0 && height > 0) {
         m_scrbits = wxBitmap(width, height, -1);     // same depth as display
@@ -603,6 +601,7 @@ Printer::OnSize(wxSizeEvent &event)
     event.Skip();       // do the rest of the OnSize processing
 }
 
+
 // If the port has been opened too long without activity, close it.
 // If we have been printing to LPT recently, keep it open a while longer.
 void
@@ -611,7 +610,7 @@ Printer::OnTimer(wxTimerEvent &WXUNUSED(event))
     if (m_printing_flag == false) {
         // if port is open, close it
         closePort();
-        // UI_info("Timer timed out; closed %s", m_portstring.c_str());
+        // UI_info("Timer timed out; closed %s", m_port_string.c_str());
     } else {
         // keep port open.  timer re-arms automatically.
         m_printing_flag = false;  // will be set if we start printing before the timer expires
@@ -627,6 +626,7 @@ Printer::OnEraseBackground(wxEraseEvent &WXUNUSED(event)) noexcept
     // do nothing
 }
 
+
 // refresh the entire window
 void
 Printer::drawScreen(wxDC& dc, int startCol, int startRow)
@@ -638,6 +638,7 @@ Printer::drawScreen(wxDC& dc, int startCol, int startRow)
     dc.DrawBitmap(m_scrbits, 0, 0);  // src, x,y
 }
 
+
 // update the pixmap of the screen image
 // if greenbar mode is on, the layout is like this:
 //    |<three chars of white>|<N chars of green or white>|<three chars of white>|
@@ -646,11 +647,11 @@ void
 Printer::generateScreen(int startCol, int startRow)
 {
     // width of virtual paper, in pixels
-    const int page_w = m_charcell_w * (m_linelength + 2*hmargin);
+    const int page_w = m_charcell_w * (m_line_length + 2*hmargin);
 
     // amount of background to the left/right of virtual page in viewport
-    const int left_bg_w  = std::max(0, (m_scrpix_w - page_w)/2);
-    const int right_bg_w = std::max(0, m_scrpix_w - left_bg_w);
+    const int left_bg_w  = std::max(0, (m_screen_pix_w - page_w)/2);
+    const int right_bg_w = std::max(0, m_screen_pix_w - left_bg_w);
 
     // left edge of paper relative to the viewport (can be negative)
     const int left_edge = (-startCol * m_charcell_w)    // if scrolled left
@@ -666,50 +667,50 @@ Printer::generateScreen(int startCol, int startRow)
     // there won't be any startCol offset
     assert((startCol == 0) || (left_edge < 0));
 
-    wxMemoryDC imgDC(m_scrbits);
+    wxMemoryDC img_dc(m_scrbits);
 
     // draw page background to white
     {
-        imgDC.SetPen(*wxWHITE_PEN);
-        imgDC.SetBrush(*wxWHITE_BRUSH);
-        imgDC.DrawRectangle(left_edge, 0,          // origin
-                             page_w, m_scrpix_h);  // width, height
+        img_dc.SetPen(*wxWHITE_PEN);
+        img_dc.SetBrush(*wxWHITE_BRUSH);
+        img_dc.DrawRectangle(left_edge, 0,             // origin
+                             page_w, m_screen_pix_h);  // width, height
     }
 
     // draw greyed out region on the right and left
     // (right_bg_w >= left_bg_w) so only need to check right_bg_w
     if (right_bg_w >= 0) {
-        imgDC.SetPen(*wxGREY_PEN);
-        imgDC.SetBrush(*wxGREY_BRUSH);
-        imgDC.DrawRectangle(0, 0,            // origin
-                            left_bg_w,       // width
-                            m_scrpix_h);     // height
-        imgDC.DrawRectangle(right_edge, 0,   // origin
-                            right_bg_w,      // width
-                            m_scrpix_h);     // height
+        img_dc.SetPen(*wxGREY_PEN);
+        img_dc.SetBrush(*wxGREY_BRUSH);
+        img_dc.DrawRectangle(0, 0,            // origin
+                             left_bg_w,       // width
+                             m_screen_pix_h); // height
+        img_dc.DrawRectangle(right_edge, 0,   // origin
+                             right_bg_w,      // width
+                             m_screen_pix_h); // height
 
         // draw black edge to paper for emphasis
-        imgDC.SetPen(*wxBLACK_PEN);
-        imgDC.DrawLine(left_edge-1, 0,       // origin
-                       left_edge-1,          // width
-                       m_scrpix_h);          // height
-        imgDC.DrawLine(right_edge-1, 0,      // origin
-                       right_edge-1,         // width
-                       m_scrpix_h);          // height
+        img_dc.SetPen(*wxBLACK_PEN);
+        img_dc.DrawLine(left_edge-1, 0,       // origin
+                        left_edge-1,          // width
+                        m_screen_pix_h);      // height
+        img_dc.DrawLine(right_edge-1, 0,      // origin
+                        right_edge-1,         // width
+                        m_screen_pix_h);      // height
 
-        imgDC.SetPen(wxNullPen);
-        imgDC.SetBrush(wxNullBrush);
+        img_dc.SetPen(wxNullPen);
+        img_dc.SetBrush(wxNullBrush);
     }
 
     // if greenbar mode, draw green rounded rectangles
     if (m_greenbar) {
 
-        wxColor lightGreen = wxColour(0xB0, 0xFF, 0xB0);
-        wxColor darkGreen  = wxColour(0x00, 0x80, 0x00);
-        wxBrush rectfill(lightGreen);
-        wxPen   rectoutline(darkGreen);
-        imgDC.SetPen(rectoutline);
-        imgDC.SetBrush(rectfill);
+        wxColor light_green = wxColour(0xB0, 0xFF, 0xB0);
+        wxColor dark_green  = wxColour(0x00, 0x80, 0x00);
+        wxBrush rect_fill(light_green);
+        wxPen   rect_outline(dark_green);
+        img_dc.SetPen(rect_outline);
+        img_dc.SetBrush(rect_fill);
 
         const int bar_2h = bar_h*2;   // twice height of greenbar
         const int first_greenbar = ((startRow                )/bar_2h)*bar_2h + bar_h;
@@ -718,14 +719,14 @@ Printer::generateScreen(int startCol, int startRow)
         for (int bar = first_greenbar; bar <= last_greenbar; bar += bar_2h) {
             const int yoff = (bar - startRow) * m_charcell_h;
             const int xoff = left_edge + hmargin* m_charcell_w - m_charcell_w/2;  //  \ expand it 1/2 char
-            const int width  = m_linelength * m_charcell_w     + m_charcell_w;    //  / on each side
+            const int width  = m_line_length * m_charcell_w     + m_charcell_w;    //  / on each side
             const int height = bar_h * m_charcell_h;
             const double radius = m_charcell_w * 0.5;
-            imgDC.DrawRoundedRectangle(xoff, yoff, width, height, radius);
+            img_dc.DrawRoundedRectangle(xoff, yoff, width, height, radius);
         }
 
-        imgDC.SetPen(wxNullPen);
-        imgDC.SetBrush(wxNullBrush);
+        img_dc.SetPen(wxNullPen);
+        img_dc.SetBrush(wxNullBrush);
     }
 
     // draw page breaks
@@ -734,30 +735,30 @@ Printer::generateScreen(int startCol, int startRow)
         wxPen breakpen(gray, 1, wxPENSTYLE_USER_DASH);
         const wxDash dashArray[] = { 2, 5 };  // pixels on, pixels off
         breakpen.SetDashes(2, &dashArray[0]);
-        imgDC.SetPen(breakpen);
+        img_dc.SetPen(breakpen);
 
-              int first_break = ((startRow                )/m_pagelength)*m_pagelength;
-        const int last_break  = ((startRow + m_chars_h + 1)/m_pagelength)*m_pagelength;
+              int first_break = ((startRow                )/m_page_length)*m_page_length;
+        const int last_break  = ((startRow + m_chars_h + 1)/m_page_length)*m_page_length;
         if (startRow == 0) {
-            first_break += m_pagelength;        // skip first break
+            first_break += m_page_length;        // skip first break
         }
-        for (int brk = first_break; brk <= last_break; brk += m_pagelength) {
+        for (int brk = first_break; brk <= last_break; brk += m_page_length) {
             const int x_off = left_edge;
             const int y_off = m_charcell_h * (brk - startRow);
             const int x_end = left_edge + page_w;
-            imgDC.DrawLine(x_off, y_off,   // from (x,y)
-                           x_end, y_off);  // to   (x,y)
+            img_dc.DrawLine(x_off, y_off,   // from (x,y)
+                            x_end, y_off);  // to   (x,y)
         }
 
-        imgDC.SetPen(wxNullPen);
+        img_dc.SetPen(wxNullPen);
     }
 
     // draw each row of the text
     {
-        imgDC.SetBackgroundMode(wxTRANSPARENT); // in case of greenbar mode
-        imgDC.SetTextBackground(*wxWHITE);      // moot if greenbar mode
-        imgDC.SetTextForeground(*wxBLACK);      // always
-        imgDC.SetFont(m_font);
+        img_dc.SetBackgroundMode(wxTRANSPARENT); // in case of greenbar mode
+        img_dc.SetTextBackground(*wxWHITE);      // moot if greenbar mode
+        img_dc.SetTextForeground(*wxBLACK);      // always
+        img_dc.SetFont(m_font);
 
         const int num_rows = m_printstream.size();
         std::string line;
@@ -767,7 +768,7 @@ Printer::generateScreen(int startCol, int startRow)
             if (startRow + row < num_rows) {
                 // the line exists
                 line = m_printstream[startRow + row];
-                const size_t nchars = (m_linelength+hmargin) - skip_chars;
+                const size_t nchars = (m_line_length+hmargin) - skip_chars;
                 if ((skip_chars > 0) || (nchars < line.length())) {
                     // chop off any chars to the left of the display or
                     // to the right of the right edge of the virtual paper
@@ -775,14 +776,15 @@ Printer::generateScreen(int startCol, int startRow)
                 }
                 const int x_off = left_bg_w + m_charcell_w * std::max(hmargin - startCol, 0);
                 const int y_off = m_charcell_h * row;
-                imgDC.DrawText(line, x_off, y_off);
+                img_dc.DrawText(line, x_off, y_off);
             }
 
         } // for (row)
     }
 
-    imgDC.SelectObject(wxNullBitmap);   // release m_scrbits
+    img_dc.SelectObject(wxNullBitmap);   // release m_scrbits
 }
+
 
 // emit current buffer to the print stream
 void
@@ -792,25 +794,26 @@ Printer::emitLine()
     m_printstream.push_back(std::string(&m_linebuf[0]));
     m_linebuf_len = 0;
 
-    if (m_autoshow) {
+    if (m_auto_show) {
         m_parent->Show(true);   // show the printer window if it is off (this should be a
     }
 
     updateView();
 
-    if (m_printasgo) {
-        if ((m_printstream.size() % m_pagelength) == 0) {
+    if (m_print_as_go) {
+        if ((m_printstream.size() % m_page_length) == 0) {
             // we just added the last line on a page. orint it.
             m_parent->printAndClear();
         }
     }
 }
 
+
 // emit lines to simulate a form feed
 void
 Printer::formFeed()
 {
-    const int linesToAdd = m_pagelength - (m_printstream.size() % m_pagelength);
+    const int linesToAdd = m_page_length - (m_printstream.size() % m_page_length);
     for (int i = 0; i < linesToAdd; i++) {
         // call emit line to that current line buffer is flushed
         // and to make sure page oriented functions such as "print as you go" are invoked
@@ -819,6 +822,7 @@ Printer::formFeed()
     }
     updateView();
 }
+
 
 // check redraw of screen, set scrollbars, update statusbar text
 void
@@ -829,13 +833,13 @@ Printer::updateView()
     // first visible line, we need to redraw.  otherwise not.
     int first_visible_row, first_visible_char;
     GetViewStart(&first_visible_char, &first_visible_row);
-    const int endrow = first_visible_row + m_chars_h;   // last row on screen
+    const int end_row = first_visible_row + m_chars_h;  // last row on screen
     const int num_rows = m_printstream.size();          // # rows in log
 
     if (num_rows <= m_chars_h) {
         // the entire print state fits on screen
         scrollbarSet(0, 0, true);
-    } else if (num_rows == endrow+1) {
+    } else if (num_rows == end_row+1) {
         // if the new row is one off the end,
         // scroll to make sure the new row is still visible
         scrollbarSet(first_visible_char, first_visible_row+1, true);
@@ -869,7 +873,7 @@ Printer::updateStatusbar()
     // line is ambiguous in the case of partial rows.
     const int num_pages = numberOfPages();
     const int last_line = std::min(first_visible_row + m_chars_h+1, num_rows);
-    const int cur_page = (last_line + m_pagelength-1) / m_pagelength;
+    const int cur_page = (last_line + m_page_length-1) / m_page_length;
     std::string msg("Page " + std::to_string(cur_page) +
                     " of " + std::to_string(num_pages) +
                     " (line " + std::to_string(last_line) +
@@ -887,6 +891,7 @@ Printout::Printout(const wxString &title, std::shared_ptr<Printer> printer) :
         m_printer(printer)
 {
 }
+
 
 bool
 Printout::OnPrintPage(int page)
@@ -993,11 +998,13 @@ Printout::OnPrintPage(int page)
     return true;
 }
 
+
 bool
 Printout::HasPage(int page) noexcept
 {
     return (page <= m_printer->numberOfPages());
 }
+
 
 bool
 Printout::OnBeginDocument(int startPage, int endPage)
@@ -1007,6 +1014,7 @@ Printout::OnBeginDocument(int startPage, int endPage)
     }
     return true;
 }
+
 
 void
 Printout::GetPageInfo(int *minPage, int *maxPage, int *selPageFrom, int * selPageTo) noexcept
