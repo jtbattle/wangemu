@@ -16,7 +16,7 @@ public:
     // ----- common IoCard functions -----
     IoCardKeyboard(std::shared_ptr<Scheduler> scheduler,
                    std::shared_ptr<Cpu2200>   cpu,
-                   int baseaddr, int cardslot);
+                   int base_addr, int card_slot);
     ~IoCardKeyboard();
 
     std::vector<int> getAddresses() const override;
@@ -50,12 +50,12 @@ private:
     void tcbScript();
 
     // test if any key is ready to accept
-    void check_keyready();
+    void checkKeyReady();
 
     std::shared_ptr<Scheduler> m_scheduler;  // shared event scheduler
     std::shared_ptr<Cpu2200>   m_cpu;        // associated CPU
     std::shared_ptr<Timer>     m_tmr_script; // keystrokes are sent a few 10s of uS after !CPB
-    const int   m_baseaddr;       // the address the card is mapped to
+    const int   m_base_addr;      // the address the card is mapped to
     const int   m_slot;           // which slot the card is plugged into
     bool        m_selected;       // this card is being addressed
     bool        m_cpb;            // 1=CPU busy (not accepting IBS input)

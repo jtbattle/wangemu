@@ -23,16 +23,16 @@ std::unique_ptr<IoCard>
 IoCard::makeCard(std::shared_ptr<Scheduler> scheduler,
                  std::shared_ptr<Cpu2200>   cpu,
                  card_t type,
-                 int baseaddr, int cardslot, const CardCfgState *cfg)
+                 int base_addr, int card_slot, const CardCfgState *cfg)
 {
-    return makeCardImpl(scheduler, cpu, type, baseaddr, cardslot, cfg);
+    return makeCardImpl(scheduler, cpu, type, base_addr, card_slot, cfg);
 }
 
 
 // make a temporary card; this is so code can query the properties of the card;
 // as such, the IoCard* functions know to do only partial construction
 std::unique_ptr<IoCard>
-IoCard::makeTmpCard(card_t type, int baseaddr)
+IoCard::makeTmpCard(card_t type, int base_addr)
 {
     std::shared_ptr<Scheduler> dummy_scheduler{nullptr};
     std::shared_ptr<Cpu2200t>  dummy_cpu{nullptr};
@@ -40,7 +40,7 @@ IoCard::makeTmpCard(card_t type, int baseaddr)
 
     return makeCardImpl(dummy_scheduler,
                         dummy_cpu,
-                        type, baseaddr, -1,
+                        type, base_addr, -1,
                         dummy_config);
 }
 
@@ -49,7 +49,7 @@ IoCard::makeTmpCard(card_t type, int baseaddr)
 std::unique_ptr<IoCard>
 IoCard::makeCardImpl(std::shared_ptr<Scheduler> scheduler,
                      std::shared_ptr<Cpu2200>   cpu,
-                     card_t type, int baseaddr, int cardslot,
+                     card_t type, int base_addr, int card_slot,
                      const CardCfgState *cfg)
 {
     std::unique_ptr<IoCard> crd{nullptr};
@@ -57,28 +57,28 @@ IoCard::makeCardImpl(std::shared_ptr<Scheduler> scheduler,
     switch (type) {
         case card_t::keyboard:
             crd = std::make_unique<IoCardKeyboard>(
-                            scheduler, cpu, baseaddr, cardslot);
+                            scheduler, cpu, base_addr, card_slot);
             break;
         case card_t::disp_64x16:
             crd = std::make_unique<IoCardDisplay>(
                             scheduler, cpu,
-                            baseaddr, cardslot, UI_SCREEN_64x16);
+                            base_addr, card_slot, UI_SCREEN_64x16);
             break;
         case card_t::disp_80x24:
             crd = std::make_unique<IoCardDisplay>(
                             scheduler, cpu,
-                            baseaddr, cardslot, UI_SCREEN_80x24);
+                            base_addr, card_slot, UI_SCREEN_80x24);
             break;
         case card_t::term_mux:
             crd = std::make_unique<IoCardTermMux>(
-                            scheduler, cpu, baseaddr, cardslot, cfg);
+                            scheduler, cpu, base_addr, card_slot, cfg);
             break;
         case card_t::printer:
-            crd = std::make_unique<IoCardPrinter>(cpu, baseaddr, cardslot);
+            crd = std::make_unique<IoCardPrinter>(cpu, base_addr, card_slot);
             break;
         case card_t::disk:
             crd = std::make_unique<IoCardDisk>(
-                            scheduler, cpu, baseaddr, cardslot, cfg);
+                            scheduler, cpu, base_addr, card_slot, cfg);
             break;
         default:
             assert(false);

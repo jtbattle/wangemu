@@ -20,7 +20,7 @@ public:
     // ----- common IoCard functions -----
     IoCardTermMux(std::shared_ptr<Scheduler> scheduler,
                   std::shared_ptr<Cpu2200> cpu,
-                  int baseaddr, int cardslot,
+                  int base_addr, int card_slot,
                   const CardCfgState *cfg);
     ~IoCardTermMux();
 
@@ -60,10 +60,10 @@ private:
     int execOneOp() noexcept;
 
     // update the board's !ready/busy status (if selected)
-    void update_rbi() noexcept;
+    void updateRbi() noexcept;
 
     // raise an interrupt if any uart has an rx char ready
-    void update_interrupt() noexcept;
+    void updateInterrupt() noexcept;
 
     void checkTxBuffer(int term_num);
     void mxdToTermCallback(int term_num, int byte);
@@ -75,7 +75,7 @@ private:
     std::shared_ptr<Cpu2200>   m_cpu;       // associated CPU
     void       *m_i8080;             // control processor
     uint8       m_ram[4096];         // i8080 RAM
-    const int   m_baseaddr;          // the address the card is mapped to
+    const int   m_base_addr;         // the address the card is mapped to
     const int   m_slot;              // which slot the card is plugged into
     int         m_num_terms;         // number of terminals attached to MXD
     bool        m_selected;          // the card is currently selected

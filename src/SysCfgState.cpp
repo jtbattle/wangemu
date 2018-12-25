@@ -229,7 +229,7 @@ SysCfgState::loadIni()
 
         // TODO: ideally, we'd check the card type against the list of
         //       addresses allowed for that card type
-        const bool plausible_card = IoCard::legal_card_t(card_type)
+        const bool plausible_card = IoCard::legalCardType(card_type)
                                  && ((0 <= io_addr)  && (io_addr <= 0xFFF));
 
         if (plausible_card) {

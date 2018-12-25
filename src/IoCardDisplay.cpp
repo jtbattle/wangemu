@@ -93,12 +93,12 @@ static const int num_scanlines = 256;
 // instance constructor
 IoCardDisplay::IoCardDisplay(std::shared_ptr<Scheduler> scheduler,
                              std::shared_ptr<Cpu2200>   cpu,
-                             int baseaddr, int cardslot,
+                             int base_addr, int card_slot,
                              ui_screen_t screen_type) :
     m_scheduler(scheduler),
     m_cpu(cpu),
-    m_baseaddr(baseaddr),
-    m_slot(cardslot),
+    m_base_addr(base_addr),
+    m_slot(card_slot),
     m_selected(false),
     m_card_busy(false),
     m_screen_type(screen_type),
@@ -116,9 +116,10 @@ IoCardDisplay::IoCardDisplay(std::shared_ptr<Scheduler> scheduler,
     reset(true);
 
     m_terminal = std::make_unique<Terminal>(scheduler, nullptr,
-                                            baseaddr, 0, screen_type);
+                                            base_addr, 0, screen_type);
     assert(m_terminal);
 }
+
 
 // instance destructor
 IoCardDisplay::~IoCardDisplay()
@@ -129,6 +130,7 @@ IoCardDisplay::~IoCardDisplay()
     }
 }
 
+
 const std::string
 IoCardDisplay::getDescription() const
 {
@@ -136,11 +138,13 @@ IoCardDisplay::getDescription() const
                                               : "80x24 CRT Controller";
 }
 
+
 const std::string
 IoCardDisplay::getName() const
 {
     return (m_screen_type == UI_SCREEN_64x16) ? "6312A" : "7011";
 }
+
 
 // return a list of the various base addresses a card can map to
 // list of common I/O addresses for this device taken from p. 2-5 of
@@ -152,17 +156,19 @@ IoCardDisplay::getBaseAddresses() const
     return v;
 }
 
+
 // return the list of addresses that this specific card responds to
 std::vector<int>
 IoCardDisplay::getAddresses() const
 {
     std::vector<int> v;
-    v.push_back(m_baseaddr);
+    v.push_back(m_base_addr);
     return v;
 }
 
+
 void
-IoCardDisplay::reset(bool hard_reset)
+IoCardDisplay::reset(bool /*hard_reset*/)
 {
     // reset card state
     m_busy_state = busy_state::IDLE;
@@ -176,9 +182,8 @@ IoCardDisplay::reset(bool hard_reset)
     m_tmr_hsync = nullptr;
     m_hsync_count = 0;
     tcbHsync(0);
-
-    hard_reset = hard_reset;    // silence lint
 }
+
 
 void
 IoCardDisplay::select()
@@ -191,6 +196,7 @@ IoCardDisplay::select()
     m_cpu->setDevRdy(!m_card_busy);
 }
 
+
 void
 IoCardDisplay::deselect()
 {
@@ -201,6 +207,7 @@ IoCardDisplay::deselect()
 
     m_selected = false;
 }
+
 
 void
 IoCardDisplay::strobeOBS(int val)
@@ -233,6 +240,7 @@ IoCardDisplay::strobeOBS(int val)
     m_cpu->setDevRdy(!m_card_busy);
 }
 
+
 void
 IoCardDisplay::strobeCBS(int val)
 {
@@ -248,6 +256,7 @@ IoCardDisplay::strobeCBS(int val)
 #endif
 }
 
+
 int
 IoCardDisplay::getIB() const noexcept
 {
@@ -258,6 +267,7 @@ IoCardDisplay::getIB() const noexcept
     // is performed on reset.
     return (m_screen_type == UI_SCREEN_80x24) ? 0x10 : 0x00;
 }
+
 
 // change of CPU Busy state
 // because the display is write-only, we don't expect the CPU

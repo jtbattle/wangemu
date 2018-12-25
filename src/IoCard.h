@@ -125,7 +125,7 @@ public:
     };
 
     // return true if the argument is a legal card enum
-    static bool legal_card_t(card_t c) {
+    static bool legalCardType(card_t c) {
         for (auto &ct : card_types) {
             if (c == ct)
                 return true;
@@ -138,13 +138,13 @@ public:
     static std::unique_ptr<IoCard> makeCard(
                             std::shared_ptr<Scheduler> scheduler,
                             std::shared_ptr<Cpu2200>   cpu,
-                            card_t type, int baseaddr, int cardslot,
+                            card_t type, int base_addr, int card_slot,
                             const CardCfgState *cfg);
 
     // make a temporary card in order to query its properties.
     // the IoCard* functions know to do only partial construction.
     static std::unique_ptr<IoCard> makeTmpCard(card_t type,
-                                               int baseaddr=0x000);
+                                               int base_addr=0x000);
 
 protected:  // these are used by the CardInfo class
 
@@ -165,15 +165,15 @@ protected:  // these are used by the CardInfo class
 
 private:
     // shared implementation the other make*Card function use.
-    // if cardslot is -1, this is a temp card that is incompletely
+    // if card_slot is -1, this is a temp card that is incompletely
     // initialized simply so we can use the methods to look up card
-    // properties (ugly).  finally, if we provide real cardslot
+    // properties (ugly).  finally, if we provide real card_slot
     // information and existing_card is false, we return a new card
     // that has default state associated with it.
     static std::unique_ptr<IoCard> makeCardImpl(
                                 std::shared_ptr<Scheduler> scheduler,
                                 std::shared_ptr<Cpu2200>   cpu,
-                                card_t type, int baseaddr, int cardslot,
+                                card_t type, int base_addr, int card_slot,
                                 const CardCfgState *cfg);
 };
 

@@ -70,14 +70,15 @@
 // start.
 //
 bool
-IoCardDisk::cax_init() noexcept
+IoCardDisk::caxInit() noexcept
 {
     // return true if AB indicates this is command initiation
     return (m_cpu->getAB() & 0xA0) == 0xA0;
 }
 
+
 std::string
-IoCardDisk::statename(int state) const
+IoCardDisk::stateName(int state) const
 {
     switch (state) {
         case CTRL_WAKEUP:               return "CTRL_WAKEUP";
@@ -141,6 +142,7 @@ IoCardDisk::driveIsSmart(int drive) const
            (m_d[drive].wvd->getNumSectors() > 32768);
 }
 
+
 bool
 IoCardDisk::driveIsDumb(int drive) const
 {
@@ -188,12 +190,14 @@ IoCardDisk::advanceState(disk_event_t event, const int val)
     const bool rv = advanceStateInt(event, val);
     const bool poll_after  = (!m_cpb && !m_card_busy);
 
+// FIXME: poll_before and poll_after identical values
     if (!poll_before && poll_after) {
         checkDiskReady();  // causes reentrancy to this function
     }
 
     return rv;
 }
+
 
 // return a pointer to a string describing a known extended command
 // which the emulator doesn't support.  return nullptr if it is either
@@ -223,6 +227,7 @@ IoCardDisk::unsupportedExtendedCommandName(int cmd)
     }
 }
 
+
 bool
 IoCardDisk::advanceStateInt(disk_event_t event, const int val)
 {
@@ -230,7 +235,7 @@ IoCardDisk::advanceStateInt(disk_event_t event, const int val)
 
     if (DBG > 1) {
         if (event == EVENT_OBS) {
-            dbglog("State %s, received OBS(0x%02x)\n", statename(m_state).c_str(), val);
+            dbglog("State %s, received OBS(0x%02x)\n", stateName(m_state).c_str(), val);
         } else {
             std::string msg;
             switch (event) {
@@ -240,7 +245,7 @@ IoCardDisk::advanceStateInt(disk_event_t event, const int val)
                 case EVENT_DISK:      msg = "EVENT_DISK";      break;
                 default:              msg = "???";             break;
             }
-            dbglog("State %s, received %s\n", statename(m_state).c_str(), msg.c_str());
+            dbglog("State %s, received %s\n", stateName(m_state).c_str(), msg.c_str());
         }
     }
 
@@ -257,12 +262,12 @@ IoCardDisk::advanceStateInt(disk_event_t event, const int val)
     // sequence.  this happens in normal conditions, but it can also
     // happen if the 2200 detects a problem in the handshake in order
     // to abort whatever command is going on.
-    if (event == EVENT_OBS && cax_init()) {
+    if (event == EVENT_OBS && caxInit()) {
         if (!inIdleState()) {
             // we are aborting something in progress
             if (DBG > 0) {
                 dbglog("Warning: CAX aborted command state %s, cnt=%d\n",
-                       statename(m_state).c_str(), m_bufptr);
+                       stateName(m_state).c_str(), m_bufptr);
             }
         }
         m_state = CTRL_WAKEUP;
@@ -292,7 +297,7 @@ IoCardDisk::advanceStateInt(disk_event_t event, const int val)
     }
     if (!expecting_obs && (event == EVENT_OBS)) {
         if (NOISY > 0) {
-            UI_Info("Unexpected OBS in state %s", statename(m_state).c_str());
+            UI_Info("Unexpected OBS in state %s", stateName(m_state).c_str());
         }
     }
 
@@ -317,7 +322,7 @@ IoCardDisk::advanceStateInt(disk_event_t event, const int val)
     case CTRL_WAKEUP:
         assert(m_card_busy == false);
         if (event == EVENT_OBS) {
-            if (cax_init()) {
+            if (caxInit()) {
                 // we must be selected if we got the OBS
                 setBusyState(false);
                 m_host_type = val;
@@ -770,7 +775,7 @@ IoCardDisk::advanceStateInt(disk_event_t event, const int val)
                 // finished receiving data and LRC, send status byte
                 // after the sector has been reached
                 m_state = CTRL_WRITE2;
-                if (realtime_disk()) {
+                if (realtimeDisk()) {
                     setBusyState(true);
                     wvdSeekSector();    // we are already on the right track
                 } else {
@@ -1488,7 +1493,7 @@ IoCardDisk::advanceStateInt(disk_event_t event, const int val)
     if (DBG > 2) {
         static int prev_state = CTRL_WAKEUP;
         if (prev_state != m_state) {
-            dbglog("%s  -->  %s\n", statename(prev_state).c_str(), statename(m_state).c_str());
+            dbglog("%s  -->  %s\n", stateName(prev_state).c_str(), stateName(m_state).c_str());
             prev_state = m_state;
         }
         dbglog("---------------------\n");

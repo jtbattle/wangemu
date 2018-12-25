@@ -21,7 +21,7 @@ public:
     // ----- common IoCard functions -----
     IoCardDisplay(std::shared_ptr<Scheduler> scheduler,
                   std::shared_ptr<Cpu2200>   cpu,
-                  int baseaddr, int cardslot, ui_screen_t screen_type);
+                  int base_addr, int card_slot, ui_screen_t screen_type);
     ~IoCardDisplay();
 
     std::vector<int> getAddresses() const override;
@@ -42,7 +42,7 @@ private:
 
     std::shared_ptr<Scheduler> m_scheduler; // shared system event scheduler
     std::shared_ptr<Cpu2200>   m_cpu;       // associated CPU
-    const int  m_baseaddr;      // the address the card is mapped to
+    const int  m_base_addr;     // the address the card is mapped to
     const int  m_slot;          // which slot the card is plugged into
     bool       m_selected;      // the card is currently selected
     bool       m_card_busy;     // the card is busy doing something

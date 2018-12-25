@@ -28,10 +28,10 @@ bool do_dbg = false;
 #endif
 
 // the i8080 runs at 1.78 MHz
-const int ns_per_tick = 561;
+const int NS_PER_TICK = 561;
 
 // character transmission time, in nanoseconds
-const int64 serial_char_delay =
+const int64 SERIAL_CHAR_DELAY =
             TIMER_US(  11.0               /* bits per character */
                      * 1.0E6 / 19200.0);  /* microseconds per bit */
 
@@ -78,13 +78,13 @@ static const int OUT_UART_CMD  = 0x0E;  // write to selected uart command reg
 // instance constructor
 IoCardTermMux::IoCardTermMux(std::shared_ptr<Scheduler> scheduler,
                              std::shared_ptr<Cpu2200> cpu,
-                             int baseaddr, int cardslot,
+                             int base_addr, int card_slot,
                              const CardCfgState *cfg) :
     m_scheduler(scheduler),
     m_cpu(cpu),
     m_i8080(nullptr),
-    m_baseaddr(baseaddr),
-    m_slot(cardslot),
+    m_base_addr(base_addr),
+    m_slot(card_slot),
     m_selected(false),
     m_cpb(true),
     m_io_offset(0),
@@ -108,7 +108,7 @@ IoCardTermMux::IoCardTermMux(std::shared_ptr<Scheduler> scheduler,
     assert(cp != nullptr);
     m_cfg = *cp;
     // TODO: why have m_num_terms if we have access to m_cfg?
-    m_num_terms = cp->getNumTerminals();
+    m_num_terms = m_cfg.getNumTerminals();
     assert(1 <= m_num_terms && m_num_terms <= 4);
 
     for (auto &t : m_terms) {
@@ -122,8 +122,8 @@ IoCardTermMux::IoCardTermMux(std::shared_ptr<Scheduler> scheduler,
         t.tx_tmr   = nullptr;
     }
 
-    int io_addr;
-    bool ok = system2200::getSlotInfo(cardslot, nullptr, &io_addr);
+    int io_addr = 0;
+    bool ok = system2200::getSlotInfo(card_slot, nullptr, &io_addr);
     assert(ok);
 
     m_i8080 = i8080_new(IoCardTermMux::i8080_rd_func,
@@ -146,22 +146,6 @@ IoCardTermMux::IoCardTermMux(std::shared_ptr<Scheduler> scheduler,
     }
 }
 
-// perform on instruction and return the number of ns of elapsed time.
-int
-IoCardTermMux::execOneOp() noexcept
-{
-    if (m_interrupt_pending) {
-        // vector to 0x0038 (rst 7)
-        i8080_interrupt(static_cast<i8080*>(m_i8080), 0xFF);
-    }
-
-    const int ticks = i8080_exec_one_op(static_cast<i8080*>(m_i8080));
-    if (ticks > 30) {
-        // it is in an error state
-        return 4 * ns_per_tick;
-    }
-    return ticks * ns_per_tick;
-}
 
 // instance destructor
 IoCardTermMux::~IoCardTermMux()
@@ -176,17 +160,20 @@ IoCardTermMux::~IoCardTermMux()
     }
 }
 
+
 const std::string
 IoCardTermMux::getDescription() const
 {
     return "Terminal Mux";
 }
 
+
 const std::string
 IoCardTermMux::getName() const
 {
     return "2236 MXD";
 }
+
 
 // return a list of the various base addresses a card can map to
 // the default comes first.
@@ -197,13 +184,14 @@ IoCardTermMux::getBaseAddresses() const
     return v;
 }
 
+
 // return the list of addresses that this specific card responds to
 std::vector<int>
 IoCardTermMux::getAddresses() const
 {
     std::vector<int> v;
     for (int i=1; i<8; i++) {
-        v.push_back(m_baseaddr + i);
+        v.push_back(m_base_addr + i);
     }
     return v;
 }
@@ -242,11 +230,11 @@ IoCardTermMux::setConfiguration(const CardCfgState &cfg) noexcept
 // interestingly, the reset pin on the i8251 uart (pin 21) is tied low
 // i.e., it doesn't have a hard reset.
 void
-IoCardTermMux::reset(bool hard_reset) noexcept
+IoCardTermMux::reset(bool /*hard_reset*/) noexcept
 {
     m_prime_seen = true;
-    hard_reset = hard_reset;    // silence lint
 }
+
 
 void
 IoCardTermMux::select()
@@ -254,7 +242,7 @@ IoCardTermMux::select()
     m_io_offset = (m_cpu->getAB() & 7);
 
     if (do_dbg) {
-        dbglog("TermMux/%02x +ABS %02x\n", m_baseaddr, m_baseaddr+m_io_offset);
+        dbglog("TermMux/%02x +ABS %02x\n", m_base_addr, m_base_addr+m_io_offset);
     }
 
     // offset 0 is not handled
@@ -263,14 +251,15 @@ IoCardTermMux::select()
     }
     m_selected = true;
 
-    update_rbi();
+    updateRbi();
 }
+
 
 void
 IoCardTermMux::deselect()
 {
     if (do_dbg) {
-        dbglog("TermMux/%02x -ABS %02x\n", m_baseaddr, m_baseaddr+m_io_offset);
+        dbglog("TermMux/%02x -ABS %02x\n", m_base_addr, m_base_addr+m_io_offset);
     }
     m_cpu->setDevRdy(false);
 
@@ -278,12 +267,13 @@ IoCardTermMux::deselect()
     m_cpb      = true;
 }
 
+
 void
 IoCardTermMux::strobeOBS(int val)
 {
     val &= 0xFF;
     if (do_dbg) {
-        dbglog("TermMux/%02x OBS: byte 0x%02x\n", m_baseaddr, val);
+        dbglog("TermMux/%02x OBS: byte 0x%02x\n", m_base_addr, val);
     }
 
     // any previous obs or cbs should have been serviced before we see another
@@ -298,15 +288,16 @@ IoCardTermMux::strobeOBS(int val)
     m_obscbs_offset = m_io_offset;
     m_obscbs_data = val;
 
-    update_rbi();
+    updateRbi();
 }
+
 
 void
 IoCardTermMux::strobeCBS(int val)
 {
     val &= 0xFF;
     if (do_dbg) {
-        dbglog("TermMux/%02x CBS: byte 0x%02x\n", m_baseaddr, val);
+        dbglog("TermMux/%02x CBS: byte 0x%02x\n", m_base_addr, val);
     }
 
     // any previous obs or cbs should have been serviced before we see another
@@ -316,8 +307,9 @@ IoCardTermMux::strobeCBS(int val)
     m_obscbs_offset = m_io_offset;  // secondary address offset latch
     m_obscbs_data = val;
 
-    update_rbi();
+    updateRbi();
 }
+
 
 // weird hack Wang used to signal the attached display is 64x16 (false)
 // or 80x24 (true).  All smart terminals are 80x24, but in boot mode/vp mode,
@@ -336,6 +328,7 @@ IoCardTermMux::getIB() const noexcept
     return (m_io_offset == 5) ? 0x10 : 0x00;
 }
 
+
 // change of CPU Busy state
 void
 IoCardTermMux::setCpuBusy(bool busy)
@@ -343,14 +336,33 @@ IoCardTermMux::setCpuBusy(bool busy)
     // it appears that except for reset, ucode only ever clears it,
     // and of course the IBS sets it back.
     if (do_dbg) {
-        dbglog("TermMux/%02x CPB%c\n", m_baseaddr, busy ? '+' : '-');
+        dbglog("TermMux/%02x CPB%c\n", m_base_addr, busy ? '+' : '-');
     }
     m_cpb = busy;
 }
 
+
+// perform on instruction and return the number of ns of elapsed time.
+int
+IoCardTermMux::execOneOp() noexcept
+{
+    if (m_interrupt_pending) {
+        // vector to 0x0038 (rst 7)
+        i8080_interrupt(static_cast<i8080*>(m_i8080), 0xFF);
+    }
+
+    const int ticks = i8080_exec_one_op(static_cast<i8080*>(m_i8080));
+    if (ticks > 30) {
+        // it is in an error state
+        return 4 * NS_PER_TICK;
+    }
+    return ticks * NS_PER_TICK;
+}
+
+
 // update the board's !ready/busy status (if selected)
 void
-IoCardTermMux::update_rbi() noexcept
+IoCardTermMux::updateRbi() noexcept
 {
     // don't drive !rbi if the board isn't selected
     if (m_io_offset == 0 || !m_selected) {
@@ -363,14 +375,16 @@ IoCardTermMux::update_rbi() noexcept
     m_cpu->setDevRdy(!busy);
 }
 
+
 void
-IoCardTermMux::update_interrupt() noexcept
+IoCardTermMux::updateInterrupt() noexcept
 {
     m_interrupt_pending = m_terms[0].rx_ready
                        || m_terms[1].rx_ready
                        || m_terms[2].rx_ready
                        || m_terms[3].rx_ready;
 }
+
 
 // a character has come in from the serial port
 void
@@ -387,8 +401,9 @@ IoCardTermMux::receiveKeystroke(int term_num, int keycode)
     term.rx_ready = true;
     term.rx_byte  = keycode;
 
-    update_interrupt();
+    updateInterrupt();
 }
+
 
 void
 IoCardTermMux::checkTxBuffer(int term_num)
@@ -402,7 +417,7 @@ IoCardTermMux::checkTxBuffer(int term_num)
     }
 
     term.tx_tmr = m_scheduler->createTimer(
-                      serial_char_delay,
+                      SERIAL_CHAR_DELAY,
                       std::bind(&IoCardTermMux::mxdToTermCallback, this, term_num, term.tx_byte)
                   );
 
@@ -410,6 +425,7 @@ IoCardTermMux::checkTxBuffer(int term_num)
     // making room for the next tx byte
     term.tx_ready = true;
 }
+
 
 // this causes a delay of 1/char_time before posting a byte to the terminal.
 // more than the latency, it is intended to rate limit the channel to match
@@ -448,6 +464,7 @@ IoCardTermMux::i8080_rd_func(int addr, void *user_data) noexcept
     return 0x00;
 }
 
+
 void
 IoCardTermMux::i8080_wr_func(int addr, int byte, void *user_data) noexcept
 {
@@ -462,6 +479,7 @@ IoCardTermMux::i8080_wr_func(int addr, int byte, void *user_data) noexcept
     }
     assert(false);
 }
+
 
 int
 IoCardTermMux::i8080_in_func(int addr, void *user_data) noexcept
@@ -498,7 +516,7 @@ IoCardTermMux::i8080_in_func(int addr, void *user_data) noexcept
     case IN_OBUS_N:
         tthis->m_obs_seen = false;
         tthis->m_cbs_seen = false;
-        tthis->update_rbi();
+        tthis->updateRbi();
         rv = (~tthis->m_obscbs_data) & 0xff;
         break;
 
@@ -517,7 +535,7 @@ IoCardTermMux::i8080_in_func(int addr, void *user_data) noexcept
         rv = term.rx_byte;
         // reading the data has the side effect of clearing the rxrdy status
         term.rx_ready = false;
-        tthis->update_interrupt();
+        tthis->updateInterrupt();
         break;
 
     case IN_UART_STATUS:
@@ -542,6 +560,7 @@ IoCardTermMux::i8080_in_func(int addr, void *user_data) noexcept
     return rv;
 }
 
+
 void
 IoCardTermMux::i8080_out_func(int addr, int byte, void *user_data)
 {
@@ -558,7 +577,7 @@ IoCardTermMux::i8080_out_func(int addr, int byte, void *user_data)
     case OUT_IB_N:
         byte = (~byte & 0xff);
         if (do_dbg) {
-            dbglog("TermMux/%02x IB=%02x\n", tthis->m_baseaddr, byte);
+            dbglog("TermMux/%02x IB=%02x\n", tthis->m_base_addr, byte);
         }
         tthis->m_cpu->ioCardCbIbs(byte);
         break;
@@ -566,7 +585,7 @@ IoCardTermMux::i8080_out_func(int addr, int byte, void *user_data)
     case OUT_IB9_N:
         byte = (~byte & 0xff);
         if (do_dbg) {
-            dbglog("TermMux/%02x IB=%03x\n", tthis->m_baseaddr, 0x100 | byte);
+            dbglog("TermMux/%02x IB=%03x\n", tthis->m_base_addr, 0x100 | byte);
         }
         tthis->m_cpu->ioCardCbIbs(0x100 | byte);
         break;
@@ -615,7 +634,7 @@ IoCardTermMux::i8080_out_func(int addr, int byte, void *user_data)
 
     case OUT_RBI:
         tthis->m_rbi = byte;
-        tthis->update_rbi();
+        tthis->updateRbi();
         break;
     }
 }

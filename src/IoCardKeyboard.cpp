@@ -15,12 +15,12 @@
 // instance constructor
 IoCardKeyboard::IoCardKeyboard(std::shared_ptr<Scheduler> scheduler,
                                std::shared_ptr<Cpu2200>   cpu,
-                               int baseaddr, int cardslot) :
+                               int base_addr, int card_slot) :
     m_scheduler(scheduler),
     m_tmr_script(nullptr),
     m_cpu(cpu),
-    m_baseaddr(baseaddr),
-    m_slot(cardslot),
+    m_base_addr(base_addr),
+    m_slot(card_slot),
     m_selected(false),
     m_cpb(true),
     m_key_ready(false),
@@ -29,20 +29,22 @@ IoCardKeyboard::IoCardKeyboard(std::shared_ptr<Scheduler> scheduler,
     if (m_slot >= 0) {
         reset();
         system2200::registerKb(
-            m_baseaddr, 0,
+            m_base_addr, 0,
             std::bind(&IoCardKeyboard::receiveKeystroke, this, std::placeholders::_1)
         );
     }
 }
+
 
 // instance destructor
 IoCardKeyboard::~IoCardKeyboard()
 {
     if (m_slot >= 0) {
         reset();        // turns off handshakes in progress
-        system2200::unregisterKb(m_baseaddr, 0);
+        system2200::unregisterKb(m_base_addr, 0);
     }
 }
+
 
 const std::string
 IoCardKeyboard::getDescription() const
@@ -50,11 +52,13 @@ IoCardKeyboard::getDescription() const
     return "Keyboard Controller";
 }
 
+
 const std::string
 IoCardKeyboard::getName() const
 {
     return "6367";
 }
+
 
 // return a list of the various base addresses a card can map to.
 // the default comes first.
@@ -65,17 +69,19 @@ IoCardKeyboard::getBaseAddresses() const
     return v;
 }
 
+
 // return the list of addresses that this specific card responds to
 std::vector<int>
 IoCardKeyboard::getAddresses() const
 {
     std::vector<int> v;
-    v.push_back(m_baseaddr);
+    v.push_back(m_base_addr);
     return v;
 }
 
+
 void
-IoCardKeyboard::reset(bool hard_reset) noexcept
+IoCardKeyboard::reset(bool /*hard_reset*/) noexcept
 {
     m_tmr_script = nullptr;
 
@@ -83,9 +89,8 @@ IoCardKeyboard::reset(bool hard_reset) noexcept
     m_selected  = false;
     m_key_ready = false;   // no pending keys
     m_cpb       = true;    // CPU busy, presumably
-
-    hard_reset = hard_reset;    // silence lint
 }
+
 
 void
 IoCardKeyboard::select()
@@ -95,8 +100,9 @@ IoCardKeyboard::select()
     }
 
     m_selected = true;
-    check_keyready(); // doesn't seem to matter if it is here or not
+    checkKeyReady(); // doesn't seem to matter if it is here or not
 }
+
 
 void
 IoCardKeyboard::deselect()
@@ -109,6 +115,7 @@ IoCardKeyboard::deselect()
     m_cpb      = true;
 }
 
+
 void
 IoCardKeyboard::strobeOBS(int val)
 {
@@ -116,6 +123,7 @@ IoCardKeyboard::strobeOBS(int val)
         UI_Warn("unexpected keyboard OBS: Output of byte 0x%02x", val);
     }
 }
+
 
 void
 IoCardKeyboard::strobeCBS(int val) noexcept
@@ -130,6 +138,7 @@ IoCardKeyboard::strobeCBS(int val) noexcept
 #endif
 }
 
+
 // change of CPU Busy state
 void
 IoCardKeyboard::setCpuBusy(bool busy)
@@ -141,7 +150,7 @@ IoCardKeyboard::setCpuBusy(bool busy)
     // it appears that except for reset, ucode only ever clears it,
     // and of course the IBS sets it back.
     m_cpb = busy;
-    check_keyready();
+    checkKeyReady();
 }
 
 
@@ -164,7 +173,7 @@ IoCardKeyboard::receiveKeystroke(int keycode)
         m_key_ready = true;
     }
 
-    check_keyready();
+    checkKeyReady();
 }
 
 // =================== private functions ===================
@@ -197,10 +206,10 @@ IoCardKeyboard::tcbScript()
 // that empirically such a delay is required otherwise the ucode may
 // drop characters.
 void
-IoCardKeyboard::check_keyready()
+IoCardKeyboard::checkKeyReady()
 {
     if (!m_key_ready) {
-        bool script_active = system2200::kb_keyReady(m_baseaddr, 0); // FIXME: only one term can use scripts
+        bool script_active = system2200::kb_keyReady(m_base_addr, 0); // FIXME: only one term can use scripts
         script_active = !script_active;  // make lint shut up
     }
 // FIXME: keyReady doesn't change m_selected, so the above call can't affect

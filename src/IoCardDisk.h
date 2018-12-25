@@ -22,8 +22,8 @@ public:
     // ----- common IoCard functions -----
     IoCardDisk(std::shared_ptr<Scheduler> scheduler,
                std::shared_ptr<Cpu2200>   cpu,
-               int baseaddr,        // eg 0x310, 0x320, 0x330
-               int cardslot,        // which backplane slot this card is in
+               int base_addr,        // eg 0x310, 0x320, 0x330
+               int card_slot,        // which backplane slot this card is in
                const CardCfgState *cfg);
     ~IoCardDisk();
 
@@ -170,7 +170,7 @@ private:
     DiskCtrlCfgState           m_cfg;                // current configuration
     std::shared_ptr<Scheduler> m_scheduler;          // system event scheduler
     std::shared_ptr<Cpu2200>   m_cpu;                // associated CPU
-    const int                  m_baseaddr;           // the address the card is mapped to
+    const int                  m_base_addr;          // the address the card is mapped to
     const int                  m_slot;               // which slot the card sits in
     bool                       m_selected;           // this card is being addressed
     bool                       m_cpb;                // cpb is asserted
@@ -297,11 +297,11 @@ private:
     };
 
     // true=same timing as real disk, false=going fast
-    static bool realtime_disk() noexcept;
+    static bool realtimeDisk() noexcept;
 
     // return true if this was a sw reset command and set state appropriately,
     // otherwise return false
-    bool cax_init() noexcept;
+    bool caxInit() noexcept;
 
     // indicate if the controller state machine is idle or busy
     bool inIdleState() const noexcept;
@@ -320,7 +320,7 @@ private:
     void sendBytes(int count, disk_sm_t return_state) noexcept;
 
     // for debugging
-    std::string statename(int state) const;
+    std::string stateName(int state) const;
 
     // centralized function to handle updating sequencing state
     bool advanceState(disk_event_t event, const int val=0);

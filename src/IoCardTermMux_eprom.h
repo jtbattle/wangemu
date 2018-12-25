@@ -1,3 +1,6 @@
+#ifndef _INCLUDE_IOCARD_TERMMUX_EPROM_H
+#define _INCLUDE_IOCARD_TERMMUX_EPROM_H
+
 // this is image of a particular Wang 7291 (MXD terminal mux) board eprom set
 static const uint8 mxd_eprom[4096] = {
     /* 0x0000 */ 0xF3, 0x3E, 0xFF, 0xD3, 0x07, 0xC3, 0x46, 0x01,
@@ -513,3 +516,7 @@ static const uint8 mxd_eprom[4096] = {
     /* 0x0ff0 */ 0x4E, 0x54, 0x20, 0xA1, 0x4C, 0x4F, 0x41, 0x44,
     /* 0x0ff8 */ 0x20, 0xFF, 0xFF, 0x00, 0x00, 0x00, 0x00, 0x42,
 };
+
+#endif // _INCLUDE_IOCARD_TERMMUX_EPROM_H
+
+// vim: ts=8:et:sw=4:smarttab

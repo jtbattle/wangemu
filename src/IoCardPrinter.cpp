@@ -13,22 +13,23 @@
 
 
 IoCardPrinter::IoCardPrinter(std::shared_ptr<Cpu2200> cpu,
-                             int baseaddr, int cardslot) :
+                             int base_addr, int card_slot) :
     m_cpu(cpu),
-    m_baseaddr(baseaddr),
-    m_slot(cardslot),
+    m_base_addr(base_addr),
+    m_slot(card_slot),
     m_selected(false),
     m_cpb(true),
     m_wndhnd(nullptr)
 {
     if (m_slot >= 0) {
         int io_addr;
-        bool ok = system2200::getSlotInfo(cardslot, nullptr, &io_addr);
+        bool ok = system2200::getSlotInfo(card_slot, nullptr, &io_addr);
         assert(ok);
         m_wndhnd = UI_printerInit(io_addr);
         reset();
     }
 }
+
 
 // instance destructor
 IoCardPrinter::~IoCardPrinter()
@@ -39,17 +40,20 @@ IoCardPrinter::~IoCardPrinter()
     }
 }
 
+
 const std::string
 IoCardPrinter::getDescription() const
 {
     return "Printer Controller";
 }
 
+
 const std::string
 IoCardPrinter::getName() const
 {
     return "7079";
 }
+
 
 // return a list of the various base addresses a card can map to
 // the default comes first.
@@ -60,24 +64,25 @@ IoCardPrinter::getBaseAddresses() const
     return v;
 }
 
+
 // return the list of addresses that this specific card responds to
 std::vector<int>
 IoCardPrinter::getAddresses() const
 {
     std::vector<int> v;
-    v.push_back(m_baseaddr);
+    v.push_back(m_base_addr);
     return v;
 }
 
+
 void
-IoCardPrinter::reset(bool hard_reset) noexcept
+IoCardPrinter::reset(bool /*hard_reset*/) noexcept
 {
     // reset card state
     m_selected   = false;
     m_cpb        = true;   // CPU busy
-
-    hard_reset = hard_reset;    // silence lint
 }
+
 
 void
 IoCardPrinter::select()
@@ -89,6 +94,7 @@ IoCardPrinter::select()
     m_selected = true;
     m_cpu->setDevRdy(true);
 }
+
 
 void
 IoCardPrinter::deselect()
@@ -104,6 +110,7 @@ IoCardPrinter::deselect()
     m_cpb      = true;
 }
 
+
 void
 IoCardPrinter::strobeOBS(int val)
 {
@@ -118,11 +125,13 @@ IoCardPrinter::strobeOBS(int val)
     m_cpu->setDevRdy(true);
 }
 
+
 void
 IoCardPrinter::strobeCBS(int val)
 {
     strobeOBS(val);
 }
+
 
 // change of CPU Busy state
 void

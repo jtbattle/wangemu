@@ -31,7 +31,7 @@
 // TODO: this is here and in IoCardTermMux.cpp
 //       put it somewhere in common
 // character transmission time, in nanoseconds
-const int64 serial_char_delay =
+const int64 SERIAL_CHAR_DELAY =
             TIMER_US(  11.0              /* bits per character */
                      * 1.0E6 / 19200.0   /* microseconds per bit */
                     );
@@ -308,7 +308,7 @@ Terminal::checkKbBuffer()
     // on carriage returns isn't enough time for whatever bookkeeping BASIC
     // does at the end of line.  so instead we run at 1/4 rate for normal
     // chars, and 1/100 rate for <CR> and hope that is enough.
-    int64 delay = serial_char_delay;
+    int64 delay = SERIAL_CHAR_DELAY;
     if (m_script_active) {
         delay *= ((byte == 0x0D) ? 100 : 4);
     }

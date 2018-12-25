@@ -14,7 +14,7 @@ public:
     CANT_ASSIGN_OR_COPY_CLASS(IoCardXxx);
 
     // ----- common IoCard functions -----
-    IoCardXxx(Cpu2200 &cpu, int baseaddr, int cardslot);
+    IoCardXxx(Cpu2200 &cpu, int base_addr, int card_slot);
     ~IoCardXxx();
 
     std::vector<int> getAddresses() const override;
@@ -34,11 +34,11 @@ private:
     // ---- card properties ----
     const std::string getDescription() const override;
     const std::string getName() const override;
-    std::vector<int> getBaseAddresses() const override;
+    std::vector<int>  getBaseAddresses() const override;
 
     // ...
     Cpu2200    &m_cpu;            // associated CPU
-    const int   m_baseaddr;       // the address the card is mapped to
+    const int   m_base_addr;      // the address the card is mapped to
     const int   m_slot;           // which slot the card is plugged into
     bool        m_selected;       // the card is currently selected
     bool        m_cpb;            // the cpu is busy

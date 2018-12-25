@@ -17,10 +17,10 @@
 
 
 // instance constructor
-IoCardXxx::IoCardXxx(Cpu2200 &cpu, int baseaddr, int cardslot) :
+IoCardXxx::IoCardXxx(Cpu2200 &cpu, int base_addr, int card_slot) :
     m_cpu(cpu),
-    m_baseaddr(baseaddr),
-    m_slot(cardslot)
+    m_base_addr(base_addr),
+    m_slot(card_slot)
 {
     if (m_slot >= 0) {
         // ... other creation functions
@@ -29,6 +29,7 @@ IoCardXxx::IoCardXxx(Cpu2200 &cpu, int baseaddr, int cardslot) :
         // this is just a probe to determine card properties
     }
 }
+
 
 // instance destructor
 IoCardXxx::~IoCardXxx()
@@ -42,17 +43,20 @@ IoCardXxx::~IoCardXxx()
     }
 }
 
+
 const std::string
 IoCardXxx::getDescription() const
 {
     return "Card Description";
 }
 
+
 const std::string
 IoCardXxx::getName() const
 {
     return "Card Name (eg, 6541)";
 }
+
 
 // return a list of the various base addresses a card can map to
 // the default comes first.
@@ -63,17 +67,19 @@ IoCardXxx:getBaseAddresses() const
     return v;
 }
 
+
 // return the list of addresses that this specific card responds to
 vector<int>
 IoCardXxx::getAddresses() const
 {
     std::vector<int> v;
-    v.push_back(m_baseaddr);
+    v.push_back(m_base_addr);
     return v;
 }
 
+
 void
-IoCardXxx::reset(bool hard_reset)
+IoCardXxx::reset(bool /*hard_reset*/)
 {
     // reset card state
     m_selected   = false;
@@ -81,6 +87,7 @@ IoCardXxx::reset(bool hard_reset)
     m_card_busy  = false;
     ...
 }
+
 
 void
 IoCardXxx::select()
@@ -93,6 +100,7 @@ IoCardXxx::select()
     m_cpu.setDevRdy(!m_card_busy);
     // ...
 }
+
 
 void
 IoCardXxx::deselect()
@@ -107,6 +115,7 @@ IoCardXxx::deselect()
     // ...
 }
 
+
 void
 IoCardXxx::strobeOBS(int val)
 {
@@ -119,6 +128,7 @@ IoCardXxx::strobeOBS(int val)
     // ...
     m_cpu.setDevRdy(!m_card_busy);
 }
+
 
 void
 IoCardXxx::strobeCBS(int val)
@@ -135,11 +145,13 @@ IoCardXxx::strobeCBS(int val)
 #endif
 }
 
+
 int
 IoCardXxx::GetIB5() const
 {
     return 0;   // this card doesn't use this feature (or change if it does)
 }
+
 
 // change of CPU Busy state
 void
