@@ -149,7 +149,7 @@
     <ClCompile Include="src\dasm.cpp" />
     <ClCompile Include="src\dasm_vp.cpp" />
     <ClCompile Include="src\DiskCtrlCfgState.cpp" />
-    <ClCompile Include="src\errtable.cpp" />
+    <ClCompile Include="src\error_table.cpp" />
     <ClCompile Include="src\host.cpp" />
     <ClCompile Include="src\i8080.c" />
     <ClCompile Include="src\i8080_dasm.c" />
@@ -199,7 +199,6 @@
     <ClInclude Include="src\compile_options.h" />
     <ClInclude Include="src\Cpu2200.h" />
     <ClInclude Include="src\DiskCtrlCfgState.h" />
-    <ClInclude Include="src\errtable.h" />
     <ClInclude Include="src\IoCard.h" />
     <ClInclude Include="src\IoCardDisk.h" />
     <ClInclude Include="src\IoCardDisplay.h" />

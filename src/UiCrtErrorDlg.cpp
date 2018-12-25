@@ -13,7 +13,7 @@
 // error message class
 // ----------------------------------------------------------------------------
 
-#include "errtable.h"   // error explanations
+#include "error_table.h"   // error explanations
 
 CrtErrorDlg::CrtErrorDlg(wxWindow *parent,
                          const wxString &errcode,
