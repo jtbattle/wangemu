@@ -1,5 +1,5 @@
 
-#include "errtable.h"   // pick up errtable_t definition
+#include "error_table.h"   // pick up error_table_t definition
 
 // #########################################################################
 // ##                          Wang BASIC Errors                          ##
@@ -1584,7 +1584,7 @@ const std::vector<error_table_t> error_table_vp = {
     /*err code*/            "C61",
     /*err msg*/             "OVERFLOW",
     /*cause*/               "The absolute value of the calculated result was greater than 9.999999999999E+99.",
-    /*recovery*/            "Correct the program or the data. Overflow errors can be suppressed by\nexecuting SELECT ERROR > 61; a default value of ±9.999999999999E+99 will be used.",
+    /*recovery*/            "Correct the program or the data. Overflow errors can be suppressed by\nexecuting SELECT ERROR > 61; a default value of Â±9.999999999999E+99 will be used.",
     /*dummy*/               nullptr,
     /*dummy*/               nullptr,
     },
@@ -1594,7 +1594,7 @@ const std::vector<error_table_t> error_table_vp = {
     /*err code*/            "C62",
     /*err msg*/             "DIVISION BY ZERO",
     /*cause*/               "Division by a value of zero is a mathematically undefined operation.",
-    /*recovery*/            "Correct the program or the data. A division-by-zero error can be\nsuppressed by executing SELECT ERROR > 62; a default value of\n±9.999999999999E+99 will be used.",
+    /*recovery*/            "Correct the program or the data. A division-by-zero error can be\nsuppressed by executing SELECT ERROR > 62; a default value of\nÂ±9.999999999999E+99 will be used.",
     /*dummy*/               nullptr,
     /*dummy*/               nullptr,
     },
@@ -1644,7 +1644,7 @@ const std::vector<error_table_t> error_table_vp = {
     /*err code*/            "C67",
     /*err msg*/             "LOG OF ZERO",
     /*cause*/               "This is a mathematically undefined operation.",
-    /*recovery*/            "Correct the program or the data. This error can be suppressed by executing\nSELECT ERROR > 67; a default value of -9.999999999999E±99 will be used.",
+    /*recovery*/            "Correct the program or the data. This error can be suppressed by executing\nSELECT ERROR > 67; a default value of -9.999999999999EÂ±99 will be used.",
     /*dummy*/               nullptr,
     /*dummy*/               nullptr,
     },
