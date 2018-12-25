@@ -2,8 +2,8 @@
 // on one of these messages and this table is used to supply the full error
 // description, taken from the BASIC User's Manual.
 
-#ifndef _INCLUDE_ERRTABLE_H_
-#define _INCLUDE_ERRTABLE_H_
+#ifndef _INCLUDE_ERROR_TABLE_H_
+#define _INCLUDE_ERROR_TABLE_H_
 
 #include "w2200.h"
 
@@ -32,6 +32,6 @@ typedef struct {
 extern const std::vector<error_table_t> error_table;
 extern const std::vector<error_table_t> error_table_vp;
 
-#endif _INCLUDE_ERRTABLE_H_
+#endif _INCLUDE_ERROR_TABLE_H_
 
 // vim: ts=8:et:sw=4:smarttab
