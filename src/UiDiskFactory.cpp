@@ -272,7 +272,7 @@ DiskFactory::OnButton_SaveAs(wxCommandEvent& WXUNUSED(event))
     int drive, io_addr;
     const bool in_use = system2200::findDisk(name, nullptr, &drive, &io_addr);
     if (in_use) {
-        UI_Warn("This disk is in use at /%03X, drive %d.\n\n"
+        UI_warn("This disk is in use at /%03X, drive %d.\n\n"
                 "Either save to a new name or eject the disk first.",
                  io_addr, drive);
         return;
@@ -309,7 +309,7 @@ DiskFactory::OnClose(wxCloseEvent& WXUNUSED(event))
     bool ok = !m_diskdata->isModified();
 
     if (!ok) {
-        ok = UI_Confirm("You will lose unsaved changes.\n"
+        ok = UI_confirm("You will lose unsaved changes.\n"
                         "Do you still want to cancel?");
     }
 

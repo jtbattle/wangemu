@@ -88,7 +88,7 @@ DiskCtrlCfgState::loadIni(const std::string &subgroup)
     int ival;
     host::configReadInt(subgroup, "numDrives", &ival, 2);
     if (ival < 1 || ival > 4) {
-        UI_Warn("config state messed up -- assuming something reasonable");
+        UI_warn("config state messed up -- assuming something reasonable");
         ival = 2;
     }
     setNumDrives(ival);

@@ -67,11 +67,11 @@ private:
     // ---- functions ----
 
     // reset crt/prt part of state
-    void reset_crt();
-    void reset_prt();
+    void resetCrt();
+    void resetPrt();
 
     // send an init sequence from emulated terminal shortly after reset
-    void SendInitSeq();
+    void sendInitSeq();
 
     // process a key received from the associated Crt,
     // or when system2200 stuffs characters during script processing
@@ -88,11 +88,11 @@ private:
     void selectPCallback();
 
     // clear the display and home the cursor
-    void scr_clear() noexcept;
+    void clearScreen() noexcept;
 
     // scroll the contents of the screen up one row,
     // and fill the new row with blanks.
-    void scr_scroll() noexcept;
+    void scrollScreen() noexcept;
 
     // receive queueing
     void crtCharFifo(uint8 byte);
@@ -159,9 +159,9 @@ private:
 
     // write 1 character to the video memory at location (x,y).
     // it is up to the caller to set the screen dirty flag.
-    inline void scr_write_char(int x, int y, uint8 ch) noexcept
+    inline void screenWriteChar(int x, int y, uint8 ch) noexcept
         { m_disp.display[m_disp.chars_w*y + x] = ch; }
-    inline void scr_write_attr(int x, int y, uint8 attr) noexcept
+    inline void screenWriteAttr(int x, int y, uint8 attr) noexcept
         { m_disp.attr[m_disp.chars_w*y + x] = attr; }
 
     // set or clear a character cell line attribute bit

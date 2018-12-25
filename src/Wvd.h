@@ -126,7 +126,7 @@ private:
     void initMembers();
 
     // make sure metadata is up to date
-    void refreshMetadata() { if (m_metadataStale && !!m_file) reopen(); }
+    void refreshMetadata() { if (m_metadata_stale && !!m_file) reopen(); }
     void reopen();
 
     // write 256 bytes to an absolute sector address
@@ -150,19 +150,15 @@ private:
 
     // ----- data members -----
     std::unique_ptr<std::fstream> m_file;   // file handle
-    bool          m_metadataStale;       // is the metadata possibly out of date?
-    bool          m_metaModified;        // metadata has been modified
-    bool          m_hasPath;             // is m_path valid?
+    bool          m_metadata_stale;      // is the metadata possibly out of date?
+    bool          m_metadata_modified;   // metadata has been modified
+    bool          m_has_path;            // is m_path valid?
     std::string   m_path;                // path to virtual disk
     std::string   m_label;               // disk label
-    disktype_t    m_diskType;            // disk type encoding
-    int           m_numPlatters;         // platters in the virtual disk image
-    int           m_numPlatterSectors;   // sectors per platter
-    bool          m_writeProtect;        // true=don't write
-//  int           m_numPlatterTracks;    // tracks per platter
-//  int           m_numTrackSectors;     // sectors per track
-//  int           m_rpm;                 // rotational speed
-//  int           m_stepTime;            // time to step one track, in ms
+    disktype_t    m_disk_type;           // disk type encoding
+    int           m_num_platters;        // platters in the virtual disk image
+    int           m_num_platter_sectors; // sectors per platter
+    bool          m_write_protect;       // true=don't write
 };
 
 #endif // _INCLUDE_WVD_H_

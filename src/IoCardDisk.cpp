@@ -109,7 +109,7 @@
 #include "DiskCtrlCfgState.h"
 #include "host.h"              // for dbglog()
 #include "IoCardDisk.h"
-#include "Ui.h"                // for UI_Warn()
+#include "Ui.h"                // for UI_warn()
 #include "Cpu2200.h"
 #include "Scheduler.h"
 #include "system2200.h"
@@ -339,7 +339,7 @@ IoCardDisk::strobeCBS(int val) noexcept
     // unexpected -- the real hardware ignores this byte
     if (NOISY > 0) {
         // FIXME: MVP spews these two a lot. what do they mean?
-        // UI_Warn("unexpected disk CBS: Output of byte 0x%02x", val8);
+        // UI_warn("unexpected disk CBS: Output of byte 0x%02x", val8);
     }
 
     // TODO:
@@ -970,7 +970,7 @@ IoCardDisk::iwvdIsDiskIdle(int drive) const
         return true;
     }
 
-    return UI_Confirm("This disk is in the middle of an operation.\n"
+    return UI_confirm("This disk is in the middle of an operation.\n"
                       "Are you sure you want to do that?");
 }
 
@@ -1018,7 +1018,7 @@ IoCardDisk::iwvdInsertDisk(int drive,
     const bool warn         = warnMismatch();
 
     if (warn && first_gen && large_disk) {
-        UI_Warn("The disk in drive %s has %d sectors and %d platters.\n\n"
+        UI_warn("The disk in drive %s has %d sectors and %d platters.\n\n"
                  "The 2200A/B/C/S/T can't access any sector number greater than %d,\n"
                  "nor anything other than the first platter.\n\n"
                  "Proceed with caution.",
@@ -1026,7 +1026,7 @@ IoCardDisk::iwvdInsertDisk(int drive,
     }
 
     if (warn && !first_gen && dumb_ctrl && large_disk) {
-        UI_Warn("The disk in drive %s has %d sectors and %d platters.\n\n"
+        UI_warn("The disk in drive %s has %d sectors and %d platters.\n\n"
                  "Dumb disk controllers can't access any sector number greater than %d,\n"
                  "nor anything other than the first platter.\n\n"
                  "You might want to reconfigure the disk controller to be intelligent.\n"
@@ -1037,7 +1037,7 @@ IoCardDisk::iwvdInsertDisk(int drive,
     if (warn && !first_gen && !dumb_ctrl && !large_disk) {
         const bool bit_15 = diskHasBit15Problem(m_d[drive].wvd.get(), false);
         if (bit_15) {
-            const bool do_it = UI_Confirm(
+            const bool do_it = UI_confirm(
                 "This disk in drive %s has extraneous bits set on some sector\n"
                 "addresses which might confuse an intelligent disk controller.\n\n"
                 "Either switch the disk controller configuration to be dumb,\n"

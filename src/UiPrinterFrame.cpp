@@ -672,7 +672,7 @@ PrinterFrame::OnPageSetup(wxCommandEvent& WXUNUSED(event))
         // we did not find a match. use letter, and issue warning
         m_printer->setPaperId(wxPAPER_NONE);
         papername = PaperSize(wxPAPER_NONE);
-        //UI_Warn("Paper Type is not supported. Assuming None.");
+        //UI_warn("Paper Type is not supported. Assuming None.");
     }
     m_printer->setPaperName(papername);
 

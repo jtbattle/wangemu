@@ -30,7 +30,7 @@
 // as a callback may result in a call to createTimer().
 
 #include "Scheduler.h"
-#include "Ui.h"         // needed for UI_Error()
+#include "Ui.h"         // needed for UI_error()
 
 #include <algorithm>    // for std::sort
 
@@ -170,7 +170,7 @@ void Scheduler::killTimer(Timer* tmr)
                        [&tmr](auto q){ return (q.get() == tmr); }),
         end(m_timer));
 #ifdef TMR_DEBUG
-    UI_Error("Error: killing non-existent simulated timer");
+    UI_error("Error: killing non-existent simulated timer");
 #endif
 }
 

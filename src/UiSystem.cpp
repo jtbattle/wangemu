@@ -118,16 +118,16 @@ TheApp::OnCmdLineParsed(wxCmdLineParser& parser)
 
     if (OK) {
         // do my processing here
-        // UI_Info("Command line items: %d", parser.GetParamCount());
+        // UI_info("Command line items: %d", parser.GetParamCount());
         wxString filename;
         if (parser.Found("s", &filename)) {
             const int io_addr = 0x01;   // default keyboard device
             std::string fn(filename.c_str());
-            system2200::kb_invokeScript(io_addr, -1, fn);
+            system2200::invokeKbScript(io_addr, -1, fn);
             bool success = true;  // FIXME: old invokeScript returned a boolean -- change new i/f to match?
             if (!success) {
                 const char *s = filename.c_str();
-                UI_Warn("Failed to open script '%s'", s);
+                UI_warn("Failed to open script '%s'", s);
             }
         }
     }
@@ -262,7 +262,7 @@ UI_AlertMsg(long style, std::string title, const char *fmt, va_list &args)
 
 // error icon
 void
-UI_Error(const char *fmt, ...)
+UI_error(const char *fmt, ...)
 {
     va_list args;
     va_start(args, fmt);
@@ -272,7 +272,7 @@ UI_Error(const char *fmt, ...)
 
 // exclamation icon
 void
-UI_Warn(const char *fmt, ...)
+UI_warn(const char *fmt, ...)
 {
     va_list args;
     va_start(args, fmt);
@@ -281,7 +281,7 @@ UI_Warn(const char *fmt, ...)
 }
 
 void
-UI_Info(const char *fmt, ...)
+UI_info(const char *fmt, ...)
 {
     va_list args;
     va_start(args, fmt);
@@ -292,7 +292,7 @@ UI_Info(const char *fmt, ...)
 
 // get a YES/NO confirmation.  return true for yes.
 bool
-UI_Confirm(const char *fmt, ...)
+UI_confirm(const char *fmt, ...)
 {
     const long style = wxYES | wxNO | wxNO_DEFAULT | wxICON_EXCLAMATION;
 //  const long style = wxYES | wxNO | wxNO_DEFAULT | wxICON_QUESTION;
@@ -424,7 +424,7 @@ UI_printerChar(PrinterFrame *wnd, uint8 byte)
 // launch the system configuration dialog, which might eventually
 // call back into system2200.setConfig() function.
 void
-UI_SystemConfigDlg()
+UI_systemConfigDlg()
 {
     SystemConfigDlg(nullptr).ShowModal();
 }
@@ -434,7 +434,7 @@ UI_SystemConfigDlg()
 // TODO: don't have two unique functions; there should be one
 // function that can figure out which dialog to invoke.
 void
-UI_ConfigureCard(IoCard::card_t card_type, CardCfgState *cfg)
+UI_configureCard(IoCard::card_t card_type, CardCfgState *cfg)
 {
     assert(cfg != nullptr);
 

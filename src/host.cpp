@@ -45,7 +45,7 @@ getConfigFileLocations()
 
     bool b = host::configReadStr(subgroup, "configversion", &foo);
     if (b && (foo != "1")) {
-        UI_Warn("Configuration file version '%s' found.\n"
+        UI_warn("Configuration file version '%s' found.\n"
                  "Version '1' expected.\n"
                  "Attempting to read the config file anyway.\n", foo.c_str());
     }
@@ -99,7 +99,7 @@ dbglog_open(const std::string &logname)
     assert(!dbg_ofs.is_open());     // only one log at a time
     dbg_ofs.open(logname.c_str(), std::ofstream::out | std::ofstream::trunc);
     if (!dbg_ofs.good()) {
-        UI_Error("Error opening '%s' for logging.\n", logname.c_str());
+        UI_error("Error opening '%s' for logging.\n", logname.c_str());
         exit(-1);
     }
 }

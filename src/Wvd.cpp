@@ -31,15 +31,15 @@
 // default constructor, then call either open() or create() to fill it.
 Wvd::Wvd() :
     m_file(nullptr),
-    m_metadataStale(true),
-    m_metaModified(false),
-    m_hasPath(false),
+    m_metadata_stale(true),
+    m_metadata_modified(false),
+    m_has_path(false),
     m_path(""),
     m_label(""),
-    m_diskType(DISKTYPE_ILLEGAL),
-    m_numPlatters(0),
-    m_numPlatterSectors(0),
-    m_writeProtect(false)
+    m_disk_type(DISKTYPE_ILLEGAL),
+    m_num_platters(0),
+    m_num_platter_sectors(0),
+    m_write_protect(false)
 {
     initMembers();
 }
@@ -75,7 +75,7 @@ Wvd::create(int disk_type, int platters, int sectors_per_platter)
     setNumPlatters(platters);
     setNumSectors(sectors_per_platter);
     setLabel("Your comment here");
-    m_metadataStale = false;
+    m_metadata_stale = false;
 }
 
 
@@ -84,32 +84,32 @@ bool
 Wvd::open(const std::string &filename)
 {
     assert(m_file == nullptr);
-    assert(!m_hasPath);
+    assert(!m_has_path);
     assert(!filename.empty());
 
     // set up a file handle
     m_file = std::make_unique<std::fstream>(
-                                filename.c_str(),
-                                std::fstream::in | std::fstream::out | std::fstream::binary);
+                    filename.c_str(),
+                    std::fstream::in | std::fstream::out | std::fstream::binary);
     if (!m_file) {
         return false;
     }
 
     if (!m_file->good()) {
-        UI_Error("Couldn't open file '%s'", m_path.c_str());
+        UI_error("Couldn't open file '%s'", m_path.c_str());
         m_file = nullptr;
         return false;
     }
 
-    m_hasPath = true;
+    m_has_path = true;
     m_path = filename;
 
     const bool ok = readHeader();
 // don't need to raise alarm, since readHeader() already did
 //  if (!ok) {
-//      UI_Info("Error opening file", filename.c_str());
+//      UI_info("Error opening file", filename.c_str());
 //  }
-    m_metadataStale = !ok;
+    m_metadata_stale = !ok;
 
     return ok;
 }
@@ -128,7 +128,6 @@ Wvd::close()
     initMembers();
 }
 
-
 // -------------------------------------------------------------------------
 // metadata access
 // -------------------------------------------------------------------------
@@ -136,14 +135,16 @@ Wvd::close()
 bool
 Wvd::isModified() const noexcept
 {
-    return m_metaModified;
+    return m_metadata_modified;
 }
+
 
 void
 Wvd::setModified(bool modified) noexcept
 {
-    m_metaModified = modified;
+    m_metadata_modified = modified;
 }
+
 
 std::string
 Wvd::getPath() const
@@ -151,86 +152,96 @@ Wvd::getPath() const
     return m_path;
 }
 
+
 void
 Wvd::setPath(const std::string &filename)
 {
     if (filename.empty()) {
-        m_hasPath = false;
+        m_has_path = false;
         m_path = "";
-    } else if (!m_hasPath || m_path != filename) {
-        m_hasPath = true;
+    } else if (!m_has_path || m_path != filename) {
+        m_has_path = true;
         m_path = filename;
         setModified();
     }
 }
 
+
 int
 Wvd::getDiskType()
 {
     refreshMetadata();
-    return m_diskType;
+    return m_disk_type;
 }
+
 
 void
 Wvd::setDiskType(int type)
 {
     refreshMetadata();
-    if (m_diskType != type) {
-        m_diskType = static_cast<disktype_t>(type);
+    if (m_disk_type != type) {
+        m_disk_type = static_cast<disktype_t>(type);
         setModified();
     }
 }
+
 
 int
 Wvd::getNumPlatters()
 {
     refreshMetadata();
-    return m_numPlatters;
+    return m_num_platters;
 }
+
 
 void
 Wvd::setNumPlatters(int num)
 {
     refreshMetadata();
-    if (m_numPlatters != num) {
-        m_numPlatters = num;
+    if (m_num_platters != num) {
+        m_num_platters = num;
         setModified();
     }
 }
+
 
 int
 Wvd::getNumSectors()
 {
     refreshMetadata();
-    return m_numPlatterSectors;
+    return m_num_platter_sectors;
 }
+
 
 void
 Wvd::setNumSectors(int num)
 {
     refreshMetadata();
-    if (m_numPlatterSectors != num) {
-        m_numPlatterSectors = num;
+    if (m_num_platter_sectors != num) {
+        m_num_platter_sectors = num;
         setModified();
     }
 }
+
 
 bool
 Wvd::getWriteProtect()
 {
     refreshMetadata();
-    return m_writeProtect;
+    return m_write_protect;
 }
+
 
 void
 Wvd::setWriteProtect(bool wp)
 {
     refreshMetadata();
-    if (m_writeProtect != wp) {
-        m_writeProtect = wp;
+    if (m_write_protect != wp) {
+        m_write_protect = wp;
         setModified();
     }
 }
+
 
 std::string
 Wvd::getLabel()
@@ -238,6 +249,7 @@ Wvd::getLabel()
     refreshMetadata();
     return m_label;
 }
+
 
 void
 Wvd::setLabel(const std::string &newlabel)
@@ -261,11 +273,11 @@ Wvd::readSector(int platter, int sector, const uint8 *buffer)
     assert(buffer != nullptr);
     refreshMetadata();
 
-    assert(platter >= 0 && platter < m_numPlatters);
-    assert(sector  >= 0 && sector  < m_numPlatterSectors);
+    assert(platter >= 0 && platter < m_num_platters);
+    assert(sector  >= 0 && sector  < m_num_platter_sectors);
     assert(m_file != nullptr);
 
-    const int abs_sector = m_numPlatterSectors*platter + sector + 1;
+    const int abs_sector = m_num_platter_sectors*platter + sector + 1;
     return rawReadSector(abs_sector, buffer);
 }
 
@@ -278,11 +290,11 @@ Wvd::writeSector(int platter, int sector, const uint8 *buffer)
     assert(buffer != nullptr);
     refreshMetadata();
 
-    assert(platter >= 0 && platter < m_numPlatters);
-    assert(sector  >= 0 && sector  < m_numPlatterSectors);
+    assert(platter >= 0 && platter < m_num_platters);
+    assert(sector  >= 0 && sector  < m_num_platter_sectors);
     assert(m_file != nullptr);
 
-    const int abs_sector = m_numPlatterSectors*platter + sector + 1;
+    const int abs_sector = m_num_platter_sectors*platter + sector + 1;
     return rawWriteSector(abs_sector, buffer);
 }
 
@@ -301,7 +313,7 @@ Wvd::flush()
             m_file->flush();
         }
         m_file->close();
-        m_metadataStale = true;
+        m_metadata_stale = true;
     }
 }
 
@@ -311,14 +323,14 @@ Wvd::flush()
 void
 Wvd::save()
 {
-    assert(m_hasPath);
+    assert(m_has_path);
     assert(!m_path.empty());
 
     if (isModified()) {
         if (writeHeader()) {
             setModified(false);
         } else {
-            UI_Error("Error: operation failed");
+            UI_error("Error: operation failed");
         }
     }
 }
@@ -329,12 +341,12 @@ void
 Wvd::save(const std::string &filename)
 {
     assert(!filename.empty());
-    assert(!m_hasPath);
+    assert(!m_has_path);
 
     if (createFile(filename)) {
         setModified(false);
     } else {
-        UI_Error("Error: operation failed");
+        UI_error("Error: operation failed");
     }
 }
 
@@ -349,8 +361,8 @@ Wvd::save(const std::string &filename)
 bool
 Wvd::rawWriteSector(const int sector, const uint8 *data)
 {
-    assert(m_hasPath);
-    assert(sector >= 0 && sector < m_numPlatters*m_numPlatterSectors+1);
+    assert(m_has_path);
+    assert(sector >= 0 && sector < m_num_platters*m_num_platter_sectors+1);
     assert(data != nullptr);
     assert(m_file->is_open());
 
@@ -369,7 +381,7 @@ Wvd::rawWriteSector(const int sector, const uint8 *data)
     // go to the start of the Nth sector
     m_file->seekp(256LL*sector);
     if (!m_file->good()) {
-        UI_Error("Error seeking to write sector %d of '%s'",
+        UI_error("Error seeking to write sector %d of '%s'",
                  sector, m_path.c_str());
         m_file->close();
         return false;
@@ -378,7 +390,7 @@ Wvd::rawWriteSector(const int sector, const uint8 *data)
     // write them all
     m_file->write(reinterpret_cast<const char*>(data), 256);
     if (!m_file->good()) {
-        UI_Error("Error writing to sector %d of '%s'",
+        UI_error("Error writing to sector %d of '%s'",
                   sector, m_path.c_str());
         m_file->close();
         return false;
@@ -396,15 +408,15 @@ Wvd::rawWriteSector(const int sector, const uint8 *data)
 bool
 Wvd::rawReadSector(const int sector, const uint8 *data)
 {
-    assert(m_hasPath);
-    assert(sector >= 0 && sector < m_numPlatters*m_numPlatterSectors+1);
+    assert(m_has_path);
+    assert(sector >= 0 && sector < m_num_platters*m_num_platter_sectors+1);
     assert(data != nullptr);
     assert(m_file->is_open());
 
     // go to the start of the Nth sector
     m_file->seekg(256LL * sector);
     if (!m_file->good()) {
-        UI_Error("Error seeking to read sector %d of '%s'",
+        UI_error("Error seeking to read sector %d of '%s'",
                  sector, m_path.c_str());
         m_file->close();
         return false;
@@ -412,7 +424,7 @@ Wvd::rawReadSector(const int sector, const uint8 *data)
 
     m_file->read((char*)data, 256);
     if (!m_file->good()) {
-        UI_Error("Error reading from sector %d of '%s'",
+        UI_error("Error reading from sector %d of '%s'",
                  sector, m_path.c_str());
         m_file->close();
         return false;
@@ -449,8 +461,8 @@ Wvd::rawReadSector(const int sector, const uint8 *data)
 bool
 Wvd::writeHeader()
 {
-    assert(m_numPlatters > 0 && m_numPlatters <= 15);
-    assert(m_numPlatterSectors > 0 && m_numPlatterSectors <= WVD_MAX_SECTORS);
+    assert(m_num_platters > 0 && m_num_platters <= 15);
+    assert(m_num_platter_sectors > 0 && m_num_platter_sectors <= WVD_MAX_SECTORS);
 
     // header block -- zap it to zeros
     uint8 data[256];
@@ -475,15 +487,15 @@ Wvd::writeHeader()
     data[5] = static_cast<uint8>(0x00);  // write format version
     data[6] = static_cast<uint8>(0x00);  // read format version
 
-    data[7] = static_cast<uint8>(m_writeProtect ? 1 : 0);
+    data[7] = static_cast<uint8>(m_write_protect ? 1 : 0);
 
     // number of sectors per platter
-    data[8] = static_cast<uint8>((m_numPlatterSectors >> 0) & 0xFF);
-    data[9] = static_cast<uint8>((m_numPlatterSectors >> 8) & 0xFF);
+    data[8] = static_cast<uint8>((m_num_platter_sectors >> 0) & 0xFF);
+    data[9] = static_cast<uint8>((m_num_platter_sectors >> 8) & 0xFF);
 
-    data[10] = static_cast<uint8>(m_diskType);
+    data[10] = static_cast<uint8>(m_disk_type);
 
-    data[11] = static_cast<uint8>(m_numPlatters-1);
+    data[11] = static_cast<uint8>(m_num_platters-1);
 
     strncpy(reinterpret_cast<char*>(&data[16]), m_label.c_str(), WVD_MAX_LABEL_LEN);
 
@@ -498,12 +510,12 @@ Wvd::reopen()
 {
     assert(m_file != nullptr);
 
-    if (m_metadataStale) {
+    if (m_metadata_stale) {
         assert(!m_file->is_open()); // make sure we cached it properly
         // set up a file handle
         m_file->open(m_path.c_str(), std::fstream::in | std::fstream::out | std::fstream::binary);
         if (!m_file->good()) {
-            UI_Error("Couldn't open file '%s'", m_path.c_str());
+            UI_error("Couldn't open file '%s'", m_path.c_str());
             m_file = nullptr;
             return;
         }
@@ -513,7 +525,7 @@ Wvd::reopen()
             return;
         }
     }
-    m_metadataStale = false;
+    m_metadata_stale = false;
 }
 
 
@@ -527,8 +539,8 @@ Wvd::readHeader()
     assert(m_file != nullptr);
 
     // set it so rawReadSector() knows what to operate on
-    m_numPlatters = 1;
-    m_numPlatterSectors = 1;
+    m_num_platters = 1;
+    m_num_platter_sectors = 1;
 
     uint8 data[256];
     const bool ok = rawReadSector(0, &data[0]);
@@ -542,50 +554,50 @@ Wvd::readHeader()
         data[2] != 'N' ||
         data[3] != 'G' ||
         data[4] != '\0') {
-        UI_Warn("This isn't a Wang Virtual Disk");
+        UI_warn("This isn't a Wang Virtual Disk");
         return false;
     }
 
     // check read format
     if (data[6] != 0x00) {
-        UI_Error("This disk is from a more recent version of WangEmu.\n"
+        UI_error("This disk is from a more recent version of WangEmu.\n"
                  "Please use a more recent emulator.");
         return false;
     }
 
-    const bool tmp_writeProtect = (data[7] != 0x00);
+    const bool tmp_write_protect = (data[7] != 0x00);
 
     const int tmp_sectors = static_cast<int>((data[9] << 8) | data[8]);
     if (tmp_sectors > WVD_MAX_SECTORS) {
-        UI_Error("The disk claims to have more than %d platters", WVD_MAX_SECTORS);
+        UI_error("The disk claims to have more than %d platters", WVD_MAX_SECTORS);
         return false;
     }
 
     const disktype_t tmp_disktype = static_cast<disktype_t>(data[10]);
     if (tmp_disktype >= DISKTYPE_ILLEGAL) {
-        UI_Error("The disktype field of the disk image isn't legal");
+        UI_error("The disktype field of the disk image isn't legal");
         return false;
     }
 
     const int tmp_platters = static_cast<int>(data[11] + 1);
     if (tmp_platters > WVD_MAX_PLATTERS) {
-        UI_Error("The disk claims to have more than %d platters", WVD_MAX_PLATTERS);
+        UI_error("The disk claims to have more than %d platters", WVD_MAX_PLATTERS);
         return false;
     }
 
     if (strlen(reinterpret_cast<const char*>(&data[16])) > WVD_MAX_LABEL_LEN-1) {
-        UI_Error("The label appears to be too long.\n"
+        UI_error("The label appears to be too long.\n"
                  "Is the disk image corrupt?");
         return false;
     }
     std::string tmp_label(reinterpret_cast<const char*>(&data[16]));
 
-    m_metaModified      = false;
-    m_label             = tmp_label;
-    m_diskType          = tmp_disktype;
-    m_numPlatters       = tmp_platters;
-    m_numPlatterSectors = tmp_sectors;
-    m_writeProtect      = tmp_writeProtect;
+    m_metadata_modified   = false;
+    m_label               = tmp_label;
+    m_disk_type           = tmp_disktype;
+    m_num_platters        = tmp_platters;
+    m_num_platter_sectors = tmp_sectors;
+    m_write_protect       = tmp_write_protect;
 
     return true;
 }
@@ -596,14 +608,14 @@ Wvd::readHeader()
 bool
 Wvd::format(const int platter)
 {
-    assert(platter >= 0 && platter < m_numPlatters);
+    assert(platter >= 0 && platter < m_num_platters);
 
     // fill all non-header sectors with 0x00
     uint8 data[256];
     memset(&data[0], static_cast<uint8>(0x00), 256);
 
     bool ok = true;
-    for (int n=0; ok && n<m_numPlatterSectors; n++) {
+    for (int n=0; ok && n<m_num_platter_sectors; n++) {
         ok = writeSector(platter, n, &data[0]);
     }
 
@@ -618,10 +630,10 @@ bool
 Wvd::createFile(const std::string &filename)
 {
     assert(m_file == nullptr);
-    assert(!m_hasPath);
+    assert(!m_has_path);
     assert(!filename.empty());
 
-    m_hasPath = true;
+    m_has_path = true;
     m_path = filename;
 
     // create the file if it doesn't exist; erase if it does
@@ -633,14 +645,14 @@ Wvd::createFile(const std::string &filename)
     }
 
     if (!m_file->good()) {
-        UI_Error("Couldn't create file '%s'", m_path.c_str());
+        UI_error("Couldn't create file '%s'", m_path.c_str());
         m_file = nullptr;
         return false;
     }
 
     bool ok = writeHeader();
     if (ok) {
-        for (int p=0; ok && p<m_numPlatters; p++) {
+        for (int p=0; ok && p<m_num_platters; p++) {
             ok = format(p);
         }
     }

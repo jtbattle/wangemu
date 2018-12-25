@@ -394,7 +394,7 @@ IoCardTermMux::receiveKeystroke(int term_num, int keycode)
     m_term_t &term = m_terms[term_num];
 
     if (term.rx_ready) {
-        UI_Warn("terminal received char too fast");
+        UI_warn("terminal received char too fast");
         // TODO: set uart overrun status bit?
         // then fall through because the old char is overwritten
     }
@@ -614,7 +614,7 @@ IoCardTermMux::i8080_out_func(int addr, int byte, void *user_data)
             m_term_t &term = tthis->m_terms[term_num];
 #if defined(_DEBUG)
             if (!term.tx_ready) {
-                UI_Warn("terminal %d mxd overwrote the uart tx buffer", term_num+1);
+                UI_warn("terminal %d mxd overwrote the uart tx buffer", term_num+1);
             }
 #endif
             term.tx_ready = false;

@@ -390,7 +390,7 @@ Printer::lptChar(uint8 byte)
     if (m_fp_port == nullptr) {
         // port is closed.  open it and set timer to close if port goes idle.
         assert(m_portstring != "");
-        // UI_Info("opening %s", m_portstring.c_str());
+        // UI_info("opening %s", m_portstring.c_str());
         m_fp_port = fopen(m_portstring.c_str(), "wb");
         m_portTimer.Start();  // period was set in the constructor
     }
@@ -433,7 +433,7 @@ Printer::saveToFile()
                                     std::ofstream::trunc |  // discard any existing file
                                     std::ofstream::binary); // just write what I ask
         if (!ofs.is_open()) {
-            UI_Error("Couldn't write to file '%s'", fullpath.c_str());
+            UI_error("Couldn't write to file '%s'", fullpath.c_str());
             return;
         }
 
@@ -448,7 +448,7 @@ Printer::saveToFile()
             const int len = tmpline.length();
             ofs.write(tmpline.c_str(), len);
             if (!ofs.good()) {
-                UI_Error("Error writing to line %d of '%s'", n+1, fullpath.c_str());
+                UI_error("Error writing to line %d of '%s'", n+1, fullpath.c_str());
                 ofs.close();
                 return;
             }
@@ -611,7 +611,7 @@ Printer::OnTimer(wxTimerEvent &WXUNUSED(event))
     if (m_printing_flag == false) {
         // if port is open, close it
         closePort();
-        // UI_Info("Timer timed out; closed %s", m_portstring.c_str());
+        // UI_info("Timer timed out; closed %s", m_portstring.c_str());
     } else {
         // keep port open.  timer re-arms automatically.
         m_printing_flag = false;  // will be set if we start printing before the timer expires

@@ -93,7 +93,7 @@ void
 IoCardXxx::select()
 {
     if (NOISY) {
-        UI_Info("xxx ABS");
+        UI_info("xxx ABS");
     }
 
     m_selected = true;
@@ -106,7 +106,7 @@ void
 IoCardXxx::deselect()
 {
     if (NOISY) {
-        UI_Info("xxx -ABS");
+        UI_info("xxx -ABS");
     }
     m_cpu->setDevRdy(false);
 
@@ -122,7 +122,7 @@ IoCardXxx::strobeOBS(int val)
     val &= 0xFF;
 
     if (NOISY) {
-        UI_Info("xxx OBS: Output of byte 0x%02x", val);
+        UI_info("xxx OBS: Output of byte 0x%02x", val);
     }
 
     // ...
@@ -140,7 +140,7 @@ IoCardXxx::strobeCBS(int val)
 #else
     // unexpected -- the real hardware ignores this byte
     if (NOISY) {
-        UI_Warn("unexpected xxx CBS: Output of byte 0x%02x", val);
+        UI_warn("unexpected xxx CBS: Output of byte 0x%02x", val);
     }
 #endif
 }
@@ -162,7 +162,7 @@ IoCardXxx::setCpuBusy(bool busy)
     // it appears that except for reset, ucode only ever clears it,
     // and of course the IBS sets it back.
     if (NOISY) {
-        UI_Info("xxx CPB%c", val?'+':'-');
+        UI_info("xxx CPB%c", val?'+':'-');
     }
 
     m_cpb = busy;

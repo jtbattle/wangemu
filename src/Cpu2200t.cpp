@@ -604,7 +604,7 @@ Cpu2200t::setSt1(uint4 value)
     m_cpu.st1 = value;
 
     if (cpb_changed) {
-        system2200::cpu_CPB(!!(m_cpu.st1 & ST1_MASK_CPB));
+        system2200::dispatchCpuBusy(!!(m_cpu.st1 & ST1_MASK_CPB));
     }
 }
 
@@ -909,7 +909,7 @@ Cpu2200t::ioCardCbIbs(int data)
     assert((m_cpu.st1 & ST1_MASK_CPB) == 0);
     m_cpu.k = static_cast<uint8>(data & 0xFF);
     m_cpu.st1 |= ST1_MASK_CPB;  // CPU busy; inhibit IBS
-    system2200::cpu_CPB(true);  // the cpu is busy now
+    system2200::dispatchCpuBusy(true);  // the cpu is busy now
 
     // return special status if it is a special function key
     if (data & IoCardKeyboard::KEYCODE_SF) {
@@ -1068,7 +1068,7 @@ Cpu2200t::execOneOp()
         {
             char buff[200];
             dasmOneOp(&buff[0], m_cpu.ic, m_ucode[m_cpu.ic].ucode);
-            UI_Error("%s\nIllegal op at ic=%04X", &buff[0], m_cpu.ic);
+            UI_error("%s\nIllegal op at ic=%04X", &buff[0], m_cpu.ic);
         }
         m_status = CPU_HALTED;
         return EXEC_ERR;
@@ -1306,8 +1306,8 @@ Cpu2200t::execOneOp()
                         dbglog("-CBS when AB=%02X, K=%02X ('%c')\n", m_cpu.ab_sel, m_cpu.k, m_cpu.k);
                     }
                 }
-                //UI_Info("CPU:CBS when AB=%02X, AB_SEL=%02X, K=%02X", m_cpu.ab, m_cpu.ab_sel, m_cpu.k);
-                system2200::cpu_CBS(m_cpu.k);  // control bus strobe
+                //UI_info("CPU:CBS when AB=%02X, AB_SEL=%02X, K=%02X", m_cpu.ab, m_cpu.ab_sel, m_cpu.k);
+                system2200::dispatchCbsStrobe(m_cpu.k);  // control bus strobe
                 break;
 
             case 0x20: // generate -OBS
@@ -1318,8 +1318,8 @@ Cpu2200t::execOneOp()
                         dbglog("-OBS when AB=%02X, K=%02X ('%c')\n", m_cpu.ab_sel, m_cpu.k, m_cpu.k);
                     }
                 }
-                //UI_Info("CPU:OBS when AB=%02X, AB_SEL=%02X, K=%02X", m_cpu.ab, m_cpu.ab_sel, m_cpu.k);
-                system2200::cpu_OBS(m_cpu.k);  // output data bus strobe
+                //UI_info("CPU:OBS when AB=%02X, AB_SEL=%02X, K=%02X", m_cpu.ab, m_cpu.ab_sel, m_cpu.k);
+                system2200::dispatchObsStrobe(m_cpu.k);  // output data bus strobe
                 break;
 
             case 0x40: // generate -ABS
@@ -1327,8 +1327,8 @@ Cpu2200t::execOneOp()
                 if (m_dbg) {
                     dbglog("-ABS with AB=%02X\n", m_cpu.ab_sel);
                 }
-                //UI_Info("CPU:ABS when AB=%02X", m_cpu.ab);
-                system2200::cpu_ABS(m_cpu.ab_sel);  // address bus strobe
+                //UI_info("CPU:ABS when AB=%02X", m_cpu.ab);
+                system2200::dispatchAbsStrobe(m_cpu.ab_sel);  // address bus strobe
                 break;
 
             default:

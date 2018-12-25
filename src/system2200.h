@@ -41,7 +41,7 @@ namespace system2200
     void unregisterClockedDevice(clkCallback cb) noexcept;
 
     // set current system configuration -- may cause reset
-    void setConfig(const SysCfgState &newcfg);
+    void setConfig(const SysCfgState &new_cfg);
 
     // give access to components
     const SysCfgState& config() noexcept;
@@ -68,11 +68,11 @@ namespace system2200
 
     // ---- I/O dispatch logic ----
 
-    void cpu_ABS(uint8 byte);   // address byte strobe
-    void cpu_OBS(uint8 byte);   // output byte strobe
-    void cpu_CBS(uint8 byte);   // control byte strobes
-    void cpu_CPB(bool busy);    // notify selected card when CPB changes
-    int  cpuPollIB();           // the CPU can poll IB without any other strobe
+    void dispatchAbsStrobe(uint8 byte);  // address byte strobe
+    void dispatchObsStrobe(uint8 byte);  // output byte strobe
+    void dispatchCbsStrobe(uint8 byte);  // control byte strobes
+    void dispatchCpuBusy(bool busy);     // notify selected card when CPB changes
+    int  cpuPollIB();                    // the CPU can poll IB without any other strobe
 
     // ---- keyboard input routing ----
 
@@ -81,22 +81,22 @@ namespace system2200
     void unregisterKb(int io_addr, int term_num) noexcept;
 
     // send a key event to the specified keyboard/terminal
-    void kb_keystroke(int io_addr, int term_num, int keyvalue);
+    void dispatchKeystroke(int io_addr, int term_num, int keyvalue);
 
     // request the contents of a file to be fed in as a keyboard stream
-    void kb_invokeScript(int io_addr, int term_num,
-                         const std::string &filename);
+    void invokeKbScript(int io_addr, int term_num,
+                        const std::string &filename);
 
     // indicates if a script is currently active on a given terminal
-    bool kb_scriptModeActive(int io_addr, int term_num);
+    bool isScriptModeActive(int io_addr, int term_num);
 
     // return how many terminals at this io_addr have active scripts
-    int kb_scriptActiveCount(int io_addr) noexcept;
+    int numActiveScripts(int io_addr) noexcept;
 
     // when invoked on a terminal in script mode, causes key callback to be
     // invoked with the next character from the script.  it returns true if
     // a script supplied a character.
-    bool kb_keyReady(int io_addr, int term_num);
+    bool pollScriptInput(int io_addr, int term_num);
 
     // ---- slot manager ----
 
@@ -130,16 +130,16 @@ namespace system2200
     // ---- legal cpu system configurations ----
 
     typedef struct {
-        int              cpuType;          // Cpu2200::CPUTYPE_* value
-        std::string      label;            // human-readable label
-        std::vector<int> ramSizeOptions;   // list of legal RAM configurations in KB
-        std::vector<int> ucodeSizeOptions; // list of legal ucode sizes, in words
-        bool             hasOneShot;       // does it have the timeslice one-shot?
+        int              cpu_type;            // Cpu2200::CPUTYPE_* value
+        std::string      label;               // human-readable label
+        std::vector<int> ram_size_options;    // list of legal RAM configurations in KB
+        std::vector<int> ucode_size_options;  // list of legal ucode sizes, in words
+        bool             has_oneshot;         // does it have the timeslice one-shot?
     } cpuconfig_t;
 
-    extern const std::vector<cpuconfig_t> cpuConfigs;
-    const cpuconfig_t* getCpuConfig(const std::string &configName) noexcept;
-    const cpuconfig_t* getCpuConfig(int configId) noexcept;
+    extern const std::vector<cpuconfig_t> m_cpu_configs;
+    const cpuconfig_t* getCpuConfig(const std::string &config_name) noexcept;
+    const cpuconfig_t* getCpuConfig(int config_id) noexcept;
 };
 
 #endif // _INCLUDE_SYSTEM2200_H_

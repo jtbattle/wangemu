@@ -46,7 +46,7 @@ Crt::Crt(CrtFrame *parent, crt_state_t *crt_state) :
 {
     create_beep();
     if (!m_beep && false) {
-        UI_Warn("Emulator was unable to create the beep sound.\n"
+        UI_warn("Emulator was unable to create the beep sound.\n"
                 "HEX(07) will produce the host bell sound.");
     }
 

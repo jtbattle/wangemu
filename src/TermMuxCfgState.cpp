@@ -78,7 +78,7 @@ TermMuxCfgState::loadIni(const std::string &subgroup)
     int ival;
     host::configReadInt(subgroup, "numTerminals", &ival, 1);
     if (ival < 1 || ival > 4) {
-        UI_Warn("config state messed up -- assuming something reasonable");
+        UI_warn("config state messed up -- assuming something reasonable");
         ival = 1;
     }
     setNumTerminals(ival);

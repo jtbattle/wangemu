@@ -419,7 +419,7 @@ CrtFrame::setMenuChecks(const wxMenu *menu)
 {
     // ----- file --------------------------------------
     if (isPrimaryCrt()) {
-        const bool script_running = system2200::kb_scriptModeActive(m_assoc_kb_addr, m_term_num);
+        const bool script_running = system2200::isScriptModeActive(m_assoc_kb_addr, m_term_num);
         m_menuBar->Enable(File_Script, !script_running);
     }
 // FIXME: we want to allow secondary MXD terminals to support script input too
@@ -984,7 +984,7 @@ CrtFrame::OnScript(wxCommandEvent& WXUNUSED(event))
     const int r = host::fileReq(host::FILEREQ_SCRIPT, "Script to execute", 1, &fullpath);
     if (r == host::FILEREQ_OK) {
         // tell the core emulator to redirect input for a while
-        system2200::kb_invokeScript(m_assoc_kb_addr, m_term_num, fullpath);
+        system2200::invokeKbScript(m_assoc_kb_addr, m_term_num, fullpath);
     }
 }
 
@@ -1041,7 +1041,8 @@ CrtFrame::OnReset(wxCommandEvent &event)
         case CPU_WarmReset:
             // route it through the keyboard handler because the MXD
             // filters out resets which aren't from terminal #1
-            system2200::kb_keystroke(getTiedAddr(), m_term_num, IoCardKeyboard::KEYCODE_RESET);
+            system2200::dispatchKeystroke(getTiedAddr(), m_term_num,
+                                          IoCardKeyboard::KEYCODE_RESET);
             break;
     }
 }
@@ -1128,7 +1129,7 @@ CrtFrame::doFormat(const std::string &filename)
         prompt += "Formatting will lose all disk contents.\n"
                   "Do you really want me to format the disk?";
 
-        if (UI_Confirm(prompt.c_str())) {
+        if (UI_confirm(prompt.c_str())) {
             if (in_use) {
                 // close filehandles to the specified drive
                 IoCardDisk::wvdFlush(slot, drive);
@@ -1138,7 +1139,7 @@ CrtFrame::doFormat(const std::string &filename)
     }
 
     if (!ok) {
-        UI_Error("Error: operation failed");
+        UI_error("Error: operation failed");
     }
 
     system2200::freezeEmu(false);   // run emulation
@@ -1153,7 +1154,7 @@ CrtFrame::OnDisk(wxCommandEvent &event)
     const int slot  =  (menu_id - Disk_Insert) / 4;
     const int drive = ((menu_id - Disk_Insert) % 4) / 2;
     const int type  =  (menu_id - Disk_Insert) % 2;
-    // UI_Info("Got disk menu: slot=%d, drive=%d, action=%d", slot, drive, type);
+    // UI_info("Got disk menu: slot=%d, drive=%d, action=%d", slot, drive, type);
 
     int ok = true;
     switch (type) {
@@ -1165,7 +1166,7 @@ CrtFrame::OnDisk(wxCommandEvent &event)
                 int drive2, io_addr2;
                 const bool b = system2200::findDisk(fullpath, nullptr, &drive2, &io_addr2);
                 if (b) {
-                    UI_Warn("Disk already in drive %c /%03x", "FC"[drive2], io_addr2);
+                    UI_warn("Disk already in drive %c /%03x", "FC"[drive2], io_addr2);
                     return;
                 } else {
                     ok = IoCardDisk::wvdInsertDisk(slot, drive, fullpath);
@@ -1179,7 +1180,7 @@ CrtFrame::OnDisk(wxCommandEvent &event)
 
 #if 0
         case 2: // format disk
-            if (UI_Confirm("Do you really want me to format the disk in drive %d?", drive)) {
+            if (UI_confirm("Do you really want me to format the disk in drive %d?", drive)) {
                 ok = IoCardDisk::wvd_format(slot, drive);
             }
             break;
@@ -1192,7 +1193,7 @@ CrtFrame::OnDisk(wxCommandEvent &event)
     }
 
     if (!ok) {
-        UI_Error("Error: operation failed");
+        UI_error("Error: operation failed");
     }
 }
 
@@ -1366,7 +1367,7 @@ CrtFrame::OnToolBarButton(wxCommandEvent &event)
                       : (shift)         ? (sf | (id - TB_SF0 + 16))
                                         : (sf | (id - TB_SF0));
 
-    system2200::kb_keystroke(getTiedAddr(), m_term_num, keycode);
+    system2200::dispatchKeystroke(getTiedAddr(), m_term_num, keycode);
 }
 
 

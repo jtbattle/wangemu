@@ -33,30 +33,35 @@ static std::shared_ptr<SysCfgState> current_cfg = nullptr;
 // mapping i/o addresses to devices
 struct iomap_t {
     int  slot;      // slot number of the device which "owns" this address
-    bool ignore;    // if false, access generates a warning message
-                    // if there is no device at that address
+    bool ignore;    // if false, access generates a warning message if ...
+                    // ... there is no device at that address
 };
-static std::array<std::unique_ptr<IoCard>, NUM_IOSLOTS> cardInSlot; // pointer to card in a given slot
-static std::array<iomap_t,256> ioMap;      // pointer to card responding to given address
-static int                     curIoAddr;  // address of most recent ABS
+
+// pointer to card in a given slot
+static std::array<std::unique_ptr<IoCard>, NUM_IOSLOTS> card_in_slot;
+
+// pointer to card responding to given address
+static std::array<iomap_t,256> ioMap;
+
+// address of most recent ABS
+static int curIoAddr;
 
 // ----------------------------- speed regulation -----------------------------
 
-static bool  firstslice    = false; // has realtimestart been initialized?
-static int64 realtimestart = 0;     // relative wall time of when sim started
-static int   real_seconds  = 0;     // real time elapsed
-
-static uint32 m_simsecs = 0; // number of actual seconds simulated time elapsed
+static bool  first_slice    = false; // has realtime_start been initialized?
+static int64 realtime_start = 0;     // relative wall time of when sim started
+static int   real_seconds   = 0;     // real time elapsed
+static uint32 sim_seconds   = 0;     // number of actual seconds simulated time
 
 // amount of actual simulated time elapsed, in ms
-static int64 m_simtime;
+static int64 sim_time_ns;
 
 // amount of adjusted simulated time elapsed, in ms because of user events
 // (eg, menu selection), sim time is often interrupted and we don't
-// actually desire to catch up.  m_simtime is the actual number of
+// actually desire to catch up. sim_time_ns is the actual number of
 // simulated slices, while this var has been fudged to account for those
 // violations of realtime.
-static int64 m_adjsimtime;
+static int64 adjust_sim_time;
 
 // keep a rolling average of how fast we are running in case it is reported.
 // we want to report the running average over the last second of realtime
@@ -89,7 +94,7 @@ typedef struct {
     std::shared_ptr<ScriptFile> script_handle;
 } kb_route_t;
 
-std::vector<kb_route_t> m_kb_routes;
+static std::vector<kb_route_t> keyboard_routes;
 
 // ----------------------------------------------------------------------------
 // initialize static class members
@@ -133,6 +138,7 @@ isDiskController(int slot) noexcept
     return ok && (cardtype_idx == static_cast<int>(IoCard::card_t::disk));
 }
 
+
 // for all disk drives, save what is mounted in them (or not)
 static void
 saveDiskMounts(void)
@@ -162,6 +168,7 @@ saveDiskMounts(void)
     } // slot
 }
 
+
 // remount all disks
 static void
 restoreDiskMounts(void)
@@ -188,12 +195,13 @@ restoreDiskMounts(void)
     } // for (slot)
 }
 
+
 // break down any resources currently committed
 static void
-breakdown_cards(void) noexcept
+breakDownCards(void) noexcept
 {
     // destroy card instances
-    for (auto &card : cardInSlot) {
+    for (auto &card : card_in_slot) {
         card = nullptr;
     }
 
@@ -211,7 +219,7 @@ breakdown_cards(void) noexcept
 }
 
 // ------------------------------------------------------------------------
-// public members
+// "public" members
 // ------------------------------------------------------------------------
 
 // build the world
@@ -223,18 +231,18 @@ system2200::initialize()
         mapentry.slot   = -1;    // unoccupied
         mapentry.ignore = false;
     }
-    for (auto &card : cardInSlot) {
+    for (auto &card : card_in_slot) {
         card = nullptr;
     }
     curIoAddr = -1;
 
     // CPU speed regulation
-    firstslice = true;
-    m_simtime    = m_adjsimtime = host::getTimeMs();
-    m_simsecs    = 0;
+    first_slice = true;
+    sim_time_ns = adjust_sim_time = host::getTimeMs();
+    sim_seconds = 0;
 
-    realtimestart = 0;    // wall time of when sim started
-    real_seconds  = 0;    // real time elapsed
+    realtime_start = 0;  // wall time of when sim started
+    real_seconds  = 0;   // real time elapsed
 
     m_do_reconfig = false;
     freezeEmu(false);
@@ -246,7 +254,7 @@ system2200::initialize()
     SysCfgState ini_cfg;
     ini_cfg.loadIni();
     if (!ini_cfg.configOk(false)) {
-        UI_Warn(".ini file wasn't usable -- using a default configuration");
+        UI_warn(".ini file wasn't usable -- using a default configuration");
         ini_cfg.setDefaults();
     }
     setConfig(ini_cfg);
@@ -264,10 +272,8 @@ system2200::initialize()
 void
 system2200::cleanup()
 {
-    // remember which disks are saved in each drive
     saveDiskMounts();
-
-    breakdown_cards();
+    breakDownCards();
 
     cpu       = nullptr;
     scheduler = nullptr;
@@ -320,16 +326,16 @@ system2200::unregisterClockedDevice(clkCallback cb) noexcept
 // build a system according to the spec.
 // if a system already exists, tear it down and rebuild it.
 void
-system2200::setConfig(const SysCfgState &newcfg)
+system2200::setConfig(const SysCfgState &new_cfg)
 {
     if (!current_cfg) {
         // first time we don't need to tear anything down
         current_cfg = std::make_shared<SysCfgState>();
     } else {
         // check if the change is minor, not requiring a teardown
-        const bool rebuild_required = current_cfg->needsReboot(newcfg);
+        const bool rebuild_required = current_cfg->needsReboot(new_cfg);
         if (!rebuild_required) {
-            *current_cfg = newcfg;  // make new config permanent
+            *current_cfg = new_cfg;  // make new config permanent
             // notify all configured cards about possible new configuration
             for (int slot=0; slot < NUM_IOSLOTS; slot++) {
                 if (current_cfg->isSlotOccupied(slot)) {
@@ -351,28 +357,28 @@ system2200::setConfig(const SysCfgState &newcfg)
         saveDiskMounts();
 
         // throw away all existing devices
-        breakdown_cards();
+        breakDownCards();
     }
 
     // save the new system configuration state
-    *current_cfg = newcfg;
+    *current_cfg = new_cfg;
 
     // (re)build the CPU
-    const int ramsize = (current_cfg->getRamKB()) * 1024;
-    int cpuType = current_cfg->getCpuType();
-    switch (cpuType) {
+    const int ram_size = (current_cfg->getRamKB()) * 1024;
+    int cpu_type = current_cfg->getCpuType();
+    switch (cpu_type) {
         default:
             assert(false);
-            cpuType = Cpu2200::CPUTYPE_2200T;
+            cpu_type = Cpu2200::CPUTYPE_2200T;
             // fall through in non-debug build if config type is invalid
         case Cpu2200::CPUTYPE_2200B:
         case Cpu2200::CPUTYPE_2200T:
-            cpu = std::make_shared<Cpu2200t>(scheduler, ramsize, cpuType);
+            cpu = std::make_shared<Cpu2200t>(scheduler, ram_size, cpu_type);
             break;
         case Cpu2200::CPUTYPE_VP:
         case Cpu2200::CPUTYPE_MVPC:
         case Cpu2200::CPUTYPE_MICROVP:
-            cpu = std::make_shared<Cpu2200vp>(scheduler, ramsize, cpuType);
+            cpu = std::make_shared<Cpu2200vp>(scheduler, ram_size, cpu_type);
             break;
     }
     assert(cpu);
@@ -406,13 +412,13 @@ system2200::setConfig(const SysCfgState &newcfg)
                                      slot, current_cfg->getCardConfig(slot).get());
         if (inst == nullptr) {
             // failed to install
-            UI_Warn("Configuration problem: failure to create slot %d card instance", slot);
+            UI_warn("Configuration problem: failure to create slot %d card instance", slot);
         } else {
             std::vector<int> addresses = inst->getAddresses();
             for (unsigned int n=0; n<addresses.size(); n++) {
                 ioMap[addresses[n]].slot = slot;
             }
-            cardInSlot[slot] = std::move(inst);
+            card_in_slot[slot] = std::move(inst);
         }
     }}
 
@@ -453,7 +459,7 @@ system2200::reset(bool cold_reset)
     // reset all I/O devices
     for (int slot=0; slot<NUM_IOSLOTS; slot++) {
         if (current_cfg->isSlotOccupied(slot)) {
-            cardInSlot[slot]->reset(cold_reset);
+            card_in_slot[slot]->reset(cold_reset);
         }
     }
 }
@@ -488,6 +494,7 @@ system2200::freezeEmu(bool freeze) noexcept
     m_freeze_emu = freeze;
 }
 
+
 // called whenever there is free time
 bool
 system2200::onIdle()
@@ -495,7 +502,7 @@ system2200::onIdle()
     if (m_do_reconfig) {
         m_do_reconfig = false;
         freezeEmu(true);
-        UI_SystemConfigDlg();
+        UI_systemConfigDlg();
         freezeEmu(false);
     }
 
@@ -551,21 +558,21 @@ system2200::emulateTimeslice(int ts_ms)
 
     const uint64 now_ms = host::getTimeMs();
 
-    if (firstslice) {
-        firstslice = false;
-        realtimestart = now_ms;
+    if (first_slice) {
+        first_slice = false;
+        realtime_start = now_ms;
     }
-    const int64 realtime_elapsed = now_ms - realtimestart;
-    int64 offset = m_adjsimtime - realtime_elapsed;
+    const int64 realtime_elapsed = now_ms - realtime_start;
+    int64 offset = adjust_sim_time - realtime_elapsed;
 
     if (offset > adj_window) {
         // we're way ahead (probably because we are running unregulated)
-        m_adjsimtime = realtime_elapsed + adj_window;
+        adjust_sim_time = realtime_elapsed + adj_window;
         offset = adj_window;
     } else if (offset < -adj_window) {
         // we've fallen way behind; catch up so we don't
         // run like mad after any substantial pause
-        m_adjsimtime = realtime_elapsed - adj_window;
+        adjust_sim_time = realtime_elapsed - adj_window;
         offset = -adj_window;
     }
 
@@ -673,16 +680,17 @@ system2200::emulateTimeslice(int ts_ms)
             }
         }
 
-        m_simtime    += ts_ms;
-        m_adjsimtime += ts_ms;
+        sim_time_ns     += ts_ms;
+        adjust_sim_time += ts_ms;
 
         if (cpu->status() != Cpu2200::CPU_RUNNING) {
-            UI_Warn("CPU halted -- must reset");
+            UI_warn("CPU halted -- must reset");
             cpu->reset(true);  // hard reset
             return;
         }
 
-        m_simsecs = static_cast<unsigned long>((m_simtime/1000) & 0xFFFFFFFF);
+        sim_seconds = static_cast<unsigned long>(
+                            (sim_time_ns/1000) & 0xFFFFFFFF);
 
         const int real_seconds_now = static_cast<int>(realtime_elapsed/1000);
         if (real_seconds != real_seconds_now) {
@@ -706,7 +714,7 @@ system2200::emulateTimeslice(int ts_ms)
                                            / static_cast<float>(ms_diff);
 
                 // update the status bar with simulated seconds and performance
-                UI_setSimSeconds(m_simsecs, relative_speed);
+                UI_setSimSeconds(sim_seconds, relative_speed);
             }
         }
 
@@ -715,14 +723,13 @@ system2200::emulateTimeslice(int ts_ms)
     }
 }
 
-
 // ========================================================================
 //    io dispatch functions (used by core sim)
 // ========================================================================
 
 // address byte strobe
 void
-system2200::cpu_ABS(uint8 byte)
+system2200::dispatchAbsStrobe(uint8 byte)
 {
     // done if reselecting same device
     if (byte == curIoAddr) {
@@ -731,13 +738,13 @@ system2200::cpu_ABS(uint8 byte)
 
     // deselect old card
     if ((curIoAddr > 0) && (ioMap[curIoAddr].slot >= 0)) {
-        (cardInSlot[ioMap[curIoAddr].slot])->deselect();
+        (card_in_slot[ioMap[curIoAddr].slot])->deselect();
     }
     curIoAddr = byte;
 
-    const int cpuType = cpu->getCpuType();
-    const bool vp_mode = (cpuType != Cpu2200::CPUTYPE_2200B)
-                      && (cpuType != Cpu2200::CPUTYPE_2200T);
+    const int cpu_type = cpu->getCpuType();
+    const bool vp_mode = (cpu_type != Cpu2200::CPUTYPE_2200B)
+                      && (cpu_type != Cpu2200::CPUTYPE_2200T);
 
     // by default, assume the device is not ready.
     // the addressed card will turn it back below if appropriate
@@ -752,7 +759,7 @@ system2200::cpu_ABS(uint8 byte)
     // let the selected card know it has been chosen
     if (ioMap[curIoAddr].slot >= 0) {
         const int slot = ioMap[curIoAddr].slot;
-        cardInSlot[slot]->select();
+        card_in_slot[slot]->select();
         return;
     }
 
@@ -769,7 +776,7 @@ system2200::cpu_ABS(uint8 byte)
         && (curIoAddr != 0x86)  // testing for mxd at 0x8n
         && (curIoAddr != 0xC6)  // testing for mxd at 0xCn
        ) {
-        const bool response = UI_Confirm(
+        const bool response = UI_confirm(
                     "Warning: selected non-existent I/O device %02X\n"
                     "Should I warn you of further accesses to this device?",
                     curIoAddr);
@@ -781,7 +788,7 @@ system2200::cpu_ABS(uint8 byte)
 
 // output byte strobe
 void
-system2200::cpu_OBS(uint8 byte)
+system2200::dispatchObsStrobe(uint8 byte)
 {
 // p 6-2 of the Wang 2200 Service Manual:
 // When the controller is selected (select latch set), the Ready/Busy
@@ -793,7 +800,7 @@ system2200::cpu_OBS(uint8 byte)
 // has been strobed by !OBS, the CPU output strobe.
     if (curIoAddr > 0) {
         if (ioMap[curIoAddr].slot >= 0) {
-            cardInSlot[ioMap[curIoAddr].slot]->strobeOBS(byte);
+            card_in_slot[ioMap[curIoAddr].slot]->strobeOBS(byte);
         }
     }
 }
@@ -801,7 +808,7 @@ system2200::cpu_OBS(uint8 byte)
 
 // handles CBS strobes
 void
-system2200::cpu_CBS(uint8 byte)
+system2200::dispatchCbsStrobe(uint8 byte)
 {
     // each card handles CBS in its own way.
     //   * many cards simply ignore it
@@ -809,18 +816,18 @@ system2200::cpu_CBS(uint8 byte)
     //     of command word
     //   * some cards use it to trigger an IBS strobe
     if ((curIoAddr > 0) && (ioMap[curIoAddr].slot >= 0)) {
-        cardInSlot[ioMap[curIoAddr].slot]->strobeCBS(byte);
+        card_in_slot[ioMap[curIoAddr].slot]->strobeCBS(byte);
     }
 }
 
 
 // notify selected card when CPB changes
 void
-system2200::cpu_CPB(bool busy)
+system2200::dispatchCpuBusy(bool busy)
 {
     if ((curIoAddr > 0) && (ioMap[curIoAddr].slot >= 0)) {
         // signal that we want to get something
-        cardInSlot[ioMap[curIoAddr].slot]->setCpuBusy(busy);
+        card_in_slot[ioMap[curIoAddr].slot]->setCpuBusy(busy);
     }
 }
 
@@ -831,7 +838,7 @@ system2200::cpuPollIB()
 {
     if  ((curIoAddr > 0) && (ioMap[curIoAddr].slot >= 0)) {
         // signal that we want to get something
-        return cardInSlot[ioMap[curIoAddr].slot]->getIB();
+        return card_in_slot[ioMap[curIoAddr].slot]->getIB();
     }
     return 0;
 }
@@ -848,42 +855,43 @@ system2200::registerKb(int io_addr, int term_num, kbCallback cb) noexcept
     assert(cb);
 
     // check that it isn't already registered
-    for (auto &kb : m_kb_routes) {
+    for (auto &kb : keyboard_routes) {
         if (io_addr == kb.io_addr && term_num == kb.term_num) {
-            UI_Warn("Attempt to register kb handler at io_addr=0x%02x, term_num=%d twice",
+            UI_warn("Attempt to register kb handler at io_addr=0x%02x, term_num=%d twice",
                     io_addr, term_num);
             return;
         }
     }
     kb_route_t kb = { io_addr, term_num, cb, nullptr };
-    m_kb_routes.push_back(kb);
+    keyboard_routes.push_back(kb);
 }
+
 
 void
 system2200::unregisterKb(int io_addr, int term_num) noexcept
 {
-    for (auto it = begin(m_kb_routes); it != end(m_kb_routes); ++it) {
+    for (auto it = begin(keyboard_routes); it != end(keyboard_routes); ++it) {
         if (io_addr == it->io_addr && term_num == it->term_num) {
-            m_kb_routes.erase(it);
+            keyboard_routes.erase(it);
             return;
         }
     }
-    UI_Warn("Attempt to unregister unknown kb handler at io_addr=0x%02x, term_num=%d",
+    UI_warn("Attempt to unregister unknown kb handler at io_addr=0x%02x, term_num=%d",
             io_addr, term_num);
 }
 
+
 // send a key event to the specified keyboard/terminal
 void
-system2200::kb_keystroke(int io_addr, int term_num, int keyvalue)
+system2200::dispatchKeystroke(int io_addr, int term_num, int keyvalue)
 {
-    for (auto &kb : m_kb_routes) {
+    for (auto &kb : keyboard_routes) {
         if (io_addr == kb.io_addr && term_num == kb.term_num) {
             if (kb.script_handle) {
                 // a script is running; ignore everything but HALT
                 // (on pc, ctrl-C or pause/break key)
                 if (keyvalue == IoCardKeyboard::KEYCODE_HALT) {
                     kb.script_handle = nullptr;
-                    // FIXME: leaking here
                 }
                 return;
             }
@@ -892,22 +900,23 @@ system2200::kb_keystroke(int io_addr, int term_num, int keyvalue)
             return;
         }
     }
-    UI_Warn("Attempt to route key to unknown kb handler at io_addr=0x%02x, term_num=%d",
+    UI_warn("Attempt to route key to unknown kb handler at io_addr=0x%02x, term_num=%d",
             io_addr, term_num);
 }
 
+
 // request the contents of a file to be fed in as a keyboard stream
 void
-system2200::kb_invokeScript(int io_addr, int term_num,
+system2200::invokeKbScript(int io_addr, int term_num,
                      const std::string &filename)
 {
-    if (kb_scriptModeActive(io_addr, term_num)) {
-        UI_Warn("Attempt to invoke a script while one already active, io_addr=0x%02x, term_num=%d",
+    if (isScriptModeActive(io_addr, term_num)) {
+        UI_warn("Attempt to invoke a script while one already active, io_addr=0x%02x, term_num=%d",
                 io_addr, term_num);
         return;
     }
 
-    for (auto &kb : m_kb_routes) {
+    for (auto &kb : keyboard_routes) {
         if (io_addr == kb.io_addr && term_num == kb.term_num) {
             const int flags = ScriptFile::SCRIPT_META_INC
                             | ScriptFile::SCRIPT_META_HEX
@@ -919,35 +928,37 @@ system2200::kb_invokeScript(int io_addr, int term_num,
                 kb.script_handle = nullptr;
             } else {
                 // possibly get the first character
-                kb_keyReady(io_addr, term_num);
+                pollScriptInput(io_addr, term_num);
             }
             return;
         }
     }
-    UI_Warn("Attempt to invoke script on unknown kb handler at io_addr=0x%02x, term_num=%d",
+    UI_warn("Attempt to invoke script on unknown kb handler at io_addr=0x%02x, term_num=%d",
             io_addr, term_num);
 }
 
+
 // indicates if a script is currently active on a given terminal
 bool
-system2200::kb_scriptModeActive(int io_addr, int term_num)
+system2200::isScriptModeActive(int io_addr, int term_num)
 {
-    for (auto &kb : m_kb_routes) {
+    for (auto &kb : keyboard_routes) {
         if (io_addr == kb.io_addr && term_num == kb.term_num) {
             return (kb.script_handle != nullptr);
         }
     }
-    UI_Warn("Attempt to query script status on unknown kb handler at io_addr=0x%02x, term_num=%d",
+    UI_warn("Attempt to query script status on unknown kb handler at io_addr=0x%02x, term_num=%d",
             io_addr, term_num);
     return false;
 }
 
+
 // return how many terminals at this io_addr have active scripts
 int
-system2200::kb_scriptActiveCount(int io_addr) noexcept
+system2200::numActiveScripts(int io_addr) noexcept
 {
     int count = 0;
-    for (auto &kb : m_kb_routes) {
+    for (auto &kb : keyboard_routes) {
         if (io_addr == kb.io_addr) {
             count++;
         }
@@ -955,13 +966,14 @@ system2200::kb_scriptActiveCount(int io_addr) noexcept
     return count;
 }
 
+
 // when invoked on a terminal in script mode, causes key callback to be
 // invoked with the next character from the script.  it returns true if
 // a script supplied a character.
 bool
-system2200::kb_keyReady(int io_addr, int term_num)
+system2200::pollScriptInput(int io_addr, int term_num)
 {
-    for (auto &kb : m_kb_routes) {
+    for (auto &kb : keyboard_routes) {
         if (io_addr == kb.io_addr && term_num == kb.term_num) {
             if (!kb.script_handle) {
                 return false;
@@ -975,7 +987,6 @@ system2200::kb_keyReady(int io_addr, int term_num)
             } else {
                 // EOF
                 kb.script_handle = nullptr;
-                // FIXME: leaking here
                 return false;
             }
         }
@@ -1050,24 +1061,24 @@ system2200::getPrinterIoAddr(int n) noexcept
 
 
 // return the instance handle of the device at the specified IO address
-// FIXME: returning a raw pointer -- does all this need to be
-//        converted to shared_ptr?
+// TODO: returning a raw pointer -- does all this need to be
+//       converted to shared_ptr?
 IoCard*
 system2200::getInstFromIoAddr(int io_addr) noexcept
 {
     assert((io_addr >= 0) && (io_addr <= 0xFFF));
-    return cardInSlot[ioMap[io_addr & 0xFF].slot].get();
+    return card_in_slot[ioMap[io_addr & 0xFF].slot].get();
 }
 
 
 // given a slot, return the "this" element
-// FIXME: returning a raw pointer -- does all this need to be
-//        converted to shared_ptr?
+// TODO: returning a raw pointer -- does all this need to be
+//       converted to shared_ptr?
 IoCard*
 system2200::getInstFromSlot(int slot) noexcept
 {
     assert(slot >=0 && slot < NUM_IOSLOTS);
-    return cardInSlot[slot].get();
+    return card_in_slot[slot].get();
 }
 
 
@@ -1139,79 +1150,81 @@ system2200::findDisk(const std::string &filename,
     return false;
 }
 
-
 // ------------------------------------------------------------------------
 // legal cpu system configurations
 // ------------------------------------------------------------------------
 
-const std::vector<system2200::cpuconfig_t> system2200::cpuConfigs = {
+const std::vector<system2200::cpuconfig_t> system2200::m_cpu_configs = {
     // https://wang2200.org/docs/datasheet/2200ABC_CPU_DataSheet.700-3491.11-74.pdf
-    {   Cpu2200::CPUTYPE_2200B,    // .cpuType
+    {   Cpu2200::CPUTYPE_2200B,    // .cpu_type
         "2200B",                   // .label
-        { 4, 8, 12, 16, 24, 32 },  // .ramSizeOptions (20K and 28K were conceptually options too)
-        { 0 },                     // .ucodeSizeOptions
-        false                      // .hasOneShot
+        { 4, 8, 12, 16, 24, 32 },  // .ram_size_options (20K and 28K were conceptually options too)
+        { 0 },                     // .ucode_size_options
+        false                      // .has_oneshot
     },
 
     // https://wang2200.org/docs/datasheet/2200T_CPU_DataSheet.700-3723D.1-79.pdf
-    {   Cpu2200::CPUTYPE_2200T,    // .cpuType
+    {   Cpu2200::CPUTYPE_2200T,    // .cpu_type
         "2200T",                   // .label
-        { 8, 16, 24, 32 },         // .ramSizeOptions
-        { 0 },                     // .ucodeSizeOptions
-        false                      // .hasOneShot
+        { 8, 16, 24, 32 },         // .ram_size_options
+        { 0 },                     // .ucode_size_options
+        false                      // .has_oneshot
     },
 
     // https://wang2200.org/docs/datasheet/2200VP_CPU_DataSheet.700-4051C.10-80.pdf
-    {   Cpu2200::CPUTYPE_VP,       // .cpuType
+    {   Cpu2200::CPUTYPE_VP,       // .cpu_type
         "2200VP",                  // .label
-        { 16, 32, 48, 64 },        // .ramSizeOptions
-        { 32 },                    // .ucodeSizeOptions
-        false                      // .hasOneShot
+        { 16, 32, 48, 64 },        // .ram_size_options
+        { 32 },                    // .ucode_size_options
+        false                      // .has_oneshot
     },
 
 #if 0 // remove it to reduce cognitive overload
     // https://wang2200.org/docs/datasheet/2200MVP_DataSheet.700-4656G.10-82.pdf
-    {   Cpu2200::CPUTYPE_MVP,      // .cpuType
+    {   Cpu2200::CPUTYPE_MVP,      // .cpu_type
         "2200MVP",                 // .label
-        { 32, 64, 128, 256 },      // .ramSizeOptions
-        { 32 },                    // .ucodeSizeOptions
-        true                       // .hasOneShot
+        { 32, 64, 128, 256 },      // .ram_size_options
+        { 32 },                    // .ucode_size_options
+        true                       // .has_oneshot
     },
 #endif
+
     // https://wang2200.org/docs/datasheet/MVP_LVP_SystemsOptionC.700-6832.4-81.pdf
     // https://wang2200.org/docs/system/2200SystemsOptionC.729-1062.pdf
-    {   Cpu2200::CPUTYPE_MVPC,     // .cpuType
+    {   Cpu2200::CPUTYPE_MVPC,     // .cpu_type
         "2200MVP-C",               // .label
-        { 32, 64, 128, 256, 512 }, // .ramSizeOptions
-        { 64 },                    // .ucodeSizeOptions
-        true                       // .hasOneShot
+        { 32, 64, 128, 256, 512 }, // .ram_size_options
+        { 64 },                    // .ucode_size_options
+        true                       // .has_oneshot
     },
 
     // https://wang2200.org/docs/system/2200MicroVP_MaintenanceManual.741-1668.5-88.pdf
-    {   Cpu2200::CPUTYPE_MICROVP,  // .cpuType
+    {   Cpu2200::CPUTYPE_MICROVP,  // .cpu_type
         "MicroVP",                 // .label
-        { 128, 512, 1024, 2048, 4096, 8192 },  // .ramSizeOptions
-        { 64 },                    // .ucodeSizeOptions
-        true                       // .hasOneShot
+        { 128, 512, 1024, 2048, 4096, 8192 },  // .ram_size_options
+        { 64 },                    // .ucode_size_options
+        true                       // .has_oneshot
     },
 };
 
+
 const system2200::cpuconfig_t*
-system2200::getCpuConfig(const std::string &configName) noexcept
+system2200::getCpuConfig(const std::string &config_name) noexcept
 {
-    for (auto const &cfg : system2200::cpuConfigs) {
-        if (cfg.label == configName) {
+    for (auto const &cfg : system2200::m_cpu_configs) {
+        if (cfg.label == config_name) {
             return &cfg;
         }
     }
     return nullptr;
 }
 
+
 const system2200::cpuconfig_t*
-system2200::getCpuConfig(int configId) noexcept
+system2200::getCpuConfig(int config_id) noexcept
 {
-    for (auto const &cfg : system2200::cpuConfigs) {
-        if (cfg.cpuType == configId) {
+    for (auto const &cfg : system2200::m_cpu_configs) {
+        if (cfg.cpu_type == config_id) {
             return &cfg;
         }
     }

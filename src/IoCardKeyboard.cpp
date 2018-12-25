@@ -96,7 +96,7 @@ void
 IoCardKeyboard::select()
 {
     if (NOISY) {
-        UI_Info("keyboard ABS");
+        UI_info("keyboard ABS");
     }
 
     m_selected = true;
@@ -108,7 +108,7 @@ void
 IoCardKeyboard::deselect()
 {
     if (NOISY) {
-        UI_Info("keyboard -ABS");
+        UI_info("keyboard -ABS");
     }
 
     m_selected = false;
@@ -120,7 +120,7 @@ void
 IoCardKeyboard::strobeOBS(int val)
 {
     if (NOISY) {
-        UI_Warn("unexpected keyboard OBS: Output of byte 0x%02x", val);
+        UI_warn("unexpected keyboard OBS: Output of byte 0x%02x", val);
     }
 }
 
@@ -133,7 +133,7 @@ IoCardKeyboard::strobeCBS(int val) noexcept
 #if 0
     // unexpected -- the real hardware ignores this byte
     if (NOISY) {
-        UI_Warn("unexpected keyboard CBS: Output of byte 0x%02x", val8);
+        UI_warn("unexpected keyboard CBS: Output of byte 0x%02x", val8);
     }
 #endif
 }
@@ -144,7 +144,7 @@ void
 IoCardKeyboard::setCpuBusy(bool busy)
 {
     if (NOISY) {
-        UI_Info("keyboard CPB%c", busy?'+':'-');
+        UI_info("keyboard CPB%c", busy?'+':'-');
     }
 
     // it appears that except for reset, ucode only ever clears it,
@@ -209,7 +209,7 @@ void
 IoCardKeyboard::checkKeyReady()
 {
     if (!m_key_ready) {
-        bool script_active = system2200::kb_keyReady(m_base_addr, 0); // FIXME: only one term can use scripts
+        bool script_active = system2200::pollScriptInput(m_base_addr, 0);
         script_active = !script_active;  // make lint shut up
     }
 // FIXME: keyReady doesn't change m_selected, so the above call can't affect

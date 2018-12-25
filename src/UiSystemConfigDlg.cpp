@@ -79,8 +79,8 @@ SystemConfigDlg::SystemConfigDlg(wxFrame *parent) :
 
     // leaf controls for leftgrid
     m_cpuType = new wxChoice(this, ID_CPU_CHOICE);
-    for (auto &cpuCfg : system2200::cpuConfigs) {
-        m_cpuType->Append(cpuCfg.label.c_str(), (void *)cpuCfg.cpuType);
+    for (auto &cpuCfg : system2200::m_cpu_configs) {
+        m_cpuType->Append(cpuCfg.label.c_str(), (void *)cpuCfg.cpu_type);
     }
 
     m_memSize = new wxChoice(this, ID_MEMSIZE_CHOICE);
@@ -221,11 +221,11 @@ SystemConfigDlg::setMemsizeStrings()
 {
     m_memSize->Clear();  // erase any existing strings
 
-    const int cpuType = m_cfg.getCpuType();
-    auto cpuCfg = system2200::getCpuConfig(cpuType);
+    const int cpu_type = m_cfg.getCpuType();
+    auto cpuCfg = system2200::getCpuConfig(cpu_type);
     assert(cpuCfg != nullptr);
 
-    for (auto const kb : cpuCfg->ramSizeOptions) {
+    for (auto const kb : cpuCfg->ram_size_options) {
         char label[10];
         if (kb < 1024) {
             sprintf(&label[0], "%3d KB", kb);
@@ -241,10 +241,10 @@ SystemConfigDlg::setMemsizeStrings()
 void
 SystemConfigDlg::updateDlg()
 {
-    const int cpuType = m_cfg.getCpuType();
+    const int cpu_type = m_cfg.getCpuType();
     bool found = false;
-    for (unsigned int n=0; n<system2200::cpuConfigs.size(); ++n) {
-        if (system2200::cpuConfigs[n].cpuType == cpuType) {
+    for (unsigned int n=0; n<system2200::m_cpu_configs.size(); ++n) {
+        if (system2200::m_cpu_configs[n].cpu_type == cpu_type) {
             m_cpuType->SetSelection(n);
             found = true;
             break;
@@ -325,15 +325,15 @@ SystemConfigDlg::OnCpuChoice(wxCommandEvent& WXUNUSED(event))
     auto cpuCfg = system2200::getCpuConfig(cputype);
     assert(cpuCfg != nullptr);
 
-    const int ram_choices = cpuCfg->ramSizeOptions.size();
-    const int min_ram = cpuCfg->ramSizeOptions[0];
-    const int max_ram = cpuCfg->ramSizeOptions[ram_choices-1];
+    const int ram_choices = cpuCfg->ram_size_options.size();
+    const int min_ram = cpuCfg->ram_size_options[0];
+    const int max_ram = cpuCfg->ram_size_options[ram_choices-1];
     int cur_mem = m_cfg.getRamKB();
     if (cur_mem < min_ram) { cur_mem = min_ram; }
     if (cur_mem > max_ram) { cur_mem = max_ram; }
 
     int i = 0;
-    for (const int kb : cpuCfg->ramSizeOptions) {
+    for (const int kb : cpuCfg->ram_size_options) {
         if (cur_mem <= kb) {
             // round up to the next biggest ram in the list of valid sizes
             m_memSize->SetSelection(i);
@@ -426,7 +426,7 @@ SystemConfigDlg::configStateOk(bool warn)
         const int addrsel = m_cardAddr[slot]->GetSelection();
         if (addrsel < 0) {
             if (warn) {
-                UI_Error("Please select an I/O address for slot %d", slot);
+                UI_error("Please select an I/O address for slot %d", slot);
             }
             return false;
         }

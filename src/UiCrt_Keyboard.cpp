@@ -316,22 +316,22 @@ Crt::OnKeyDown(wxKeyEvent &event)
     extern int g_dbg;
     if (key == (0x01 | IoCardKeyboard::KEYCODE_SF)) {
         // key = 'A';
-        if (!g_dbg) { UI_Info("Turning on logging to w2200dbg.log"); }
+        if (!g_dbg) { UI_info("Turning on logging to w2200dbg.log"); }
         g_dbg = 1;
         return;  // swallow it
     }
     if (key == (0x02 | IoCardKeyboard::KEYCODE_SF)) {
         // key = 'B';
-        if (g_dbg) { UI_Info("Turning off logging to w2200dbg.log"); }
+        if (g_dbg) { UI_info("Turning off logging to w2200dbg.log"); }
         g_dbg = 0;
         return;  // swallow it
     }
 #endif
 
     if (foundmap) {
-        system2200::kb_keystroke(m_parent->getTiedAddr(),
-                                 m_parent->getTermNum(),
-                                 key);
+        system2200::dispatchKeystroke(m_parent->getTiedAddr(),
+                                      m_parent->getTermNum(),
+                                      key);
     } else {
         // let the OnChar routine handle it
         event.Skip();
@@ -381,9 +381,9 @@ Crt::OnChar(wxKeyEvent &event)
     }
 
     if (foundmap) {
-        system2200::kb_keystroke(m_parent->getTiedAddr(),
-                                 m_parent->getTermNum(),
-                                 key);
+        system2200::dispatchKeystroke(m_parent->getTiedAddr(),
+                                      m_parent->getTermNum(),
+                                      key);
     } else {
         // calling skip causes the menubar & etc logic to process it
         event.Skip();

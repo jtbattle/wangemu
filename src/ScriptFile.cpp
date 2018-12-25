@@ -131,7 +131,7 @@ ScriptFile::prepareNextLine()
     if (m_ifs->fail()) {
         std::string location = getLineDescription();
         std::string msg = "Very long line in script at " + location;
-        UI_Warn("%s", msg.c_str());
+        UI_warn("%s", msg.c_str());
         m_line_buf[MAX_EXPECTED_LINE_LENGTH] = '\0';  // make sure zero terminated
     }
 
@@ -475,7 +475,7 @@ ScriptFile::getNextByte(int *byte)
                     std::string location = getLineDescription();
                     std::string msg("Error opening file '" + abs_inc_fname +
                                     "',\nincluded from " + location);
-                    UI_Error("%s", msg.c_str());
+                    UI_error("%s", msg.c_str());
                     prepareNextLine();
                     continue;  // try next line of input
                 }

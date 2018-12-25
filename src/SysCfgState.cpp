@@ -181,21 +181,21 @@ SysCfgState::loadIni()
         host::configReadStr(subgroup, "cpu", &sval, &defaultCpu);
         auto cpuCfg = system2200::getCpuConfig(sval);
         if (cpuCfg == nullptr) {
-            UI_Warn("The ini didn't specify a legal cpu type.\n"
+            UI_warn("The ini didn't specify a legal cpu type.\n"
                     "Delete your .ini and start over.");
             cpuCfg = system2200::getCpuConfig("2200T");
         }
-        setCpuType(cpuCfg->cpuType);
+        setCpuType(cpuCfg->cpu_type);
 
-        const int ram_choices = cpuCfg->ramSizeOptions.size();
-        const int min_ram     = cpuCfg->ramSizeOptions[0];
-        const int max_ram     = cpuCfg->ramSizeOptions[ram_choices-1];
+        const int ram_choices = cpuCfg->ram_size_options.size();
+        const int min_ram     = cpuCfg->ram_size_options[0];
+        const int max_ram     = cpuCfg->ram_size_options[ram_choices-1];
         const int dflt_ram    = max_ram;
         int ival;
         host::configReadInt(subgroup, "memsize", &ival, dflt_ram);
         if (ival < min_ram) { ival = min_ram; }
         if (ival > max_ram) { ival = max_ram; }
-        for (const int kb : cpuCfg->ramSizeOptions) {
+        for (const int kb : cpuCfg->ram_size_options) {
             if (ival <= kb) {
                 // round up to the next biggest ram in the list of valid sizes
                 setRamKB(kb);
@@ -456,7 +456,7 @@ SysCfgState::editCardConfig(int slot)
     assert(isSlotOccupied(slot));
     auto card_cfg = m_slot[slot].card_cfg;
     if (card_cfg != nullptr) {
-        UI_ConfigureCard(m_slot[slot].type, card_cfg.get());
+        UI_configureCard(m_slot[slot].type, card_cfg.get());
     }
 }
 
@@ -525,7 +525,7 @@ SysCfgState::configOk(bool warn) const
                 for (const int slot2_addr : slot2Addresses) {
                     if ((slot_addr & 0xFF) == (slot2_addr & 0xFF)) {
                         if (warn) {
-                            UI_Error("Configuration problem: "
+                            UI_error("Configuration problem: "
                                      "card in slots %d and %d both responding to address 0x%02X",
                                      slot, slot2, slot_addr & 0xFF);
                         }
@@ -538,14 +538,14 @@ SysCfgState::configOk(bool warn) const
 
     if (!pri_kb_found) {
         if (warn) {
-            UI_Error("Configuration problem: there must be a keyboard controller at address 0x01");
+            UI_error("Configuration problem: there must be a keyboard controller at address 0x01");
         }
         return false;
     }
 
     if (!pri_crt_found) {
         if (warn) {
-            UI_Error("Configuration problem: there must be a CRT controller at address 0x05");
+            UI_error("Configuration problem: there must be a CRT controller at address 0x05");
         }
         return false;
     }

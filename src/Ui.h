@@ -57,20 +57,20 @@ void UI_printerChar(PrinterFrame *wnd, uint8 byte);
 
 // launch the system configuration dialog, which might eventually
 // call back into system2200.setConfig() function.
-void UI_SystemConfigDlg();
+void UI_systemConfigDlg();
 
 // configure a disk controller
-void UI_ConfigureCard(IoCard::card_t card_type, CardCfgState *cfg);
+void UI_configureCard(IoCard::card_t card_type, CardCfgState *cfg);
 
 // ---- general status notification ----
 
 // send an error/warning to the user that requires an action to close
-void UI_Error(const char *fmt, ...);
-void UI_Warn(const char *fmt, ...);
-void UI_Info(const char *fmt, ...);
+void UI_error(const char *fmt, ...);
+void UI_warn(const char *fmt, ...);
+void UI_info(const char *fmt, ...);
 
 // get a YES/NO confirmation.  return true for yes.
-bool UI_Confirm(const char *fmt, ...);
+bool UI_confirm(const char *fmt, ...);
 
 #endif // _INCLUDE_UI_H_
 

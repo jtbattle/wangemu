@@ -297,7 +297,7 @@ IoCardDisk::advanceStateInt(disk_event_t event, const int val)
     }
     if (!expecting_obs && (event == EVENT_OBS)) {
         if (NOISY > 0) {
-            UI_Info("Unexpected OBS in state %s", stateName(m_state).c_str());
+            UI_info("Unexpected OBS in state %s", stateName(m_state).c_str());
         }
     }
 
@@ -369,12 +369,12 @@ IoCardDisk::advanceStateInt(disk_event_t event, const int val)
                         break;
                 }
                 if ((NOISY > 0) && (m_host_type > 0x02)) {
-                    UI_Warn("CTRL_WAKEUP got bad host type of 0x%02x", val);
+                    UI_warn("CTRL_WAKEUP got bad host type of 0x%02x", val);
                 }
                 m_state = CTRL_STATUS1;
             } else {
                 if (NOISY > 0) {
-                    UI_Warn("Unexpected cax condition in WAKEUP state");
+                    UI_warn("Unexpected cax condition in WAKEUP state");
                 }
             }
         }
@@ -516,11 +516,11 @@ IoCardDisk::advanceStateInt(disk_event_t event, const int val)
                     if (!reported[m_special_command]) {
                         std::string msg = unsupportedExtendedCommandName(m_special_command);
                         if (msg != "") {
-                            UI_Warn("ERROR: disk controller received unimplemented special command 0x%02x (%s)\n"
+                            UI_warn("ERROR: disk controller received unimplemented special command 0x%02x (%s)\n"
                                     "Please notify the program developer if you want this feature added",
                                      m_special_command, msg.c_str());
                         } else {
-                            UI_Warn("ERROR: disk controller received unknown special command 0x%02x",
+                            UI_warn("ERROR: disk controller received unknown special command 0x%02x",
                                      m_special_command);
                         }
                         reported[m_special_command] = true;
@@ -567,7 +567,7 @@ IoCardDisk::advanceStateInt(disk_event_t event, const int val)
 
                     // a COPY is supposed to always be followed by READ
                     if (m_copy_pending != false) {
-                        UI_Warn("Disk controller got unexpected command following COPY\n"
+                        UI_warn("Disk controller got unexpected command following COPY\n"
                                  "Ignoring the COPY command");
                         m_copy_pending = false;
                     }
@@ -708,7 +708,7 @@ IoCardDisk::advanceStateInt(disk_event_t event, const int val)
     case CTRL_READ1:
         if (event == EVENT_OBS) {
             if ((NOISY > 0) && (val != 0x00)) {
-                UI_Warn("CTRL_READ1 received mystery byte of 0x%02x", val);
+                UI_warn("CTRL_READ1 received mystery byte of 0x%02x", val);
             }
             m_state = CTRL_READ2;
             const bool ok = iwvdReadSector();  // really read the data
@@ -958,7 +958,7 @@ IoCardDisk::advanceStateInt(disk_event_t event, const int val)
     case CTRL_COPY4:
         if (event == EVENT_OBS) {
             if ((NOISY > 0) && (val != 0x00)) {
-                UI_Warn("CTRL_COPY4 received mystery byte of 0x%02x", val);
+                UI_warn("CTRL_COPY4 received mystery byte of 0x%02x", val);
             }
             if (m_d[m_drive].wvd->getWriteProtect()) {
                 m_byte_to_send = 0x01;  // signal write protect
@@ -1121,7 +1121,7 @@ IoCardDisk::advanceStateInt(disk_event_t event, const int val)
     case CTRL_FORMAT1:
         if (event == EVENT_OBS) {
             if ((NOISY > 0) && (val != 0x00)) {
-                UI_Warn("FORMAT1 was expecting a 0x00 padding byte, but got 0x%02x", val);
+                UI_warn("FORMAT1 was expecting a 0x00 padding byte, but got 0x%02x", val);
             }
             if (m_drive >= numDrives()) {
                 // bad drive selection
@@ -1218,7 +1218,7 @@ IoCardDisk::advanceStateInt(disk_event_t event, const int val)
     case CTRL_MSECT_WR_START:
         if (event == EVENT_OBS) {
             if ((NOISY > 0) && (val != 0x00)) {
-                UI_Warn("MULTI-SECTOR-START was expecting a 0x00 padding byte, but got 0x%02x", val);
+                UI_warn("MULTI-SECTOR-START was expecting a 0x00 padding byte, but got 0x%02x", val);
             }
             // m_multisector_mode = true;
         }
@@ -1245,7 +1245,7 @@ IoCardDisk::advanceStateInt(disk_event_t event, const int val)
     case CTRL_MSECT_WR_END1:
         if (event == EVENT_OBS) {
             if ((NOISY > 0) && (val != 0x00)) {
-                UI_Warn("MULTI-SECTOR-END was expecting a 0x00 padding byte, but got 0x%02x", val);
+                UI_warn("MULTI-SECTOR-END was expecting a 0x00 padding byte, but got 0x%02x", val);
             }
             // m_multisector_mode = false;
             // setBusyState(true);
@@ -1351,7 +1351,7 @@ IoCardDisk::advanceStateInt(disk_event_t event, const int val)
     case CTRL_VERIFY_RANGE3:
         if (event == EVENT_OBS) {
             if ((NOISY > 0) && (val != 0x00)) {
-                UI_Warn("VERIFY_RANGE3 was expecting a 0x00 padding byte, but got 0x%02x", val);
+                UI_warn("VERIFY_RANGE3 was expecting a 0x00 padding byte, but got 0x%02x", val);
             }
             setBusyState(true);
             m_state = CTRL_VERIFY_RANGE4;
@@ -1433,14 +1433,14 @@ IoCardDisk::advanceStateInt(disk_event_t event, const int val)
             static bool reported = false;
             if (!reported) {
                 reported = true;
-                UI_Warn("Unimplemented special command: READ STATUS");
+                UI_warn("Unimplemented special command: READ STATUS");
             }
         }
         // at this point we expect to see a 0x00 dummy byte from the CPU
         if (event == EVENT_OBS) {
             int num_sectors = 0;
             if ((NOISY > 0) && (val != 0x00)) {
-                UI_Warn("READ_STATUS was expecting a 0x00 padding byte, but got 0x%02x", val);
+                UI_warn("READ_STATUS was expecting a 0x00 padding byte, but got 0x%02x", val);
             }
             if (m_drive < numDrives()) {
                 num_sectors = m_d[m_drive].wvd->getNumSectors();
@@ -1477,7 +1477,7 @@ IoCardDisk::advanceStateInt(disk_event_t event, const int val)
             static bool reported = false;
             if (!reported) {
                 reported = true;
-                UI_Warn("Unimplemented special command: NO_ERROR_CHECKS");
+                UI_warn("Unimplemented special command: NO_ERROR_CHECKS");
             }
         }
 #endif

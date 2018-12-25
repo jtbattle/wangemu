@@ -81,7 +81,7 @@ Terminal::Terminal(std::shared_ptr<Scheduler> scheduler,
         // it powers up (the second is to run self tests).
         m_init_tmr = m_scheduler->createTimer(
                        TIMER_MS(700),
-                       std::bind(&Terminal::SendInitSeq, this)
+                       std::bind(&Terminal::sendInitSeq, this)
                      );
     }
 }
@@ -130,8 +130,8 @@ Terminal::reset(bool hard_reset)
         m_escape_seen = false;
         m_crt_sink    = true;
 
-        reset_crt();
-        reset_prt();
+        resetCrt();
+        resetPrt();
     }
 
     // smart terminals echo the ID string to the CRT at power on
@@ -149,14 +149,14 @@ Terminal::reset(bool hard_reset)
 
 // reset just the crt part of the terminal state
 void
-Terminal::reset_crt()
+Terminal::resetCrt()
 {
     // dumb/smart terminal state:
     m_disp.curs_x    = 0;
     m_disp.curs_y    = 0;
     m_disp.curs_attr = cursor_attr_t::CURSOR_ON;
     m_disp.dirty     = true;  // must regenerate display
-    scr_clear();
+    clearScreen();
 
     // smart terminal state:
     m_raw_cnt    = 0;
@@ -189,7 +189,7 @@ Terminal::reset_crt()
 
 // reset just the prt part of the terminal state
 void
-Terminal::reset_prt()
+Terminal::resetPrt()
 {
     m_prt_buff       = {};
     m_prt_flow_state = flow_state_t::START;
@@ -207,7 +207,7 @@ Terminal::reset_prt()
 // flow control byte.  In a real system the CRT might be turned on before
 // the 2200 CPU is, and so the MXD wouldn't see the init sequence.
 void
-Terminal::SendInitSeq()
+Terminal::sendInitSeq()
 {
     m_init_tmr = nullptr;
 //  m_kb_buff.push(static_cast<uint8>(0xE4));
@@ -228,7 +228,7 @@ void
 Terminal::receiveKeystroke(int keycode)
 {
     if (m_kb_buff.size() >= KB_BUFF_MAX) {
-        UI_Warn("the terminal keyboard buffer dropped a character");
+        UI_warn("the terminal keyboard buffer dropped a character");
         return;
     }
 
@@ -315,7 +315,7 @@ Terminal::checkKbBuffer()
     // another complication: if two terminals are doing script processing
     // at the same time, it slows down the MXD response time, and we again
     // get overruns.
-    const int active_scripts = system2200::kb_scriptActiveCount(m_io_addr+0x01);
+    const int active_scripts = system2200::numActiveScripts(m_io_addr+0x01);
     if (active_scripts > 1) {
         delay *= active_scripts;
     }
@@ -366,13 +366,12 @@ Terminal::termToMxdCallback(int key)
 
     // poll for script input, but don't let it overrun the key buffer
     if (m_kb_buff.size() < 5) {
-        m_script_active = system2200::kb_keyReady(m_io_addr+0x01, m_term_num);
+        m_script_active = system2200::pollScriptInput(m_io_addr+0x01, m_term_num);
     }
 
     // see if any other chars are pending
     checkKbBuffer();
 }
-
 
 // ----------------------------------------------------------------------------
 // crt character processing
@@ -388,7 +387,7 @@ Terminal::adjustCursorY(int delta) noexcept
         if (m_disp.screen_type != UI_SCREEN_2236DE) {
             m_disp.curs_x = 0;   // yes, scrolling has this effect
         }
-        scr_scroll();
+        scrollScreen();
     } else if (m_disp.curs_y < 0) {
         m_disp.curs_y = m_disp.chars_h-1;     // wrap around
     }
@@ -410,7 +409,7 @@ Terminal::adjustCursorX(int delta) noexcept
 
 // clear the display; home the cursor
 void
-Terminal::scr_clear() noexcept
+Terminal::clearScreen() noexcept
 {
     for (auto &byte : m_disp.display) { byte = static_cast<uint8>(0x20); }
     for (auto &byte : m_disp.attr)    { byte = static_cast<uint8>(0x00); }
@@ -422,7 +421,7 @@ Terminal::scr_clear() noexcept
 // scroll the contents of the screen up one row, and fill the new
 // row with blanks.
 void
-Terminal::scr_scroll() noexcept
+Terminal::scrollScreen() noexcept
 {
     uint8 *d  = &m_disp.display[0];  // first char of row 0
     uint8 *s  = d + m_disp.chars_w;  // first char of row 1
@@ -516,23 +515,23 @@ Terminal::processChar(uint8 byte)
             // then F8 every three seconds while not throttled.
 #if 0
             // if I include this, the emulator thinks it got the INIT atom (E4)
-            system2200::kb_keystroke(m_io_addr+0x01, m_term_num, 0xE4);
+            system2200::dispatchKeystroke(m_io_addr+0x01, m_term_num, 0xE4);
 #endif
-            system2200::kb_keystroke(m_io_addr+0x01, m_term_num, 0xF8);
+            system2200::dispatchKeystroke(m_io_addr+0x01, m_term_num, 0xF8);
             // TODO: then F8 every 3 seconds if not throttled
             break;
 
         case 0xF6: // reset crt (FB F6)
-            reset_crt();
+            resetCrt();
             // a real 2336 sends E9 (crt stop flow control),
             // then F8 (crt go flow control), then another F8, then E4 (??),
             // then F8 every three seconds while not throttled.
-            system2200::kb_keystroke(m_io_addr+0x01, m_term_num, 0xF9);
-            system2200::kb_keystroke(m_io_addr+0x01, m_term_num, 0xF8);
-            system2200::kb_keystroke(m_io_addr+0x01, m_term_num, 0xF8);
+            system2200::dispatchKeystroke(m_io_addr+0x01, m_term_num, 0xF9);
+            system2200::dispatchKeystroke(m_io_addr+0x01, m_term_num, 0xF8);
+            system2200::dispatchKeystroke(m_io_addr+0x01, m_term_num, 0xF8);
 #if 0
             // if I include this, the emulator thinks it got the INIT atom (E4)
-            system2200::kb_keystroke(m_io_addr+0x01, m_term_num, 0xE4);
+            system2200::dispatchKeystroke(m_io_addr+0x01, m_term_num, 0xE4);
 #endif
             // TODO: then F8 every 3 seconds if not throttled
             break;
@@ -557,7 +556,7 @@ Terminal::crtCharFifo(uint8 byte)
 {
     int size = m_crt_buff.size();
     if (size == CRT_BUFF_MAX) {
-        UI_Warn("Terminal 0x%02x, term#%d had crt fifo overflow",
+        UI_warn("Terminal 0x%02x, term#%d had crt fifo overflow",
                 m_io_addr, m_term_num+1);
         return;  // we dropped the new one
     }
@@ -657,7 +656,7 @@ Terminal::processCrtChar1(uint8 byte)
         const int delay_ms = 1000 * (m_raw_buf[1] - 0xC0) / 6;
         assert(m_selectp_tmr == nullptr);
         if (delay_ms > 0) {
-//UI_Info("Got FB Cn, delay=%d ms", delay_ms);
+//UI_info("Got FB Cn, delay=%d ms", delay_ms);
             m_selectp_tmr = m_scheduler->createTimer(
                                    TIMER_MS(delay_ms),
                                    std::bind(&Terminal::selectPCallback, this)
@@ -705,9 +704,9 @@ Terminal::processCrtChar1(uint8 byte)
 
     // TODO: what should happen with illegal sequences?
     // for now, I'm passing them through
-    if (do_debug) {
-        dbglog("Unexpected sequence: 0x%02x 0x%02x\n", m_raw_buf[0], m_raw_buf[1]);
-    }
+#ifdef _DEBUG
+    dbglog("Unexpected sequence: 0x%02x 0x%02x\n", m_raw_buf[0], m_raw_buf[1]);
+#endif
     processCrtChar2(m_raw_buf[0]);
     processCrtChar2(m_raw_buf[1]);
     m_raw_cnt = 0;
@@ -737,12 +736,12 @@ Terminal::processCrtChar2(uint8 byte)
         case 0x0E:  // enable attributes
             m_attr_on   = false;  // after 04 xx yy 0E, 0E changes to temp mode?
             m_attr_temp = true;
-//          UI_Info("attrs: 0E --> %02x, %d", m_attrs, m_attr_under);
+//          UI_info("attrs: 0E --> %02x, %d", m_attrs, m_attr_under);
             return;
         case 0x0F:  // disable attributes
             m_attr_on   = false;
             m_attr_temp = false;
-//          UI_Info("attrs: 0F");
+//          UI_info("attrs: 0F");
             return;
         default:
             // pass through
@@ -832,7 +831,7 @@ Terminal::processCrtChar2(uint8 byte)
         }
         m_attr_on   = (m_input_buf[4] == 0x0E);
         m_attr_temp = false;
-//      UI_Info("attrs: 02 04 %02x %02x %02x --> %02x, %d", m_input_buf[2], m_input_buf[3], m_input_buf[4], m_attrs, m_attr_under);
+//      UI_info("attrs: 02 04 %02x %02x %02x --> %02x, %d", m_input_buf[2], m_input_buf[3], m_input_buf[4], m_attrs, m_attr_under);
         return;
     }
 
@@ -843,10 +842,10 @@ Terminal::processCrtChar2(uint8 byte)
         m_input_cnt = 0;
         char *idptr = &id_string[1];  // skip the leading asterisk
         while (*idptr) {
-            system2200::kb_keystroke(m_io_addr+0x01, m_term_num, *idptr);
+            system2200::dispatchKeystroke(m_io_addr+0x01, m_term_num, *idptr);
             idptr++;
         }
-        system2200::kb_keystroke(m_io_addr+0x01, m_term_num, 0x0D);
+        system2200::dispatchKeystroke(m_io_addr+0x01, m_term_num, 0x0D);
         return;
     }
     // 02 08 xx yy is otherwise undefined
@@ -938,7 +937,7 @@ Terminal::processCrtChar2(uint8 byte)
         // logging real 2336, it clears the CRT
         // but doesn't spew out any return code
         m_input_cnt = 0;
-        reset_crt();
+        resetCrt();
         return;
     }
 
@@ -969,7 +968,7 @@ Terminal::processCrtChar3(uint8 byte)
             break;
 
         case 0x03:      // clear screen
-            scr_clear();
+            clearScreen();
             break;
 
         case 0x05:      // enable cursor
@@ -1021,7 +1020,7 @@ Terminal::processCrtChar3(uint8 byte)
             byte = (byte & 0x7F)
                  | ((use_underline) ? 0x80 : 0x00);
 
-            scr_write_char(m_disp.curs_x, m_disp.curs_y, byte);
+            screenWriteChar(m_disp.curs_x, m_disp.curs_y, byte);
 
             // update char attributes in screen buffer
             const int old = m_disp.attr[m_disp.chars_w*m_disp.curs_y + m_disp.curs_x]
@@ -1039,8 +1038,8 @@ Terminal::processCrtChar3(uint8 byte)
                 attr_mask |= char_attr_t::CHAR_ATTR_ALT;
             }
 
-            scr_write_attr(m_disp.curs_x, m_disp.curs_y,
-                           static_cast<uint8>(old | (m_attrs & ~attr_mask)));
+            screenWriteAttr(m_disp.curs_x, m_disp.curs_y,
+                            static_cast<uint8>(old | (m_attrs & ~attr_mask)));
             adjustCursorX(+1);
             break;
     }

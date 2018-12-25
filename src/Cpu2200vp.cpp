@@ -541,7 +541,7 @@ Cpu2200vp::setSH(uint8 value)
                                   | ( mask & m_cpu.sh));
 
     if (cpb_changed) {
-        system2200::cpu_CPB(!!(m_cpu.sh & SH_MASK_CPB));
+        system2200::dispatchCpuBusy(!!(m_cpu.sh & SH_MASK_CPB));
     }
 }
 
@@ -797,15 +797,15 @@ Cpu2200vp::Cpu2200vp(std::shared_ptr<Scheduler> scheduler,
     auto cpu_cfg = system2200::getCpuConfig(cpu_subtype);
     assert(cpu_cfg != nullptr);
     bool ram_found = false;
-    for (auto const kb : cpu_cfg->ramSizeOptions) {
+    for (auto const kb : cpu_cfg->ram_size_options) {
         ram_found |= (ramsize == 1024*kb);
     }
     assert(ram_found);
     // supporting this would require extra GUI work
     // and the user experience complexity isn't worth it
-    assert(cpu_cfg->ucodeSizeOptions.size() == 1);
-    m_ucode_words = cpu_cfg->ucodeSizeOptions[0] * 1024;
-    m_has_oneshot = cpu_cfg->hasOneShot;
+    assert(cpu_cfg->ucode_size_options.size() == 1);
+    m_ucode_words = cpu_cfg->ucode_size_options[0] * 1024;
+    m_has_oneshot = cpu_cfg->has_oneshot;
 
     // init microcode
     for (int i=0; i<MAX_UCODE; i++) {
@@ -919,7 +919,7 @@ Cpu2200vp::ioCardCbIbs(int data)
     assert((m_cpu.sh & SH_MASK_CPB) == 0);
     m_cpu.k = static_cast<uint8>(data & 0xFF);
     m_cpu.sh |= SH_MASK_CPB;    // CPU busy; inhibit IBS
-    system2200::cpu_CPB(true);  // we are busy now
+    system2200::dispatchCpuBusy(true);  // we are busy now
 
     // return special status if it is a special function key
     if (data & IoCardKeyboard::KEYCODE_SF) {
@@ -1183,7 +1183,7 @@ Cpu2200vp::execOneOp()
         {
             char buff[200];
             dasmOneVpOp(&buff[0], m_cpu.ic, m_ucode[m_cpu.ic].ucode);
-            UI_Error("%s\nIllegal op at ic=%04X", &buff[0], m_cpu.ic);
+            UI_error("%s\nIllegal op at ic=%04X", &buff[0], m_cpu.ic);
         }
         m_status = CPU_HALTED;
         return EXEC_ERR;
@@ -1284,8 +1284,8 @@ Cpu2200vp::execOneOp()
                 if (m_dbg) {
                     dbglog("-ABS with AB=%02X, ic=0x%04X\n", m_cpu.ab_sel, m_cpu.ic);
                 }
-                //UI_Info("CPU:ABS when AB=%02X", m_cpu.ab);
-                system2200::cpu_ABS(m_cpu.ab_sel);  // address bus strobe
+                //UI_info("CPU:ABS when AB=%02X", m_cpu.ab);
+                system2200::dispatchAbsStrobe(m_cpu.ab_sel);  // address bus strobe
                 break;
             case 0x20: // OBS
                 if (m_dbg) {
@@ -1295,7 +1295,7 @@ Cpu2200vp::execOneOp()
                         dbglog("-OBS when AB=%02X, K=%02X ('%c')\n", m_cpu.ab_sel, m_cpu.k, m_cpu.k);
                     }
                 }
-                //UI_Info("CPU:OBS when AB=%02X, AB_SEL=%02X, K=%02X", m_cpu.ab, m_cpu.ab_sel, m_cpu.k);
+                //UI_info("CPU:OBS when AB=%02X, AB_SEL=%02X, K=%02X", m_cpu.ab, m_cpu.ab_sel, m_cpu.k);
                 if (   (m_cpu_subtype == Cpu2200::CPUTYPE_MICROVP)
                     && (m_cpu.ab == 0x80)) {
                     // the VLSI-2 version of the MicroVP added the BSR register
@@ -1303,7 +1303,7 @@ Cpu2200vp::execOneOp()
                     setBSR(m_cpu.k);
                 } else {
                     setDevRdy(false);  // (M)VP cpus do this, but not 2200T
-                    system2200::cpu_OBS(m_cpu.k);  // output data bus strobe
+                    system2200::dispatchObsStrobe(m_cpu.k);  // output data bus strobe
                 }
                 break;
             case 0x10: // CBS
@@ -1314,9 +1314,9 @@ Cpu2200vp::execOneOp()
                         dbglog("-CBS when AB=%02X, K=%02X ('%c')\n", m_cpu.ab_sel, m_cpu.k, m_cpu.k);
                     }
                 }
-                //UI_Info("CPU:CBS when AB=%02X, AB_SEL=%02X, K=%02X", m_cpu.ab, m_cpu.ab_sel, m_cpu.k);
+                //UI_info("CPU:CBS when AB=%02X, AB_SEL=%02X, K=%02X", m_cpu.ab, m_cpu.ab_sel, m_cpu.k);
                 setDevRdy(false);  // (M)VP cpus do this, but not 2200T
-                system2200::cpu_CBS(m_cpu.k);    // control bus strobe
+                system2200::dispatchCbsStrobe(m_cpu.k);    // control bus strobe
                 break;
             case 0x08: // status request
                 // although the 2600 arch manual doesn't describe this op,
@@ -1326,13 +1326,13 @@ Cpu2200vp::execOneOp()
                 // VP BASIC issues this operation in three places.
                 //     978080 : CIO       ??? (ILLEGAL)
                 // this corresponds to a mask of 0x08.
-//UI_Info("doing CIO STATUS_REQUEST, AB=%02x, IC=%04X", m_cpu.ab, m_cpu.ic);
+//UI_info("doing CIO STATUS_REQUEST, AB=%02x, IC=%04X", m_cpu.ab, m_cpu.ic);
                 m_cpu.k = static_cast<uint8>(system2200::cpuPollIB());
                 // Paul Szudzik's SDS_Wang2200.pdf arch manual says
                 //    Fire internal IBS one shot (SRS).  Sets CPB.  Basically
                 //    used for Status Requests from MUXD.
                 m_cpu.sh |= SH_MASK_CPB;    // CPU busy; inhibit IBS
-                system2200::cpu_CPB(true);  // we are busy now
+                system2200::dispatchCpuBusy(true);  // we are busy now
                 break;
             case 0x00: // no strobe
                 break;
@@ -1340,7 +1340,7 @@ Cpu2200vp::execOneOp()
                 // the one-shot timer falls into this bucket, but it was
                 // handled earlier.
                 if (((uop & 0xC) != 0xC) || (t_field != 0x00)) {
-                    UI_Info("unknown CIO %02x, AB=%02x, IC=%04X",
+                    UI_info("unknown CIO %02x, AB=%02x, IC=%04X",
                              t_field, m_cpu.ab, m_cpu.ic);
                 }
                 break;
@@ -1366,7 +1366,7 @@ Cpu2200vp::execOneOp()
                                                        [&](){ oneShot30msCallback(); });
             } else {
                 if (!g_30ms_warning) {
-                    UI_Warn("Your system is configured with a 2200VP CPU,\n"
+                    UI_warn("Your system is configured with a 2200VP CPU,\n"
                             "but the operating system appears to be MVP.\n"
                             "Configure your system for an MVP or MicroVP for this OS.");
                     g_30ms_warning = true;
@@ -1694,7 +1694,7 @@ Cpu2200vp::dumpRam(const std::string &filename)
     // open the file, discarding contents of file if it already exists
     std::ofstream ofs(filename.c_str(), std::ofstream::out | std::ofstream::trunc);
     if (!ofs.is_open()) {
-        UI_Error("Error writing to file '%s'", filename.c_str());
+        UI_error("Error writing to file '%s'", filename.c_str());
         return;
     }
 

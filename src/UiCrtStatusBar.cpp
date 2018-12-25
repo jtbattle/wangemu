@@ -494,7 +494,7 @@ CrtStatusBar::OnDiskButton(wxMouseEvent &event)
                 int drive2, io_addr;
                 const bool b = system2200::findDisk(fullpath, nullptr, &drive2, &io_addr);
                 if (b) {
-                    UI_Warn("Disk already in drive %c /%03x", "FR"[drive2], io_addr);
+                    UI_warn("Disk already in drive %c /%03x", "FR"[drive2], io_addr);
                     return;
                 } else {
                     ok = IoCardDisk::wvdInsertDisk(slot, drive, fullpath);
@@ -531,7 +531,7 @@ CrtStatusBar::OnDiskButton(wxMouseEvent &event)
     }
 
     if (!ok) {
-        UI_Error("Error: operation failed");
+        UI_error("Error: operation failed");
     }
 
     // return focus to frame, otherwise the control will eat keyed input
