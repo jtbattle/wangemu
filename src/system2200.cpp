@@ -1060,9 +1060,8 @@ system2200::getPrinterIoAddr(int n) noexcept
 }
 
 
-// return the instance handle of the device at the specified IO address
-// TODO: returning a raw pointer -- does all this need to be
-//       converted to shared_ptr?
+// return the instance handle of the device at the specified IO address.
+// consumers of this function don't own the card, so a raw pointer is used.
 IoCard*
 system2200::getInstFromIoAddr(int io_addr) noexcept
 {
@@ -1072,8 +1071,7 @@ system2200::getInstFromIoAddr(int io_addr) noexcept
 
 
 // given a slot, return the "this" element
-// TODO: returning a raw pointer -- does all this need to be
-//       converted to shared_ptr?
+// consumers of this function don't own the card, so a raw pointer is used.
 IoCard*
 system2200::getInstFromSlot(int slot) noexcept
 {
