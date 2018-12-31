@@ -30,11 +30,6 @@ bool do_dbg = false;
 // the i8080 runs at 1.78 MHz
 const int NS_PER_TICK = 561;
 
-// character transmission time, in nanoseconds
-const int64 SERIAL_CHAR_DELAY =
-            TIMER_US(  11.0               /* bits per character */
-                     * 1.0E6 / 19200.0);  /* microseconds per bit */
-
 // mxd eprom image
 #include "IoCardTermMux_eprom.h"
 
@@ -419,7 +414,7 @@ IoCardTermMux::checkTxBuffer(int term_num)
     }
 
     term.tx_tmr = m_scheduler->createTimer(
-                      SERIAL_CHAR_DELAY,
+                      Terminal::serial_char_delay,
                       std::bind(&IoCardTermMux::mxdToTermCallback, this, term_num, term.tx_byte)
                   );
 

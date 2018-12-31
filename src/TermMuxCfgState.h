@@ -1,6 +1,11 @@
 // This class is derived from CardCfgState and holds some configuration state
 // particular to this type of card.  For the terminal mux, currently there is
 // only one bit of state: how many terminals are connected to it.
+//
+// TODO: Other possible configuration options (per terminal):
+//    - link speed
+//    - serial port instead of virtual terminal
+//    - attached printer or not
 
 #ifndef _INCLUDE_TERM_MUX_CFG_H_
 #define _INCLUDE_TERM_MUX_CFG_H_

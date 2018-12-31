@@ -5,6 +5,7 @@
 
 #include "w2200.h"
 #include "TerminalState.h"
+#include "Scheduler.h"
 #include <queue>
 
 class CrtFrame;
@@ -28,6 +29,12 @@ public:
 
     // send a character to the display controller
     void processChar(uint8 byte);
+
+    // character transmission time, in nanoseconds
+    static const int64 serial_char_delay =
+            TIMER_US(  11.0              /* bits per character */
+                     * 1.0E6 / 19200.0   /* microseconds per bit */
+                    );
 
 private:
     // size of the FIFO holding keystrokes which are yet to be sent to the

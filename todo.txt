@@ -9,9 +9,6 @@ Emulator TODO list
       takes a shared_ptr but a raw pointer or reference really would
       be the appropriate choice, as the subroutine's life cannot
       exceed that of the caller.  Or maybe it is confused.  Check anyway.
-    - move const int64 SERIAL_CHAR_DELAY
-        from IoCardTermMux.cpp
-        from Terminal.cpp
     - IoCardDisk_Controller.cpp
       IoCardDisk::advanceState has
         const bool poll_before = (!m_cpb && !m_card_busy);  << the same!
