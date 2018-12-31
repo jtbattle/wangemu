@@ -2,9 +2,6 @@
 Emulator TODO list
 ============================================================================
 
-*) change code to allow MXD only at 00 (other cases don't work and need
-   debugging and aren't really useful to have 5+ virtual terms on one display.
-
 *) the aaa_attribute.w22 script
     half of the results should be blinking, but only 4 of 16 are.
     double check what is going on.  maybe certain attribute combinations

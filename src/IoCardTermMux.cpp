@@ -175,7 +175,13 @@ IoCardTermMux::getName() const
 std::vector<int>
 IoCardTermMux::getBaseAddresses() const
 {
-    std::vector<int> v { 0x000, 0x040, 0x080, 0x0c0 };
+#if 0
+    // FIXME: running with more than one MXD causes MVP OS to hang, for reasons
+    // I have yet to debug.  having more than one MXD is unwieldy anyway.
+    std::vector<int> v { 0x00, 0x40, 0x80, 0xc0 };
+#else
+    std::vector<int> v { 0x00, };
+#endif
     return v;
 }
 

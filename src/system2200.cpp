@@ -275,10 +275,7 @@ system2200::cleanup()
     saveDiskMounts();
     breakDownCards();
 
-    assert(cpu.unique());
-    cpu = nullptr;
-
-    assert(scheduler.unique());
+    cpu       = nullptr;
     scheduler = nullptr;
 
     current_cfg->saveIni();  // save state to ini file
@@ -354,7 +351,6 @@ system2200::setConfig(const SysCfgState &new_cfg)
         }
 
         // the change was major, so delete existing resources
-        assert(cpu.unique());
         cpu = nullptr;
 
         // remember which virtual disks are installed
