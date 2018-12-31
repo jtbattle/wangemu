@@ -27,17 +27,12 @@ class Timer
 
 public:
     // ticks is at what absolute time, in ns, to invoke the callback
-    Timer(Scheduler *sched, int64 time_ns, sched_callback_t cb) :
-        s(sched), expires_ns(time_ns), callback(cb) { };
-    ~Timer() { };
-
-    // kill off this timer
-    void kill();
+    Timer(int64 time_ns, sched_callback_t cb) :
+            m_expires_ns(time_ns), m_callback(cb) { };
 
 private:
-    Scheduler       * const s;      // pointer to owning scheduler
-    int64             expires_ns;   // tick count until expiration
-    sched_callback_t  callback;     // registered callback function
+    int64             m_expires_ns; // tick count until expiration
+    sched_callback_t  m_callback;   // registered callback function
 };
 
 
@@ -85,12 +80,6 @@ private:
     // n is added to the already elapsed time.
     // this shouldn't need to be called very frequently.
     void creditTimer();
-
-    // remove a pending timer event by passing the timer object
-    // (called only from Timer.kill())
-    // Alternately, just set the timer pointer to null.  If the only ref
-    // to the timer is the active timer list, it will be treated as dead.
-    void killTimer(Timer* tmr);
 
     // returns, in absolute ns, the time of the soonest event on the timer list
     int64 firstEvent() noexcept;

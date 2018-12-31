@@ -266,10 +266,7 @@ IoCardDisk::reset(bool /*hard_reset*/)
     m_acting_intelligent = false;
 
     // reset drive state
-    if (m_tmr_motor_off != nullptr) {
-        m_tmr_motor_off->kill();
-        m_tmr_motor_off = nullptr;
-    }
+    m_tmr_motor_off = nullptr;
 
     for (int drive=0; drive<numDrives(); drive++) {
         stopMotor(drive);
@@ -398,14 +395,8 @@ IoCardDisk::stopMotor(int drive)
     m_d[drive].sector     = 0;    // which sector is being read
     m_d[drive].idle_cnt   = 0;    // number of operations done w/o this drive
     m_d[drive].secwait    = -1;
-    if (m_d[drive].tmr_track != nullptr) {
-        m_d[drive].tmr_track->kill();
-        m_d[drive].tmr_track = nullptr;
-    }
-    if (m_d[drive].tmr_sector != nullptr) {
-        m_d[drive].tmr_sector->kill();
-        m_d[drive].tmr_sector = nullptr;
-    }
+    m_d[drive].tmr_track  = nullptr;
+    m_d[drive].tmr_sector = nullptr;
 
     UI_diskEvent(m_slot, drive);        // let UI know things have changed
 }

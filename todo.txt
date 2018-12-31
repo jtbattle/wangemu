@@ -19,21 +19,7 @@ Emulator TODO list
    what happens if there is an incorrect escape sequence?
    at what point are the bytes swallowed, or are they passed through?
 
-*) Thought for possibly easier code
-
-    createTimer() returns a std::shared_ptr<Timer>.  It is up to the
-    caller of createTimer() to remember to "tmr->kill()" before resetting
-    the pointer to nullptr, say at reset or cleanup.  The pointer can just
-    be set to nullptr inside the callback routine because the scheduler has
-    already removed the pointer on its side.
-
-    What if the caller owned the pointer, and the scheduler had a weak_ptr
-    to it?  When the tmr handle is reset to nullptr, or if the card is
-    destroyed and its destructor kills off all non-nullptr shared_ptr objects,
-    the Timer::~Timer destructor inside scheduler will automatically be
-    notified.  At that point the scheduler can clean up the dead entry.
-    There is no need for kill() either -- the consumer just sets the pointer
-    to nullptr and all the magic happens.
+*) speed up the simulation loop for the special case of two tasks
 
 *) Document in the keyboard help file there are some new keys
      Shift-Alt-R is hard reset  (changed)

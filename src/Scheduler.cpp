@@ -10,9 +10,7 @@
 // can be zero, one, two, etc, arguments, just so long as bind supplies
 // an argument for each parameter in the called function.
 //
-// A timer can be canceled early like this:
-//
-//     tmr->kill();
+// A timer can be canceled early simply by setting it to nullptr.
 
 // History:
 //    2000-2001: originally developed Solace, a sol-20 emulator for win32
@@ -119,7 +117,7 @@ Scheduler::Scheduler() :
 
 
 // return a timer object; the caller doesn't destroy this object,
-// but calls kill() if it wants to terminate it.
+// but sets it to nullptr when it is done with it (early or not).
 // 'ns' is the number of nanoseconds in the future when the callback fires.
 std::shared_ptr<Timer>
 Scheduler::createTimer(int64 ns, const sched_callback_t &fcn)
@@ -132,7 +130,7 @@ Scheduler::createTimer(int64 ns, const sched_callback_t &fcn)
     assert(m_timer.size() < MAX_TIMERS);
 
     int64 event_ns = m_time_ns + ns;
-    auto tmr = std::make_shared<Timer>(this, event_ns, fcn);
+    auto tmr = std::make_shared<Timer>(event_ns, fcn);
 
     m_timer.push_back(tmr);
     m_trigger_ns = firstEvent();
@@ -147,31 +145,11 @@ Scheduler::firstEvent() noexcept
 {
     int64 rv = MAX_TIME;
     for (auto &t : m_timer) {
-        if (t->expires_ns < rv) {
-            rv = t->expires_ns;
+        if (t->m_expires_ns < rv) {
+            rv = t->m_expires_ns;
         }
     }
     return rv;
-}
-
-
-// kill a timer.  the timer number passed to this function
-// is the one returned by the createTimer function.
-// if we happen to be killing the timer nearest to completion,
-// we don't bother messing with updating m_countdown.
-// instead, we just let that countdown expire, nothing will
-// be triggered, and a new countdown will be established then.
-void Scheduler::killTimer(Timer* tmr)
-{
-    // the fact that we have to do this lookup doesn't matter since
-    // killTimer is infrequently used.
-    m_timer.erase(
-        std::remove_if(begin(m_timer), end(m_timer),
-                       [&tmr](auto q){ return (q.get() == tmr); }),
-        end(m_timer));
-#ifdef TMR_DEBUG
-    UI_error("Error: killing non-existent simulated timer");
-#endif
 }
 
 
@@ -186,17 +164,16 @@ void Scheduler::creditTimer(void)
         return; // no timers
     }
 
-    // scan each active timer, moving expired ones to the retired list
+    // scan each active timer, moving expired ones to the retired list.
     std::vector<std::shared_ptr<Timer>> retired;
     const int active_before = m_timer.size();
     int active_after = 0;
     for (int s=0; s<active_before; s++) {
         if (m_timer[s].unique()) {
-            // the timer is killed because the scheduler holds the only
-            // reference to it.
+            // the timer is dead: the scheduler holds the only reference to it
             ;
         } else {
-            if (m_timer[s]->expires_ns <= m_time_ns) {
+            if (m_timer[s]->m_expires_ns <= m_time_ns) {
                 // a timer has expired; move it to the retired list
                 retired.push_back(m_timer[s]);
             } else {
@@ -206,39 +183,30 @@ void Scheduler::creditTimer(void)
         }
     }
 
+    // delete any expired timers
     if (active_after < active_before) {
         // shrink active list, but null out pointers so resize doesn't
         // free them, as they now live on the retired list
         for (int i=active_after; i < active_before; i++) {
             m_timer[i] = nullptr;
         }
-        m_timer.resize(active_after);  // delete any expired timers
+        m_timer.resize(active_after);
     }
 
     // find the next event
     m_trigger_ns = firstEvent();
 
-    // sort retired events in order they expired
+    // sort retired events in order they expire
     std::sort(begin(retired), end(retired),
               [](const std::shared_ptr<Timer> &a,
                  const std::shared_ptr<Timer> &b) {
-                    return (a->expires_ns < b->expires_ns);
+                    return (a->m_expires_ns < b->m_expires_ns);
                });
 
     // scan through the retired list and perform callbacks
     for (auto &t : retired) {
-        (t->callback)();
+        (t->m_callback)();
     }
-}
-
-
-// ======================================================================
-// ======================================================================
-
-// kill off this timer
-void Timer::kill()
-{
-    s->killTimer(this);
 }
 
 // vim: ts=8:et:sw=4:smarttab

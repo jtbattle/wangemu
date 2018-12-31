@@ -871,10 +871,7 @@ Cpu2200vp::reset(bool hard_reset) noexcept
         } else {
             // actually, the one-shot isn't reset, but let's be safe
             m_cpu.sh &= ~SH_MASK_30MS;
-            if (m_tmr_30ms != nullptr) {
-                m_tmr_30ms->kill();
-                m_tmr_30ms = nullptr;
-            }
+            m_tmr_30ms = nullptr;
         }
     }
 
@@ -1326,11 +1323,8 @@ Cpu2200vp::execOneOp()
                 // in the MVP CPU schematic.  if ucode bits 3:2 are both one,
                 // the 30 ms one shot gets retriggered.
                 m_cpu.sh |= SH_MASK_30MS;     // one shot output rises
-                if (m_tmr_30ms != nullptr) {
-                    // kill pending timer before starting a new one
-                    m_tmr_30ms->kill();
-                    m_tmr_30ms = nullptr;
-                }
+                // kill pending timer before starting a new one
+                m_tmr_30ms = nullptr;
                 // BPMVP14A says
                 //    CLOCK SPECIFICATIONS:
                 //         20 MS. MIN.
