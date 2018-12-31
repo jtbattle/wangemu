@@ -182,7 +182,6 @@ IoCardDisk::sendBytes(int count, disk_sm_t return_state) noexcept
 //    reset                        (event == EVENT_RESET)
 //    cpu sent a byte              (event == EVENT_OBS)
 //    cpu ready to receive a byte  (event == EVENT_IBS)
-//
 bool
 IoCardDisk::advanceState(disk_event_t event, const int val)
 {
@@ -190,7 +189,6 @@ IoCardDisk::advanceState(disk_event_t event, const int val)
     const bool rv = advanceStateInt(event, val);
     const bool poll_after  = (!m_cpb && !m_card_busy);
 
-// FIXME: poll_before and poll_after identical values
     if (!poll_before && poll_after) {
         checkDiskReady();  // causes reentrancy to this function
     }

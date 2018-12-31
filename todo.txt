@@ -9,12 +9,6 @@ Emulator TODO list
       takes a shared_ptr but a raw pointer or reference really would
       be the appropriate choice, as the subroutine's life cannot
       exceed that of the caller.  Or maybe it is confused.  Check anyway.
-    - IoCardDisk_Controller.cpp
-      IoCardDisk::advanceState has
-        const bool poll_before = (!m_cpb && !m_card_busy);  << the same!
-        const bool poll_after  = (!m_cpb && !m_card_busy);  << the same!
-        ...
-        if (!poll_before && poll_after) {  << impossible condition
      - UiCrtFrame.h has a raw pointer to its crt.  since the frame is
        the owner, it should be unique_ptr.  or maybe not; I'm not sure
        of the wx ownership rules anymore.  I need to review.
