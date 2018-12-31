@@ -100,7 +100,7 @@ dasmAField(char *buf, uint32 uop, bool &adj) noexcept
         return sprintf(buf, "F%d", field);
     }
 
-    char *str = nullptr;
+    const char *str = nullptr;
     int pc = 0;
     switch (field) {
         case  8: str = "CH";  pc = 0; break;
@@ -148,7 +148,7 @@ dasmBField(char *buf, uint32 uop) noexcept
         return sprintf(buf, "F%d", field);
     }
 
-    char *str = nullptr;
+    const char *str = nullptr;
     if (xbit) {
         switch (field) {
             case  8: str = "ST3"; break;
@@ -194,7 +194,7 @@ dasmCField(char *buf, bool &illegal, uint32 uop) noexcept
         return sprintf(buf, "F%d", field);
     }
 
-    char *str = nullptr;
+    const char *str = nullptr;
     if (xbit) {
         switch (field) {
             case  8: str = "ST3";   break;
@@ -270,7 +270,7 @@ dasmSt1Bitfield(char *buf, int *len, uint4 bits) noexcept
                 p += 2;
             }
             many = true;
-            char *str = nullptr;
+            const char *str = nullptr;
             switch (i) {
                  case 0: str = "carry";      break;
                  case 1: str = "CPB";        break;
@@ -302,7 +302,7 @@ dasmSt3Bitfield(char *buf, int *len, uint4 bits) noexcept
                 p += 2;
             }
             many = true;
-            char *str = nullptr;
+            const char *str = nullptr;
             switch (i) {
                  case 0: str = "ready/!busy"; break;
                  case 1: str = "IB5";         break;
@@ -552,7 +552,7 @@ dasmMiniOp(char *buf, bool &illegal, uint32 uop) noexcept
             len += padSpaces(buf, len, PARAM_COL);
             len += sprintf(&buf[len], "%02X", static_cast<int>(uop & 0xFF));
             if ((uop & 0xF0) != 0x00) {
-                char *comma = "";
+                const char *comma = "";
                 len += padSpaces(buf, len, COMMENT_COL);
                 len += sprintf(&buf[len], "; ");
                 if (uop & 0x80) {

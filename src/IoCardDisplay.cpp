@@ -106,7 +106,6 @@ IoCardDisplay::IoCardDisplay(std::shared_ptr<Scheduler> scheduler,
     m_screen_type(screen_type),
     m_terminal(nullptr),
     m_tmr_hsync(nullptr),
-    m_realtime(true),
     m_hsync_count(0),
     m_busy_state(busy_state::IDLE)
 {
@@ -269,8 +268,6 @@ IoCardDisplay::getIB() const noexcept
 void
 IoCardDisplay::setCpuBusy(bool busy)
 {
-    busy = busy; // make lint happy
-
     // it appears that except for reset, ucode only ever clears it,
     // and of course the IBS sets it back.
     if (do_dbg) {

@@ -84,8 +84,8 @@ IoCardTermMux::IoCardTermMux(std::shared_ptr<Scheduler> scheduler,
     m_cpb(true),
     m_io_offset(0),
     m_prime_seen(true),
-    m_cbs_seen(false),
     m_obs_seen(false),
+    m_cbs_seen(false),
     m_obscbs_offset(0),
     m_obscbs_data(0x00),
     m_rbi(0xff),                // not ready
@@ -448,7 +448,7 @@ IoCardTermMux::mxdToTermCallback(int term_num, int byte)
 // i8080 CPU modeling
 // ============================================================================
 
-int
+uint8
 IoCardTermMux::i8080_rd_func(int addr, void *user_data) noexcept
 {
     if (addr < 0x1000) {
@@ -484,7 +484,7 @@ IoCardTermMux::i8080_wr_func(int addr, int byte, void *user_data) noexcept
 }
 
 
-int
+uint8
 IoCardTermMux::i8080_in_func(int addr, void *user_data) noexcept
 {
     IoCardTermMux *tthis = static_cast<IoCardTermMux*>(user_data);
@@ -492,7 +492,7 @@ IoCardTermMux::i8080_in_func(int addr, void *user_data) noexcept
     int term_num = tthis->m_uart_sel;
     m_term_t &term = tthis->m_terms[term_num];
 
-    int rv = 0x00;
+    uint8 rv = 0x00;
     switch (addr) {
 
     case IN_UART_TXRDY:
@@ -506,12 +506,13 @@ IoCardTermMux::i8080_in_func(int addr, void *user_data) noexcept
     case IN_2200_STATUS:
         {
         const bool cpu_waiting = tthis->m_selected && !tthis->m_cpb;  // CPU waiting for input
+        const uint8 msbs = static_cast<uint8>(tthis->m_io_offset << 5);
         rv = (tthis->m_obs_seen   ? 0x01 : 0x00)  // [0]
            | (tthis->m_cbs_seen   ? 0x02 : 0x00)  // [1]
            | (tthis->m_prime_seen ? 0x04 : 0x00)  // [2]
            | (cpu_waiting         ? 0x08 : 0x00)  // [3]
            | (tthis->m_selected   ? 0x10 : 0x00)  // [4]
-           | (tthis->m_io_offset << 5);           // [7:5]
+           | msbs;                                // [7:5]
         }
         break;
 
@@ -524,7 +525,10 @@ IoCardTermMux::i8080_in_func(int addr, void *user_data) noexcept
         break;
 
     case IN_OBSCBS_ADDR:
-        rv = (tthis->m_obscbs_offset << 5);  // bits [7:5]
+        {
+        const uint8 msbs = static_cast<uint8>(tthis->m_obscbs_offset << 5);
+        rv = msbs;  // bits [7:5]
+        }
         break;
 
     case IN_UART_RXRDY:
@@ -535,7 +539,7 @@ IoCardTermMux::i8080_in_func(int addr, void *user_data) noexcept
         break;
 
     case IN_UART_DATA:
-        rv = term.rx_byte;
+        rv = static_cast<uint8>(term.rx_byte);
         // reading the data has the side effect of clearing the rxrdy status
         term.rx_ready = false;
         tthis->updateInterrupt();

@@ -111,7 +111,7 @@ public:
 
     void refresh();
 
-    std::string LabelPanel::getLabelString();
+    std::string getLabelString();
 
 private:
 
@@ -135,10 +135,9 @@ DiskFactory::DiskFactory(wxFrame *parent, const std::string &filename) :
         wxDialog(parent, -1, "Disk Factory",
                  wxDefaultPosition, wxDefaultSize,
                  wxDEFAULT_DIALOG_STYLE | wxRESIZE_BORDER),
-        m_menubar(nullptr),
+        m_disk_data(nullptr),
         m_tab1(nullptr),
         m_tab2(nullptr),
-        m_disk_data(nullptr),
         m_btn_cancel(nullptr),
         m_btn_save(nullptr)
 {

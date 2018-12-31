@@ -149,13 +149,11 @@ typedef enum {
 
 } op_t;
 
-enum {
-    FETCH_B  = 0x80000000,      // load b_op  according to uop[3:0]
-    FETCH_A  = 0x40000000,      // load a_op  according to uop[7:4]
-    FETCH_AB = 0xC0000000,      // fetch a_op and b_op
-    FETCH_X  = 0x20000000,      // get a_op, a_op2, b_op, b_op2
-    FETCH_CY = 0x10000000       // perform CY operation
-};
+static const uint32 FETCH_B  = 0x80000000;  // load b_op according to uop[3:0]
+static const uint32 FETCH_A  = 0x40000000;  // load a_op according to uop[7:4]
+static const uint32 FETCH_AB = 0xC0000000;  // fetch a_op and b_op
+static const uint32 FETCH_X  = 0x20000000;  // get a_op, a_op2, b_op, b_op2
+static const uint32 FETCH_CY = 0x10000000;  // perform CY operation
 
 // 10b page branch target address
 #define PAGE_BR(uop) \

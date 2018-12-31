@@ -30,7 +30,6 @@ private:
 
     wxChoice *m_cpu_type;               // B/T/VP/MVP/VLSI
     wxChoice *m_mem_size;               // main memory size
-    wxChoice *m_kb_type;                // keyboard type
     wxChoice *m_card_desc[NUM_IOSLOTS]; // io slot card types
     wxChoice *m_card_addr[NUM_IOSLOTS]; // io slot addresses
     wxButton *m_card_cfg[NUM_IOSLOTS];  // per-card configuration

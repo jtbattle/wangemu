@@ -51,10 +51,10 @@ private:
     std::shared_ptr<CardCfgState> getCfgState() override;
 
     // i8080 hal interface
-    static int  i8080_rd_func(int addr, void *user_data) noexcept;
-    static void i8080_wr_func(int addr, int byte, void *user_data) noexcept;
-    static int  i8080_in_func(int addr, void *user_data) noexcept;
-    static void i8080_out_func(int addr, int byte, void *user_data);
+    static uint8 i8080_rd_func(int addr, void *user_data) noexcept;
+    static void  i8080_wr_func(int addr, int byte, void *user_data) noexcept;
+    static uint8 i8080_in_func(int addr, void *user_data) noexcept;
+    static void  i8080_out_func(int addr, int byte, void *user_data);
 
     // perform one i8080 instruction
     int execOneOp() noexcept;

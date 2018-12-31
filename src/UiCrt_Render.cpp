@@ -650,8 +650,8 @@ void
 Crt::generateScreenCursor(wxMemoryDC &memDC)
 {
     const bool cursor_blink_enable = m_parent->getCursorBlinkPhase();
-    if (m_crt_state->curs_attr == cursor_attr_t::CURSOR_OFF  ||
-        m_crt_state->curs_attr == cursor_attr_t::CURSOR_BLINK && !cursor_blink_enable) {
+    if ((m_crt_state->curs_attr == cursor_attr_t::CURSOR_OFF)  ||
+        (m_crt_state->curs_attr == cursor_attr_t::CURSOR_BLINK && !cursor_blink_enable)) {
         // don't draw the cursor at all
         return;
     }

@@ -152,8 +152,8 @@ IoCardDisk::IoCardDisk(std::shared_ptr<Scheduler> scheduler,
     m_cpb(true),
     m_card_busy(false),
     m_compare_err(false),
-    m_tmr_motor_off(nullptr),
     m_acting_intelligent(false),
+    m_tmr_motor_off(nullptr),
     m_copy_pending(false)
 {
     // only init if not doing a property probe

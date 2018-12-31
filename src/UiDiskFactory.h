@@ -33,7 +33,6 @@ private:
 
     // member data
     std::shared_ptr<Wvd> m_disk_data;
-    wxMenuBar  *m_menubar;
     PropPanel  *m_tab1;
     LabelPanel *m_tab2;
     wxButton   *m_btn_cancel;

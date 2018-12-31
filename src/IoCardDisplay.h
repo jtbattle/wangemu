@@ -52,7 +52,6 @@ private:
 
     // model controller "busy" timing
     std::shared_ptr<Timer> m_tmr_hsync;  // horizontal sync timer
-    bool       m_realtime;      // true: match real timing, false: go fast
     int        m_hsync_count;   // which horizontal line we are on
     enum class busy_state {
         IDLE,    // not busy

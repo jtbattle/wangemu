@@ -113,6 +113,8 @@ Emulator TODO list
    (2018) that link is now dead.  searching on _BIND_TO_CURRENT_CRT_VERSION=1
    turns up links from 2008-2010 timeframe.  perhaps that solution doesn't
    apply anymore.  this needs more research.
+    ...
+    https://docs.microsoft.com/en-us/cpp/build/manifest-generation-in-visual-studio?view=vs-2017
 
 ----------------------------------------------------------------------------
 small issues that it would be nice to figure out, but aren't release blockers

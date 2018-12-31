@@ -44,10 +44,10 @@ extern "C" {
 
 #include <stdint.h>
 
-typedef int  rd_handler(int addr, void *user_data);
-typedef void wr_handler(int addr, int byte, void *user_data);
-typedef int  in_handler(int addr, void *user_data);
-typedef void out_handler(int addr, int byte, void *user_data);
+typedef uint8_t  rd_handler(int addr, void *user_data);
+typedef void     wr_handler(int addr, int byte, void *user_data);
+typedef uint8_t  in_handler(int addr, void *user_data);
+typedef void     out_handler(int addr, int byte, void *user_data);
 
 typedef union {
     struct {

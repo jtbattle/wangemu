@@ -136,11 +136,9 @@ enum {
     OP_XP
 };
 
-enum {
-    FETCH_B   = 0x80000000,     // load b_op  according to uop[24:20]
-    FETCH_A   = 0x40000000,     // load a_op  according to uop[7:4]
-    FETCH_AB  = 0xC0000000      // fetch a_op and b_op
-};
+static const uint32 FETCH_B  = 0x80000000;  // load b_op according to uop[24:20]
+static const uint32 FETCH_A  = 0x40000000;  // load a_op according to uop[7:4]
+static const uint32 FETCH_AB = 0xC0000000;  // fetch a_op and b_op
 
 // swap the two nibbles of a byte
 #define NIBBLE_SWAP(v) \
