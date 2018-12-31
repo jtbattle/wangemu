@@ -293,7 +293,7 @@ IoCardDisplay::tcbHsync(int arg)
     m_hsync_count++;
 
     int64 new_period = HSYNC_PERIOD;
-    if (!regulated || (m_hsync_count < num_scanlines)) {
+    if (!regulated || (m_hsync_count >= num_scanlines)) {
         // once per vertical refresh -- just to keep the timer alive
         new_period = VSYNC_PERIOD;
         m_hsync_count = 1;
