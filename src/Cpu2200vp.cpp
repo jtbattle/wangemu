@@ -1588,7 +1588,7 @@ Cpu2200vp::execOneOp()
         break;
 
     case OP_BLR:        // BLR: branch if R[AAAA] < R[BBBB]
-        m_cpu.pc = static_cast<uint16>(m_cpu.pc + (int8)(puop->p8));
+        m_cpu.pc = static_cast<uint16>(m_cpu.pc + static_cast<int8>(puop->p8));
         if (a_op < b_op) { m_cpu.ic = puop->p16; }
                     else { m_cpu.ic++; }
         break;

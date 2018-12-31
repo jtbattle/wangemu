@@ -30,7 +30,7 @@ struct file_group_t {
     std::string  ini_group;   // name in .ini file
 };
 
-static file_group_t file_group[host::FILEREQ_NUM] = {{"", "", "", 0, ""}};
+static file_group_t file_group[host::FILEREQ_NUM];
 
 // ============================================================================
 // file-local functions

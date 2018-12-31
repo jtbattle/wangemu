@@ -295,7 +295,7 @@ system2200::terminate() noexcept
 
 // unregister a callback function which advances with the clock
 void
-system2200::registerClockedDevice(clkCallback cb) noexcept
+system2200::registerClockedDevice(clkCallback cb)
 {
     clocked_device_t cd = { cb, 0 };
     m_clocked_devices.push_back(cd);
@@ -907,7 +907,7 @@ system2200::cpuPollIB()
 
 // register a handler for a key event to a given keyboard terminal
 void
-system2200::registerKb(int io_addr, int term_num, kbCallback cb) noexcept
+system2200::registerKb(int io_addr, int term_num, kbCallback cb)
 {
     assert(cb);
 
@@ -925,7 +925,7 @@ system2200::registerKb(int io_addr, int term_num, kbCallback cb) noexcept
 
 
 void
-system2200::unregisterKb(int io_addr, int term_num) noexcept
+system2200::unregisterKb(int io_addr, int term_num)
 {
     for (auto it = begin(keyboard_routes); it != end(keyboard_routes); ++it) {
         if (io_addr == it->io_addr && term_num == it->term_num) {
