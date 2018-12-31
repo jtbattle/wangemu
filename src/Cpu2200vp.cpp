@@ -19,10 +19,9 @@
 #include "ucode_2200.h"
 
 // control which functions get inlined
+// FIXME: it doesn't work, becuse static func can't access members
 #define INLINE_STORE_C 1
-#define INLINE_MEM_RD  1  // FIXME: 0 doesn't work, due to static declaration
-#define INLINE_DD_OP   1  // FIXME: 0 doesn't work, due to static declaration
-#define INLINE_GET_Hb  1
+#define INLINE_DD_OP   1
 
 static bool g_dbg_trace = false;
 
@@ -662,23 +661,6 @@ decimalSub(int a_op, int b_op, int ci) noexcept
     )
 
 
-// read from the specified address
-#define INLINE_MEM_READ8(addr) m_ram[INLINE_MAP_ADDRESS(addr)]
-
-#if INLINE_MEM_RD
-    #define mem_read8(addr) INLINE_MEM_READ8(addr)
-#else
-    static uint8
-    mem_read8(int addr)
-    {
-        assert(addr >= 0);
-        uint8 rv = INLINE_MEM_READ8(addr);
-        //dbglog("READ RAM[0x%04X] = 0x%02X\n", addr, rv);
-        return rv;
-    }
-#endif
-
-
 // write to the specified address.
 // addresses < 8 KB always map to bank 0,
 // otherwise we add the bank offset.
@@ -731,20 +713,9 @@ Cpu2200vp::getHbHa(int HbHa, int a_op, int b_op) const noexcept
 }
 
 
-#define INLINED_GET_Hb(Hb, b_op)        \
+#define GET_HB(Hb, b_op)               \
     (((Hb)&1) ? (((b_op) >> 4) & 0xF)  \
               : (((b_op) >> 0) & 0xF))
-
-#if INLINE_GET_Hb
-    #define get_Hb(Hb, b_op) INLINED_GET_Hb(Hb, b_op)
-#else
-    static int
-    get_Hb(int Hb, int b_op)
-    {
-        return INLINED_GET_Hb(Hb, b_op);
-    }
-#endif
-
 
 
 // decode the DD field and perform memory rd/wr op if specified
@@ -755,8 +726,11 @@ Cpu2200vp::getHbHa(int HbHa, int a_op, int b_op) const noexcept
             case 0: /* nothing */                                    \
                 break;                                               \
             case 1: /* read */                                       \
-                m_cpu.ch = mem_read8(m_cpu.orig_pc);                 \
-                m_cpu.cl = mem_read8(m_cpu.orig_pc ^ 1);             \
+              {                                                      \
+                int rd_addr = INLINE_MAP_ADDRESS(m_cpu.orig_pc);     \
+                m_cpu.ch = m_ram[rd_addr];                           \
+                m_cpu.cl = m_ram[rd_addr ^ 1];                       \
+              }                                                      \
                 break;                                               \
             default:                                                 \
                 INLINE_MEM_WRITE(m_cpu.orig_pc, wr_val, d_field==3); \
@@ -1586,14 +1560,14 @@ Cpu2200vp::execOneOp()
     case OP_MI:         // binary multiply immediate w/ carry
         PREAMBLE3;
         imm  = (uop >> 4) & 0xF;
-        b_op = get_Hb(uop >> 15, b_op);
+        b_op = GET_HB(uop >> 15, b_op);
         rslt = imm * b_op;
         POSTAMBLE3;
         break;
 
 #define PREAMBLE4                       \
         imm  = (uop >> 4) & 0xF;        \
-        b_op = get_Hb(uop >> 18, b_op)
+        b_op = GET_HB(uop >> 18, b_op)
 
     case OP_BT:         // branch if true
         PREAMBLE4;
