@@ -40,6 +40,6 @@ private:
     wxButton   *m_btn_save;
 };
 
-#endif _INCLUDE_UI_DISK_FACTORY_H_
+#endif // _INCLUDE_UI_DISK_FACTORY_H_
 
 // vim: ts=8:et:sw=4:smarttab

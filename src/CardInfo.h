@@ -32,6 +32,6 @@ public:
     static std::shared_ptr<CardCfgState> getCardCfgState(IoCard::card_t cardtype);
 };
 
-#endif  // _INCLUDE_CARDINFO_H_
+#endif // _INCLUDE_CARDINFO_H_
 
 // vim: ts=8:et:sw=4:smarttab

@@ -74,7 +74,6 @@
 // it is used all over the place
 #define NUM_IOSLOTS 6
 
-
-#endif _INCLUDE_COMPILE_OPTIONS_H_
+#endif // _INCLUDE_COMPILE_OPTIONS_H_
 
 // vim: ts=8:et:sw=4:smarttab

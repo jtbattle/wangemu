@@ -40,6 +40,6 @@ typedef  uint8_t   uint4;  // for clarity; not really 4b
     ClassName& operator=(const ClassName&) = delete; \
     ClassName(ClassName&) = delete;
 
-#endif  // _INCLUDE_W2200_H_
+#endif // _INCLUDE_W2200_H_
 
 // vim: ts=8:et:sw=4:smarttab

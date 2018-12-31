@@ -42,3 +42,5 @@ struct crt_state_t
 };
 
 #endif // _INCLUDE_TERMINAL_STATE_H_
+
+// vim: ts=8:et:sw=4:smarttab

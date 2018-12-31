@@ -181,6 +181,6 @@ private:
     }
 };
 
-#endif _INCLUDE_TERMINAL_H_
+#endif // _INCLUDE_TERMINAL_H_
 
 // vim: ts=8:et:sw=4:smarttab

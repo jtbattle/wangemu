@@ -116,6 +116,6 @@ private:
     std::unique_ptr<wxPageSetupDialogData> m_pageSetupData;
 };
 
-#endif _INCLUDE_UI_PRINTER_FRAME_H_
+#endif // _INCLUDE_UI_PRINTER_FRAME_H_
 
 // vim: ts=8:et:sw=4:smarttab

@@ -69,6 +69,6 @@ private:
     int             m_cur_char;     // which character to return next
 };
 
-#endif // ifdef _INCLUDE_SCRIPT_H_
+#endif // _INCLUDE_SCRIPT_H_
 
 // vim: ts=8:et:sw=4:smarttab

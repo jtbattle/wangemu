@@ -38,6 +38,6 @@ extern uint8  kROM_2200T[KROM_WORDS_2200T];
 #define UCODE_WORDS_2200VP  1024
 extern uint32 ucode_2200vp[UCODE_WORDS_2200VP];  // boot ucode
 
-#endif  // _INCLUDE_UCODE_2200_H_
+#endif // _INCLUDE_UCODE_2200_H_
 
 // vim: ts=8:et:sw=4:smarttab

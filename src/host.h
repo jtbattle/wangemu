@@ -134,6 +134,6 @@ namespace host
 // exported by host.cpp
 void dbglog(const char *fmt, ...);
 
-#endif _INCLUDE_HOST_H_
+#endif // _INCLUDE_HOST_H_
 
 // vim: ts=8:et:sw=4:smarttab

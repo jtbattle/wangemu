@@ -138,6 +138,6 @@ private:
     std::unique_ptr<wxTimer> m_beep_tmr;
 };
 
-#endif _INCLUDE_UI_CRT_H_
+#endif // _INCLUDE_UI_CRT_H_
 
 // vim: ts=8:et:sw=4:smarttab

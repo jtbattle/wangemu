@@ -40,6 +40,6 @@ private:
     void getDefaults();
 };
 
-#endif _INCLUDE_UI_TERMINAL_MUX_CFG_DLG_H_
+#endif // _INCLUDE_UI_TERMINAL_MUX_CFG_DLG_H_
 
 // vim: ts=8:et:sw=4:smarttab

@@ -269,6 +269,6 @@ private:
 bool dasmOneOp  (char *buff, uint16 ic, uint32 ucode) noexcept;
 bool dasmOneVpOp(char *buff, uint16 ic, uint32 ucode) noexcept;
 
-#endif _INCLUDE_CPU2200_H_
+#endif // _INCLUDE_CPU2200_H_
 
 // vim: ts=8:et:sw=4:smarttab

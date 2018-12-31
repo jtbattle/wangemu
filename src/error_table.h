@@ -32,6 +32,6 @@ typedef struct {
 extern const std::vector<error_table_t> error_table;
 extern const std::vector<error_table_t> error_table_vp;
 
-#endif _INCLUDE_ERROR_TABLE_H_
+#endif // _INCLUDE_ERROR_TABLE_H_
 
 // vim: ts=8:et:sw=4:smarttab

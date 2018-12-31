@@ -1414,5 +1414,4 @@ Cpu2200t::execOneOp()
     return 1600;  // all operations take 1.6us ticks
 }
 
-
 // vim: ts=8:et:sw=4:smarttab
