@@ -19,8 +19,6 @@ Emulator TODO list
    what happens if there is an incorrect escape sequence?
    at what point are the bytes swallowed, or are they passed through?
 
-*) speed up the simulation loop for the special case of two tasks
-
 *) Document in the keyboard help file there are some new keys
      Shift-Alt-R is hard reset  (changed)
      Shift-Alt-W is warm reset  (changed)

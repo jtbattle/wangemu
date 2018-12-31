@@ -598,6 +598,7 @@ system2200::emulateTimeslice(int ts_ms)
         // simulate one timeslice's worth of instructions
         int slice_ns = ts_ms*1000000;
         if (num_devices == 1) {
+
             auto cb = m_clocked_devices[0].callback_fn;
             while (slice_ns > 0) {
                 const int op_ns = cb();
@@ -609,7 +610,63 @@ system2200::emulateTimeslice(int ts_ms)
                     scheduler->timerTick(op_ns);
                 }
             }
+
+        } else if (num_devices == 2) {
+            // this is an important case of #0 being cpu, and #1 being
+            // the 8080 in the MXD.  the cpu is faster than the 8080,
+            // so let it run a few cycles between reevaluations of which
+            // device is ahead in time.
+
+            // at the start of a timeslice, shift time for all cards towards
+            // zero to prevent overflowing the 32b nanosecond counters
+            const uint32 rebase = std::min(m_clocked_devices[0].ns,
+                                           m_clocked_devices[1].ns);
+            m_clocked_devices[0].ns -= rebase;
+            m_clocked_devices[1].ns -= rebase;
+
+            // we try to keep the devices in time lockstep as much as we can.
+            // each device has a nanosecond counter. the list of devices is
+            // kept in sorted order of increasing time. we call entry 0, adjust
+            // its time, then move it to the right place in the list.
+            while (slice_ns > 0) {
+                const bool run_vp = (   m_clocked_devices[0].ns
+                                     <= m_clocked_devices[1].ns);
+                int op_ns_signed = 0;
+                uint32 op_ns = 0;
+                if (run_vp) {
+                    // the 2200vp executes about six instructions in the time
+                    // the 8080 does one typical instruction
+                    auto cb = m_clocked_devices[0].callback_fn;
+                    op_ns_signed  = cb();
+                    op_ns_signed += cb();
+                    op_ns_signed += cb();
+                    op_ns_signed += cb();
+                    op_ns_signed += cb();
+                    op_ns_signed += cb();
+                    op_ns = static_cast<uint32>(op_ns_signed);
+                    m_clocked_devices[0].ns += op_ns;
+                } else {
+                    auto cb = m_clocked_devices[1].callback_fn;
+                    op_ns_signed = cb();
+                    op_ns = static_cast<uint32>(op_ns_signed);
+                    m_clocked_devices[1].ns += op_ns;
+                }
+
+                if (op_ns > 50000) {
+                    // something went wrong; finish the timeslice
+                    slice_ns = 0;
+                } else {
+                    const uint32 clamp_ns =
+                        std::max(m_clocked_devices[1].ns, m_clocked_devices[0].ns)
+                      - std::min(m_clocked_devices[1].ns, m_clocked_devices[0].ns);
+                    const uint32 delta_ns = std::min(op_ns, clamp_ns);
+                    slice_ns -= delta_ns;
+                    scheduler->timerTick(delta_ns);
+                }
+            }
+
         } else {
+
             // there are multiple devices
 
             // moving m_clocked_devices entries around it expensive,
@@ -678,7 +735,7 @@ system2200::emulateTimeslice(int ts_ms)
                     order[i] = entry0;
                 }
             }
-        }
+        } // 3 or more clocked devices
 
         sim_time_ns     += ts_ms;
         adjust_sim_time += ts_ms;
