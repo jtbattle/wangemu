@@ -886,7 +886,7 @@ Printer::updateStatusbar()
 // ----------------------------------------------------------------------------
 
 // constructor
-Printout::Printout(const wxString &title, std::shared_ptr<Printer> printer) :
+Printout::Printout(const wxString &title, Printer *printer) :
         wxPrintout(title),
         m_printer(printer)
 {

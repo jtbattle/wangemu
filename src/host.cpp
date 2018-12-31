@@ -17,9 +17,9 @@
 // module state
 // ============================================================================
 
-static std::string                   app_home;            // path to application home directory
-static std::unique_ptr<wxFileConfig> config    = nullptr; // configuration file object
-static std::unique_ptr<wxStopWatch>  stopwatch = nullptr; // time program started
+static std::string                   app_home;   // path to application home directory
+static std::unique_ptr<wxFileConfig> config;     // configuration file object
+static std::unique_ptr<wxStopWatch>  stopwatch;  // time program started
 
 // remember where certain files are located
 struct file_group_t {

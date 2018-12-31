@@ -188,12 +188,12 @@ CrtStatusBar::CrtStatusBar(CrtFrame *parent,
         // make a label to indicate the base address associated with drives
         wxString label;
         label.Printf("3%02X:", io & 0xff);
-        m_disk_label[2*ctrl+0] = std::make_unique<wxStaticText>(this, -1, label);
+        m_disk_label[2*ctrl+0] = new wxStaticText(this, -1, label);
         const wxSize label_size0  = m_disk_label[2*ctrl+0]->GetSize();
         const int    label_width0 = label_size0.GetWidth();
 
         label.Printf("3%02X:", (io + 0x40) & 0xff);
-        m_disk_label[2*ctrl+1] = std::make_unique<wxStaticText>(this, -1, label);
+        m_disk_label[2*ctrl+1] = new wxStaticText(this, -1, label);
         const wxSize label_size1 = m_disk_label[2*ctrl+1]->GetSize();
         int label_width1 = label_size1.GetWidth();
         if (m_num_drives[ctrl] <= 2) {
@@ -212,7 +212,7 @@ CrtStatusBar::CrtStatusBar(CrtFrame *parent,
         for (int drive=0; drive<m_num_drives[ctrl]; drive++) {
             int idx = 4*ctrl + drive;
 
-            m_disk_icon[idx] = std::make_unique<MyStaticBitmap>(
+            m_disk_icon[idx] = new MyStaticBitmap(
                                     this,
                                     ID_Button_DiskCtrl0_FDrive + idx, // wxWindowID
                                     dummy,              // gets overridden later
@@ -273,9 +273,7 @@ CrtStatusBar::CrtStatusBar(CrtFrame *parent,
     // move it into position later.  this member should be set last as
     // some methods test it to know if initialization is done yet.
     std::string label = (smart_term) ? "A/A" : "Keyword";
-// FIXME: should I take ownership like this, or does the wx object it is attached to?
-    m_keyword_ctl = std::make_unique<wxCheckBox>(
-                            this, ID_Keyword_Mode, label);
+    m_keyword_ctl = new wxCheckBox(this, ID_Keyword_Mode, label);
 
     Show(true);
 
@@ -363,16 +361,6 @@ CrtStatusBar::SetDiskIcon(const int slot, const int drive)
 
 CrtStatusBar::~CrtStatusBar()
 {
-    m_keyword_ctl = nullptr;
-
-    for (int ctrl=0; ctrl<m_num_disk_controllers; ctrl++) {
-        m_disk_label[2*ctrl+0] = nullptr;
-        m_disk_label[2*ctrl+1] = nullptr;
-        for (int drive=0; drive<m_num_drives[ctrl]; drive++) {
-            m_disk_icon[4*ctrl+drive] = nullptr;
-        }
-    }
-
     m_icon_set = nullptr;
 }
 

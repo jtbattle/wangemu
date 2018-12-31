@@ -164,7 +164,7 @@ PrinterFrame::PrinterFrame(const wxString& title, const int io_addr) :
     m_printData     = std::make_unique<wxPrintData>();
     m_pageSetupData = std::make_unique<wxPageSetupDialogData>();
 
-    m_printer = std::make_shared<Printer>(this);
+    m_printer = new Printer(this);
     getDefaults();      // get configuration options, or supply defaults
     setMenuChecks();    // might need to disable some menu items
 
@@ -198,7 +198,6 @@ PrinterFrame::~PrinterFrame()
     if (m_printer->getPrintasgo()) {
         printAndClear();        // print anything left in the printer
     }
-    m_printer       = nullptr;
     m_pageSetupData = nullptr;
     m_printData     = nullptr;
 }

@@ -171,7 +171,6 @@ private:
     CrtStatusBar *m_statusbar;
     wxToolBar    *m_toolbar;
 
-// FIXME: use unique_ptr?
     Crt *m_crt;                 // emulated CRT display window
 
     bool m_fullscreen;          // currently fullscreen or not

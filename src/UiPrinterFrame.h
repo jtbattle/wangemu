@@ -106,7 +106,7 @@ private:
 
     wxMenuBar   *m_menubar;     // menubar on frame
     wxStatusBar *m_statusbar;   // status bar on frame
-    std::shared_ptr<Printer> m_printer; // emulated Printer display window
+    Printer     *m_printer;     // emulated Printer display window
 
     int m_font_size;            // eg 8 for 8 pt, 12 for 12 pt, etc
     int m_printer_addr;         // we use this to track configuration options
