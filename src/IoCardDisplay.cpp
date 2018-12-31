@@ -50,16 +50,18 @@
 */
 
 #include "Ui.h"
+#include "host.h"             // for dbglog
 #include "IoCardDisplay.h"
-#include "Scheduler.h"          // for Timer...() functions
+#include "Scheduler.h"        // for Timer...() functions
 #include "system2200.h"
 #include "Terminal.h"
 #include "Cpu2200.h"
 
-#define NOISY  0        // turn on some debugging messages
 #ifdef _MSC_VER
     #pragma warning( disable: 4127 )  // conditional expression is constant
 #endif
+
+static const bool do_dbg = false;  // turn on some debugging messages
 
 // number of scanlines per display field
 static const int num_scanlines = 256;
@@ -188,8 +190,8 @@ IoCardDisplay::reset(bool /*hard_reset*/)
 void
 IoCardDisplay::select()
 {
-    if (NOISY) {
-        UI_info("display ABS");
+    if (do_dbg) {
+        dbglog("display ABS\n");
     }
 
     m_selected = true;
@@ -200,8 +202,8 @@ IoCardDisplay::select()
 void
 IoCardDisplay::deselect()
 {
-    if (NOISY) {
-        UI_info("display -ABS");
+    if (do_dbg) {
+        dbglog("display -ABS\n");
     }
     m_cpu->setDevRdy(false);
 
@@ -216,8 +218,9 @@ IoCardDisplay::strobeOBS(int val)
 
     const uint8 val8 = val & 0xFF;
 
-    if (NOISY) {
-        UI_info("display OBS: Output of byte 0x%02x", val8);
+    if (do_dbg) {
+        char ch = (0x20 <= val8 && val8 < 0x7F) ? val8 : '.';
+        dbglog("display OBS: Output of byte 0x%02x (%c)\n", val8, ch);
     }
 
     m_terminal->processChar(val8);
@@ -245,14 +248,8 @@ void
 IoCardDisplay::strobeCBS(int val)
 {
     val &= 0xFF;
-
-#if 0
-    // handle it if card uses it instead of the message here
-#else
-    // unexpected -- the real hardware ignores this byte
-    if (NOISY) {
-        UI_warn("unexpected display CBS: Output of byte 0x%02x", val);
-    }
+#ifdef _DEBUG
+    UI_warn("unexpected display CBS: Output of byte 0x%02x", val);
 #endif
 }
 
@@ -279,8 +276,8 @@ IoCardDisplay::setCpuBusy(bool busy)
 
     // it appears that except for reset, ucode only ever clears it,
     // and of course the IBS sets it back.
-    if (NOISY) {
-        UI_info("display CPB%c", busy?'+':'-');
+    if (do_dbg) {
+        dbglog("display CPB%c\n", busy?'+':'-');
     }
 
     m_cpu->setDevRdy(!m_card_busy);

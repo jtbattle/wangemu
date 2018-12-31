@@ -3,7 +3,6 @@ Emulator TODO list
 ============================================================================
 
 *) review coding convention
-   see coding_notes.txt
    also,
     - look for std::shared_ptr which really can be std::unique_ptr
     - the MSVC C++ guidelines point out some cases where a routing
@@ -13,9 +12,6 @@ Emulator TODO list
     - move const int64 SERIAL_CHAR_DELAY
         from IoCardTermMux.cpp
         from Terminal.cpp
-    - rename this file and fix include callouts
-         ++ errtable.cpp     <<-- should rename the file "error_table.*"
-         ++ errtable.h       <<-- should rename the file "error_table.*"
     - IoCardDisk_Controller.cpp
       IoCardDisk::advanceState has
         const bool poll_before = (!m_cpb && !m_card_busy);  << the same!
@@ -23,10 +19,25 @@ Emulator TODO list
         ...
         if (!poll_before && poll_after) {  << impossible condition
      - UiCrtFrame.h has a raw pointer to its crt.  since the frame is
-       the owner, it should be unique_ptr
+       the owner, it should be unique_ptr.  or maybe not; I'm not sure
+       of the wx ownership rules anymore.  I need to review.
+            https://wiki.wxwidgets.org/Avoiding_Memory_Leaks
      - I need to review when wx owns pointers attached to windows and
        when I should take ownership.  eg, UiCrtStatusBar m_keyword_ctl
        should be a dumb pointer if wx owns it.
+
+*) the aaa_attribute.w22 script
+    half of the results should be blinking, but only 4 of 16 are.
+    double check what is going on.  maybe certain attribute combinations
+    don't blink.  specifically, bright+blink is just bright w/no blink.
+
+    2236DE_TerminalUserManual.700-5711B.6-81.pdf, page 3.4 (pdf page 24)
+    "Note that there are two ways to code the attribute "blinking".
+    However, on the Model 2236DE, blinking normal intensity and blinking
+    high intensity characters both appear as blinking, high intensity."
+
+    For that matter, double check my logic around the handling of the
+    0E and 0F codes (pdf page 29+)
 
 *) support more than one MXD (each with one terminal)
    - booting MVP 3.5, it gets to the loading BASIC-2 stage but hangs
@@ -43,13 +54,6 @@ Emulator TODO list
      Ctrl-Left arrow is S.F. 07 (start of line)
      Ctrl-Right arrow is S.F. 04 (end of line)
 
-*) I'm seeing new strobes to the disk controller in MVP OS.
-   IoCardDisk::CBS() handler has comments saying OB8 and OB1
-   were used for various things.
-
-*) notes on disk protocol and unimplemented commands:
-    C:/Users/Jim/Documents/wang2200/disk_protocol/notes.txt
-
 *) do a memory leak check once in a while
 
     - installed Dr. Memory, seems easy to use, no source changes and does
@@ -57,8 +61,8 @@ Emulator TODO list
 
 *) Thought for possibly easier code.
 
-    TimerCreate() returns a std::shared_ptr<Timer>.  It is up to the
-    caller of TimerCreate() to remember to "tmr->Kill()" before resetting
+    createTimer() returns a std::shared_ptr<Timer>.  It is up to the
+    caller of createTimer() to remember to "tmr->kill()" before resetting
     the pointer to nullptr, say at reset or cleanup.  The pointer can just
     be set to nullptr inside the callback routine because the scheduler has
     already removed the pointer on its side.
@@ -68,7 +72,7 @@ Emulator TODO list
     destroyed and its destructor kills off all non-nullptr shared_ptr objects,
     the Timer::~Timer destructor inside scheduler will automatically be
     notified.  At that point the scheduler can clean up the dead entry.
-    There is no need for Kill() either -- the consumer just sets the pointer
+    There is no need for kill() either -- the consumer just sets the pointer
     to nullptr and all the magic happens.
 
 *) None of the recent changes has been compiled on OSX, so there will
@@ -113,6 +117,9 @@ Emulator TODO list
       single 10x22 dot format and can then stretch to the current screen size,
       instead of having 1:1, 1:2, 2:4 dot matrix modes.
 
+    - https://stackoverflow.com/questions/41145024/wxwidgets-and-modern-opengl-3-3
+      https://github.com/wxWidgets/wxWidgets/blob/master/samples/opengl/pyramid/pyramid.cpp
+
     - pre-blurring the char set to a glyph map, then blitting to the display
       works OK, except the cursor isn't blurred because it is dynamic, and
       edges of block graphic characters are noticeable because the blurring
@@ -128,11 +135,6 @@ Emulator TODO list
         - actual serial port connection
         - running via sockets, allowing local or remote connection
         - perhaps as a javascript app, with multiple terminals as tabs?
-
-*) allow pasting text to the emulator from the clipboard.  should be easy.
-   copying text from the screen is significantly more work, as I'd have
-   to track start & end selection, account for scrolling, have some visual
-   indication.
 
 *) add disk unit addressing cheatsheet?  I have forgotten the ins and outs.
     3xx
@@ -195,11 +197,6 @@ Emulator TODO list
         LIST DCT/D20  ==  LIST DCR/320
         LIST DCT/D21  ==  LIST DCF/320
 
-*) This guy wrote a lib to allow querying which printers are available,
-   and returning properties about a given printer:
-   http://hdrlab.org.nz/projects/wxwidgets-projects/custom-print-dialog-toolkit/
-   Perhaps it could make for a more friendly "configure real printer" interface
-
 *) update the website (and build notes) with directions on how to make
    the thing such that it doesn't have DLL dependencies.  What a mess.
       1) declare "_BIND_TO_CURRENT_CRT_VERSION=1" in the wx libs that
@@ -210,6 +207,9 @@ Emulator TODO list
          to the top level emulator directory
    see
      http://www.microsoft.com/communities/newsgroups/en-us/default.aspx?dg=microsoft.public.vstudio.general&tid=2d0b8055-3fe2-482b-9fb2-731eb51859ee&cat=&lang=en&cr=US&sloc=&p=1
+   (2018) that link is now dead.  searching on _BIND_TO_CURRENT_CRT_VERSION=1
+   turns up links from 2008-2010 timeframe.  perhaps that solution doesn't
+   apply anymore.  this needs more research.
 
 ----------------------------------------------------------------------------
 small issues that it would be nice to figure out, but aren't release blockers
@@ -231,6 +231,23 @@ small issues that it would be nice to figure out, but aren't release blockers
 *) 2236DE_TerminalUserManual.700-5711B.6-81.pdf, page 15 says all keys
    repeat except RESET, EDIT, and underline.  what implication does that
    have for the emulator?
+
+*) I'm seeing new strobes to the disk controller in MVP OS.
+   IoCardDisk::CBS() handler has comments saying OB8 and OB1
+   were used for various things.
+
+*) notes on disk protocol and unimplemented commands:
+    C:/Users/Jim/Documents/wang2200/disk_protocol/notes.txt
+
+*) allow pasting text to the emulator from the clipboard.  should be easy.
+   copying text from the screen is significantly more work, as I'd have
+   to track start & end selection, account for scrolling, have some visual
+   indication.
+
+*) This guy wrote a lib to allow querying which printers are available,
+   and returning properties about a given printer:
+   http://hdrlab.org.nz/projects/wxwidgets-projects/custom-print-dialog-toolkit/
+   Perhaps it could make for a more friendly "configure real printer" interface
 
 ----------------------------------------------------------------------------
 feature ideas which likely will never be implemented

@@ -394,7 +394,9 @@ IoCardTermMux::receiveKeystroke(int term_num, int keycode)
     m_term_t &term = m_terms[term_num];
 
     if (term.rx_ready) {
+#ifdef _DEBUG
         UI_warn("terminal received char too fast");
+#endif
         // TODO: set uart overrun status bit?
         // then fall through because the old char is overwritten
     }

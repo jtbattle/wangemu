@@ -962,7 +962,7 @@ Terminal::processCrtChar3(uint8 byte)
             // ignored
             break;
 
-        case 0x01:      // home screen
+        case 0x01:      // home cursor
             setCursorX(0);
             setCursorY(0);
             break;
@@ -1062,14 +1062,9 @@ Terminal::selectPCallback()
 
 // input queue for PRT byte stream
 void
-Terminal::prtCharFifo(uint8 byte)
+Terminal::prtCharFifo(uint8 /*byte*/)
 {
-#if 0
     // TODO: not modeling remote printer yet
-#else
-    byte = byte;
-    return;
-#endif
 }
 
 // vim: ts=8:et:sw=4:smarttab

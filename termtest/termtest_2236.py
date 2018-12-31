@@ -298,7 +298,7 @@ if 0:
         time.sleep(5)
 
 # testing the bell
-if 1:
+if 0:
     term.clear()
     term.sendline("Testing the bell")
 
@@ -352,6 +352,15 @@ if 1:
     #  1: turning blink on and off attribute while the cursor is off
     #     doens't turn the cursor back on
     #  2: turning the cursor on forces blink off
+
+# character set
+if 1:
+    term.clear()
+    term.sendline("Character set")
+    for n in range(16,256):
+        term.sendhex('%02x' % n)
+        if n%16 == 15:
+            term.sendhex('0d0a')
 
 term.cursor('on').charset1().attrOff()
 term.sendline("done!")

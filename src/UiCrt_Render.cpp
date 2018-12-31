@@ -488,7 +488,7 @@ Crt::generateFontmap()
                         // add underline on the last bitmap row
                         // the hardware stipples the underline this way
                         float dot_fg = (bright) ? f_intense : f_norm;
-                        if ((chr >= 0x80) && (bmr == 10)) {
+                        if ((chr >= 0x90) && (bmr == 10)) {
                             pixrow = 0x55 << 1;
                             dot_fg = f_norm;   // underline is not affected by bright
                         }
@@ -632,7 +632,7 @@ Crt::generateScreenByBlits(wxMemoryDC &memDC)
             // old terminal: one character set, no attributes
             for (int col=0; col<m_crt_state->chars_w; ++col) {
                 const int chr = m_crt_state->display[row*m_crt_state->chars_w + col];
-                if ((chr >= 0x10) && (chr != 0x20)) {  // if (non-blank character)
+                if (chr != 0x20) {  // if (non-blank character)
                     memDC.Blit(col*m_charcell_w, row*m_charcell_h,  // dest x,y
                                m_charcell_w, m_charcell_h,          // w,h
                                &font_map_dc,                        // src image
@@ -686,9 +686,7 @@ Crt::generateScreenOverlay(wxMemoryDC &memDC)
 
     // box overlay is always normal brightness.
     // in 2236 mode, we diminish normal brightness in order to get bright (1.0)
-    wxColor fg = (m_crt_state->screen_type == UI_SCREEN_2236DE)
-                        ? intensityToColor(0.6f)
-                        : intensityToColor(1.0f);
+    wxColor fg = intensityToColor(0.6f);
     wxPen pen(fg, 1, wxPENSTYLE_USER_DASH);
     wxDash dashpat[2] = {1, 1};
     if (m_charcell_sx == 1) {
