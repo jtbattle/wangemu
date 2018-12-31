@@ -219,7 +219,7 @@ IoCardDisplay::strobeOBS(int val)
     const uint8 val8 = val & 0xFF;
 
     if (do_dbg) {
-        char ch = (0x20 <= val8 && val8 < 0x7F) ? val8 : '.';
+        const char ch = (0x20 <= val8 && val8 < 0x7F) ? val8 : '.';
         dbglog("display OBS: Output of byte 0x%02x (%c)\n", val8, ch);
     }
 

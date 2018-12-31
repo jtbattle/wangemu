@@ -441,11 +441,11 @@ CrtFrame::setMenuChecks(const wxMenu *menu)
 
         // see if there are any disk controllers
         for (int controller=0; ; controller++) {
-            int slot, io_addr;
+            int slot=0, io_addr=0;
             if (!system2200::findDiskController(controller, &slot)) {
                 break;
             }
-            bool ok = system2200::getSlotInfo(slot, nullptr, &io_addr);
+            const bool ok = system2200::getSlotInfo(slot, nullptr, &io_addr);
             assert(ok);
             for (int d=0; d<2; d++) {
                 const int stat = IoCardDisk::wvdDriveStatus(slot, d);

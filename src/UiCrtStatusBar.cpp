@@ -126,8 +126,8 @@ CrtStatusBar::CrtStatusBar(CrtFrame *parent,
         m_popup_action(unknown)
 {
     // max config: alpha/keyword button, status area, disk drives, dummy area
-    int pane_widths[2+MAX_DISK_DRIVES+1];
-    int pane_styles[2+MAX_DISK_DRIVES+1];
+    int pane_widths[2+MAX_DISK_DRIVES+1] = {0};
+    int pane_styles[2+MAX_DISK_DRIVES+1] = {0};
 
     m_icon_set = std::make_unique<wxBitmap>(icons_xpm);
 
@@ -171,7 +171,7 @@ CrtStatusBar::CrtStatusBar(CrtFrame *parent,
         int slot = 0;
         system2200::findDiskController(ctrl, &slot); // where is it plugged in?
         int io = 0;
-        bool ok = system2200::getSlotInfo(slot, nullptr, &io);  // address it is mapped to
+        const bool ok = system2200::getSlotInfo(slot, nullptr, &io);  // address it is mapped to
         assert(ok);
 
         // figure out how many drives are attached to this controller

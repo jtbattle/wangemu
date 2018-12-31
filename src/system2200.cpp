@@ -158,7 +158,7 @@ saveDiskMounts(void)
                 if (isDiskController(slot)) {
                     const int stat = IoCardDisk::wvdDriveStatus(slot, drive);
                     if (stat & IoCardDisk::WVD_STAT_DRIVE_OCCUPIED) {
-                        bool ok = IoCardDisk::wvdGetFilename(slot, drive, &filename);
+                        const bool ok = IoCardDisk::wvdGetFilename(slot, drive, &filename);
                         assert(ok);
                     }
                 }
@@ -275,7 +275,10 @@ system2200::cleanup()
     saveDiskMounts();
     breakDownCards();
 
-    cpu       = nullptr;
+    assert(cpu.unique());
+    cpu = nullptr;
+
+    assert(scheduler.unique());
     scheduler = nullptr;
 
     current_cfg->saveIni();  // save state to ini file
@@ -351,6 +354,7 @@ system2200::setConfig(const SysCfgState &new_cfg)
         }
 
         // the change was major, so delete existing resources
+        assert(cpu.unique());
         cpu = nullptr;
 
         // remember which virtual disks are installed

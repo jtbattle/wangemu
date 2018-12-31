@@ -261,7 +261,7 @@ dasmDdField(char *buf, uint32 uop) noexcept
     assert(buf != nullptr);
     const int dd_field = ((uop >> 12) & 0x3);
 
-    char *str;
+    char *str = nullptr;
     switch (dd_field) {
          case 0: str = "";    break;
          case 1: str = ",R";  break;
@@ -285,7 +285,7 @@ dasmCyField(char *buf, bool &illegal, uint32 uop) noexcept
     const int cy_field = ((uop >> 14) & 0x3);
     illegal = false;
 
-    char *str;
+    char *str = nullptr;
     switch (cy_field) {
           case 0: return 0;
           case 1: str = ",x"; illegal = true; break;
@@ -308,7 +308,7 @@ dasmType1(char *buf, const char *mnemonic, bool &illegal, uint32 uop) noexcept
     assert(mnemonic != nullptr);
 
     const int x_field = (uop >> 17) & 1;
-    bool bad1, bad2;
+    bool bad1 = false, bad2 = false;
 
     strcpy(buf, mnemonic);
     int len = strlen(buf);
@@ -340,7 +340,7 @@ dasmType1a(char *buf, const char *mnemonic, bool &illegal, uint32 uop) noexcept
     assert(mnemonic != nullptr);
 
     const int x_field = (uop >> 17) & 1;
-    bool bad1, bad2;
+    bool bad1 = false, bad2 = false;
 
     strcpy(buf, mnemonic);
     int len = strlen(buf);
@@ -520,7 +520,7 @@ dasmType3(char *buf, const char *mnemonic, uint32 ic, uint32 uop) noexcept
     assert(buf != nullptr);
     assert(mnemonic != nullptr);
 
-    const uint32 newic = PAGE_BR(ic, uop);
+    const uint32 new_ic = PAGE_BR(ic, uop);
     const int x_field = (uop >> 18) & 1;
     // move the X bit from bit 18 to bit 17 for A and B field disassembly
     const uint32 munged_uop = (uop & NO_X_BIT) | (x_field << 17);
@@ -536,7 +536,7 @@ dasmType3(char *buf, const char *mnemonic, uint32 ic, uint32 uop) noexcept
     buf[len++] = ','; buf[len] = '\0';
     len += dasmBField(&buf[len], munged_uop);
     buf[len++] = ','; buf[len] = '\0';
-    len += dasmAddr(&buf[len], ic, newic);
+    len += dasmAddr(&buf[len], ic, new_ic);
 
     return len;
 }
@@ -557,7 +557,7 @@ dasmShBitfield(char *buf, uint8 bits) noexcept
                 len += 2;
             }
             many = true;
-            char *str;
+            char *str = nullptr;
             switch (i) {
                  case 0: str = "carry";      break;
                  case 1: str = "CRB";        break;
@@ -585,7 +585,7 @@ dasmType4(char *buf, const char *mnemonic, uint32 ic, uint32 uop) noexcept
     assert(buf != nullptr);
     assert(mnemonic != nullptr);
 
-    const uint32 newic = PAGE_BR(ic, uop);
+    const uint32 new_ic = PAGE_BR(ic, uop);
     const int Hb = ((uop >> 18) & 1);
 
     strcpy(buf, mnemonic);
@@ -597,7 +597,7 @@ dasmType4(char *buf, const char *mnemonic, uint32 ic, uint32 uop) noexcept
     buf[len++] = ','; buf[len] = '\0';
     len += dasmBField(&buf[len], (uop & NO_X_BIT));
     buf[len++] = ','; buf[len] = '\0';
-    len += dasmAddr(&buf[len], ic, newic);
+    len += dasmAddr(&buf[len], ic, new_ic);
 
     if ((uop & 0x70000F) == 0x60000D) {         // BT or BF of SH
         uint8 bitfield = static_cast<uint8>(uop & 0xF0);
@@ -684,7 +684,7 @@ dasmVpOp(char *buf, uint16 ic, uint32 uop) noexcept
     const bool lpi_op  = ((uop & 0x790000) == 0x190000);
     const bool mini_op = ((uop & 0x618000) == 0x018000);
     const bool shft_op = ((uop & 0x71C000) == 0x004000);
-    uint16 newic;
+    uint16 new_ic = 0;
 
     int parity = 0;
     for (int bit=0; bit<24; bit++) {
@@ -907,16 +907,16 @@ dasmVpOp(char *buf, uint16 ic, uint32 uop) noexcept
         // branch instructions:
 
             case 0x15:  // subroutine branch
-                newic = FULL_BR(uop);
+                new_ic = FULL_BR(uop);
                 strcpy(buf, "SB"); len = 2;
                 len += padSpaces(buf, len, PARAM_COL);
-                len += dasmAddr(&buf[len], ic, newic);
+                len += dasmAddr(&buf[len], ic, new_ic);
                 break;
             case 0x17:  // unconditional branch
-                newic = FULL_BR(uop);
+                new_ic = FULL_BR(uop);
                 strcpy(buf, "B"); len = 1;
                 len += padSpaces(buf, len, PARAM_COL);
-                len += dasmAddr(&buf[len], ic, newic);
+                len += dasmAddr(&buf[len], ic, new_ic);
                 break;
 
         // mask branch instructions:

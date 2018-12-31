@@ -274,7 +274,7 @@ IoCardDisk::advanceStateInt(disk_event_t event, const int val)
 
     // this is for diagnostic purposes only
     // if a state which isn't expecting an OBS gets one, report it
-    bool expecting_obs;
+    bool expecting_obs = false;
     switch (m_state) {
         case CTRL_WAKEUP:
         case CTRL_GET_BYTES:

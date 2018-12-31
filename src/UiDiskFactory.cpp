@@ -154,7 +154,7 @@ DiskFactory::DiskFactory(wxFrame *parent, const std::string &filename) :
                             disk_choices[0].sectors_per_platter);
     } else {
         // existing disk
-        bool ok = m_disk_data->open(filename);
+        const bool ok = m_disk_data->open(filename);
         assert(ok);
     }
 

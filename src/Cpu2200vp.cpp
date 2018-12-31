@@ -719,23 +719,23 @@ Cpu2200vp::getHbHa(int HbHa, int a_op, int b_op) const noexcept
 
 
 // decode the DD field and perform memory rd/wr op if specified
-#define INLINE_PERFORM_DD_OP(uop,wr_val)                             \
-    {                                                                \
-        const int d_field = ((uop) >> 12) & 0x3;                     \
-        switch (d_field) {                                           \
-            case 0: /* nothing */                                    \
-                break;                                               \
-            case 1: /* read */                                       \
-              {                                                      \
-                int rd_addr = INLINE_MAP_ADDRESS(m_cpu.orig_pc);     \
-                m_cpu.ch = m_ram[rd_addr];                           \
-                m_cpu.cl = m_ram[rd_addr ^ 1];                       \
-              }                                                      \
-                break;                                               \
-            default:                                                 \
-                INLINE_MEM_WRITE(m_cpu.orig_pc, wr_val, d_field==3); \
-                break;                                               \
-        }                                                            \
+#define INLINE_PERFORM_DD_OP(uop,wr_val)                               \
+    {                                                                  \
+        const int d_field = ((uop) >> 12) & 0x3;                       \
+        switch (d_field) {                                             \
+            case 0: /* nothing */                                      \
+                break;                                                 \
+            case 1: /* read */                                         \
+              {                                                        \
+                const int rd_addr = INLINE_MAP_ADDRESS(m_cpu.orig_pc); \
+                m_cpu.ch = m_ram[rd_addr];                             \
+                m_cpu.cl = m_ram[rd_addr ^ 1];                         \
+              }                                                        \
+                break;                                                 \
+            default:                                                   \
+                INLINE_MEM_WRITE(m_cpu.orig_pc, wr_val, d_field==3);   \
+                break;                                                 \
+        }                                                              \
     }
 
 #if INLINE_DD_OP

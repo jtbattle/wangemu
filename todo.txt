@@ -2,20 +2,8 @@
 Emulator TODO list
 ============================================================================
 
-*) review coding convention
-   also,
-    - look for std::shared_ptr which really can be std::unique_ptr
-    - the MSVC C++ guidelines point out some cases where a routing
-      takes a shared_ptr but a raw pointer or reference really would
-      be the appropriate choice, as the subroutine's life cannot
-      exceed that of the caller.  Or maybe it is confused.  Check anyway.
-     - UiCrtFrame.h has a raw pointer to its crt.  since the frame is
-       the owner, it should be unique_ptr.  or maybe not; I'm not sure
-       of the wx ownership rules anymore.  I need to review.
-            https://wiki.wxwidgets.org/Avoiding_Memory_Leaks
-     - I need to review when wx owns pointers attached to windows and
-       when I should take ownership.  eg, UiCrtStatusBar m_keyword_ctl
-       should be a dumb pointer if wx owns it.
+*) change code to allow MXD only at 00 (other cases don't work and need
+   debugging and aren't really useful to have 5+ virtual terms on one display.
 
 *) the aaa_attribute.w22 script
     half of the results should be blinking, but only 4 of 16 are.
@@ -30,27 +18,11 @@ Emulator TODO list
     For that matter, double check my logic around the handling of the
     0E and 0F codes (pdf page 29+)
 
-*) support more than one MXD (each with one terminal)
-   - booting MVP 3.5, it gets to the loading BASIC-2 stage but hangs
-     dumped debug_termmux_io_{dual,single}.log
-     but the cause isn't apparent.  it would help to dump the symbols
-     from the 3.5 source disks so I can figure out what section of code
-     it is in when things diverge.
+*) test some corner case on the real terminal
+   what happens if there is an incorrect escape sequence?
+   at what point are the bytes swallowed, or are they passed through?
 
-*) Document in the keyboard help file there are some new keys
-     Shift-Alt-R is hard reset  (changed)
-     Shift-Alt-W is warm reset  (changed)
-     Up arrow is S.F. 06 (up a screen line)
-     Down arrow is S.F. 05 (down a screen line)
-     Ctrl-Left arrow is S.F. 07 (start of line)
-     Ctrl-Right arrow is S.F. 04 (end of line)
-
-*) do a memory leak check once in a while
-
-    - installed Dr. Memory, seems easy to use, no source changes and does
-      much more than just detecting leaks.  http://www.drmemory.org/
-
-*) Thought for possibly easier code.
+*) Thought for possibly easier code
 
     createTimer() returns a std::shared_ptr<Timer>.  It is up to the
     caller of createTimer() to remember to "tmr->kill()" before resetting
@@ -66,66 +38,25 @@ Emulator TODO list
     There is no need for kill() either -- the consumer just sets the pointer
     to nullptr and all the magic happens.
 
+*) Document in the keyboard help file there are some new keys
+     Shift-Alt-R is hard reset  (changed)
+     Shift-Alt-W is warm reset  (changed)
+     Up arrow is S.F. 06 (up a screen line)
+     Down arrow is S.F. 05 (down a screen line)
+     Ctrl-Left arrow is S.F. 07 (start of line)
+     Ctrl-Right arrow is S.F. 04 (end of line)
+
+*) do a memory leak check once in a while
+
+    - installed Dr. Memory, seems easy to use, no source changes and does
+      much more than just detecting leaks.  http://www.drmemory.org/
+
 *) None of the recent changes has been compiled on OSX, so there will
    be problems.  Once the code is somewhat stable under windows,
    build it on OSX and iron out the problems.
 
 *) In MXD mode, TAB means TAB (2236DW) or FN (2236DE) (instead of STMT).
    The help page should be updated to indicate this.
-
-*) improved 2236 terminal emulation
-
-    - test some corner case on the real terminal
-      what happens if there is an incorrect escape sequence:
-      at what point are the bytes swallowed, or are they passed through?
-
-    - 742-0903.MNL.IntegratedTerminal2236DW.85-02-27.pdf, pdf page 68 says
-          2236DW and 2236DW have mostly the same character generators,
-          except for characters 5F/7F/80/8D/8F/DF/FF
-
-    - the weird thing where inverse mode causes video to be lit
-      either when the current dot is 0 or the previous dot was 0
-      gets tricky in the presence of box line graphics.
-        1) vert is kind of screwed because it could interact with the
-           glyph bitmap under it
-        2) horizontal box lines should be stippled if normal video,
-           but solid black if inverse mode
-      the fix is either to buy into full-screen at once blurring,
-      or to double the fontmap to have with/without vertical bar
-    - dot stream is gated by pixclk.  not easily do-able in 2:1 dot mode
-    - get rid of 1x1 dot matrix mode -- doesn't model the real hw,
-      isn't readable.
-    - write an opengl shader which uses the attr/char maps as a texture
-      to generate the output in parallel. can also add contrast, brightness,
-      blur, TV warp, etc
-          Js amiga emulator using webgl for display:
-              http://scriptedamigaemulator.net
-          Stack overflow: using webgl to map palettized display to rgb display
-              http://stackoverflow.com/questions/19695658/emulating-palette-based-graphics-in-webgl-v-s-canvas-2d
-          apple II js w/webgl rendering option:
-              http://porkrind.org/a2/
-      in many ways this is simpler, in that it only has to deal with one
-      single 10x22 dot format and can then stretch to the current screen size,
-      instead of having 1:1, 1:2, 2:4 dot matrix modes.
-
-    - https://stackoverflow.com/questions/41145024/wxwidgets-and-modern-opengl-3-3
-      https://github.com/wxWidgets/wxWidgets/blob/master/samples/opengl/pyramid/pyramid.cpp
-
-    - pre-blurring the char set to a glyph map, then blitting to the display
-      works OK, except the cursor isn't blurred because it is dynamic, and
-      edges of block graphic characters are noticeable because the blurring
-      kernel needs to span across characters.  it also interacts poorly
-      with the box line graphics overlay.
-
-      render unblurred and then use OGL to do the blurring.  this has the
-      benefit of offering flexible scaling at low cost, and perhaps other
-      video generation defect emulation.
-
-    - allow running terminal as a separate process
-        - running in process is easier to manage for the casual user, though
-        - actual serial port connection
-        - running via sockets, allowing local or remote connection
-        - perhaps as a javascript app, with multiple terminals as tabs?
 
 *) add disk unit addressing cheatsheet?  I have forgotten the ins and outs.
     3xx
@@ -219,9 +150,60 @@ small issues that it would be nice to figure out, but aren't release blockers
        256KB of RAM => it thinks it is MVP
        128KB of RAM => it thinks it is VLSI-1
 
+*) support more than one MXD (each with one terminal)
+   - booting MVP 3.5, it gets to the loading BASIC-2 stage but hangs
+     dumped debug_termmux_io_{dual,single}.log
+     but the cause isn't apparent.  it would help to dump the symbols
+     from the 3.5 source disks so I can figure out what section of code
+     it is in when things diverge.
+
 *) 2236DE_TerminalUserManual.700-5711B.6-81.pdf, page 15 says all keys
    repeat except RESET, EDIT, and underline.  what implication does that
    have for the emulator?
+
+*) improved 2236 terminal emulation
+
+    - 742-0903.MNL.IntegratedTerminal2236DW.85-02-27.pdf, pdf page 68 says
+          2236DW and 2236DW have mostly the same character generators,
+          except for characters 5F/7F/80/8D/8F/DF/FF
+
+    - the weird thing where inverse mode causes video to be lit
+      either when the current dot is 0 or the previous dot was 0
+      gets tricky in the presence of box line graphics.
+        1) vert is kind of screwed because it could interact with the
+           glyph bitmap under it
+        2) horizontal box lines should be stippled if normal video,
+           but solid black if inverse mode
+      the fix is either to buy into full-screen at once blurring,
+      or to double the fontmap to have with/without vertical bar
+    - dot stream is gated by pixclk.  not easily do-able in 2:1 dot mode
+    - get rid of 1x1 dot matrix mode -- doesn't model the real hw,
+      isn't readable.
+    - write an opengl shader which uses the attr/char maps as a texture
+      to generate the output in parallel. can also add contrast, brightness,
+      blur, TV warp, etc
+          Js amiga emulator using webgl for display:
+              http://scriptedamigaemulator.net
+          Stack overflow: using webgl to map palettized display to rgb display
+              http://stackoverflow.com/questions/19695658/emulating-palette-based-graphics-in-webgl-v-s-canvas-2d
+          apple II js w/webgl rendering option:
+              http://porkrind.org/a2/
+      in many ways this is simpler, in that it only has to deal with one
+      single 10x22 dot format and can then stretch to the current screen size,
+      instead of having 1:1, 1:2, 2:4 dot matrix modes.
+
+    - https://stackoverflow.com/questions/41145024/wxwidgets-and-modern-opengl-3-3
+      https://github.com/wxWidgets/wxWidgets/blob/master/samples/opengl/pyramid/pyramid.cpp
+
+    - pre-blurring the char set to a glyph map, then blitting to the display
+      works OK, except the cursor isn't blurred because it is dynamic, and
+      edges of block graphic characters are noticeable because the blurring
+      kernel needs to span across characters.  it also interacts poorly
+      with the box line graphics overlay.
+
+      render unblurred and then use OGL to do the blurring.  this has the
+      benefit of offering flexible scaling at low cost, and perhaps other
+      video generation defect emulation.
 
 *) I'm seeing new strobes to the disk controller in MVP OS.
    IoCardDisk::CBS() handler has comments saying OB8 and OB1
@@ -256,6 +238,12 @@ feature ideas which likely will never be implemented
      "Not OK" state will pop up an explanation of the problem.  Currently
      you have to hit the "Not OK" button to get the info. I think adding
      the former is good for discoverability.
+
+*) allow running terminal as a separate process
+    - running in process is easier to manage for the casual user, though
+    - actual serial port connection
+    - running via sockets, allowing local or remote connection
+    - perhaps as a javascript app, with multiple terminals as tabs?
 
 *) emulate "CPU running" light on keyboard (first-gen only)
    double check -- it is probably (cpu waiting for input && 01 selected)

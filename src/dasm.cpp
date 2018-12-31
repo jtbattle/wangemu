@@ -100,8 +100,8 @@ dasmAField(char *buf, uint32 uop, bool &adj) noexcept
         return sprintf(buf, "F%d", field);
     }
 
-    char *str;
-    int pc;
+    char *str = nullptr;
+    int pc = 0;
     switch (field) {
         case  8: str = "CH";  pc = 0; break;
         case  9: str = "CH-"; pc = 1; break;
@@ -148,7 +148,7 @@ dasmBField(char *buf, uint32 uop) noexcept
         return sprintf(buf, "F%d", field);
     }
 
-    char *str;
+    char *str = nullptr;
     if (xbit) {
         switch (field) {
             case  8: str = "ST3"; break;
@@ -194,7 +194,7 @@ dasmCField(char *buf, bool &illegal, uint32 uop) noexcept
         return sprintf(buf, "F%d", field);
     }
 
-    char *str;
+    char *str = nullptr;
     if (xbit) {
         switch (field) {
             case  8: str = "ST3";   break;
@@ -270,7 +270,7 @@ dasmSt1Bitfield(char *buf, int *len, uint4 bits) noexcept
                 p += 2;
             }
             many = true;
-            char *str;
+            char *str = nullptr;
             switch (i) {
                  case 0: str = "carry";      break;
                  case 1: str = "CPB";        break;
@@ -302,7 +302,7 @@ dasmSt3Bitfield(char *buf, int *len, uint4 bits) noexcept
                 p += 2;
             }
             many = true;
-            char *str;
+            char *str = nullptr;
             switch (i) {
                  case 0: str = "ready/!busy"; break;
                  case 1: str = "IB5";         break;
@@ -665,7 +665,7 @@ dasmOp(char *buf, uint16 ic, uint32 uop) noexcept
     const int b_field = (uop >> 10) & 0xF;
     const int m_field = (uop >>  8) & 0x3;
     int len = 0;
-    uint16 new_ic;
+    uint16 new_ic = 0;
 
     bool illegal = false;  // default
 

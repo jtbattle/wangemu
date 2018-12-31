@@ -118,7 +118,7 @@ IoCardTermMux::IoCardTermMux(std::shared_ptr<Scheduler> scheduler,
     }
 
     int io_addr = 0;
-    bool ok = system2200::getSlotInfo(card_slot, nullptr, &io_addr);
+    const bool ok = system2200::getSlotInfo(card_slot, nullptr, &io_addr);
     assert(ok);
 
     m_i8080 = i8080_new(IoCardTermMux::i8080_rd_func,

@@ -30,7 +30,7 @@ struct file_group_t {
     std::string  ini_group;   // name in .ini file
 };
 
-static file_group_t file_group[host::FILEREQ_NUM];
+static file_group_t file_group[host::FILEREQ_NUM] = {{"", "", "", 0, ""}};
 
 // ============================================================================
 // file-local functions
@@ -474,7 +474,7 @@ host::configWriteStr(const std::string &subgroup,
     wxString wxKey(key);
     wxString wxVal(val);
     config->SetPath("/wangemu/config-0/" + subgroup);
-    bool b = config->Write(wxKey, wxVal);
+    const bool b = config->Write(wxKey, wxVal);
     assert(b);
 }
 
@@ -510,7 +510,7 @@ host::configWriteWinGeom(wxWindow *wxwin,
 {
     assert(wxwin != nullptr);
 
-    int x, y, w, h;
+    int x=0, y=0, w=0, h=0;
     wxwin->GetPosition(&x, &y);
     if (client_size) {
         wxwin->GetClientSize(&w, &h);

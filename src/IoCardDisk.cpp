@@ -1147,7 +1147,7 @@ IoCardDisk::getDiskGeometry(int disktype,
                             int *interleave
                            ) noexcept
 {
-    int sectors_per_track, track_seek_ms, disk_rpm, inter;
+    int sectors_per_track=0, track_seek_ms=0, disk_rpm=0, inter=0;
 
     switch (disktype) {
 
