@@ -2,13 +2,13 @@
 // headers
 // ----------------------------------------------------------------------------
 
-#include "host.h"               // for Config* functions
 #include "IoCardDisk.h"         // disk access routines
-#include "system2200.h"         // disk access routines
 #include "Ui.h"                 // emulator interface
-#include "UiSystem.h"           // sharing info between UI_wxgui modules
 #include "UiDiskFactory.h"
+#include "UiSystem.h"           // sharing info between UI_wxgui modules
 #include "Wvd.h"
+#include "host.h"               // for Config* functions
+#include "system2200.h"         // disk access routines
 
 #include <wx/notebook.h>        // wxNotebook
 

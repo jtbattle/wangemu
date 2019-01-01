@@ -11,15 +11,15 @@
 //     https://wang2200.org/2200tech/wang_2236mxd.lst
 
 #include "Cpu2200.h"
-#include "host.h"             // for dbglog()
-#include "i8080.h"
 #include "IoCardKeyboard.h"   // for key encodings
 #include "IoCardTermMux.h"
 #include "Scheduler.h"
-#include "system2200.h"
-#include "Terminal.h"
 #include "TermMuxCfgState.h"
+#include "Terminal.h"
 #include "Ui.h"
+#include "host.h"             // for dbglog()
+#include "i8080.h"
+#include "system2200.h"
 
 bool do_dbg = false;
 

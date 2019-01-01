@@ -4,6 +4,8 @@
 #ifndef _INCLUDE_TERMINAL_STATE_H_
 #define _INCLUDE_TERMINAL_STATE_H_
 
+#include "w2200.h"
+
 enum ui_screen_t;  // defined in Ui.h
 
 // state used only in smart terminal mode (eg 2236DE)

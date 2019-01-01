@@ -22,7 +22,6 @@
 #ifndef _INCLUDE_SYS_CONFIG_STATE_H_
 #define _INCLUDE_SYS_CONFIG_STATE_H_
 
-#include "w2200.h"
 #include "Cpu2200.h"
 #include "IoCard.h"
 

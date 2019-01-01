@@ -1,10 +1,10 @@
 
-#include "host.h"
 #include "IoCard.h"
+#include "TermMuxCfgState.h"
 #include "Ui.h"                 // emulator interface
 #include "UiSystem.h"           // sharing info between UI_wxgui modules
-#include "TermMuxCfgState.h"
 #include "UiTermMuxCfgDlg.h"
+#include "host.h"
 #include "system2200.h"
 
 // ----------------------------------------------------------------------------

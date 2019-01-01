@@ -10,7 +10,6 @@
 #ifndef _INCLUDE_CARDINFO_H_
 #define _INCLUDE_CARDINFO_H_
 
-#include "w2200.h"
 #include "IoCard.h"     // to pick up card_t
 
 // CardInfo could be a namespace, except one can't declare a friend namespace.

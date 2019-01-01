@@ -9,8 +9,8 @@
 #ifndef _INCLUDE_UI_SYSTEM_CONFIG_DLG_H_
 #define _INCLUDE_UI_SYSTEM_CONFIG_DLG_H_
 
-#include "wx/wx.h"
 #include "SysCfgState.h"
+#include "wx/wx.h"
 
 class SystemConfigDlg : public wxDialog
 {

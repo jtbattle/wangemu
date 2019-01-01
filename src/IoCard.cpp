@@ -1,11 +1,9 @@
 // Although the IoCard class is abstract for the most part,
 // these factory functions live here
 
-#include "Ui.h"
 #include "CardCfgState.h"
-#include "DiskCtrlCfgState.h"
-#include "host.h"
 #include "Cpu2200.h"
+#include "DiskCtrlCfgState.h"
 #include "IoCardDisk.h"
 #include "IoCardDisplay.h"
 #include "IoCardKeyboard.h"
@@ -13,6 +11,8 @@
 #include "IoCardTermMux.h"
 #include "Scheduler.h"
 #include "SysCfgState.h"
+#include "Ui.h"
+#include "host.h"
 
 // ========================================================================
 // card management functions (used by UI)

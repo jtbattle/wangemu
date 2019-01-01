@@ -5,11 +5,11 @@
 #include "CardCfgState.h"
 #include "CardInfo.h"
 #include "Cpu2200.h"
-#include "host.h"
 #include "IoCard.h"
-#include "system2200.h"
 #include "SysCfgState.h"
 #include "Ui.h"                 // for UI_Alert
+#include "host.h"
+#include "system2200.h"
 
 #include <sstream>
 

@@ -3,11 +3,11 @@
 // ----------------------------------------------------------------------------
 
 #include "Cpu2200.h"
-#include "system2200.h"
 #include "SysCfgState.h"
-#include "UiSystem.h"           // sharing info between UI_wxgui modules
-#include "UiMyStaticText.h"     // sharing info between UI_wxgui modules
 #include "UiCrtErrorDlg.h"
+#include "UiMyStaticText.h"     // sharing info between UI_wxgui modules
+#include "UiSystem.h"           // sharing info between UI_wxgui modules
+#include "system2200.h"
 
 // ----------------------------------------------------------------------------
 // error message class

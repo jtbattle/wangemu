@@ -1,9 +1,9 @@
 // I found wxAboutBox to be a bit ugly, so I customized it.  The code in this
 // class was lifted and adapted from <wxdir>/src/generic/aboutdlgg.cpp
 
-#include "UiSystem.h"
-#include "UiMyStaticText.h"
 #include "UiMyAboutDlg.h"
+#include "UiMyStaticText.h"
+#include "UiSystem.h"
 
 // the emulator needs only the "base" and "core" wx libraries if USE_HYPERLINK
 // is 0, but then the About box link to www.wang2200.org below is not live.

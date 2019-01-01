@@ -1,7 +1,7 @@
 
 #include "DiskCtrlCfgState.h"
-#include "host.h"
 #include "Ui.h"                 // for UI_Alert
+#include "host.h"
 
 #include <sstream>
 

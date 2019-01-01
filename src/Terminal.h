@@ -3,9 +3,10 @@
 #ifndef _INCLUDE_TERMINAL_H_
 #define _INCLUDE_TERMINAL_H_
 
-#include "w2200.h"
-#include "TerminalState.h"
 #include "Scheduler.h"
+#include "TerminalState.h"
+#include "w2200.h"
+
 #include <queue>
 
 class CrtFrame;

@@ -3,9 +3,9 @@
 // ------------------------------------------------------------------------
 
 #include "IoCardDisk.h"
-#include "host.h"              // for dbglog()
 #include "Ui.h"
 #include "Wvd.h"
+#include "host.h"              // for dbglog()
 
 #include <fstream>
 

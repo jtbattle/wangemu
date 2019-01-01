@@ -8,7 +8,6 @@
 #ifndef _INCLUDE_UI_H_
 #define _INCLUDE_UI_H_
 
-#include "w2200.h"
 #include "IoCard.h"   // for IoCard::card_t enum
 
 class CardCfgState;

@@ -5,8 +5,8 @@
 
 #define WVD_MAX_LABEL_LEN (256-16-1) // don't forget the zero terminator
 
-#include "IoCard.h"
 #include "DiskCtrlCfgState.h"
+#include "IoCard.h"
 
 class Cpu2200;
 class Scheduler;

@@ -6,12 +6,12 @@
 #include "UiSystem.h"           // sharing info between UI_wxgui modules
 #include "host.h"
 
-#include "wx/filename.h"        // for wxFileName
 #include "wx/fileconf.h"        // for configuration state object
-#include "wx/tokenzr.h"         // req'd by wxStringTokenizer
+#include "wx/filename.h"        // for wxFileName
 #include "wx/settings.h"        // req'd by GetMetric()
-#include "wx/utils.h"           // time/date stuff
 #include "wx/stdpaths.h"        // wxStandardPaths stuff
+#include "wx/tokenzr.h"         // req'd by wxStringTokenizer
+#include "wx/utils.h"           // time/date stuff
 
 // ============================================================================
 // module state

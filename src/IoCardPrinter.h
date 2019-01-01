@@ -1,8 +1,8 @@
 #ifndef _INCLUDE_IOCARD_PRINTER_H_
 #define _INCLUDE_IOCARD_PRINTER_H_
 
-#include "Ui.h"
 #include "IoCard.h"
+#include "Ui.h"
 
 class Cpu2200;
 

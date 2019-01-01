@@ -3,9 +3,9 @@
 // ----------------------------------------------------------------------------
 
 #include "Ui.h"                 // emulator interface
-#include "UiSystem.h"           // sharing info between UI_wxgui modules
-#include "UiCrtFrame.h"
 #include "UiCrtConfigDlg.h"
+#include "UiCrtFrame.h"
+#include "UiSystem.h"           // sharing info between UI_wxgui modules
 #include "host.h"               // for Config*()
 
 #include "wx/slider.h"

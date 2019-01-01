@@ -13,6 +13,8 @@
 #include "wx/dialog.h"
 #include "wx/string.h"
 
+class wxTextCtrl;
+
 // create a class for transferring data to and from the dialog
 class PrinterDialogDataTransfer
 {

@@ -10,11 +10,11 @@
 //      confirm these assumptions (eg, change the behavior and see
 //      if diags still pass).
 
-#include "Ui.h"
 #include "Cpu2200.h"
-#include "host.h"             // for dbglog
 #include "IoCardKeyboard.h"
 #include "Scheduler.h"
+#include "Ui.h"
+#include "host.h"             // for dbglog
 #include "system2200.h"
 #include "ucode_2200.h"
 

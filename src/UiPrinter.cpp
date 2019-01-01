@@ -10,9 +10,9 @@
 // ----------------------------------------------------------------------------
 
 #include "Ui.h"                 // emulator interface
-#include "UiSystem.h"           // sharing info between UI_wxgui modules
 #include "UiPrinter.h"          // this module's defines
 #include "UiPrinterFrame.h"     // parent's defines
+#include "UiSystem.h"           // sharing info between UI_wxgui modules
 #include "host.h"               // for Config* functions
 
 #include <algorithm>            // for std::max

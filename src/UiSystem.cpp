@@ -17,16 +17,16 @@ struct crt_state_t;
 // ----------------------------------------------------------------------------
 
 #include "Cpu2200.h"
-#include "host.h"
-#include "system2200.h"
 #include "Ui.h"
-#include "UiSystem.h"
-#include "UiSystemConfigDlg.h"
 #include "UiCrtFrame.h"
 #include "UiDiskCtrlCfgDlg.h"
-#include "UiTermMuxCfgDlg.h"
 #include "UiMyAboutDlg.h"
 #include "UiPrinterFrame.h"
+#include "UiSystem.h"
+#include "UiSystemConfigDlg.h"
+#include "UiTermMuxCfgDlg.h"
+#include "host.h"
+#include "system2200.h"
 
 #include "wx/cmdline.h"         // req'd by wxCmdLineParser
 #include "wx/filename.h"

@@ -106,15 +106,15 @@
 //      average sequential write time, per sector:   3.6  ms
 //      average random read/write time, per sector: 42.0  ms
 
-#include "DiskCtrlCfgState.h"
-#include "host.h"              // for dbglog()
-#include "IoCardDisk.h"
-#include "Ui.h"                // for UI_warn()
 #include "Cpu2200.h"
+#include "DiskCtrlCfgState.h"
+#include "IoCardDisk.h"
 #include "Scheduler.h"
-#include "system2200.h"
 #include "SysCfgState.h"
+#include "Ui.h"                // for UI_warn()
 #include "Wvd.h"
+#include "host.h"              // for dbglog()
+#include "system2200.h"
 
 
 #ifdef _DEBUG

@@ -2,12 +2,12 @@
 // Logically, it implements the character generator and CRT tube.
 // It is used by the CrtFrame class.
 
+#include "TerminalState.h"      // state needed to create crt image
 #include "Ui.h"                 // emulator interface
-#include "UiSystem.h"           // sharing info between Ui* wxgui modules
 #include "UiCrt.h"              // this module's defines
 #include "UiCrtErrorDlg.h"      // error code decoder
 #include "UiCrtFrame.h"         // this module's owner
-#include "TerminalState.h"      // state needed to create crt image
+#include "UiSystem.h"           // sharing info between Ui* wxgui modules
 
 #include <wx/sound.h>           // "beep!"
 

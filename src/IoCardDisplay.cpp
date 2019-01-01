@@ -49,13 +49,13 @@
             - 1 blank row
 */
 
-#include "Ui.h"
-#include "host.h"             // for dbglog
+#include "Cpu2200.h"
 #include "IoCardDisplay.h"
 #include "Scheduler.h"        // for Timer...() functions
-#include "system2200.h"
 #include "Terminal.h"
-#include "Cpu2200.h"
+#include "Ui.h"
+#include "host.h"             // for dbglog
+#include "system2200.h"
 
 #ifdef _MSC_VER
     #pragma warning( disable: 4127 )  // conditional expression is constant

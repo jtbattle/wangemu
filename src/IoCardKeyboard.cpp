@@ -1,9 +1,9 @@
 // This code emulates the keyboard controller.
 
-#include "Ui.h"
-#include "IoCardKeyboard.h"
 #include "Cpu2200.h"
+#include "IoCardKeyboard.h"
 #include "Scheduler.h"
+#include "Ui.h"
 #include "system2200.h"
 
 #define NOISY  0        // turn on some debugging messages

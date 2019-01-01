@@ -42,13 +42,13 @@
 // headers
 // ----------------------------------------------------------------------------
 
+#include "TerminalState.h"      // characater attribute names
 #include "Ui.h"                 // emulator interface
-#include "UiSystem.h"           // sharing info between Ui* wxgui modules
 #include "UiCrt.h"              // this module's defines
-#include "UiCrt_Charset.h"      // wang character generator bitmaps
 #include "UiCrtErrorDlg.h"      // error code decoder
 #include "UiCrtFrame.h"         // this module's owner
-#include "TerminalState.h"      // characater attribute names
+#include "UiCrt_Charset.h"      // wang character generator bitmaps
+#include "UiSystem.h"           // sharing info between Ui* wxgui modules
 
 #include <wx/image.h>           // required only for blur hack
 #include <wx/rawbmp.h>          // for direct bitmap manipulation

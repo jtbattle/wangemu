@@ -2,14 +2,14 @@
 
 #include "CardInfo.h"
 #include "Cpu2200.h"
-#include "host.h"
 #include "IoCardDisk.h"
 #include "IoCardKeyboard.h"  // for KEYCODE_HALT
 #include "Scheduler.h"
 #include "ScriptFile.h"
-#include "system2200.h"
 #include "SysCfgState.h"
 #include "Ui.h"
+#include "host.h"
+#include "system2200.h"
 
 #include <algorithm>
 #include <sstream>

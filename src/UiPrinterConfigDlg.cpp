@@ -3,8 +3,8 @@
 // ----------------------------------------------------------------------------
 
 #include "Ui.h"
-#include "UiSystem.h"
 #include "UiPrinterConfigDlg.h"
+#include "UiSystem.h"
 
 #include "wx/valgen.h"
 #include "wx/valtext.h"

@@ -28,14 +28,14 @@
 // controller claim to be smart or dumb?) but it saves some configuration
 // difficulties for the user.
 
-#include "DiskCtrlCfgState.h"
-#include "host.h"         // for dbglog()
-#include "IoCardDisk.h"
-#include "Ui.h"           // for UI_Alert()
 #include "Cpu2200.h"
+#include "DiskCtrlCfgState.h"
+#include "IoCardDisk.h"
 #include "Scheduler.h"
 #include "SysCfgState.h"
+#include "Ui.h"           // for UI_Alert()
 #include "Wvd.h"
+#include "host.h"         // for dbglog()
 
 #include <algorithm>      // for std::min, std::max
 

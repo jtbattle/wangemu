@@ -2,12 +2,12 @@
 // headers
 // ----------------------------------------------------------------------------
 
-#include "host.h"
+#include "DiskCtrlCfgState.h"
 #include "IoCard.h"
 #include "Ui.h"                 // emulator interface
-#include "UiSystem.h"           // sharing info between UI_wxgui modules
-#include "DiskCtrlCfgState.h"
 #include "UiDiskCtrlCfgDlg.h"
+#include "UiSystem.h"           // sharing info between UI_wxgui modules
+#include "host.h"
 #include "system2200.h"
 
 // ----------------------------------------------------------------------------

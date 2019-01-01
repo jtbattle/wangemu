@@ -7,12 +7,12 @@
 
 #include "compile_options.h"    // compile-time flags
 
+#include <array>
 #include <cassert>
+#include <functional>
+#include <memory>
 #include <string>
 #include <vector>
-#include <array>
-#include <memory>
-#include <functional>
 
 // types used globally in the wang emulator
 

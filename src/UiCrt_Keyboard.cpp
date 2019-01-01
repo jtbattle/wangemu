@@ -6,13 +6,13 @@
 // headers
 // ----------------------------------------------------------------------------
 
-#include "Ui.h"                 // emulator interface
 #include "IoCardKeyboard.h"     // to pick up core_* keyboard functions
-#include "system2200.h"
-#include "UiSystem.h"           // sharing info between UI_wxgui modules
-#include "UiCrtFrame.h"         // emulated terminal
-#include "UiCrt.h"              // just the display part
 #include "TerminalState.h"      // m_crt_state definition
+#include "Ui.h"                 // emulator interface
+#include "UiCrt.h"              // just the display part
+#include "UiCrtFrame.h"         // emulated terminal
+#include "UiSystem.h"           // sharing info between UI_wxgui modules
+#include "system2200.h"
 #include "tokens.h"             // keymap tokens
 
 // ----------------------------------------------------------------------------

@@ -49,19 +49,20 @@
 // headers
 // ----------------------------------------------------------------------------
 
+#include "Ui.h"                 // emulator interface
+#include "UiPrinter.h"
+#include "UiPrinterConfigDlg.h"
+#include "UiPrinterFrame.h"
+#include "UiSystem.h"           // sharing info between UI_wxgui modules
 #include "host.h"
 #include "system2200.h"
-#include "Ui.h"                 // emulator interface
-#include "UiSystem.h"           // sharing info between UI_wxgui modules
-#include "UiPrinter.h"
-#include "UiPrinterFrame.h"
-#include "UiPrinterConfigDlg.h"
 
-#include "wx/printdlg.h"        // print preview interfaces
 #include "wx/paper.h"           // pick up paper database
                                 // (for translation of enums - see paperSize)
-#include <sstream>
+#include "wx/printdlg.h"        // print preview interfaces
+
 #include <iomanip>
+#include <sstream>
 
 // ----------------------------------------------------------------------------
 // constants

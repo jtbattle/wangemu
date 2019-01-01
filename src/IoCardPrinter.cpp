@@ -1,9 +1,9 @@
 // Emulate a printer device.  Most of the work is done in the GUI side.
 
-#include "Ui.h"
-#include "IoCardPrinter.h"
-#include "system2200.h"
 #include "Cpu2200.h"
+#include "IoCardPrinter.h"
+#include "Ui.h"
+#include "system2200.h"
 
 #define NOISY  0        // turn on some debugging messages
 

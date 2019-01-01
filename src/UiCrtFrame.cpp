@@ -2,24 +2,24 @@
 // headers
 // ----------------------------------------------------------------------------
 
-#include "host.h"
 #include "IoCardDisk.h"
 #include "IoCardKeyboard.h"     // to pick up core_* keyboard interface
 #include "IoCardPrinter.h"
-#include "system2200.h"
 #include "TerminalState.h"
 #include "Ui.h"                 // emulator interface
-#include "UiSystem.h"
-#include "UiCrtFrame.h"
 #include "UiCrt.h"
 #include "UiCrtConfigDlg.h"
+#include "UiCrtFrame.h"
 #include "UiCrtStatusBar.h"
 #include "UiDiskFactory.h"
 #include "UiPrinterFrame.h"
+#include "UiSystem.h"
+#include "host.h"
+#include "system2200.h"
 
 #include <algorithm>
-#include <sstream>
 #include <iomanip>
+#include <sstream>
 
 // ----------------------------------------------------------------------------
 // resources

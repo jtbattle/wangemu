@@ -1,14 +1,10 @@
-// ----------------------------------------------------------------------------
-// headers
-// ----------------------------------------------------------------------------
-
 #include "CardInfo.h"
 #include "Cpu2200.h"
-#include "host.h"
 #include "IoCard.h"
 #include "Ui.h"                 // emulator interface
 #include "UiSystem.h"           // sharing info between UI_wxgui modules
 #include "UiSystemConfigDlg.h"
+#include "host.h"
 #include "system2200.h"
 
 enum

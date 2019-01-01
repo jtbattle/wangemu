@@ -1,10 +1,10 @@
 // emulate the Wang 2200T micromachine
 
-#include "Ui.h"
 #include "Cpu2200.h"
-#include "host.h"             // for dbglog
 #include "IoCardKeyboard.h"
 #include "Scheduler.h"
+#include "Ui.h"
+#include "host.h"             // for dbglog
 #include "system2200.h"
 #include "ucode_2200.h"
 

@@ -2,14 +2,14 @@
 // headers
 // ----------------------------------------------------------------------------
 
-#include "host.h"
 #include "IoCardDisk.h"
-#include "system2200.h"
 #include "Ui.h"                 // emulator interface
-#include "UiSystem.h"
 #include "UiCrtFrame.h"
 #include "UiCrtStatusBar.h"
+#include "UiSystem.h"
 #include "Wvd.h"                // used only for DISKTYPE_ definition
+#include "host.h"
+#include "system2200.h"
 
 // ----------------------------------------------------------------------------
 // constants

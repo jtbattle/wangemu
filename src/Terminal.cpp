@@ -20,13 +20,13 @@
 //     gets dropped a later one will get things going again.  that is less
 //     important in the emulator where line loss is not a possibility.
 
-#include "Ui.h"
-#include "host.h"              // for dbglog()
 #include "IoCardKeyboard.h"
 #include "IoCardTermMux.h"
 #include "Scheduler.h"
-#include "system2200.h"
 #include "Terminal.h"
+#include "Ui.h"
+#include "host.h"              // for dbglog()
+#include "system2200.h"
 
 bool do_debug = false;
 

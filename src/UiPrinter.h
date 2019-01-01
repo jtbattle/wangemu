@@ -5,8 +5,8 @@
 #define _INCLUDE_UI_PRINTER_H_
 
 #include "w2200.h"
-#include "wx/wx.h"
 #include "wx/print.h"   // printing support
+#include "wx/wx.h"
 
 class PrinterFrame;
 

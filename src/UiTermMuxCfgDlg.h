@@ -7,8 +7,8 @@
 #ifndef _INCLUDE_UI_TERMINAL_MUX_CFG_DLG_H_
 #define _INCLUDE_UI_TERMINAL_MUX_CFG_DLG_H_
 
-#include "wx/wx.h"
 #include "TermMuxCfgState.h"
+#include "wx/wx.h"
 
 class TermMuxCfgDlg : public wxDialog
 {
