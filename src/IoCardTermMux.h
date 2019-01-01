@@ -28,7 +28,7 @@ public:
 
     void  setConfiguration(const CardCfgState &cfg) noexcept override;
 
-    void  reset(bool hard_reset=true) noexcept override;
+    void  reset(bool hard_reset) noexcept override;
     void  select() override;
     void  deselect() override;
     void  strobeOBS(int val) override;

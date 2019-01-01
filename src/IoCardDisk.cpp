@@ -172,7 +172,7 @@ IoCardDisk::~IoCardDisk()
 {
     // "temp" cards aren't fully initialized
     if (m_slot >= 0) {
-        reset();
+        reset(true);
         for (int drive=0; drive<numDrives(); drive++) {
             m_d[drive].wvd = nullptr;
         }
@@ -417,7 +417,7 @@ IoCardDisk::createDiskController()
         m_d[drive].tmr_sector = nullptr;
     }
 
-    reset();
+    reset(true);
 }
 
 

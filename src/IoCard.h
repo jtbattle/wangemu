@@ -47,7 +47,7 @@ public:
 
     // this is called when the machine is reset.
     // hard_reset is true on cold boot, and false on warm reset.
-    virtual void reset(bool hard_reset=true) = 0;
+    virtual void reset(bool hard_reset) = 0;
 
     // this is called when a card is addressed via an -ABS strobe.
     virtual void select() = 0;

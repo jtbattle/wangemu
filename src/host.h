@@ -123,7 +123,7 @@ namespace host
 
     // for a given category (FILEREQ_*), ask to select a file from
     // the default directory for that category.
-    int fileReq(int requestor, std::string title,
+    int fileReq(int requestor, const std::string &title,
                 bool readonly, std::string *fullpath);
 
 };  // namespace host

@@ -296,7 +296,7 @@ system2200::terminate() noexcept
 
 // unregister a callback function which advances with the clock
 void
-system2200::registerClockedDevice(clkCallback cb)
+system2200::registerClockedDevice(const clkCallback &cb)
 {
     clocked_device_t cd = { cb, 0 };
     m_clocked_devices.push_back(cd);
@@ -305,7 +305,7 @@ system2200::registerClockedDevice(clkCallback cb)
 
 // unregister a callback function which advances with the clock
 void
-system2200::unregisterClockedDevice(clkCallback cb) noexcept
+system2200::unregisterClockedDevice(const clkCallback &/*cb*/) noexcept
 {
 #if 0
 // FIXME: it is not possible to compare bound functions, so a different
@@ -908,10 +908,8 @@ system2200::cpuPollIB()
 
 // register a handler for a key event to a given keyboard terminal
 void
-system2200::registerKb(int io_addr, int term_num, kbCallback cb)
+system2200::registerKb(int io_addr, int term_num, const kbCallback &cb)
 {
-    assert(cb);
-
     // check that it isn't already registered
     for (auto &kb : keyboard_routes) {
         if (io_addr == kb.io_addr && term_num == kb.term_num) {

@@ -89,8 +89,8 @@ typedef struct {
 
 #define RD_WORD(addr) ((RD_BYTE((addr)+1) << 8) | RD_BYTE(addr))
 
-#define WR_WORD(addr, value) { WR_BYTE(addr,    ((value)       & 0xff)); \
-                               WR_BYTE(addr+1, (((value) >> 8) & 0xff)); }
+#define WR_WORD(addr, value) { WR_BYTE((addr),    ((value)       & 0xff)); \
+                               WR_BYTE((addr)+1, (((value) >> 8) & 0xff)); }
 
 #define FLAGS           cpu->f
 #define AF              cpu->af.w

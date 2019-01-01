@@ -666,11 +666,11 @@ decimalSub(int a_op, int b_op, int ci) noexcept
     do {                                                  \
         int la = (addr);                                  \
         if (la < 8192 && !m_cpu.bsr_mode) {               \
-            la ^= write2;                                 \
+            la ^= (write2);                               \
             m_ram[la] = static_cast<uint8>(wr_value);     \
         } else if (la + m_cpu.bank_offset < m_mem_size) { \
             la += m_cpu.bank_offset;                      \
-            la ^= write2;                                 \
+            la ^= (write2);                               \
             m_ram[la] = static_cast<uint8>(wr_value);     \
         }                                                 \
     } while (false)

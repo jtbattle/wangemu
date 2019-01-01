@@ -26,7 +26,7 @@ IoCardPrinter::IoCardPrinter(std::shared_ptr<Cpu2200> cpu,
         const bool ok = system2200::getSlotInfo(card_slot, nullptr, &io_addr);
         assert(ok);
         m_wndhnd = UI_printerInit(io_addr);
-        reset();
+        reset(true);
     }
 }
 
@@ -35,7 +35,7 @@ IoCardPrinter::IoCardPrinter(std::shared_ptr<Cpu2200> cpu,
 IoCardPrinter::~IoCardPrinter()
 {
     if (m_slot >= 0) {
-        reset();        // turns off handshakes in progress
+        reset(true);  // turns off handshakes in progress
         UI_printerDestroy(getGuiPtr());
     }
 }

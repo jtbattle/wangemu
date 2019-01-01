@@ -168,7 +168,7 @@
 
 #define ANA(val) \
 {                                               \
-    H_FLAG = ((A | val) & 0x08) != 0;           \
+    H_FLAG = ((A | (val)) & 0x08) != 0;         \
     A &= (val);                                 \
     S_FLAG = ((A & 0x80) != 0);                 \
     Z_FLAG = (A == 0);                          \

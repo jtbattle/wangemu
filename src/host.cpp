@@ -267,7 +267,7 @@ host::terminate()
 // ask user to provide a file location
 
 int
-host::fileReq(int requestor, std::string title, bool readonly, std::string *fullpath)
+host::fileReq(int requestor, const std::string &title, bool readonly, std::string *fullpath)
 {
     assert(fullpath != nullptr);
     assert(requestor >= 0 && requestor < FILEREQ_NUM);

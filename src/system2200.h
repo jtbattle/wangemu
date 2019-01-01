@@ -37,8 +37,8 @@ namespace system2200
     void terminate() noexcept;
 
     // (un)register a callback function which advances with the clock
-    void registerClockedDevice(clkCallback cb);
-    void unregisterClockedDevice(clkCallback cb) noexcept;
+    void registerClockedDevice(const clkCallback &cb);
+    void unregisterClockedDevice(const clkCallback &cb) noexcept;
 
     // set current system configuration -- may cause reset
     void setConfig(const SysCfgState &new_cfg);
@@ -77,7 +77,7 @@ namespace system2200
     // ---- keyboard input routing ----
 
     // register a handler for a key event to a given keyboard terminal
-    void registerKb(int io_addr, int term_num, kbCallback cb);
+    void registerKb(int io_addr, int term_num, const kbCallback &cb);
     void unregisterKb(int io_addr, int term_num);
 
     // send a key event to the specified keyboard/terminal

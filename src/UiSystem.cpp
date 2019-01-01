@@ -249,7 +249,7 @@ TheApp::makeHelpMenu(wxWindow *win)
 
 // shared code
 static bool
-UI_AlertMsg(long style, std::string title, const char *fmt, va_list &args)
+UI_AlertMsg(long style, const std::string &title, const char *fmt, va_list &args)
 {
     char buff[1000];
     vsnprintf(&buff[0], sizeof(buff), fmt, args);
