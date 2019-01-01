@@ -586,7 +586,7 @@ uint4
 Cpu2200t::readSt3() const
 {
     const int k = system2200::cpuPollIB();
-    const int ib5 = (k >> 5) & 1;  // isolate bit 5
+    const int ib5 = (k >> 4) & 1;  // isolate bit 5
 
     return static_cast<uint4>(
                      (m_cpu.st3 & 0x8)  // 1=horizontal RAM addressing
