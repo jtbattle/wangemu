@@ -58,7 +58,10 @@ class Wvd
 {
 public:
     CANT_ASSIGN_OR_COPY_CLASS(Wvd);
-     Wvd();  // default constructor must be followed by either open() or create()
+
+    // making a valid Wvd is a two step process.  create a container with the
+    // default constructor, then call either open() or create() to fill it.
+     Wvd() = default;  // must be followed by either open() or create()
     ~Wvd();
 
     // new blank disk with default values
@@ -122,11 +125,8 @@ public:
     bool format(const int platter);
 
 private:
-    // initialize all members to virgin state
-    void initMembers();
-
     // make sure metadata is up to date
-    void refreshMetadata() { if (m_metadata_stale && !!m_file) reopen(); }
+    void refreshMetadata() { if (m_metadata_stale && !!m_file) { reopen(); } }
     void reopen();
 
     // write 256 bytes to an absolute sector address
@@ -150,15 +150,15 @@ private:
 
     // ----- data members -----
     std::unique_ptr<std::fstream> m_file;   // file handle
-    bool          m_metadata_stale;      // is the metadata possibly out of date?
-    bool          m_metadata_modified;   // metadata has been modified
-    bool          m_has_path;            // is m_path valid?
-    std::string   m_path;                // path to virtual disk
-    std::string   m_label;               // disk label
-    disktype_t    m_disk_type;           // disk type encoding
-    int           m_num_platters;        // platters in the virtual disk image
-    int           m_num_platter_sectors; // sectors per platter
-    bool          m_write_protect;       // true=don't write
+    bool          m_metadata_stale      = true;    // is the metadata possibly out of date?
+    bool          m_metadata_modified   = false;   // metadata has been modified
+    bool          m_has_path            = false;   // is m_path valid?
+    std::string   m_path;                          // path to virtual disk
+    std::string   m_label;                         // disk label
+    disktype_t    m_disk_type           = DISKTYPE_ILLEGAL;  // disk type encoding
+    int           m_num_platters        = 0;       // platters in the virtual disk image
+    int           m_num_platter_sectors = 0;       // sectors per platter
+    bool          m_write_protect       = false;   // true=don't write
 };
 
 #endif // _INCLUDE_WVD_H_

@@ -77,22 +77,22 @@ static     int64 perf_real_ms[100];     // realtime at start of each slice
 // each device has a ns resolution counter, but we keep rebasing
 // the count so the counter doesn't overflow.  all we care is the
 // difference between the devices' sense of time.
-typedef struct {
+struct clocked_device_t {
     clkCallback callback_fn;
     uint32      ns;          // nanoseconds
-} clocked_device_t;
+};
 static std::vector<clocked_device_t> m_clocked_devices;
 
 // ----------------------- keyboard input routing table -----------------------
 
-typedef struct {
+struct kb_route_t {
     int         io_addr;
     int         term_num;       // 0..3 for smart terms; 0 for display controllers
     kbCallback  callback_fn;
     // can't use unique_ptr because it doesn't allow copy assignment
     // (only move) and std::vector requires copy assignment.
     std::shared_ptr<ScriptFile> script_handle;
-} kb_route_t;
+};
 
 static std::vector<kb_route_t> keyboard_routes;
 
@@ -101,11 +101,12 @@ static std::vector<kb_route_t> keyboard_routes;
 // ----------------------------------------------------------------------------
 
 // help ensure an orderly shutdown
-typedef enum { RUNNING,
-               TERMINATING,
-               TERMINATED
-             } term_state_t;
-static term_state_t m_termination_state  = RUNNING;
+enum term_state_t {
+    RUNNING,
+    TERMINATING,
+    TERMINATED
+};
+static term_state_t m_termination_state = RUNNING;
 
 static bool m_freeze_emu  = false;  // toggle to prevent time advancing
 static bool m_do_reconfig = false;  // deferred request to reconfigure
@@ -141,7 +142,7 @@ isDiskController(int slot) noexcept
 
 // for all disk drives, save what is mounted in them (or not)
 static void
-saveDiskMounts(void)
+saveDiskMounts()
 {
     for (int slot=0; slot<NUM_IOSLOTS; slot++) {
         if (isDiskController(slot)) {
@@ -154,10 +155,10 @@ saveDiskMounts(void)
             for (int drive=0; drive<num_drives; drive++) {
                 std::ostringstream item;
                 item << "filename-" << drive;
-                std::string filename("");
+                std::string filename;
                 if (isDiskController(slot)) {
                     const int stat = IoCardDisk::wvdDriveStatus(slot, drive);
-                    if (stat & IoCardDisk::WVD_STAT_DRIVE_OCCUPIED) {
+                    if ((stat & IoCardDisk::WVD_STAT_DRIVE_OCCUPIED) != 0) {
                         const bool ok = IoCardDisk::wvdGetFilename(slot, drive, &filename);
                         assert(ok);
                     }
@@ -171,7 +172,7 @@ saveDiskMounts(void)
 
 // remount all disks
 static void
-restoreDiskMounts(void)
+restoreDiskMounts()
 {
     // look for disk controllers and populate drives
     for (int slot=0; slot<NUM_IOSLOTS; slot++) {
@@ -188,7 +189,7 @@ restoreDiskMounts(void)
                 std::string filename;
                 bool b = host::configReadStr(subgroup.str(), item.str(), &filename);
                 if (b && !filename.empty()) {
-                    IoCardDisk::wvdInsertDisk(slot, drive, filename.c_str());
+                    IoCardDisk::wvdInsertDisk(slot, drive, filename);
                 }
             } // for (drive)
         } // if (isDiskController)
@@ -198,7 +199,7 @@ restoreDiskMounts(void)
 
 // break down any resources currently committed
 static void
-breakDownCards(void) noexcept
+breakDownCards() noexcept
 {
     // destroy card instances
     for (auto &card : card_in_slot) {
@@ -415,8 +416,8 @@ system2200::setConfig(const SysCfgState &new_cfg)
             UI_warn("Configuration problem: failure to create slot %d card instance", slot);
         } else {
             std::vector<int> addresses = inst->getAddresses();
-            for (unsigned int n=0; n<addresses.size(); n++) {
-                ioMap[addresses[n]].slot = slot;
+            for (auto &addr : addresses) {
+                ioMap[addr].slot = slot;
             }
             card_in_slot[slot] = std::move(inst);
         }
@@ -965,7 +966,7 @@ system2200::dispatchKeystroke(int io_addr, int term_num, int keyvalue)
 // request the contents of a file to be fed in as a keyboard stream
 void
 system2200::invokeKbScript(int io_addr, int term_num,
-                     const std::string &filename)
+                           const std::string &filename)
 {
     if (isScriptModeActive(io_addr, term_num)) {
         UI_warn("Attempt to invoke a script while one already active, io_addr=0x%02x, term_num=%d",
@@ -1041,11 +1042,10 @@ system2200::pollScriptInput(int io_addr, int term_num)
                 auto cb = kb.callback_fn;
                 cb(ch);
                 return true;
-            } else {
-                // EOF
-                kb.script_handle = nullptr;
-                return false;
             }
+            // EOF
+            kb.script_handle = nullptr;
+            return false;
         }
     }
     return false;
@@ -1181,18 +1181,18 @@ system2200::findDisk(const std::string &filename,
         const int num_drives = dcfg->getNumDrives();
         for (int d=0; d<num_drives; d++) {
             const int stat = IoCardDisk::wvdDriveStatus(slt, d);
-            if (stat & IoCardDisk::WVD_STAT_DRIVE_OCCUPIED) {
+            if ((stat & IoCardDisk::WVD_STAT_DRIVE_OCCUPIED) != 0) {
                 std::string fname;
                 bool ok = IoCardDisk::wvdGetFilename(slt, d, &fname);
                 assert(ok);
                 if (filename == fname) {
-                    if (slot) {
+                    if (slot != nullptr) {
                         *slot = slt;
                     }
-                    if (drive) {
+                    if (drive != nullptr) {
                         *drive = d;
                     }
-                    if (io_addr) {
+                    if (io_addr != nullptr) {
                         ok = getSlotInfo(slt, nullptr, io_addr);
                         assert(ok);
                     }

@@ -50,18 +50,17 @@ getConfigFileLocations()
                  "Attempting to read the config file anyway.\n", foo.c_str());
     }
 
-    for (int i=0; i<host::FILEREQ_NUM; i++) {
-
-        subgroup = file_group[i].ini_group;
+    for (auto &group : file_group) {
+        subgroup = group.ini_group;
         long v = 0;
 
         b = host::configReadStr(subgroup, "directory", &foo);
-        file_group[i].dir = (b) ? foo : ".";
+        group.dir = (b) ? foo : ".";
 
         b = host::configReadStr(subgroup, "filterindex", &foo);
-        file_group[i].filter_idx = (b && wxString(foo).ToLong(&v)) ? v : 0;
+        group.filter_idx = (b && wxString(foo).ToLong(&v)) ? v : 0;
 
-        file_group[i].name = "";     // intentionally don't save this
+        group.name = "";     // intentionally don't save this
     }
 }
 
@@ -75,10 +74,10 @@ saveConfigFileLocations()
 
     host::configWriteStr(subgroup, "configversion", version);
 
-    for (int i=0; i<host::FILEREQ_NUM; i++) {
-        subgroup = file_group[i].ini_group;
-        host::configWriteStr(subgroup, "directory",   file_group[i].dir);
-        host::configWriteInt(subgroup, "filterindex", file_group[i].filter_idx);
+    for (auto const &group : file_group) {
+        subgroup = group.ini_group;
+        host::configWriteStr(subgroup, "directory",   group.dir);
+        host::configWriteInt(subgroup, "filterindex", group.filter_idx);
     }
 }
 
@@ -268,7 +267,7 @@ host::terminate()
 // ask user to provide a file location
 
 int
-host::fileReq(int requestor, std::string title, int readonly, std::string *fullpath)
+host::fileReq(int requestor, std::string title, bool readonly, std::string *fullpath)
 {
     assert(fullpath != nullptr);
     assert(requestor >= 0 && requestor < FILEREQ_NUM);
@@ -425,7 +424,7 @@ host::configReadWinGeom(wxWindow *wxwin,
 
     if (!b) {
         // the specified geometry was bad; use the supplied default
-        if (!default_geom) {
+        if (default_geom == nullptr) {
             return;     // nothing we can do
         }
         x = default_geom->GetX();

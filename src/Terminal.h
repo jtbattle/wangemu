@@ -21,7 +21,8 @@ public:
 
     Terminal(std::shared_ptr<Scheduler> scheduler,
              IoCardTermMux *muxd,
-             int io_addr, int term_num, ui_screen_t screen_type);
+             int io_addr, int term_num, ui_screen_t screen_type,
+             bool vp_cpu);
     ~Terminal();
 
     // hardware reset
@@ -116,6 +117,7 @@ private:
     // ---- state ----
     std::shared_ptr<Scheduler> m_scheduler; // shared event scheduler
     IoCardTermMux *m_muxd;          // nullptr if dumb term
+    const bool     m_vp_cpu;        // scripting throttle needs this info
 
     // display state and geometry
     CrtFrame     *m_wndhnd;         // opaque handle to UI window

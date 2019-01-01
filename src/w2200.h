@@ -17,16 +17,15 @@
 // types used globally in the wang emulator
 
 #include <cstdint>
-typedef uint64_t  uint64;
-typedef  int64_t   int64;
-typedef uint32_t  uint32;
-typedef  int32_t   int32;
-typedef uint16_t  uint16;
-typedef  int16_t   int16;
-typedef  uint8_t   uint8;
-typedef   int8_t    int8;
-typedef  uint8_t   uint4;  // for clarity; not really 4b
-
+using uint64 = uint64_t;
+using  int64 =  int64_t;
+using uint32 = uint32_t;
+using  int32 =  int32_t;
+using uint16 = uint16_t;
+using  int16 =  int16_t;
+using  uint8 =  uint8_t;
+using   int8 =   int8_t;
+using  uint4 =  uint8_t;  // for clarity; not really 4b
 
 // Put this at the end of a class declaration to make the class
 // uncopyable and unassignable

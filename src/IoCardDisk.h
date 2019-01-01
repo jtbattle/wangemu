@@ -329,7 +329,7 @@ private:
     int        m_host_type;          // 00=2200 T or PROM mode, 01=2200 VP, 02=2200 MVP
     int        m_command;            // command byte
     int        m_special_command;    // special command byte
-    int        m_primary;            // primary or secondary drive address
+    bool       m_primary;            // primary or secondary drive address
     int        m_drive;              // drive selection, extracted from command byte
     int        m_platter;            // platter address
     int        m_lastdrive;          // previously selected drive

@@ -12,11 +12,8 @@ class Timer;
 class Cpu2200
 {
 public:
-    // destructor
-    Cpu2200() : m_status(CPU_HALTED) { };
-
-    // destructor
-    virtual ~Cpu2200() { };
+    Cpu2200() = default;
+    virtual ~Cpu2200() = default;
 
     // report which type of CPU is in use
     enum { CPUTYPE_2200B, CPUTYPE_2200T,
@@ -59,7 +56,7 @@ public:
     virtual void halt() noexcept = 0;
 
 protected:
-    int m_status;  // whether the cpu is running or halted
+    int m_status = CPU_HALTED;  // whether the cpu is running or halted
 
 private:
 };
@@ -126,14 +123,14 @@ private:
     static const int ICSTACK_TOP  = (ICSTACK_SIZE-1);  // index of top of stack
     static const int ICSTACK_MASK = 0xF;
 
-    typedef struct {
+    struct ucode_t {
         uint32 ucode;       // 19:0 stores raw ucode word
                             // 24:20 stores the repacked B field specifier
                             // 31:30 stores flags about required operands
         uint8  op;          // predecode: specific instruction
         uint8  p8;          // unused
         uint16 p16;         // predecode: instruction specific
-    } ucode_t;
+    };
 
     ucode_t   m_ucode[MAX_UCODE]; // microcode store
     const int m_ucode_size;       // size of ucode store, in words

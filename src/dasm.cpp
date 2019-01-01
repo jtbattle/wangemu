@@ -141,7 +141,7 @@ static int
 dasmBField(char *buf, uint32 uop) noexcept
 {
     assert(buf != nullptr);
-    const int xbit  = ((uop >> 14) & 0x1);
+    const bool xbit = ((uop >> 14) & 0x1) != 0x0;
     const int field = ((uop >> 10) & 0xF);
 
     if (field < 8) {
@@ -186,7 +186,7 @@ static int
 dasmCField(char *buf, bool &illegal, uint32 uop) noexcept
 {
     assert(buf != nullptr);
-    const int xbit  = ((uop >> 14) & 0x1);
+    const bool xbit = ((uop >> 14) & 0x1) != 0x0;
     const int field = ((uop >>  0) & 0xF);
 
     if (field < 8) {
@@ -224,13 +224,12 @@ dasmCField(char *buf, bool &illegal, uint32 uop) noexcept
     if (str == nullptr) {
         illegal = true;
         return sprintf(buf, "???");
-    } else {
-        illegal = false;
-        if (str[0] != '\0') {
-            return sprintf(buf, "%s", str);
-        }
-        return 0; // no dest
     }
+    illegal = false;
+    if (str[0] != '\0') {
+        return sprintf(buf, "%s", str);
+    }
+    return 0; // no dest
 }
 
 
@@ -264,7 +263,7 @@ dasmSt1Bitfield(char *buf, int *len, uint4 bits) noexcept
     int p = *len;
 
     for (int i=0; i<4; i++) {
-        if (bits & (1 << i)) {
+        if ((bits & (1 << i)) != 0) {
             if (many) {
                 strcpy(&buf[p], ", ");
                 p += 2;
@@ -296,7 +295,7 @@ dasmSt3Bitfield(char *buf, int *len, uint4 bits) noexcept
     int p = *len;
 
     for (int i=0; i<4; i++) {
-        if (bits & (1 << i)) {
+        if ((bits & (1 << i)) != 0) {
             if (many) {
                 strcpy(&buf[p], ", ");
                 p += 2;
@@ -329,9 +328,9 @@ dasmType1(char *buf, const char *mnemonic, bool &illegal, uint32 uop) noexcept
     bool bad = false;
 
     const int b_field = (uop >> 10) & 0xF;
-    const int mov = DASM_PSEUDO_OPS
-                 && !strcmp(mnemonic, "OR")
-                 && (b_field == 0xF); // OR a,0,c  --> MV a,c
+    const bool mov = DASM_PSEUDO_OPS
+                  && (strcmp(mnemonic, "OR") != 0)
+                  && (b_field == 0xF); // OR a,0,c  --> MV a,c
     const char *mnem = (mov) ? "MV" : mnemonic;
 
     int len = sprintf(buf, "%s", mnem);
@@ -365,17 +364,17 @@ dasmType2(char *buf, const char *mnemonic, bool &illegal, uint32 uop) noexcept
     const int i_field = (uop >>  4) & 0xF;
     const int b_field = (uop >> 10) & 0xF;
     const int c_field = (uop >>  0) & 0xF;
-    const int x_field = (uop >> 14) & 0x1;
-    const int b_st1 = (!x_field && (b_field == 0xA)); // B is ST1
-    const int b_st3 = ( x_field && (b_field == 0x8)); // B is ST3
-    const int c_st1 = (!x_field && (c_field == 0xA)); // C is ST1
-    const int c_st3 = ( x_field && (c_field == 0x8)); // C is ST3
-    const int ori  = !strcmp(mnemonic, "ORI");
-    const int andi = !strcmp(mnemonic, "ANDI");
-    const int mvi = DASM_PSEUDO_OPS
-                 && ori && (b_field == 0xF);  // ORI imm,0,c  --> MVI imm,c
-    const int mov = DASM_PSEUDO_OPS && !mvi
-                 && ori && (i_field == 0x0);  // ORI 0,b,c    --> MV b,c
+    const bool x_field = ((uop >> 14) & 0x1) != 0x0;
+    const bool b_st1 = (!x_field && (b_field == 0xA)); // B is ST1
+    const bool b_st3 = ( x_field && (b_field == 0x8)); // B is ST3
+    const bool c_st1 = (!x_field && (c_field == 0xA)); // C is ST1
+    const bool c_st3 = ( x_field && (c_field == 0x8)); // C is ST3
+    const bool ori  = (strcmp(mnemonic, "ORI") != 0);
+    const bool andi = (strcmp(mnemonic, "ANDI") != 0);
+    const bool mvi = DASM_PSEUDO_OPS
+                  && ori && (b_field == 0xF);  // ORI imm,0,c  --> MVI imm,c
+    const bool mov = DASM_PSEUDO_OPS && !mvi
+                  && ori && (i_field == 0x0);  // ORI 0,b,c    --> MV b,c
     const char *mnem = (mvi) ? "MVI"
                      : (mov) ? "MV"
                              : mnemonic;
@@ -555,19 +554,19 @@ dasmMiniOp(char *buf, bool &illegal, uint32 uop) noexcept
                 const char *comma = "";
                 len += padSpaces(buf, len, COMMENT_COL);
                 len += sprintf(&buf[len], "; ");
-                if (uop & 0x80) {
+                if ((uop & 0x80) != 0x00) {
                     len += sprintf(&buf[len], "AB = K");
                     comma = ", ";
                 }
-                if (uop & 0x40) {
+                if ((uop & 0x40) != 0x00) {
                     len += sprintf(&buf[len], "%s-ABS", comma);
                     comma = ", ";
                 }
-                if (uop & 0x20) {
+                if ((uop & 0x20) != 0x00) {
                     len += sprintf(&buf[len], "%s-OBS", comma);
                     comma = ", ";
                 }
-                if (uop & 0x10) {
+                if ((uop & 0x10) != 0x00) {
                     len += sprintf(&buf[len], "%s-CBS", comma);
                 }
             }
@@ -655,8 +654,8 @@ dasmMiniOp(char *buf, bool &illegal, uint32 uop) noexcept
 
 
 // disassemble one microinstruction into static buffer
-// return 0 if OK, 1 if error
-static int
+// return true if error, otherwise false
+static bool
 dasmOp(char *buf, uint16 ic, uint32 uop) noexcept
 {
     assert(buf != nullptr);

@@ -45,10 +45,12 @@ Crt::Crt(CrtFrame *parent, crt_state_t *crt_state) :
     m_beep_tmr(nullptr)
 {
     createBeep();
-    if (!m_beep && false) {
+#if 0
+    if (!m_beep) {
         UI_warn("Emulator was unable to create the beep sound.\n"
                 "HEX(07) will produce the host bell sound.");
     }
+#endif
 
     m_beep_tmr = std::make_unique<wxTimer>(this, Timer_Beep);
 
@@ -219,7 +221,7 @@ Crt::OnPaint(wxPaintEvent &WXUNUSED(event))
         if (left > 0) { // left border is required
             dc.DrawRectangle(0, top, left, bottom-top);
         }
-        if (right_w) {  // right border is required
+        if (right_w > 0) {  // right border is required
             dc.DrawRectangle(right, top, right_w, bottom-top);
         }
 
@@ -315,12 +317,12 @@ Crt::OnLeftDClick(wxMouseEvent &event)
         }
 
         // make sure there is at least one digit
-        if (!isdigit(static_cast<unsigned char>(*pp))) {
+        if (isdigit(static_cast<unsigned char>(*pp)) == 0) {
             continue;
         }
 
         // grab the number
-        while ((pp < e) && isdigit(static_cast<unsigned char>(*pp))) {
+        while ((pp < e) && (isdigit(static_cast<unsigned char>(*pp)) != 0)) {
             errcode += *pp++;
         }
 
@@ -480,14 +482,14 @@ Crt::OnTimer(wxTimerEvent &event)
 
 const uint32 riffID = ('R' << 24) | ('I' << 16) | ('F' << 8) | ('F' << 0);
 const uint32 waveID = ('W' << 24) | ('A' << 16) | ('V' << 8) | ('E' << 0);
-typedef struct {
+struct RIFF_t {
     uint32      groupID;        // should be 'RIFF'
     uint32      riffBytes;      // number of bytes in file after this header
     uint32      riffType;       // should be 'WAVE'
-} RIFF_t;
+};
 
 const uint32 fmtID = ('f' << 24) | ('m' << 16) | ('t' << 8) | (' ' << 0);
-typedef struct {
+struct FormatChunk_t {
     uint32      chunkID;        // should be 'fmt '
     int32       chunkSize;      // not including first 8 bytes of header
     int16       formatTag;      // data format
@@ -496,14 +498,14 @@ typedef struct {
     uint32      bytesPerSec;    // samples/sec * #channels * bytes/sample
     uint16      blockAlign;     // # bytes per (sample*channels)
     uint16      bitsPerSample;
-} FormatChunk_t;
+};
 
 const uint32 dataID = ('d' << 24) | ('a' << 16) | ('t' << 8) | ('a' << 0);
-typedef struct {
+struct DataChunk_t {
     uint32      chunkID;        // must be 'data'
     int32       chunkSize;      // not including first 8 bytes of header
 //  unsigned char data[];       // everything that follows
-} DataChunk_t;
+};
 
 
 // most of the data fields are stored little endian, but the ID tags

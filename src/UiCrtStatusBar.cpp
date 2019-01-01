@@ -178,7 +178,7 @@ CrtStatusBar::CrtStatusBar(CrtFrame *parent,
         m_num_drives[ctrl] = 0;
         for (int d=0; d<4; d++) {
             const int stat = IoCardDisk::wvdDriveStatus(slot, d);
-            if (stat & IoCardDisk::WVD_STAT_DRIVE_EXISTENT) {
+            if ((stat & IoCardDisk::WVD_STAT_DRIVE_EXISTENT) != 0) {
                 m_num_drives[ctrl]++;
             } else {
                 break;
@@ -301,9 +301,9 @@ CrtStatusBar::SetDiskIcon(const int slot, const int drive)
 
     // figure out if disk is empty, idle, or running
     const int stat = IoCardDisk::wvdDriveStatus(slot, drive);
-    const bool empty    =  !(stat & IoCardDisk::WVD_STAT_DRIVE_OCCUPIED);  // disk is not present
-//  const bool running  = !!(stat & IoCardDisk::WVD_STAT_DRIVE_RUNNING);   // motor is active
-    const bool selected = !!(stat & IoCardDisk::WVD_STAT_DRIVE_SELECTED);  // unit is being addressed
+    const bool empty    = (stat & IoCardDisk::WVD_STAT_DRIVE_OCCUPIED) == 0;  // disk is not present
+//  const bool running  = (stat & IoCardDisk::WVD_STAT_DRIVE_RUNNING)  != 0;  // motor is active
+    const bool selected = (stat & IoCardDisk::WVD_STAT_DRIVE_SELECTED) != 0;  // unit is being addressed
 
     // figure out which disk controller this maps to
     int controller = 0;
@@ -321,6 +321,7 @@ CrtStatusBar::SetDiskIcon(const int slot, const int drive)
 
     wxString tip;
     bool hard_disk = false;  // until proven otherwise
+    const char drive_ch = (drive == 0) ? 'F' : 'R';
     if (!empty) {
         int disk_type;
         ok = IoCardDisk::wvdGetDiskType(slot, drive, &disk_type);
@@ -332,9 +333,9 @@ CrtStatusBar::SetDiskIcon(const int slot, const int drive)
         assert(ok);
         // assign a tooltip
         tip.Printf("Click to eject drive %c/%03X:\n%s",
-                    (drive & 1) ? 'R':'F', mod_addr, filename.c_str());
+                    drive_ch, mod_addr, filename.c_str());
     } else {
-        tip.Printf("Click to load drive %c /%03X", drive ? 'R':'F', mod_addr);
+        tip.Printf("Click to load drive %c /%03X", drive_ch, mod_addr);
     }
 
     m_disk_icon[idx]->SetToolTip(tip);
@@ -369,7 +370,7 @@ CrtStatusBar::~CrtStatusBar()
 void
 CrtStatusBar::OnSize(wxSizeEvent &event)
 {
-    if (!m_keyword_ctl) {
+    if (m_keyword_ctl == nullptr) {
         return;         // not initialized yet
     }
 
@@ -448,7 +449,7 @@ CrtStatusBar::OnDiskButton(wxMouseEvent &event)
     bool ok = system2200::findDiskController(controller, &slot);
     assert(ok);
     const int stat = IoCardDisk::wvdDriveStatus(slot, drive);
-    const bool drive_occupied = !!(stat & IoCardDisk::WVD_STAT_DRIVE_OCCUPIED);
+    const bool drive_occupied = (stat & IoCardDisk::WVD_STAT_DRIVE_OCCUPIED) != 0;
 
     // which behavior are we after
     m_popup_action = unknown;
@@ -478,16 +479,15 @@ CrtStatusBar::OnDiskButton(wxMouseEvent &event)
 
         case insert_disk: {
             std::string fullpath;
-            if (host::fileReq(host::FILEREQ_DISK, "Disk to load", 1, &fullpath) ==
+            if (host::fileReq(host::FILEREQ_DISK, "Disk to load", true, &fullpath) ==
                               host::FILEREQ_OK) {
                 int drive2, io_addr;
                 const bool b = system2200::findDisk(fullpath, nullptr, &drive2, &io_addr);
                 if (b) {
                     UI_warn("Disk already in drive %c /%03x", "FR"[drive2], io_addr);
                     return;
-                } else {
-                    ok = IoCardDisk::wvdInsertDisk(slot, drive, fullpath);
                 }
+                ok = IoCardDisk::wvdInsertDisk(slot, drive, fullpath);
             } }
             break;
 

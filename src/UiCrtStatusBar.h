@@ -64,7 +64,7 @@ public:
     bool getKeywordMode() const;
 
     // something changed about the indicated drive -- refresh display
-    void diskEvent(int controller, int drive);
+    void diskEvent(int slot, int drive);
 
 private:
 

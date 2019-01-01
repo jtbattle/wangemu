@@ -80,7 +80,7 @@ private:
 
     // ---- utility functions ----
 
-    wxFont pickFont(int pointsize, int bold, const std::string &facename="");
+    wxFont pickFont(int pointsize, bool bold, const std::string &facename="");
     int getFontSize() const noexcept;
 
     // rebuild m_font_map

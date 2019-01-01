@@ -449,14 +449,15 @@ CrtFrame::setMenuChecks(const wxMenu *menu)
             assert(ok);
             for (int d=0; d<2; d++) {
                 const int stat = IoCardDisk::wvdDriveStatus(slot, d);
-                if (stat & IoCardDisk::WVD_STAT_DRIVE_OCCUPIED) {
+                const char drive_ch = (d == 0) ? 'F' : 'R';
+                if ((stat & IoCardDisk::WVD_STAT_DRIVE_OCCUPIED) != 0) {
                     wxString str1, str2;
-                    str1.Printf("Drive %c/%03X: Remove", d?'R':'F', io_addr);
+                    str1.Printf("Drive %c/%03X: Remove", drive_ch, io_addr);
                     str2.Printf("Remove the disk from drive %d, unit /%03X", d, io_addr);
                     disk_menu->Append(Disk_Remove+4*slot+2*d, str1, str2, wxITEM_CHECK);
                 } else {
                     wxString str1, str2;
-                    str1.Printf("Drive %c/%03X: Insert", d?'R':'F', io_addr);
+                    str1.Printf("Drive %c/%03X: Insert", drive_ch, io_addr);
                     str2.Printf("Insert a disk into drive %d, unit /%03X", d, io_addr);
                     disk_menu->Append(Disk_Insert+4*slot+2*d, str1, str2, wxITEM_CHECK);
                 }
@@ -577,9 +578,9 @@ CrtFrame::initToolBar(wxToolBar *tb)
     }
 
     // see if any of the labels is wider than the SFxx string
-    for (int ii=0; ii<17; ii++) {
+    for (auto const &lab : sf_labels) {
         int width, height;
-        mem_dc.GetTextExtent(sf_labels[ii], &width, &height);
+        mem_dc.GetTextExtent(lab, &width, &height);
         if (width > textW) {
             textW = width;
         }
@@ -976,9 +977,9 @@ void
 CrtFrame::OnScript(wxCommandEvent& WXUNUSED(event))
 {
     std::string full_path;
-    const int r = host::fileReq(host::FILEREQ_SCRIPT, "Script to execute", 1, &full_path);
+    const int r = host::fileReq(host::FILEREQ_SCRIPT, "Script to execute", true, &full_path);
     if (r == host::FILEREQ_OK) {
-        // tell the core emulator to redirect input for a while
+        // tell the core emulator to redirect keyboard input from a file
         system2200::invokeKbScript(m_assoc_kb_addr, m_term_num, full_path);
     }
 }
@@ -991,7 +992,7 @@ CrtFrame::OnSnapshot(wxCommandEvent& WXUNUSED(event))
     // get the name of a file to execute
     std::string full_path;
 
-    const int r = host::fileReq(host::FILEREQ_GRAB, "Filename of image", 0, &full_path);
+    const int r = host::fileReq(host::FILEREQ_GRAB, "Filename of image", false, &full_path);
     if (r == host::FILEREQ_OK) {
         const wxBitmap* bitmap = m_crt->grabScreen();
         assert(bitmap != nullptr);
@@ -1007,7 +1008,7 @@ CrtFrame::OnDump(wxCommandEvent& WXUNUSED(event))
 {
     // get the name of a file to execute
     std::string full_path;
-    int r = host::fileReq(host::FILEREQ_GRAB, "Name of file to save to", 0, &full_path);
+    int r = host::fileReq(host::FILEREQ_GRAB, "Name of file to save to", false, &full_path);
 
     if (r == host::FILEREQ_OK) {
         dumpRam(full_path);
@@ -1053,9 +1054,9 @@ CrtFrame::OnCpuSpeed(wxCommandEvent &event)
 void
 CrtFrame::OnDiskFactory(wxCommandEvent &event)
 {
-    std::string filename("");
+    std::string filename;
     if (event.GetId() == Disk_Inspect) {
-        if (host::fileReq(host::FILEREQ_DISK, "Virtual Disk Name", 1, &filename) !=
+        if (host::fileReq(host::FILEREQ_DISK, "Virtual Disk Name", true, &filename) !=
                           host::FILEREQ_OK) {
             return;     // canceled
         }
@@ -1092,7 +1093,7 @@ void
 CrtFrame::OnDiskFormat(wxCommandEvent& WXUNUSED(event))
 {
     std::string filename;
-    if (host::fileReq(host::FILEREQ_DISK, "Virtual Disk Name", 1, &filename) !=
+    if (host::fileReq(host::FILEREQ_DISK, "Virtual Disk Name", true, &filename) !=
                       host::FILEREQ_OK) {
         return; // cancelled
     }
@@ -1151,21 +1152,20 @@ CrtFrame::OnDisk(wxCommandEvent &event)
     const int type  =  (menu_id - Disk_Insert) % 2;
     // UI_info("Got disk menu: slot=%d, drive=%d, action=%d", slot, drive, type);
 
-    int ok = true;
+    bool ok = true;
     switch (type) {
 
         case 0: // insert disk
         {   std::string full_path;
-            if (host::fileReq(host::FILEREQ_DISK, "Disk to load", 1, &full_path) ==
+            if (host::fileReq(host::FILEREQ_DISK, "Disk to load", true, &full_path) ==
                               host::FILEREQ_OK) {
                 int drive2, io_addr2;
                 const bool b = system2200::findDisk(full_path, nullptr, &drive2, &io_addr2);
                 if (b) {
                     UI_warn("Disk already in drive %c /%03x", "FC"[drive2], io_addr2);
                     return;
-                } else {
-                    ok = IoCardDisk::wvdInsertDisk(slot, drive, full_path);
                 }
+                ok = IoCardDisk::wvdInsertDisk(slot, drive, full_path);
             }
         }   break;
 
@@ -1585,11 +1585,11 @@ CrtFrame::refreshWindow()
 
 // called when something changes about the specified disk
 void
-CrtFrame::diskEvent(int controller, int drive)
+CrtFrame::diskEvent(int slot, int drive)
 {
     CrtFrame *pf = getPrimaryFrame();
     if (pf != nullptr) {
-        pf->m_statusbar->diskEvent(controller, drive);
+        pf->m_statusbar->diskEvent(slot, drive);
     }
 }
 

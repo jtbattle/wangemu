@@ -38,9 +38,11 @@ static char id_string[] = "*2236DE R2016 19200BPS 8+O (USA)";
 
 Terminal::Terminal(std::shared_ptr<Scheduler> scheduler,
                    IoCardTermMux *muxd,
-                   int io_addr, int term_num, ui_screen_t screen_type) :
+                   int io_addr, int term_num, ui_screen_t screen_type,
+                   bool vp_cpu) :
     m_scheduler(scheduler),
     m_muxd(muxd),
+    m_vp_cpu(vp_cpu),
     m_io_addr(io_addr),
     m_term_num(term_num),
     m_init_tmr(nullptr),
@@ -129,7 +131,7 @@ Terminal::reset(bool hard_reset)
     // smart terminals echo the ID string to the CRT at power on
     if (smart_term && hard_reset) {
         char *idptr = &id_string[1];  // skip the leading asterisk
-        while (*idptr) {
+        while (*idptr != '\0') {
             processCrtChar3(*idptr);
             idptr++;
         }
@@ -235,7 +237,7 @@ Terminal::receiveKeystroke(int keycode)
     } else if (keycode == (IoCardKeyboard::KEYCODE_SF | IoCardKeyboard::KEYCODE_EDIT)) {
         // edit
         m_kb_buff.push(static_cast<uint8>(0xBD));
-    } else if (keycode & IoCardKeyboard::KEYCODE_SF) {
+    } else if ((keycode & IoCardKeyboard::KEYCODE_SF) != 0) {
         // special function
         m_kb_buff.push(static_cast<uint8>(0xFD));
         m_kb_buff.push(static_cast<uint8>(keycode & 0xff));
@@ -302,7 +304,18 @@ Terminal::checkKbBuffer()
     // chars, and 1/100 rate for <CR> and hope that is enough.
     int64 delay = serial_char_delay;
     if (m_script_active) {
-        delay *= ((byte == 0x0D) ? 100 : 4);
+        if (m_vp_cpu) {
+            delay *= ((byte == 0x0D) ? 100 : 4);
+        } else {
+            // this is good enough for entering programs into empty memory,
+            // but if the input is merging with an existing program, causing
+            // a lot of end-of-line processing, things break down.  maybe a
+            // better fix is to not invoke the script polling here but instead
+            // from inside the IoCardTermMux code -- it knows when the CPU
+            // is waiting for a byte.  Here we could make the serial port
+            // delay tiny and just feed the bytes on demand.  TODO: think
+            delay *= ((byte == 0x0D) ? 150 : 7);
+        }
     }
     // another complication: if two terminals are doing script processing
     // at the same time, it slows down the MXD response time, and we again
@@ -833,7 +846,7 @@ Terminal::processCrtChar2(uint8 byte)
                          && m_input_buf[3] == 0x0F) {
         m_input_cnt = 0;
         char *idptr = &id_string[1];  // skip the leading asterisk
-        while (*idptr) {
+        while (*idptr != '\0') {
             system2200::dispatchKeystroke(m_io_addr+0x01, m_term_num, *idptr);
             idptr++;
         }
@@ -1004,7 +1017,7 @@ Terminal::processCrtChar3(uint8 byte)
             }
 #endif
             const bool use_alt_char = (byte >= 0x80)
-                                   && (m_attrs & char_attr_t::CHAR_ATTR_ALT);
+                                   && ((m_attrs & char_attr_t::CHAR_ATTR_ALT) != 0);
 
             const bool use_underline = ((byte >= 0x90) && !use_alt_char)
                                     || (m_attr_under && (m_attr_on || m_attr_temp));

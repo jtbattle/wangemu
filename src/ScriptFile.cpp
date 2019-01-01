@@ -95,7 +95,7 @@ ScriptFile::isEof() const noexcept
 std::string
 ScriptFile::getLineDescription() const
 {
-    std::string desc("");
+    std::string desc;
 
     if (m_subscript) {
         std::string desc2(m_subscript->getLineDescription());
@@ -161,10 +161,10 @@ hexval(char ch) noexcept
 // =========================================================================
 // define the mapping table
 
-typedef struct {
+struct metakeytable_t {
     char *name;
     short val;          // flags | keycode
-} metakeytable_t;
+};
 
 static metakeytable_t metakeytable[] = {
 
@@ -404,9 +404,9 @@ ScriptFile::getNextByte(int *byte)
         }
 
         // Escape case #2: "\xx" -> interpret as hex value of char
-        if (m_meta_flags & SCRIPT_META_HEX) {
-            if (isxdigit(m_line_buf[m_cur_char+0]) &&
-                isxdigit(m_line_buf[m_cur_char+1])) {
+        if ((m_meta_flags & SCRIPT_META_HEX) != 0) {
+            if ((isxdigit(m_line_buf[m_cur_char+0]) != 0) &&
+                (isxdigit(m_line_buf[m_cur_char+1]) != 0)) {
                 int val = 16*hexval(m_line_buf[m_cur_char+0]) +
                              hexval(m_line_buf[m_cur_char+1]) ;
                 *byte = val;
@@ -416,12 +416,12 @@ ScriptFile::getNextByte(int *byte)
         }
 
         // Escape case #3: "\<label>" -> map using symbol table
-        if (m_meta_flags & SCRIPT_META_KEY) {
-            for (unsigned int i=0; i<sizeof(metakeytable)/sizeof(metakeytable_t); i++) {
-                const int len = strlen(metakeytable[i].name);
-                if (strncmp(&m_line_buf[m_cur_char], metakeytable[i].name, len) == 0) {
+        if ((m_meta_flags & SCRIPT_META_KEY) != 0) {
+            for (auto const &mkt : metakeytable) {
+                const int len = strlen(mkt.name);
+                if (strncmp(&m_line_buf[m_cur_char], mkt.name, len) == 0) {
                     // we found a matcher
-                    *byte = metakeytable[i].val;
+                    *byte = mkt.val;
                     m_cur_char += len;
                     return true;
                 }
@@ -432,15 +432,15 @@ ScriptFile::getNextByte(int *byte)
         // \<include filename.foo>
         // it must start a line in the first column.
         // any chars after the closing ">" are ignored.
-        if ((m_meta_flags & SCRIPT_META_INC) &&
+        if (((m_meta_flags & SCRIPT_META_INC) != 0) &&
             (m_cur_depth < m_max_depth) &&
             (strncmp(&m_line_buf[m_cur_char], "<include ", 9) == 0)) {
 
             // scan for either end of line or ">"
             m_cur_char += 9;
-            int end_char;
-            for (end_char = m_cur_char; m_line_buf[end_char] && m_line_buf[end_char]!='>'; end_char++) {
-                ;
+            int end_char = m_cur_char;
+            while ((m_line_buf[end_char] != '\0') && (m_line_buf[end_char] != '>')) {
+                 end_char++;
             }
             if (m_line_buf[end_char] == '>') {
                 m_line_buf[end_char] = '\0';  // terminate filename

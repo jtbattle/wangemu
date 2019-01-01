@@ -126,11 +126,10 @@ IoCardKeyboard::strobeOBS(int val)
 
 
 void
-IoCardKeyboard::strobeCBS(int val) noexcept
+IoCardKeyboard::strobeCBS(int /*val*/) noexcept
 {
-    int val8 = val & 0xFF;
-    val8 = val8;  // lint
 #if 0
+    int val8 = val & 0xFF;
     // unexpected -- the real hardware ignores this byte
     if (NOISY) {
         UI_warn("unexpected keyboard CBS: Output of byte 0x%02x", val8);
@@ -212,7 +211,7 @@ IoCardKeyboard::checkKeyReady()
         bool script_active = system2200::pollScriptInput(m_base_addr, 0);
         script_active = !script_active;  // make lint shut up
     }
-// FIXME: keyReady doesn't change m_selected, so the above call can't affect
+// TODO: keyReady doesn't change m_selected, so the above call can't affect
 // it this cycle.  maybe the thing to do is after m_key_ready is set to
 // false (no matter the reason) a timer to tcbScript is invoked.  or something.
 // think it through.

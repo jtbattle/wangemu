@@ -15,7 +15,7 @@
 class TermMuxCfgState : public CardCfgState
 {
 public:
-    TermMuxCfgState();
+    TermMuxCfgState() = default;
     TermMuxCfgState(const TermMuxCfgState &obj) noexcept;             // copy
     TermMuxCfgState &operator=(const TermMuxCfgState &rhs) noexcept;  // assign
 
@@ -38,10 +38,8 @@ public:
     int  getNumTerminals() const noexcept;
 
 private:
-    // just for debugging -- make sure we don't attempt to use such a config
-    bool m_initialized;
-
-    int  m_num_terms;      // number of terminasl connected to term mux
+    bool m_initialized = false;  // for debugging and sanity checking
+    int  m_num_terms   = 0;      // number of terminasl connected to term mux
 };
 
 #endif // _INCLUDE_TERM_MUX_CFG_H_

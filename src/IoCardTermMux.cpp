@@ -134,10 +134,13 @@ IoCardTermMux::IoCardTermMux(std::shared_ptr<Scheduler> scheduler,
     system2200::registerClockedDevice(cb);
 
     // create all the terminals
+    auto const cpu_type = m_cpu->getCpuType();
+    const bool vp_mode = (cpu_type != Cpu2200::CPUTYPE_2200B)
+                      && (cpu_type != Cpu2200::CPUTYPE_2200T);
     for(int n=0; n<m_num_terms; n++) {
         m_terms[n].terminal =
             std::make_unique<Terminal>(scheduler, this,
-                                       io_addr, n, UI_SCREEN_2236DE);
+                                       io_addr, n, UI_SCREEN_2236DE, vp_mode);
     }
 }
 
@@ -371,7 +374,7 @@ IoCardTermMux::updateRbi() noexcept
     }
 
     const bool busy = ((m_obs_seen || m_cbs_seen) && (m_io_offset >= 4))
-                   || !!((m_rbi >> (m_io_offset-1)) & 1);
+                   || (((m_rbi >> (m_io_offset-1)) & 1) != 0);
 
     m_cpu->setDevRdy(!busy);
 }

@@ -36,19 +36,19 @@ CrtConfigDlg::CrtConfigDlg(wxFrame *parent, const wxString &title,
         m_subgroup(subgroup)
 {
     const int h_text_margin = 8;
-    CrtFrame *pp = wxStaticCast(GetParent(), CrtFrame);
 
     m_font_choice = new wxChoice(this, ID_FONT_CHOICE);
-    // FIXME: the encodings should come from the enum
-    for (int i=0; i<pp->getNumFonts(); i++) {
-        int         size  = pp->getFontNumber(i);
-        std::string label = pp->getFontName(i);
+    const int num_fonts = CrtFrame::getNumFonts();
+    for (int i=0; i < num_fonts; i++) {
+        int         size  = CrtFrame::getFontNumber(i);
+        std::string label = CrtFrame::getFontName(i);
         m_font_choice->Append(label, (void*)size);
     }
 
     m_color_choice = new wxChoice(this, ID_COLOR_CHOICE);
-    for (int j=0; j<pp->getNumColorSchemes(); j++) {
-        std::string label = pp->getColorSchemeName(j);
+    const int num_schemes = CrtFrame::getNumColorSchemes();
+    for (int j=0; j < num_schemes; j++) {
+        std::string label = CrtFrame::getColorSchemeName(j);
         m_color_choice->Append(label, (void*)j);
     }
 

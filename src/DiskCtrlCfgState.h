@@ -13,7 +13,7 @@
 class DiskCtrlCfgState : public CardCfgState
 {
 public:
-    DiskCtrlCfgState();
+    DiskCtrlCfgState() = default;
     DiskCtrlCfgState(const DiskCtrlCfgState &obj) noexcept;             // copy
     DiskCtrlCfgState &operator=(const DiskCtrlCfgState &rhs) noexcept;  // assign
 
@@ -50,13 +50,11 @@ public:
     bool getWarnMismatch() const noexcept;
 
 private:
-    // just for debugging -- make sure we don't attempt to use such a config
-    bool m_initialized;
-
-    int  m_num_drives;       // number of associated disk drives
+    bool m_initialized = false;    // for debugging and sanity checking
+    int  m_num_drives = 0;         // number of associated disk drives
     disk_ctrl_intelligence_t
-         m_intelligence;     // dumb, smart, or automatically decide
-    bool m_warn_mismatch;    // warn if media mismatches controller intelligence
+         m_intelligence = DISK_CTRL_INTELLIGENT; // dumb, smart, or automatically decide
+    bool m_warn_mismatch = true;   // warn if media mismatches controller intelligence
 };
 
 #endif // _INCLUDE_DISK_CONTROLLER_CFG_H_

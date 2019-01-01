@@ -92,7 +92,7 @@ enum { SH_MASK_CARRY  = 0x01,   // CARRY (H/M)
 // predecoding is performed and saved to speed up instruction cracking.
 // ------------------------------------------------------------------------
 
-typedef enum {
+enum op_t {
 
     // misc
     OP_PECM,            // bad control memory parity
@@ -147,7 +147,7 @@ typedef enum {
     OP_SB,
     OP_B
 
-} op_t;
+};
 
 static const uint32 FETCH_B  = 0x80000000;  // load b_op according to uop[3:0]
 static const uint32 FETCH_A  = 0x40000000;  // load a_op according to uop[7:4]
@@ -180,9 +180,9 @@ Cpu2200vp::writeUcode(uint16 addr, uint32 uop, bool force) noexcept
     const int c_field = (uop >>  8) & 0xF;
     const int d_field = (uop >> 12) & 0x3;
 
-    const int lpi_op  = ((uop & 0x790000) == 0x190000);
-    const int mini_op = ((uop & 0x618000) == 0x018000);
-    const int shft_op = ((uop & 0x71C000) == 0x004000);
+    const bool lpi_op  = ((uop & 0x790000) == 0x190000);
+    const bool mini_op = ((uop & 0x618000) == 0x018000);
+    const bool shft_op = ((uop & 0x71C000) == 0x004000);
 
     bool illegal = false;  // innocent until proven guilty
 
@@ -198,13 +198,13 @@ Cpu2200vp::writeUcode(uint16 addr, uint32 uop, bool force) noexcept
     m_ucode[addr].p16   = 0;    // default
 
     // check parity
-    uint32 fold = (uop << 16) ^ uop;
+    uint32 fold  = (uop << 16) ^ uop;
            fold ^= (fold << 8);
            fold ^= (fold << 4);
            fold ^= (fold << 2);
            fold ^= (fold << 1);
 
-    if (~fold & 0x80000000) {
+    if ((~fold & 0x80000000) != 0) {
 
         m_ucode[addr].op  = OP_PECM;    // bad parity
 
@@ -307,7 +307,7 @@ Cpu2200vp::writeUcode(uint16 addr, uint32 uop, bool force) noexcept
 
         const int x_field = (uop >> 17) & 1;
 
-        if (x_field) {
+        if (x_field != 0) {
             illegal = (c_field == 9) || (c_field == 10) || (c_field == 11);
             m_ucode[addr].ucode |= FETCH_X;
             m_ucode[addr].op  = OP_SHX;
@@ -339,7 +339,7 @@ Cpu2200vp::writeUcode(uint16 addr, uint32 uop, bool force) noexcept
             case 0x07:  // M: multiply
                 illegal = (uop & 0x010000) != 0x000000;
                 x_field = (uop >> 17) & 1;
-                if (x_field) {
+                if (x_field != 0) {
                     illegal |= (c_field == 9) || (c_field == 10) || (c_field == 11);
                     m_ucode[addr].ucode |= FETCH_X;
                     m_ucode[addr].op  = static_cast<uint8>(OP_ORX + 2*op);
@@ -373,7 +373,7 @@ Cpu2200vp::writeUcode(uint16 addr, uint32 uop, bool force) noexcept
             case 0x14:                  // BEQ: branch if R[AAAA] == R[BBBB]
             case 0x16:                  // BNE: branch if R[AAAA] != R[BBBB]
                 x_field = (uop >> 18) & 1;
-                if (x_field) {
+                if (x_field != 0) {
                     m_ucode[addr].ucode |= FETCH_X;
                     m_ucode[addr].op  = static_cast<uint8>(
                                                 (op <= 0x11) ? OP_BLRX
@@ -537,8 +537,8 @@ Cpu2200vp::setSH(uint8 value)
     m_cpu.sh = static_cast<uint8>(  (~mask & value)
                                   | ( mask & m_cpu.sh));
 
-    if (cpb_changed) {
-        system2200::dispatchCpuBusy(!!(m_cpu.sh & SH_MASK_CPB));
+    if (cpb_changed != 0) {
+        system2200::dispatchCpuBusy((m_cpu.sh & SH_MASK_CPB) != 0);
     }
 }
 
@@ -559,14 +559,14 @@ decimalAdd(int a_op, int b_op, int ci) noexcept
 #endif
 
     int sum_low = a_op_low + b_op_low + ci; // ranges from binary 0 to 19
-    int co      = (sum_low > 9);
-    if (co) {
+    int co      = (sum_low > 9) ? 1 : 0;
+    if (co != 0) {
         sum_low -= 10;
     }
 
     int sum_high = a_op_high + b_op_high + co; // ranges from binary 0 to 19
-    co           = (sum_high > 9);
-    if (co) {
+    co           = (sum_high > 9) ? 1 : 0;
+    if (co != 0) {
         sum_high -= 10;
     }
 
@@ -596,10 +596,7 @@ decimalSub(int a_op, int b_op, int ci) noexcept
     b_op_low  = 9 - b_op_low;
     b_op_high = 9 - b_op_high;
 
- // the +1 below is for 10's complement
- // int sum_low = a_op_low + b_op_low + 1 - ci; // ranges from binary 0 to 19
- // but the (+1 - ci) can be collapsed
-    int sum_low = a_op_low + b_op_low + !ci; // ranges from binary 0 to 19
+    int sum_low = a_op_low + b_op_low + (1-ci); // ranges from binary 0 to 19
     int borrow;
     if (sum_low > 9) {
         sum_low -= 10;
@@ -608,7 +605,7 @@ decimalSub(int a_op, int b_op, int ci) noexcept
         borrow = 1;
     }
 
-    int sum_high = a_op_high + b_op_high + !borrow; // ranges from binary 0 to 19
+    int sum_high = a_op_high + b_op_high + (1-borrow); // ranges from binary 0 to 19
     if (sum_high > 9) {
         sum_high -= 10;
         borrow = 0;
@@ -683,7 +680,7 @@ decimalSub(int a_op, int b_op, int ci) noexcept
 uint8
 Cpu2200vp::getHbHa(int HbHa, int a_op, int b_op) const noexcept
 {
-    int rslt;
+    int rslt = 0;
 
     switch (HbHa) {
         case 0: // Hb=0, Ha=0
@@ -756,7 +753,6 @@ Cpu2200vp::getHbHa(int HbHa, int a_op, int b_op) const noexcept
 // subtype *must* be 2200VP, at least presently
 Cpu2200vp::Cpu2200vp(std::shared_ptr<Scheduler> scheduler,
                      int ramsize, int cpu_subtype) :
-    Cpu2200(),  // init base class
     m_cpu_subtype(cpu_subtype),
     m_scheduler(scheduler),
     m_has_oneshot(false),
@@ -891,7 +887,7 @@ Cpu2200vp::ioCardCbIbs(int data)
     system2200::dispatchCpuBusy(true);  // we are busy now
 
     // return special status if it is a special function key
-    if (data & IoCardKeyboard::KEYCODE_SF) {
+    if ((data & IoCardKeyboard::KEYCODE_SF) != 0) {
         m_cpu.sh |= SH_MASK_SF;         // special function key
     }
 }
@@ -959,8 +955,8 @@ Cpu2200vp::execOneOp()
     uint16 tmp16;
 
 #if defined(_DEBUG)
-    static int g_num_ops = 0;
     if (g_dbg_trace) {
+        static int g_num_ops = 0;
         g_num_ops++;
         char buff[200];
         dumpState(true);
@@ -978,7 +974,7 @@ Cpu2200vp::execOneOp()
     a_op = a_op2 = b_op = b_op2 = 0;
 #endif
 
-    if (uop & FETCH_CY) {
+    if ((uop & FETCH_CY) != 0) {
         // set or clear carry
         // we must do this before FETCH_A/B because it can affect SH state
         switch ((uop >> 14) & 3) {
@@ -992,7 +988,7 @@ Cpu2200vp::execOneOp()
     }
 
     // fetch argA and argB as required
-    if (uop & FETCH_B) {
+    if ((uop & FETCH_B) != 0) {
 
         b_field = uop & 0xF;
         switch (b_field) {
@@ -1015,7 +1011,7 @@ Cpu2200vp::execOneOp()
         }
 
         // A is fetched only if B is fetched as well
-        if (uop & FETCH_A) {
+        if ((uop & FETCH_A) != 0) {
             a_field = (uop >> 4) & 0xF;
             switch (a_field) {
                 case 0: case 1: case 2: case 3:
@@ -1039,7 +1035,7 @@ Cpu2200vp::execOneOp()
             a_op2 = 0;  // keep lint happy
         }
 
-    } else if (uop & FETCH_X) {
+    } else if ((uop & FETCH_X) != 0) {
 
         b_field = uop & 0xF;
         switch (b_field) {
@@ -1138,7 +1134,7 @@ Cpu2200vp::execOneOp()
     case OP_PECM:
         // 1) set SH6 = 1
         m_cpu.sh |= SH_MASK_PARITY;
-        if (~m_cpu.sh & SH_MASK_DPRTY) {
+        if ((~m_cpu.sh & SH_MASK_DPRTY) != 0) {
             // data parity trap is enabled
             // 2) instruction addr+1 is pushed on subroutine return stack
             m_cpu.icstack[m_cpu.icsp] = static_cast<uint16>(m_cpu.ic + 1);
@@ -1162,7 +1158,7 @@ Cpu2200vp::execOneOp()
         m_cpu.orig_pc = m_cpu.pc;       // LPI is a special case where change
                                         //    of PC is seen by R and W
         perform_dd_op(uop, 0x00);       // force B field to pick 0
-        m_cpu.ic++;
+        ++m_cpu.ic;
         ns = 1100;  // 1.1us
         break;
 
@@ -1170,14 +1166,14 @@ Cpu2200vp::execOneOp()
         perform_dd_op(uop, b_op);
         idx = (uop >> 4) & 0x1F;
         m_cpu.pc = m_cpu.aux[idx];
-        m_cpu.ic++;
+        ++m_cpu.ic;
         break;
 
     case OP_TPA:
         perform_dd_op(uop, b_op);
         idx = (uop >> 4) & 0x1F;
         m_cpu.aux[idx] = static_cast<uint16>(m_cpu.pc + static_cast<int16>(puop->p16));
-        m_cpu.ic++;
+        ++m_cpu.ic;
         break;
 
     case OP_XPA:
@@ -1186,21 +1182,21 @@ Cpu2200vp::execOneOp()
         tmp16 = m_cpu.aux[idx];
         m_cpu.aux[idx] = static_cast<uint16>(m_cpu.pc + static_cast<int16>(puop->p16));
         m_cpu.pc = tmp16;
-        m_cpu.ic++;
+        ++m_cpu.ic;
         break;
 
     case OP_TPS:
         perform_dd_op(uop, b_op);
         m_cpu.icstack[m_cpu.icsp] = static_cast<uint16>(m_cpu.pc + static_cast<int16>(puop->p16));
         DEC_ICSP;
-        m_cpu.ic++;
+        ++m_cpu.ic;
         break;
 
     case OP_TSP:
         perform_dd_op(uop, b_op);
         INC_ICSP;
         m_cpu.pc = m_cpu.icstack[m_cpu.icsp];
-        m_cpu.ic++;
+        ++m_cpu.ic;
         break;
 
     case OP_RCM:
@@ -1243,7 +1239,7 @@ Cpu2200vp::execOneOp()
         s_field = (uop >> 11) & 0x1;
         t_field = (uop >>  4) & 0x7F;
 
-        if (s_field) {
+        if (s_field != 0) {
             m_cpu.ab = m_cpu.k;     // I/O address bus register takes K reg value
         }
 
@@ -1340,7 +1336,7 @@ Cpu2200vp::execOneOp()
             }
         }
 
-        m_cpu.ic++;
+        ++m_cpu.ic;
         break;
 
 #define PREAMBLE1       \
@@ -1350,7 +1346,7 @@ Cpu2200vp::execOneOp()
         store_c(c_field, rslt);                                        \
         perform_dd_op(uop, rslt);       /* mem rd/wr */                \
         m_cpu.pc = static_cast<uint16>(m_cpu.pc + (int16)(puop->p16)); \
-        m_cpu.ic++
+        ++m_cpu.ic
 
     case OP_OR:
         PREAMBLE1;
@@ -1420,7 +1416,7 @@ Cpu2200vp::execOneOp()
         store_c(c_field, rslt);                                 \
         store_c((c_field+1) & 0xF, rslt2);                      \
         perform_dd_op(uop, rslt2);      /* mem rd/wr */         \
-        m_cpu.ic++
+        ++m_cpu.ic
 
     case OP_ORX:
         PREAMBLE2;
@@ -1500,7 +1496,7 @@ Cpu2200vp::execOneOp()
 #define POSTAMBLE3                      \
         store_c(c_field, rslt);         \
         perform_dd_op(uop, rslt);       \
-        m_cpu.ic++
+        ++m_cpu.ic
 
     case OP_ORI:        // or immediate
         PREAMBLE3;
@@ -1564,64 +1560,64 @@ Cpu2200vp::execOneOp()
     case OP_BT:         // branch if true
         PREAMBLE4;
         if ((b_op & imm) == imm) { m_cpu.ic = puop->p16; }
-                            else { m_cpu.ic++; }
+                            else { ++m_cpu.ic; }
         break;
 
     case OP_BF:         // branch if false
         PREAMBLE4;
         if ((b_op & imm) == 0) { m_cpu.ic = puop->p16; }
-                          else { m_cpu.ic++; }
+                          else { ++m_cpu.ic; }
         break;
 
     case OP_BEQ:        // branch if = to mask
         PREAMBLE4;
         if (b_op == imm) { m_cpu.ic = puop->p16; }
-                    else { m_cpu.ic++; }
+                    else { ++m_cpu.ic; }
         break;
 
     case OP_BNE:        // branch if != to mask
         PREAMBLE4;
         if (b_op != imm) { m_cpu.ic = puop->p16; }
-                    else { m_cpu.ic++; }
+                    else { ++m_cpu.ic; }
         break;
 
     case OP_BLR:        // BLR: branch if R[AAAA] < R[BBBB]
         m_cpu.pc = static_cast<uint16>(m_cpu.pc + static_cast<int8>(puop->p8));
         if (a_op < b_op) { m_cpu.ic = puop->p16; }
-                    else { m_cpu.ic++; }
+                    else { ++m_cpu.ic; }
         break;
 
     case OP_BLRX:       // BLRX: branch if R[AAAA] < R[BBBB]
         a_op = (a_op2<<8) | a_op;
         b_op = (b_op2<<8) | b_op;
         if (a_op < b_op) { m_cpu.ic = puop->p16; }
-                    else { m_cpu.ic++; }
+                    else { ++m_cpu.ic; }
         ns = 800;
         break;
 
     case OP_BLER:       // BLER: branch if R[AAAA] <= R[BBBB]
         m_cpu.pc = static_cast<uint16>(m_cpu.pc + static_cast<int8>(puop->p8));
         if (a_op <= b_op) { m_cpu.ic = puop->p16; }
-                     else { m_cpu.ic++; }
+                     else { ++m_cpu.ic; }
         break;
 
     case OP_BLERX:      // BLERX: branch if R[AAAA] <= R[BBBB]
         a_op = (a_op2<<8) | a_op;
         b_op = (b_op2<<8) | b_op;
         if (a_op <= b_op) { m_cpu.ic = puop->p16; }
-                     else { m_cpu.ic++; }
+                     else { ++m_cpu.ic; }
         ns = 800;
         break;
 
     case OP_BER:        // BEQ: branch if R[AAAA] == R[BBBB]
         if (a_op == b_op) { m_cpu.ic = puop->p16; }
-                     else { m_cpu.ic++; }
+                     else { ++m_cpu.ic; }
         m_cpu.pc = static_cast<uint16>(m_cpu.pc + static_cast<int8>(puop->p8));
         break;
 
     case OP_BNR:        // BNE: branch if R[AAAA] != R[BBBB]
         if (a_op != b_op) { m_cpu.ic = puop->p16; }
-                     else { m_cpu.ic++; }
+                     else { ++m_cpu.ic; }
         m_cpu.pc = static_cast<uint16>(m_cpu.pc + static_cast<int8>(puop->p8));
         break;
 

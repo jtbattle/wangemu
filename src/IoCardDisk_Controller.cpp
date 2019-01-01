@@ -513,7 +513,7 @@ IoCardDisk::advanceStateInt(disk_event_t event, const int val)
                     static bool reported[256] = { false };
                     if (!reported[m_special_command]) {
                         std::string msg = unsupportedExtendedCommandName(m_special_command);
-                        if (msg != "") {
+                        if (msg.empty()) {
                             UI_warn("ERROR: disk controller received unimplemented special command 0x%02x (%s)\n"
                                     "Please notify the program developer if you want this feature added",
                                      m_special_command, msg.c_str());
@@ -564,7 +564,7 @@ IoCardDisk::advanceStateInt(disk_event_t event, const int val)
                                  m_header[4];
 
                     // a COPY is supposed to always be followed by READ
-                    if (m_copy_pending != false) {
+                    if (m_copy_pending) {
                         UI_warn("Disk controller got unexpected command following COPY\n"
                                  "Ignoring the COPY command");
                         m_copy_pending = false;
@@ -666,18 +666,18 @@ IoCardDisk::advanceStateInt(disk_event_t event, const int val)
 
                 switch (m_command) {
                 case CMD_READ:
-                    if (DBG > 1) dbglog("CMD: CMD_READ, drive=%d, head=%d, sector=%d\n",
-                                        m_drive, m_platter, m_drive, m_secaddr);
+                    if (DBG > 1) { dbglog("CMD: CMD_READ, drive=%d, head=%d, sector=%d\n",
+                                          m_drive, m_platter, m_drive, m_secaddr); }
                     m_state = CTRL_READ1;
                     break;
                 case CMD_WRITE:
-                    if (DBG > 1) dbglog("CMD: CMD_WRITE, drive=%d, head=%d, sector=%d\n",
-                                        m_drive, m_platter, m_secaddr);
+                    if (DBG > 1) { dbglog("CMD: CMD_WRITE, drive=%d, head=%d, sector=%d\n",
+                                          m_drive, m_platter, m_secaddr); }
                     m_state = CTRL_WRITE1;
                     break;
                 case CMD_VERIFY:
-                    if (DBG > 1) dbglog("CMD: CMD_VERIFY, drive=%d, head=%d, sector=%d\n",
-                                        m_drive, m_platter, m_secaddr);
+                    if (DBG > 1) { dbglog("CMD: CMD_VERIFY, drive=%d, head=%d, sector=%d\n",
+                                          m_drive, m_platter, m_secaddr); }
                     m_compare_err = false;
                     m_state = CTRL_READ1;  // yes, READ1 -- it shares logic
                     break;
@@ -966,7 +966,6 @@ IoCardDisk::advanceStateInt(disk_event_t event, const int val)
                 for (int d=0; d<numDrives(); d++) {
                     UI_diskEvent(m_slot, d);
                 }
-                m_drive = m_range_drive;
                 m_state = CTRL_COPY5;
                 // seek the first track
                 m_drive   = m_range_drive;

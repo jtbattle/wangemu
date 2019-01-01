@@ -21,7 +21,7 @@
 class CardCfgState
 {
 public:
-    virtual ~CardCfgState() {};
+    virtual ~CardCfgState() = default;
 
     // initialized with a reasonable default state
     virtual void setDefaults() = 0;

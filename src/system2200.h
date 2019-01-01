@@ -22,8 +22,8 @@
 class IoCard;
 class SysCfgState;
 
-typedef std::function<int()>     clkCallback;
-typedef std::function<void(int)> kbCallback;
+using clkCallback = std::function<int()>;
+using  kbCallback = std::function<void(int)>;
 
 // fixed services related to the overall simulation
 namespace system2200
@@ -129,18 +129,19 @@ namespace system2200
 
     // ---- legal cpu system configurations ----
 
-    typedef struct {
+    struct cpuconfig_t {
         int              cpu_type;            // Cpu2200::CPUTYPE_* value
         std::string      label;               // human-readable label
         std::vector<int> ram_size_options;    // list of legal RAM configurations in KB
         std::vector<int> ucode_size_options;  // list of legal ucode sizes, in words
         bool             has_oneshot;         // does it have the timeslice one-shot?
-    } cpuconfig_t;
+    };
 
     extern const std::vector<cpuconfig_t> m_cpu_configs;
     const cpuconfig_t* getCpuConfig(const std::string &config_name) noexcept;
     const cpuconfig_t* getCpuConfig(int config_id) noexcept;
-};
+
+};  // namespace system2200
 
 #endif // _INCLUDE_SYSTEM2200_H_
 

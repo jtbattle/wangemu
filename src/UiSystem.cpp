@@ -385,9 +385,9 @@ UI_setSimSeconds(unsigned long seconds, float relative_speed)
 
 
 void
-UI_diskEvent(int controller, int drive)
+UI_diskEvent(int slot, int drive)
 {
-    CrtFrame::diskEvent(controller, drive);
+    CrtFrame::diskEvent(slot, drive);
 }
 
 

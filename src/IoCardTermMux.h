@@ -69,7 +69,6 @@ private:
     void mxdToTermCallback(int term_num, int byte);
 
     // ---- board state ----
-// FIXME: use smart pointer
     TermMuxCfgState            m_cfg;       // current configuration
     std::shared_ptr<Scheduler> m_scheduler; // shared event scheduler
     std::shared_ptr<Cpu2200>   m_cpu;       // associated CPU

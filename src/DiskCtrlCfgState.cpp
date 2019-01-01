@@ -9,16 +9,6 @@
 // public members
 // ------------------------------------------------------------------------
 
-// default constructor
-DiskCtrlCfgState::DiskCtrlCfgState() :
-        m_initialized(false),
-        m_num_drives(0),
-        m_intelligence(DISK_CTRL_INTELLIGENT),
-        m_warn_mismatch(true)
-{
-}
-
-
 // assignment
 DiskCtrlCfgState&
 DiskCtrlCfgState::operator=(const DiskCtrlCfgState &rhs) noexcept
@@ -40,7 +30,6 @@ DiskCtrlCfgState::operator=(const DiskCtrlCfgState &rhs) noexcept
 
 // copy constructor
 DiskCtrlCfgState::DiskCtrlCfgState(const DiskCtrlCfgState &obj) noexcept
-    : CardCfgState()  // good hygiene, although base class is empty
 {
     assert(obj.m_initialized);
     m_num_drives    = obj.m_num_drives;
@@ -190,10 +179,6 @@ bool
 DiskCtrlCfgState::configOk(bool /*warn*/) const noexcept
 {
     assert(m_initialized);
-    if (!m_initialized) {
-        return false;
-    }
-
     return true;  // pretty hard to screw it up
 }
 

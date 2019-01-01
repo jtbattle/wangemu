@@ -141,13 +141,13 @@ Crt::intensityToColor(float f) const
 // we generate all 256 characters and not worry about manually underlining.
 // The 2236 also offers an alternate upper character set for 0x80-0xFF.
 
-wxFont Crt::pickFont(int pointsize, int bold, const std::string &facename)
+wxFont Crt::pickFont(int pointsize, bool bold, const std::string &facename)
 {
     wxFont font;
     const auto font_weight = (bold) ? wxFONTWEIGHT_BOLD : wxFONTWEIGHT_NORMAL;
     const bool underline = false;
 
-    if (facename != "") {
+    if (!facename.empty()) {
         // try the specified family name
         font = wxFont(pointsize,
                       wxFONTFAMILY_MODERN,  // fixed pitch
@@ -354,8 +354,8 @@ Crt::generateFontmap()
         for (int alt=0; alt<2; ++alt) {
 
             // brightness modulation for native font rendering
-            wxColor fg_eff = ( inv) ? blk : (bright) ? intense : norm;
-            wxColor bg_eff = (!inv) ? blk : (bright) ? intense : norm;
+            wxColor fg_eff = (inv == 1) ? blk : (bright != 0) ? intense : norm;
+            wxColor bg_eff = (inv == 0) ? blk : (bright != 0) ? intense : norm;
             char_dc.SetBackground(wxBrush(bg_eff, wxBRUSHSTYLE_SOLID));
             char_dc.SetTextBackground(bg_eff);
             char_dc.SetTextForeground(fg_eff);
@@ -370,12 +370,12 @@ Crt::generateFontmap()
                     // prepare by blanking out everything
                     char_dc.Clear();
 
-                    if (alt && (ch >= 0x40)) {
+                    if ((alt != 0) && (ch >= 0x40)) {
                         // box graphics characters
                         for (int yy=0; yy<3; ++yy) {
                             for (int xx=0; xx<2; ++xx) {
                                 const int shift = 2*yy + xx;
-                                if ((chr >> shift) & 1) {
+                                if (((chr >> shift) & 1) != 0) {
                                     // x,y,w,h
                                     char_dc.DrawRectangle(
                                         boxx[xx],
@@ -386,7 +386,7 @@ Crt::generateFontmap()
                                 }
                             }
                         }
-                    } else if (alt) {
+                    } else if (alt != 0) {
 #if 0
                         wxString text((wxChar)(xlat_char_alt[ch]));
 #else
@@ -429,7 +429,7 @@ Crt::generateFontmap()
                                 const bool lit = (inv) ? (x < 2)
                                                        : (x > 1 && ((x&1)==1));
 #else
-                                const bool lit = (inv) ? (x < 2) : (x > 1);
+                                const bool lit = (inv != 0) ? (x < 2) : (x > 1);
 #endif
                                 const float v = (lit) ? dot_fg : dot_bg;
                                 char_intensity[row][x] = v;
@@ -442,13 +442,13 @@ Crt::generateFontmap()
                     for (int bmr=0; bmr<11; ++bmr) {  // bitmap row
 
                         int pixrow = 0;
-                        if (alt && (ch >= 0x40)) {
+                        if ((alt != 0) && (ch >= 0x40)) {
                             // alt character set, w/block graphics
                             // hardware maps it this way, so we do too
                             pixrow = (bmr <  2) ? chargen_2236_alt[8*ch + 0+(bmr&1)]
                                    : (bmr < 10) ? chargen_2236_alt[8*ch + bmr-2]
                                                 : chargen_2236_alt[8*ch + 6+(bmr&1)];
-                        } else if (alt) {
+                        } else if (alt != 0) {
                             // alt character set
                             pixrow = (bmr <  2) ? 0x00
                                    : (bmr < 10) ? chargen_2236_alt[8*ch + bmr-2]
@@ -462,7 +462,7 @@ Crt::generateFontmap()
 
                         // pad out to 10 pixel row
                         pixrow <<= 1;
-                        if (alt && (ch >= 0x40)) {
+                        if ((alt != 0) && (ch >= 0x40)) {
                             // block graphics fills the character cell.
                             // from the original bitmap, we pad to the left using
                             // bit 6 (not 7), and we pad to the right using bit 1
@@ -480,21 +480,21 @@ Crt::generateFontmap()
                         //
                         // I can't model this accurately right now because the box
                         // graphics overlay is done separately
-                        if (inv) {
+                        if (inv != 0) {
                             pixrow = (~pixrow >> 1)  // 1st term above
                                    &  ~pixrow;       // 2nd term above
                         }
 
                         // add underline on the last bitmap row
                         // the hardware stipples the underline this way
-                        float dot_fg = (bright) ? f_intense : f_norm;
+                        float dot_fg = (bright != 0) ? f_intense : f_norm;
                         if ((chr >= 0x90) && (bmr == 10)) {
                             pixrow = 0x55 << 1;
                             dot_fg = f_norm;   // underline is not affected by bright
                         }
 
                         for (int bmc=0; bmc<10; pixrow <<= 1, ++bmc) { // bitmap col
-                            float v = (pixrow & 0x200) ? dot_fg : f_blk;
+                            float v = ((pixrow & 0x200) != 0) ? dot_fg : f_blk;
                             for (int yy=0; yy<sy; ++yy) {
                             for (int xx=0; xx<sx; ++xx) {
                                 char_intensity[offset + bmr*sy*dy + yy]
@@ -606,10 +606,10 @@ Crt::generateScreenByBlits(wxMemoryDC &memDC)
             for (int col=0; col<m_crt_state->chars_w; ++col) {
                 const uint8 chr    = m_crt_state->display[row*m_crt_state->chars_w + col];
                 const uint8 attr   = m_crt_state->attr[row*m_crt_state->chars_w + col];
-                const bool  blink  = (attr & char_attr_t::CHAR_ATTR_BLINK)  ? true : false;
-                const int   alt    = (attr & char_attr_t::CHAR_ATTR_ALT)    ? 4 : 0;
-                const int   inv    = (attr & char_attr_t::CHAR_ATTR_INV)    ? 2 : 0;
-                      int   bright = (attr & char_attr_t::CHAR_ATTR_BRIGHT) ? 1 : 0;
+                const bool  blink  = ((attr & char_attr_t::CHAR_ATTR_BLINK)  != 0) ? true : false;
+                const int   alt    = ((attr & char_attr_t::CHAR_ATTR_ALT)    != 0) ? 4 : 0;
+                const int   inv    = ((attr & char_attr_t::CHAR_ATTR_INV)    != 0) ? 2 : 0;
+                      int   bright = ((attr & char_attr_t::CHAR_ATTR_BRIGHT) != 0) ? 1 : 0;
 
                 // blinking alternates between normal and bright intensity
                 // but intense text can't blink because it is already intense
@@ -617,7 +617,7 @@ Crt::generateScreenByBlits(wxMemoryDC &memDC)
                     bright = 1;
                 }
 
-                if ((chr != 0x20) || inv) {
+                if ((chr != 0x20) || (inv != 0)) {
                     // if (non-blank character)
                     const int font_row = m_charcell_h * (alt + inv + bright);
                     memDC.Blit(col*m_charcell_w, row*m_charcell_h,  // dest x,y
@@ -661,7 +661,7 @@ Crt::generateScreenCursor(wxMemoryDC &memDC)
     wxColor color(fg);
     if (m_crt_state->screen_type == UI_SCREEN_2236DE) {
         const uint8 attr = m_crt_state->attr[80*m_crt_state->curs_y + m_crt_state->curs_x];
-        color = (attr & char_attr_t::CHAR_ATTR_INV) ? bg : fg;
+        color = ((attr & char_attr_t::CHAR_ATTR_INV) != 0) ? bg : fg;
     }
 
     const int top   = m_charcell_h*(m_crt_state->curs_y+1) - (2 * m_charcell_sy*m_charcell_dy);
@@ -707,7 +707,7 @@ Crt::generateScreenOverlay(wxMemoryDC &memDC)
         int off = 80 * row;
         int start = -1;
         for (int col=0; col < 80; ++col, ++off) {
-            if (m_crt_state->attr[off] & (char_attr_t::CHAR_ATTR_LEFT)) {
+            if ((m_crt_state->attr[off] & (char_attr_t::CHAR_ATTR_LEFT)) != 0) {
                 // start or extend
                 if (start < 0) {
                     start = col*m_charcell_w;
@@ -720,7 +720,7 @@ Crt::generateScreenOverlay(wxMemoryDC &memDC)
                 }
                 start = -1;
             }
-            if (m_crt_state->attr[off] & (char_attr_t::CHAR_ATTR_RIGHT)) {
+            if ((m_crt_state->attr[off] & (char_attr_t::CHAR_ATTR_RIGHT)) != 0) {
                 if (start < 0) { // start of run
                     start = col*m_charcell_w + (m_charcell_w >> 1);
                 }
@@ -749,7 +749,7 @@ Crt::generateScreenOverlay(wxMemoryDC &memDC)
         int off = col;
         int start = -1;
         for (int row=0; row < 25; ++row, off += 80) {
-            if (m_crt_state->attr[off] & (char_attr_t::CHAR_ATTR_VERT)) {
+            if ((m_crt_state->attr[off] & (char_attr_t::CHAR_ATTR_VERT)) != 0) {
                 if (start < 0) { // start of run
                     start = row * m_charcell_h;
                 }

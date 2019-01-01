@@ -248,11 +248,11 @@ static uint8_t sub_half_carry_table[] = { 0, 1, 1, 1, 0, 0, 0, 1 };
 static void i8080_store_flags(i8080 *cpu)
 {
     F = F_UN1;     // bit 1 unused; always 1
-    if (S_FLAG) F |= F_NEG;
-    if (Z_FLAG) F |= F_ZERO;
-    if (H_FLAG) F |= F_HCARRY;
-    if (P_FLAG) F |= F_PARITY;
-    if (C_FLAG) F |= F_CARRY;
+    if (S_FLAG) { F |= F_NEG; }
+    if (Z_FLAG) { F |= F_ZERO; }
+    if (H_FLAG) { F |= F_HCARRY; }
+    if (P_FLAG) { F |= F_PARITY; }
+    if (C_FLAG) { F |= F_CARRY; }
 //  F &= ~F_UN3;   // bit 3 unused; always 0
 //  F &= ~F_UN5;   // bit 5 unused; always 0
 }
@@ -484,7 +484,7 @@ int i8080_exec_one_op(i8080 *cpu)
 
         case 0x17:            /* ral */
             cpu_cycles = 4;
-            work8 = (uint8_t)C_FLAG;
+            work8 = C_FLAG;
             C_FLAG = ((A & 0x80) != 0);
             A = (A << 1) | work8;
             break;
@@ -521,7 +521,7 @@ int i8080_exec_one_op(i8080 *cpu)
 
         case 0x1F:             /* rar */
             cpu_cycles = 4;
-            work8 = (uint8_t)C_FLAG;
+            work8 = C_FLAG;
             C_FLAG = A & 0x01;
             A = (A >> 1) | (work8 << 7);
             break;
@@ -560,7 +560,7 @@ int i8080_exec_one_op(i8080 *cpu)
 
         case 0x27:            /* daa */
             cpu_cycles = 4;
-            carry = (uint8_t)C_FLAG;
+            carry = C_FLAG;
             add = 0;
             if (H_FLAG || (A & 0x0f) > 9) {
                 add = 0x06;

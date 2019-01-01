@@ -10,24 +10,24 @@
 // error description table.
 // invalid entries are nullptr.
 
-typedef struct {
+struct error_table_t {
     const char *errcode;    // eg "01", "02", .. "98", "=1", "=2", "=3"
     const char *error;      // eg "DIVISION BY 0"
     const char *cause;      // eg "The denominator ..."
     const char *action;     // eg "Test for zero before dividing"
     const char *example;    // eg, "10 D=0\n20 PRINT 5/D"
     const char *fix;        // eg, "10 D=0\n20 IF D=0 THEN 30:PRINT 5/D"
-} error_table_t;
+};
 
 // for vp errors, the meaning is different
-//typedef struct {
+//struct error_table_t {
 //    const char *errcode;    // eg "A01", "S20"
 //    const char *error;      // eg "DIVISION BY 0"
 //    const char *cause;      // eg "The denominator ..."
 //    const char *recovery;   // eg "Test for zero before dividing"
 //    const char *dummy;      // unused
 //    const char *dummy;      // unused
-//} error_table_t;
+//};
 
 extern const std::vector<error_table_t> error_table;
 extern const std::vector<error_table_t> error_table_vp;

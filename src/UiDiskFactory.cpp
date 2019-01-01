@@ -230,7 +230,7 @@ DiskFactory::updateButtons()
     // disable the Save or SaveAs button if there have been no changes
     const bool new_disk = m_disk_data->getPath().empty();
     const bool modified = m_disk_data->isModified();
-    if (m_btn_save) {
+    if (m_btn_save != nullptr) {
         m_btn_save->Enable(new_disk || modified);
     }
 }
@@ -261,7 +261,7 @@ void
 DiskFactory::OnButton_SaveAs(wxCommandEvent& WXUNUSED(event))
 {
     std::string name;
-    if (host::fileReq(host::FILEREQ_DISK, "Virtual Disk Name", 0, &name) !=
+    if (host::fileReq(host::FILEREQ_DISK, "Virtual Disk Name", false, &name) !=
                       host::FILEREQ_OK) {
         return;
     }

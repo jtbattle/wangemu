@@ -26,11 +26,11 @@
 #define KC_NOCTRL   0x0004      // this mapping applies only if CONTROL isn't present
 #define KC_CTRL     0x0008      // this mapping applies only if CONTROL is present
 
-typedef struct {
+struct kd_keymap_t {
     int wxKey;
     int wxKeyFlags;
     int wangKey;
-} kd_keymap_t;
+};
 
 kd_keymap_t keydown_keymap_table[] = {
 
@@ -187,11 +187,11 @@ kd_keymap_t keydown_keymap_table[] = {
 };
 
 
-typedef struct {
+struct oc_keymap_t {
     int wxKey;
     int wangKey_KW_mode;
     int wangKey_Aa_mode;
-} oc_keymap_t;
+};
 
 oc_keymap_t onchar_keymap_table[] = {
 
@@ -286,9 +286,9 @@ Crt::OnKeyDown(wxKeyEvent &event)
         return;
     }
 
-    const int wxKey = event.GetKeyCode();
-    const int shift = event.ShiftDown();
-    const int ctrl  = event.ControlDown();
+    const int wxKey  = event.GetKeyCode();
+    const bool shift = event.ShiftDown();
+    const bool ctrl  = event.ControlDown();
     int key = 0x00;    // key value we stuff into emulator
 
     bool found_map = false;

@@ -9,7 +9,7 @@
 
 
 // when a timer expires, we invoke the callback function
-typedef std::function<void()> sched_callback_t;
+using sched_callback_t = std::function<void()>;
 
 // ======================================================================
 // A Timer is just a handle that Scheduler can pass back on timer creation,
@@ -76,6 +76,10 @@ private:
     // detect runaway conditions
     static const int MAX_TIMERS = 30;
 
+    // things get hinky if we get near the sign bit, but that isn't
+    // a concern anymore now that we're using int64.
+    static const int64 MAX_TIME = (1LL << 62);
+
     // transfer accumulated timer deficit to each active timer.
     // n is added to the already elapsed time.
     // this shouldn't need to be called very frequently.
@@ -84,8 +88,8 @@ private:
     // returns, in absolute ns, the time of the soonest event on the timer list
     int64 firstEvent() noexcept;
 
-    int64 m_time_ns;        // simulated absolute time (in ns)
-    int64 m_trigger_ns;     // time next event expires
+    int64 m_time_ns    = 0LL;       // simulated absolute time (in ns)
+    int64 m_trigger_ns = MAX_TIME;  // time next event expires
 
     // list of callbacks to invoke when m_time_ns exceeds the expiration time
     // embedded in the timer.

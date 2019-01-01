@@ -328,10 +328,9 @@ IoCardDisk::strobeOBS(int val)
 
 
 void
-IoCardDisk::strobeCBS(int val) noexcept
+IoCardDisk::strobeCBS(int /*val*/) noexcept
 {
-    int val8 = val & 0xFF;
-    val8 = val8;  // lint
+//  int val8 = val & 0xFF;
 
     // unexpected -- the real hardware ignores this byte
     if (NOISY > 0) {
@@ -367,15 +366,15 @@ IoCardDisk::strobeCBS(int val) noexcept
 
 // change of CPU Busy state
 void
-IoCardDisk::setCpuBusy(bool val)
+IoCardDisk::setCpuBusy(bool busy)
 {
     // it appears that except for reset, ucode only ever clears it,
     // and of course the IBS sets it back.
     if (DBG > 2) {
-        dbglog("disk CPB%c\n", val?'+':'-');
+        dbglog("disk CPB%c\n", busy?'+':'-');
     }
 
-    m_cpb = val;
+    m_cpb = busy;
     checkDiskReady();
 }
 
@@ -519,7 +518,11 @@ IoCardDisk::wvdGetNsToTrack(int track)
         // similar to, but a little worse than, the 2280 timing.
         case Wvd::DISKTYPE_HD60:
         case Wvd::DISKTYPE_HD80:
-            time_ns = TIMER_MS((track_diff ? 6.0 : 0.0) + 0.06*track_diff);
+            if (track_diff == 0) {
+                time_ns = 0LL;
+            } else {
+                time_ns = TIMER_MS(6.0 + 0.06*track_diff);
+            }
             break;
 
         default:
@@ -739,7 +742,7 @@ IoCardDisk::tcbSector(int arg)
     assert(drive >= 0 && drive < numDrives());
     assert(m_d[drive].tmr_sector != nullptr);
 
-    if (0 && (NOISY > 2)) {
+    if (false && (NOISY > 2)) {
         dbglog("Drive %d SECTOR timer fired: sector %d\n", drive, m_d[drive].sector);
     }
 
@@ -854,19 +857,19 @@ IoCardDisk::wvdDriveStatus(int slot, int drive) noexcept
         rv |= WVD_STAT_DRIVE_EXISTENT;
     }
 
-    if (rv && tthis->m_d[drive].state != DRIVE_EMPTY) {
+    if ((rv != 0) && tthis->m_d[drive].state != DRIVE_EMPTY) {
         rv |= WVD_STAT_DRIVE_OCCUPIED;
     }
 
-    if (rv && tthis->m_selected && (tthis->m_drive == drive)) {
+    if ((rv != 0) && tthis->m_selected && (tthis->m_drive == drive)) {
         rv |= WVD_STAT_DRIVE_SELECTED;
     }
 
-    if (rv && !tthis->inIdleState()) {
+    if ((rv != 0) && !tthis->inIdleState()) {
         rv |= WVD_STAT_DRIVE_BUSY;
     }
 
-    if (rv && tthis->m_d[drive].state != DRIVE_IDLE) {
+    if ((rv != 0) && tthis->m_d[drive].state != DRIVE_IDLE) {
         rv |= WVD_STAT_DRIVE_RUNNING;
     }
 
@@ -975,8 +978,10 @@ IoCardDisk::iwvdInsertDisk(int drive,
     assert(m_d[drive].state == DRIVE_EMPTY);
 
     char disk_loc[10];
-    sprintf(&disk_loc[0],  "%c/3%02X", ((drive & 1) ? 'R' : 'F'),
-                          m_base_addr + ((drive & 2) ? 0x40 : 0x00));
+    const bool drive_r =  (drive & 1) != 0;
+    const int addr_off = ((drive & 2) != 0) ? 0x40 : 0x00;
+    sprintf(&disk_loc[0], "%c/3%02X",
+                (drive_r ? 'R' : 'F'), m_base_addr + addr_off);
     const bool ok = m_d[drive].wvd->open(filename);
     if (!ok) {
         return false;

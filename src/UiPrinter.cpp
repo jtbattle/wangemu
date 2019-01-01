@@ -25,6 +25,8 @@
 static const int bar_h   = 3;   // height of greenbar
 static const int hmargin = 3;   // number chars horizontal padding on page
 
+static const bool draw_page_breaks = true;
+
 // ----------------------------------------------------------------------------
 // Printer
 // ----------------------------------------------------------------------------
@@ -389,7 +391,7 @@ Printer::lptChar(uint8 byte)
 {
     if (m_fp_port == nullptr) {
         // port is closed.  open it and set timer to close if port goes idle.
-        assert(m_port_string != "");
+        assert(!m_port_string.empty());
         // UI_info("opening %s", m_port_string.c_str());
         m_fp_port = fopen(m_port_string.c_str(), "wb");
         m_port_timer.Start();  // period was set in the constructor
@@ -424,7 +426,7 @@ Printer::saveToFile()
 {
     std::string fullpath;
     const int r = host::fileReq(host::FILEREQ_PRINTER,
-                                "Save printer log file", 0,
+                                "Save printer log file", false,
                                 &fullpath);
     if (r == host::FILEREQ_OK) {
 
@@ -607,7 +609,7 @@ Printer::OnSize(wxSizeEvent &event)
 void
 Printer::OnTimer(wxTimerEvent &WXUNUSED(event))
 {
-    if (m_printing_flag == false) {
+    if (!m_printing_flag) {
         // if port is open, close it
         closePort();
         // UI_info("Timer timed out; closed %s", m_port_string.c_str());
@@ -729,8 +731,7 @@ Printer::generateScreen(int startCol, int startRow)
         img_dc.SetBrush(wxNullBrush);
     }
 
-    // draw page breaks
-    if (1) {
+    if (draw_page_breaks) {
         wxColor gray = wxColour(0x80, 0x80, 0x80);
         wxPen breakpen(gray, 1, wxPENSTYLE_USER_DASH);
         const wxDash dashArray[] = { 2, 5 };  // pixels on, pixels off
@@ -791,7 +792,7 @@ void
 Printer::emitLine()
 {
     m_linebuf[m_linebuf_len] = '\0';
-    m_printstream.push_back(std::string(&m_linebuf[0]));
+    m_printstream.emplace_back(&m_linebuf[0]);
     m_linebuf_len = 0;
 
     if (m_auto_show) {
@@ -897,7 +898,7 @@ bool
 Printout::OnPrintPage(int page)
 {
     wxDC *dc = GetDC();
-    if (!dc) {
+    if (dc == nullptr) {
         return false;
     }
 
@@ -1009,10 +1010,7 @@ Printout::HasPage(int page) noexcept
 bool
 Printout::OnBeginDocument(int startPage, int endPage)
 {
-    if (!wxPrintout::OnBeginDocument(startPage, endPage)) {
-        return false;
-    }
-    return true;
+    return wxPrintout::OnBeginDocument(startPage, endPage);
 }
 
 

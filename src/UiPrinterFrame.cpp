@@ -131,7 +131,6 @@ struct paperbinmap_t {
     { wxPRINTBIN_FORMSOURCE,     "FORMSOURCE" },
     { wxPRINTBIN_USER,           "USER" }
 };
-const int PBMAX = sizeof(paperbinmap)/sizeof(paperbinmap_t);
 
 // ----------------------------------------------------------------------------
 // PrinterFrame
@@ -433,7 +432,7 @@ PrinterFrame::getDefaults()
     m_printer->setBin(paperbin);
 
     // pick up printer name
-    std::string printername("");
+    std::string printername;
     b = host::configReadStr(subgroup, "realprintername", &printername);
     m_printer->setRealPrinterName(printername);
 }
@@ -441,18 +440,18 @@ PrinterFrame::getDefaults()
 
 // translate a character pagesize to the appropriate enum value for wxPaperSize
 wxPaperSize
-PrinterFrame::paperSize(const std::string &pagesizename)
+PrinterFrame::paperSize(const std::string &papersize_name)
 {
     // translate char to wxPaperSize
 #if USEMYPAPER
     for (int i=0; i< PSMAX; i++) {
-        if (papersizemap[i].papersize_name == pagesizename) {
+        if (papersizemap[i].papersize_name == papersize_name) {
             return papersizemap[i].papersize_val;
         }
     }
     return wxPAPER_NONE;  // default
 #else
-    return wxThePrintPaperDatabase->ConvertNameToId(pagesizename);
+    return wxThePrintPaperDatabase->ConvertNameToId(papersize_name);
 #endif
 }
 
@@ -464,7 +463,7 @@ PrinterFrame::paperSize(wxPaperSize papersize_val) const
     // translate char to wxPaperSize
 #if USEMYPAPER
     for (int i=0; i< PSMAX; i++) {
-        if (papersizemap[i].papersize_val == papersizeval) {
+        if (papersizemap[i].papersize_val == papersize_val) {
             return papersizemap[i].papersize_name;
         }
     }
@@ -480,9 +479,9 @@ wxPrintBin
 PrinterFrame::paperBin(const std::string &paperbin_name) const noexcept
 {
     // translate char to wxPrintBin
-    for (int i=0; i< PBMAX; i++) {
-        if (paperbinmap[i].paperbin_name == paperbin_name) {
-            return paperbinmap[i].paperbin_val;
+    for (auto const &pb : paperbinmap) {
+        if (pb.paperbin_name == paperbin_name) {
+            return pb.paperbin_val;
         }
     }
     return wxPRINTBIN_DEFAULT;  // default
@@ -494,9 +493,9 @@ std::string
 PrinterFrame::paperBin(wxPrintBin paperbin_val) const
 {
     // translate char to wxPaperSize
-    for (int i=0; i< PBMAX; i++) {
-        if (paperbinmap[i].paperbin_val == paperbin_val) {
-            return paperbinmap[i].paperbin_name;
+    for (auto const &pb : paperbinmap) {
+        if (pb.paperbin_val == paperbin_val) {
+            return pb.paperbin_name;
         }
     }
 

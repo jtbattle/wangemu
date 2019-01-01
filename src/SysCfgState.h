@@ -23,6 +23,7 @@
 #define _INCLUDE_SYS_CONFIG_STATE_H_
 
 #include "w2200.h"
+#include "Cpu2200.h"
 #include "IoCard.h"
 
 class CardCfgState;
@@ -91,7 +92,7 @@ public:
 
 private:
     // just for debugging -- make sure we don't attempt to use such a config
-    bool m_initialized;
+    bool m_initialized = false;
 
     // -------------- information about slots --------------
     // a list of which cards are plugged into each slot of the IO backplane
@@ -102,11 +103,11 @@ private:
     } m_slot[NUM_IOSLOTS];
 
     // -------------- misc information --------------
-    int  m_cpu_type;         // which CPU type
-    int  m_ramsize;          // amount of memory in CPU
-    bool m_speed_regulated;  // emulation speed throttling
-    bool m_disk_realtime;    // boolean whether disk emulation is realtime or not
-    bool m_warn_io;          // boolean whether to warn on access to invalid IO device
+    int  m_cpu_type        = Cpu2200::CPUTYPE_2200T;  // which CPU type
+    int  m_ramsize         = 32;    // amount of memory in CPU
+    bool m_speed_regulated = true;  // emulation speed throttling
+    bool m_disk_realtime   = true;  // boolean whether disk emulation is realtime or not
+    bool m_warn_io         = true;  // boolean whether to warn on access to invalid IO device
 };
 
 #endif // _INCLUDE_SYS_CONFIG_STATE_H_

@@ -80,7 +80,7 @@ TermMuxCfgHelpDlg::TermMuxCfgHelpDlg(wxWindow *parent)
 
     // make sure the start of text is at the top
     txt->SetInsertionPoint(0);
-    txt->ShowPosition(false);
+    txt->ShowPosition(0);
 
     // make it fill the window, and show it
     wxBoxSizer *sz = new wxBoxSizer(wxVERTICAL);

@@ -27,38 +27,6 @@
 //   public interface
 // =====================================================
 
-// making a valid Wvd is a two step process.  create a container with the
-// default constructor, then call either open() or create() to fill it.
-Wvd::Wvd() :
-    m_file(nullptr),
-    m_metadata_stale(true),
-    m_metadata_modified(false),
-    m_has_path(false),
-    m_path(""),
-    m_label(""),
-    m_disk_type(DISKTYPE_ILLEGAL),
-    m_num_platters(0),
-    m_num_platter_sectors(0),
-    m_write_protect(false)
-{
-    initMembers();
-}
-
-
-// initialize all members to virgin state
-void
-Wvd::initMembers()
-{
-    setPath("");
-    setLabel("");
-    setDiskType(0);
-    setNumPlatters(0);
-    setNumSectors(0);
-    setWriteProtect(false);
-    setModified(false);
-}
-
-
 Wvd::~Wvd()
 {
     close();
@@ -125,7 +93,15 @@ Wvd::close()
         }
         m_file = nullptr;
     }
-    initMembers();
+
+    // reinitialize in case the Wvd object gets recycled
+    setPath("");
+    setLabel("");
+    setDiskType(0);
+    setNumPlatters(0);
+    setNumSectors(0);
+    setWriteProtect(false);
+    setModified(false);
 }
 
 // -------------------------------------------------------------------------

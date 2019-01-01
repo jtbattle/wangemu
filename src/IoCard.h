@@ -33,7 +33,7 @@ class IoCard
 
 public:
     // interface class destructors must be virtual
-    virtual ~IoCard() {};
+    virtual ~IoCard() = default;
 
     // ------------------------ informative ------------------------
 
@@ -127,8 +127,9 @@ public:
     // return true if the argument is a legal card enum
     static bool legalCardType(card_t c) {
         for (auto &ct : card_types) {
-            if (c == ct)
+            if (c == ct) {
                 return true;
+            }
         }
         return false;
     }

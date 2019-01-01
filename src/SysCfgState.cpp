@@ -18,13 +18,7 @@
 // ------------------------------------------------------------------------
 
 // default constructor
-SysCfgState::SysCfgState() :
-    m_initialized(false),
-    m_cpu_type(Cpu2200::CPUTYPE_2200T),
-    m_ramsize(32),
-    m_speed_regulated(true),
-    m_disk_realtime(true),
-    m_warn_io(true)
+SysCfgState::SysCfgState()
 {
     for (auto &slot : m_slot) {
         slot.type     = IoCard::card_t::none;
@@ -205,7 +199,7 @@ SysCfgState::loadIni()
 
         // learn whether CPU speed is regulated or not
         regulateCpuSpeed(true);  // default
-        bool b = host::configReadStr(subgroup, "speed", &sval);
+        const bool b = host::configReadStr(subgroup, "speed", &sval);
         if (b && (sval == "unregulated")) {
             regulateCpuSpeed(false);
         }
@@ -222,7 +216,7 @@ SysCfgState::loadIni()
 
         int io_addr;
         host::configReadInt(subgroup, "addr", &io_addr, -1);  // -1 if not found
-        int b = host::configReadStr(subgroup, "type", &sval);
+        const bool b = host::configReadStr(subgroup, "type", &sval);
         if (b) {
             card_type = CardInfo::getCardTypeFromName(sval);
         }
@@ -230,7 +224,7 @@ SysCfgState::loadIni()
         // TODO: ideally, we'd check the card type against the list of
         //       addresses allowed for that card type
         const bool plausible_card = IoCard::legalCardType(card_type)
-                                 && ((0 <= io_addr)  && (io_addr <= 0xFFF));
+                                 && ((0 <= io_addr) && (io_addr <= 0xFFF));
 
         if (plausible_card) {
             setSlotCardType(slot, card_type);
@@ -302,7 +296,7 @@ SysCfgState::saveIni() const
         auto cpuCfg = system2200::getCpuConfig(m_cpu_type);
         assert(cpuCfg != nullptr);
         std::string cpu_label = cpuCfg->label;
-        host::configWriteStr(subgroup, "cpu", cpu_label.c_str());
+        host::configWriteStr(subgroup, "cpu", cpu_label);
 
         host::configWriteInt(subgroup, "memsize", getRamKB());
 

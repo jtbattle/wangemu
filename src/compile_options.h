@@ -62,9 +62,9 @@
 // UiDiskCtrlCfgDlg.cpp compile-time options
 // ========================================================================
 
-// define to 1 to expose the hacky "auto" disk controller intelligence mode.
+// define to true to expose the hacky "auto" disk controller intelligence mode.
 // the support is always there, this just exposes it or hides it from the UI.
-#define SUPPORT_AUTO_INTELLIGENCE 0
+#define SUPPORT_AUTO_INTELLIGENCE false
 
 // ========================================================================
 // miscellaneous

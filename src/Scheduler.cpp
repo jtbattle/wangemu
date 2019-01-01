@@ -91,7 +91,7 @@ timerTest(void)
 
     for (int n=0; n<100; n++) {
         if (n == 5) {
-            t1->kill();
+            t1 = nullptr;
         }
         test_scheduler.timerTick(1);
     }
@@ -102,11 +102,7 @@ timerTest(void)
 // Scheduler implementation
 // ======================================================================
 
-static const int64 MAX_TIME = (1LL << 62);
-
-Scheduler::Scheduler() :
-    m_time_ns(0),
-    m_trigger_ns(MAX_TIME)
+Scheduler::Scheduler()
 {
 #if TEST_TIMER
     if (this == &test_scheduler) {
@@ -156,7 +152,7 @@ Scheduler::firstEvent() noexcept
 // the m_trigger_ns threshold has been exceeded.  check all timers and invoke
 // callback all those which have expired.
 // this shouldn't need to be called very frequently.
-void Scheduler::creditTimer(void)
+void Scheduler::creditTimer()
 {
     if (m_timer.empty()) {
         // don't trigger this fcn again until there is real work to do

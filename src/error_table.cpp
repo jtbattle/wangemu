@@ -1369,7 +1369,7 @@ const std::vector<error_table_t> error_table_vp = {
 // -------------------------------------------------------------------------
     {
     /*err code*/            "P40",
-    /*err msg*/             "NO CORRESPONDING \"FOR\" FOR \"NEXT\" STATEMENT",
+    /*err msg*/             R"(NO CORRESPONDING "FOR" FOR "NEXT" STATEMENT)",
     /*cause*/               "There is no companion FOR statement for a NEXT statement, or a branch was\nmade into the middle of a FOR/NEXT Loop.",
     /*recovery*/            "Correct the program.",
     /*dummy*/               nullptr,
