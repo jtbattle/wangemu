@@ -170,7 +170,7 @@ if 0:
     term.at(0,20).box(25,2)
     term.read(1)
 
-if 1:
+if 0:
     # blink w/ intense test
     term.clear().attrUse()
     term.attrUse().send("Normal intensity, no blink, normal  video, no underline --> ").attrUse(blink=0, bright=0, under=0, inv=0).sendline("TEST STRING")
@@ -192,18 +192,6 @@ if 1:
     term.attrUse().send("High   intensity, blinking, reverse video, no underline --> ").attrUse(blink=1, bright=1, under=0, inv=1).sendline("TEST STRING")
     term.attrUse().send("High   intensity, blinking, normal  video,    underline --> ").attrUse(blink=1, bright=1, under=1, inv=0).sendline("TEST STRING")
     term.attrUse().send("High   intensity, blinking, reverse video,    underline --> ").attrUse(blink=1, bright=1, under=1, inv=1).sendline("TEST STRING")
-
-if 0:
-    # blink w/ intense test
-    term.clear().attrUse()
-    term.attrUse().send("Normal intensity, no blink, normal  video --> ").attrUse(bright=0, blink=0, inv=0).sendline("TEST STRING")
-    term.attrUse().send("Normal intensity, no blink, reverse video --> ").attrUse(bright=0, blink=0, inv=1).sendline("TEST STRING")
-    term.attrUse().send("High   intensity, no blink, normal  video --> ").attrUse(bright=1, blink=0, inv=0).sendline("TEST STRING")
-    term.attrUse().send("High   intensity, no blink, reverse video --> ").attrUse(bright=1, blink=0, inv=1).sendline("TEST STRING")
-    term.attrUse().send("Normal intensity, blinking, normal  video --> ").attrUse(bright=0, blink=1, inv=0).sendline("TEST STRING")
-    term.attrUse().send("Normal intensity, blinking, reverse video --> ").attrUse(bright=0, blink=1, inv=1).sendline("TEST STRING")
-    term.attrUse().send("High   intensity, blinking, normal  video --> ").attrUse(bright=1, blink=1, inv=0).sendline("TEST STRING")
-    term.attrUse().send("High   intensity, blinking, reverse video --> ").attrUse(bright=1, blink=1, inv=1).sendline("TEST STRING")
 
 if 0:
     # attribute vs overlay testing
@@ -385,7 +373,34 @@ if 0:
         if n%16 == 15:
             term.sendhex('0d0a')
 
+# what happens with illegal escape sequences?  are they swallowed?
+# sent through?  partially sent through?
+if 1:
+    term.clear()
+    term.sendline("Illegal escape sequence testing")
+    term.send("OK  020400000E:").sendhex("020400000E").sendline(":done")  # --> OK  020400000E::
+    term.send("OK  020400000E:").sendhex("020400020E").sendline(":done")  # --> OK  020400020E::  (inverse :done)
+    term.attrOff()
+    term.send("BAD 020441420E:").sendhex("020441420E").sendline(":done")  # --> BAD 020441420E:AB:  (:AB is also inverse) ...
+    # ... interestingly, the 0E above is interpreted to mean "turn prev attr back on"
+    term.send("BAD 020402070E:").sendhex("020402070E").sendline(":done")  # --> BAD 020402070E::done  (no attr, no beep)
+    term.send("BAD 020300000E:").sendhex("020030000E").sendline(":done")  # --> BAD 020300000E::done  (no attr, didn't clear screen)
+    # conclusion:
+    # 1. any non-control character will cause accumulated command to be ignored
+    #    and the non-control character will be sent through.
+    #    Actually that is not right as later tests show.
+    term.send("OK  020400000E:").sendhex("020400020E").sendline(":done")  # --> OK  020400020E::  (inverse :done)
+    term.attrOff()
+    term.send("BAD 0204020207:").sendhex("0204020207").sendline(":xxxx")  # --> BAD 0204020207: (and nothing else)
+    # ... the ":xxxx" and the CR/LF at end of line were swallowed!
+    term.attrOff()
+    term.send("OK  020400000E:").sendhex("020400020E").sendline(":done")  # --> OK  020400020E::  (inverse :done)
+    term.attrOff()
+    term.send("BAD 0204020200000703010E:").sendhex("0204020200000703010E").sendline(":done")  # --> BAD 0204020207: (and nothing else)
+    term.attrOff()
+    term.sendline("here is a whole bunch of normal text")  # not even this shows up
+
 term.cursor('on').charset1().attrOff()
-term.sendline("done!")
+term.sendline("complete!")
 
 del term

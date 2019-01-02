@@ -19,6 +19,10 @@
 //     empty. I guess this is a robustness feature to even if the first CRT-GO
 //     gets dropped a later one will get things going again.  that is less
 //     important in the emulator where line loss is not a possibility.
+//   - I did a little experimenting with a real 2336, but what should happen
+//     if an illegal escape sequence is received? it isn't documented and
+//     in my limited testing, really unexpected things can happen (like the
+//     parser swallowing all subsequent input, includingn printable chars).
 
 #include "IoCardKeyboard.h"
 #include "IoCardTermMux.h"
@@ -729,6 +733,13 @@ Terminal::processCrtChar2(uint8 byte)
 
     assert(m_input_cnt < sizeof(m_input_buf));
 
+    // it isn't documented, but from experimentation, non-control characters
+    // following an 02... sequence will abort the sequence and that character
+    // gets sent through.
+    if (byte >= 0x10) {
+        m_input_cnt = 0;
+    }
+
     if (m_input_cnt == 0) {
         switch (byte) {
         case 0x02:  // character attribute, draw/erase box
@@ -772,7 +783,7 @@ Terminal::processCrtChar2(uint8 byte)
     }
     // unrecognized 02 05 xx sequence
     if (m_input_cnt == 3 && m_input_buf[1] == 0x05) {
-        // TODO: just ignore?
+        // ignore it
         m_input_cnt = 0;
         return;
     }
@@ -795,30 +806,33 @@ Terminal::processCrtChar2(uint8 byte)
     }
     // unrecognized 02 02 xx yy sequence
     if (m_input_cnt == 4 && m_input_buf[1] == 0x02) {
-        // TODO: just ignore?
+        // ignore it
         m_input_cnt = 0;
         return;
     }
 
     // defined attributes, possibly enabling them: 02 04 xx yy {0E|0F}
+    // experimenting with a 2336, the actual behavior is more complex.
+    // the command stream parser seems to keep accepting characters
+    // until an 0E or 0F
     if (m_input_cnt == 3 && m_input_buf[1] == 0x04) {
         if (m_input_buf[2] != 0x00 && m_input_buf[2] != 0x02 &&
             m_input_buf[2] != 0x04 && m_input_buf[2] != 0x0B) {
-            m_input_cnt = 0;  // TODO: ignore?
+            m_input_cnt = 0;  // ignore it
         }
         return;
     }
     if (m_input_cnt == 4 && m_input_buf[1] == 0x04) {
         if (m_input_buf[3] != 0x00 && m_input_buf[3] != 0x02 &&
             m_input_buf[3] != 0x04 && m_input_buf[3] != 0x0B) {
-            m_input_cnt = 0;  // TODO: ignore?
+            m_input_cnt = 0;  // ignore it
         }
         return;
     }
     if (m_input_cnt == 5 && m_input_buf[1] == 0x04) {
         m_input_cnt = 0;
         if (m_input_buf[4] != 0x0E && m_input_buf[4] != 0x0F) {
-            return;  // TODO: ignore?
+            return;  // ignore it
         }
         m_attrs &= ~(char_attr_t::CHAR_ATTR_BRIGHT |
                      char_attr_t::CHAR_ATTR_BLINK  |
@@ -858,7 +872,7 @@ Terminal::processCrtChar2(uint8 byte)
     // 02 08 xx yy is otherwise undefined
     if (m_input_cnt == 4 && m_input_buf[1] == 0x08) {
         m_input_cnt = 0;
-        return;  // TODO: ignore it?
+        return;  // ignore it
     }
 
     // draw/erase box mode
@@ -869,7 +883,7 @@ Terminal::processCrtChar2(uint8 byte)
         if (m_input_buf[2] != 0x02 && m_input_buf[2] != 0x0B) {
             // must start either 02 0B 02, or 02 0B 0B
             m_input_cnt = 0;
-            return;  // TODO: ignore it?
+            return;  // ignore it
         }
         // this flag is used during 08 sub-commands
         // we draw the bottom only if we've seen a previous 0B command
@@ -914,7 +928,7 @@ Terminal::processCrtChar2(uint8 byte)
                 m_input_cnt = 0;
                 return;
             default:
-                // TODO: just ignore error and drop out of box mode?
+                // just ignore error and drop out of box mode
                 m_input_cnt = 0;
                 return;
         }
@@ -929,13 +943,13 @@ Terminal::processCrtChar2(uint8 byte)
     if (m_input_cnt == 3 && m_input_buf[1] == 0x0D
                          && m_input_buf[2] != 0x0C) {
         m_input_cnt = 0;
-        return; // TODO: just ignore it?
+        return; // ignore it
     }
     if (m_input_cnt == 4 && m_input_buf[1] == 0x0D
                          && m_input_buf[2] == 0x0C
                          && m_input_buf[3] != 0x03) {
         m_input_cnt = 0;
-        return; // TODO: just ignore it?
+        return; // ignore it
     }
     if (m_input_cnt == 5 && m_input_buf[1] == 0x0D
                          && m_input_buf[2] == 0x0C
@@ -950,7 +964,7 @@ Terminal::processCrtChar2(uint8 byte)
 
     if (m_input_cnt >= 5) {
         m_input_cnt = 0;
-        return; // TODO: just ignore it?
+        return; // ignore it
     }
 }
 
