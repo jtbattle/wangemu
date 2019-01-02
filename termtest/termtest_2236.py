@@ -170,6 +170,29 @@ if 0:
     term.at(0,20).box(25,2)
     term.read(1)
 
+if 1:
+    # blink w/ intense test
+    term.clear().attrUse()
+    term.attrUse().send("Normal intensity, no blink, normal  video, no underline --> ").attrUse(blink=0, bright=0, under=0, inv=0).sendline("TEST STRING")
+    term.attrUse().send("Normal intensity, no blink, reverse video, no underline --> ").attrUse(blink=0, bright=0, under=0, inv=1).sendline("TEST STRING")
+    term.attrUse().send("Normal intensity, no blink, normal  video,    underline --> ").attrUse(blink=0, bright=0, under=1, inv=0).sendline("TEST STRING")
+    term.attrUse().send("Normal intensity, no blink, reverse video,    underline --> ").attrUse(blink=0, bright=0, under=1, inv=1).sendline("TEST STRING")
+                                                                                                         
+    term.attrUse().send("High   intensity, no blink, normal  video, no underline --> ").attrUse(blink=0, bright=1, under=0, inv=0).sendline("TEST STRING")
+    term.attrUse().send("High   intensity, no blink, reverse video, no underline --> ").attrUse(blink=0, bright=1, under=0, inv=1).sendline("TEST STRING")
+    term.attrUse().send("High   intensity, no blink, normal  video,    underline --> ").attrUse(blink=0, bright=1, under=1, inv=0).sendline("TEST STRING")
+    term.attrUse().send("High   intensity, no blink, reverse video,    underline --> ").attrUse(blink=0, bright=1, under=1, inv=1).sendline("TEST STRING")
+                                                                                                         
+    term.attrUse().send("Normal intensity, blinking, normal  video, no underline --> ").attrUse(blink=1, bright=0, under=0, inv=0).sendline("TEST STRING")
+    term.attrUse().send("Normal intensity, blinking, reverse video, no underline --> ").attrUse(blink=1, bright=0, under=0, inv=1).sendline("TEST STRING")
+    term.attrUse().send("Normal intensity, blinking, normal  video,    underline --> ").attrUse(blink=1, bright=0, under=1, inv=0).sendline("TEST STRING")
+    term.attrUse().send("Normal intensity, blinking, reverse video,    underline --> ").attrUse(blink=1, bright=0, under=1, inv=1).sendline("TEST STRING")
+                                                                                                         
+    term.attrUse().send("High   intensity, blinking, normal  video, no underline --> ").attrUse(blink=1, bright=1, under=0, inv=0).sendline("TEST STRING")
+    term.attrUse().send("High   intensity, blinking, reverse video, no underline --> ").attrUse(blink=1, bright=1, under=0, inv=1).sendline("TEST STRING")
+    term.attrUse().send("High   intensity, blinking, normal  video,    underline --> ").attrUse(blink=1, bright=1, under=1, inv=0).sendline("TEST STRING")
+    term.attrUse().send("High   intensity, blinking, reverse video,    underline --> ").attrUse(blink=1, bright=1, under=1, inv=1).sendline("TEST STRING")
+
 if 0:
     # blink w/ intense test
     term.clear().attrUse()
@@ -354,7 +377,7 @@ if 0:
     #  2: turning the cursor on forces blink off
 
 # character set
-if 1:
+if 0:
     term.clear()
     term.sendline("Character set")
     for n in range(16,256):

@@ -322,7 +322,7 @@ Crt::generateFontmap()
     if (m_crt_state->screen_type == UI_SCREEN_2236DE) {
         // diminish normal to differentiate it from bright intensity
         norm = wxColor(0x70, 0x70, 0x70);  // only blue channel is used
-        f_norm = 160.0f/255.0f;
+        f_norm = 140.0f/255.0f;
     }
 
     // mapping from filtered image intensity to a color
@@ -604,22 +604,33 @@ Crt::generateScreenByBlits(wxMemoryDC &memDC)
         if (m_crt_state->screen_type == UI_SCREEN_2236DE) {
 
             for (int col=0; col<m_crt_state->chars_w; ++col) {
-                const uint8 chr    = m_crt_state->display[row*m_crt_state->chars_w + col];
-                const uint8 attr   = m_crt_state->attr[row*m_crt_state->chars_w + col];
-                const bool  blink  = ((attr & char_attr_t::CHAR_ATTR_BLINK)  != 0) ? true : false;
-                const int   alt    = ((attr & char_attr_t::CHAR_ATTR_ALT)    != 0) ? 4 : 0;
-                const int   inv    = ((attr & char_attr_t::CHAR_ATTR_INV)    != 0) ? 2 : 0;
-                      int   bright = ((attr & char_attr_t::CHAR_ATTR_BRIGHT) != 0) ? 1 : 0;
+                const uint8 chr  = m_crt_state->display[row*m_crt_state->chars_w + col];
+                const uint8 attr = m_crt_state->attr[row*m_crt_state->chars_w + col];
+                const bool attr_blink  = ((attr & char_attr_t::CHAR_ATTR_BLINK)  != 0);
+                const bool attr_alt    = ((attr & char_attr_t::CHAR_ATTR_ALT)    != 0);
+                const bool attr_inv    = ((attr & char_attr_t::CHAR_ATTR_INV)    != 0);
+                const bool attr_bright = ((attr & char_attr_t::CHAR_ATTR_BRIGHT) != 0);
 
-                // blinking alternates between normal and bright intensity
-                // but intense text can't blink because it is already intense
-                if (text_blink_enable && blink) {
-                    bright = 1;
+                // 2236DE_TerminalUserManual.700-5711B.6-81.pdf, page 3.4 (pdf page 24)
+                // "Note that there are two ways to code the attribute "blinking".
+                // However, on the Model 2236DE, blinking normal intensity and blinking
+                // high intensity characters both appear as blinking, high intensity."
+                // The circuit only has three video levels (not counting sync):
+                //     off, normal, bright
+                // So what this really means is (high intensity + blink) and
+                // (normal intensity + blink) just cycle between normal and high.
+
+                int font_offset = (attr_alt ? 4 : 0)
+                                + (attr_inv ? 2 : 0);
+                if (!attr_blink) {
+                    font_offset += (attr_bright ? 1 : 0);
+                } else {
+                    font_offset += (text_blink_enable) ? 1 : 0;
                 }
 
-                if ((chr != 0x20) || (inv != 0)) {
+                if ((chr != 0x20) || attr_inv) {
                     // if (non-blank character)
-                    const int font_row = m_charcell_h * (alt + inv + bright);
+                    const int font_row = m_charcell_h * font_offset;
                     memDC.Blit(col*m_charcell_w, row*m_charcell_h,  // dest x,y
                                m_charcell_w, m_charcell_h,          // w,h
                                &font_map_dc,                        // src image
@@ -822,18 +833,21 @@ Crt::generateScreenByRawBmp(wxColor fg, wxColor bg)
             TT_t::Iterator cp(raw_font);
             cp.OffsetX(raw_font, m_charcell_w * ch);
 
-            bool blink  = (attr & char_attr_t::CHAR_ATTR_BLINK)  ? true : false;
-            int  alt    = (attr & char_attr_t::CHAR_ATTR_ALT)    ? 4 : 0;
-            int  inv    = (attr & char_attr_t::CHAR_ATTR_INV)    ? 2 : 0;
-            int  bright = (attr & char_attr_t::CHAR_ATTR_BRIGHT) ? 1 : 0;
+            const bool attr_blink  = ((attr & char_attr_t::CHAR_ATTR_BLINK)  != 0);
+            const bool attr_alt    = ((attr & char_attr_t::CHAR_ATTR_ALT)    != 0);
+            const bool attr_inv    = ((attr & char_attr_t::CHAR_ATTR_INV)    != 0);
+            const bool attr_bright = ((attr & char_attr_t::CHAR_ATTR_BRIGHT) != 0);
 
-            // blinking alternates between normal and bright intensity
-            // but intense text can't blink because it is already intense
-            if (text_blink_enable && blink) {
-                bright = 1;
+            // see comment in generateScreenByBlits() for why this is done
+            int font_offset = (attr_alt ? 4 : 0)
+                            + (attr_inv ? 2 : 0);
+            if (!attr_blink) {
+                font_offset += (attr_bright ? 1 : 0);
+            } else {
+                font_offset += (text_blink_enable) ? 1 : 0;
             }
 
-            int font_row = m_charcell_h * (alt + inv + bright);
+            int font_row = m_charcell_h * font_offset;
             cp.OffsetY(raw_font, font_row);
 
             for (int rr=0; rr<m_charcell_h; ++rr) {

@@ -2,20 +2,7 @@
 Emulator TODO list
 ============================================================================
 
-*) the aaa_attribute.w22 script
-    half of the results should be blinking, but only 4 of 16 are.
-    double check what is going on.  maybe certain attribute combinations
-    don't blink.  specifically, bright+blink is just bright w/no blink.
-
-    2236DE_TerminalUserManual.700-5711B.6-81.pdf, page 3.4 (pdf page 24)
-    "Note that there are two ways to code the attribute "blinking".
-    However, on the Model 2236DE, blinking normal intensity and blinking
-    high intensity characters both appear as blinking, high intensity."
-
-    For that matter, double check my logic around the handling of the
-    0E and 0F codes (pdf page 29+)
-
-*) test some corner case on the real terminal
+*) test some corner cases on the real terminal
    what happens if there is an incorrect escape sequence?
    at what point are the bytes swallowed, or are they passed through?
 
@@ -35,6 +22,9 @@ Emulator TODO list
 *) None of the recent changes has been compiled on OSX, so there will
    be problems.  Once the code is somewhat stable under windows,
    build it on OSX and iron out the problems.
+
+   related: test if DRAW_WITH_RAWBMP (compile_options.h) makes a perf
+            difference (in prev release, it helped mac, hurt pc)
 
 *) In MXD mode, TAB means TAB (2236DW) or FN (2236DE) (instead of STMT).
    The help page should be updated to indicate this.
@@ -119,12 +109,6 @@ Emulator TODO list
 ----------------------------------------------------------------------------
 small issues that it would be nice to figure out, but aren't release blockers
 ----------------------------------------------------------------------------
-
-*) MXD mode, VP OS 2.4 and EDIT/RECALL works as expected -- EDIT causes
-   a leading "*".
-   But MVP OS 3.5, EDIT doesn't show the "*", though recall does recall.
-   Is that an OS thing or a bug in the emulator?
-   MVP OS 2.6.2 is the same as 3.5.
 
 *) when running diagnostics on MVP OS 3.4, the data memory test identifies
    the CPU as VLSI-1 even though I thought I was modeling the MVP-C.

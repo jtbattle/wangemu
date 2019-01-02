@@ -167,7 +167,9 @@ Terminal::resetCrt()
         m_kb_recent = {};
     }
 
-    m_attrs      = char_attr_t::CHAR_ATTR_BRIGHT; // implicitly primary char set
+    // on reset, the unit defaults to all attributes off, but the saved
+    // "previous attributes" state, activated by a lone HEX(0E) is "bright".
+    m_attrs      = char_attr_t::CHAR_ATTR_BRIGHT;
     m_attr_on    = false;
     m_attr_temp  = false;
     m_attr_under = false;
