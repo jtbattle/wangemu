@@ -799,6 +799,12 @@ Cpu2200vp::Cpu2200vp(std::shared_ptr<Scheduler> scheduler,
         }
     }
 #endif
+    // init these here to avoid a harmless "uninitialized read" of the bsr
+    // register, which happens because reset calls updateBankOffset(),
+    // which reads both of those registers, so no matter which one is
+    // written first, one will fire a warning.
+    m_cpu.sl  = 0x00;
+    m_cpu.bsr = 0x00;
 
     reset(true);
 }
