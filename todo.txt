@@ -2,6 +2,13 @@
 Emulator TODO list
 ============================================================================
 
+*) None of the recent changes has been compiled on OSX, so there will
+   be problems.  Once the code is somewhat stable under windows,
+   build it on OSX and iron out the problems.
+
+   related: test if DRAW_WITH_RAWBMP (compile_options.h) makes a perf
+            difference (in prev release, it helped mac, hurt pc)
+
 *) Document in the keyboard help file there are some new keys
      Shift-Alt-R is hard reset  (changed)
      Shift-Alt-W is warm reset  (changed)
@@ -9,18 +16,6 @@ Emulator TODO list
      Down arrow is S.F. 05 (down a screen line)
      Ctrl-Left arrow is S.F. 07 (start of line)
      Ctrl-Right arrow is S.F. 04 (end of line)
-
-*) do a memory leak check once in a while
-
-    - installed Dr. Memory, seems easy to use, no source changes and does
-      much more than just detecting leaks.  http://www.drmemory.org/
-
-*) None of the recent changes has been compiled on OSX, so there will
-   be problems.  Once the code is somewhat stable under windows,
-   build it on OSX and iron out the problems.
-
-   related: test if DRAW_WITH_RAWBMP (compile_options.h) makes a perf
-            difference (in prev release, it helped mac, hurt pc)
 
 *) In MXD mode, TAB means TAB (2236DW) or FN (2236DE) (instead of STMT).
    The help page should be updated to indicate this.
@@ -318,9 +313,10 @@ release checklist (roughly in this order)
     - disks/...
     - scripts/...
     - wvdutil/...
+- update UiMyAboutDlg.cpp release version, date, and credits
 - package for windows
 - package for mac
-- unpackage on clean windows & mac machines and very emu works
+- unpackage on clean windows & mac machines and verify emu works
 - update the website
 - archive a snapshot
 - to prevent confusion, immediately update the UiMyAboutDlg.cpp

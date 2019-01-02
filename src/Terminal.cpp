@@ -713,13 +713,13 @@ Terminal::processCrtChar1(uint8 byte)
         return;
     }
 
-    // TODO: what should happen with illegal sequences?
-    // for now, I'm passing them through
+    // what should happen with illegal sequences?
 #ifdef _DEBUG
     dbglog("Unexpected sequence: 0x%02x 0x%02x\n", m_raw_buf[0], m_raw_buf[1]);
 #endif
-    processCrtChar2(m_raw_buf[0]);
-    processCrtChar2(m_raw_buf[1]);
+    // for now, I'm dropping them
+    //processCrtChar2(m_raw_buf[0]);
+    //processCrtChar2(m_raw_buf[1]);
     m_raw_cnt = 0;
 }
 
@@ -754,12 +754,10 @@ Terminal::processCrtChar2(uint8 byte)
         case 0x0E:  // enable attributes
             m_attr_on   = false;  // after 04 xx yy 0E, 0E changes to temp mode?
             m_attr_temp = true;
-//          UI_info("attrs: 0E --> %02x, %d", m_attrs, m_attr_under);
             return;
         case 0x0F:  // disable attributes
             m_attr_on   = false;
             m_attr_temp = false;
-//          UI_info("attrs: 0F");
             return;
         default:
             // pass through
