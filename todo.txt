@@ -3,8 +3,7 @@ Emulator TODO list
 ============================================================================
 
 *) None of the recent changes has been compiled on OSX, so there will
-   be problems.  Once the code is somewhat stable under windows,
-   build it on OSX and iron out the problems.
+   be problems.  Build the emulator on OSX and iron out the problems.
 
    related: test if DRAW_WITH_RAWBMP (compile_options.h) makes a perf
             difference (in prev release, it helped mac, hurt pc)

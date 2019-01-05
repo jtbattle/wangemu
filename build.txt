@@ -1,6 +1,6 @@
 ============================================================================
-		      Wang 2200 emulator build notes, v2.2
-                               November 18, 2018
+		      Wang 2200 emulator build notes, v3.0
+                                January 4, 2018
 ============================================================================
 
 The typical user of wangmu has no need to know any of this.  However, if you
@@ -24,7 +24,7 @@ an explicit mouse-click-by-mouse-click cookbook.
 
 2) Get the wxWidgets library source code
 
-   Version 2.2 of WangEmu was built using wx version 3.1.1.  If you download
+   Version 3.0 of WangEmu was built using wx version 3.1.2.  If you download
    a later version of wxWidgets, there may be issues, as the wx developers
    do tend to make a few backward-incompatible changes each release.
 
@@ -33,9 +33,9 @@ an explicit mouse-click-by-mouse-click cookbook.
 3) Unpack the wxWidgets source code
 
    Personally, I override the default install location and instead unpack
-   it into C:\libs\wx-3.1.1 (for release 3.1.1).  This isn't strictly
+   it into C:\libs\wx-3.1.2 (for release 3.1.2).  This isn't strictly
    necessary, but future examples in this document assumes things were
-   installed into C:\libs\wx-3.1.1.  Adjust future comments if you install
+   installed into C:\libs\wx-3.1.2.  Adjust future comments if you install
    somewhere else.
 
 4) Tweak setup.h (strictly optional)
@@ -44,7 +44,7 @@ an explicit mouse-click-by-mouse-click cookbook.
    the wx build features, like additional malloc debugging, now is the time
    to do it.
 
-   cd C:\libs\wx-3.1.1\include\wx\msw
+   cd C:\libs\wx-3.1.2\include\wx\msw
 
    Edit the file "setup.h" to tweak whatever options you need.  Only do
    this if you know your way around wxWidgets.  The stock setup.h will
@@ -56,7 +56,7 @@ an explicit mouse-click-by-mouse-click cookbook.
    only the way I do it.  This worked for MSVC 2017 Community Edition:
 
    5a) Launch a command line shell from MSVC compiler
-   5b) type "set WXWIN=c:\libs\wx-3.1.1"  (change to your appropriate path)
+   5b) type "set WXWIN=c:\libs\wx-3.1.2"  (change to your appropriate path)
    5c) type "cd %WXWIN\build\msw"
    5d) type "nmake -f makefile.vc"
        and wait 10 minutes
@@ -106,7 +106,7 @@ an explicit mouse-click-by-mouse-click cookbook.
    7a) set the shell environment variable WXWIN to point to wherever you
        installed the wxwindows library.  This should be the path up to the
        root of that tree.  In my case, it is
-            set WXWIN="C:\libs\wx-3.1.1"
+            set WXWIN="C:\libs\wx-3.1.2"
    7b) Fire up the compiler
    7c) Select File -> Open -> Project/Solution ...
    7d) You are facing a file dialog box.  Navigate over to wangemu.sln,
