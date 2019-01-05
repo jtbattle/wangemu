@@ -20,67 +20,6 @@ Emulator TODO list
 *) In MXD mode, TAB means TAB (2236DW) or FN (2236DE) (instead of STMT).
    The help page should be updated to indicate this.
 
-*) add disk unit addressing cheatsheet?  I have forgotten the ins and outs.
-    3xx
-    Bxx
-    Dxx
-    F vs R vs T
-
-    page 12-18 of MultiuserBasic2RefManual.700-4080F.3-91.pdf says this:
-      platter specification: T indicates that the disk address itself specifies
-      which disk in the disk unit is to be used.  T must be used whenever device
-      type Dxx is used to access a disk.  In most statements, platter
-      specifications F and R are supported for compatibility with older
-      versions of BASIC-2 and Wang BASIC when using device type 3xx or Bxx.
-
-    page 1-2 etc of WangBasic2DiskRefManual.700-3081G.6-81.pdf has a table
-
-        MODEL      PLATTER       DEVICE ADDRESS
-        ---------  -----------   ---------------
-        2280-1     Removable     D10 (or B10)*
-                   Fixed         D11 (or 310)
-
-        2280-2     Removable     D10 (or B10)
-                   First Fixed   D11 (or 310)
-                   Second Fixed  D12
-                   Third  Fixed  D13
-
-        2280-3     Removable     D10 (or B10)
-                   First Fixed   D11 (or 310)
-                   Second Fixed  D12
-                   Third  Fixed  D13
-                   Fourth Fixed  D14
-                   Fifth  Fixed  D15
-
-    page 1-5 of the same manual says
-
-        The slave drive in a Model 2260C-2, 2260BC-2 or 2280 dual drive system
-        is treated much the same as the third drive in the Model 2270-3.
-        Although it is functionally an extention of the Master drive, it is
-        assigned a separate address which is always HEX(40) greater than the
-        address of the Master disk.  If the Master drive's default address is
-        310, the address of the Slave drive would be 350; if the address of the
-        Master drive is 320, the address of the Slave drive is 360, etc.
-        As an example, for the 2260C-2 or 2260BC-2, statement 10 below accesses
-        the fixed platter in the Slave drive assuming that the primary address
-        in the Master drive is the default address, 310.
-            10 SAVE F/350, "FILE4"
-        The statement 10 below accesses the first platter of the Slave drive in
-        a 2280 dual drive system.
-            10 SAVE T/D51, "FILE6"
-
-    via experimenting of LIST DCT/blah
-
-        LIST DCT/310  ==  LIST DCF/310
-        LIST DCT/B10  ==  LIST DCR/310
-        LIST DCT/320  ==  LIST DCF/320
-        LIST DCT/B20  ==  LIST DCR/320
-
-        LIST DCT/D10  ==  LIST DCR/310
-        LIST DCT/D11  ==  LIST DCF/310
-        LIST DCT/D20  ==  LIST DCR/320
-        LIST DCT/D21  ==  LIST DCF/320
-
 *) update the website (and build notes) with directions on how to make
    the thing such that it doesn't have DLL dependencies.  What a mess.
       1) declare "_BIND_TO_CURRENT_CRT_VERSION=1" in the wx libs that

@@ -1,4 +1,3 @@
-
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
@@ -50,6 +49,7 @@ Here are the topics explained on this page.
     <li><a href="#save">Save a Program to Disk</a></li>
     <li><a href="#erase">Erase a Program from the Disk</a></li>
     <li><a href="#housekeeping">Housekeeping</a></li>
+    <li><a href="#addressing">Disk Addressing</a></li>
 </ul>
 
 <p>
@@ -417,10 +417,185 @@ to another disk in the second drive, issue the command
 <p class="code">COPY FR(0,1023)</p>
 <p class="code">COPY RF(0,1023)</p>
 
+<h2><a name="addressing">Disk Addressing</a></h2>
+
+<p>
+When Wang BASIC was created in the early 70s, disk drive capacity was low.
+Floppy disks had about 1000 sectors, and hard disks had about 10,000 (2.5MB)
+or 20,000 (5MB).  Wang was smart and had a high level protocol between the
+CPU and the disk drive, which meant they could make a wide range of disk
+drives that could plug and play with the same CPU without requiring custom
+drivers and whatnot.  This was important because Wang BASIC was burned into
+custom ROMs and were not easily field upgradable.
+</p>
+
+<p>
+A given disk controller could support up to four disk drives, and system
+could support up to three disk controllers.  Because the first generation
+of disk drives had one non-removable disk platter (the fixed disk) and one
+removable platter, DCF (fixed) and DCR (removable) were used to distinguish
+between a pair of drives.  These names, however, quickly became anachronistic.
+The 0x40 bit of the device address was used to distinguish between the primary
+and secondary pair of drives connected to a given controller.
+</p>
+
+<table>
+<thead>
+    <tr>
+        <td>Device address</td>
+        <td>First drive</td>
+        <td>Second drive</td>
+        <td>Third drive</td>
+        <td>Fourth drive</td>
+    </tr>
+</thead>
+<tbody>
+    <tr>
+        <td>0x10</d>
+        <td>DCF/310</td>
+        <td>DCR/310</td>
+        <td>DCF/350</td>
+        <td>DCR/350</td>
+    </tr>
+    <tr>
+        <td>0x20</d>
+        <td>DCF/320</td>
+        <td>DCR/320</td>
+        <td>DCF/360</td>
+        <td>DCR/360</td>
+    </tr>
+    <tr>
+        <td>0x30</d>
+        <td>DCF/330</td>
+        <td>DCR/330</td>
+        <td>DCF/370</td>
+        <td>DCR/370</td>
+    </tr>
+</tbody>
+</table>
+
+<p>
+Note the device address is specified as /xyz.  The actual device address of
+a disk controller is limited to be hex 10, 20, or 30; this is the "yz" part
+above (modulo the 0x40 bit, which distinguishes between drive pairs).  What
+is the "x" part?  Conceptually it is a device type (eg, "3" means disk
+device, "2" means printer, etc).  But in practice, Wang BASIC wasn't too
+picky.  That is, although "DCF/310" was the canonical way of addressing the
+first drive of the first controller, DCF/... and DCR/... ignored the first
+digit.  "DCF/010", "DCF/110", "DCF/210", ..., "DCF/F10" all mean the same thing.
+However, there is also no advantage to using something else, and everybody
+simply used /3xy.
+</p>
+
+<p>
+Although using a high level disk protocol was smart, Wang was dumb in that
+the sector addresses used by that protocol were limited to 15 bits, which
+meant a given disk could support a maximum of 32768 sectors, or 8 MB. Very
+quickly that became a problem.
+Rather than switching to a 24 bit sector address in their protocol (which
+they did do, eventually), Wang's engineers made another hack that, at least
+in the short term, solved two problems.
+</p>
+
+<p>
+Another designator, "DCT", was added.  With this parameter, the specified
+address supplied all the information not only to address a given drive
+uniquely, but to address multiple platters on a given drive.
+Whereas the device type digit (the "3" in /310) didn't mean anything when
+using DCF/310 and DCR/310, for DCT/xyz, that first digit is meaningful
+with DCT.
+</p>
+
+<p>
+DCT/3xy means access the "fixed" disk at device address xy,
+and DCT/Bxy means access the "removable" disk at device address xy.
+That is DCT/3xy is identical to DCF/3xy, and DCT/Bxy is synonymous with
+DCR/3xy.  That means any drive could be selected by changing only the
+device address, and not having to also twiddle the "F" vs "R" parameter.
+</p>
+
+<p>
+But even more importantly, the form DCT/Dxy was used to address the
+controller at device address x0, platter "y".  For example, "DCT/D13" means
+address the controller at address 10, platter 3. That meant drives of up to
+16 platters could be supported, allowing one drive to have up to 128 MB.
+</p>
+
+<p>
+Here is a revised table showing both the DCF/DCR addressing style and,
+on the next line, the DCT-equivalent.
+</p>
+
+<table>
+<thead>
+    <tr>
+        <td>Device address</td>
+        <td>First drive</td>
+        <td>Second drive</td>
+        <td>Third drive</td>
+        <td>Fourth drive</td>
+    </tr>
+</thead>
+<tbody>
+    <tr>
+        <td>0x10</td>
+        <td>DCF/310</td>
+        <td>DCR/310</td>
+        <td>DCF/350</td>
+        <td>DCR/350</td>
+    </tr>
+    <tr>
+        <td></td>
+        <td>DCT/310</td>
+        <td>DCT/B10</td>
+        <td>DCT/350</td>
+        <td>DCT/B50</td>
+    </tr>
+    <tr>
+        <td>0x20</td>
+        <td>DCF/320</td>
+        <td>DCR/320</td>
+        <td>DCF/360</td>
+        <td>DCR/360</td>
+    </tr>
+    <tr>
+        <td></td>
+        <td>DCT/320</td>
+        <td>DCT/B20</td>
+        <td>DCT/360</td>
+        <td>DCT/B60</td>
+    </tr>
+    <tr>
+        <td>0x30</td>
+        <td>DCF/330</td>
+        <td>DCR/330</td>
+        <td>DCF/370</td>
+        <td>DCR/370</td>
+    </tr>
+    <tr>
+        <td></td>
+        <td>DCT/330</td>
+        <td>DCT/B30</td>
+        <td>DCT/370</td>
+        <td>DCT/B70</td>
+    </tr>
+</tbody>
+</table>
+
+<p>
+The <a href="http://wang2200.org/docs/language/2200_DiskMemoryRefManual.700-3159G.8-77.pdf">
+2200 Disk Memory Reference Manual</a>, Chapter 6, especially section 6.7, describes the use
+of the DCT parameter in detail.
+</p>
+
+<table>
+
+</table>
+
 </div>
 
 <div id="footer">
-    <p>Last update:June 2, 2018</p>
+    <p>Last update:January 4, 2019</p>
 </div>
 
 </div>
