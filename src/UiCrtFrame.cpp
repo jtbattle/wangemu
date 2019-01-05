@@ -61,6 +61,8 @@ enum
     Disk_Remove,  // /
     // ...
     Disk_LastRemove = Disk_Insert + 4*NUM_IOSLOTS-1,
+    Disk_Realtime,
+    Disk_UnregulatedSpeed,
 
     Configure_Dialog,
     Configure_Screen_Dialog,
@@ -252,6 +254,8 @@ CrtFrame::CrtFrame(const wxString& title,
     Bind(wxEVT_MENU, &CrtFrame::OnDiskFormat,  this, Disk_Format);
     Bind(wxEVT_COMMAND_MENU_SELECTED, &CrtFrame::OnDisk, this,
                             Disk_Insert, Disk_Insert+NUM_IOSLOTS*4-1);
+    Bind(wxEVT_MENU, &CrtFrame::OnDiskSpeed, this, Disk_Realtime);
+    Bind(wxEVT_MENU, &CrtFrame::OnDiskSpeed, this, Disk_UnregulatedSpeed);
 
     Bind(wxEVT_MENU, &CrtFrame::OnConfigureDialog,       this, Configure_Dialog);
     Bind(wxEVT_MENU, &CrtFrame::OnConfigureScreenDialog, this, Configure_Screen_Dialog);
@@ -467,6 +471,13 @@ CrtFrame::setMenuChecks(const wxMenu *menu)
         disk_menu->Append(Disk_New,     "&New Disk...",     "Create virtual disk");
         disk_menu->Append(Disk_Inspect, "&Inspect Disk...", "Inspect/modify virtual disk");
         disk_menu->Append(Disk_Format,  "&Format Disk...",  "Format existing virtual disk");
+
+        bool disk_realtime = system2200::isDiskRealtime();
+        disk_menu->AppendSeparator();
+        disk_menu->Append(Disk_Realtime,         "Realtime Disk Speed",  "Emulate actual disk timing",             wxITEM_CHECK);
+        disk_menu->Append(Disk_UnregulatedSpeed, "Unregulated Speed",    "Make disk accesses as fast as possible", wxITEM_CHECK);
+        disk_menu->Check(Disk_Realtime,          disk_realtime);
+        disk_menu->Check(Disk_UnregulatedSpeed, !disk_realtime);
     }
 
     // ----- configure ---------------------------------
@@ -1190,6 +1201,14 @@ CrtFrame::OnDisk(wxCommandEvent &event)
     if (!ok) {
         UI_error("Error: operation failed");
     }
+}
+
+
+void
+CrtFrame::OnDiskSpeed(wxCommandEvent &event)
+{
+    bool realtime = (event.GetId() == Disk_Realtime);
+    system2200::setDiskRealtime(realtime);
 }
 
 

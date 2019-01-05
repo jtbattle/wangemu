@@ -25,7 +25,6 @@ private:
     void OnCardChoice(wxCommandEvent &event);
     void OnAddrChoice(wxCommandEvent &event);
     void OnButton(wxCommandEvent &event);
-    void OnDiskRealtime(wxCommandEvent& WXUNUSED(event));
     void OnWarnIo(wxCommandEvent& WXUNUSED(event));
 
     wxChoice *m_cpu_type;               // B/T/VP/MVP/VLSI
@@ -33,8 +32,6 @@ private:
     wxChoice *m_card_desc[NUM_IOSLOTS]; // io slot card types
     wxChoice *m_card_addr[NUM_IOSLOTS]; // io slot addresses
     wxButton *m_card_cfg[NUM_IOSLOTS];  // per-card configuration
-
-    wxCheckBox *m_disk_realtime;        // whether disk emulation is realistic/fast
 
     wxCheckBox *m_warn_io;      // whether to want on access to non-existing IO devices
                                 // the real Wang hardware ignored such actions

@@ -39,7 +39,6 @@ enum
 //      |   +-- leftgroup (V)
 //      |   |   |
 //      |   |   +-- left_grid
-//      |   |   +-- m_disk_realtime
 //      |   |   +-- m_warn_io
 //      |   |
 //      |   +-- right_grid
@@ -58,7 +57,6 @@ SystemConfigDlg::SystemConfigDlg(wxFrame *parent) :
         m_card_desc{nullptr},
         m_card_addr{nullptr},
         m_card_cfg{nullptr},
-        m_disk_realtime(nullptr),
         m_warn_io(nullptr),
         m_btn_revert(nullptr),
         m_btn_ok(nullptr),
@@ -96,9 +94,6 @@ SystemConfigDlg::SystemConfigDlg(wxFrame *parent) :
     left_grid->Add(m_mem_size, 1,
                    wxGROW | wxALIGN_CENTER_VERTICAL);
 
-    // continuing on down the left side, we get this option
-    m_disk_realtime = new wxCheckBox(this, ID_CHK_DISK_REALTIME,
-                                           "Realtime Disk Emulation");
     // and this option
     m_warn_io = new wxCheckBox(this, ID_CHK_WARN_IO,
                                      "Warn on Invalid IO Device Access");
@@ -106,7 +101,6 @@ SystemConfigDlg::SystemConfigDlg(wxFrame *parent) :
     // and we get a box sizer to group all things on the left
     wxBoxSizer *leftgroup = new wxBoxSizer(wxVERTICAL);
     leftgroup->Add(left_grid);
-    leftgroup->Add(m_disk_realtime, 0, wxTOP, 15);
     leftgroup->Add(m_warn_io, 0, wxTOP, 15);
 
     // the grid on the right contains Slot related configuration
@@ -199,7 +193,6 @@ SystemConfigDlg::SystemConfigDlg(wxFrame *parent) :
     // event routing table
     Bind(wxEVT_CHOICE,   &SystemConfigDlg::OnCpuChoice,     this, ID_CPU_CHOICE);
     Bind(wxEVT_CHOICE,   &SystemConfigDlg::OnMemsizeChoice, this, ID_MEMSIZE_CHOICE);
-    Bind(wxEVT_CHECKBOX, &SystemConfigDlg::OnDiskRealtime,  this, ID_CHK_DISK_REALTIME);
     Bind(wxEVT_CHECKBOX, &SystemConfigDlg::OnWarnIo,        this, ID_CHK_WARN_IO);
     Bind(wxEVT_BUTTON,   &SystemConfigDlg::OnButton,        this, -1);
 
@@ -254,8 +247,6 @@ SystemConfigDlg::updateDlg()
             m_mem_size->SetSelection(i);
         }
     }
-
-    m_disk_realtime->SetValue(m_cfg.getDiskRealtime());
 
     m_warn_io->SetValue(m_cfg.getWarnIo());
 
@@ -352,20 +343,13 @@ SystemConfigDlg::OnMemsizeChoice(wxCommandEvent& WXUNUSED(event))
 
 
 void
-SystemConfigDlg::OnDiskRealtime(wxCommandEvent& WXUNUSED(event))
-{
-    const bool checked = m_disk_realtime->IsChecked();
-    m_cfg.setDiskRealtime(checked);
-    updateButtons();
-}
-
-void
 SystemConfigDlg::OnWarnIo(wxCommandEvent& WXUNUSED(event))
 {
     const bool checked = m_warn_io->IsChecked();
     m_cfg.setWarnIo(checked);
     updateButtons();
 }
+
 
 void
 SystemConfigDlg::OnCardChoice(wxCommandEvent &event)

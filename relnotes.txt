@@ -1,23 +1,23 @@
 ============================================================================
 		   Wang 2200 emulator release notes, v3.0-pre
-                               December 21, 2018
+                                January 4, 2018
 ============================================================================
 
 ---- What is It? ----
 
 This emulates a Wang 2200 system with a choice of five CPU architectures:
 
-    * 2200B     CPU (first generation 2200, with a somewhat limited command set)
-    * 2200T     CPU (the highest end of the first generation 2200's)
-    * 2200VP    CPU (2nd generation CPU)
-    * 2200MVP-C CPU (2nd generation CPU, w/multiple users and 64K word ucode)
-    * MicroVP   CPU (3rd generation CPU, supporting up to 8MB of data RAM)
+    * 2200B     (1st generation 2200, with a somewhat limited command set)
+    * 2200T     (the highest end of the 1st generation 2200's)
+    * 2200VP    (2nd generation CPU)
+    * 2200MVP-C (2nd generation CPU, w/multiple users and 64K word ucode store)
+    * MicroVP   (3rd generation CPU, supporting up to 8MB of data RAM)
 
 and a number of peripherals:
 
     * 6312 (64x16) and 7011 (80x24) CRT controllers
     * 6367 keyboard controller
-    * MXD terminal mux, connected to a 2236 terminal
+    * MXD terminal mux, connected to one to four 2236 terminals
     * either dumb or intelligent disk controller, capable of modeling any
       2270 floppy disk, 2260 hard disk, and 2280 large hard disk subsystems
     * configurable printer controller
@@ -41,6 +41,11 @@ The emulator very well might run on Linux via Wine, but it hasn't been tested.
    harder to accidentally hit this key, the mapping is now
        Shift-Alt-R --> hard reset
        Shift-Alt-W --> warm reset
+
+*) the option to control whether disk accesses are performed at the same
+   speed as a real 2200 ("realtime") or quickly ("unregulated") used to be
+   a checkbox item on the system configuration dialog.  Now it appears in
+   the more logical place (and easier to access), the Disk menu.
 
 *) support for more system CPU and RAM configurations
 

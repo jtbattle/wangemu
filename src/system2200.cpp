@@ -467,7 +467,6 @@ system2200::reset(bool cold_reset)
 
 
 // turn cpu speed regulation on (true) or off (false)
-// this is a convenience function
 void
 system2200::regulateCpuSpeed(bool regulated) noexcept
 {
@@ -480,11 +479,25 @@ system2200::regulateCpuSpeed(bool regulated) noexcept
 
 
 // indicate if the CPU is throttled or not
-// this is a convenience function
 bool
 system2200::isCpuSpeedRegulated() noexcept
 {
     return current_cfg->isCpuSpeedRegulated();
+}
+
+
+void
+system2200::setDiskRealtime(bool realtime) noexcept
+{
+    current_cfg->setDiskRealtime(realtime);
+}
+
+
+// indicate if the disk emulation speed is throttled or not
+bool
+system2200::isDiskRealtime() noexcept
+{
+    return current_cfg->getDiskRealtime();
 }
 
 

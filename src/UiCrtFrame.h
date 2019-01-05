@@ -98,6 +98,7 @@ private:
     void OnDiskFactory(wxCommandEvent &event);
     void OnDiskFormat(wxCommandEvent& WXUNUSED(event));
     void OnDisk(wxCommandEvent &event);
+    void OnDiskSpeed(wxCommandEvent &event);
 
     // toggle fullscreen or not
     void OnDisplayFullscreen(wxCommandEvent &event);

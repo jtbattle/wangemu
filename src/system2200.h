@@ -56,6 +56,10 @@ namespace system2200
     void regulateCpuSpeed(bool regulated) noexcept;
     bool isCpuSpeedRegulated() noexcept;
 
+    // change/query the simulation speed
+    void setDiskRealtime(bool realtime) noexcept;
+    bool isDiskRealtime() noexcept;
+
     // temporarily halt emulation
     void freezeEmu(bool freeze) noexcept;
 
