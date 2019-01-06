@@ -28,11 +28,11 @@ private:
     void updateDlg();   // make dialog reflect system state
 
     // data member
-    wxChoice    *m_font_choice;         // font type and size
-    wxChoice    *m_color_choice;        // fg/bg color scheme
-    wxSlider    *m_contrast_slider;     // display contrast
-    wxSlider    *m_brightness_slider;   // display brightness
-    std::string  m_subgroup;            // ini file tag
+    const std::string m_subgroup;                 // ini file tag
+    wxChoice    *m_font_choice = nullptr;         // font type and size
+    wxChoice    *m_color_choice = nullptr;        // fg/bg color scheme
+    wxSlider    *m_contrast_slider = nullptr;     // display contrast
+    wxSlider    *m_brightness_slider = nullptr;   // display brightness
 };
 
 #endif // _INCLUDE_UI_CRT_CONFIG_DLG_H_

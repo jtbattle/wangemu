@@ -33,34 +33,7 @@ static const bool draw_page_breaks = true;
 
 Printer::Printer(PrinterFrame *parent) :
         wxScrolledWindow(parent, -1, wxDefaultPosition, wxDefaultSize),
-        m_parent(parent),
-        m_printing_flag(false),
-        m_fp_port(nullptr),
-        m_screen_pix_w(0),
-        m_screen_pix_h(0),
-        m_chars_w(0),
-        m_chars_h(0),
-        m_font_size(12),
-        m_charcell_w(0),
-        m_charcell_h(0),
-        m_greenbar(true),
-        m_marginleft(0),
-        m_margintop(0),
-        m_marginright(0),
-        m_marginbottom(0),
-        m_real_printer_name(""),
-        m_orientation(wxPORTRAIT),
-        m_paper_id(wxPAPER_LETTER),         // default
-        m_paper_name(""),
-        m_paper_bin(wxPRINTBIN_DEFAULT),    // default
-        m_line_length(80),                  // default
-        m_page_length(66),                  // default
-        m_auto_show(true),                  // default
-        m_print_as_go(true),                // default
-        m_port_direct(false),               // default
-        m_port_string("LPT1"),              // default
-        m_linebuf_len(0),
-        m_linebuf{0}
+        m_parent(parent)
 {
     // the means don't perform a screen-to-screen blit to effect
     // the scroll.  just let the app redraw everything.

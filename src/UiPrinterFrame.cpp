@@ -141,14 +141,7 @@ struct paperbinmap_t {
 PrinterFrame::PrinterFrame(const wxString& title, const int io_addr) :
         wxFrame((wxFrame *)nullptr, -1, title, wxDefaultPosition, wxDefaultSize,
                 wxDEFAULT_FRAME_STYLE | wxNO_FULL_REPAINT_ON_RESIZE),
-        m_menubar(nullptr),
-        m_statusbar(nullptr),
-        m_printer(nullptr),
-        m_font_size(12),
-        m_printer_addr(-1),
-        m_preview_zoom(25),
-        m_printData(nullptr),
-        m_pageSetupData(nullptr)
+    m_printer_addr(io_addr)   // used later during configuration
 {
 #ifndef __WXMAC__
     // set the frame icon
@@ -157,8 +150,6 @@ PrinterFrame::PrinterFrame(const wxString& title, const int io_addr) :
 
     makeMenubar();      // create menubar
     makeStatusbar();    // create status bar
-
-    m_printer_addr = io_addr;   // we use this later during configuration
 
     // Printer support
     m_printData     = std::make_unique<wxPrintData>();

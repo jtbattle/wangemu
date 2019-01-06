@@ -27,19 +27,20 @@ private:
     void OnButton(wxCommandEvent &event);
     void OnWarnIo(wxCommandEvent& WXUNUSED(event));
 
-    wxChoice *m_cpu_type;               // B/T/VP/MVP/VLSI
-    wxChoice *m_mem_size;               // main memory size
-    wxChoice *m_card_desc[NUM_IOSLOTS]; // io slot card types
-    wxChoice *m_card_addr[NUM_IOSLOTS]; // io slot addresses
-    wxButton *m_card_cfg[NUM_IOSLOTS];  // per-card configuration
+    wxChoice *m_cpu_type = nullptr;                 // B/T/VP/MVP/VLSI
+    wxChoice *m_mem_size = nullptr;                 // main memory size
+    wxChoice *m_card_desc[NUM_IOSLOTS] = {nullptr}; // io slot card types
+    wxChoice *m_card_addr[NUM_IOSLOTS] = {nullptr}; // io slot addresses
+    wxButton *m_card_cfg[NUM_IOSLOTS]  = {nullptr}; // per-card configuration
 
-    wxCheckBox *m_warn_io;      // whether to want on access to non-existing IO devices
-                                // the real Wang hardware ignored such actions
-                                // the emulator has support to catch such actions, which is
-                                // useful for debugging
-    wxButton *m_btn_revert;
-    wxButton *m_btn_ok;
-    wxButton *m_btn_cancel;
+    // whether to want on access to non-existing IO devices the real Wang
+    // hardware ignored such actions the emulator has support to catch such
+    // actions, which is useful for debugging:
+    wxCheckBox *m_warn_io = nullptr;
+
+    wxButton *m_btn_revert = nullptr;
+    wxButton *m_btn_ok     = nullptr;
+    wxButton *m_btn_cancel = nullptr;
 
     // system configuration state
     SysCfgState m_cfg;          // the one being modified

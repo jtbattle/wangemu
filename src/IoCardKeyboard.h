@@ -57,10 +57,10 @@ private:
     std::shared_ptr<Timer>     m_tmr_script; // keystrokes are sent a few 10s of uS after !CPB
     const int   m_base_addr;      // the address the card is mapped to
     const int   m_slot;           // which slot the card is plugged into
-    bool        m_selected;       // this card is being addressed
-    bool        m_cpb;            // 1=CPU busy (not accepting IBS input)
-    bool        m_key_ready;      // key_code is valid
-    int         m_key_code;       // keycode of most recently received keystroke
+    bool        m_selected  = false;  // this card is being addressed
+    bool        m_cpb       = true;   // 1=CPU busy (not accepting IBS input)
+    bool        m_key_ready = false;  // key_code is valid
+    int         m_key_code  = 0x00;   // keycode of most recently received keystroke
 };
 
 #endif // _INCLUDE_IOCARD_KEYBOARD_H_

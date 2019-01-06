@@ -101,13 +101,7 @@ IoCardDisplay::IoCardDisplay(std::shared_ptr<Scheduler> scheduler,
     m_cpu(cpu),
     m_base_addr(base_addr),
     m_slot(card_slot),
-    m_selected(false),
-    m_card_busy(false),
-    m_screen_type(screen_type),
-    m_terminal(nullptr),
-    m_tmr_hsync(nullptr),
-    m_hsync_count(0),
-    m_busy_state(busy_state::IDLE)
+    m_screen_type(screen_type)
 {
     if (m_slot < 0) {
         // this is just a probe to query properties, so don't make a window

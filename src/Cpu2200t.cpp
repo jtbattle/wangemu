@@ -742,15 +742,14 @@ decimalSub(uint4 a_op, uint4 b_op, int ci) noexcept
 // subtype selects between the flavors of the cpu
 Cpu2200t::Cpu2200t(std::shared_ptr<Scheduler> scheduler,
                    int ramsize, int cpu_subtype) :
+    Cpu2200(),
     m_scheduler(scheduler),  // unused by 2200t
     m_cpu_type(cpu_subtype),
-    m_ucode{0x00},
     m_ucode_size((m_cpu_type == CPUTYPE_2200B) ? UCODE_WORDS_2200B
                                                : UCODE_WORDS_2200T),
     m_krom_size( (m_cpu_type == CPUTYPE_2200B) ?  KROM_WORDS_2200B
                                                :  KROM_WORDS_2200T),
-    m_mem_size(ramsize),
-    m_dbg(false)
+    m_mem_size(ramsize)
 {
     #define K *1024
     assert(ramsize >= 4 K && ramsize <= 32 K);

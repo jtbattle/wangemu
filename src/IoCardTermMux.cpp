@@ -77,20 +77,8 @@ IoCardTermMux::IoCardTermMux(std::shared_ptr<Scheduler> scheduler,
                              const CardCfgState *cfg) :
     m_scheduler(scheduler),
     m_cpu(cpu),
-    m_i8080(nullptr),
     m_base_addr(base_addr),
-    m_slot(card_slot),
-    m_selected(false),
-    m_cpb(true),
-    m_io_offset(0),
-    m_prime_seen(true),
-    m_obs_seen(false),
-    m_cbs_seen(false),
-    m_obscbs_offset(0),
-    m_obscbs_data(0x00),
-    m_rbi(0xff),                // not ready
-    m_uart_sel(0),
-    m_interrupt_pending(false)
+    m_slot(card_slot)
 {
     if (m_slot < 0) {
         // this is just a probe to query properties, so don't make a window

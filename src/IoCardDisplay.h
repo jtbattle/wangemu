@@ -44,15 +44,16 @@ private:
     std::shared_ptr<Cpu2200>   m_cpu;       // associated CPU
     const int  m_base_addr;     // the address the card is mapped to
     const int  m_slot;          // which slot the card is plugged into
-    bool       m_selected;      // the card is currently selected
-    bool       m_card_busy;     // the card is busy doing something
-
     const int  m_screen_type;   // display type
+
+    bool       m_selected  = false;      // the card is currently selected
+    bool       m_card_busy = false;      // the card is busy doing something
+
     std::unique_ptr<Terminal>  m_terminal;  // handle to display logic
 
     // model controller "busy" timing
     std::shared_ptr<Timer> m_tmr_hsync;  // horizontal sync timer
-    int        m_hsync_count;   // which horizontal line we are on
+    int        m_hsync_count = 0;        // which horizontal line we are on
     enum class busy_state {
         IDLE,    // not busy
         CHAR,    // wait for next hsync then clear busy
@@ -60,7 +61,7 @@ private:
         CLEAR2,  // wait for vsync, then clear busy
         ROLL1,   // wait for hsync, then advance to BUSY_ROLL2
         ROLL2,   // wait for hsync, then clear busy
-    } m_busy_state;
+    } m_busy_state = busy_state::IDLE;
 
     void tcbHsync(int arg);     // timer callback
 };

@@ -38,8 +38,8 @@ private:
     std::shared_ptr<Cpu2200> m_cpu;  // associated CPU
     const int     m_base_addr;    // the address the card is mapped to
     const int     m_slot;         // which slot the card is plugged into
-    bool          m_selected;     // the card is currently selected
-    bool          m_cpb;          // the cpu is busy
+    bool          m_selected = false;  // the card is currently selected
+    bool          m_cpb      = true;   // the cpu is busy
     PrinterFrame *m_wndhnd;       // opaque handle to UI window
 };
 

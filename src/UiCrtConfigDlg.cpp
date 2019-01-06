@@ -29,10 +29,6 @@ CrtConfigDlg::CrtConfigDlg(wxFrame *parent, const wxString &title,
         wxDialog(parent, -1, title,
                  wxDefaultPosition, wxDefaultSize,
                  wxDEFAULT_DIALOG_STYLE | wxRESIZE_BORDER),
-        m_font_choice(nullptr),
-        m_color_choice(nullptr),
-        m_contrast_slider(nullptr),
-        m_brightness_slider(nullptr),
         m_subgroup(subgroup)
 {
     const int h_text_margin = 8;

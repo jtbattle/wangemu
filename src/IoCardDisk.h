@@ -167,17 +167,17 @@ private:
     bool warnMismatch() noexcept
         { return m_cfg.getWarnMismatch(); }
 
-    DiskCtrlCfgState           m_cfg;                // current configuration
-    std::shared_ptr<Scheduler> m_scheduler;          // system event scheduler
-    std::shared_ptr<Cpu2200>   m_cpu;                // associated CPU
-    const int                  m_base_addr;          // the address the card is mapped to
-    const int                  m_slot;               // which slot the card sits in
-    bool                       m_selected;           // this card is being addressed
-    bool                       m_cpb;                // cpb is asserted
-    bool                       m_card_busy;          // the card isn't ready to accept a command or reply
-    bool                       m_compare_err;        // compare status (true=miscompare)
-    bool                       m_acting_intelligent; // what we told the host most recently
-    std::shared_ptr<Timer>     m_tmr_motor_off;      // turn off both drives after a period of inactivity
+    DiskCtrlCfgState           m_cfg;             // current configuration
+    std::shared_ptr<Scheduler> m_scheduler;       // system event scheduler
+    std::shared_ptr<Cpu2200>   m_cpu;             // associated CPU
+    std::shared_ptr<Timer>     m_tmr_motor_off;   // turn off both drives after a period of inactivity
+    const int                  m_base_addr;       // the address the card is mapped to
+    const int                  m_slot;            // which slot the card sits in
+    bool            m_selected           = false; // this card is being addressed
+    bool            m_cpb                = true;  // cpb is asserted
+    bool            m_card_busy          = false; // the card isn't ready to accept a command or reply
+    bool            m_compare_err        = false; // compare status (true=miscompare)
+    bool            m_acting_intelligent = false; // what we told the host most recently
 
     enum state_t { DRIVE_EMPTY, DRIVE_IDLE, DRIVE_SPINNING };
     struct drive_t {
@@ -339,11 +339,11 @@ private:
     uint8      m_buffer[257];        // 256B of data plus an LRC byte
     int        m_bufptr;             // which buffer entry is read or written next
     uint8      m_header[10];         // header bytes
-    int        m_state_cnt;          // how many bytes of the have been processed
+    int        m_state_cnt = 0;      // how many bytes of the have been processed
     int        m_xfer_length;        // number of bytes in this part of transaction
 
     // stuff for state machine subroutines
-    disk_sm_t  m_state;               // the current controller state
+    disk_sm_t  m_state = CTRL_WAKEUP; // the current controller state
     disk_sm_t  m_calling_state;       // who performed call
     disk_sm_t  m_return_state;        // where to go when subroutine is done
     int        m_byte_count;          // how many bytes to send/receive
@@ -355,7 +355,7 @@ private:
     // the special COPY command sets up the following state.
     // the next command is a normal READ in form, but the normal READ
     // behavior is taken over by the COPY semantics.
-    bool       m_copy_pending;        // the state below is meaningful
+    bool       m_copy_pending = false;  // the state below is meaningful
 
     // the special COPY and VERIFY RANGE commands save into this state
     int        m_range_drive;         // chosen drive

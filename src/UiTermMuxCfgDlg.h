@@ -22,11 +22,11 @@ private:
     void OnNumTerminals(wxCommandEvent &event);
     void OnButton(wxCommandEvent &event);
 
-    wxRadioBox *m_rb_num_terminals;   // number of attached terminals
-    wxButton   *m_btn_revert;
-    wxButton   *m_btn_ok;
-    wxButton   *m_btn_cancel;
-    wxButton   *m_btn_help;
+    wxRadioBox *m_rb_num_terminals = nullptr;   // number of attached terminals
+    wxButton   *m_btn_revert       = nullptr;
+    wxButton   *m_btn_ok           = nullptr;
+    wxButton   *m_btn_cancel       = nullptr;
+    wxButton   *m_btn_help         = nullptr;
 
     // system configuration state
     TermMuxCfgState &m_cfg;         // the one being modified

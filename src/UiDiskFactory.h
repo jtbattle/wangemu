@@ -33,10 +33,10 @@ private:
 
     // member data
     std::shared_ptr<Wvd> m_disk_data;
-    PropPanel  *m_tab1;
-    LabelPanel *m_tab2;
-    wxButton   *m_btn_cancel;
-    wxButton   *m_btn_save;
+    PropPanel  *m_tab1       = nullptr;
+    LabelPanel *m_tab2       = nullptr;
+    wxButton   *m_btn_cancel = nullptr;
+    wxButton   *m_btn_save   = nullptr;
 };
 
 #endif // _INCLUDE_UI_DISK_FACTORY_H_

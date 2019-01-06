@@ -105,32 +105,32 @@ private:
 
     // ---- state ----
 
-    CrtFrame * const m_parent;      // who owns us
-    crt_state_t  *m_crt_state;      // contents of display memory
+    CrtFrame     * const m_parent;      // who owns us
+    crt_state_t  * const m_crt_state;   // contents of display memory
 
-    wxBitmap      m_scrbits;        // image of the display
-    int           m_frame_count;    // for tracking refresh fps
-    bool          m_dirty;          // need to refresh display
+    wxBitmap  m_scrbits;            // image of the display
+    int       m_frame_count = 0;    // for tracking refresh fps
+    bool      m_dirty       = true; // need to refresh display
 
-    wxBitmap      m_font_map;       // image of the font in use
-    int           m_font_size;      // size of font (in points)
-    bool          m_font_dirty;     // font/color/contrast/brightness changed
-    int           m_charcell_w;     // width of one character cell
-    int           m_charcell_h;     // height of one character cell
-    int           m_charcell_sx;    // real x pixels per logical pixel
-    int           m_charcell_sy;    // # real y pixels per logical pixel
-    int           m_charcell_dy;    // row skipping factor
+    wxBitmap  m_font_map;           // image of the font in use
+    int       m_font_size   = FONT_MATRIX12;  // size of font (in points)
+    bool      m_font_dirty  = true; // font/color/contrast/brightness changed
+    int       m_charcell_w  = 1;    // width of one character cell
+    int       m_charcell_h  = 1;    // height of one character cell
+    int       m_charcell_sx = 1;    // real x pixels per logical pixel
+    int       m_charcell_sy = 1;    // # real y pixels per logical pixel
+    int       m_charcell_dy = 1;    // row skipping factor
 
-    wxColor       m_fg_color;       // screen phosphor color
-    wxColor       m_bg_color;       // screen background color
-    int           m_display_contrast;
-    int           m_display_brightness;
+    wxColor   m_fg_color = wxColor(0xff, 0xff, 0xff);  // phosphor color
+    wxColor   m_bg_color = wxColor(0x00, 0x00, 0x00);  // background color
+    int       m_display_contrast   = 100;
+    int       m_display_brightness = 0;
 
     // this holds the dimensions of the visible area we have to draw on,
     // which is entirely independent of the logical CRT dimensions.
-    int           m_screen_pix_w;   // display dimension, in pixels
-    int           m_screen_pix_h;   // display dimension, in pixels
-    wxRect        m_screen_rc;      // active text area
+    int       m_screen_pix_w = 0;   // display dimension, in pixels
+    int       m_screen_pix_h = 0;   // display dimension, in pixels
+    wxRect    m_screen_rc = wxRect(0, 0, 0, 0);  // active text area
 
     // sound for beep
     void createBeep();

@@ -753,13 +753,10 @@ Cpu2200vp::getHbHa(int HbHa, int a_op, int b_op) const noexcept
 // subtype *must* be 2200VP, at least presently
 Cpu2200vp::Cpu2200vp(std::shared_ptr<Scheduler> scheduler,
                      int ramsize, int cpu_subtype) :
+    Cpu2200(),
     m_cpu_subtype(cpu_subtype),
     m_scheduler(scheduler),
-    m_has_oneshot(false),
-    m_tmr_30ms(nullptr),
-    m_ucode{{0, 0, 0, 0}},
-    m_mem_size(ramsize),
-    m_dbg(false)
+    m_mem_size(ramsize)
 {
     // find which configuration options are available/legal for this CPU
     auto cpu_cfg = system2200::getCpuConfig(cpu_subtype);

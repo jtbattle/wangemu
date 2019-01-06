@@ -49,19 +49,17 @@ public:
 private:
     static const int MAX_EXPECTED_LINE_LENGTH=1024;  // getline() needs a char* buffer
 
+    const int       m_meta_flags;   // which escapes to recognize
+    const int       m_cur_depth;    // now deeply nested we are (starting at 1)
+    const int       m_max_depth;    // how deeply nesting is allowed
+
     std::unique_ptr<std::ifstream> m_ifs;  // input file stream
-    std::string     m_filename;     // name of opened script file
-    bool            m_opened_ok;    // residual state of attempt to open the script file
-    bool            m_eof;          // we've hit the end of file
+    std::string     m_filename;            // name of opened script file
+    bool            m_opened_ok = false;   // residual state of attempt to open the script file
+    bool            m_eof       = false;   // we've hit the end of file
+    int             m_cur_line  = 0;       // current line of file (starts at 1)
 
-    int             m_meta_flags;   // which escapes to recognize
-
-    int             m_cur_depth;    // now deeply nested we are (starting at 1)
-    int             m_max_depth;    // how deeply nesting is allowed
-
-    int             m_cur_line;     // current line of file (starts at 1)
-
-    std::unique_ptr<ScriptFile> m_subscript;    // the file we are pending on (or 0 if none)
+    std::unique_ptr<ScriptFile> m_subscript;  // the file we are pending on (or 0 if none)
 
     // does necessary manipulations to read next line of text and sets flags
     void            prepareNextLine();

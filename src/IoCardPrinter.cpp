@@ -17,8 +17,6 @@ IoCardPrinter::IoCardPrinter(std::shared_ptr<Cpu2200> cpu,
     m_cpu(cpu),
     m_base_addr(base_addr),
     m_slot(card_slot),
-    m_selected(false),
-    m_cpb(true),
     m_wndhnd(nullptr)
 {
     if (m_slot >= 0) {

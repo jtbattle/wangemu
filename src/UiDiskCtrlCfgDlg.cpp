@@ -183,13 +183,6 @@ DiskCtrlCfgDlg::DiskCtrlCfgDlg(wxFrame *parent, CardCfgState &cfg) :
         wxDialog(parent, -1, "Disk Controller Configuration",
                  wxDefaultPosition, wxDefaultSize,
                  wxDEFAULT_DIALOG_STYLE | wxRESIZE_BORDER),
-        m_rb_num_drives(nullptr),
-        m_rb_intelligence(nullptr),
-        m_warn_mismatch(nullptr),
-        m_btn_revert(nullptr),
-        m_btn_ok(nullptr),
-        m_btn_cancel(nullptr),
-        m_btn_help(nullptr),
         m_cfg(dynamic_cast<DiskCtrlCfgState&>(cfg)),      // edited version
         m_old_cfg(dynamic_cast<DiskCtrlCfgState&>(cfg))   // copy of original
 {

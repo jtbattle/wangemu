@@ -52,15 +52,6 @@ SystemConfigDlg::SystemConfigDlg(wxFrame *parent) :
         wxDialog(parent, -1, "System Configuration",
                  wxDefaultPosition, wxDefaultSize,
                  wxDEFAULT_DIALOG_STYLE | wxRESIZE_BORDER) ,
-        m_cpu_type(nullptr),
-        m_mem_size(nullptr),
-        m_card_desc{nullptr},
-        m_card_addr{nullptr},
-        m_card_cfg{nullptr},
-        m_warn_io(nullptr),
-        m_btn_revert(nullptr),
-        m_btn_ok(nullptr),
-        m_btn_cancel(nullptr),
         m_cfg    (system2200::config()),  // the one we will be editing
         m_old_cfg(system2200::config())   // the existing configuration
 {

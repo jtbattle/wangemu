@@ -113,17 +113,7 @@ MyStaticBitmap::OnPaint(wxPaintEvent& WXUNUSED(event))
 CrtStatusBar::CrtStatusBar(CrtFrame *parent,
                            bool smart_term, bool primary_crt) :
         wxStatusBar(parent, -1),
-        m_parent(parent),
-        m_keyword_ctl(nullptr),
-        m_disk_label{nullptr},
-        m_disk_icon{nullptr},
-        m_disk_label_xoff{0},
-        m_disk_icon_xoff{0},
-        m_disk_state{-1},
-        m_icon_set(nullptr),
-        m_num_disk_controllers(0),
-        m_num_drives{0},
-        m_popup_action(unknown)
+        m_parent(parent)
 {
     // max config: alpha/keyword button, status area, disk drives, dummy area
     int pane_widths[2+MAX_DISK_DRIVES+1] = {0};

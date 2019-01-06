@@ -168,25 +168,25 @@ private:
 
     // ---- data members ----
 
-    wxMenuBar    *m_menubar;
-    CrtStatusBar *m_statusbar;
-    wxToolBar    *m_toolbar;
+    const int  m_crt_addr;      // used to track configuration options
+    const int  m_term_num;      // 0 for dumb terms, 1-4 for muxed terms
+    const bool m_smart_term;    // true for serial terminals
+    const bool m_small_crt;     // true=64x16
+    const bool m_primary_crt;   // true for main crt
 
-    Crt *m_crt;                 // emulated CRT display window
+    wxMenuBar    *m_menubar   = nullptr;
+    CrtStatusBar *m_statusbar = nullptr;
+    wxToolBar    *m_toolbar   = nullptr;
 
-    bool m_fullscreen;          // currently fullscreen or not
-    bool m_show_stats;          // show timing statistics
+    Crt *m_crt = nullptr;          // emulated CRT display window
 
-    int  m_colorsel;            // index of selected color scheme
-    int  m_font_size[2];        // [1]=fullscreen, [0]=not fullscreen
+    bool m_fullscreen = false;     // currently fullscreen or not
+    bool m_show_stats = false;     // show timing statistics
 
-    int  m_crt_addr;            // used to track configuration options
-    int  m_term_num;            // 0 for dumb terms, 1-4 for muxed terms
-    bool m_primary_crt;         // true for main crt
-    bool m_smart_term;          // true for serial terminals
-    bool m_small_crt;           // true=64x16
+    int  m_colorsel = 0;           // index of selected color scheme
+    int  m_font_size[2] = {0, 0};  // [1]=fullscreen, [0]=not fullscreen
 
-    int  m_assoc_kb_addr;       // io address of associated keyboard
+    int  m_assoc_kb_addr = -1;     // io address of associated keyboard
 
 #if BIG_BUTTONS
     // holds the icons for the toolbar buttons
@@ -201,8 +201,8 @@ private:
     // just initiated.
     std::unique_ptr<wxTimer> m_refresh_tmr;     // triggers to cause a screen update
     std::unique_ptr<wxTimer> m_quarter_sec_tmr; // 4 Hz event for blink & frames/sec calc
-    int      m_blink_phase;
-    int      m_fps;             // most recent frames/sec count
+    int      m_blink_phase = 0;
+    int      m_fps         = 0;     // most recent frames/sec count
 
     // the one privileged CRT (/005 display, or term 1 of MXD at 0x00)
     static CrtFrame *m_primary_frame;

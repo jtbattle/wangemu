@@ -165,7 +165,7 @@ private:
     } m_cpu;
 
     // debugging feature
-    bool m_dbg;
+    bool m_dbg = false;
 };
 
 
@@ -212,17 +212,18 @@ private:
     void dumpRam(const std::string &filename);
 #endif
 
-    // ---- data members ----
-
-    const int                   m_cpu_subtype;
-    std::shared_ptr<Scheduler>  m_scheduler;   // shared system timing scheduler object
-    bool                        m_has_oneshot; // this cpu supports timeslicing
-    std::shared_ptr<Timer>      m_tmr_30ms;    // time slice 30 ms one shot
-
     static const int MAX_RAM   = 8192*1024; // max # bytes of main memory
     static const int MAX_UCODE =   64*1024; // max # words in ucode store
-
     static const int STACKSIZE = 96; // number of entries in the return stack
+
+    // ---- data members ----
+
+    const int m_cpu_subtype;
+    const int m_mem_size;       // size, in bytes
+
+    bool                        m_has_oneshot = false; // this cpu supports timeslicing
+    std::shared_ptr<Scheduler>  m_scheduler;   // shared system timing scheduler object
+    std::shared_ptr<Timer>      m_tmr_30ms;    // time slice 30 ms one shot
 
     struct ucode_t {
         uint32 ucode;       // raw ucode word (really 24b)
@@ -234,7 +235,6 @@ private:
     int m_ucode_words;      // number of implemented words
 
     // main memory
-    const int m_mem_size;       // size, in bytes
     uint8     m_ram[MAX_RAM];
 
     // this contains the CPU state
@@ -259,7 +259,7 @@ private:
     } m_cpu;
 
     // debugging feature
-    bool m_dbg;
+    bool m_dbg = false;
 };
 
 // microcode disassembly utilities

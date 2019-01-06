@@ -26,17 +26,9 @@ ScriptFile::ScriptFile(const std::string &filename,
                        int metaflags,
                        int max_nesting_depth,
                        int cur_nesting_depth) :
-        m_ifs(nullptr),
-        m_filename(""),
-        m_opened_ok(false),
-        m_eof(false),
         m_meta_flags(metaflags),
         m_cur_depth(cur_nesting_depth),
-        m_max_depth(max_nesting_depth),
-        m_cur_line(0),
-        m_subscript(nullptr),
-        m_line_buf{0x00},
-        m_cur_char(0)
+        m_max_depth(max_nesting_depth)
 {
     // put in canonical format
     m_filename = host::asAbsolutePath(filename);
@@ -97,7 +89,7 @@ ScriptFile::getLineDescription() const
 {
     std::string desc;
 
-    if (m_subscript) {
+    if (m_subscript != nullptr) {
         std::string desc2(m_subscript->getLineDescription());
         desc = desc2 + ",\nincluded from ";
     }
@@ -369,7 +361,7 @@ ScriptFile::getNextByte(int *byte)
     for (;;) {
 
         // if we have a subscript running, listen to it
-        if (m_subscript) {
+        if (m_subscript != nullptr) {
             if (m_subscript->isEof()) {
                 m_subscript = nullptr;
                 continue;  // retry using current script processing

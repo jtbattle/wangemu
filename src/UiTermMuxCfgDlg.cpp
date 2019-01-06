@@ -114,11 +114,6 @@ TermMuxCfgDlg::TermMuxCfgDlg(wxFrame *parent, CardCfgState &cfg) :
         wxDialog(parent, -1, "Terminal Mux Controller Configuration",
                  wxDefaultPosition, wxDefaultSize,
                  wxDEFAULT_DIALOG_STYLE | wxRESIZE_BORDER),
-        m_rb_num_terminals(nullptr),
-        m_btn_revert(nullptr),
-        m_btn_ok(nullptr),
-        m_btn_cancel(nullptr),
-        m_btn_help(nullptr),
         m_cfg(dynamic_cast<TermMuxCfgState&>(cfg)),     // edited version
         m_old_cfg(dynamic_cast<TermMuxCfgState&>(cfg))  // copy of original
 {

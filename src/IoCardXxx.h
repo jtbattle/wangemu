@@ -40,9 +40,9 @@ private:
     Cpu2200    &m_cpu;            // associated CPU
     const int   m_base_addr;      // the address the card is mapped to
     const int   m_slot;           // which slot the card is plugged into
-    bool        m_selected;       // the card is currently selected
-    bool        m_cpb;            // the cpu is busy
-    bool        m_card_busy;      // the card is busy doing something
+    bool        m_selected  = false; // the card is currently selected
+    bool        m_cpb       = true;  // the cpu is busy
+    bool        m_card_busy = false; // the card is busy doing something
 };
 
 #endif // _INCLUDE_IOCARD_XXX_H_

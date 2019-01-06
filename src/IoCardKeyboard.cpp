@@ -18,13 +18,8 @@ IoCardKeyboard::IoCardKeyboard(std::shared_ptr<Scheduler> scheduler,
                                int base_addr, int card_slot) :
     m_scheduler(scheduler),
     m_cpu(cpu),
-    m_tmr_script(nullptr),
     m_base_addr(base_addr),
-    m_slot(card_slot),
-    m_selected(false),
-    m_cpb(true),
-    m_key_ready(false),
-    m_key_code(0)
+    m_slot(card_slot)
 {
     if (m_slot >= 0) {
         reset(true);

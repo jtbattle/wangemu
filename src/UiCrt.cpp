@@ -24,25 +24,7 @@ enum {
 Crt::Crt(CrtFrame *parent, crt_state_t *crt_state) :
     wxWindow(parent, -1, wxDefaultPosition, wxDefaultSize),
     m_parent(parent),
-    m_crt_state(crt_state),
-    m_frame_count(0),
-    m_dirty(true),
-    m_font_size(FONT_MATRIX12),
-    m_font_dirty(true),         // must be regenerated
-    m_charcell_w(1),            // until SetFontSize overrides.  this prevents
-    m_charcell_h(1),            // problems when m_scrbits is first allocated.
-    m_charcell_sx(1),
-    m_charcell_sy(1),
-    m_charcell_dy(1),
-    m_fg_color(wxColor(0xff, 0xff, 0xff)),
-    m_bg_color(wxColor(0x00, 0x00, 0x00)),
-    m_display_contrast(100),
-    m_display_brightness(0),
-    m_screen_pix_w(0),
-    m_screen_pix_h(0),
-    m_screen_rc(wxRect(0, 0, 0, 0)),
-    m_beep(nullptr),
-    m_beep_tmr(nullptr)
+    m_crt_state(crt_state)
 {
     createBeep();
 #if 0

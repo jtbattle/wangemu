@@ -122,11 +122,11 @@ private:
 
     // display state and geometry
     CrtFrame     *m_wndhnd;         // opaque handle to UI window
-    int           m_io_addr;        // associated I/O address
-    int           m_term_num;       // associated terminal number
+    const int     m_io_addr;        // associated I/O address
+    const int     m_term_num;       // associated terminal number
     crt_state_t   m_disp;           // contents of display memory
     std::shared_ptr<Timer> m_init_tmr;  // send init sequence from terminal
-    bool          m_script_active;  // a script is feeding us keystrokes
+    bool          m_script_active = false;  // a script is feeding us keystrokes
 
     // current character attributes
     int           m_attrs;          // current char attributes

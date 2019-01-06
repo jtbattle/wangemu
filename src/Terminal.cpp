@@ -48,13 +48,7 @@ Terminal::Terminal(std::shared_ptr<Scheduler> scheduler,
     m_muxd(muxd),
     m_vp_cpu(vp_cpu),
     m_io_addr(io_addr),
-    m_term_num(term_num),
-    m_init_tmr(nullptr),
-    m_script_active(false),
-    m_tx_tmr(nullptr),
-    m_crt_tmr(nullptr),
-    m_selectp_tmr(nullptr),
-    m_prt_tmr(nullptr)
+    m_term_num(term_num)
 {
     m_disp.screen_type = screen_type;
     m_disp.chars_w  = (screen_type == UI_SCREEN_64x16)  ? 64 : 80;

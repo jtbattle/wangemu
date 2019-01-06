@@ -42,7 +42,7 @@ private:
 #if HANDLE_MSB_PAINT
     void OnPaint(wxPaintEvent& WXUNUSED(event));
 #endif
-    int m_myid;
+    const int m_myid;
 };
 
 // ----------------------------------------------------------------------------
@@ -80,19 +80,19 @@ private:
     void SetDiskIcon(const int slot, const int drive);
 
     CrtFrame * const m_parent;
-    wxCheckBox     *m_keyword_ctl;                        // set = "Keyword/A", unset = "A/a"
-    wxStaticText   *m_disk_label[2*MAX_DISK_CONTROLLERS]; // eg "310:"
-    MyStaticBitmap *m_disk_icon[MAX_DISK_DRIVES];         // icon for disk state
-    int             m_disk_label_xoff[2*MAX_DISK_CONTROLLERS];  // positioning
-    int             m_disk_icon_xoff[MAX_DISK_DRIVES];  // positioning
-    int             m_disk_state[MAX_DISK_DRIVES]; // which icon we are showing
-    std::unique_ptr<wxBitmap> m_icon_set;          // collection of images in one place
+    wxCheckBox     *m_keyword_ctl                             = nullptr;    // set = "Keyword/A", unset = "A/a"
+    wxStaticText   *m_disk_label[2*MAX_DISK_CONTROLLERS]      = {nullptr};  // eg "310:"
+    MyStaticBitmap *m_disk_icon[MAX_DISK_DRIVES]              = {nullptr};  // icon for disk state
+    int             m_disk_label_xoff[2*MAX_DISK_CONTROLLERS] = {0};        // positioning
+    int             m_disk_icon_xoff[MAX_DISK_DRIVES]         = {0};        // positioning
+    int             m_disk_state[MAX_DISK_DRIVES]             = {-1};       // which icon we are showing
+    std::unique_ptr<wxBitmap> m_icon_set;                                   // collection of images in one place
 
-    int  m_num_disk_controllers;                // number of disk controllers
-    int  m_num_drives[MAX_DISK_CONTROLLERS];    // drives per controller
+    int  m_num_disk_controllers = 0;                // number of disk controllers
+    int  m_num_drives[MAX_DISK_CONTROLLERS] = {0};  // drives per controller
 
     enum { unknown, insert_disk, eject_disk, inspect_disk, format_disk }
-          m_popup_action;
+          m_popup_action = unknown;
 };
 
 #endif // _INCLUDE_UI_CRT_STATUSBAR_H_

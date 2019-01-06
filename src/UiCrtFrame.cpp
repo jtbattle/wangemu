@@ -163,28 +163,13 @@ CrtFrame::CrtFrame(const wxString& title,
                    crt_state_t *crt_state) :
        wxFrame((wxFrame *)nullptr, -1, title, wxDefaultPosition, wxDefaultSize,
                wxDEFAULT_FRAME_STYLE | wxNO_FULL_REPAINT_ON_RESIZE),
-    m_menubar(nullptr),
-    m_statusbar(nullptr),
-    m_toolbar(nullptr),
-    m_crt(nullptr),
-    m_fullscreen(false),
-    m_show_stats(false),
-    m_colorsel(0),
-    m_font_size{0},
     m_crt_addr(io_addr),
     m_term_num(term_num),
-    m_primary_crt(false),
-    m_assoc_kb_addr(-1),
-    m_refresh_tmr(nullptr),
-    m_quarter_sec_tmr(nullptr),
-    m_blink_phase(0),
-    m_fps(0)
+    m_smart_term(crt_state->screen_type == UI_SCREEN_2236DE),
+    m_small_crt(crt_state->chars_w == 64),
+    m_primary_crt(m_smart_term ? ((m_crt_addr == 0x00) && (m_term_num == 0))
+                               :  (m_crt_addr == 0x05))
 {
-    m_smart_term  = (crt_state->screen_type == UI_SCREEN_2236DE);
-    m_small_crt   = (crt_state->chars_w == 64);
-    m_primary_crt = (m_smart_term) ? ((m_crt_addr == 0x00) && (term_num == 0))
-                                   :  (m_crt_addr == 0x05);
-
     if (m_primary_crt) {
         assert(!m_primary_frame);
         m_primary_frame = this;
@@ -472,7 +457,7 @@ CrtFrame::setMenuChecks(const wxMenu *menu)
         disk_menu->Append(Disk_Inspect, "&Inspect Disk...", "Inspect/modify virtual disk");
         disk_menu->Append(Disk_Format,  "&Format Disk...",  "Format existing virtual disk");
 
-        bool disk_realtime = system2200::isDiskRealtime();
+        const bool disk_realtime = system2200::isDiskRealtime();
         disk_menu->AppendSeparator();
         disk_menu->Append(Disk_Realtime,         "Realtime Disk Speed",  "Emulate actual disk timing",             wxITEM_CHECK);
         disk_menu->Append(Disk_UnregulatedSpeed, "Unregulated Speed",    "Make disk accesses as fast as possible", wxITEM_CHECK);
@@ -1207,7 +1192,7 @@ CrtFrame::OnDisk(wxCommandEvent &event)
 void
 CrtFrame::OnDiskSpeed(wxCommandEvent &event)
 {
-    bool realtime = (event.GetId() == Disk_Realtime);
+    const bool realtime = (event.GetId() == Disk_Realtime);
     system2200::setDiskRealtime(realtime);
 }
 

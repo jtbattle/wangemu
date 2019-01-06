@@ -80,17 +80,17 @@ private:
     void OnWriteProt(wxCommandEvent& WXUNUSED(event));
 
     // controls
-    DiskFactory  *m_parent;     // owning dialog
-    wxStaticText *m_path;       // path to virtual disk file
-    wxRadioBox   *m_disktype;   // which type of disk (5.25", 8", hard disk)
-    wxStaticText *m_st_type;    // type of drive
-    wxStaticText *m_st_plats;   // # platters
-    wxStaticText *m_st_tracks;  // # tracks/platter
-    wxStaticText *m_st_secttrk; // display of sectors/track
-    wxStaticText *m_st_sect;    // display of # of sectors per platter
-    wxStaticText *m_st_steptime;  // display of time to step between tracks
-    wxStaticText *m_st_rpm;     // display of rotational speed
-    wxCheckBox   *m_write_prot; // write protect checkbox
+    DiskFactory  *m_parent      = nullptr;  // owning dialog
+    wxStaticText *m_path        = nullptr;  // path to virtual disk file
+    wxRadioBox   *m_disktype    = nullptr;  // which type of disk (5.25", 8", hard disk)
+    wxStaticText *m_st_type     = nullptr;  // type of drive
+    wxStaticText *m_st_plats    = nullptr;  // # platters
+    wxStaticText *m_st_tracks   = nullptr;  // # tracks/platter
+    wxStaticText *m_st_secttrk  = nullptr;  // display of sectors/track
+    wxStaticText *m_st_sect     = nullptr;  // display of # of sectors per platter
+    wxStaticText *m_st_steptime = nullptr;  // display of time to step between tracks
+    wxStaticText *m_st_rpm      = nullptr;  // display of rotational speed
+    wxCheckBox   *m_write_prot  = nullptr;  // write protect checkbox
 
     // data
     std::shared_ptr<Wvd> m_disk_data;
@@ -120,7 +120,7 @@ private:
 
     // controls
     DiskFactory * const m_parent;      // owning dialog
-    wxTextCtrl  *m_text;
+    wxTextCtrl  *m_text = nullptr;
 
     // data
     std::shared_ptr<Wvd> m_disk_data;
@@ -134,16 +134,9 @@ private:
 DiskFactory::DiskFactory(wxFrame *parent, const std::string &filename) :
         wxDialog(parent, -1, "Disk Factory",
                  wxDefaultPosition, wxDefaultSize,
-                 wxDEFAULT_DIALOG_STYLE | wxRESIZE_BORDER),
-        m_disk_data(nullptr),
-        m_tab1(nullptr),
-        m_tab2(nullptr),
-        m_btn_cancel(nullptr),
-        m_btn_save(nullptr)
+                 wxDEFAULT_DIALOG_STYLE | wxRESIZE_BORDER)
 {
     const bool new_disk = filename.empty();
-    m_btn_cancel = nullptr;
-    m_btn_save   = nullptr;
 
     m_disk_data = std::make_shared<Wvd>();
     if (new_disk) {
@@ -344,16 +337,6 @@ PropPanel::PropPanel(DiskFactory *df,
                      std::shared_ptr<Wvd> diskdata) :
         wxPanel(parent, -1),
         m_parent(df),
-        m_path(nullptr),
-        m_disktype(nullptr),
-        m_st_type(nullptr),
-        m_st_plats(nullptr),
-        m_st_tracks(nullptr),
-        m_st_secttrk(nullptr),
-        m_st_sect(nullptr),
-        m_st_steptime(nullptr),
-        m_st_rpm(nullptr),
-        m_write_prot(nullptr),
         m_disk_data(diskdata)
 {
     const int margin_pixels = 6;
@@ -565,7 +548,6 @@ LabelPanel::LabelPanel(DiskFactory *df,
                        std::shared_ptr<Wvd> diskdata) :
         wxPanel(parent, -1),
         m_parent(df),
-        m_text(nullptr),
         m_disk_data(diskdata)
 {
     const int style = wxTE_MULTILINE;
