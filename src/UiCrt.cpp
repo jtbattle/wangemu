@@ -462,15 +462,15 @@ Crt::OnTimer(wxTimerEvent &event)
 // although it is legal to have more than one data chunk, this
 // program assumes there is only one.
 
-const uint32 riffID = ('R' << 24) | ('I' << 16) | ('F' << 8) | ('F' << 0);
-const uint32 waveID = ('W' << 24) | ('A' << 16) | ('V' << 8) | ('E' << 0);
+static constexpr uint32 riffID = ('R' << 24) | ('I' << 16) | ('F' << 8) | ('F' << 0);
+static constexpr uint32 waveID = ('W' << 24) | ('A' << 16) | ('V' << 8) | ('E' << 0);
 struct RIFF_t {
     uint32      groupID;        // should be 'RIFF'
     uint32      riffBytes;      // number of bytes in file after this header
     uint32      riffType;       // should be 'WAVE'
 };
 
-const uint32 fmtID = ('f' << 24) | ('m' << 16) | ('t' << 8) | (' ' << 0);
+static constexpr uint32 fmtID = ('f' << 24) | ('m' << 16) | ('t' << 8) | (' ' << 0);
 struct FormatChunk_t {
     uint32      chunkID;        // should be 'fmt '
     int32       chunkSize;      // not including first 8 bytes of header
@@ -482,7 +482,7 @@ struct FormatChunk_t {
     uint16      bitsPerSample;
 };
 
-const uint32 dataID = ('d' << 24) | ('a' << 16) | ('t' << 8) | ('a' << 0);
+static constexpr uint32 dataID = ('d' << 24) | ('a' << 16) | ('t' << 8) | ('a' << 0);
 struct DataChunk_t {
     uint32      chunkID;        // must be 'data'
     int32       chunkSize;      // not including first 8 bytes of header

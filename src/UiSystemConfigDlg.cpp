@@ -64,7 +64,7 @@ SystemConfigDlg::SystemConfigDlg(wxFrame *parent) :
     // leaf controls for left_grid
     m_cpu_type = new wxChoice(this, ID_CPU_CHOICE);
     for (auto &cpu_cfg : system2200::m_cpu_configs) {
-        m_cpu_type->Append(cpu_cfg.label.c_str(), (void *)cpu_cfg.cpu_type);
+        m_cpu_type->Append(cpu_cfg.label, (void *)cpu_cfg.cpu_type);
     }
 
     m_mem_size = new wxChoice(this, ID_MEMSIZE_CHOICE);

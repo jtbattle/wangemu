@@ -32,7 +32,7 @@ struct kd_keymap_t {
     int wangKey;
 };
 
-kd_keymap_t keydown_keymap_table[] = {
+static constexpr kd_keymap_t keydown_keymap_table[] = {
 
     // --------- various control keys -------------
     // key              modifier                        mapping
@@ -193,7 +193,7 @@ struct oc_keymap_t {
     int wangKey_Aa_mode;
 };
 
-oc_keymap_t onchar_keymap_table[] = {
+static constexpr oc_keymap_t onchar_keymap_table[] = {
 
     // key      Keyword/A mapping       A/a mapping
 

@@ -95,9 +95,9 @@ enum
 // Map of enums for some of the paper sizes (wxPaperSize). Used for load/save
 // to config file not all are implemented. See exPaperSize in defs.h for a
 // complete list.
-struct papersizemap_t {
+static constexpr struct papersizemap_t {
     wxPaperSize papersize_val;
-    std::string papersize_name;
+    char       *papersize_name;
 } papersizemap[] = {
     { wxPAPER_NONE,       "NONE" },         // Use specific dimensions
     { wxPAPER_LETTER,     "LETTER" },       // Letter, 8 1/2 by 11 inches
@@ -112,9 +112,9 @@ const int PSMAX = sizeof(papersizemap)/sizeof(papersizemap_t);
 #endif
 
 // map of enums for some of the paper bins (wxPrintBin). Used for load/save to config file
-struct paperbinmap_t {
+static constexpr struct paperbinmap_t {
     wxPrintBin paperbin_val;
-    std::string paperbin_name;
+    char      *paperbin_name;
 } paperbinmap[] = {
     { wxPRINTBIN_DEFAULT,        "DEFAULT" },
     { wxPRINTBIN_ONLYONE,        "ONLYONE" },

@@ -135,7 +135,7 @@ namespace system2200
 
     struct cpuconfig_t {
         int              cpu_type;            // Cpu2200::CPUTYPE_* value
-        std::string      label;               // human-readable label
+        const char      *label;               // human-readable label
         std::vector<int> ram_size_options;    // list of legal RAM configurations in KB
         std::vector<int> ucode_size_options;  // list of legal ucode sizes, in words
         bool             has_oneshot;         // does it have the timeslice one-shot?

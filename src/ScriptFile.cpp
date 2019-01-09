@@ -158,7 +158,7 @@ struct metakeytable_t {
     short val;          // flags | keycode
 };
 
-static metakeytable_t metakeytable[] = {
+static constexpr metakeytable_t metakeytable[] = {
 
     // useful keys
     { "<LF>",           0x0A },

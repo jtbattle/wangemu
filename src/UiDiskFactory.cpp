@@ -30,8 +30,8 @@ enum
 };
 
 
-static struct disk_choice_t {
-    std::string description;
+static constexpr struct disk_choice_t {
+    char  *description;
     int    disk_type;
     int    platters;
     int    sectors_per_platter;
@@ -68,8 +68,7 @@ class PropPanel : public wxPanel
 public:
     CANT_ASSIGN_OR_COPY_CLASS(PropPanel);
     PropPanel(DiskFactory *df, wxWindow *parent,
-              std::shared_ptr<Wvd> diskdata);
-//    ~PropPanel();
+              const std::shared_ptr<Wvd> &diskdata);
 
     void refresh();
 
@@ -106,8 +105,7 @@ class LabelPanel : public wxPanel
 public:
     CANT_ASSIGN_OR_COPY_CLASS(LabelPanel);
     LabelPanel(DiskFactory *df, wxWindow *parent,
-               std::shared_ptr<Wvd> diskdata);
-//    ~LabelPanel();
+               const std::shared_ptr<Wvd> &diskdata);
 
     void refresh();
 
@@ -334,7 +332,7 @@ enum
 
 PropPanel::PropPanel(DiskFactory *df,
                      wxWindow *parent,
-                     std::shared_ptr<Wvd> diskdata) :
+                     const std::shared_ptr<Wvd> &diskdata) :
         wxPanel(parent, -1),
         m_parent(df),
         m_disk_data(diskdata)
@@ -545,7 +543,7 @@ enum
 
 LabelPanel::LabelPanel(DiskFactory *df,
                        wxWindow *parent,
-                       std::shared_ptr<Wvd> diskdata) :
+                       const std::shared_ptr<Wvd> &diskdata) :
         wxPanel(parent, -1),
         m_parent(df),
         m_disk_data(diskdata)

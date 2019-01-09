@@ -1,9 +1,10 @@
 // disassemble 8080 instructions
 
+#include "i8080.h"
+
+#include <assert.h>
 #include <stdio.h>
 #include <string.h>
-#include <assert.h>
-#include "i8080.h"
 
 // the op_str strings below are interpreted with the following escapes:
 //    # = print immediate 8b value

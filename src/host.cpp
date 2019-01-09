@@ -83,7 +83,7 @@ saveConfigFileLocations()
 
 
 // ------------------------------------------------------------------------
-//  a small logging facility, not in the host namespace
+// a small logging facility, not in the host namespace
 // ------------------------------------------------------------------------
 
 #include <cstdarg>      // for var args
