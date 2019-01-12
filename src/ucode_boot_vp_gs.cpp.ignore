@@ -1,4 +1,4 @@
-// this boot rom image came from Georg Sch‰fer's machine
+// this boot rom image came from Georg Sch√§fer's machine
 
 #include "ucode_2200.h"
 
