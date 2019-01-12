@@ -1,7 +1,3 @@
-// ----------------------------------------------------------------------------
-// headers
-// ----------------------------------------------------------------------------
-
 #include "Ui.h"                 // emulator interface
 #include "UiCrtConfigDlg.h"
 #include "UiCrtFrame.h"
@@ -9,6 +5,21 @@
 #include "host.h"               // for Config*()
 
 #include "wx/slider.h"
+
+// ----------------------------------------------------------------------------
+// utility class
+// ----------------------------------------------------------------------------
+
+class myClientData : public wxClientData
+{
+public:
+    myClientData(int data) : m_data(data) { }
+    int m_data;
+};
+
+// ----------------------------------------------------------------------------
+// dialog
+// ----------------------------------------------------------------------------
 
 enum
 {
@@ -38,14 +49,14 @@ CrtConfigDlg::CrtConfigDlg(wxFrame *parent, const wxString &title,
     for (int i=0; i < num_fonts; i++) {
         int         size  = CrtFrame::getFontNumber(i);
         std::string label = CrtFrame::getFontName(i);
-        m_font_choice->Append(label, (void*)size);
+        m_font_choice->Append(label, new myClientData(size));
     }
 
     m_color_choice = new wxChoice(this, ID_COLOR_CHOICE);
     const int num_schemes = CrtFrame::getNumColorSchemes();
     for (int j=0; j < num_schemes; j++) {
         std::string label = CrtFrame::getColorSchemeName(j);
-        m_color_choice->Append(label, (void*)j);
+        m_color_choice->Append(label, new myClientData(j));
     }
 
     m_contrast_slider = new wxSlider(this, ID_CONTRAST_SLIDER,
@@ -117,7 +128,9 @@ CrtConfigDlg::~CrtConfigDlg()
 void
 CrtConfigDlg::OnFontChoice(wxCommandEvent &event)
 {
-    const int size = reinterpret_cast<int>(event.GetClientData());
+    const auto mcdp = reinterpret_cast<myClientData*>(event.GetClientObject());
+    assert(mcdp != nullptr);
+    const int size = mcdp->m_data;
     CrtFrame *pp = wxStaticCast(GetParent(), CrtFrame);
     assert(pp);
     pp->setFontSize(size);
@@ -165,7 +178,9 @@ CrtConfigDlg::updateDlg()
     const int font_size = pp->getFontSize();
     int font_choice = -1;
     for (unsigned int i=0; i<m_font_choice->GetCount(); i++) {
-        if (reinterpret_cast<int>(m_font_choice->GetClientData(i)) == font_size) {
+        const auto mcdp = reinterpret_cast<myClientData*>(m_font_choice->GetClientObject(i));
+        assert(mcdp != nullptr);
+        if (mcdp->m_data == font_size) {
             font_choice = i;
         }
     }

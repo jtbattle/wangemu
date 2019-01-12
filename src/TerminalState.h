@@ -6,7 +6,7 @@
 
 #include "w2200.h"
 
-enum ui_screen_t;  // defined in Ui.h
+enum ui_screen_t : int;  // defined in Ui.h
 
 // state used only in smart terminal mode (eg 2236DE)
 enum char_attr_t : uint8 {

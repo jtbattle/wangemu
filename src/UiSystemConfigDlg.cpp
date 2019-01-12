@@ -7,6 +7,21 @@
 #include "host.h"
 #include "system2200.h"
 
+// ----------------------------------------------------------------------------
+// utility class
+// ----------------------------------------------------------------------------
+
+class myClientData : public wxClientData
+{
+public:
+    myClientData(int data) : m_data(data) { }
+    int m_data;
+};
+
+// ----------------------------------------------------------------------------
+// dialog
+// ----------------------------------------------------------------------------
+
 enum
 {
     ID_CPU_CHOICE = 1,
@@ -64,7 +79,7 @@ SystemConfigDlg::SystemConfigDlg(wxFrame *parent) :
     // leaf controls for left_grid
     m_cpu_type = new wxChoice(this, ID_CPU_CHOICE);
     for (auto &cpu_cfg : system2200::m_cpu_configs) {
-        m_cpu_type->Append(cpu_cfg.label, (void *)cpu_cfg.cpu_type);
+        m_cpu_type->Append(cpu_cfg.label, new myClientData(cpu_cfg.cpu_type));
     }
 
     m_mem_size = new wxChoice(this, ID_MEMSIZE_CHOICE);
@@ -113,14 +128,14 @@ SystemConfigDlg::SystemConfigDlg(wxFrame *parent) :
         m_card_desc[slot] = new wxChoice(this, ID_SLOT0_CARD_CHOICE+slot);
         // FIXME: for some reason, if I use -1, it reads as 0 (!) in
         //        OnCardChoice().  this was true in 2.6, and is true in 2.8.8
-        m_card_desc[slot]->Append("(vacant)", (void*)(-2));
+        m_card_desc[slot]->Append("(vacant)", new myClientData(-2));
 
         for (int ctype=0; ctype<IoCard::NUM_CARDTYPES; ctype++) {
             const IoCard::card_t ct = IoCard::card_types[ctype];
             const std::string card_name = CardInfo::getCardName(ct);
             const std::string card_desc = CardInfo::getCardDesc(ct);
             const std::string str(card_name + " (" + card_desc + ")");
-            m_card_desc[slot]->Append(str, (void*)ctype);
+            m_card_desc[slot]->Append(str, new myClientData(ctype));
         }
 
         m_card_addr[slot] = new wxChoice(this, ID_SLOT0_ADDR_CHOICE+slot);
@@ -204,14 +219,14 @@ SystemConfigDlg::setMemsizeStrings()
     auto cpu_cfg = system2200::getCpuConfig(cpu_type);
     assert(cpu_cfg != nullptr);
 
-    for (auto const kb : cpu_cfg->ram_size_options) {
+    for (const int kb : cpu_cfg->ram_size_options) {
         char label[10];
         if (kb < 1024) {
             sprintf(&label[0], "%3d KB", kb);
         } else {
             sprintf(&label[0], "%3d MB", kb/1024);
         }
-        m_mem_size->Append(&label[0], (void*)kb);
+        m_mem_size->Append(&label[0], new myClientData(kb));
     }
 }
 
@@ -234,7 +249,9 @@ SystemConfigDlg::updateDlg()
     m_mem_size->SetSelection(-1); // just in case there is no match, make it obvious
     const int ram_size = m_cfg.getRamKB();
     for (unsigned int i=0; i<m_mem_size->GetCount(); i++) {
-        if (reinterpret_cast<int>(m_mem_size->GetClientData(i)) == ram_size) {
+        const auto mcdp = reinterpret_cast<myClientData*>(m_mem_size->GetClientObject(i));
+        assert(mcdp != nullptr);
+        if (mcdp->m_data == ram_size) {
             m_mem_size->SetSelection(i);
         }
     }
@@ -291,7 +308,9 @@ void
 SystemConfigDlg::OnCpuChoice(wxCommandEvent& WXUNUSED(event))
 {
     const int selection = m_cpu_type->GetSelection();
-    const int cpu_type  = reinterpret_cast<int>(m_cpu_type->GetClientData(selection));
+    const auto mcdp = reinterpret_cast<myClientData*>(m_cpu_type->GetClientObject(selection));
+    assert(mcdp != nullptr);
+    const int cpu_type = mcdp->m_data;
 
     m_cfg.setCpuType(cpu_type);
 
@@ -328,7 +347,9 @@ void
 SystemConfigDlg::OnMemsizeChoice(wxCommandEvent& WXUNUSED(event))
 {
     const int selection = m_mem_size->GetSelection();
-    m_cfg.setRamKB(reinterpret_cast<int>(m_mem_size->GetClientData(selection)));
+    const auto mcdp = reinterpret_cast<myClientData*>(m_mem_size->GetClientObject(selection));
+    assert(mcdp != nullptr);
+    m_cfg.setRamKB(mcdp->m_data);
     updateButtons();
 }
 
@@ -351,7 +372,9 @@ SystemConfigDlg::OnCardChoice(wxCommandEvent &event)
     const wxChoice *hCtl = m_card_desc[slot];
     assert(hCtl != nullptr);
     const int selection = hCtl->GetSelection();
-    int idx = reinterpret_cast<int>(hCtl->GetClientData(selection));
+    const auto mcdp = reinterpret_cast<myClientData*>(hCtl->GetClientObject(selection));
+    assert(mcdp != nullptr);
+    int idx = mcdp->m_data;
     if (idx < 0) { idx = -1; }  // hack due to -2 hack earlier
     const IoCard::card_t card_type = static_cast<IoCard::card_t>(idx);
 
@@ -373,7 +396,9 @@ SystemConfigDlg::OnAddrChoice(wxCommandEvent &event)
     const int slot = id - ID_SLOT0_ADDR_CHOICE;
     const int addr_sel = m_card_addr[slot]->GetSelection();
     const int card_sel = m_card_desc[slot]->GetSelection();
-    const int card_type_idx = reinterpret_cast<int>(m_card_desc[slot]->GetClientData(card_sel));
+    const auto mcdp = reinterpret_cast<myClientData*>(m_card_desc[slot]->GetClientObject(card_sel));
+    assert(mcdp != nullptr);
+    const int card_type_idx = mcdp->m_data;
     assert(card_type_idx >= 0);
 
     std::vector<int> base_addresses = CardInfo::getCardBaseAddresses(static_cast<IoCard::card_t>(card_type_idx));

@@ -10,7 +10,7 @@ class Cpu2200;
 class Scheduler;
 class Timer;
 class Terminal;
-enum ui_screen_t;
+enum ui_screen_t : int;
 
 class IoCardDisplay : public IoCard
 {

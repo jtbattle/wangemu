@@ -20,7 +20,7 @@ struct crt_state_t;
 // =============================================================
 
 // called at the start of time to create the actual display
-enum ui_screen_t {
+enum ui_screen_t : int {
     UI_SCREEN_64x16,
     UI_SCREEN_80x24,
     UI_SCREEN_2236DE

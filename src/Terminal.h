@@ -13,7 +13,7 @@ class CrtFrame;
 class Scheduler;
 class Timer;
 class IoCardTermMux;
-enum ui_screen_t;
+enum ui_screen_t : int;
 
 class Terminal
 {
