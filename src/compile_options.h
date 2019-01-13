@@ -32,12 +32,14 @@
 #ifdef __WXMAC__
     // construct the m_scrbits image via the rawbmp.h interface.
     #define DRAW_WITH_RAWBMP 1
+    #define USE_FILE_BEEPS 1
 #else
     // blit each character from the fontmap to the bitmap.
     // rawbmp is very slow on win32 because rawbmp scribbles on DIBs, but the
     // conversion of DIB to DDB under win32 is really slow when it comes time
     // to blast it to the screen.
     #define DRAW_WITH_RAWBMP 0
+    #define USE_FILE_BEEPS 0
 #endif
 
 // ========================================================================

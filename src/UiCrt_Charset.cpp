@@ -2691,128 +2691,6 @@ uint8 xlat_char_alt[64] = {
 
 };
 
-// map
-wxString unicode_xlat_char[128] = {
-
-    /* the first 16 chars are identical to 0x80-0x8F,
-     * but they can never be seen */
-    /*0x00*/ L" ",      // blank
-#if 0
-    /*0x01*/ L"\u25c6", // black diamond  (too big)
-#else
-    /*0x01*/ L"\u2666", // black diamond  (chosen from card suit glyphs)
-#endif
-    /*0x02*/ L"\u25ba", // black triangle pointing right |>
-    /*0x03*/ L"\u25c4", // black triangle pointing left <|
-    /*0x04*/ L"\u2192", // right arrow
-    /*0x05*/ L"\u00ac", // blank marker ;_ (mapped to rotated version, ¬)
-    /*0x06*/ L"|",      // solid vertical bar |
-    /*0x07*/ L"\u0308", // umlaut
-    /*0x08*/ L"\u00b4", // accent acute
-    /*0x09*/ L"\u0060", // accent grave
-    /*0x0a*/ L"^",      // carret
-    /*0x0b*/ L"\u2584", // low box  (maybe \u25a0 is better)
-    /*0x0c*/ L"\u203c", // double !!
-    /*0x0d*/ L"\u2195", // updown arrow
-    /*0x0e*/ L"\u00df", // schloss (german double s)
-    /*0x0f*/ L"\u00b6", // paragraph
-
-    /*0x10*/ L"\u00e2", // a-hat
-    /*0x11*/ L"\u00ea", // e-hat
-    /*0x12*/ L"\u00ee", // i-hat
-    /*0x13*/ L"\u00f4", // o-hat
-    /*0x14*/ L"\u00fb", // u-hat
-    /*0x15*/ L"\u00e4", // a-umlaut
-    /*0x16*/ L"\u00eb", // e-umlaut
-    /*0x17*/ L"\u00ef", // i-umlaut
-    /*0x18*/ L"\u00f6", // o-umlaut
-    /*0x19*/ L"\u00fc", // u-umlaut
-    /*0x1a*/ L"\u00e0", // a-accent grave
-    /*0x1b*/ L"\u00e8", // e-accent grave
-    /*0x1c*/ L"\u00f9", // u-accent grave
-    /*0x1d*/ L"\u00c4", // A-umlaut
-    /*0x1e*/ L"\u00d6", // O-umlaut
-    /*0x1f*/ L"\u00dc", // U-umlaut
-
-    /* 0x20 - 0x5A core ascii, A-Z, [\] */
-    L" ", L"!", L"\"", L"#", L"$",  L"%", L"&", L"'",
-    L"(", L")", L"*",  L"+", L",",  L"-", L".", L"/",
-    L"0", L"1", L"2",  L"3", L"4",  L"5", L"6", L"7",
-    L"8", L"9", L":",  L";", L"<",  L"=", L">", L"?",
-    L"@", L"A", L"B",  L"C", L"D",  L"E", L"F", L"G",
-    L"H", L"I", L"J",  L"K", L"L",  L"M", L"N", L"O",
-    L"P", L"Q", L"R",  L"S", L"T",  L"U", L"V", L"W",
-    L"X", L"Y", L"Z",  L"[", L"\\", L"]",
-
-    /*0x5e*/ L"\u2191", // up arrow
-    /*0x5f*/ L"\u2190", // left arrow (becomes "<<" digraph)
-    /*0x60*/ L"\u00b0", // degree
-
-          L"a", L"b", L"c", L"d", L"e", L"f", L"g",
-    L"h", L"i", L"j", L"k", L"l", L"m", L"n", L"o",
-    L"p", L"q", L"r", L"s", L"t", L"u", L"v", L"w",
-    L"x", L"y", L"z",
-    /* 0x61 - 0x7a (a-z) */
-
-    /*0x7b*/ L"\u00a7", // section mark (§)
-    /*0x7c*/ L"\u00a3", // pound sterling
-    /*0x7d*/ L"\u00e9", // e-accent acute
-    /*0x7e*/ L"\u00e7", // c-cedilla
-    /*0x7f*/ L"\u00a2", // cent
-};
-
-wxString unicode_xlat_char_alt[64] = {
-
-    /*0x00*/ L"\u0323", // small dot centered in the bottom of the glyph
-#if 0
-    /*0x01*/ L"\u25c6", // black diamond  (too big)
-#else
-    /*0x01*/ L"\u2666", // black diamond  (chosen from card suit glyphs)
-#endif
-    /*0x02*/ L"\u25ba", // black triangle pointing right |>
-    /*0x03*/ L"\u25c4", // black triangle pointing left <|
-    /*0x04*/ L"\u2192", // right arrow
-    /*0x05*/ L"\u00ac", // blank marker ;_ (mapped to rotated version, ¬)
-    /*0x06*/ L"|",      // solid vertical bar |
-    /*0x07*/ L"\u0308", // umlaut
-    /*0x08*/ L"\u00b4", // accent acute
-    /*0x09*/ L"\u0060", // accent grave
-    /*0x0a*/ L"^",      // carret
-    /*0x0b*/ L"\u2584", // low box  (maybe \u25a0 is better)
-    /*0x0c*/ L"\u203c", // double !!
-    /*0x0d*/ L"\u2195", // updown arrow
-    /*0x0e*/ L"\u00df", // schloss (german double s)
-    /*0x0f*/ L"\u00b6", // paragraph
-
-    // alternate character set from Wang 2236DW
-    /*0x90*/ L"\u25aa", // small middle cell black square
-    /*0x91*/ L"\u25ca", // open diamond (maps to "lozenge")
-    /*0x92*/ L"\u25b2", // black triangle pointing up
-    /*0x93*/ L"\u25bc", // black triangle pointing down
-    /*0x94*/ L"\u2193", // arrow pointing down
-    /*0x95*/ L"\u00ac", // space marker ¬
-    /*0x96*/ L"\u221a", // radical/check (too big)
-    /*0x97*/ L"\u25e6", // mid-cell open dot
-    /*0x98*/ L"{",      // {
-    /*0x99*/ L"}",      // }
-    /*0x9a*/ L"\u2206", // delta, or maybe open triangle facing up
-#if 0
-    /*0x9b*/ L"\u25a1", // mid-cell open box (bigger than it should be)
-#else
-    /*0x9b*/ L"\u25ab", // mid-cell open box (smaller than it should be)
-#endif
-    /*0x9c*/ L" ",      // blank
-    /*0x9d*/ L" ",      // blank
-    /*0x9e*/ L" ",      // blank
-    /*0x9f*/ L" ",      // blank
-
-    /*0xA0-0xBF: blanks*/
-    L" ", L" ", L" ", L" ", L" ", L" ", L" ", L" ",
-    L" ", L" ", L" ", L" ", L" ", L" ", L" ", L" ",
-    L" ", L" ", L" ", L" ", L" ", L" ", L" ", L" ",
-    L" ", L" ", L" ", L" ", L" ", L" ", L" ", L" ",
-};
-
 #elif defined(__WXMAC__)
 
 // this table translates the wang character set to the closest representation
@@ -2933,5 +2811,129 @@ uint8 xlat_char_alt[64] = {
 #else
     ERROR: undefined port
 #endif
+
+
+// map
+wxString unicode_xlat_char[128] = {
+
+    /* the first 16 chars are identical to 0x80-0x8F,
+     * but they can never be seen */
+    /*0x00*/ L" ",      // blank
+#if 0
+    /*0x01*/ L"\u25c6", // black diamond  (too big)
+#else
+    /*0x01*/ L"\u2666", // black diamond  (chosen from card suit glyphs)
+#endif
+    /*0x02*/ L"\u25ba", // black triangle pointing right |>
+    /*0x03*/ L"\u25c4", // black triangle pointing left <|
+    /*0x04*/ L"\u2192", // right arrow
+    /*0x05*/ L"\u00ac", // blank marker ;_ (mapped to rotated version, ¬)
+    /*0x06*/ L"|",      // solid vertical bar |
+    /*0x07*/ L"\u0308", // umlaut
+    /*0x08*/ L"\u00b4", // accent acute
+    /*0x09*/ L"\u0060", // accent grave
+    /*0x0a*/ L"^",      // carret
+    /*0x0b*/ L"\u2584", // low box  (maybe \u25a0 is better)
+    /*0x0c*/ L"\u203c", // double !!
+    /*0x0d*/ L"\u2195", // updown arrow
+    /*0x0e*/ L"\u00df", // schloss (german double s)
+    /*0x0f*/ L"\u00b6", // paragraph
+
+    /*0x10*/ L"\u00e2", // a-hat
+    /*0x11*/ L"\u00ea", // e-hat
+    /*0x12*/ L"\u00ee", // i-hat
+    /*0x13*/ L"\u00f4", // o-hat
+    /*0x14*/ L"\u00fb", // u-hat
+    /*0x15*/ L"\u00e4", // a-umlaut
+    /*0x16*/ L"\u00eb", // e-umlaut
+    /*0x17*/ L"\u00ef", // i-umlaut
+    /*0x18*/ L"\u00f6", // o-umlaut
+    /*0x19*/ L"\u00fc", // u-umlaut
+    /*0x1a*/ L"\u00e0", // a-accent grave
+    /*0x1b*/ L"\u00e8", // e-accent grave
+    /*0x1c*/ L"\u00f9", // u-accent grave
+    /*0x1d*/ L"\u00c4", // A-umlaut
+    /*0x1e*/ L"\u00d6", // O-umlaut
+    /*0x1f*/ L"\u00dc", // U-umlaut
+
+    /* 0x20 - 0x5A core ascii, A-Z, [\] */
+    L" ", L"!", L"\"", L"#", L"$",  L"%", L"&", L"'",
+    L"(", L")", L"*",  L"+", L",",  L"-", L".", L"/",
+    L"0", L"1", L"2",  L"3", L"4",  L"5", L"6", L"7",
+    L"8", L"9", L":",  L";", L"<",  L"=", L">", L"?",
+    L"@", L"A", L"B",  L"C", L"D",  L"E", L"F", L"G",
+    L"H", L"I", L"J",  L"K", L"L",  L"M", L"N", L"O",
+    L"P", L"Q", L"R",  L"S", L"T",  L"U", L"V", L"W",
+    L"X", L"Y", L"Z",  L"[", L"\\", L"]",
+
+    /*0x5e*/ L"\u2191", // up arrow
+    /*0x5f*/ L"\u2190", // left arrow (becomes "<<" digraph)
+    /*0x60*/ L"\u00b0", // degree
+
+          L"a", L"b", L"c", L"d", L"e", L"f", L"g",
+    L"h", L"i", L"j", L"k", L"l", L"m", L"n", L"o",
+    L"p", L"q", L"r", L"s", L"t", L"u", L"v", L"w",
+    L"x", L"y", L"z",
+    /* 0x61 - 0x7a (a-z) */
+
+    /*0x7b*/ L"\u00a7", // section mark (§)
+    /*0x7c*/ L"\u00a3", // pound sterling
+    /*0x7d*/ L"\u00e9", // e-accent acute
+    /*0x7e*/ L"\u00e7", // c-cedilla
+    /*0x7f*/ L"\u00a2", // cent
+};
+
+
+wxString unicode_xlat_char_alt[64] = {
+
+    /*0x00*/ L"\u0323", // small dot centered in the bottom of the glyph
+#if 0
+    /*0x01*/ L"\u25c6", // black diamond  (too big)
+#else
+    /*0x01*/ L"\u2666", // black diamond  (chosen from card suit glyphs)
+#endif
+    /*0x02*/ L"\u25ba", // black triangle pointing right |>
+    /*0x03*/ L"\u25c4", // black triangle pointing left <|
+    /*0x04*/ L"\u2192", // right arrow
+    /*0x05*/ L"\u00ac", // blank marker ;_ (mapped to rotated version, ¬)
+    /*0x06*/ L"|",      // solid vertical bar |
+    /*0x07*/ L"\u0308", // umlaut
+    /*0x08*/ L"\u00b4", // accent acute
+    /*0x09*/ L"\u0060", // accent grave
+    /*0x0a*/ L"^",      // carret
+    /*0x0b*/ L"\u2584", // low box  (maybe \u25a0 is better)
+    /*0x0c*/ L"\u203c", // double !!
+    /*0x0d*/ L"\u2195", // updown arrow
+    /*0x0e*/ L"\u00df", // schloss (german double s)
+    /*0x0f*/ L"\u00b6", // paragraph
+
+    // alternate character set from Wang 2236DW
+    /*0x90*/ L"\u25aa", // small middle cell black square
+    /*0x91*/ L"\u25ca", // open diamond (maps to "lozenge")
+    /*0x92*/ L"\u25b2", // black triangle pointing up
+    /*0x93*/ L"\u25bc", // black triangle pointing down
+    /*0x94*/ L"\u2193", // arrow pointing down
+    /*0x95*/ L"\u00ac", // space marker ¬
+    /*0x96*/ L"\u221a", // radical/check (too big)
+    /*0x97*/ L"\u25e6", // mid-cell open dot
+    /*0x98*/ L"{",      // {
+    /*0x99*/ L"}",      // }
+    /*0x9a*/ L"\u2206", // delta, or maybe open triangle facing up
+#if 0
+    /*0x9b*/ L"\u25a1", // mid-cell open box (bigger than it should be)
+#else
+    /*0x9b*/ L"\u25ab", // mid-cell open box (smaller than it should be)
+#endif
+    /*0x9c*/ L" ",      // blank
+    /*0x9d*/ L" ",      // blank
+    /*0x9e*/ L" ",      // blank
+    /*0x9f*/ L" ",      // blank
+
+    /*0xA0-0xBF: blanks*/
+    L" ", L" ", L" ", L" ", L" ", L" ", L" ", L" ",
+    L" ", L" ", L" ", L" ", L" ", L" ", L" ", L" ",
+    L" ", L" ", L" ", L" ", L" ", L" ", L" ", L" ",
+    L" ", L" ", L" ", L" ", L" ", L" ", L" ", L" ",
+};
 
 // vim: ts=8:et:sw=4:smarttab

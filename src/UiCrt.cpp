@@ -501,6 +501,17 @@ struct DataChunk_t {
 void
 Crt::createBeep()
 {
+#if USE_FILE_BEEPS
+    m_beep = std::make_unique<wxSound>();
+    wxString sound_file =
+        (m_crt_state->screen_type == UI_SCREEN_2236DE) ? "beep_1940.wav"
+                                                       : "beep_1100.wav";
+    const bool success = m_beep->Create(sound_file);
+    if (!success) {
+        m_beep = nullptr;
+    }
+#else
+    // generate the beep in memory (not supported by osx)
     const float sample_rate = 44100.0f;
 
     // the schematics for the dumb terminal seem to show about a 1100 Hz tone,
@@ -576,6 +587,7 @@ Crt::createBeep()
     }
 
     delete [] wav;
+#endif
 }
 
 // vim: ts=8:et:sw=4:smarttab

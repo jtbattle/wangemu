@@ -14,6 +14,19 @@
 #include "Ui.h"
 #include "host.h"
 
+// ------------------------------------------------------------------------
+// until C++17, storage must be declared outside the class too
+// ------------------------------------------------------------------------
+
+const IoCard::card_t IoCard::card_types[IoCard::NUM_CARDTYPES] = {
+    IoCard::card_t::keyboard,
+    IoCard::card_t::disp_64x16,
+    IoCard::card_t::disp_80x24,
+    IoCard::card_t::term_mux,
+    IoCard::card_t::printer,
+    IoCard::card_t::disk
+};
+
 // ========================================================================
 // card management functions (used by UI)
 // ========================================================================

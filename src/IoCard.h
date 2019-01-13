@@ -115,14 +115,7 @@ public:
 
     // initialized after the class declaration:
     static const int NUM_CARDTYPES = 6;
-    constexpr static card_t card_types[NUM_CARDTYPES] = {
-        IoCard::card_t::keyboard,
-        IoCard::card_t::disp_64x16,
-        IoCard::card_t::disp_80x24,
-        IoCard::card_t::term_mux,
-        IoCard::card_t::printer,
-        IoCard::card_t::disk
-    };
+    static const card_t card_types[NUM_CARDTYPES];
 
     // return true if the argument is a legal card enum
     static bool legalCardType(card_t c) {

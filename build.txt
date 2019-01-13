@@ -3,11 +3,25 @@
                                 January 4, 2018
 ============================================================================
 
-The typical user of wangmu has no need to know any of this.  However, if you
+The typical user of wangmu has no need to know any of this. However, if you
 are curious and want to add a feature to the emulator or fix a bug, this
 document will attempt to help you set up an environment on either Windows or
-OSX and build the emulator as it is released.  It is a rough guide, and not
+OSX and build the emulator as it is released. It is a rough guide, and not
 an explicit mouse-click-by-mouse-click cookbook.
+
+The code makes extensive use of C++11 language features. It also uses one
+C++14 feature, std::make_unique. If you have a c++11 compiler and C++14
+isn't an option, it would be possible to declare the std::make_unique
+template in w2200.h (which is visible in every .cpp file). This version
+comes from Herb Sutter:
+
+    https://herbsutter.com/gotw/_102/
+
+    template<typename T, typename ...Args>
+    std::unique_ptr<T> make_unique( Args&& ...args )
+    {
+        return std::unique_ptr<T>( new T( std::forward<Args>(args)... ) );
+    }
 
 --------------------------------------------------------------
 ------------------------ Windows Port ------------------------
@@ -15,8 +29,8 @@ an explicit mouse-click-by-mouse-click cookbook.
 
 1) Set up a modern C++ compiler
 
-   Install Microsoft Visual Studio Community Edition 2017.  It is free,
-   it works well, it has a great debugger.  I will completely ignore the
+   Install Microsoft Visual Studio Community Edition 2017. It is free,
+   it works well, it has a great debugger. I will completely ignore the
    steps of downloading it and getting it installed.
 
    Other compilers may work just fine, but Visual Studio Community 2017
@@ -24,7 +38,7 @@ an explicit mouse-click-by-mouse-click cookbook.
 
 2) Get the wxWidgets library source code
 
-   Version 3.0 of WangEmu was built using wx version 3.1.2.  If you download
+   Version 3.0 of WangEmu was built using wx version 3.1.2. If you download
    a later version of wxWidgets, there may be issues, as the wx developers
    do tend to make a few backward-incompatible changes each release.
 
@@ -33,9 +47,9 @@ an explicit mouse-click-by-mouse-click cookbook.
 3) Unpack the wxWidgets source code
 
    Personally, I override the default install location and instead unpack
-   it into C:\libs\wx-3.1.2 (for release 3.1.2).  This isn't strictly
+   it into C:\libs\wx-3.1.2 (for release 3.1.2). This isn't strictly
    necessary, but future examples in this document assumes things were
-   installed into C:\libs\wx-3.1.2.  Adjust future comments if you install
+   installed into C:\libs\wx-3.1.2. Adjust future comments if you install
    somewhere else.
 
 4) Tweak setup.h (strictly optional)
@@ -46,14 +60,14 @@ an explicit mouse-click-by-mouse-click cookbook.
 
    cd C:\libs\wx-3.1.2\include\wx\msw
 
-   Edit the file "setup.h" to tweak whatever options you need.  Only do
-   this if you know your way around wxWidgets.  The stock setup.h will
+   Edit the file "setup.h" to tweak whatever options you need. Only do
+   this if you know your way around wxWidgets. The stock setup.h will
    work fine.
 
 5) Build the wxWidgets library
 
-   The wxWidgets library may be built many different ways.  I'll describe
-   only the way I do it.  This worked for MSVC 2017 Community Edition:
+   The wxWidgets library may be built many different ways. I'll describe
+   only the way I do it. This worked for MSVC 2017 Community Edition:
 
    5a) Launch a command line shell from MSVC compiler
    5b) type "set WXWIN=c:\libs\wx-3.1.2"  (change to your appropriate path)
@@ -63,11 +77,11 @@ an explicit mouse-click-by-mouse-click cookbook.
    5e) type "nmake -f makefile.vc BUILD=release"
        and wait 10 minutes
    5f) Bonus points if you want to build and run any of the demo or sample
-       applications.  Note that most specify linking against a wide range
+       applications. Note that most specify linking against a wide range
        of wx libs, although not all are necessarily needed for a given
-       application.  This is worth the effort to gain confidence that the
-       wx libs were built successfully.  samples/minimal is the canonical
-       app to try, but demos/bombs is a lot more fun.  To build one, cd into
+       application. This is worth the effort to gain confidence that the
+       wx libs were built successfully. samples/minimal is the canonical
+       app to try, but demos/bombs is a lot more fun. To build one, cd into
        the sample or demo directory, and issue the same command as before, eg
             nmake -f makefile.vc BUILD=release
        then cd into the vc_mswu/ (or whatever) subdirecotyr and run the .exe
@@ -88,13 +102,13 @@ an explicit mouse-click-by-mouse-click cookbook.
         wangemu.sln
         wangemu.vcxproj
 
-   I don't know much about the the compiler -- maybe you can hand edit these
+   I don't know much about the compiler -- maybe you can hand edit these
    files to configure it for your own purposes, but I always use the compiler
-   GUI to manipulate the project settings.  Very likely you will have
+   GUI to manipulate the project settings. Very likely you will have
    installed things on different paths than I did, so some tweaking will
    be necessary.
 
-   The directory will also contain a subdirectory called "src".  This is
+   The directory will also contain a subdirectory called "src". This is
    where the source code (*.h, *.cpp, *.rc, and some miscellaneous image
    files) live.
 
@@ -104,21 +118,21 @@ an explicit mouse-click-by-mouse-click cookbook.
 7) Configure the compiler for the project
 
    7a) set the shell environment variable WXWIN to point to wherever you
-       installed the wxwindows library.  This should be the path up to the
-       root of that tree.  In my case, it is
+       installed the wxWidgets library. This should be the path up to the
+       root of that tree. In my case, it is
             set WXWIN="C:\libs\wx-3.1.2"
    7b) Fire up the compiler
    7c) Select File -> Open -> Project/Solution ...
-   7d) You are facing a file dialog box.  Navigate over to wangemu.sln,
+   7d) You are facing a file dialog box. Navigate over to wangemu.sln,
        and select it.
-   7e) Select the "Debug" project configuration, then on te Debug menu item,
+   7e) Select the "Debug" project configuration, then on the Debug menu item,
        select "wangemu Properties..."
 
    Now is the time to point the compiler to the location where you
    built the wxWidgets libs.
 
    7f) Under Configuration Properties, expand the "C/C++" control.
-       Select the "General" category.  Here is what I have for the
+       Select the "General" category. Here is what I have for the
        first line item, "Additional Include Directories":
 
         debug build:
@@ -127,7 +141,7 @@ an explicit mouse-click-by-mouse-click cookbook.
             $(WXWIN)\include;$(WXWIN)\lib\vc_lib\msw
 
    7f) Still under the C/C++ control, select the "Preprocessor" group.
-       The first line item is "Preprocessor Definitions".  Here is what
+       The first line item is "Preprocessor Definitions". Here is what
        I have; if you are using the .vcproj file supplied with the emulator
        source this should already be configured properly:
 
@@ -137,7 +151,7 @@ an explicit mouse-click-by-mouse-click cookbook.
          WIN32;__WXMSW__;_WINDOWS;_CRT_SECURE_NO_WARNINGS=1
 
    7g) Still under the C/C++ control, select the "Code Generation" group.
-       The sixth line item is "Runtime Library".  Here is what I have;
+       The sixth line item is "Runtime Library". Here is what I have;
        if you are using the .vcproj file supplied with the emulator source
        this should already be configured properly:
 
@@ -146,13 +160,13 @@ an explicit mouse-click-by-mouse-click cookbook.
         release build:
             Multi-threaded DLL (/MD)
 
-   7h) Switch to the "Linker" tree control item.  The ninth line item is
-       "Additional Library Directories".  Here is what I have (same for both
+   7h) Switch to the "Linker" tree control item. The ninth line item is
+       "Additional Library Directories". Here is what I have (same for both
        debug and release builds):
 
             $(WXWIN)\lib\vc_lib;$(WXWIN)\include
 
-   7i) Switch to the "Resources" tree control item.  The fourth line item is:
+   7i) Switch to the "Resources" tree control item. The fourth line item is:
 
         debug build:
             $(WXWIN)\include;$(WXWIN)\lib\vc_lib\mswd;.
@@ -164,12 +178,12 @@ an explicit mouse-click-by-mouse-click cookbook.
 8) Build the emulator
 
    8a) After closing the properties box, go to the top level menu, make sure
-      that the project is set to build the Debug version.  There is a control
+      that the project is set to build the Debug version. There is a control
       on the toolbar to select it.
 
    8b) Select the top level menu Build -> Build Solution  (or Ctrl+Shift+B)
        It should grind away for one or two minutes and not produce any
-       warnings or errors.  If you do ... uh, I don't have any good advice.
+       warnings or errors. If you do ... uh, I don't have any good advice.
        I've tried to make it clear here, but the entire chain of things
        that must be configured properly affords plenty of opportunities to
        get it wrong.
@@ -184,10 +198,13 @@ an explicit mouse-click-by-mouse-click cookbook.
 --------------------------------------------------------------
 (This section is out of date; the OSX version was last built 8 years ago)
 
-I'm not a Mac person.  I bought a Mac Mini for the sole purpose of porting
-the emulator to OSX.  98% of all development on is is done on a Windows XP
-machine.  As I am a neophyte, I'm barely qualified to give advice on how
-to build wxWidgets and this emulator on OSX.  But, I must try.
+I'm not a Mac person. I bought a Mac Mini for the sole purpose of porting
+the emulator to OSX. 98% of all development on is is done on a Windows 7
+machine. As I am a neophyte, I'm barely qualified to give advice on how
+to build wxWidgets and this emulator on OSX. But, I must try.
+
+It might not make any difference, but just in case, I'm developing on a
+mac mini, a late 2014 model, running OSX 10.14.2.
 
 The first place to start is here:
 
@@ -199,200 +216,139 @@ and specifically, this page:
 
 1) Set up a modern C++ compiler
 
-   You want to download and install XCode.
+   In the previous release of this emulator, I built it with xcode, the
+   Apple IDE. However, it was painful to use, and from everything I've
+   read, it has gotten worse. It is a 12GB monster now. So this time
+   I've done everything through the command line.
 
-   My machine is running OSX 10.4.11.  As such XCode 2.5 is the latest.
-   If you are running OSX 10.5 or later, XCode 3.whatever is probably
-   a better choice.  However, the details might be slightly different
-   than I describe.
+   From a Terminal, type the following:
+        xcode-select --install
+
+   If the tools aren't installed, it will ask you if you want to download
+   them. Say yes. It is a small download (as compared to xcode), about
+   150MB, and takes only a minute to install.
 
 2) Get the wxWidgets library source code
 
-   Version 2.1 of WangEmu was build using wx version 2.8.9.  If you download
-   a later version of wxWidgets, there are likely to be issues, as the wx
-   developers do tend to make a few backward-incompatible changes each
-   release.  Release 3.0 will, no doubt, have even greater compatibility
-   issues.
+   Version 3.0 of WangEmu was build using wx version 3.1.2. If you download
+   a later version of wxWidgets, there may be issues, as the wx developers
+   do tend to make a few backward-incompatible changes each release.
 
-   Go to http://www.wxwidgets.org/downloads/ and grab the wxMac file.
+   Go to http://www.wxwidgets.org/downloads/ and download the installer
+   for OSX.
 
 3) Unpack the wxWidgets source code
 
-   The file you downloaded is called something like wxMac.2.8.9.tar.gz.
-   Double click it to open it up, and drag the wxMac-2.8.9 folder to wherever
-   you please.  For now, I'll assume you did what I did and put it in your
-   home directory, aka ~.  That is, after moving the files, there is a
-   directory ~/wxMac-2.8.9
+   The file you downloaded is located in your downloads directory and is
+   called something like ~/Downloads/wxWidgets-3.1.2.tar.bz2.
+
+   Double click to unpack it into ~/Downloads/wxWidgets-3.1.2 (or whichever
+   directory you downloaded it to). You can move this directory anywhere
+   you please, but I put it in ~/src and rename it such that the full path is
+   ~/src/wx-3.1.2/.
 
 4) Build the wxWidgets library
 
-   Believe it or not, this is quite simple, at least it worked smoothly for
-   me.  To automate things, I created two scripts, one to build a debug
-   version of the wxWidget libs, and one to build the release versions.
+   To automate things, I created two scripts, one to build a debug version
+   of the wxWidgets libs, and one to build the release versions. Before
+   wx 3.0, it was possible and useful to build a release and a debug version
+   of the wx libraries and have them both resident. During compile time you
+   could select which version to link to the emulator. But since 3.0 things
+   have changed and they discourage that. As a result, I build the debug
+   version, develop and debug my app, and just before releasing the emulator,
+   I delete the libs and rebuild with optimization turned on.
 
-        [14] cd ~/wxMac-2.8.9
+   Here are two scripts to build the library (adjust for your own situation):
+
+        [14] cd ~/src/wx-3.1.2
         [15] cat > build-debug-script
-        #!/bin/tcsh
-        if (-e build-debug) then
-            echo "build-debug already exists"
+        #!/usr/bin/env tcsh
+        if (-e debug) then
+            echo "debug already exists"
             exit 1
         endif
-        mkdir build-debug
-        cd build-debug
+        mkdir debug
+        cd debug
         ../configure \
-            --enable-universal_binary \
-            --disable-shared \
-            --disable-compat26 \
-            --enable-std_string \
-            --enable-debug=yes \
-            --enable-optimize=no \
-            --with-macosx-sdk=/Developer/SDKs/MacOSX10.4u.sdk \
-            --prefix=$cwd \
-            && make
+            --disable-shared        \
+            --enable-stl            \
+            --with-cxx=14           \
+            --with-macos-sdk=/Library/Developer/CommandLineTools/SDKs/MacOSX10.14.sdk \
+            --enable-debug          \
+            --enable-debug_gdb      \
+            --disable-optimise      \
+            --prefix=$HOME/lib      \
+            && make -j4 install
 
-   and
+        [16] ./build-debug-script |& tee build-debug.log
 
-        [16] cat > build-release-script
-        #!/bin/tcsh
-        if (-e build-release) then
-            echo "build-release already exists"
+   or for the optimized build:
+
+        [17] cat > build-release-script
+        #!/usr/bin/env tcsh
+        if (-e release) then
+            echo "release already exists"
             exit 1
         endif
-        mkdir build-release
-        cd build-release
+        mkdir release
+        cd release
         ../configure \
-            --enable-universal_binary \
-            --disable-shared \
-            --disable-compat26 \
-            --enable-std_string \
-            --enable-debug=no \
-            --enable-optimize=yes \
-            --with-macosx-sdk=/Developer/SDKs/MacOSX10.4u.sdk \
-            --prefix=$cwd \
-            && make
+            --disable-shared        \
+            --enable-stl            \
+            --with-cxx=14           \
+            --with-macos-sdk=/Library/Developer/CommandLineTools/SDKs/MacOSX10.14.sdk \
+            --disable-debug         \
+            --enable-optimise       \
+            --prefix=$HOME/lib      \
+            && make -j4 install
 
-   If you know you only want to target either PPC or i386 machines,
-   get rid of the --enable-universal_binary lines.
+        [18] ./build-release-script |& tee build-release.log
 
-        [17] ./build-debug-script
-        [18] ./build-release-script
+   The build products will be produced in the debug or release subdirectories,
+   and the install step will copy them to ~/bin and ~/lib  (that is what
+   the --prefix argument specifies).
 
-   With luck, these complete without errors.
+   With luck, these complete without errors. If they don't, sorry I can't
+   help. I'd suggest googling and then going onto the wxWidgets forum.
 
    It is good to build one of the wx demo or sample applications to prove
    that the libraries built properly.
 
-        [19] cd build-debug/demos/bombs
-        [20] make
+        [19] cd debug/demos/bombs
+        [20] make -f makefile.unx
         [21] ./bombs
+
+   Again, if that builds and runs, you are golden. If it fails to build
+   or doesn't run, the same advice as before: go to the wx forum for help.
 
 5) Set up the build tree
 
    When you install the Wang 2200 emulator, there is a folder called
-   "src".  This contains the source files for building the emulator.
+   "src". This contains the source files for building the emulator, and
+   a makefile for building it from scratch.
 
-   mkdir ~/wang2200
+   mkdir ~/wangemu
+   put all the files under this directory.  That is,
+
+        ls -l ~/wangemu/
+
+   should show a number of folders and files including the following
+   (not all folders and files shown)
+
+        disks/
+        scripts/
+        src/
+        build.txt
+        LICENSE
+        makefile
+        README.md
    
-   place the "src" folder under ~/wang2200, that is, there should be
-   a folder ~/wang2200/src when you are done.
+6) Build the emulator
 
-6) Configure the compiler for the project
+   cd into ~/wangemu/src.  Then type "make" and, with a bit of luck,
+   lots of build commands and output will appear in your terminal.
+   After five minutes or less, you should have a binary ready to run.
+   Type
+        ./wangemu
 
-   This is the big one.  Again, it might be useful to consult the wxWidgets
-   wiki:
-        http://wiki.wxwidgets.org/Getting_started_on_OS_X
-
-   Some of the text below is copied from that webpage.
-
-   6a) Fire up XCode
-   6b) Click "File, New Project ..., Empty Project", and then "Next"
-   6c) Set the Project Name to "wangemu"
-   6d) It will automatically set the Project Directory to "~/wangemu".
-       Change it to "~/wang2200/emu".
-   6e) Click Finish
-   6e) The left panel shows a "Targets" item.  Beneath that is "wangemu".
-       Double click it to get a "Target Info" dialog.
-   6f) Click on the "Build" button along the top
-   6g) Set the configuration to Debug
-   6h) Set Collection to General
-   6i) Double click the line item "Architectures" and indicate PPC and/or
-       i386, whichever target(s) you care to build
-   6j) double click the line item "Header Search Paths".  This is what I have,
-       although your path will no doubt be different:
-          /Users/jb/wxMac-2.8.9/build-debug/lib/wx/include/mac-ansi-debug-static-2.8
-          /Users/jb/wxMac-2.8.9/include
-   6k) ensure that the line item "ZeroLink" does not have a check after it
-   6l) scroll down to the line item "Other Linker Flags".  Mine is like this,
-       except all one line:
-
-            -framework IOKit
-            -framework Carbon
-            -framework Cocoa
-            -framework QuickTime
-            -framework OpenGl
-            /Users/jb/wxMac-2.8.9/build-debug/lib/libwx_macd_adv-2.8.a
-            /Users/jb/wxMac-2.8.9/build-debug/lib/libwx_macd_core-2.8.a
-            /Users/jb/wxMac-2.8.9/build-debug/lib/libwx_base_carbond-2.8.a
-            -liconv
-
-       It is somewhat insane that the project depends on QuickTime and
-       OpenGl frameworks, but such is life.  As was noted in the PC build
-       section, there is only a single function in the emulator that uses
-       the features of the wx adv lib.  If USE_HYPERLINK is set to 0 in
-       UiMyAboutDlg.cpp, then then only the core and base wx libs are needed.
-       The wxwiki page says to use Project/Add... to add these libraries to
-       the project.  Don't do it ... simply add them in the Other Linker
-       Flags line as shown.
-   6m) Change the Collection from "General" to "GNU C/C++ Compiler 4.0"
-   6n) Change the line item "Other C Flags" to contain at least this:
-
-       -D_FILE_OFFSET_BITS=64 -D_LARGE_FILES -D_DEBUG -D__WXDEBUG__ -D__WXMAC__
-
-   6o) Set the line item "Optimization Level" to "None" if it isn't already
-   6p) Close the Target Info dialog
-
-7) Add the project files
-   7a) Select the main menu item Project -> Add to Project ...
-   7b) You are faced with a file browser dialog.  Navigate into the
-       src subdirectory.  Select all the *.h and *.cpp files except
-       the following, if they exist:
-            IoCardXXX.cpp
-            IoCardXXX.h
-            ucode_boot_vp_gs.cpp
-       Also select these image files:
-            icons.xpm
-            wang.icns
-            wang.xpm
-       Finally hit the Add button to include them in the build.
-
-8) Build the emulator
-   Simply hit the "Build" button on the toolbar at the top.  After
-   a minute or two of activity, you should have built the emulator.
-   If warnings or errors are reported ... uh, I don't have any good
-   advice.  It took me a week of trying blind alleys and asking for
-   help on one of the wx wiki forums before I got things to work.
-   I hope this guide has saved you at least some of that trouble.
-
-9) Run the emulator
-
-   If you got past step 8, you should be golden.  Hit the "Build and Go"
-   button on the toolbar.  Have fun!
-
-10) Building the release version.
-
-    This section will be very terse.  Follow the same steps as for
-    debugging, but any paths through "build-debug" should instead read
-    "build-release", and the libraries that are set up by the
-    "Other Linker Flags" should include:
-
-         /Users/jb/wxMac-2.8.9/build-release/lib/libwx_mac_adv-2.8.a
-         /Users/jb/wxMac-2.8.9/build-release/lib/libwx_mac_core-2.8.a
-         /Users/jb/wxMac-2.8.9/build-release/lib/libwx_base_carbon-2.8.a
-
-    The "Other C Flags" item should define neither __WXDEBUG__ nor _DEBUG
-    The "Optimization Level" should be "Fast [-O, O1]"
-    The "Header Search Path" should be
-         /Users/jb/wxMac-2.8.9/build-release/lib/wx/include/mac-ansi-release-static-2.8
-         /Users/jb/wxMac-2.8.9/include
-
-     Build & Run.
+   and the emulator should begin running.
