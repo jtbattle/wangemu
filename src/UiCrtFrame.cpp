@@ -91,8 +91,8 @@ enum
 // ========== Crt font styles ==========
 
 static constexpr struct font_table_t {
-    int   size;   // encoding for font as it appears in .ini file
-    char *name;   // descriptive string
+    int         size;   // encoding for font as it appears in .ini file
+    const char *name;   // descriptive string
 } font_table[] = {
     {  1, "Dot-matrix Font 1:1" },
     {  2, "Dot-matrix Font 1:2" },
@@ -112,7 +112,7 @@ const int num_fonts = (sizeof(font_table) / sizeof(font_table_t));
 static constexpr struct colorscheme_t {
     unsigned char fg_r, fg_g, fg_b;     // foreground color
     unsigned char bg_r, bg_g, bg_b;     // background color
-    char         *menu_help;            // string as it appears on statusbar
+    const char   *menu_help;            // string as it appears on statusbar
 } colorscheme[] = {
     {
 #ifdef __WXMAC__
