@@ -28,12 +28,6 @@
 // the application icon
 #include "wang.xpm"
 
-#define SFKEY_STYLE1 0
-#if SFKEY_TINY_STYLE
-    // special function key image for toolbar
-    #include "sfkey.xpm"
-#endif
-
 // ----------------------------------------------------------------------------
 // constants
 // ----------------------------------------------------------------------------
@@ -491,32 +485,6 @@ CrtFrame::setMenuChecks(const wxMenu *menu)
 void
 CrtFrame::initToolBar(wxToolBar *tb)
 {
-#if SFKEY_TINY_STYLE
-    wxBitmap img(sfkey_xpm);
-    int w = img.GetWidth();
-    int h = img.GetHeight();
-    tb->SetToolBitmapSize(wxSize(w, h));
-
-    for (int i=0; i<17; i++) {
-        wxString label, tooltip;
-        if (i < 16) {
-            label.Printf("SF%d", i);
-            tooltip.Printf("Special Function key %d", i);
-        } else {
-            tb->AddSeparator();
-            label = "EDIT";
-            tooltip = "EDIT key";
-        }
-        tb->AddTool(TB_SF0+i, label, img, tooltip);
-#ifdef __WXMAC__
-        if (i==3 || i==7 || i==11) {
-            tb->AddSeparator();
-        }
-#endif
-    }
-
-#else  // !SFKEY_TINY_STYLE
-
 #ifdef __WXMAC__
     // as of wxWidgets 2.5.5 at least, toolbar icons must be <=32 pixels wide
     // or they must be exactly 48 pixels (and maybe 128) pixels wide otherwise
@@ -741,7 +709,6 @@ CrtFrame::initToolBar(wxToolBar *tb)
         break;  // we found a font size that works
     } // for (font_size)
     #endif
-#endif // !SFKEY_TINY_STYLE
 
     tb->Realize();
 }

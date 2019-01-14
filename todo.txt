@@ -3,25 +3,39 @@ Emulator TODO list
 ============================================================================
 
 *) Build the emulator on OSX and iron out the problems.
-    - test alt reset shortcuts
-      hmm, it is shift-ctrl-R and shift-ctrl-W. Is that right?
     - the floppy disk image icons look weird
+        they come from icons.xpm  (132x13x3b)
+      in code.txt, probably describe what all these various image resources
+      are for
+         wang.icons      = multi-resolution apple format (128x128x32b)
+         wang.ico        = windows icon 32x32x4b
+         wang.xpm        = 32x32x2b
+         wang_icon48.xpm = 48x48x8b
     - clicking the floppy disk image doesn't empty/load the disk and
       hovering doesn't offer the disk contents tool tip.  right clicking
       is also ignored.
+    - the left and right arrowheads on the toolbar are over the top
+      up and down look OK.  also, the font looks different (blurry)
+      and probably a different font too.
     - figure out resources and how things are packaged in the
       vanilla build system.
     - test if DRAW_WITH_RAWBMP (compile_options.h) makes a perf difference
       (in prev release, it helped mac, hurt pc)
     - my mac keyboard has control and command keys.  have an option to use
       control instead of command?
-    - the left and right arrowheads on the toolbar are over the top
-      up and down look OK.
+    - F1, F2, F3, F4, F7-F12 are intercepted by osx and aren't seen by
+      the application.  F17-F19 are available but are ignored by wangemu.
+      pagedown, pageup, clear are on keyboard too but ignored by wangemu.
     - PRINT HEX(07) beeps the first time.  but is silent after that.
       for some reason it doesn't reload.  The sound.cpp sample program
       is also hosed on osx.  I have a query out on the wx forum.
     - menu bar order is File, CPU, Disk, Printer, Configure, Help, Window
       the 2.1 order was File, CPU, Disk, Printer, Configure, Window, Help
+    - test alt reset shortcuts
+                hard reset     warm reset
+          win   shift-alt-R    shift-alt-W
+          osx   shift-cmd-R    shift-cmd-W   << why not shift-alt?
+                                                I tried it and it worked fine.
 
 *) Document in the keyboard help file there are some new keys
      Shift-Alt-R is hard reset  (changed)
