@@ -14,9 +14,6 @@ Emulator TODO list
     - clicking the floppy disk image doesn't empty/load the disk and
       hovering doesn't offer the disk contents tool tip.  right clicking
       is also ignored.
-    - the left and right arrowheads on the toolbar are over the top
-      up and down look OK.  also, the font looks different (blurry)
-      and probably a different font too.
     - figure out resources and how things are packaged in the
       vanilla build system.
     - test if DRAW_WITH_RAWBMP (compile_options.h) makes a perf difference
@@ -36,6 +33,13 @@ Emulator TODO list
           win   shift-alt-R    shift-alt-W
           osx   shift-cmd-R    shift-cmd-W   << why not shift-alt?
                                                 I tried it and it worked fine.
+
+*) windows .ico format supports multiple resolutions
+   right now, wang.ico is a 32x32x4b, single resolution icon.
+   according to this site;
+        https://visualpharm.com/articles/icon_sizes.html
+   windows icons should provide 16x16, 32x32, 48x48, and 256x256
+   osx icons should provide NxN for all N={16,32,64,128,256,512,1024}
 
 *) Document in the keyboard help file there are some new keys
      Shift-Alt-R is hard reset  (changed)

@@ -486,11 +486,11 @@ void
 CrtFrame::initToolBar(wxToolBar *tb)
 {
 #ifdef __WXMAC__
-    // as of wxWidgets 2.5.5 at least, toolbar icons must be <=32 pixels wide
-    // or they must be exactly 48 pixels (and maybe 128) pixels wide otherwise
-    // something forces the icon to shrink and the results aren't pretty.
-    // this is combatted two ways.  first, shorter strings are used; second,
-    // we keep trying smaller fonts until one meets the requirements.
+    // OSX requires that toolbar icons be 32x32. the wxwidgets api allows
+    // declaring a different size, but in the end it gets truncated and/or
+    // stretched to 32x32, and the results aren't pretty.  this is combatted
+    // two ways.  first, shorter strings are used; second, we keep trying
+    // smaller fonts until one meets the requirements.
     for (int font_size=14; font_size>=8; font_size--) {
 #else
     const int font_size = 8;
@@ -505,7 +505,7 @@ CrtFrame::initToolBar(wxToolBar *tb)
     wxBitmap tmpbm(1, 1);
     mem_dc.SelectObject(tmpbm); // wxmac requires it even before GetTextExtent()
     wxCoord textH, textW;
-    mem_dc.GetTextExtent("SF15", &textW, &textH); // widest string in use
+    mem_dc.GetTextExtent("SF15", &textW, &textH); // widest label w/o big buttons
 #if BIG_BUTTONS
     std::string sf_labels[17] = {
         "", "", "", "", // SF0-3
@@ -552,15 +552,21 @@ CrtFrame::initToolBar(wxToolBar *tb)
             textH = height;
         }
     }
-    const int buttonH(2*textH);
-#else // !BIG_BUTTONS
-    const int buttonH(textH);
-#endif
-    const int buttonW(textW);
+#endif  // BIG_BUTTONS
+
 #ifdef __WXMAC__
-    if (buttonW > 32) {
+    if (textW > 32) {
         continue;       // try next smaller font size
     }
+    const int buttonH(32);
+    const int buttonW(32);
+#else
+  #if BIG_BUTTONS
+    const int buttonH(2*textH);
+  #else
+    const int buttonH(textH);
+  #endif
+    const int buttonW(textW);
 #endif
 
     tb->SetToolBitmapSize(wxSize(buttonW, buttonH));
@@ -598,12 +604,34 @@ CrtFrame::initToolBar(wxToolBar *tb)
         mem_dc.DrawRectangle(0, 0, buttonW, buttonH); // clear it
 
         mem_dc.GetTextExtent(label, &textW, &textH);
-        int button_x_origin((buttonW - textW)>>1);
-#if BIG_BUTTONS
-        mem_dc.DrawText(label, button_x_origin, textH);
-        mem_dc.GetTextExtent(sf_labels[i], &textW, &textH);
-        button_x_origin = (buttonW - textW) >> 1;
+        int label_x_offset = (buttonW - textW) >> 1;  // center it
+#if !BIG_BUTTONS
+        mem_dc.DrawText(label, label_x_offset, 0);
+#else // BIG_BUTTONS
+        // there are two rows of text on the button.  the button can be viewed as
+        //           |  gap
+        //           |  textH  (upper text)
+        //  buttonH  |  gap
+        //           |  textH  (lower text)
+        //           |  gap
+        const int gap = (buttonH - 2*textH) / 3;
+        const int upper_text_y = gap;
+        const int lower_text_y = buttonH - gap - textH;
+        assert(gap >= 0);  // always 0 on msw; >0 on osx
 
+        // this is the lower text on the label (SF%d, or "EDIT")
+// FIXME: for mac, the spacing is off
+#if __WXMAC__
+        mem_dc.DrawText(label, label_x_offset, lower_text_y);
+#else
+        mem_dc.DrawText(label, label_x_offset, lower_text_y);
+#endif
+
+        // now draw the upper text
+        mem_dc.GetTextExtent(sf_labels[i], &textW, &textH);
+        label_x_offset = (buttonW - textW) >> 1;  // center it
+
+        // for some s.f. keys, put the edit mode legend above
     #if GRAPHIC_ARROWS
         bool vertical = false;  // false=horizontal
         int shaft_ticks = 0;    // number of separators
@@ -675,7 +703,7 @@ CrtFrame::initToolBar(wxToolBar *tb)
                           + (shaft_ticks-1)*dashes[1];
             }
 
-            const int shaft_y      = textH/2;
+            const int shaft_y      = gap + textH/2;
             const int shaft_beg_x  = buttonW/2   - (arrow_dir * shaft_len)/2;
             const int shaft_end_x  = shaft_beg_x + (arrow_dir * shaft_len);
             const int head_delta_x = -arrow_dir * dashes[0];
@@ -694,14 +722,13 @@ CrtFrame::initToolBar(wxToolBar *tb)
                             shaft_end_x + head_delta_x,
                             shaft_y - head_delta_y);
         } else
-    #endif
+    #endif  // GRAPHIC_ARROWS
         {
-            mem_dc.DrawText(sf_labels[i], button_x_origin, 0);
+            mem_dc.DrawText(sf_labels[i], label_x_offset, upper_text_y);
         }
-#else
-        mem_dc.DrawText(label, button_x_origin, 0);
-#endif
+#endif  // BIG_BUTTONS
 
+        // N.B.: apparently the tooltip doesn't appear on the osx port
         tb->AddTool(TB_SF0+i, label, m_sf_key_icons[i], tooltip);
         mem_dc.SelectObject(wxNullBitmap);
     } // for (i)

@@ -188,10 +188,8 @@ private:
 
     int  m_assoc_kb_addr = -1;     // io address of associated keyboard
 
-#if BIG_BUTTONS
     // holds the icons for the toolbar buttons
     wxBitmap m_sf_key_icons[17];
-#endif
 
     // triggers display refresh for all windows
     // once upon a time these were static timers, but when the emulation
