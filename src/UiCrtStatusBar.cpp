@@ -80,19 +80,9 @@ void
 MyStaticBitmap::OnPaint(wxPaintEvent& WXUNUSED(event))
 {
     wxPaintDC dc(this); // must always be created, even if not used
-#ifdef __WXMSW__
-    // win32 makes the distinction between a bitmap, which is an image
-    // with no mask, and an icon, which is a bitmap with a mask.  wxwidgets
-    // seems to be confused on the matter, and different platforms do things
-    // differently.  Oh, well.
-    wxIcon img = this->GetIcon();       // must use icon because of transparency
-#else
-    wxBitmap img = this->GetBitmap();   // everything is a bitmap
-#endif
+    wxBitmap img = this->GetBitmap();
 
-    wxMemoryDC mem_dc;
-    mem_dc.SelectObject(img);
-    //dc.SetBackgroundMode(wxTRANSPARENT);
+    wxMemoryDC mem_dc(img);
     dc.Blit(0, 0, img.GetWidth(), img.GetHeight(),     // dest x,y,w,h
             &mem_dc, 0, 0,      // source image,x,y
             wxCOPY,             // logicalFunc
@@ -222,23 +212,6 @@ CrtStatusBar::CrtStatusBar(CrtFrame *parent,
                                       + DISK_ICON_GAP
                                       + ((drive == 3) ? (DISK_ICON_WIDTH+DISK_ICON_GAP) : 0);
             }
-
-#ifdef __WXMSW__
-            // windows tooltips have a couple oddities:
-            // (1) if the first tooltip associated with the window doesn't
-            //     have a newline in it, subsequently associating one that
-            //     does have a newline will result in the newline being
-            //     ignored.  thus we set a tooltip here with a newline, and
-            //     it will be overridden later before the first use, but then
-            //     multiline tooltips will be sure to work.
-            // (2) if the first tooltip string does have a newline, it will
-            //     set a max window width for the tooltip, even if a later
-            //     tooltip string is wider.  thus, we set a very wide string
-            //     here.  no worries, even if the later tooltip is narrower,
-            //     the box will shrink to fit.
-            wxString tmptip(wxChar(' '), 100);
-            m_disk_icon[idx]->SetToolTip(tmptip + "\n" + tmptip);
-#endif
             SetDiskIcon(slot, drive);   // establish appropriate bitmap
         } // drive
 
