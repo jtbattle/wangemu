@@ -2,18 +2,28 @@
 Emulator TODO list
 ============================================================================
 
+*) long time bug (it existed in wangemu 2.1 and earlier too)
+   If the disk controller is configured to have more than two drives,
+   the top level "Disk" menu has insert/remove actions only for F/310
+   and R/310, not F/350 and R/350.
+
+   also, if the controller has just a single drive, the R/310 entry still
+   exists.  if you insert a floppy to R/310, it will trigger an assertion.
+
 *) Build the emulator on OSX and iron out the problems.
-    - the floppy disk image icons look weird
-        they come from icons.xpm  (132x13x3b)
-      in code.txt, probably describe what all these various image resources
-      are for
-         wang.icons      = multi-resolution apple format (128x128x32b)
-         wang.ico        = windows icon 32x32x4b
-         wang.xpm        = 32x32x2b
-         wang_icon48.xpm = 48x48x8b
-    - clicking the floppy disk image doesn't empty/load the disk and
-      hovering doesn't offer the disk contents tool tip.  right clicking
-      is also ignored.
+    - clicking the floppy disk image doesn't empty/load the disk.
+      right clicking is also ignored.
+      mouse button click events not captured in MyStaticBitmap.
+    - does UiCrtStatusBar.cpp need to define MyStaticBitmap?
+      can it just Bind() event handlers directly on the wxStaticBitmap? Eg
+        https://stackoverflow.com/questions/11701937/connect-mouse-event-to-wxstaticbitmap-wx-2-8
+      on samples/statbar/starbar.cpp, try Bind()'ing mouse event handlers
+      to the icon images and see if events are captured.
+    - the HANDLE_MSB_PAINT option doesn't seem necessary any longer on OSX
+      (inside UiCrtStatusBar.{h,cpp})
+    - there is no pause/break (->HALT/STEP) key on mac keyboards.
+      (but ctrl-c should work for this specific case, right?)
+      maybe make page-up be EDIT, and page-down be HALT/STEP
     - figure out resources and how things are packaged in the
       vanilla build system.
     - test if DRAW_WITH_RAWBMP (compile_options.h) makes a perf difference
@@ -33,6 +43,16 @@ Emulator TODO list
           win   shift-alt-R    shift-alt-W
           osx   shift-cmd-R    shift-cmd-W   << why not shift-alt?
                                                 I tried it and it worked fine.
+
+*) in code.txt, describe what all these various image resources are for:
+      wang.icons       = multi-resolution apple format (128x128x32b)
+      wang.ico         = windows icon 32x32x4b
+      wang.xpm         = 32x32x2b  (used in UiCrtFrame.cpp for titlebar icon in the upper left)
+      wang_icon48.xpm  = 48x48x8b
+      disk_icon<N>.xpm = 22x13x3b (used in UiCrtStatusBar.cpp)
+
+*) maybe use fiverr and get more artful icons.
+   worst case I've lost just a few bucks.
 
 *) windows .ico format supports multiple resolutions
    right now, wang.ico is a 32x32x4b, single resolution icon.
@@ -202,8 +222,6 @@ feature ideas which likely will never be implemented
 
 *) make keyboard mapping configurable
     - requested by Mark Musen, who runs it on a mac under virtual PC.
-      there is no pause/break (->HALT/STEP) key on that setup.
-      (but ctrl-c should work for this specific case, right?)
 
 *) emulate plotter?  no point really without an interesting program.
    plotter commands:

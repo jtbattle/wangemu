@@ -55,7 +55,7 @@ class CrtStatusBar : public wxStatusBar
 public:
     CANT_ASSIGN_OR_COPY_CLASS(CrtStatusBar);
     CrtStatusBar(CrtFrame *parent, bool smart_term, bool primary_crt);
-    ~CrtStatusBar();
+    ~CrtStatusBar() = default;
 
     void SetStatusMessage(const std::string &text);
 
@@ -86,7 +86,7 @@ private:
     int             m_disk_label_xoff[2*MAX_DISK_CONTROLLERS] = {0};        // positioning
     int             m_disk_icon_xoff[MAX_DISK_DRIVES]         = {0};        // positioning
     int             m_disk_state[MAX_DISK_DRIVES]             = {-1};       // which icon we are showing
-    std::unique_ptr<wxBitmap> m_icon_set;                                   // collection of images in one place
+    wxIcon          m_icon_set[6];                                          // collection of images in one place
 
     int  m_num_disk_controllers = 0;                // number of disk controllers
     int  m_num_drives[MAX_DISK_CONTROLLERS] = {0};  // drives per controller

@@ -37,7 +37,12 @@ enum {  ID_Keyword_Mode = 100,          // ID for status bar button
 // ----------------------------------------------------------------------------
 
 // icon set for disk images in the statusbar
-#include "icons.xpm"
+#include "disk_icon0.xpm"
+#include "disk_icon1.xpm"
+#include "disk_icon2.xpm"
+#include "disk_icon3.xpm"
+#include "disk_icon4.xpm"
+#include "disk_icon5.xpm"
 
 // ----------------------------------------------------------------------------
 // MyStaticBitmap
@@ -109,7 +114,12 @@ CrtStatusBar::CrtStatusBar(CrtFrame *parent,
     int pane_widths[2+MAX_DISK_DRIVES+1] = {0};
     int pane_styles[2+MAX_DISK_DRIVES+1] = {0};
 
-    m_icon_set = std::make_unique<wxBitmap>(icons_xpm);
+    m_icon_set[0] = wxIcon(disk_icon0_xpm);
+    m_icon_set[1] = wxIcon(disk_icon1_xpm);
+    m_icon_set[2] = wxIcon(disk_icon2_xpm);
+    m_icon_set[3] = wxIcon(disk_icon3_xpm);
+    m_icon_set[4] = wxIcon(disk_icon4_xpm);
+    m_icon_set[5] = wxIcon(disk_icon5_xpm);
 
     // determine how many disk controllers there are
     if (primary_crt) {
@@ -312,20 +322,11 @@ CrtStatusBar::SetDiskIcon(const int slot, const int drive)
 
     // reassign and redraw the icon, but only if needed -- reduces flashing
     if (m_disk_state[idx] != state) {
-        const wxRect icon_rect(
-                        (DISK_ICON_WIDTH*state), 0,            // x, y
-                         DISK_ICON_WIDTH, DISK_ICON_HEIGHT);   // w, h
-        const wxBitmap icon = m_icon_set->GetSubBitmap(icon_rect);
-        m_disk_state[idx] = state;
-        m_disk_icon[idx]->SetBitmap(icon);
+        const wxIcon icon = m_icon_set[state];
+        m_disk_icon[idx]->SetIcon(icon);
         m_disk_icon[idx]->Refresh();
+        m_disk_state[idx] = state;
     }
-}
-
-
-CrtStatusBar::~CrtStatusBar()
-{
-    m_icon_set = nullptr;
 }
 
 
