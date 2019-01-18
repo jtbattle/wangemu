@@ -45,59 +45,6 @@ enum {  ID_Keyword_Mode = 100,          // ID for status bar button
 #include "disk_icon5.xpm"
 
 // ----------------------------------------------------------------------------
-// MyStaticBitmap
-// ----------------------------------------------------------------------------
-// the statusbar uses staticbitmaps to hold the icons for the disk state.
-// (at first wxBitmapButtons were used, but on WXMAC it wasn't possible to
-//  draw them flat and all sorts of bitmap clipping issues came up, so it
-//  was abandoned (2005-03-06)).  staticbitmaps don't capture mouse events,
-// thus this subclass.
-
-MyStaticBitmap::MyStaticBitmap(
-                    wxWindow *parent, wxWindowID id, const wxBitmap &label,
-                    const wxPoint &pos, const wxSize &size,
-                    long style, const std::string &name) :
-        wxStaticBitmap (parent, id, label, pos, size, style, name),
-        m_myid(id)
-{
-    // event routing table
-    Bind(wxEVT_LEFT_DOWN,  &MyStaticBitmap::OnMouseBtnDown, this);
-    Bind(wxEVT_RIGHT_DOWN, &MyStaticBitmap::OnMouseBtnDown, this);
-#if HANDLE_MSB_PAINT
-    Bind(wxEVT_PAINT,      &MyStaticBitmap::OnPaint, this);
-#endif
-}
-
-
-void
-MyStaticBitmap::OnMouseBtnDown(wxMouseEvent &event)
-{
-#ifdef __WXMAC__
-    event.SetId(m_myid);                // otherwise id=0 on the Mac
-#endif
-    event.ResumePropagation(1);         // event was flagged to not propagate
-    event.Skip();
-}
-
-
-#if HANDLE_MSB_PAINT
-void
-MyStaticBitmap::OnPaint(wxPaintEvent& WXUNUSED(event))
-{
-    wxPaintDC dc(this); // must always be created, even if not used
-    wxBitmap img = this->GetBitmap();
-
-    wxMemoryDC mem_dc(img);
-    dc.Blit(0, 0, img.GetWidth(), img.GetHeight(),     // dest x,y,w,h
-            &mem_dc, 0, 0,      // source image,x,y
-            wxCOPY,             // logicalFunc
-            true                // useMask
-           );
-    mem_dc.SelectObject(wxNullBitmap);
-}
-#endif
-
-// ----------------------------------------------------------------------------
 // implementation
 // ----------------------------------------------------------------------------
 
@@ -202,7 +149,7 @@ CrtStatusBar::CrtStatusBar(CrtFrame *parent,
         for (int drive=0; drive < m_num_drives[ctrl]; drive++) {
             int idx = 4*ctrl + drive;
 
-            m_disk_icon[idx] = new MyStaticBitmap(
+            m_disk_icon[idx] = new wxGenericStaticBitmap(
                                     this,
                                     ID_Button_DiskCtrl0_FDrive + idx, // wxWindowID
                                     dummy,              // gets overridden later
@@ -223,6 +170,9 @@ CrtStatusBar::CrtStatusBar(CrtFrame *parent,
                                       + ((drive == 3) ? (DISK_ICON_WIDTH+DISK_ICON_GAP) : 0);
             }
             SetDiskIcon(slot, drive);   // establish appropriate bitmap
+            // mouse event routing
+            m_disk_icon[idx]->Bind(wxEVT_LEFT_DOWN,  &CrtStatusBar::OnMouseBtnDown, this);
+            m_disk_icon[idx]->Bind(wxEVT_RIGHT_DOWN, &CrtStatusBar::OnMouseBtnDown, this);
         } // drive
 
         // allocate space for up to four drives, and one label per pair of drives
@@ -489,6 +439,17 @@ CrtStatusBar::OnDiskButton(wxMouseEvent &event)
 
     // return focus to frame, otherwise the control will eat keyed input
     m_parent->refocus();
+}
+
+
+void
+CrtStatusBar::OnMouseBtnDown(wxMouseEvent &event)
+{
+#ifdef __WXMAC__
+    event.SetId(m_myid);                // otherwise id=0 on the Mac
+#endif
+    event.ResumePropagation(1);         // event was flagged to not propagate
+    event.Skip();
 }
 
 

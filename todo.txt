@@ -11,16 +11,10 @@ Emulator TODO list
    exists.  if you insert a floppy to R/310, it will trigger an assertion.
 
 *) Build the emulator on OSX and iron out the problems.
-    - clicking the floppy disk image doesn't empty/load the disk.
-      right clicking is also ignored.
-      mouse button click events not captured in MyStaticBitmap.
-    - does UiCrtStatusBar.cpp need to define MyStaticBitmap?
-      can it just Bind() event handlers directly on the wxStaticBitmap? Eg
-        https://stackoverflow.com/questions/11701937/connect-mouse-event-to-wxstaticbitmap-wx-2-8
-      on samples/statbar/starbar.cpp, try Bind()'ing mouse event handlers
-      to the icon images and see if events are captured.
-    - the HANDLE_MSB_PAINT option doesn't seem necessary any longer on OSX
-      (inside UiCrtStatusBar.{h,cpp})
+    - disk icon mouse events now work on osx, but there is one bug left.
+      right_click followed by "inspect" brings up the disk inspection dialog.
+      that works fine, but after it is dismissed the emulator is frozen.
+      Am I perhaps leaving the freeze_emu state true?
     - there is no pause/break (->HALT/STEP) key on mac keyboards.
       (but ctrl-c should work for this specific case, right?)
       maybe make page-up be EDIT, and page-down be HALT/STEP
@@ -43,6 +37,7 @@ Emulator TODO list
           win   shift-alt-R    shift-alt-W
           osx   shift-cmd-R    shift-cmd-W   << why not shift-alt?
                                                 I tried it and it worked fine.
+      do these conflict with standard osx keyboard shortcuts?
 
 *) in code.txt, describe what all these various image resources are for:
       wang.icons       = multi-resolution apple format (128x128x32b)
