@@ -154,8 +154,8 @@ hexval(char ch) noexcept
 // define the mapping table
 
 struct metakeytable_t {
-    char *name;
-    short val;          // flags | keycode
+    const char *name;
+    short       val;    // flags | keycode
 };
 
 static constexpr metakeytable_t metakeytable[] = {

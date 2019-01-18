@@ -331,7 +331,7 @@ UI_displayInit(const int screen_type, const int io_addr, const int term_num,
                         : (cpu_type == Cpu2200::CPUTYPE_MICROVP) ? "MicroVP"
                                                                  : "unknown cpu";
 
-    char *disp_str = "unknown";
+    const char *disp_str = "unknown";
     switch (screen_type) {
         case UI_SCREEN_64x16:  disp_str = "64x16"; break;
         case UI_SCREEN_80x24:  disp_str = "80x24"; break;

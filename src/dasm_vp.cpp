@@ -260,7 +260,7 @@ dasmDdField(char *buf, uint32 uop) noexcept
     assert(buf != nullptr);
     const int dd_field = ((uop >> 12) & 0x3);
 
-    char *str = nullptr;
+    const char *str = nullptr;
     switch (dd_field) {
          case 0: str = "";    break;
          case 1: str = ",R";  break;
@@ -284,7 +284,7 @@ dasmCyField(char *buf, bool &illegal, uint32 uop) noexcept
     const int cy_field = ((uop >> 14) & 0x3);
     illegal = false;
 
-    char *str = nullptr;
+    const char *str = nullptr;
     switch (cy_field) {
           case 0: return 0;
           case 1: str = ",x"; illegal = true; break;
@@ -556,7 +556,7 @@ dasmShBitfield(char *buf, uint8 bits) noexcept
                 len += 2;
             }
             many = true;
-            char *str = nullptr;
+            const char *str = nullptr;
             switch (i) {
                  case 0: str = "carry";      break;
                  case 1: str = "CRB";        break;

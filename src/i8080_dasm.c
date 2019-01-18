@@ -19,9 +19,9 @@
 //        @b = pop entry off of stack, read byte from memory, push on stack
 //        @w = pop entry off of stack, read word from memory, push on stack
 typedef struct {
-    int   len;          // number of bytes in this instruction
-    char *op_str;       // main opcode field
-    char *value_str;    // describe values in use
+    int         len;        // number of bytes in this instruction
+    const char *op_str;     // main opcode field
+    const char *value_str;  // describe values in use
 } dasminfo_t;
 
 static dasminfo_t mnemonics[256] = {
@@ -331,14 +331,14 @@ i8080_disassemble(i8080 *cpu, char *buff, int addr, int annotate)
     int stack[2];
     int sp = 0; // stack pointer
 
-    int   len = mnemonics[op].len;
-    char *src = mnemonics[op].op_str;
-    char *dst = buff;
+    int         len = mnemonics[op].len;
+    const char *src = mnemonics[op].op_str;
+    char       *dst = buff;
 
     char hex[10], ch;
 
     // scan opcode string, expanding escapes while copying
-    while (ch = *src++) {
+    while ((ch = *src++)) {
         switch (ch) {
 
         case '#':

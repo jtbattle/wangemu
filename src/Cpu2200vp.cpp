@@ -1220,7 +1220,10 @@ Cpu2200vp::execOneOp()
         tmp16 = m_cpu.icstack[m_cpu.icsp];
         // BASIC-3/COBOL required larger control memories, but
         // the boot rom is still stuck in the middle
-        if ((tmp16 < MAX_UCODE) &&
+        if (
+#if (MAX_UCODE < 64*1024)
+             (tmp16 < MAX_UCODE) &&
+#endif
             !((tmp16 >= 0x8000) && (tmp16 < 0x9000))) {
             writeUcode(tmp16, ((~m_cpu.k & 0xFF) << 16) | m_cpu.pc);
         }

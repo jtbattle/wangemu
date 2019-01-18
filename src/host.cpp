@@ -193,7 +193,7 @@ host::initialize()
     wxFileName init_path(stdp.GetUserConfigDir() + "/wangemu.ini");
   #endif
     config = std::make_unique<wxFileConfig>("", "", ini_path.GetFullPath());
-    wxConfigBase::Set(config);
+    wxConfigBase::Set(config.get());
 #endif
 
     // needed so we can compute a time difference to get ms later

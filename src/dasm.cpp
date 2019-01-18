@@ -119,7 +119,7 @@ dasmAField(char *buf, uint32 uop, bool &adj) noexcept
     // indicate if the PC would get adjusted
     adj |= (pc != 0);
 
-    return sprintf(buf, str);
+    return sprintf(buf, "%s", str);
 }
 
 
@@ -175,7 +175,7 @@ dasmBField(char *buf, uint32 uop) noexcept
         }
     }
 
-    return sprintf(buf, str);
+    return sprintf(buf, "%s", str);
 }
 
 

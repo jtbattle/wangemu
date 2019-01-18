@@ -270,7 +270,7 @@ static void i8080_retrieve_flags(i8080 *cpu)
 static int trace_on = 0;
 static char dasm_buff[250];
 static FILE *fh = NULL;
-static void i8080_log_open(char *filename)
+static void i8080_log_open(const char *filename)
 {
     assert(fh == NULL);
     fh = fopen(filename, "w");

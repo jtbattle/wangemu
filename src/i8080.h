@@ -36,7 +36,7 @@
 #define I8080_H
 
 /* enable this define if the host CPU is little endian (eg, intel CPUs) */
-#define LITTLE_ENDIAN
+#define USE_LITTLE_ENDIAN
 
 #ifdef __cplusplus
 extern "C" {
@@ -51,7 +51,7 @@ typedef void     out_handler(int addr, int byte, void *user_data);
 
 typedef union {
     struct {
-#ifdef LITTLE_ENDIAN
+#ifdef USE_LITTLE_ENDIAN
         uint8_t l, h;   /* intel style */
 #else
         uint8_t h, l;   /* motorola style */

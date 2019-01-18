@@ -43,7 +43,7 @@ CrtErrorDlg::CrtErrorDlg(wxWindow *parent,
     bool found = false;
     auto err = pet.cbegin();
     while (err != pet.cend()) {
-        if (strcmp(err->errcode, errcode) == 0) {
+        if (strcmp(err->errcode, errcode.c_str()) == 0) {
             found = true;
             break;
         }

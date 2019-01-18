@@ -31,10 +31,10 @@ enum
 
 
 static constexpr struct disk_choice_t {
-    char  *description;
-    int    disk_type;
-    int    platters;
-    int    sectors_per_platter;
+    const char *description;
+    int         disk_type;
+    int         platters;
+    int         sectors_per_platter;
 } disk_choices[] = {
                                                          // tracks*sectors
     { "PCS 5.25\" floppy disk (88 KB)", Wvd::DISKTYPE_FD5,   1,   35*10  },  // =   350
