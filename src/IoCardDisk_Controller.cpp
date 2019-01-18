@@ -125,7 +125,7 @@ bool
 IoCardDisk::inIdleState() const noexcept
 {
     return  (m_state == CTRL_WAKEUP) ||
-           ((m_state == CTRL_COMMAND) && (m_state_cnt==0));
+           ((m_state == CTRL_COMMAND) && (m_state_cnt == 0));
 }
 
 
@@ -660,7 +660,7 @@ IoCardDisk::advanceStateInt(disk_event_t event, const int val)
                 m_state = CTRL_COMMAND;
             } else  {
                 // let the UI know that selection might have changed
-                for (int d=0; d<numDrives(); d++) {
+                for (int d=0; d < numDrives(); d++) {
                     UI_diskEvent(m_slot, d);
                 }
 
@@ -747,7 +747,7 @@ IoCardDisk::advanceStateInt(disk_event_t event, const int val)
             m_buffer[m_bufptr++] = static_cast<uint8>(val);
             if (m_bufptr == 257) {
                 int cksum = 0;
-                for (int i=0; i<256; i++) {
+                for (int i=0; i < 256; i++) {
                     cksum += m_buffer[i];
                 }
                 cksum &= 0xFF;  // LRC
@@ -814,7 +814,7 @@ IoCardDisk::advanceStateInt(disk_event_t event, const int val)
                 // this is the right thing to do, although the disk controller
                 // microcode in the Module Repair Guide #2 ignores the LRC byte
                 int cksum = 0;
-                for (int i=0; i<256; i++) {
+                for (int i=0; i < 256; i++) {
                     cksum += m_buffer[i];
                 }
                 cksum &= 0xFF;
@@ -963,7 +963,7 @@ IoCardDisk::advanceStateInt(disk_event_t event, const int val)
                 m_state = CTRL_COPY7;
             } else {
                 setBusyState(true);
-                for (int d=0; d<numDrives(); d++) {
+                for (int d=0; d < numDrives(); d++) {
                     UI_diskEvent(m_slot, d);
                 }
                 m_state = CTRL_COPY5;
@@ -995,7 +995,7 @@ IoCardDisk::advanceStateInt(disk_event_t event, const int val)
 
             // wvdGetNsToTrack() and wvdSeekTrack() need m_drive set
             m_drive = m_dest_drive;
-            for (int d=0; d<numDrives(); d++) {
+            for (int d=0; d < numDrives(); d++) {
                 UI_diskEvent(m_slot, d);
             }
 
@@ -1056,7 +1056,7 @@ IoCardDisk::advanceStateInt(disk_event_t event, const int val)
             if (ok && (m_range_start <= m_range_end)) {
                 m_state = CTRL_COPY5;
                 // account for one rotation of disk, plus step time
-                for (int d=0; d<numDrives(); d++) {
+                for (int d=0; d < numDrives(); d++) {
                     UI_diskEvent(m_slot, d);
                 }
                 m_drive = m_range_drive;
@@ -1153,7 +1153,7 @@ IoCardDisk::advanceStateInt(disk_event_t event, const int val)
                 // fill all sectors with 0x00
                 uint8 data[256];
                 memset(&data[0], static_cast<uint8>(0x00), 256);
-                for (int n=0; ok && n<sec_per_trk; n++) {
+                for (int n=0; ok && n < sec_per_trk; n++) {
                     ok = m_d[m_drive].wvd->writeSector(m_platter, n, &data[0]);
                 }
                 if (!ok) {

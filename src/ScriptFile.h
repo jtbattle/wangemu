@@ -47,7 +47,7 @@ public:
     bool getNextByte(int *byte);
 
 private:
-    static const int MAX_EXPECTED_LINE_LENGTH=1024;  // getline() needs a char* buffer
+    static const int MAX_EXPECTED_LINE_LENGTH = 1024;  // getline() needs a char* buffer
 
     const int       m_meta_flags;   // which escapes to recognize
     const int       m_cur_depth;    // now deeply nested we are (starting at 1)

@@ -424,13 +424,13 @@ CrtFrame::setMenuChecks(const wxMenu *menu)
 
         // see if there are any disk controllers
         for (int controller=0; ; controller++) {
-            int slot=0, io_addr=0;
+            int slot = 0, io_addr = 0;
             if (!system2200::findDiskController(controller, &slot)) {
                 break;
             }
             const bool ok = system2200::getSlotInfo(slot, nullptr, &io_addr);
             assert(ok);
-            for (int d=0; d<2; d++) {
+            for (int d=0; d < 2; d++) {
                 const int stat = IoCardDisk::wvdDriveStatus(slot, d);
                 const char drive_ch = (d == 0) ? 'F' : 'R';
                 if ((stat & IoCardDisk::WVD_STAT_DRIVE_OCCUPIED) != 0) {
@@ -586,7 +586,7 @@ CrtFrame::initToolBar(wxToolBar *tb)
     mem_dc.SetTextBackground(bg);
     mem_dc.SelectObject(wxNullBitmap);
 
-    for (int i=0; i<17; i++) {
+    for (int i=0; i < 17; i++) {
         wxString label, tooltip;
         if (i < 16) {
             label.Printf("SF%d", i);
@@ -833,7 +833,7 @@ CrtFrame::getDefaults()
 
     // make sure that old mapping still makes sense
     bool found = false;
-    for (int i=0; i<NUM_IOSLOTS; i++) {
+    for (int i=0; i < NUM_IOSLOTS; i++) {
         if (system2200::getKbIoAddr(i) == m_assoc_kb_addr) {
             found = true;
             break;

@@ -436,7 +436,7 @@ PrinterFrame::paperSize(const std::string &papersize_name)
 {
     // translate char to wxPaperSize
 #if USEMYPAPER
-    for (int i=0; i< PSMAX; i++) {
+    for (int i=0; i < PSMAX; i++) {
         if (papersizemap[i].papersize_name == papersize_name) {
             return papersizemap[i].papersize_val;
         }
@@ -454,7 +454,7 @@ PrinterFrame::paperSize(wxPaperSize papersize_val) const
 {
     // translate char to wxPaperSize
 #if USEMYPAPER
-    for (int i=0; i< PSMAX; i++) {
+    for (int i=0; i < PSMAX; i++) {
         if (papersizemap[i].papersize_val == papersize_val) {
             return papersizemap[i].papersize_name;
         }
@@ -600,7 +600,7 @@ PrinterFrame::OnPrint(wxCommandEvent& WXUNUSED(event))
     system2200::freezeEmu(true);
 
     wxPrintDialogData printDialogData(*m_printData);
-    wxPrinter printer(& printDialogData);
+    wxPrinter printer(&printDialogData);
 
     Printout printout("", m_printer);
     if (!printer.Print(this, &printout, true)) {
@@ -816,7 +816,7 @@ PrinterFrame::printAndClear()
 
     wxPrintDialogData printDialogData(*m_printData);
     printDialogData.SetToPage(m_printer->numberOfPages());
-    wxPrinter printer(& printDialogData);
+    wxPrinter printer(&printDialogData);
 
     Printout printout("", m_printer);
     if (!printer.Print(this, &printout, false)) {

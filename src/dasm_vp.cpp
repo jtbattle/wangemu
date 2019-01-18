@@ -66,7 +66,7 @@ static const bool cx_illegal_regs[] = {
         false, false, false, false,
         };
 
-#define NO_X_BIT (~(1<<17))
+#define NO_X_BIT (~(1 << 17))
 
 // 10b page branch target address
 #define PAGE_BR(ic,uop) static_cast<uint16>(((ic) & 0xFC00) | (((uop) >> 8) & 0x03FF))
@@ -549,7 +549,7 @@ dasmShBitfield(char *buf, uint8 bits) noexcept
     bool many = false;
     int len = 0;
 
-    for (int i=0; i<8; i++) {
+    for (int i=0; i < 8; i++) {
         if ((bits & (1 << i)) != 0) {
             if (many) {
                 strcpy(&buf[len], ", ");
@@ -686,7 +686,7 @@ dasmVpOp(char *buf, uint16 ic, uint32 uop) noexcept
     uint16 new_ic = 0;
 
     int parity = 0;
-    for (int bit=0; bit<24; bit++) {
+    for (int bit=0; bit < 24; bit++) {
         parity ^= (uop >> bit) & 1;
     }
 

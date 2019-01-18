@@ -182,7 +182,7 @@ std::vector<int>
 IoCardTermMux::getAddresses() const
 {
     std::vector<int> v;
-    for (int i=1; i<8; i++) {
+    for (int i=1; i < 8; i++) {
         v.push_back(m_base_addr + i);
     }
     return v;

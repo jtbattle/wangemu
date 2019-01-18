@@ -322,7 +322,7 @@ Crt::OnLeftDClick(wxMouseEvent &event)
 
 #ifdef REVIEW_ALL_ERROR_MESSAGES
     if (false) {
-        for (int ec=0; ec<100; ec++) {
+        for (int ec=0; ec < 100; ec++) {
             wxString ecs;
             ecs.Printf("%02d", ec);
             ExplainError(ecs, abs_pos);
@@ -332,37 +332,37 @@ Crt::OnLeftDClick(wxMouseEvent &event)
         ExplainError("=3", abs_pos);
     } else {
         int ec;
-        for (ec=1; ec<9; ec++) {
+        for (ec=1; ec < 9; ec++) {
             wxString ecs;
             ecs.Printf("A%02d", ec);
             ExplainError(ecs, abs_pos);
         }
-        for (ec=10; ec<29; ec++) {
+        for (ec=10; ec < 29; ec++) {
             wxString ecs;
             ecs.Printf("S%02d", ec);
             ExplainError(ecs, abs_pos);
         }
-        for (ec=32; ec<59; ec++) {
+        for (ec=32; ec < 59; ec++) {
             wxString ecs;
             ecs.Printf("P%02d", ec);
             ExplainError(ecs, abs_pos);
         }
-        for (ec=60; ec<69; ec++) {
+        for (ec=60; ec < 69; ec++) {
             wxString ecs;
             ecs.Printf("C%02d", ec);
             ExplainError(ecs, abs_pos);
         }
-        for (ec=70; ec<77; ec++) {
+        for (ec=70; ec < 77; ec++) {
             wxString ecs;
             ecs.Printf("X%02d", ec);
             ExplainError(ecs, abs_pos);
         }
-        for (ec=80; ec<89; ec++) {
+        for (ec=80; ec < 89; ec++) {
             wxString ecs;
             ecs.Printf("D%02d", ec);
             ExplainError(ecs, abs_pos);
         }
-        for (ec=190; ec<199; ec++) {
+        for (ec=190; ec < 199; ec++) {
             wxString ecs;
             ecs.Printf("%03d", ec);
             ExplainError(ecs, abs_pos);
@@ -571,7 +571,7 @@ Crt::createBeep()
     const float phase_scale = 2*3.14159f * act_freq / sample_rate;
     const float clip        = 0.70f;  // chop off top/bottom of wave
     const float amplitude   = 40.0f;  // loudness
-    for (int n=0; n<num_samples; n++) {
+    for (int n=0; n < num_samples; n++) {
         float s = sin(phase_scale * n);
         s = (s >  clip) ?  clip
           : (s < -clip) ? -clip

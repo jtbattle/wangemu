@@ -138,7 +138,7 @@ IoCardPrinter::setCpuBusy(bool busy)
     // it appears that except for reset, ucode only ever clears it,
     // and of course the IBS sets it back.
     if (NOISY) {
-        UI_info("printer CPB%c", busy?'+':'-');
+        UI_info("printer CPB%c", busy ? '+' : '-');
     }
 
     m_cpb = busy;

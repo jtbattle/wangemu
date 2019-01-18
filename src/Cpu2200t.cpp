@@ -142,7 +142,7 @@ static const uint32 FETCH_AB = 0xC0000000;  // fetch a_op and b_op
 
 // swap the two nibbles of a byte
 #define NIBBLE_SWAP(v) \
-    static_cast<uint8>((((v)&0xF)<<4) | (((v)>>4)&0xF))
+    static_cast<uint8>((((v) & 0xF) << 4) | (((v) >> 4) & 0xF))
 
 // decode the M field and if a memory op is going to occur,
 // decode the A field and check it for legality
@@ -171,7 +171,7 @@ static const uint32 FETCH_AB = 0xC0000000;  // fetch a_op and b_op
 
 // extract the branch target for an unconditional branch
 #define FULL_TARGET(u) \
-    static_cast<uint16>(((u) & 0xF00F) | (((u)<<4) & 0x0F00) | (((u)>>4) & 0x00F0))
+    static_cast<uint16>(((u) & 0xF00F) | (((u) << 4) & 0x0F00) | (((u) >> 4) & 0x00F0))
 
 // branch target within 8b page
 #define BRANCH_TARGET(ic,uop) \
@@ -385,7 +385,7 @@ Cpu2200t::writeUcode(int addr, uint32 uop) noexcept
 // ------------------------------------------------------------------------
 
 // return 0 or 1 based on the st1 carry flag
-#define CARRY_BIT ((m_cpu.st1&ST1_MASK_CARRY)?1:0)
+#define CARRY_BIT ((m_cpu.st1 & ST1_MASK_CARRY) ? 1 : 0)
 
 #if 0
 // dump the most important contents of the uP state
@@ -421,7 +421,7 @@ Cpu2200t::dumpState(bool full_dump)
         int todo = (num > 6) ? 6 : num;
         int i;
         dbglog("    recent: ");
-        for (i=ICSTACK_TOP; i>ICSTACK_TOP-todo; i--) {
+        for (i=ICSTACK_TOP; i > ICSTACK_TOP-todo; i--) {
             dbglog("%04X ", m_cpu.icstack[i]);
         }
         dbglog("\n");
@@ -440,8 +440,8 @@ Cpu2200t::dump16n(int addr)
     int i;
     addr &= ~1;
     sprintf(buff, "RAM[%04X] = ", addr);
-    for (i=0; i<8; i++) {
-        sprintf(&buff[12+i],"%X", NIBBLE_SWAP(m_ram[addr+i]));
+    for (i=0; i < 8; i++) {
+        sprintf(&buff[12+i], "%X", NIBBLE_SWAP(m_ram[addr+i]));
     }
     dbglog("%s\n", buff);
 }
@@ -555,9 +555,9 @@ Cpu2200t::writeMem(uint16 addr, uint4 wr_value, int write2) noexcept
         assert(RAMaddr < m_mem_size);
 
         if ((addr & 1) != 0) {
-            m_ram[RAMaddr] = static_cast<uint8>((m_ram[RAMaddr]&0x0F) | (wr_value<<4));
+            m_ram[RAMaddr] = static_cast<uint8>((m_ram[RAMaddr] & 0x0F) | (wr_value << 4));
         } else {
-            m_ram[RAMaddr] = static_cast<uint8>((m_ram[RAMaddr]&0xF0) | (wr_value<<0));
+            m_ram[RAMaddr] = static_cast<uint8>((m_ram[RAMaddr] & 0xF0) | (wr_value << 0));
         }
         // dbglog("WR%d %04X, RAM[0x%04X] = 0x%02X\n", 1+write2, addr, RAMaddr, m_ram[RAMaddr]);
     }
@@ -759,21 +759,21 @@ Cpu2200t::Cpu2200t(std::shared_ptr<Scheduler> scheduler,
     // initialize ucode store from built-in image
     switch (m_cpu_type) {
         case CPUTYPE_2200B:
-            for (int i=0; i<m_ucode_size; i++) {
+            for (int i=0; i < m_ucode_size; i++) {
                 writeUcode(i, ucode_2200B[i]);
             }
-            for (int i=0; i<UCODE_WORDS_2200BX; i++) {
+            for (int i=0; i < UCODE_WORDS_2200BX; i++) {
                 writeUcode(0x7E00+i, ucode_2200BX[i]);
             }
-            for (int i=0; i<m_krom_size; i++) {
+            for (int i=0; i < m_krom_size; i++) {
                 m_kROM[i] = kROM_2200B[i];
             }
             break;
         case CPUTYPE_2200T:
-            for (int i=0; i<m_ucode_size; i++) {
+            for (int i=0; i < m_ucode_size; i++) {
                 writeUcode(i, ucode_2200T[i]);
             }
-            for (int i=0; i<m_krom_size; i++) {
+            for (int i=0; i < m_krom_size; i++) {
                 m_kROM[i] = kROM_2200T[i];
             }
             break;
@@ -790,13 +790,13 @@ Cpu2200t::Cpu2200t(std::shared_ptr<Scheduler> scheduler,
     {
         char buff[200];
         uint16 pc;
-        for (pc=0x0000; pc<m_ucode_size; pc++) {
+        for (pc=0x0000; pc < m_ucode_size; pc++) {
             dasmOneOp(buff, pc, m_ucode[pc].ucode & 0x000FFFFF);
             dbglog(buff);
         }
         if (m_cpu_type == CPUTYPE_2200B) {
             // disassemble the patch ROM
-            for (pc=0x7E00; pc<0x7E00+UCODE_WORDS_2200BX; pc++) {
+            for (pc=0x7E00; pc < 0x7E00+UCODE_WORDS_2200BX; pc++) {
                 dasmOneOp(buff, pc, m_ucode[pc].ucode & 0x000FFFFF);
                 dbglog(buff);
             }
@@ -842,14 +842,14 @@ Cpu2200t::reset(bool hard_reset) noexcept
     // the real HW doesn't reset these, but do it anyway for purity
     m_cpu.pc = 0;
 #if 0 // interestingly, this must not be reset, or warm reset doesn't work
-    for (int i=0; i<16; i++) {
+    for (int i=0; i < 16; i++) {
         m_cpu.aux[i] = 0x0000;
     }
 #endif
-    for (int i=0; i<8; i++) {
+    for (int i=0; i < 8; i++) {
         m_cpu.reg[i] = 0x0;
     }
-    for (int i=0; i<ICSTACK_SIZE; i++) {
+    for (int i=0; i < ICSTACK_SIZE; i++) {
         m_cpu.icstack[i] = 0x0000;
     }
     m_cpu.c = 0x00;
@@ -864,7 +864,7 @@ Cpu2200t::reset(bool hard_reset) noexcept
 
     // real hardware doesn't reset memory, but the emulator does
     if (hard_reset) {
-        for (int i=0; i<m_mem_size; i++) {
+        for (int i=0; i < m_mem_size; i++) {
             m_ram[i] = 0xFF;
             // it appears that either bit 0 or bit 4 must be set
             // otherwise bad things happen.
@@ -955,7 +955,7 @@ Cpu2200t::getAB() const noexcept
 
 // perform one instruction and return the number of ns the instruction took.
 // returns EXEC_ERR if we hit an illegal op.
-#define EXEC_ERR (1<<30)
+#define EXEC_ERR (1 << 30)
 int
 Cpu2200t::execOneOp()
 {
@@ -1373,7 +1373,7 @@ Cpu2200t::execOneOp()
         //  20K = 100, 24K=101, 28K=110, 32K=111
         // that is, it should be (#4K blocks - 1)
         DECODE_M_FIELD(uop, a_op);
-        m_cpu.pc = static_cast<uint16>((((m_mem_size>>12)-1) << 13) | (1<<12));
+        m_cpu.pc = static_cast<uint16>((((m_mem_size >> 12)-1) << 13) | (1 << 12));
         ++m_cpu.ic;
         break;
 

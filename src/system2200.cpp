@@ -41,7 +41,7 @@ struct iomap_t {
 static std::array<std::unique_ptr<IoCard>, NUM_IOSLOTS> card_in_slot;
 
 // pointer to card responding to given address
-static std::array<iomap_t,256> ioMap;
+static std::array<iomap_t, 256> ioMap;
 
 // address of most recent ABS
 static int curIoAddr;
@@ -144,7 +144,7 @@ isDiskController(int slot) noexcept
 static void
 saveDiskMounts()
 {
-    for (int slot=0; slot<NUM_IOSLOTS; slot++) {
+    for (int slot=0; slot < NUM_IOSLOTS; slot++) {
         if (isDiskController(slot)) {
             std::ostringstream subgroup;
             subgroup << "io/slot-" << slot;
@@ -152,7 +152,7 @@ saveDiskMounts()
             const auto dcfg = dynamic_cast<const DiskCtrlCfgState*>(cfg.get());
             assert(dcfg);
             const int num_drives = dcfg->getNumDrives();
-            for (int drive=0; drive<num_drives; drive++) {
+            for (int drive=0; drive < num_drives; drive++) {
                 std::ostringstream item;
                 item << "filename-" << drive;
                 std::string filename;
@@ -175,13 +175,13 @@ static void
 restoreDiskMounts()
 {
     // look for disk controllers and populate drives
-    for (int slot=0; slot<NUM_IOSLOTS; slot++) {
+    for (int slot=0; slot < NUM_IOSLOTS; slot++) {
         if (isDiskController(slot)) {
             const auto cfg = current_cfg->getCardConfig(slot);
             const auto dcfg = dynamic_cast<const DiskCtrlCfgState*>(cfg.get());
             assert(dcfg);
             const int num_drives = dcfg->getNumDrives();
-            for (int drive=0; drive<num_drives; drive++) {
+            for (int drive=0; drive < num_drives; drive++) {
                 std::ostringstream subgroup;
                 subgroup << "io/slot-" << slot;
                 std::ostringstream item;
@@ -391,8 +391,8 @@ system2200::setConfig(const SysCfgState &new_cfg)
     // bar will be misconfigured.  the hack is to sweep the list twice,
     // skipping CRT's the first time, then doing only CRTs the second time.
 
-    for (int pass=0; pass<2; pass++) {
-    for (int slot=0; slot<NUM_IOSLOTS; slot++) {
+    for (int pass=0; pass < 2; pass++) {
+    for (int slot=0; slot < NUM_IOSLOTS; slot++) {
 
         if (!current_cfg->isSlotOccupied(slot)) {
             continue;
@@ -405,7 +405,7 @@ system2200::setConfig(const SysCfgState &new_cfg)
                           || (cardtype == IoCard::card_t::disp_80x24)
                           || (cardtype == IoCard::card_t::term_mux) ;
 
-        if ((pass==0 && display) || (pass==1 && !display)) {
+        if ((pass == 0 && display) || (pass == 1 && !display)) {
             continue;
         }
 
@@ -458,7 +458,7 @@ system2200::reset(bool cold_reset)
     cpu->reset(cold_reset);
 
     // reset all I/O devices
-    for (int slot=0; slot<NUM_IOSLOTS; slot++) {
+    for (int slot=0; slot < NUM_IOSLOTS; slot++) {
         if (current_cfg->isSlotOccupied(slot)) {
             card_in_slot[slot]->reset(cold_reset);
         }
@@ -687,12 +687,12 @@ system2200::emulateTimeslice(int ts_ms)
             // so this array is used to maintain the order of the devices
             // where [0] is the one most behind in time.
             std::vector<int> order;
-            for (int n=0; n<num_devices; n++) {
+            for (int n=0; n < num_devices; n++) {
                 order.push_back(n);
             }
             // bubble sort in time order
-            for (int n=0; n<num_devices; n++) {
-                for (int k=0; k<num_devices-1; k++) {
+            for (int n=0; n < num_devices; n++) {
+                for (int k=0; k < num_devices-1; k++) {
                     if (m_clocked_devices[order[k]].ns >
                         m_clocked_devices[order[k+1]].ns) {
                         std::swap(order[k], order[k+1]);
@@ -700,7 +700,7 @@ system2200::emulateTimeslice(int ts_ms)
                 }
             }
             // double check they are sorted in time order
-            for (int k=0; k<num_devices-1; k++) {
+            for (int k=0; k < num_devices-1; k++) {
                 assert (m_clocked_devices[order[k]].ns <=
                         m_clocked_devices[order[k+1]].ns);
             }
@@ -739,7 +739,7 @@ system2200::emulateTimeslice(int ts_ms)
                     const uint32 new_ns = (m_clocked_devices[order[0]].ns += op_ns);
                     auto entry0 = order[0];
                     int i;
-                    for (i=0; i<num_devices-1; ++i) {
+                    for (i=0; i < num_devices-1; ++i) {
                         if (m_clocked_devices[order[i+1]].ns < new_ns) {
                             order[i] = order[i+1];
                         } else {
@@ -773,7 +773,7 @@ system2200::emulateTimeslice(int ts_ms)
                              % perf_hist_size;
                 int64 ms_diff = 0;
                 int slices = 0;
-                for (int n=1; n<perf_hist_len; n+=10) {
+                for (int n=1; n < perf_hist_len; n+=10) {
                     const int n0 = (n1 - n + perf_hist_size) % perf_hist_size;
                     slices = n;
                     ms_diff = (perf_real_ms[n1] - perf_real_ms[n0]);
@@ -1095,7 +1095,7 @@ system2200::getKbIoAddr(int n) noexcept
 {
     int num = 0;
 
-    for (int slot=0; slot<NUM_IOSLOTS; slot++) {
+    for (int slot=0; slot < NUM_IOSLOTS; slot++) {
         if (current_cfg->getSlotCardType(slot) == IoCard::card_t::keyboard) {
             if (num == n) {
                 return current_cfg->getSlotCardAddr(slot);
@@ -1115,7 +1115,7 @@ system2200::getPrinterIoAddr(int n) noexcept
 {
     int num = 0;
 
-    for (int slot=0; slot<NUM_IOSLOTS; slot++) {
+    for (int slot=0; slot < NUM_IOSLOTS; slot++) {
         if (current_cfg->getSlotCardType(slot) == IoCard::card_t::printer) {
             if (num == n) {
                 return current_cfg->getSlotCardAddr(slot);
@@ -1159,7 +1159,7 @@ system2200::findDiskController(const int n, int *slot) noexcept
 
     assert(n >= 0);
 
-    for (int probe=0; probe<num_ioslots; probe++) {
+    for (int probe=0; probe < num_ioslots; probe++) {
         if (isDiskController(probe)) {
             if (numfound++ == n) {
                 *slot = probe;
@@ -1190,7 +1190,7 @@ system2200::findDisk(const std::string &filename,
         const auto dcfg = dynamic_cast<const DiskCtrlCfgState*>(cfg.get());
         assert(dcfg);
         const int num_drives = dcfg->getNumDrives();
-        for (int d=0; d<num_drives; d++) {
+        for (int d=0; d < num_drives; d++) {
             const int stat = IoCardDisk::wvdDriveStatus(slt, d);
             if ((stat & IoCardDisk::WVD_STAT_DRIVE_OCCUPIED) != 0) {
                 std::string fname;

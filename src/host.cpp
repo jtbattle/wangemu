@@ -376,9 +376,9 @@ host::configReadBool(const std::string &subgroup,
 {
     assert(val != nullptr);
     int v = 0;
-    const bool b = configReadInt(subgroup, key, &v, ((defaultval) ? 1:0));
+    const bool b = configReadInt(subgroup, key, &v, ((defaultval) ? 1 : 0));
     if (b && (v >= 0) && (v <= 1)) {
-        *val = (v==1);
+        *val = (v == 1);
     } else {
         *val = defaultval;
     }
@@ -399,7 +399,7 @@ host::configReadWinGeom(wxWindow *wxwin,
                         wxRect * const default_geom,
                         bool client_size)
 {
-    long x=0, y=0, w=0, h=0;    // just for lint
+    long x = 0, y = 0, w = 0, h = 0;    // just for lint
     std::string valstr;
 
     bool b = configReadStr(subgroup, "window", &valstr);
@@ -509,7 +509,7 @@ host::configWriteWinGeom(wxWindow *wxwin,
 {
     assert(wxwin != nullptr);
 
-    int x=0, y=0, w=0, h=0;
+    int x = 0, y = 0, w = 0, h = 0;
     wxwin->GetPosition(&x, &y);
     if (client_size) {
         wxwin->GetClientSize(&w, &h);

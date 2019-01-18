@@ -89,7 +89,7 @@ timerTest(void)
     auto t2 = test_scheduler.createTimer(10, std::bind(&TimerTestFoo::report1, &foo, 2));
     auto t3 = test_scheduler.createTimer(50, std::bind(&TimerTestFoo::report2, &foo, 3));
 
-    for (int n=0; n<100; n++) {
+    for (int n=0; n < 100; n++) {
         if (n == 5) {
             t1 = nullptr;
         }
@@ -164,7 +164,7 @@ void Scheduler::creditTimer()
     std::vector<std::shared_ptr<Timer>> retired;
     const int active_before = m_timer.size();
     int active_after = 0;
-    for (int s=0; s<active_before; s++) {
+    for (int s=0; s < active_before; s++) {
         if (m_timer[s].unique()) {
             // the timer is dead: the scheduler holds the only reference to it
             ;

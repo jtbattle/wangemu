@@ -628,7 +628,7 @@ Terminal::processCrtChar1(uint8 byte)
             const char ch = (0x20 <= m_raw_buf[2] && m_raw_buf[2] <= 0x7E) ? m_raw_buf[2] : '.';
             dbglog("Decompress run: cnt=%d, chr=0x%02x/%c\n", m_raw_buf[1], m_raw_buf[2], ch);
         }
-        for (int i=0; i<m_raw_buf[1]; i++) {
+        for (int i=0; i < m_raw_buf[1]; i++) {
             processCrtChar2(m_raw_buf[2]);
         }
         m_raw_cnt = 0;
@@ -649,7 +649,7 @@ Terminal::processCrtChar1(uint8 byte)
         if (do_debug) {
             dbglog("Decompress spaces: cnt=%d\n", m_raw_buf[1]-0x60);
         }
-        for (int i=0x60; i<m_raw_buf[1]; i++) {
+        for (int i=0x60; i < m_raw_buf[1]; i++) {
             processCrtChar2(static_cast<uint8>(0x20));
         }
         m_raw_cnt = 0;

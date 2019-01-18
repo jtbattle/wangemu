@@ -265,7 +265,7 @@ IoCardDisplay::setCpuBusy(bool busy)
     // it appears that except for reset, ucode only ever clears it,
     // and of course the IBS sets it back.
     if (do_dbg) {
-        dbglog("display CPB%c\n", busy?'+':'-');
+        dbglog("display CPB%c\n", busy ? '+' : '-');
     }
 
     m_cpu->setDevRdy(!m_card_busy);

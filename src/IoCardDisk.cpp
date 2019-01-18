@@ -118,9 +118,9 @@
 
 
 #ifdef _DEBUG
-    int iodisk_noisy=1;
+    int iodisk_noisy = 1;
     #define NOISY  (iodisk_noisy) // turn on some alert messages
-    int iodisk_dbg=0;
+    int iodisk_dbg = 0;
     #define DBG    (iodisk_dbg)   // turn on some debug logging
 #else
     #define NOISY  (0)          // turn on some alert messages
@@ -166,7 +166,7 @@ IoCardDisk::~IoCardDisk()
     // "temp" cards aren't fully initialized
     if (m_slot >= 0) {
         reset(true);
-        for (int drive=0; drive<numDrives(); drive++) {
+        for (int drive=0; drive < numDrives(); drive++) {
             m_d[drive].wvd = nullptr;
         }
     }
@@ -261,7 +261,7 @@ IoCardDisk::reset(bool /*hard_reset*/)
     // reset drive state
     m_tmr_motor_off = nullptr;
 
-    for (int drive=0; drive<numDrives(); drive++) {
+    for (int drive=0; drive < numDrives(); drive++) {
         stopMotor(drive);
     }
 
@@ -283,7 +283,7 @@ IoCardDisk::select()
     }
 
     m_cpu->setDevRdy(!m_card_busy);
-    for (int drive=0; drive<numDrives(); drive++) {
+    for (int drive=0; drive < numDrives(); drive++) {
         UI_diskEvent(m_slot, drive);
     }
 }
@@ -300,7 +300,7 @@ IoCardDisk::deselect()
     m_selected = false;
     m_cpb      = true;
 
-    for (int drive=0; drive<numDrives(); drive++) {
+    for (int drive=0; drive < numDrives(); drive++) {
         UI_diskEvent(m_slot, drive);
     }
 }
@@ -364,7 +364,7 @@ IoCardDisk::setCpuBusy(bool busy)
     // it appears that except for reset, ucode only ever clears it,
     // and of course the IBS sets it back.
     if (DBG > 2) {
-        dbglog("disk CPB%c\n", busy?'+':'-');
+        dbglog("disk CPB%c\n", busy ? '+' : '-');
     }
 
     m_cpb = busy;
@@ -400,7 +400,7 @@ IoCardDisk::createDiskController()
 {
     m_tmr_motor_off = nullptr;
 
-    for (int drive=0; drive<4; drive++) {
+    for (int drive=0; drive < 4; drive++) {
         m_d[drive].wvd = (drive < numDrives()) ? std::make_unique<Wvd>()
                                                : nullptr;
         m_d[drive].state = DRIVE_EMPTY;
@@ -447,7 +447,7 @@ const int64 TEN_SECONDS = TIMER_MS(10000.0);
 void
 IoCardDisk::setBusyState(bool busy)
 {
-    if ((DBG> 1) && (m_card_busy != busy)) {
+    if ((DBG > 1) && (m_card_busy != busy)) {
         dbglog("disk setBusyState(%s)\n", busy ? "true" : "false");
     }
     m_card_busy = busy;
@@ -719,7 +719,7 @@ IoCardDisk::tcbMotorOff(int /*arg*/)
         dbglog("MOTOR OFF timer fired\n");
     }
 
-    for (int drive=0; drive<numDrives(); drive++) {
+    for (int drive=0; drive < numDrives(); drive++) {
         stopMotor(drive);
     }
 }
@@ -932,7 +932,7 @@ IoCardDisk::wvdFormatFile(const std::string &filename)
     }
 
     const int num_platters = dsk.getNumPlatters();
-    for (int p=0; ok && p<num_platters; p++) {
+    for (int p=0; ok && p < num_platters; p++) {
         ok = dsk.format(p);
     }
 
@@ -1117,7 +1117,7 @@ IoCardDisk::iwvdReadSector()
 
     // compute LRC
     int cksum = 0;
-    for (int i=0; i<256; i++) {
+    for (int i=0; i < 256; i++) {
         cksum += m_buffer[i];
     }
     m_buffer[256] = static_cast<uint8>(cksum & 0xFF);  // LRC byte
@@ -1136,7 +1136,7 @@ IoCardDisk::getDiskGeometry(int disktype,
                             int *interleave
                            ) noexcept
 {
-    int sectors_per_track=0, track_seek_ms=0, disk_rpm=0, inter=0;
+    int sectors_per_track = 0, track_seek_ms = 0, disk_rpm = 0, inter = 0;
 
     switch (disktype) {
 
@@ -1396,7 +1396,7 @@ IoCardDisk::diskHasBit15Problem(Wvd *wvd, bool fix_it)
 
     bool has_problem = false;
 
-    for (int p=0; p<num_platters; p++) {
+    for (int p=0; p < num_platters; p++) {
         const bool has_catalog = platterHasValidCatalog(wvd, p);
         if (has_catalog) {
             has_problem |= platterHasBit15Problem(wvd, p, fix_it);

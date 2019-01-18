@@ -177,7 +177,7 @@ CrtConfigDlg::updateDlg()
     // figure out mapping of font size to index
     const int font_size = pp->getFontSize();
     int font_choice = -1;
-    for (unsigned int i=0; i<m_font_choice->GetCount(); i++) {
+    for (unsigned int i=0; i < m_font_choice->GetCount(); i++) {
         const auto mcdp = reinterpret_cast<myClientData*>(m_font_choice->GetClientObject(i));
         assert(mcdp != nullptr);
         if (mcdp->m_data == font_size) {

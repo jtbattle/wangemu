@@ -445,7 +445,7 @@ Cpu2200vp::writeUcode(uint16 addr, uint32 uop, bool force) noexcept
 // ------------------------------------------------------------------------
 
 // return 0 or 1 based on the st1 carry flag
-#define CARRY_BIT ((m_cpu.sh & SH_MASK_CARRY)?1:0)
+#define CARRY_BIT ((m_cpu.sh & SH_MASK_CARRY) ? 1 : 0)
 
 // set the sh carry flag in accordance with bit 8 of v
 #define SET_CARRY(v)                                                    \
@@ -627,8 +627,8 @@ decimalSub(int a_op, int b_op, int ci) noexcept
             case 4: case 5: case 6: case 7:                             \
                 m_cpu.reg[cf] = static_cast<uint8>(v);                  \
                 break;                                                  \
-            case  8: m_cpu.pc = static_cast<uint16>((m_cpu.pc & 0xFF00) |  v);     break; /* PL */ \
-            case  9: m_cpu.pc = static_cast<uint16>((m_cpu.pc & 0x00FF) | (v<<8)); break; /* PH */ \
+            case  8: m_cpu.pc = static_cast<uint16>((m_cpu.pc & 0xFF00) |  v);       break; /* PL */ \
+            case  9: m_cpu.pc = static_cast<uint16>((m_cpu.pc & 0x00FF) | (v << 8)); break; /* PH */ \
             case 10: break;     /* CL; illegal */                       \
             case 11: break;     /* CH; illegal */                       \
             case 12: setSL(static_cast<uint8>(v)); break;               \
@@ -709,8 +709,8 @@ Cpu2200vp::getHbHa(int HbHa, int a_op, int b_op) const noexcept
 
 
 #define GET_HB(Hb, b_op)               \
-    (((Hb)&1) ? (((b_op) >> 4) & 0xF)  \
-              : (((b_op) >> 0) & 0xF))
+    (((Hb) & 1) ? (((b_op) >> 4) & 0xF)  \
+                : (((b_op) >> 0) & 0xF))
 
 
 // decode the DD field and perform memory rd/wr op if specified
@@ -773,11 +773,11 @@ Cpu2200vp::Cpu2200vp(std::shared_ptr<Scheduler> scheduler,
     m_has_oneshot = cpu_cfg->has_oneshot;
 
     // init microcode
-    for (int i=0; i<MAX_UCODE; i++) {
+    for (int i=0; i < MAX_UCODE; i++) {
         writeUcode(static_cast<uint16>(i), 0, true);
     }
     // TODO: have different boot images for different CPU types?
-    for (int i=0; i<1024; i++) {
+    for (int i=0; i < 1024; i++) {
         writeUcode(static_cast<uint16>(0x8000+i), ucode_2200vp[i], true);
     }
 
@@ -790,7 +790,7 @@ Cpu2200vp::Cpu2200vp(std::shared_ptr<Scheduler> scheduler,
     {
         char buff[200];
         uint16 pc;
-        for (pc=0x8000; pc<0x8400; pc++) {
+        for (pc=0x8000; pc < 0x8400; pc++) {
             dasmOneVpOp(buff, pc, m_ucode[pc].ucode);
             dbglog(buff);
         }
@@ -833,19 +833,19 @@ Cpu2200vp::reset(bool hard_reset) noexcept
     m_cpu.icsp = STACKSIZE-1;
 
     if (hard_reset) {
-        for (int i=0; i<m_mem_size; i++) {
+        for (int i=0; i < m_mem_size; i++) {
             m_ram[i] = 0xFF;
         }
 #if 0
         m_cpu.pc = 0;
         m_cpu.orig_pc;
-        for (int i=0; i<32; i++) {
+        for (int i=0; i < 32; i++) {
             m_cpu.aux[32];
         }
-        for (int i=0; i<8; i++) {
+        for (int i=0; i < 8; i++) {
             m_cpu.reg[i];
         }
-        for (int i=0; i<STACKSIZE; i++) {
+        for (int i=0; i < STACKSIZE; i++) {
             m_cpu.icstack[i] = 0;
         }
         m_cpu.ch = 0;
@@ -943,7 +943,7 @@ Cpu2200vp::oneShot30msCallback() noexcept
 
 // perform one instruction and return the number of ns the instruction took.
 // returns EXEC_ERR if we hit an illegal op.
-#define EXEC_ERR (1<<30)
+#define EXEC_ERR (1 << 30)
 int
 Cpu2200vp::execOneOp()
 {
@@ -1401,7 +1401,7 @@ Cpu2200vp::execOneOp()
         PREAMBLE1;
         HbHa    = (uop >> 14) & 3;
         rslt = getHbHa(HbHa, a_op, b_op);
-        rslt = ((rslt>>4)&0xF) * (rslt&0xF);
+        rslt = ((rslt >> 4) & 0xF) * (rslt & 0xF);
         POSTAMBLE1;
         break;
 
@@ -1479,8 +1479,8 @@ Cpu2200vp::execOneOp()
         HbHa = (uop >> 14) & 3;
         rslt  = getHbHa(HbHa, a_op, b_op);
         rslt2 = getHbHa(HbHa, a_op2, b_op2);
-        rslt  = ((rslt >>4)&0xF) * (rslt &0xF);
-        rslt2 = ((rslt2>>4)&0xF) * (rslt2&0xF);
+        rslt  = ((rslt  >> 4) & 0xF) * (rslt  & 0xF);
+        rslt2 = ((rslt2 >> 4) & 0xF) * (rslt2 & 0xF);
         POSTAMBLE2;
         break;
 
@@ -1591,8 +1591,8 @@ Cpu2200vp::execOneOp()
         break;
 
     case OP_BLRX:       // BLRX: branch if R[AAAA] < R[BBBB]
-        a_op = (a_op2<<8) | a_op;
-        b_op = (b_op2<<8) | b_op;
+        a_op = (a_op2 << 8) | a_op;
+        b_op = (b_op2 << 8) | b_op;
         if (a_op < b_op) { m_cpu.ic = puop->p16; }
                     else { ++m_cpu.ic; }
         ns = 800;
@@ -1605,8 +1605,8 @@ Cpu2200vp::execOneOp()
         break;
 
     case OP_BLERX:      // BLERX: branch if R[AAAA] <= R[BBBB]
-        a_op = (a_op2<<8) | a_op;
-        b_op = (b_op2<<8) | b_op;
+        a_op = (a_op2 << 8) | a_op;
+        b_op = (b_op2 << 8) | b_op;
         if (a_op <= b_op) { m_cpu.ic = puop->p16; }
                      else { ++m_cpu.ic; }
         ns = 800;
@@ -1666,7 +1666,7 @@ Cpu2200vp::dumpRam(const std::string &filename)
     ofs.fill('0');
     for (int addr=0; addr < m_mem_size; addr += 16) {
         ofs << std::setw(4) << std::hex << std::uppercase << addr << ":";
-        for (int i=0; i<16; i++) {
+        for (int i=0; i < 16; i++) {
             ofs << " " << std::setw(2) << std::hex << std::uppercase << int(m_ram[addr+i]);
         }
         ofs << std::endl;
@@ -1674,7 +1674,7 @@ Cpu2200vp::dumpRam(const std::string &filename)
 
     ofs << std::endl << std::endl;
     ofs << "===============================================" << std::endl << std::endl;
-    for (int addr=0; addr<0x8000; addr++) {
+    for (int addr=0; addr < 0x8000; addr++) {
         char buff[200];
         dasmOneVpOp(buff, addr, m_ucode[addr].ucode);
         ofs << buff;

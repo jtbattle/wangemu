@@ -262,7 +262,7 @@ dasmSt1Bitfield(char *buf, int *len, uint4 bits) noexcept
     bool many = false;
     int p = *len;
 
-    for (int i=0; i<4; i++) {
+    for (int i=0; i < 4; i++) {
         if ((bits & (1 << i)) != 0) {
             if (many) {
                 strcpy(&buf[p], ", ");
@@ -294,7 +294,7 @@ dasmSt3Bitfield(char *buf, int *len, uint4 bits) noexcept
     bool many = false;
     int p = *len;
 
-    for (int i=0; i<4; i++) {
+    for (int i=0; i < 4; i++) {
         if ((bits & (1 << i)) != 0) {
             if (many) {
                 strcpy(&buf[p], ", ");
@@ -737,13 +737,13 @@ dasmOp(char *buf, uint16 ic, uint32 uop) noexcept
             len = dasmType3(buf, "BNR", illegal, ic, uop);
             break;
         case 0x14: case 0x15:   // subroutine branch
-            new_ic = static_cast<uint16>((uop & 0xF00F) | ((uop<<4) & 0x0F00) | ((uop>>4) & 0x00F0));
+            new_ic = static_cast<uint16>((uop & 0xF00F) | ((uop << 4) & 0x0F00) | ((uop >> 4) & 0x00F0));
             len = sprintf(buf, "SB");
             len += padSpaces(buf, len, PARAM_COL);
             len += dasmAddr(&buf[len], ic, new_ic);
             break;
         case 0x16: case 0x17:   // unconditional branch
-            new_ic = static_cast<uint16>((uop & 0xF00F) | ((uop<<4) & 0x0F00) | ((uop>>4) & 0x00F0));
+            new_ic = static_cast<uint16>((uop & 0xF00F) | ((uop << 4) & 0x0F00) | ((uop >> 4) & 0x00F0));
             len = sprintf(buf, "B");
             len += padSpaces(buf, len, PARAM_COL);
             len += dasmAddr(&buf[len], ic, new_ic);

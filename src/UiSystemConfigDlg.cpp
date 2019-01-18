@@ -123,14 +123,14 @@ SystemConfigDlg::SystemConfigDlg(wxFrame *parent) :
     right_grid->Add(new wxStaticText(this, -1, ""), 1,
                     wxALIGN_CENTER | wxALIGN_CENTER_VERTICAL | wxBOTTOM, v_text_margin);
 
-    for (int slot=0; slot<NUM_IOSLOTS; slot++) {
+    for (int slot=0; slot < NUM_IOSLOTS; slot++) {
 
         m_card_desc[slot] = new wxChoice(this, ID_SLOT0_CARD_CHOICE+slot);
         // FIXME: for some reason, if I use -1, it reads as 0 (!) in
         //        OnCardChoice().  this was true in 2.6, and is true in 2.8.8
         m_card_desc[slot]->Append("(vacant)", new myClientData(-2));
 
-        for (int ctype=0; ctype<IoCard::NUM_CARDTYPES; ctype++) {
+        for (int ctype=0; ctype < IoCard::NUM_CARDTYPES; ctype++) {
             const IoCard::card_t ct = IoCard::card_types[ctype];
             const std::string card_name = CardInfo::getCardName(ct);
             const std::string card_desc = CardInfo::getCardDesc(ct);
@@ -237,7 +237,7 @@ SystemConfigDlg::updateDlg()
 {
     const int cpu_type = m_cfg.getCpuType();
     bool found = false;
-    for (unsigned int n=0; n<system2200::m_cpu_configs.size(); ++n) {
+    for (unsigned int n=0; n < system2200::m_cpu_configs.size(); ++n) {
         if (system2200::m_cpu_configs[n].cpu_type == cpu_type) {
             m_cpu_type->SetSelection(n);
             found = true;
@@ -248,7 +248,7 @@ SystemConfigDlg::updateDlg()
 
     m_mem_size->SetSelection(-1); // just in case there is no match, make it obvious
     const int ram_size = m_cfg.getRamKB();
-    for (unsigned int i=0; i<m_mem_size->GetCount(); i++) {
+    for (unsigned int i=0; i < m_mem_size->GetCount(); i++) {
         const auto mcdp = reinterpret_cast<myClientData*>(m_mem_size->GetClientObject(i));
         assert(mcdp != nullptr);
         if (mcdp->m_data == ram_size) {
@@ -258,7 +258,7 @@ SystemConfigDlg::updateDlg()
 
     m_warn_io->SetValue(m_cfg.getWarnIo());
 
-    for (int slot=0; slot<NUM_IOSLOTS; slot++) {
+    for (int slot=0; slot < NUM_IOSLOTS; slot++) {
         const IoCard::card_t card_type = m_cfg.getSlotCardType(slot);
         const int int_cardtype = static_cast<int>(card_type);
         if (card_type == IoCard::card_t::none) {
@@ -413,7 +413,7 @@ bool
 SystemConfigDlg::configStateOk(bool warn)
 {
     // make sure all io addresses have been selected
-    for (int slot=0; slot<NUM_IOSLOTS; slot++) {
+    for (int slot=0; slot < NUM_IOSLOTS; slot++) {
         const int card_sel = m_card_desc[slot]->GetSelection();
         if (card_sel == 0) {
             continue;   // not occupied
@@ -515,7 +515,7 @@ SystemConfigDlg::setValidIoChoices(int slot, int card_type_idx)
         std::vector<int> base_addresses = CardInfo::getCardBaseAddresses(ct);
 
         int addr_mtch_idx = -1;
-        for (unsigned int j=0; j<base_addresses.size(); j++) {
+        for (unsigned int j=0; j < base_addresses.size(); j++) {
             const int io_addr = base_addresses[j];
             wxString str;
             str.Printf("0x%03X", io_addr);

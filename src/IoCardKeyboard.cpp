@@ -138,7 +138,7 @@ void
 IoCardKeyboard::setCpuBusy(bool busy)
 {
     if (NOISY) {
-        UI_info("keyboard CPB%c", busy?'+':'-');
+        UI_info("keyboard CPB%c", busy ? '+' : '-');
     }
 
     // it appears that except for reset, ucode only ever clears it,
