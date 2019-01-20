@@ -419,6 +419,47 @@ particular card.
 
 
 ----------------------------------------------------------------------------
+Other Resources
+----------------------------------------------------------------------------
+
+There are few graphical elements needed by the program. This section
+describes what these various files are for.
+
+beep_1100.wav
+    This is a 150 ms "soft" square wave at 1100 Hz. It is the beep sound
+    when using the dumb CRT controller. It is used on the OSX platform,
+    but not on windows.
+
+beep_1940.wav
+    This is a 150 ms "soft" square wave at 1940 Hz. It is the beep sound
+    when using the 2236MXD controller with 2236 terminal emulation.
+    It is used on the OSX platform, but not on windows.
+
+disk_icon<N>.xpm (22x13x3b)
+    This is a set of six small xpm images, used in UiCrtStatusBar.cpp to
+    display the state of each disk drive:
+        disk_icon0.xpm: idle hard drive
+        disk_icon1.xpm: active hard drive
+        disk_icon2.xpm: idle floppy drive
+        disk_icon3.xpm: active floppy drive
+        disk_icon4.xpm: empty floppy drive
+        disk_icon5.xpm: empty but active floppy drive
+
+wang.icons (128x128x32b)
+    This is a multi-resolution application icon used by OSX.
+
+wang.ico (32x32x4b)
+    This is the application icon used by windows.  It is referenced by
+    wangemu.rc.
+
+wang.xpm (32x32x2b)
+    This is in UiCrtFrame.cpp for titlebar icon in the upper left.
+    It is shrunk to 16x16 by the window manager before display.
+
+wang_icon48.xpm (48x48x8b)
+    This icon is used in the "About" dialog box.
+
+----------------------------------------------------------------------------
 Configuration Management
 ----------------------------------------------------------------------------
 
