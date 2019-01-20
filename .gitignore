@@ -8,6 +8,7 @@
 mydisks/
 myscripts/
 wangemu-cppcheck-build-dir/
+src/*.d
 
 # Build results
 [Dd]ebug/
@@ -109,3 +110,4 @@ termtest/catch_kb.py
 wvdutil/lint.bat
 wvdutil/unscramble.py
 .vs/slnx.sqlite
+wangemu

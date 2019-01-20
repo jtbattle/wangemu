@@ -57,6 +57,9 @@ wangemu: $(OBJFILES)
 	$(CXX) $(LDFLAGS) $(OBJFILES) -o wangemu
 
 src/tags:
+	@echo " "
+	@echo "=== Building tags ==="
+	@echo " "
 	(cd src; ctags *.h *.cpp *.c)
 
 clean:

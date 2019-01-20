@@ -1221,7 +1221,7 @@ Cpu2200vp::execOneOp()
         // BASIC-3/COBOL required larger control memories, but
         // the boot rom is still stuck in the middle
         if (
-#if (MAX_UCODE < 64*1024)
+#if 0 // (MAX_UCODE < 64*1024)
              (tmp16 < MAX_UCODE) &&
 #endif
             !((tmp16 >= 0x8000) && (tmp16 < 0x9000))) {

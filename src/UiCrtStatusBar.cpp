@@ -446,9 +446,6 @@ CrtStatusBar::OnDiskButton(wxMouseEvent &event)
 void
 CrtStatusBar::OnMouseBtnDown(wxMouseEvent &event)
 {
-#ifdef __WXMAC__
-    event.SetId(m_myid);                // otherwise id=0 on the Mac
-#endif
     event.ResumePropagation(1);         // event was flagged to not propagate
     event.Skip();
 }
