@@ -51,10 +51,10 @@ enum
     Disk_New,     // unique
     Disk_Inspect, // unique
     Disk_Format,  // unique
-    Disk_Insert,  // \__ there are two per controller, up to one per IO slot
+    Disk_Insert,  // \__ there are up to four disks per controller, up to one per IO slot
     Disk_Remove,  // /
     // ...
-    Disk_LastRemove = Disk_Insert + 4*NUM_IOSLOTS-1,
+    Disk_LastRemove = Disk_Insert + 8*NUM_IOSLOTS-1,
     Disk_Realtime,
     Disk_UnregulatedSpeed,
 
@@ -232,7 +232,7 @@ CrtFrame::CrtFrame(const wxString& title,
     Bind(wxEVT_MENU, &CrtFrame::OnDiskFactory, this, Disk_Inspect);
     Bind(wxEVT_MENU, &CrtFrame::OnDiskFormat,  this, Disk_Format);
     Bind(wxEVT_COMMAND_MENU_SELECTED, &CrtFrame::OnDisk, this,
-                            Disk_Insert, Disk_Insert+NUM_IOSLOTS*4-1);
+                            Disk_Insert, Disk_Insert+NUM_IOSLOTS*8-1);
     Bind(wxEVT_MENU, &CrtFrame::OnDiskSpeed, this, Disk_Realtime);
     Bind(wxEVT_MENU, &CrtFrame::OnDiskSpeed, this, Disk_UnregulatedSpeed);
 
@@ -430,19 +430,24 @@ CrtFrame::setMenuChecks(const wxMenu *menu)
             }
             const bool ok = system2200::getSlotInfo(slot, nullptr, &io_addr);
             assert(ok);
-            for (int d=0; d < 2; d++) {
+            for (int d=0; d < 4; d++) {
                 const int stat = IoCardDisk::wvdDriveStatus(slot, d);
-                const char drive_ch = (d == 0) ? 'F' : 'R';
+                if (!(stat & IoCardDisk::WVD_STAT_DRIVE_EXISTENT)) {
+                    break;
+                }
+                const char drive_ch = ((d & 1) == 0) ? 'F' : 'R';
+                const int  addr_off = ((d & 2) == 0) ? 0x00 : 0x40;
+                const int  eff_addr = io_addr + addr_off;
                 if ((stat & IoCardDisk::WVD_STAT_DRIVE_OCCUPIED) != 0) {
                     wxString str1, str2;
-                    str1.Printf("Drive %c/%03X: Remove", drive_ch, io_addr);
-                    str2.Printf("Remove the disk from drive %d, unit /%03X", d, io_addr);
-                    disk_menu->Append(Disk_Remove+4*slot+2*d, str1, str2, wxITEM_CHECK);
+                    str1.Printf("Drive %c/%03X: Remove", drive_ch, eff_addr);
+                    str2.Printf("Remove the disk from drive %d, unit /%03X", d, eff_addr);
+                    disk_menu->Append(Disk_Remove+8*slot+2*d, str1, str2, wxITEM_CHECK);
                 } else {
                     wxString str1, str2;
-                    str1.Printf("Drive %c/%03X: Insert", drive_ch, io_addr);
-                    str2.Printf("Insert a disk into drive %d, unit /%03X", d, io_addr);
-                    disk_menu->Append(Disk_Insert+4*slot+2*d, str1, str2, wxITEM_CHECK);
+                    str1.Printf("Drive %c/%03X: Insert", drive_ch, eff_addr);
+                    str2.Printf("Insert a disk into drive %d, unit /%03X", d, eff_addr);
+                    disk_menu->Append(Disk_Insert+8*slot+2*d, str1, str2, wxITEM_CHECK);
                 }
             }
             disk_menu->AppendSeparator();
@@ -1137,8 +1142,8 @@ CrtFrame::OnDisk(wxCommandEvent &event)
 {
     // each controller manages two drives, each has three possible actions
     const int menu_id = event.GetId();
-    const int slot  =  (menu_id - Disk_Insert) / 4;
-    const int drive = ((menu_id - Disk_Insert) % 4) / 2;
+    const int slot  =  (menu_id - Disk_Insert) / 8;
+    const int drive = ((menu_id - Disk_Insert) % 8) / 2;
     const int type  =  (menu_id - Disk_Insert) % 2;
     // UI_info("Got disk menu: slot=%d, drive=%d, action=%d", slot, drive, type);
 
@@ -1151,8 +1156,9 @@ CrtFrame::OnDisk(wxCommandEvent &event)
                               host::FILEREQ_OK) {
                 int drive2, io_addr2;
                 const bool b = system2200::findDisk(full_path, nullptr, &drive2, &io_addr2);
+                const int eff_addr = io_addr2 + ((drive2 < 2) ? 0x00 : 0x40);
                 if (b) {
-                    UI_warn("Disk already in drive %c /%03x", "FC"[drive2], io_addr2);
+                    UI_warn("Disk already in drive %c /%03x", "FRFR"[drive2], eff_addr);
                     return;
                 }
                 ok = IoCardDisk::wvdInsertDisk(slot, drive, full_path);

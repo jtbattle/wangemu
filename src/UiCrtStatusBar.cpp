@@ -392,16 +392,17 @@ CrtStatusBar::OnDiskButton(wxMouseEvent &event)
     switch (m_popup_action) {
 
         case insert_disk: {
-            std::string fullpath;
-            if (host::fileReq(host::FILEREQ_DISK, "Disk to load", true, &fullpath) ==
+            std::string full_path;
+            if (host::fileReq(host::FILEREQ_DISK, "Disk to load", true, &full_path) ==
                               host::FILEREQ_OK) {
                 int drive2, io_addr;
-                const bool b = system2200::findDisk(fullpath, nullptr, &drive2, &io_addr);
+                const bool b = system2200::findDisk(full_path, nullptr, &drive2, &io_addr);
+                const int eff_addr = io_addr + ((drive2 < 2) ? 0x00 : 0x40);
                 if (b) {
-                    UI_warn("Disk already in drive %c /%03x", "FR"[drive2], io_addr);
+                    UI_warn("Disk already in drive %c /%03x", "FRFR"[drive2], eff_addr);
                     return;
                 }
-                ok = IoCardDisk::wvdInsertDisk(slot, drive, fullpath);
+                ok = IoCardDisk::wvdInsertDisk(slot, drive, full_path);
             } }
             break;
 
