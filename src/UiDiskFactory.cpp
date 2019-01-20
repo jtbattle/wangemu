@@ -244,7 +244,7 @@ DiskFactory::OnButton_Save(wxCommandEvent& WXUNUSED(event))
 
     m_disk_data->setLabel(m_tab2->getLabelString());
     m_disk_data->save();
-    Close();
+    EndModal(0);
 }
 
 
@@ -271,14 +271,14 @@ DiskFactory::OnButton_SaveAs(wxCommandEvent& WXUNUSED(event))
     m_disk_data->setLabel(m_tab2->getLabelString());
     m_disk_data->save(name);
 
-    Close();
+    EndModal(0);
 }
 
 
 void
 DiskFactory::OnButton_Cancel(wxCommandEvent& WXUNUSED(event))
 {
-    Close();
+    EndModal(1);
 }
 
 

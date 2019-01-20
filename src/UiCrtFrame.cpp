@@ -1077,8 +1077,8 @@ CrtFrame::doInspect(const std::string &filename)
         IoCardDisk::wvdFlush(slot, drive);
     }
 
-    DiskFactory *factory = new DiskFactory(this, filename);
-    factory->ShowModal();
+    DiskFactory dlg(this, filename);
+    dlg.ShowModal();
 
     system2200::freezeEmu(false);   // run emulation
 }
