@@ -112,7 +112,7 @@ const int num_fonts = (sizeof(font_table) / sizeof(font_table_t));
 static constexpr struct colorscheme_t {
     unsigned char fg_r, fg_g, fg_b;     // foreground color
     unsigned char bg_r, bg_g, bg_b;     // background color
-    const char   *menu_help;            // string as it appears on statusbar
+    const char   *help_label;           // string as it appears on statusbar
 } colorscheme[] = {
     {
 #ifdef __WXMAC__
@@ -1420,7 +1420,7 @@ std::string
 CrtFrame::getColorSchemeName(int idx)
 {
     assert(idx >= 0 && idx < num_colorschemes);
-    return colorscheme[idx].menu_help;
+    return colorscheme[idx].help_label;
 }
 
 // -------- Crt display set/get --------

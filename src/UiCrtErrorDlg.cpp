@@ -51,7 +51,12 @@ CrtErrorDlg::CrtErrorDlg(wxWindow *parent,
     }
 
     // this is the font used for the example and correction code text
-    wxFont fixedfont = wxFont(10,                   // point size
+#ifdef __WXMSW__
+    const int font_size = 10;
+#else // __WXMAC__
+    const int font_size = 12;
+#endif
+    wxFont fixedfont = wxFont(font_size,
                               wxFONTFAMILY_MODERN,
                               wxFONTSTYLE_NORMAL,
                               wxFONTWEIGHT_BOLD);
