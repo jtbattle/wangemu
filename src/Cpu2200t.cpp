@@ -624,16 +624,7 @@ Cpu2200t::storeOperandC(uint32 uop, uint4 value)
 
     if (xbit) {
         switch (field) {
-#if 0
-    // FIXME: this would seem correct, but it leads to problems.  if halt/step
-    //        is pressed, it appears that the thing remains "pressed",
-    //        and by using the "wrong" code below, the bits is cleared.
-    //
-    //        look at the schematics: how does the HW behave?
-            case  8: m_cpu.st3 = static_cast<uint4>((m_cpu.st3 & 0x6) | (value & 0x9)); break;
-#else
-            case  8: m_cpu.st3 = value; break;
-#endif
+            case  8: m_cpu.st3 = static_cast<uint4>((m_cpu.st3 & 0x3) | (value & 0xc)); break;    // only [3:2] are writable
             case  9: m_cpu.st4 = value; break;
             case 10: m_cpu.pc  = static_cast<uint16>((m_cpu.pc & 0xFF0F) | (value <<  4)); break; // PC2
             case 11: m_cpu.pc  = static_cast<uint16>((m_cpu.pc & 0xF0FF) | (value <<  8)); break; // PC3
