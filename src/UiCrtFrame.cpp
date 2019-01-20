@@ -392,11 +392,8 @@ void
 CrtFrame::setMenuChecks(const wxMenu *menu)
 {
     // ----- file --------------------------------------
-    if (isPrimaryCrt()) {
-        const bool script_running = system2200::isScriptModeActive(m_assoc_kb_addr, m_term_num);
-        m_menubar->Enable(File_Script, !script_running);
-    }
-// FIXME: we want to allow secondary MXD terminals to support script input too
+    const bool script_running = system2200::isScriptModeActive(m_assoc_kb_addr, m_term_num);
+    m_menubar->Enable(File_Script, !script_running);
 
     // ----- cpu ---------------------------------------
     if (isPrimaryCrt()) {
