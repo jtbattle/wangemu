@@ -95,11 +95,7 @@ MyAboutDlg::MyAboutDlg(wxWindow *parent) :
         "Max Blomme\n"
         "Eilert Brinkmeyer\n"
         "Carl Coffman\n"
-#ifdef __WXMSW__
-        "Georg Sch‰fer\n"
-#else // WXMAC
-        "Georg Schäfer\n"
-#endif
+        "Georg Sch\u00e4fer\n"
         "Paul Szudzik\n"
         "Smokey Thompson\n"
         "Jan Van de Veen\n"
