@@ -172,8 +172,6 @@ IoCardKeyboard::receiveKeystroke(int keycode)
 
 // =================== private functions ===================
 
-// FIXME: if nothing else, the name is bad because IoCardKeyboard
-// no longer knows about scripts -- system2200 takes care of it.
 void
 IoCardKeyboard::tcbScript()
 {
@@ -203,13 +201,8 @@ void
 IoCardKeyboard::checkKeyReady()
 {
     if (!m_key_ready) {
-        bool script_active = system2200::pollScriptInput(m_base_addr, 0);
-        script_active = !script_active;  // make lint shut up
+        system2200::pollScriptInput(m_base_addr, 0);
     }
-// TODO: keyReady doesn't change m_selected, so the above call can't affect
-// it this cycle.  maybe the thing to do is after m_key_ready is set to
-// false (no matter the reason) a timer to tcbScript is invoked.  or something.
-// think it through.
     if (m_selected) {
         if (m_key_ready && !m_cpb) {
             // we can't return IBS right away -- apparently there
