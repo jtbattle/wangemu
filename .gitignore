@@ -4,7 +4,7 @@
 # User-specific files
 *.suo
 *.user
-github.ignore/
+*.ignore/
 mydisks/
 myscripts/
 wangemu-cppcheck-build-dir/
