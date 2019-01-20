@@ -1192,7 +1192,8 @@ system2200::findDisk(const std::string &filename,
         const int num_drives = dcfg->getNumDrives();
         for (int d=0; d < num_drives; d++) {
             const int stat = IoCardDisk::wvdDriveStatus(slt, d);
-            if ((stat & IoCardDisk::WVD_STAT_DRIVE_OCCUPIED) != 0) {
+            if ((stat & IoCardDisk::WVD_STAT_DRIVE_EXISTENT) != 0  &&
+                (stat & IoCardDisk::WVD_STAT_DRIVE_OCCUPIED) != 0) {
                 std::string fname;
                 bool ok = IoCardDisk::wvdGetFilename(slt, d, &fname);
                 assert(ok);
