@@ -625,7 +625,6 @@ CrtFrame::initToolBar(wxToolBar *tb)
         assert(gap >= 0);  // always 0 on msw; >0 on osx
 
         // this is the lower text on the label (SF%d, or "EDIT")
-// FIXME: for mac, the spacing is off
 #if __WXMAC__
         mem_dc.DrawText(label, label_x_offset, lower_text_y);
 #else

@@ -327,7 +327,7 @@ IoCardDisk::strobeCBS(int /*val*/) noexcept
 
     // unexpected -- the real hardware ignores this byte
     if (NOISY > 0) {
-        // FIXME: MVP spews these two a lot. what do they mean?
+        // TODO: MVP spews these two a lot. what do they mean?
         // UI_warn("unexpected disk CBS: Output of byte 0x%02x", val8);
     }
 

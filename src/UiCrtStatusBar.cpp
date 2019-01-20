@@ -84,8 +84,8 @@ CrtStatusBar::CrtStatusBar(CrtFrame *parent,
 #ifdef __WXMSW__
     pane_widths[panes] = 80;        // 80 pixels wide
 #else
-    // FIXME: this shouldn't have to be hard-coded if I just did a little
-    //        more work figuring out the button size w/maximum text
+    // TODO: this shouldn't have to be hard-coded if I just did a little
+    //       more work figuring out the button size w/maximum text
     pane_widths[panes] = 90;        // 90 pixels wide
 #endif
     pane_styles[panes] = wxSB_NORMAL;

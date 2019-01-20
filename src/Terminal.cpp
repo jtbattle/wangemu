@@ -22,7 +22,7 @@
 //   - I did a little experimenting with a real 2336, but what should happen
 //     if an illegal escape sequence is received? it isn't documented and
 //     in my limited testing, really unexpected things can happen (like the
-//     parser swallowing all subsequent input, includingn printable chars).
+//     parser swallowing all subsequent input, including printable chars).
 
 #include "IoCardKeyboard.h"
 #include "IoCardTermMux.h"

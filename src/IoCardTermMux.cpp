@@ -310,7 +310,7 @@ IoCardTermMux::strobeCBS(int val)
 int
 IoCardTermMux::getIB() const noexcept
 {
-    // TODO: do we need to give more status than this?
+    // TBD: do we need to give more status than this?
     // In the real hardware, IB is driven by the most recent
     // OUT_IB_N data any time the board is selected.  In addition,
     // any time the address offset is 5 or 7, a gate forcibly drives
