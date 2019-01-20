@@ -49,7 +49,11 @@ static constexpr kd_keymap_t keydown_keymap_table[] = {
     { WXK_TAB,          KC_ANY,                         0xE6 },
 
     // halt/step
-#ifndef __WXMAC__
+#ifdef __WXMAC__
+    // mapping this to the "CLEAR" key seems like a slam dunk, but I think this
+    // is more useful.
+    { WXK_CLEAR,        KC_ANY,                         IoCardKeyboard::KEYCODE_HALT },
+#else
     { WXK_PAUSE,        KC_ANY,                         IoCardKeyboard::KEYCODE_HALT },
 #endif
     { 'C',              KC_CTRL,                        IoCardKeyboard::KEYCODE_HALT },
