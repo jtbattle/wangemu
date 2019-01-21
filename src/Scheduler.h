@@ -74,7 +74,7 @@ public:
 private:
     // not strictly necesssary to place a limit, but it is useful to
     // detect runaway conditions
-    static const int MAX_TIMERS = 30;
+    static const int MAX_TIMERS = 50;
 
     // things get hinky if we get near the sign bit, but that isn't
     // a concern anymore now that we're using int64.

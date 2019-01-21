@@ -123,7 +123,23 @@ Scheduler::createTimer(int64 ns, const sched_callback_t &fcn)
     assert(ns <= 12E9);      // 12 seconds
 
     // make sure we don't leak timers
+    // the one tricky case that pushed the limit above 30 (max 37 seen)
+    // is the SNAKE220 game on the "more_games.wvd" disk. for whatever
+    // reason, the way it is written causes a lot of blocking events that
+    // cause the 27ms time slice one-shot to be retriggered frequently.
+    // each touch creates a new event on the callback queue, but the zombie
+    // ones don't retired until their own 27ms window completes. eventually
+    // that happens, but there can be me as many zombies as the scheduler
+    // touches the one-shot in a given 27ms window.
+#if 1
+    static unsigned int max_timers = MAX_TIMERS;
+    if (m_timer.size() > max_timers) {
+        max_timers = m_timer.size();
+        UI_warn("now at %d timers", max_timers);
+    }
+#else
     assert(m_timer.size() < MAX_TIMERS);
+#endif
 
     int64 event_ns = m_time_ns + ns;
     auto tmr = std::make_shared<Timer>(event_ns, fcn);
