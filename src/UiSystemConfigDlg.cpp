@@ -126,9 +126,7 @@ SystemConfigDlg::SystemConfigDlg(wxFrame *parent) :
     for (int slot=0; slot < NUM_IOSLOTS; slot++) {
 
         m_card_desc[slot] = new wxChoice(this, ID_SLOT0_CARD_CHOICE+slot);
-        // FIXME: for some reason, if I use -1, it reads as 0 (!) in
-        //        OnCardChoice().  this was true in 2.6, and is true in 2.8.8
-        m_card_desc[slot]->Append("(vacant)", new myClientData(-2));
+        m_card_desc[slot]->Append("(vacant)", new myClientData(-1));
 
         for (int ctype=0; ctype < IoCard::NUM_CARDTYPES; ctype++) {
             const IoCard::card_t ct = IoCard::card_types[ctype];
@@ -375,7 +373,6 @@ SystemConfigDlg::OnCardChoice(wxCommandEvent &event)
     const auto mcdp = reinterpret_cast<myClientData*>(hCtl->GetClientObject(selection));
     assert(mcdp != nullptr);
     int idx = mcdp->m_data;
-    if (idx < 0) { idx = -1; }  // hack due to -2 hack earlier
     const IoCard::card_t card_type = static_cast<IoCard::card_t>(idx);
 
     m_cfg.setSlotCardType(slot, card_type);
