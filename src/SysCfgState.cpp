@@ -102,10 +102,15 @@ SysCfgState::operator==(const SysCfgState &rhs) const
     assert(rhs.m_initialized);
 
     for (int slot=0; slot < NUM_IOSLOTS; slot++) {
-        if ((m_slot[slot].type    != rhs.m_slot[slot].type) ||
-            (m_slot[slot].addr    != rhs.m_slot[slot].addr) ||
-             ((    m_slot[slot].card_cfg == nullptr) !=
-              (rhs.m_slot[slot].card_cfg == nullptr))) {
+        if (m_slot[slot].type != rhs.m_slot[slot].type) {
+            return false;
+        }
+        if (m_slot[slot].type == IoCard::card_t::none) {
+            continue;  // on to next slot
+        }
+        if (   (m_slot[slot].addr != rhs.m_slot[slot].addr)
+            || ((    m_slot[slot].card_cfg == nullptr) !=
+                (rhs.m_slot[slot].card_cfg == nullptr))) {
             return false;
         }
 
