@@ -515,7 +515,7 @@ SystemConfigDlg::setValidIoChoices(int slot, int card_type_idx)
         for (unsigned int j=0; j < base_addresses.size(); j++) {
             const int io_addr = base_addresses[j];
             wxString str;
-            str.Printf("0x%03X", io_addr);
+            str.Printf("/%03X", io_addr);
             hAddrCtl->Append(str);
             if ((io_addr & 0xFF) == (m_cfg.getSlotCardAddr(slot) & 0xFF)) {
                 addr_mtch_idx = j;
