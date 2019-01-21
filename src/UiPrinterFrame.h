@@ -8,10 +8,9 @@
 #include "w2200.h"
 #include "wx/wx.h"
 #include <wx/cmndata.h>
+#include <wx/print.h>
 
 class Printer;
-
-enum wxPrintBin;
 
 class PrinterFrame : public wxFrame
 {
@@ -104,14 +103,14 @@ private:
 
     // ---- data members ----
 
-    const int    m_printer_addr;         // use to track configuration options
+    const int m_printer_addr;   // use to track configuration options
+    int m_font_size    = 12;    // eg 8 for 8 pt, 12 for 12 pt, etc
+    int m_preview_zoom = 25;    // zoom factor for page preview
 
-    wxMenuBar   *m_menubar   = nullptr;  // menubar on frame
-    wxStatusBar *m_statusbar = nullptr;  // status bar on frame
-    Printer     *m_printer   = nullptr;  // emulated Printer display window
-
-    int          m_font_size    = 12;    // eg 8 for 8 pt, 12 for 12 pt, etc
-    int          m_preview_zoom = 25;    // zoom factor for page preview
+    wxMenuBar      *m_menubar   = nullptr;  // menubar on frame
+    wxStatusBar    *m_statusbar = nullptr;  // status bar on frame
+    Printer        *m_printer   = nullptr;  // emulated Printer display window
+    wxPreviewFrame *m_preview   = nullptr;  // print preview frame
 
     std::unique_ptr<wxPrintData>           m_printData;
     std::unique_ptr<wxPageSetupDialogData> m_pageSetupData;

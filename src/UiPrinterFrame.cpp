@@ -530,11 +530,9 @@ PrinterFrame::PP_OnClose(wxCloseEvent &event)
     const std::string subgroup("ui/printpreview");
     host::configWriteWinGeom(this, subgroup, false);
 
-    wxPreviewControlBar *controlBar = ((wxPreviewFrame*)this)->GetControlBar();
+    wxPreviewControlBar *controlBar = m_preview->GetControlBar();
     assert(controlBar != nullptr);
-    PrinterFrame *parent = dynamic_cast<PrinterFrame*>(GetParent());
-    assert(parent != nullptr);
-    parent->m_preview_zoom = controlBar->GetZoomControl();
+    m_preview_zoom = controlBar->GetZoomControl();
 
     event.Skip();
 }
@@ -561,36 +559,34 @@ PrinterFrame::OnPrintPreview(wxCommandEvent& WXUNUSED(event))
 
     std::string preview_title("Print Preview");
     // NB: wx framework takes care of reclaiming the frame object
-    wxPreviewFrame *frame = new wxPreviewFrame(preview, this,
-                                    preview_title,
-                                    wxPoint(100, 100),  // default position
-                                    wxSize(600, 650));  // default size
+    m_preview = new wxPreviewFrame(preview, this,
+                                   preview_title,
+                                   wxPoint(100, 100),  // default position
+                                   wxSize(600, 650));  // default size
 
 #if 1
-    // works in 2.5.4 and subsequent releases
-// FIXME: Connect() has been superceded by Bind()
-//        "and is better in every way" according to VZ
-    frame->Connect(wxID_ANY, wxEVT_CLOSE_WINDOW,
-                   wxCloseEventHandler(PrinterFrame::PP_OnClose));
+    // intercept the close event so we can retrieve the preview zoom
+    // factor, so it can be restored the next time.
+    m_preview->Bind(wxEVT_CLOSE_WINDOW, &PrinterFrame::PP_OnClose, this);
+
+    m_preview->Initialize();
 
     const std::string subgroup("ui/printpreview");
     wxRect default_geom(100, 100, 600, 650);
-    host::configReadWinGeom(frame, subgroup, &default_geom, false);
-
-    frame->Initialize();
+    host::configReadWinGeom(m_preview, subgroup, &default_geom, false);
 
     // it appears that these both have to be set -- setting one doesn't
     // automatically refresh the other
-    frame->GetControlBar()->SetZoomControl(m_preview_zoom);
+    m_preview->GetControlBar()->SetZoomControl(m_preview_zoom);
     preview->SetZoom(m_preview_zoom);
 #else
     // FIXME: this is how the printing sample ends it -- study this to see
     //        what all the code above is doing.
-    frame->Centre(wxBOTH);
-    frame->InitializeWithModality(wxPreviewFrame_AppModal);
+    m_preview->Centre(wxBOTH);
+    m_preview->InitializeWithModality(wxPreviewFrame_AppModal);
 #endif
 
-    frame->Show();
+    m_preview->Show();
 }
 
 

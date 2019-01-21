@@ -7,6 +7,7 @@
 *.ignore/
 mydisks/
 myscripts/
+dr_memory_logs
 wangemu-cppcheck-build-dir/
 src/*.d
 
