@@ -1,6 +1,6 @@
 ============================================================================
 		   Wang 2200 emulator release notes, v3.0-pre
-                                January 4, 2018
+                                January 19, 2018
 ============================================================================
 
 ---- What is It? ----
@@ -63,6 +63,12 @@ The emulator very well might run on Linux via Wine, but it hasn't been tested.
 
 *) Previously, printing HEX(07) produced a default bell-like sound.
    Now the emulator emits a sound very much like a real Wang terminal.
+
+*) Previously, the emulator could be launched like this:
+      wangemu.exe -s somescript.w22
+   and the name script would be fed into the emulator.  But that isn't
+   useful now (if it ever was) for (M)VP systems, which must be configured
+   before they can run a program.  Now it ignores the command line arguments.
 
 ---- Bugs Fixed in this Release ----
 

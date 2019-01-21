@@ -120,6 +120,15 @@ TheApp::OnCmdLineParsed(wxCmdLineParser& parser)
         // do my processing here
         // UI_info("Command line items: %d", parser.GetParamCount());
         wxString filename;
+#if 0
+    // this doesn't make sense anymore.
+    // (1) it wasn't useful to begin with
+    // (2) it can't be used with (M)VP setups as they must be configured before use
+    // (3) even with 2200T and a dumb CRT/keyboard, it is throwing errors, and
+    //     I don't care to spend the time to fix it. it has something to do with
+    //     attempting to route the first character to the keyboard before the
+    //     universe has been built.  the fix would be to simply save the script
+    //     name and then have system2200 invoke it once the world was built.
         if (parser.Found("s", &filename)) {
             const int io_addr = 0x01;   // default keyboard device
             std::string fn(filename.c_str());
@@ -130,6 +139,7 @@ TheApp::OnCmdLineParsed(wxCmdLineParser& parser)
                 UI_warn("Failed to open script '%s'", s);
             }
         }
+#endif
     }
 
     return ok;
