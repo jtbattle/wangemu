@@ -93,8 +93,7 @@ Terminal::~Terminal()
     m_prt_tmr     = nullptr;
     m_selectp_tmr = nullptr;
 
-    UI_displayDestroy(m_wndhnd);
-    m_wndhnd = nullptr;
+    UI_displayDestroy(m_wndhnd.get());
 }
 
 
@@ -993,7 +992,7 @@ Terminal::processCrtChar3(uint8 byte)
             break;
 
         case 0x07:      // bell
-            UI_displayDing(m_wndhnd);
+            UI_displayDing(m_wndhnd.get());
             break;
 
         case 0x08:      // cursor left

@@ -133,7 +133,7 @@ TheApp::OnCmdLineParsed(wxCmdLineParser& parser)
             const int io_addr = 0x01;   // default keyboard device
             std::string fn(filename.c_str());
             system2200::invokeKbScript(io_addr, -1, fn);
-            bool success = true;  // FIXME: old invokeScript returned a boolean -- change new i/f to match?
+            bool success = true;  // old invokeScript returned a boolean
             if (!success) {
                 const char *s = filename.c_str();
                 UI_warn("Failed to open script '%s'", s);
@@ -328,7 +328,7 @@ UI_confirm(const char *fmt, ...)
 // ---- Crt wrappers ----
 
 // called at the start of time to create the actual display
-CrtFrame*
+std::shared_ptr<CrtFrame>
 UI_displayInit(const int screen_type, const int io_addr, const int term_num,
                crt_state_t *crt_state)
 {
@@ -361,11 +361,8 @@ UI_displayInit(const int screen_type, const int io_addr, const int term_num,
                         io_addr, term_num+1, cpu_str, disp_str);
     }
 
-    // Create the main application window
-// FIXME: return a unique_ptr<CrtFrame> instead
-    CrtFrame *crt_ptr = new CrtFrame(title, io_addr, term_num, crt_state);
-    assert(crt_ptr != nullptr);
-    return crt_ptr;
+    // create the main application window
+    return std::make_shared<CrtFrame>(title, io_addr, term_num, crt_state);
 }
 
 
@@ -404,13 +401,12 @@ UI_diskEvent(int slot, int drive)
 // ---- printer wrappers ----
 
 // called at the start of time to create the actual display
-// FIXME: return a unique_ptr?
-PrinterFrame*
+std::shared_ptr<PrinterFrame>
 UI_printerInit(int io_addr)
 {
     char title[32];
     sprintf(&title[0], "Wang Printer /%03X", io_addr);
-    return new PrinterFrame(&title[0], io_addr);
+    return std::make_shared<PrinterFrame>(&title[0], io_addr);
 }
 
 

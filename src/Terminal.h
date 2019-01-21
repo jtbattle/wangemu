@@ -121,7 +121,7 @@ private:
     const bool     m_vp_cpu;        // scripting throttle needs this info
 
     // display state and geometry
-    CrtFrame     *m_wndhnd;         // opaque handle to UI window
+    std::shared_ptr<CrtFrame> m_wndhnd;  // opaque handle to UI window
     const int     m_io_addr;        // associated I/O address
     const int     m_term_num;       // associated terminal number
     crt_state_t   m_disp;           // contents of display memory

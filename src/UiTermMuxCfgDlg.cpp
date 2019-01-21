@@ -228,7 +228,8 @@ TermMuxCfgDlg::OnButton(wxCommandEvent &event)
 void
 TermMuxCfgDlg::saveDefaults()
 {
-// FIXME: we need to receive the MXD-nn-CRT-m prefix subgroup
+    // TODO: we should specify the MXD-nn-CRT-m prefix subgroup
+    //       otherwise all such dialogs will share one position state
     const std::string subgroup("ui/termmuxcfgdlg");
 
     // save position and size
@@ -240,7 +241,8 @@ void
 TermMuxCfgDlg::getDefaults()
 {
     // see if we've established a favored location and size
-// FIXME: we need to receive the MXD-nn-CRT-m prefix subgroup
+    // TODO: we should specify the MXD-nn-CRT-m prefix subgroup
+    //       otherwise all such dialogs will share one position state
     const std::string subgroup("ui/termmuxcfgdlg");
     host::configReadWinGeom(this, subgroup);
 }

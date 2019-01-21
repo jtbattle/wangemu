@@ -16,8 +16,7 @@ IoCardPrinter::IoCardPrinter(std::shared_ptr<Cpu2200> cpu,
                              int base_addr, int card_slot) :
     m_cpu(cpu),
     m_base_addr(base_addr),
-    m_slot(card_slot),
-    m_wndhnd(nullptr)
+    m_slot(card_slot)
 {
     if (m_slot >= 0) {
         int io_addr;
@@ -152,7 +151,7 @@ IoCardPrinter::setCpuBusy(bool busy)
 PrinterFrame *
 IoCardPrinter::getGuiPtr() const noexcept
 {
-    return m_wndhnd;
+    return m_wndhnd.get();
 }
 
 // vim: ts=8:et:sw=4:smarttab
