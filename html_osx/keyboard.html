@@ -1,0 +1,531 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+ "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<title>WangEmu Keyboard Map</title>
+<style type="text/css">
+<!--
+@import url("./emu.css");
+-->
+
+table td {
+    padding-left:4px;
+    padding-right:4px;
+}
+table.underlined {
+    border-collapse:collapse;
+}
+table.underlined td {
+    border-bottom:1px solid black;
+}
+table.underlined tfoot td {
+    border-bottom-style:none;
+    font-size:small;
+}
+table.keywords td:first-child + td {
+    font-family:courier;
+}
+.arrow {
+    font-size:150%
+}
+</style>
+</head>
+
+<body>
+<div id="container">
+
+<div id="content">
+	
+<h1>WangEmu Keyboard Map</h1>
+
+<p>
+The Wang 2200 had a number of different keyboard options during
+its life.  The earliest ones are best described as being more like
+a calculator keyboard that had the letters retrofitted to it than a keyboard
+meant for typing.  Later ones did have a more or less normal typewriter
+layout augmented with some dedicated keys for performing common tasks.
+</p>
+
+<p>
+One problem most emulators have is deciding how to map the emulated
+keys onto the keys available on the host computer's keyboard.  Many
+emulator writers attempt to map the emulated keys to the same positions
+of the keyboard even if the key legend is very different (such that a
+blindfolded user of the emulated computer would feel at home).  WangEmu takes
+the other tack.  As much as possible, if a key with the right legend
+is available on the host keyboard, that is the one used to represent the
+equivalent 2200 key.
+</p>
+
+<p>
+That still leaves some problems.  The Mac keyboard has many keys
+that the 2200 (more correctly, the 2226 keyboard) didn't have, and the
+2226 had some keys that the Mac keyboard doesn't have.  In these cases,
+WangEmu tries to pick keys that are somewhat mnemonic.  Also, not
+all keys were directly mapped since such a mapping was rarely used and
+adding it to the emulator would cause more confusion than it was worth
+(e.g., mapping "RENUMBER" to the shifted comma key, while accuate, would
+have necessitated moving the "&lt;" symbol to some other obscure location).
+</p>
+
+<p>
+Another matter is that there isn't complete standardization on keyboard
+layouts.
+This is especially true on the Mac platform.
+Perhaps a future version of the emulator will allow for a user-configurable
+key map, but for now, changing it requires editing the source code and
+recompiling.
+</p>
+
+<h2>Special function keys and dedicated keyword keys</h2>
+
+<p>
+Unfortunately, the Wang has 16 special function keys, while not all Mac
+keyboards do.  OS X also steals F9, F10, F11, and F12 for various Expos&eacute;
+functions, and at least on the authors keyboard, F13-F16 don't seem to
+act predictably like the other function keys.
+</p>
+
+<p>
+There are two workarounds available for the lack of a complete set of
+F0-F15 keys.
+First, WangEmu can be configured to display a toolbar with all the special
+function keys.
+</p>
+
+<p>
+Second, special function keys used in the EDIT mode
+are also mapped to control key combinations.
+</p>
+
+<p>
+Below is a complete table of the mappings.  In some cases, there
+are two Mac keys or key combinations that are used to emulate a given
+2226 keystroke.  On the 2200, some of
+the special function keys get a dedicated purpose when in edit mode, shown
+as the last column of the table. Note that not all Wang keys have an equivalent
+Mac mapping, including "PRINT" and "CONTINUE".
+</p>
+
+<table class="underlined">
+<thead>
+<tr>
+    <td>Wang key</td>
+    <td>2200 use</td>
+    <td>2200 use in edit mode</td>
+    <td>Mac keys</td>
+</tr>
+</thead>
+
+
+<tbody>
+<tr>
+    <td>SF0</td>
+    <td>special function 0</td>
+    <td>n/a</td>
+    <td>ESC</td>
+</tr>
+
+<tr>
+    <td>SF1</td>
+    <td>special function 1</td>
+    <td>n/a</td>
+    <td>F1</td>
+</tr>
+
+<tr>
+    <td><b>&hellip;</b></td>
+    <td><b>&hellip;</b></td>
+    <td><b>&hellip;</b></td>
+    <td><b>&hellip;</b></td>
+</tr>
+
+<tr>
+    <td>SF7</td>
+    <td>special function 7</td>
+    <td>n/a</td>
+    <td>F7</td>
+</tr>
+
+<tr>
+    <td>SF8</td>
+    <td>special function 8</td>
+    <td>delete to end of line</td>
+    <td>F8<br />End</td>
+</tr>
+
+<tr>
+    <td>SF9</td>
+    <td>special function 9</td>
+    <td>delete char under cursor</td>
+    <td>Delete<br />Ctrl+D</td>
+</tr>
+
+<tr>
+    <td>SF10</td>
+    <td>special function 10</td>
+    <td>insert char at cursor</td>
+    <td>Ctrl+I</td>
+</tr>
+
+<tr>
+    <td>SF11</td>
+    <td>special function 11</td>
+    <td>cursor right 5 places</td>
+    <td>Shift + <span class="arrow">&rarr;</span></td>
+</tr>
+
+<tr>
+    <td>SF12</td>
+    <td>special function 12</td>
+    <td>cursor right 1 place</td>
+    <td><span class="arrow">&rarr;</span></td>
+</tr>
+
+<tr>
+    <td>SF13</td>
+    <td>special function 13</td>
+    <td>cursor left 1 place</td>
+    <td><span class="arrow">&larr;</span></td>
+</tr>
+
+<tr>
+    <td>SF14</td>
+    <td>special function 14</td>
+    <td>cursor left 5 places</td>
+    <td>Shift + <span class="arrow">&larr;</span></td>
+</tr>
+
+<tr>
+    <td>SF15</td>
+    <td>special function 15</td>
+    <td>recall line</td>
+    <td>Ctrl+F</td>
+</tr>
+
+<tr>
+    <td>EDIT</td>
+    <td>enter edit mode</td>
+    <td>n/a</td>
+    <td>Ctrl+E</td>
+</tr>
+
+<tr>
+    <td>LINE ERASE</td>
+    <td>clear whole line</td>
+    <td>clear whole line</td>
+    <td>Home</td>
+</tr>
+
+<tr>
+    <td>NEXT STATEMENT</td>
+    <td>next highest line number</td>
+    <td>next highest line number</td>
+    <td>Tab</td>
+</tr>
+
+<tr>
+    <td>HALT/STEP</td>
+    <td>break/single step</td>
+    <td>n/a</td>
+    <td>Ctrl+C</td>
+</tr>
+</tbody>
+
+</table>
+
+
+<p>
+Pressing the key or key sequence for SF0-SF15 in combination with the
+SHIFT key will generate the codes for the 2200's special function 16 through
+31 keys (the 2226 also had only 16 special function keys, SF0-SF15, and
+SF16-SF31 were obtained by pressing SHIFT to add 16 to the special function
+key number).
+This doesn't work for F8-F15 because of OS X's allocation of these keys.
+Instead, you must use the toolbar by clicking the appropriate function key
+image while holding down shift.
+</p>
+
+<p>
+To recall and edit, say, line 500
+this quick keyboard sequence
+can be used:
+</p>
+
+
+<p class="code">
+500&lt;press ctrl&gt;&lt;E&gt;&lt;F&gt;&lt;release ctrl&gt;
+</p>
+
+<h2>Keyword Keys</h2>
+
+<p>
+The 2226 keyboard had two modes of operation: "Keyword/A" and "A/a".
+Which mode the keyboard was in was controlled by a toggle switch on the
+left side of the keyboard.  This is controlled in the emulator in any of
+three ways: the checkbox in the lower left corner of the emulated CRT window,
+via the Configure/Keyword mode menu item, or with the
+Cmd+K shortcut.
+</p>
+
+<table>
+<tr>
+    <td><img src="img/keyword1.png"  height="24" width="80" alt="placeholder" /></td>
+    <td></td>
+    <td><img src="img/keyword2.png"  height="24" width="80" alt="placeholder" /></td>
+    <td></td>
+    <td><img src="img/menu_config.png"  height="122" width="187" alt="placeholder" /></td>
+</tr>
+</table>
+
+<p>
+In "A/a" mode, the keyboard works pretty
+much like a typewriter, with unshifted keys producing lower case letters
+and shifted keys producing capital letters.  In "Keyword/A" mode,
+unshifted keys produced capital letters while shifted keys produced BASIC
+keywords.  Most of them have been preserved.
+</p>
+
+<table class="keywords">
+<thead>
+<tr>
+    <td>Mac key</td>
+    <td>Keyword</td>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+    <td>A</td>
+    <td>HEX(</td>
+</tr>
+
+<tr>
+    <td>B</td>
+    <td>SKIP</td>
+</tr>
+
+<tr>
+    <td>C</td>
+    <td>REWIND</td>
+</tr>
+
+<tr>
+    <td>D</td>
+    <td>DATA</td>
+</tr>
+
+<tr>
+    <td>E</td>
+    <td>DEFFN</td>
+</tr>
+
+<tr>
+    <td>F</td>
+    <td>RESTORE</td>
+</tr>
+
+<tr>
+    <td>G</td>
+    <td>READ</td>
+</tr>
+
+<tr>
+    <td>H</td>
+    <td>IF</td>
+</tr>
+
+<tr>
+    <td>I</td>
+    <td>FOR</td>
+</tr>
+
+<tr>
+    <td>J</td>
+    <td>THEN</td>
+</tr>
+
+<tr>
+    <td>K</td>
+    <td>STOP</td>
+</tr>
+
+<tr>
+    <td>L</td>
+    <td>END</td>
+</tr>
+
+<tr>
+    <td>M</td>
+    <td>GOTO</td>
+</tr>
+
+<tr>
+    <td>N</td>
+    <td>TRACE</td>
+</tr>
+
+<tr>
+    <td>O</td>
+    <td>STEP</td>
+</tr>
+
+<tr>
+    <td>P</td>
+    <td>NEXT</td>
+</tr>
+
+<tr>
+    <td>Q</td>
+    <td>COM</td>
+</tr>
+
+<tr>
+    <td>R</td>
+    <td>GOSUB</td>
+</tr>
+
+<tr>
+    <td>S</td>
+    <td>STR(</td>
+</tr>
+
+<tr>
+    <td>T</td>
+    <td>RETURN</td>
+</tr>
+
+<tr>
+    <td>U</td>
+    <td>INPUT</td>
+</tr>
+
+<tr>
+    <td>V</td>
+    <td>SAVE</td>
+</tr>
+
+<tr>
+    <td>W</td>
+    <td>DIM</td>
+</tr>
+
+<tr>
+    <td>X</td>
+    <td>BACKSPACE</td>
+</tr>
+
+<tr>
+    <td>Y</td>
+    <td>REM</td>
+</tr>
+
+<tr>
+    <td>Z</td>
+    <td>SELECT</td>
+</tr>
+</tbody>
+
+</table>
+
+<p>
+A few keys that couldn't be conveniently mapped to their Wang-like positions,
+but which are exceedingly useful, have been mapped to control keys:
+</p>
+
+<table class="keywords">
+<thead>
+<tr>
+    <td>Mac key</td>
+    <td>Keyword</td>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+    <td>Ctrl+Z</td>
+    <td>CONTINUE</td>
+</tr>
+
+<tr>
+    <td>Ctrl+L</td>
+    <td>LIST</td>
+</tr>
+
+<tr>
+    <td>Ctrl+P</td>
+    <td>PRINT</td>
+</tr>
+
+<tr>
+    <td>Ctrl+R</td>
+    <td>RUN</td>
+</tr>
+</tbody>
+</table>
+
+<p>
+It should be noted that the GUI itself has these keyboard accelerators:
+</p>
+
+<table>
+<thead>
+<tr>
+    <td>Mac key</td>
+    <td>Function</td>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+    <td>Cmd+G</td>
+    <td>screen grab</td>
+</tr>
+
+<tr>
+    <td>Cmd+Q</td>
+    <td>exit application</td>
+</tr>
+
+<tr>
+    <td>Cmd+R</td>
+    <td>cold reset</td>
+</tr>
+
+<tr>
+    <td>Cmd+W</td>
+    <td>warm reset</td>
+</tr>
+
+<tr>
+    <td>Cmd+K</td>
+    <td>toggle keyword mode</td>
+</tr>
+
+<tr>
+    <td>Cmd+Enter</td>
+    <td>toggle fullscreen mode</td>
+</tr>
+</tbody>
+
+</table>
+
+<p>
+Finally, here is a diagram showing where all the keys are mapped,
+at least on my keyboard.  Certain keys may appear in different locations
+on different keyboards, especially European keyboards.
+</p>
+
+<p><img src="img/kb_diagram.png"  height="380" width="868" alt="placeholder" /></p>
+
+</div>
+
+<div id="footer">
+    <p>Last update:December 11, 2008</p>
+</div>
+
+</div>
+</body>
+</html>
