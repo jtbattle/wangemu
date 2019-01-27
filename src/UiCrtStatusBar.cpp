@@ -195,7 +195,7 @@ CrtStatusBar::CrtStatusBar(CrtFrame *parent,
     // keywords or cap characters.  the OnSize handler will size it and
     // move it into position later.  this member should be set last as
     // some methods test it to know if initialization is done yet.
-    std::string label = (smart_term) ? "A/A" : "Keyword";
+    std::string label = (smart_term) ? "A/a" : "Keyword";
     m_keyword_ctl = new wxCheckBox(this, ID_Keyword_Mode, label);
 
     Show(true);
@@ -261,7 +261,10 @@ CrtStatusBar::SetDiskIcon(const int slot, const int drive)
         tip.Printf("Click to load drive %c /%03X", drive_ch, mod_addr);
     }
 
-    m_disk_icon[idx]->SetToolTip(tip);
+    wxString old_tip = m_disk_icon[idx]->GetToolTipText();
+    if (tip != old_tip) {
+        m_disk_icon[idx]->SetToolTip(tip);
+    }
 
     // 0: hard disk,       1: selected hard disk
     // 2: occupied floppy, 3: selected occupied floppy
