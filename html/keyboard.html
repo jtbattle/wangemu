@@ -10,10 +10,20 @@
 @import url("./emu.css");
 -->
 
+hr {
+    border: 0;
+    height: 1px;
+    background-color: #b0b0b0;
+}
+
+table thead td {
+    background: #aaffaa;
+}
 table td {
     padding-left:4px;
     padding-right:4px;
 }
+
 table.underlined {
     border-collapse:collapse;
 }
@@ -24,11 +34,31 @@ table.underlined tfoot td {
     border-bottom-style:none;
     font-size:small;
 }
-table.keywords td:first-child + td {
+table.underlined tbody td {
+    border: 1px solid #aaaaaa;
+}
+table.underlined tbody tr:nth-child(even) {
+    background: #dddddd;
+}
+table.underlined thead td {
+    border: 1px solid #bbbbbb;
+}
+
+table.keywords tbody td:nth-child(2),
+table.keywords tbody td:nth-child(4) {
     font-family:courier;
 }
+
+li {
+    margin-bottom: 0.4em;
+}
+
 .arrow {
-    font-size:150%
+    font-size:120%
+}
+
+div.diagram {
+    background: 0xff0000;
 }
 </style>
 </head>
@@ -66,7 +96,7 @@ that the 2200 (more correctly, the 2226 keyboard) didn't have, and the
 WangEmu tries to pick keys that are somewhat mnemonic.  Also, not
 all keys were directly mapped since such a mapping was rarely used and
 adding it to the emulator would cause more confusion than it was worth
-(e.g., mapping "RENUMBER" to the shifted comma key, while accuate, would
+(e.g., mapping "RENUMBER" to the shifted comma key, while accurate, would
 have necessitated moving the "&lt;" symbol to some other obscure location).
 </p>
 
@@ -82,39 +112,35 @@ recompiling.
 
 <p>
 Unfortunately, the Wang has 16 special function keys, while most PC keyboards
-have only 12.  Also, Windows has dedicated F10 to selecting the application
-menu, for accessibility.  Press it twice in a row to get around that problem.
-</p>
-<p>
-Since F13-F15 don't typically exist, WangEmu has a workaround.
-Holding down the control key when pressing F9 to F12 yields the function keys.
-Ctrl+F9 through F11 map to special function keys 13 through 15,
-while Ctrl+F12 maps to the EDIT key.
+have only 12. Since F13-F15 don't typically exist, WangEmu offers three
+workarounds.
 </p>
 
-<p>
-There are two workarounds available for the lack of a complete set of
-F0-F15 keys.
-First, WangEmu can be configured to display a toolbar with all the special
-function keys.
-</p>
+<ul>
+    <li>
+    A toolbar can be displayed with all the special function keys.
+    </li>
 
-<p>
-Second, special function keys used in the EDIT mode
-are also mapped to control key combinations.
-For example, to enter the Wang SF13 key, which in edit mode
-causes the cursor to move left one position, it is much more mnemonic to press
-LEFT-ARROW (<span class="arrow">&larr;</span>) than the normal mapping,
-Ctrl+F9.
-</p>
+    <li>
+    Holding down the control key when pressing F9 to F12 will produce
+    the otherwise missing function keys.  Ctrl-F9 through F11 map to special
+    function keys 13 through 15, while Ctrl-F12 maps to the EDIT key.
+    </li>
+
+    <li>
+    Special function keys used in the EDIT mode are also mapped to control
+    key combinations.  For example, to enter the SF 13 key, which in edit mode
+    causes the cursor to move left one position, it is much more mnemonic to
+    press LEFT-ARROW (<span class="arrow">&larr;</span>) than the normal
+    mapping, Ctrl-F9.
+    </li>
+</ul>
 
 <p>
 Below is a complete table of the mappings.  In some cases, there
 are two PC keys or key combinations that are used to emulate a given
-2226 keystroke.  On the 2200, some of
-the special function keys get a dedicated purpose when in edit mode, shown
-as the last column of the table. Note that not all Wang keys have an equivalent
-PC mapping, including "PRINT" and "CONTINUE".
+keystroke.  On the 2200, some of the special function keys get a dedicated
+purpose when in edit mode, shown as the last column of the table.
 </p>
 
 <table class="underlined">
@@ -130,7 +156,17 @@ PC mapping, including "PRINT" and "CONTINUE".
 <tfoot>
 <tr>
     <td colspan="4">
-    <sup>&dagger;</sup> F10 must be hit twice in a row to achieve one SF10 keystroke
+    <sup>&dagger;</sup>This edit behavior is for (M)VP OS only
+    </td>
+</tr>
+<tr>
+    <td colspan="4">
+    <sup>&Dagger;</sup>This behavior is for 2200A/B/C/S/T Wang BASIC
+    </td>
+</tr>
+<tr>
+    <td colspan="4">
+    <sup>&sect;</sup>This behavior is for 2236 serial terminals w/(M)VP
     </td>
 </tr>
 </tfoot>
@@ -151,82 +187,108 @@ PC mapping, including "PRINT" and "CONTINUE".
 </tr>
 
 <tr>
-    <td><b>&hellip;</b></td>
-    <td><b>&hellip;</b></td>
-    <td><b>&hellip;</b></td>
-    <td><b>&hellip;</b></td>
+    <td>SF2</td>
+    <td>special function 2</td>
+    <td>n/a</td>
+    <td>F2</td>
+</tr>
+
+<tr>
+    <td>SF3</td>
+    <td>special function 3</td>
+    <td>n/a</td>
+    <td>F3</td>
+</tr>
+
+<tr>
+    <td>SF4</td>
+    <td>special function 4</td>
+    <td><sup>&dagger;</sup>cursor to end of line</td>
+    <td>F4<br/>Ctrl-<span class="arrow">&rarr;</span></td>
+</tr>
+
+<tr>
+    <td>SF5</td>
+    <td>special function 5</td>
+    <td><sup>&dagger;</sup>cursor down a line</td>
+    <td>F5<br/><span class="arrow">&darr;</span></td>
+</tr>
+
+<tr>
+    <td>SF6</td>
+    <td>special function 6</td>
+    <td><sup>&dagger;</sup>cursor up a line</td>
+    <td>F6<br/><span class="arrow">&uarr;</span></td>
 </tr>
 
 <tr>
     <td>SF7</td>
     <td>special function 7</td>
-    <td>n/a</td>
-    <td>F7</td>
+    <td><sup>&dagger;</sup>cursor to start of line</td>
+    <td>F7<br/>Ctrl-<span class="arrow">&larr;</span></td>
 </tr>
 
 <tr>
     <td>SF8</td>
     <td>special function 8</td>
     <td>delete to end of line</td>
-    <td>F8<br />End</td>
+    <td>F8<br/>End<br/>Ctrl-K(ill)</td>
 </tr>
 
 <tr>
     <td>SF9</td>
     <td>special function 9</td>
     <td>delete char under cursor</td>
-    <td>F9<br />Delete<br />Ctrl+D</td>
+    <td>F9<br/>Delete<br/>Ctrl-D</td>
 </tr>
 
 <tr>
     <td>SF10</td>
     <td>special function 10</td>
     <td>insert char at cursor</td>
-    <td>F10<sup>&dagger;</sup>
-    <br />Insert
-    <br />Ctrl+I</td>
+    <td>F10<br/>Insert<br/>Ctrl-I</td>
 </tr>
 
 <tr>
     <td>SF11</td>
     <td>special function 11</td>
     <td>cursor right 5 places</td>
-    <td>F11<br />Shift + <span class="arrow">&rarr;</span></td>
+    <td>F11<br/>Shift + <span class="arrow">&rarr;</span></td>
 </tr>
 
 <tr>
     <td>SF12</td>
     <td>special function 12</td>
     <td>cursor right 1 place</td>
-    <td>F12<br /><span class="arrow">&rarr;</span></td>
+    <td>F12<br/><span class="arrow">&rarr;</span></td>
 </tr>
 
 <tr>
     <td>SF13</td>
     <td>special function 13</td>
     <td>cursor left 1 place</td>
-    <td>Ctrl+F9<br /><span class="arrow">&larr;</span></td>
+    <td>Ctrl-F9<br/><span class="arrow">&larr;</span></td>
 </tr>
 
 <tr>
     <td>SF14</td>
     <td>special function 14</td>
     <td>cursor left 5 places</td>
-    <td>Ctrl+F10<br />Shift + <span class="arrow">&larr;</span></td>
+    <td>Ctrl-F10<br/>Shift + <span class="arrow">&larr;</span></td>
 </tr>
 
 <tr>
     <td>SF15</td>
     <td>special function 15</td>
     <td>recall line</td>
-    <td>Ctrl+F11<br />Ctrl+F</td>
+    <td>Ctrl-F11<br/>Ctrl-F</td>
 </tr>
 
 <tr>
     <td>EDIT</td>
     <td>enter edit mode</td>
     <td>n/a</td>
-    <td>Ctrl+F12<br />Ctrl+E</td>
+    <td>Ctrl-F12<br/>Ctrl-E</td>
 </tr>
 
 <tr>
@@ -237,9 +299,15 @@ PC mapping, including "PRINT" and "CONTINUE".
 </tr>
 
 <tr>
-    <td>NEXT STATEMENT</td>
-    <td>next highest line number</td>
-    <td>next highest line number</td>
+    <td><sup>&Dagger;</sup>STMT NUMBER</td>
+    <td>next line number</td>
+    <td> </td>
+    <td>Tab</td>
+</tr>
+<tr>
+    <td><sup>&sect;</sup>FN</td>
+    <td>function key</td>
+    <td></td>
     <td>Tab</td>
 </tr>
 
@@ -247,7 +315,7 @@ PC mapping, including "PRINT" and "CONTINUE".
     <td>HALT/STEP</td>
     <td>break/single step</td>
     <td>n/a</td>
-    <td>Break<br />Ctrl+C</td>
+    <td>Break<br/>Ctrl-S</td>
 </tr>
 </tbody>
 
@@ -284,247 +352,153 @@ Which mode the keyboard was in was controlled by a toggle switch on the
 left side of the keyboard.  This is controlled in the emulator in any of
 three ways: the checkbox in the lower left corner of the emulated CRT window,
 via the Configure/Keyword mode menu item, or with the
-Alt+K shortcut.
+Alt-K shortcut.
 </p>
 
 <table>
 <tr>
-    <td><img src="img/keyword1.png"  height="33" width="143" alt="placeholder" /></td>
+    <td><img src="img/keyword1.png"  height="30" width="150" alt="placeholder" /></td>
     <td></td>
-    <td><img src="img/keyword2.png"  height="33" width="143" alt="placeholder" /></td>
+    <td><img src="img/keyword2.png"  height="30" width="150" alt="placeholder" /></td>
     <td></td>
-    <td><img src="img/menu_config.png"  height="108" width="194" alt="placeholder" /></td>
+    <td><img src="img/menu_config.png"  height="138" width="240" alt="placeholder" /></td>
 </tr>
 </table>
 
 <p>
-In "A/a" mode, the keyboard works pretty
-much like a typewriter, with unshifted keys producing lower case letters
-and shifted keys producing capital letters.  In "Keyword/A" mode,
-unshifted keys produced capital letters while shifted keys produced BASIC
-keywords.  Most of them have been preserved.
+In "A/a" mode, the keyboard works pretty much like a typewriter,
+with unshifted keys producing lower case letters and shifted keys producing
+capital letters.  In "Keyword/A" mode, unshifted keys produced capital
+letters while shifted keys produced BASIC keywords.
+Most of them have been preserved.
 </p>
 
 <table class="keywords">
 <thead>
-<tr>
-    <td>PC key</td>
-    <td>Keyword</td>
-</tr>
+<tr> <td>PC key</td>  <td>Keyword</td>  <td>PC key</td>  <td>Keyword</td> </tr>
 </thead>
 
 <tbody>
-<tr>
-    <td>A</td>
-    <td>HEX(</td>
-</tr>
-
-<tr>
-    <td>B</td>
-    <td>SKIP</td>
-</tr>
-
-<tr>
-    <td>C</td>
-    <td>REWIND</td>
-</tr>
-
-<tr>
-    <td>D</td>
-    <td>DATA</td>
-</tr>
-
-<tr>
-    <td>E</td>
-    <td>DEFFN</td>
-</tr>
-
-<tr>
-    <td>F</td>
-    <td>RESTORE</td>
-</tr>
-
-<tr>
-    <td>G</td>
-    <td>READ</td>
-</tr>
-
-<tr>
-    <td>H</td>
-    <td>IF</td>
-</tr>
-
-<tr>
-    <td>I</td>
-    <td>FOR</td>
-</tr>
-
-<tr>
-    <td>J</td>
-    <td>THEN</td>
-</tr>
-
-<tr>
-    <td>K</td>
-    <td>STOP</td>
-</tr>
-
-<tr>
-    <td>L</td>
-    <td>END</td>
-</tr>
-
-<tr>
-    <td>M</td>
-    <td>GOTO</td>
-</tr>
-
-<tr>
-    <td>N</td>
-    <td>TRACE</td>
-</tr>
-
-<tr>
-    <td>O</td>
-    <td>STEP</td>
-</tr>
-
-<tr>
-    <td>P</td>
-    <td>NEXT</td>
-</tr>
-
-<tr>
-    <td>Q</td>
-    <td>COM</td>
-</tr>
-
-<tr>
-    <td>R</td>
-    <td>GOSUB</td>
-</tr>
-
-<tr>
-    <td>S</td>
-    <td>STR(</td>
-</tr>
-
-<tr>
-    <td>T</td>
-    <td>RETURN</td>
-</tr>
-
-<tr>
-    <td>U</td>
-    <td>INPUT</td>
-</tr>
-
-<tr>
-    <td>V</td>
-    <td>SAVE</td>
-</tr>
-
-<tr>
-    <td>W</td>
-    <td>DIM</td>
-</tr>
-
-<tr>
-    <td>X</td>
-    <td>BACKSPACE</td>
-</tr>
-
-<tr>
-    <td>Y</td>
-    <td>REM</td>
-</tr>
-
-<tr>
-    <td>Z</td>
-    <td>SELECT</td>
-</tr>
+<tr> <td>A</td>  <td>HEX(</td>     <td>N</td>  <td>TRACE</td> </tr>
+<tr> <td>B</td>  <td>SKIP</td>     <td>O</td>  <td>STEP</td> </tr>
+<tr> <td>C</td>  <td>REWIND</td>   <td>P</td>  <td>NEXT</td> </tr>
+<tr> <td>D</td>  <td>DATA</td>     <td>Q</td>  <td>COM</td> </tr>
+<tr> <td>E</td>  <td>DEFFN</td>    <td>R</td>  <td>GOSUB</td> </tr>
+<tr> <td>F</td>  <td>RESTORE</td>  <td>S</td>  <td>STR(</td> </tr>
+<tr> <td>G</td>  <td>READ</td>     <td>T</td>  <td>RETURN</td> </tr>
+<tr> <td>H</td>  <td>IF</td>       <td>U</td>  <td>INPUT</td> </tr>
+<tr> <td>I</td>  <td>FOR</td>      <td>V</td>  <td>SAVE</td> </tr>
+<tr> <td>J</td>  <td>THEN</td>     <td>W</td>  <td>DIM</td> </tr>
+<tr> <td>K</td>  <td>STOP</td>     <td>X</td>  <td>BACKSPACE</td> </tr>
+<tr> <td>L</td>  <td>END</td>      <td>Y</td>  <td>REM</td> </tr>
+<tr> <td>M</td>  <td>GOTO</td>     <td>Z</td>  <td>SELECT</td> </tr>
 </tbody>
 
 </table>
 
+<hr/>
+
 <p>
-A few keys that couldn't be conveniently mapped to their Wang-like positions,
-but which are exceedingly useful, have been mapped to control keys:
+In 2236 mode (serial terminal), the Wang keyboard did not have a keyword mode.
+Instead, the same switch just toggled between normal mode and caps-lock mode.
+</p>
+
+<table>
+<tr>
+    <td><img src="img/keyword1b.png"  height="30" width="150" alt="placeholder" /></td>
+    <td></td>
+    <td><img src="img/keyword2b.png"  height="30" width="150" alt="placeholder" /></td>
+    <td></td>
+    <td><img src="img/menu_config_b.png"  height="138" width="240" alt="placeholder" /></td>
+</tr>
+</table>
+
+<hr/>
+
+<p>
+For both 2226 (dumb terminal) and 2236 (serial terminal) modes of operation,
+a few keys couldn't be conveniently mapped to their Wang-like positions and
+have been mapped to control keys.  Each (except CONTINUE) uses the first
+letter of the word it maps as a convenient mnemonic.
 </p>
 
 <table class="keywords">
 <thead>
-<tr>
-    <td>PC key</td>
-    <td>Keyword</td>
-</tr>
+<tr> <td>PC key</td> <td>Keyword</td> </tr>
 </thead>
 
 <tbody>
-<tr>
-    <td>Ctrl+Z</td>
-    <td>CONTINUE</td>
-</tr>
-
-<tr>
-    <td>Ctrl+L</td>
-    <td>LIST</td>
-</tr>
-
-<tr>
-    <td>Ctrl+P</td>
-    <td>PRINT</td>
-</tr>
-
-<tr>
-    <td>Ctrl+R</td>
-    <td>RUN</td>
-</tr>
+<tr>  <td>Ctrl-C</td>  <td>CLEAR</td> </tr>
+<tr>  <td>Ctrl-L</td>  <td>LOAD</td> </tr>
+<tr>  <td>Ctrl-P</td>  <td>PRINT</td> </tr>
+<tr>  <td>Ctrl-R</td>  <td>RUN</td> </tr>
+<tr>  <td>Ctrl-Z</td>  <td>CONTINUE</td> </tr>
 </tbody>
 </table>
 
 <p>
-It should be noted that the GUI itself has these keyboard accelerators:
+A number of other keyboard shortcuts have been added to map keys that
+don't appear on a PC keyboard, or which are convenient 2nd choices
+vs using the special function key toolbar.  The control key names try
+to use a mnemonic letter, except for Ctrl-F (SF15/recall). This was chosen
+because the [edit][recall] sequence is a frequent pair, and so Ctrl-[E][F]
+is a quick action.
+</p>
+
+<p>
+The odd man out is the RESET key, which was mapped to Shift-Alt-R to make
+it difficult to accidentally trigger.
+</p>
+
+<table class="keywords">
+<thead>
+<tr> <td>PC key</td> <td>key</td> </tr>
+</thead>
+
+<tbody>
+<tr>  <td>Ctrl-E</td>       <td>edit mode toggle</td> </tr>
+<tr>  <td>Ctrl-F</td>       <td>edit mode recall</td> </tr>
+<tr>  <td>Ctrl-D</td>       <td>edit mode delete</td> </tr>
+<tr>  <td>Ctrl-I</td>       <td>edit mode insert</td> </tr>
+<tr>  <td>Ctrl-K</td>       <td>edit mode kill to end of line</td> </tr>
+<tr>  <td>Ctrl-S</td>       <td>halt/step</td> </tr>
+<tr>  <td>Break</td>        <td>halt/step</td> </tr>
+<tr>  <td>END</td>          <td>ERASE key</td> </tr>
+<tr>  <td>Tab</td>          <td>STMT NUMBER key (2226)</td> </tr>
+<tr>  <td>Tab</td>          <td>FN key (2236)</td> </tr>
+<tr>  <td>Shift-Alt-R</td>  <td>RESET</td> </tr>
+</tbody>
+</table>
+
+<p>
+There are a few keyboard shortcuts that don't map to a real keyboard behavior;
+rather, these are used to manage the emulation, not the emulated computer.
 </p>
 
 <table>
 <thead>
-<tr>
-    <td>PC key</td>
-    <td>Function</td>
-</tr>
+<tr> <td>PC key</td> <td>Function</td> </tr>
 </thead>
 
 <tbody>
-<tr>
-    <td>Alt+G</td>
-    <td>screen grab</td>
-</tr>
+<tr> <td>Alt-G</td>           <td>screen grab</td> </tr>
+<tr> <td>Alt-X</td>           <td>exit application</td> </tr>
+<tr> <td>Alt-K</td>           <td>toggle keyword mode</td> </tr>
+<tr> <td>Alt-Enter</td>       <td>toggle full-screen mode</td> </tr>
+</tbody>
 
-<tr>
-    <td>Alt+X</td>
-    <td>exit application</td>
-</tr>
+</table>
 
-<tr>
-    <td>Alt+R</td>
-    <td>cold reset</td>
-</tr>
+<table>
+<thead>
+<tr> <td>PC key</td> <td>Function</td> </tr>
+</thead>
 
-<tr>
-    <td>Alt+W</td>
-    <td>warm reset</td>
-</tr>
-
-<tr>
-    <td>Alt+K</td>
-    <td>toggle keyword mode</td>
-</tr>
-
-<tr>
-    <td>Alt+Enter</td>
-    <td>toggle fullscreen mode</td>
-</tr>
+<tbody>
+<tr> <td>Alt-G</td>           <td>screen grab</td> </tr>
+<tr> <td>Alt-X</td>           <td>exit application</td> </tr>
+<tr> <td>Alt-K</td>           <td>toggle keyword mode</td> </tr>
+<tr> <td>Alt-Enter</td>       <td>toggle full-screen mode</td> </tr>
 </tbody>
 
 </table>
@@ -535,12 +509,14 @@ at least on my keyboard.  Certain keys may appear in different locations
 on different keyboards, especially European keyboards.
 </p>
 
-<p><img src="img/kb_diagram.png"  height="380" width="868" alt="placeholder" /></p>
+<div class="diagram">
+<img src="img/pc_kb_opt.svg" height="380" width="868" alt="placeholder" />
+</div>
 
 </div>
 
 <div id="footer">
-    <p>Last update:December 11, 2008</p>
+    <p>Last update:January 26, 2019</p>
 </div>
 
 </div>

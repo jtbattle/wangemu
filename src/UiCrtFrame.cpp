@@ -285,20 +285,20 @@ CrtFrame::makeMenubar()
     if (m_primary_crt || m_smart_term) {
         menu_file->Append(File_Script,   "&Script...", "Redirect keyboard from a file");
     }
-    menu_file->Append(File_Snapshot, "Screen &Grab...\t" ALT "+G", "Save an image of the screen to a file");
+    menu_file->Append(File_Snapshot, "Screen &Grab...\t" ALT "-G", "Save an image of the screen to a file");
 #if HAVE_FILE_DUMP
     if (m_primary_crt) {
         menu_file->Append(File_Dump,     "Dump Memory...", "Save an image of the system memory to a file");
     }
 #endif
-    menu_file->Append(File_Quit,     "E&xit\t" ALT "+X", "Quit the program");
+    menu_file->Append(File_Quit,     "E&xit\t" ALT "-X", "Quit the program");
 
     wxMenu *menu_cpu = nullptr;
     menu_cpu = new wxMenu;
     if (m_primary_crt) {
-        menu_cpu->Append(CPU_HardReset, "Hard Reset CPU\t" ALT2 "+R", "Perform a power-up reset");
+        menu_cpu->Append(CPU_HardReset, "Reboot CPU\t", "Perform a power-up reset");
     }
-    menu_cpu->Append(CPU_WarmReset, "Warm Reset CPU\t" ALT2 "+W", "Perform a state-preserving reset");
+    menu_cpu->Append(CPU_WarmReset, "Reset CPU\t" ALT2 "-R", "Perform a state-preserving reset");
     if (m_primary_crt) {
         menu_cpu->AppendSeparator();
         menu_cpu->Append(CPU_ActualSpeed,      "&Actual Speed",      "Run emulation at speed of the actual machine", wxITEM_CHECK);
@@ -336,12 +336,12 @@ CrtFrame::makeMenubar()
     }
     menu_config->Append(Configure_Screen_Dialog,  "&Configure Screen...",      "Change display settings");
     if (m_smart_term) {
-        menu_config->Append(Configure_KeywordMode,    "&Kaps lock\t" ALT "+K",  "Toggle keyboard keyword mode",        wxITEM_CHECK);
+        menu_config->Append(Configure_KeywordMode,    "&Kaps lock\t" ALT "-K",  "Toggle keyboard keyword mode",        wxITEM_CHECK);
     } else {
-        menu_config->Append(Configure_KeywordMode,    "&Keyword mode\t" ALT "+K",  "Toggle keyboard keyword mode",        wxITEM_CHECK);
+        menu_config->Append(Configure_KeywordMode,    "&Keyword mode\t" ALT "-K",  "Toggle keyboard keyword mode",        wxITEM_CHECK);
     }
     menu_config->Append(Configure_SF_toolBar,     "SF key toolbar",            "Toggle special function key toolbar", wxITEM_CHECK);
-    menu_config->Append(Configure_Fullscreen,     "Fullscreen\t" ALT "+Enter", "Toggle full screen display",          wxITEM_CHECK);
+    menu_config->Append(Configure_Fullscreen,     "Fullscreen\t" ALT "-Enter", "Toggle full screen display",          wxITEM_CHECK);
     if (m_primary_crt) {
         menu_config->Append(Configure_Stats,      "Statistics",                "Toggle statistics on statusbar",      wxITEM_CHECK);
     }

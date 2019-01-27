@@ -235,6 +235,8 @@ Terminal::receiveKeystroke(int keycode)
         m_kb_buff.push(static_cast<uint8>(0x13));
     } else if (keycode == (IoCardKeyboard::KEYCODE_SF | IoCardKeyboard::KEYCODE_EDIT)) {
         // edit
+        // Note: logging what comes out of my 2336, Shift-EDIT produces FD 50.
+        //       I tried adding it but its purpose escapes me, so I removed it.
         m_kb_buff.push(static_cast<uint8>(0xBD));
     } else if ((keycode & IoCardKeyboard::KEYCODE_SF) != 0) {
         // special function

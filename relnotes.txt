@@ -1,6 +1,6 @@
 ============================================================================
 		   Wang 2200 emulator release notes, v3.0-pre
-                                January 19, 2018
+                                January 25, 2018
 ============================================================================
 
 ---- What is It? ----
@@ -35,23 +35,14 @@ The emulator very well might run on Linux via Wine, but it hasn't been tested.
 
 ---- User-visible Changes ----
 
-*) Previously, Alt-R would do a hard reset of the emulator, and Alt-W would
-   do a warm reset, which is analogous to pressing the RESET button on a
-   2200T terminal or the SHIFT-RESET key on a serial terminal. To make it
-   harder to accidentally hit this key, the mapping is now
-       Shift-Alt-R --> hard reset
-       Shift-Alt-W --> warm reset
+*) There is support for more system CPU configurations:
+       2200B, 2200T, 2200VP, 2200MVP-C (new), and MicroVP (new)
+   Correspondingly, there are appropriate system RAM size options available
+   for each CPU type.
 
-*) the option to control whether disk accesses are performed at the same
-   speed as a real 2200 ("realtime") or quickly ("unregulated") used to be
-   a checkbox item on the system configuration dialog.  Now it appears in
-   the more logical place (and easier to access), the Disk menu.
-
-*) support for more system CPU and RAM configurations
-
-*) Added emulation of a MXD terminal mux and 2236DE terminal.
-   Why MXD and not MXE? One good reason is that OS's before 2.4 would
-   not run with an MXE terminal mux.
+*) Added emulation of a 2236MXD terminal mux and 2236DE terminal.
+   Why MXD and not MXE? One good reason is that OS's before 2.4 would not
+   run with an MXE terminal mux.
 
    When not emulating a smart terminal, the host computer's TAB key maps
    to the Wang BASIC "NEXT STMT" key, which in Wang BASIC inserts the next
@@ -59,16 +50,45 @@ The emulator very well might run on Linux via Wine, but it hasn't been tested.
    terminals, TAB maps to the TAB or FN key (depending if DW or DE terminal).
 
 *) It is now possible to run MVP OS's, but of course the system configuration
-   must have at least one 2236MXD terminal mux.
+   must have one 2236MXD terminal mux installed.
+
+*) Because the addition of 2336 terminal emulation, the keyboard map has
+   had some new key mappings added, and some old ones have been changed.
+   Most significantly:
+
+   - Previously, Alt-R would do a hard reset of the emulator, akin to power
+     cycling. Because this operation should be infrequent, the lack of a
+     keyboard shortcut shouldn't be noticed. The hard reset operation is
+     still available from the CPU menu, and is called "Reboot CPU".
+
+   - Previously, Alt-W would do a warm reset of the emulator, analogous to
+     pressing the RESET button on a 2200T terminal or the SHIFT-RESET key on
+     a serial terminal. It is now mapped to Shift-Alt-R. Adding the shift
+     qualifier makes is harder to accidentally trigger, and moving it to "R"
+     is more mnemonic for "reset."
+
+   - Ctrl-S is now used for Halt/Step. Previously it was Ctlr-C, but that
+     is now used to map the CLEAR key.
+
+   - Ctrl-L is now used for LOAD. Previously it was used for LIST.
+
+   Consult the Keyboard Help entry from the top level Help menu to review
+   all the mappings.
+
+*) The option to control whether disk accesses are performed at the same
+   speed as a real 2200 ("realtime") or quickly ("unregulated") used to be
+   a checkbox item on the system configuration dialog. Now it appears in
+   a more logical place (and easier to access), the Disk menu.
 
 *) Previously, printing HEX(07) produced a default bell-like sound.
    Now the emulator emits a sound very much like a real Wang terminal.
+   (see limitation of OSX port in the "Known Bugs" section)
 
 *) Previously, the emulator could be launched like this:
       wangemu.exe -s somescript.w22
-   and the name script would be fed into the emulator.  But that isn't
+   and the name script would be fed into the emulator. But that isn't
    useful now (if it ever was) for (M)VP systems, which must be configured
-   before they can run a program.  Now it ignores the command line arguments.
+   before they can run a program. Now it ignores the command line arguments.
 
 ---- Bugs Fixed in this Release ----
 
@@ -110,18 +130,40 @@ The emulator very well might run on Linux via Wine, but it hasn't been tested.
    what was historically accurate. It used to be configuring a VP in the
    emulator with 16 KB or 48 KB of RAM would trigger an assertion.
 
+*) A typo was fixed in error_table.cpp for error 73; it should read "SAVE DCF"
+   instead of "SAVE SCF".
+
+   A few missing error codes which were added for MVP operation were also
+   added to the table.
+
 ---- Minor Tweaks and Implementation Changes ----
 
-*) compiled with the latest wxWidgets library release, 3.1.0,
+*) compiled with the latest wxWidgets library release, 3.1.2,
    and Microsoft Studio Community 2017 compiler.
-
-*) fixed a typo in errtable.cpp for error 73;
-   it should read "SAVE DCF" instead of "SAVE SCF"
 
 *) got rid of unnecessary wx-isms;
    now using modern c++11 features when it simplifies the code
 
+*) used three different static code analyzers (MSVS 2017's built-in static
+   analyzer, cppcheck, and clang-tidy) and followed up many many suggestions,
+   though not all. Those that were painful, overly pedantic, or I didn't
+   agree with have been ignored for now.
+
 ---- Known Bugs ----
+
+*) A real MVP allowed up to three MXD terminal mux cards to be installed
+   supporting up to 12 terminals. The emulator allows only one MXD terminal
+   because (a) managing four windows is already unwieldy, and (b) for some
+   reason the OS would hang if more than one emulated MXD was active and I
+   didn't feel like investing the effort to debug it because of issue (a).
+
+*) Because of limitations in the wxSound implementation on OSX, a program
+   such as this emits a choppy alert tone instead of continuous one:
+      10 PRINT HEX(07):GOTO 10
+
+*) In 2336 terminal mode, the boundary between character cells when displaying
+   graphic characters is noticeable. The fix would require a complete rewrite
+   of the display generation code. Maybe this will be fixed the next release.
 
 *) The real 2200 CPUs occasionally insert dummy microinstruction cycles
    to performs memory refresh. This isn't modeled in the emulator,
@@ -166,5 +208,4 @@ The emulator very well might run on Linux via Wine, but it hasn't been tested.
       with a CR and no LF.
     + If the program ends without filling the last page, you may need to send a
       HEX(0C) (page feed) to the printer to flush out the partial page.
-
 

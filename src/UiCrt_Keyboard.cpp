@@ -34,7 +34,22 @@ struct kd_keymap_t {
 
 static constexpr kd_keymap_t keydown_keymap_table[] = {
 
-    // --------- various control keys -------------
+    // --------------------------- keyword keys -------------------------------
+    // most of these don't have a natural mapping, so just use Ctrl-<letter>
+    // where the letter is mnemonic and doesn't conflict with other Ctrl keys.
+    //
+    // key              modifier                        mapping
+
+#ifdef __WXMAC__
+    { WXK_CLEAR,        KC_ANY,                         TOKEN_CLEAR },
+#endif
+    { 'C',              KC_CTRL,                        TOKEN_CLEAR },
+    { 'L',              KC_CTRL,                        TOKEN_LOAD },
+    { 'P',              KC_CTRL,                        TOKEN_PRINT },
+    { 'R',              KC_CTRL,                        TOKEN_RUN },
+    { 'Z',              KC_CTRL,                        TOKEN_CONTINUE },
+
+    // ----------------------- various control keys ---------------------------
     // key              modifier                        mapping
 
     { WXK_BACK,         KC_ANY,                         0x08 },
@@ -45,20 +60,17 @@ static constexpr kd_keymap_t keydown_keymap_table[] = {
     // clear line
     { WXK_HOME,         KC_ANY,                         0xE5 },
 
-    // next highest line #
+    // next highest line #  (in 6367 keyboard controller mode)
+    // FN (in MXD mode; Terminal.cpp takes care of remapping it)
     { WXK_TAB,          KC_ANY,                         0xE6 },
 
     // halt/step
-#ifdef __WXMAC__
-    // mapping this to the "CLEAR" key seems like a slam dunk, but I think this
-    // is more useful.
-    { WXK_CLEAR,        KC_ANY,                         IoCardKeyboard::KEYCODE_HALT },
-#else
+#ifdef __WXMSW__
     { WXK_PAUSE,        KC_ANY,                         IoCardKeyboard::KEYCODE_HALT },
 #endif
-    { 'C',              KC_CTRL,                        IoCardKeyboard::KEYCODE_HALT },
+    { 'S', /*step*/     KC_CTRL,                        IoCardKeyboard::KEYCODE_HALT },
 
-    // --------- special function keys -------------
+    // ----------------------- special function keys ---------------------------
     // key              modifier                        mapping
 
     { WXK_ESCAPE,       KC_NOSHIFT,                     IoCardKeyboard::KEYCODE_SF | 0x00 },
@@ -73,102 +85,91 @@ static constexpr kd_keymap_t keydown_keymap_table[] = {
     { WXK_F3,           KC_NOSHIFT,                     IoCardKeyboard::KEYCODE_SF | 0x03 },
     { WXK_F3,           KC_SHIFT,                       IoCardKeyboard::KEYCODE_SF | 0x13 },
 
+    // edit mode: end of line
+    { WXK_RIGHT,        KC_CTRL,                        IoCardKeyboard::KEYCODE_SF | 0x04 },
     { WXK_F4,           KC_NOSHIFT,                     IoCardKeyboard::KEYCODE_SF | 0x04 },
     { WXK_F4,           KC_SHIFT,                       IoCardKeyboard::KEYCODE_SF | 0x14 },
 
+    // edit mode: down a line
+    { WXK_DOWN,         KC_NOSHIFT,                     IoCardKeyboard::KEYCODE_SF | 0x05 },
     { WXK_F5,           KC_NOSHIFT,                     IoCardKeyboard::KEYCODE_SF | 0x05 },
     { WXK_F5,           KC_SHIFT,                       IoCardKeyboard::KEYCODE_SF | 0x15 },
 
+    // edit mode: up a line
+    { WXK_UP,           KC_NOSHIFT,                     IoCardKeyboard::KEYCODE_SF | 0x06 },
     { WXK_F6,           KC_NOSHIFT,                     IoCardKeyboard::KEYCODE_SF | 0x06 },
     { WXK_F6,           KC_SHIFT,                       IoCardKeyboard::KEYCODE_SF | 0x16 },
 
+    // edit mode: beginning of line
+    { WXK_LEFT,         KC_CTRL,                        IoCardKeyboard::KEYCODE_SF | 0x07 },
     { WXK_F7,           KC_NOSHIFT,                     IoCardKeyboard::KEYCODE_SF | 0x07 },
     { WXK_F7,           KC_SHIFT,                       IoCardKeyboard::KEYCODE_SF | 0x17 },
 
+    // edit mode: erase to end of line
+    { 'K',              KC_CTRL,                        IoCardKeyboard::KEYCODE_SF | 0x08 },
+    { WXK_END,          KC_ANY,                         IoCardKeyboard::KEYCODE_SF | 0x08 },
     { WXK_F8,           KC_NOSHIFT,                     IoCardKeyboard::KEYCODE_SF | 0x08 },
     { WXK_F8,           KC_SHIFT,                       IoCardKeyboard::KEYCODE_SF | 0x18 },
 
-#if 1 // !defined(__WXMAC__)  // OS X hijacks these keys, but leaving them defined doesn't hurt
+    // edit mode: delete a character
+    { 'D',              KC_CTRL,                        IoCardKeyboard::KEYCODE_SF | 0x09 },
+    { WXK_DELETE,       KC_ANY,                         IoCardKeyboard::KEYCODE_SF | 0x09 },
     { WXK_F9,           KC_NOSHIFT | KC_NOCTRL,         IoCardKeyboard::KEYCODE_SF | 0x09 },
     { WXK_F9,           KC_SHIFT   | KC_NOCTRL,         IoCardKeyboard::KEYCODE_SF | 0x19 },
-    { WXK_F9,           KC_NOSHIFT | KC_CTRL,           IoCardKeyboard::KEYCODE_SF | 0x0D },
-    { WXK_F9,           KC_SHIFT   | KC_CTRL,           IoCardKeyboard::KEYCODE_SF | 0x1D },
 
+    // edit mode: insert a character
+    { 'I',              KC_CTRL,                        IoCardKeyboard::KEYCODE_SF | 0x0A },
+    { WXK_INSERT,       KC_ANY,                         IoCardKeyboard::KEYCODE_SF | 0x0A },
     { WXK_F10,          KC_NOSHIFT | KC_NOCTRL,         IoCardKeyboard::KEYCODE_SF | 0x0A },
     { WXK_F10,          KC_SHIFT   | KC_NOCTRL,         IoCardKeyboard::KEYCODE_SF | 0x1A },
-    { WXK_F10,          KC_NOSHIFT | KC_CTRL,           IoCardKeyboard::KEYCODE_SF | 0x0E },
-    { WXK_F10,          KC_SHIFT   | KC_CTRL,           IoCardKeyboard::KEYCODE_SF | 0x1E },
 
+    // edit mode: skip five spaces right
+    { WXK_RIGHT,        KC_SHIFT,                       IoCardKeyboard::KEYCODE_SF | 0x0B },
     { WXK_F11,          KC_NOSHIFT | KC_NOCTRL,         IoCardKeyboard::KEYCODE_SF | 0x0B },
     { WXK_F11,          KC_SHIFT   | KC_NOCTRL,         IoCardKeyboard::KEYCODE_SF | 0x1B },
+
+    // edit mode: skip one space right
+    { WXK_RIGHT,        KC_NOSHIFT,                     IoCardKeyboard::KEYCODE_SF | 0x0C },
+    { WXK_F12,          KC_NOSHIFT | KC_NOCTRL,         IoCardKeyboard::KEYCODE_SF | 0x0C },
+    { WXK_F12,          KC_SHIFT   | KC_NOCTRL,         IoCardKeyboard::KEYCODE_SF | 0x1C },
+
+    // edit mode: skip one space left
+    { WXK_LEFT,         KC_NOSHIFT,                     IoCardKeyboard::KEYCODE_SF | 0x0D },
+    { WXK_F13,          KC_NOSHIFT,                     IoCardKeyboard::KEYCODE_SF | 0x0D },
+    { WXK_F13,          KC_SHIFT,                       IoCardKeyboard::KEYCODE_SF | 0x1D },
+#ifdef __WXMSW__
+    { WXK_F9,           KC_NOSHIFT | KC_CTRL,           IoCardKeyboard::KEYCODE_SF | 0x0D },
+    { WXK_F9,           KC_SHIFT   | KC_CTRL,           IoCardKeyboard::KEYCODE_SF | 0x1D },
+#endif
+
+    // edit mode: skip five spaces left
+    { WXK_LEFT,         KC_SHIFT,                       IoCardKeyboard::KEYCODE_SF | 0x0E },
+    { WXK_F14,          KC_NOSHIFT,                     IoCardKeyboard::KEYCODE_SF | 0x0E },
+    { WXK_F14,          KC_SHIFT,                       IoCardKeyboard::KEYCODE_SF | 0x1E },
+#ifdef __WXMSW__
+    { WXK_F10,          KC_NOSHIFT | KC_CTRL,           IoCardKeyboard::KEYCODE_SF | 0x0E },
+    { WXK_F10,          KC_SHIFT   | KC_CTRL,           IoCardKeyboard::KEYCODE_SF | 0x1E },
+#endif
+
+    // edit mode: recall
+    { 'F',              KC_CTRL,                        IoCardKeyboard::KEYCODE_SF | 0x0F },
+    { WXK_F15,          KC_NOSHIFT,                     IoCardKeyboard::KEYCODE_SF | 0x0F },
+    { WXK_F15,          KC_SHIFT,                       IoCardKeyboard::KEYCODE_SF | 0x1F },
+#ifdef __WXMSW__
     { WXK_F11,          KC_NOSHIFT | KC_CTRL,           IoCardKeyboard::KEYCODE_SF | 0x0F },
     { WXK_F11,          KC_SHIFT   | KC_CTRL,           IoCardKeyboard::KEYCODE_SF | 0x1F },
 #endif
 
-    { WXK_F12,          KC_NOSHIFT | KC_NOCTRL,         IoCardKeyboard::KEYCODE_SF | 0x0C },
-    { WXK_F12,          KC_SHIFT   | KC_NOCTRL,         IoCardKeyboard::KEYCODE_SF | 0x1C },
+    // edit mode toggle
+    { 'E',              KC_CTRL,                        IoCardKeyboard::KEYCODE_SF | IoCardKeyboard::KEYCODE_EDIT },
+#ifdef __WXMSW__
     { WXK_F12,          KC_CTRL,                        IoCardKeyboard::KEYCODE_SF | IoCardKeyboard::KEYCODE_EDIT },
-
-    // the next three are just in case somebody has a keyboard with 16 Fn keys
-    { WXK_F13,          KC_NOSHIFT,                     IoCardKeyboard::KEYCODE_SF | 0x0D },
-    { WXK_F13,          KC_SHIFT,                       IoCardKeyboard::KEYCODE_SF | 0x1D },
-    { WXK_F14,          KC_NOSHIFT,                     IoCardKeyboard::KEYCODE_SF | 0x0E },
-    { WXK_F14,          KC_SHIFT,                       IoCardKeyboard::KEYCODE_SF | 0x1E },
-    { WXK_F15,          KC_NOSHIFT,                     IoCardKeyboard::KEYCODE_SF | 0x0F },
-    { WXK_F15,          KC_SHIFT,                       IoCardKeyboard::KEYCODE_SF | 0x1F },
-
+#endif
 #ifdef __WXMAC__
     { WXK_F16,          KC_NOSHIFT | KC_CTRL,           IoCardKeyboard::KEYCODE_SF | IoCardKeyboard::KEYCODE_EDIT },
     { WXK_F16,          KC_SHIFT   | KC_CTRL,           IoCardKeyboard::KEYCODE_SF | IoCardKeyboard::KEYCODE_EDIT },
 #endif
 
-    // ------------- alias for special function keys -------------
-    // these are useful in EDIT mode, as they are much easier to remember
-    // key              modifier                        mapping
-
-    // skip one or five spaces left
-    { WXK_LEFT,         KC_NOSHIFT,                     IoCardKeyboard::KEYCODE_SF   | 0x0D },
-    { WXK_LEFT,         KC_SHIFT,                       IoCardKeyboard::KEYCODE_SF   | 0x0E },
-
-    // skip one or five spaces right
-    { WXK_RIGHT,        KC_NOSHIFT,                     IoCardKeyboard::KEYCODE_SF   | 0x0C },
-    { WXK_RIGHT,        KC_SHIFT,                       IoCardKeyboard::KEYCODE_SF   | 0x0B },
-
-    // insert a character
-    { WXK_INSERT,       KC_ANY,                         IoCardKeyboard::KEYCODE_SF   | 0x0A },
-    // delete a character
-    { WXK_DELETE,       KC_ANY,                         IoCardKeyboard::KEYCODE_SF   | 0x09 },
-    // erase to end of line
-    { WXK_END,          KC_ANY,                         IoCardKeyboard::KEYCODE_SF   | 0x08 },
-
-#if EXTRA_EDIT_KEYS
-    { 'E',              KC_CTRL,                        IoCardKeyboard::KEYCODE_SF | IoCardKeyboard::KEYCODE_EDIT },      // edit
-    { 'F',              KC_CTRL,                        IoCardKeyboard::KEYCODE_SF | 0x0F },              // recall
-    { 'D',              KC_CTRL,                        IoCardKeyboard::KEYCODE_SF | 0x09 },              // delete
-    { 'I',              KC_CTRL,                        IoCardKeyboard::KEYCODE_SF | 0x0A },              // insert
-    { 'K',              KC_CTRL,                        IoCardKeyboard::KEYCODE_SF | 0x08 },              // erase (kill)
-#endif
-
-    // ---------- alias for special function keys meaningful for VP ----------
-    // key              modifier                        mapping
-
-    // end of line
-    { WXK_RIGHT,        KC_CTRL,                        IoCardKeyboard::KEYCODE_SF   | 0x04 },
-    // down a line
-    { WXK_DOWN,         KC_NOSHIFT,                     IoCardKeyboard::KEYCODE_SF   | 0x05 },
-    // up a line
-    { WXK_UP,           KC_NOSHIFT,                     IoCardKeyboard::KEYCODE_SF   | 0x06 },
-    // start of line
-    { WXK_LEFT,         KC_CTRL,                        IoCardKeyboard::KEYCODE_SF   | 0x07 },
-
-    // --------- misc -------------
-    // these don't have any natural place to put them, but they are useful,
-    // so just make them mnemonic
-
-    { 'P',              KC_CTRL,                        TOKEN_PRINT },
-    { 'L',              KC_CTRL,                        TOKEN_LIST },
-    { 'R',              KC_CTRL,                        TOKEN_RUN },
-    { 'Z',              KC_CTRL,                        TOKEN_CONTINUE },
 /*
  -- numeric keypad:
     NUM_LOCK,           TOKEN_PRINT,
@@ -184,9 +185,6 @@ static constexpr kd_keymap_t keydown_keymap_table[] = {
  -- figure out how to map these in:
     ',',                TOKEN_RENUMBER,
     '.',                TOKEN_LIST,
-
- -- not mapped:
-    CLEAR, LOAD
 */
 };
 

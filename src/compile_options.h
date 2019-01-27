@@ -43,24 +43,6 @@
 #endif
 
 // ========================================================================
-// UiCrt_Keyboard.cpp compile-time options
-// ========================================================================
-
-// define to 1 to make these keyboard aliases that are useful for
-// edit mode.  it is especially useful on the mac, where the function
-// keys aren't supported well.
-//      CTRL-E --> EDIT
-//      CTRL-F --> SF-15 (recall)
-//      CTRL-K --> SF-8  (erase)
-//      CTRL-D --> SF-9  (delete)
-//      CTRL-I --> SF-10 (insert)
-#ifdef __WXMAC__
-    #define EXTRA_EDIT_KEYS 1
-#else
-    #define EXTRA_EDIT_KEYS 1
-#endif
-
-// ========================================================================
 // UiDiskCtrlCfgDlg.cpp compile-time options
 // ========================================================================
 
