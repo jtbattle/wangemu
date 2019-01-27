@@ -7,6 +7,7 @@ NODEPS := clean tags info
 # Find all the source files in the src/ directory
 CPP_SOURCES := $(shell find src -name "*.cpp")
 C_SOURCES   := $(shell find src -name "*.c")
+H_SOURCES   := $(shell find src -name "*.h")
 SOURCES     := $(CPP_SOURCES) $(C_SOURCES)
 
 # These are the dependency files, which make will clean up after it creates them
@@ -56,11 +57,8 @@ obj/%.o: src/%.c src/%.d
 wangemu: $(OBJFILES)
 	$(CXX) $(LDFLAGS) $(OBJFILES) -o wangemu
 
-src/tags:
-	@echo " "
-	@echo "=== Building tags ==="
-	@echo " "
-	(cd src; ctags *.h *.cpp *.c)
+src/tags: $(CPP_SOURCES) $(C_SOURCES) $(H_SOURCES)
+	(cd src; ctags *.h *.cpp *.c >& /dev/null)
 
 clean:
 	rm -f src/*.d src/tags obj/*.o
