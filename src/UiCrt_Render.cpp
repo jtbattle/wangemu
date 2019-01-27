@@ -565,7 +565,7 @@ Crt::generateScreen()
             bg(intensityToColor(0.0f));  // color of background
 
 #if DRAW_WITH_RAWBMP
-// FIXME: see if we still need this for OSX
+    // TODO: is this still needed for OSX?
     const bool success = generateScreenByRawBmp(fg, bg);
 #else
     const bool success = false;
