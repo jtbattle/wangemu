@@ -3,6 +3,8 @@
 #
 # Version: 1.0, 2018/09/15, JTB
 #     massive restructuring of the old wvdutil code base
+# Version: 1.1, 2019/01/26, JTB
+#     the "VER(" token was mapped to "VER" (missing paren)
 
 from __future__ import print_function
 import re
@@ -135,7 +137,7 @@ token[0xEE] = 'DSC '       # BASIC-2 only
 token[0xEF] = 'SUB'        # BASIC-2 only
 
 token[0xF0] = 'LINPUT '    # BASIC-2 only
-token[0xF1] = 'VER'        # BASIC-2 only
+token[0xF1] = 'VER('       # BASIC-2 only
 token[0xF2] = ' ELSE '     # BASIC-2 only
 token[0xF3] = 'SPACE'      # BASIC-2 only
 token[0xF4] = 'ROUND('     # BASIC-2 only
