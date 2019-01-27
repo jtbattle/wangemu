@@ -1964,7 +1964,12 @@ const std::vector<error_table_t> error_table_vp = {
     /*cause*/       "Division by a value of zero is a mathematically undefined operation.",
     /*recovery*/    "Correct the program or the data. A division-by-zero error can be\n"
                     "suppressed by executing SELECT ERROR > 62; a default value of\n"
-                    "±9.999999999999E+99 will be used.",
+#ifdef __WXMAC__
+                    "+-"
+#else
+                    "\xb1"
+#endif
+                    "9.999999999999E+99 will be used.",
     /*dummy*/       nullptr,
     /*dummy*/       nullptr,
     },
