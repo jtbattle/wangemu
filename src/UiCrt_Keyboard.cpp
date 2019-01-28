@@ -43,11 +43,11 @@ static constexpr kd_keymap_t keydown_keymap_table[] = {
 #ifdef __WXMAC__
     { WXK_CLEAR,        KC_ANY,                         TOKEN_CLEAR },
 #endif
-    { 'C',              KC_CTRL,                        TOKEN_CLEAR },
-    { 'L',              KC_CTRL,                        TOKEN_LOAD },
-    { 'P',              KC_CTRL,                        TOKEN_PRINT },
-    { 'R',              KC_CTRL,                        TOKEN_RUN },
-    { 'Z',              KC_CTRL,                        TOKEN_CONTINUE },
+    { 'C',              KC_CTRL | KC_NOSHIFT,           TOKEN_CLEAR },
+    { 'L',              KC_CTRL | KC_NOSHIFT,           TOKEN_LOAD },
+    { 'P',              KC_CTRL | KC_NOSHIFT,           TOKEN_PRINT },
+    { 'R',              KC_CTRL | KC_NOSHIFT,           TOKEN_RUN },
+    { 'Z',              KC_CTRL | KC_NOSHIFT,           TOKEN_CONTINUE },
 
     // ----------------------- various control keys ---------------------------
     // key              modifier                        mapping
@@ -65,10 +65,10 @@ static constexpr kd_keymap_t keydown_keymap_table[] = {
     { WXK_TAB,          KC_ANY,                         0xE6 },
 
     // halt/step
+    { 'S', /*step*/     KC_CTRL | KC_NOSHIFT,           IoCardKeyboard::KEYCODE_HALT },
 #ifdef __WXMSW__
     { WXK_PAUSE,        KC_ANY,                         IoCardKeyboard::KEYCODE_HALT },
 #endif
-    { 'S', /*step*/     KC_CTRL,                        IoCardKeyboard::KEYCODE_HALT },
 
     // ----------------------- special function keys ---------------------------
     // key              modifier                        mapping
@@ -280,7 +280,7 @@ static constexpr oc_keymap_t onchar_keymap_table[] = {
 
 
 void
-Crt::OnKeyDown(wxKeyEvent &event)
+Crt::OnChar(wxKeyEvent &event)
 {
     // don't swallow keystrokes that we can't handle
     if (event.AltDown()) {
@@ -288,14 +288,16 @@ Crt::OnKeyDown(wxKeyEvent &event)
         return;
     }
 
-    const int wxKey  = event.GetKeyCode();
+    const int  wxKey = event.GetKeyCode();
     const bool shift = event.ShiftDown();
-    const bool ctrl  = event.ControlDown();
+    const bool ctrl  = event.RawControlDown();
+    // map ctrl-A through ctrl-Z to 'A' to 'Z'
+    const int baseKey = (ctrl && (1 <= wxKey) && (wxKey <= 26)) ? (wxKey | 64) : wxKey;
     int key = 0x00;    // key value we stuff into emulator
 
     bool found_map = false;
     for (auto const &kkey : keydown_keymap_table) {
-        if (kkey.wxKey != wxKey) {
+        if (kkey.wxKey != baseKey) {
             continue;
         }
         if ( shift && ((kkey.wxKeyFlags & KC_NOSHIFT) != 0)) {
@@ -312,74 +314,36 @@ Crt::OnKeyDown(wxKeyEvent &event)
         }
         key = kkey.wangKey;
         found_map = true;
+        break;
     }
 
-#if 0
-    extern int g_dbg;
-    if (key == (0x01 | IoCardKeyboard::KEYCODE_SF)) {
-        // key = 'A';
-        if (!g_dbg) { UI_info("Turning on logging to w2200dbg.log"); }
-        g_dbg = 1;
-        return;  // swallow it
-    }
-    if (key == (0x02 | IoCardKeyboard::KEYCODE_SF)) {
-        // key = 'B';
-        if (g_dbg) { UI_info("Turning off logging to w2200dbg.log"); }
-        g_dbg = 0;
-        return;  // swallow it
-    }
-#endif
-
-    if (found_map) {
-        system2200::dispatchKeystroke(m_parent->getTiedAddr(),
-                                      m_parent->getTermNum(),
-                                      key);
-    } else {
-        // let the OnChar routine handle it
-        event.Skip();
-    }
-}
-
-
-void
-Crt::OnChar(wxKeyEvent &event)
-{
-    const bool smart_term = (m_crt_state->screen_type == UI_SCREEN_2236DE);
-
-    // don't swallow keystrokes that we can't handle
-    if (event.AltDown() || event.ControlDown()) {
-        event.Skip();
-        return;
-    }
-
-    const int wxKey = event.GetKeyCode();
-
-    const bool keyword_mode = m_parent->getKeywordMode();
-    bool found_map = false;
-    int key = 0x00;
-    if (smart_term) {
-        // the 2236 doesn't support keyword mode, just caps lock
-        if (keyword_mode && ('a' <= wxKey && wxKey <= 'z')) {
-            key = wxKey - 'a' + 'A';  // force to uppercase
-            found_map = true;
-        }
-    } else {
-        // the first generation keyboards had a keyword associated with
-        // each letter A-Z
-        for (auto const &kkey : onchar_keymap_table) {
-            if (kkey.wxKey == wxKey) {
-                key = (keyword_mode) ? kkey.wangKey_KW_mode
-                                     : kkey.wangKey_Aa_mode;
+    if (!found_map) {
+        const bool keyword_mode = m_parent->getKeywordMode();
+        const bool smart_term = (m_crt_state->screen_type == UI_SCREEN_2236DE);
+        if (smart_term) {
+            // the 2236 doesn't support keyword mode, just caps lock
+            if (keyword_mode && ('a' <= baseKey && baseKey <= 'z')) {
+                key = baseKey - 'a' + 'A';  // force to uppercase
                 found_map = true;
-                break;
+            }
+        } else {
+            // the first generation keyboards had a keyword associated with
+            // each letter A-Z
+            for (auto const &kkey : onchar_keymap_table) {
+                if (kkey.wxKey == baseKey) {
+                    key = (keyword_mode) ? kkey.wangKey_KW_mode
+                                         : kkey.wangKey_Aa_mode;
+                    found_map = true;
+                    break;
+                }
             }
         }
-    }
 
-    if (!found_map && (wxKey >= 32) && (wxKey < 128)) {
-        // non-mapped simple ASCII key
-        key = wxKey;
-        found_map = true;
+        if (!found_map && (wxKey >= 32) && (wxKey < 128)) {
+            // non-mapped simple ASCII key
+            key = wxKey;
+            found_map = true;
+        }
     }
 
     if (found_map) {
@@ -387,7 +351,7 @@ Crt::OnChar(wxKeyEvent &event)
                                       m_parent->getTermNum(),
                                       key);
     } else {
-        // calling skip causes the menubar & etc logic to process it
+        // percolate the event up to the parent
         event.Skip();
     }
 }

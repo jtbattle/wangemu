@@ -39,7 +39,6 @@ Crt::Crt(CrtFrame *parent, crt_state_t *crt_state) :
     // event routing table
     Bind(wxEVT_ERASE_BACKGROUND, &Crt::OnEraseBackground, this);
     Bind(wxEVT_PAINT,            &Crt::OnPaint,           this);
-    Bind(wxEVT_KEY_DOWN,         &Crt::OnKeyDown,         this);
     Bind(wxEVT_CHAR,             &Crt::OnChar,            this);
     Bind(wxEVT_SIZE,             &Crt::OnSize,            this);
     Bind(wxEVT_LEFT_DCLICK,      &Crt::OnLeftDClick,      this);

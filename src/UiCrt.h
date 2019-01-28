@@ -72,7 +72,6 @@ private:
     // ---- event handlers ----
     void OnEraseBackground(wxEraseEvent &event);
     void OnPaint(wxPaintEvent &event);
-    void OnKeyDown(wxKeyEvent &event);
     void OnChar(wxKeyEvent &event);
     void OnSize(wxSizeEvent &event);
     void OnLeftDClick(wxMouseEvent &event);
