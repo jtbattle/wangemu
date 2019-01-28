@@ -11,7 +11,7 @@ will be some code tweaks to get it to compile.
 
 Wangemu allows building a system configuration, including
 
-* CPU type (2200B, 2200T, 2200VP)
+* CPU type (2200B, 2200T, 2200VP, 2200MVP, MicroVP)
 * amount of system RAM
 * what type of peripheral is loaded into each of the backplane slots
 
