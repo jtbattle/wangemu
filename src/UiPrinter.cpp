@@ -680,8 +680,8 @@ Printer::generateScreen(int startCol, int startRow)
     // if greenbar mode, draw green rounded rectangles
     if (m_greenbar) {
 
-        wxColor light_green = wxColour(0xB0, 0xFF, 0xB0);
-        wxColor dark_green  = wxColour(0x00, 0x80, 0x00);
+        wxColor light_green = wxColour(0xD8, 0xFF, 0xD8);
+        wxColor dark_green  = wxColour(0x50, 0xA0, 0x50);
         wxBrush rect_fill(light_green);
         wxPen   rect_outline(dark_green);
         img_dc.SetPen(rect_outline);
