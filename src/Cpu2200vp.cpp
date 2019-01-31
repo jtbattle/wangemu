@@ -840,10 +840,10 @@ Cpu2200vp::reset(bool hard_reset) noexcept
         m_cpu.pc = 0;
         m_cpu.orig_pc;
         for (int i=0; i < 32; i++) {
-            m_cpu.aux[32];
+            m_cpu.aux[32] = 0x0000;
         }
         for (int i=0; i < 8; i++) {
-            m_cpu.reg[i];
+            m_cpu.reg[i] = 0x00;
         }
         for (int i=0; i < STACKSIZE; i++) {
             m_cpu.icstack[i] = 0;
