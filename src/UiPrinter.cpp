@@ -70,7 +70,8 @@ Printer::setFontSize(const int size)
 {
     wxClientDC dc(this);
 
-    m_font = wxFont(size, wxFONTFAMILY_MODERN, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL, false);
+    wxString face_name = "Courier New";
+    m_font = wxFont(size, wxFONTFAMILY_MODERN, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_LIGHT, false, face_name);
     dc.SetFont(m_font);
 
     m_font_size  = size;
@@ -621,19 +622,33 @@ Printer::drawScreen(wxDC& dc, int startCol, int startRow)
 void
 Printer::generateScreen(int startCol, int startRow)
 {
+    wxMemoryDC img_dc(m_scrbits);
+    img_dc.SetFont(m_font);
+
+#if 0
     // width of virtual paper, in pixels
-    const int page_w = m_charcell_w * (m_line_length + 2*hmargin);
+    const int page_w_pix = m_charcell_w * (m_line_length + 2*hmargin);
+#else
+    // on OSX, even though we queried the font for the width of one character
+    // (it is a monospace font), when it renders a string of n characters, it
+    // can take more than the stated space.  eg, with a 14 point font, it
+    // claims to be 8 pixels/char, but 80 such characters have an x-extent
+    // of 672 pixels -- 8.3 pixels/char. So we measure it here.
+    wxString ruler('c', m_line_length + 2*hmargin);
+    wxSize ruler_size = img_dc.GetTextExtent(ruler);
+    const int page_w_pix = ruler_size.x;
+#endif
 
     // amount of background to the left/right of virtual page in viewport
-    const int left_bg_w  = std::max(0, (m_screen_pix_w - page_w)/2);
+    const int left_bg_w  = std::max(0, (m_screen_pix_w - page_w_pix)/2);
     const int right_bg_w = std::max(0, m_screen_pix_w - left_bg_w);
 
     // left edge of paper relative to the viewport (can be negative)
     const int left_edge = (-startCol * m_charcell_w)    // if scrolled left
-                        + left_bg_w;                    // if viewport > page_w
+                        + left_bg_w;                    // if viewport > page_w_pix
 
     // right edge of paper relative to the viewport, exclusive
-    const int right_edge = left_edge + page_w - 1;
+    const int right_edge = left_edge + page_w_pix - 1;
 
     // this is the number of characters to skip at the start of each row
     const int skip_chars = std::max((startCol - hmargin), 0);
@@ -642,14 +657,12 @@ Printer::generateScreen(int startCol, int startRow)
     // there won't be any startCol offset
     assert((startCol == 0) || (left_edge < 0));
 
-    wxMemoryDC img_dc(m_scrbits);
-
     // draw page background to white
     {
         img_dc.SetPen(*wxWHITE_PEN);
         img_dc.SetBrush(*wxWHITE_BRUSH);
-        img_dc.DrawRectangle(left_edge, 0,             // origin
-                             page_w, m_screen_pix_h);  // width, height
+        img_dc.DrawRectangle(left_edge, 0,                 // origin
+                             page_w_pix, m_screen_pix_h);  // width, height
     }
 
     // draw greyed out region on the right and left
@@ -693,8 +706,8 @@ Printer::generateScreen(int startCol, int startRow)
 
         for (int bar = first_greenbar; bar <= last_greenbar; bar += bar_2h) {
             const int yoff = (bar - startRow) * m_charcell_h;
-            const int xoff = left_edge + hmargin* m_charcell_w - m_charcell_w/2;  //  \ expand it 1/2 char
-            const int width  = m_line_length * m_charcell_w     + m_charcell_w;    //  / on each side
+            const int xoff = left_edge + hmargin*m_charcell_w - m_charcell_w/2;  //  \ expand it 1/2 char
+            const int width  = page_w_pix - (2*hmargin-1)*m_charcell_w;          //  / on each side
             const int height = bar_h * m_charcell_h;
             const double radius = m_charcell_w * 0.5;
             img_dc.DrawRoundedRectangle(xoff, yoff, width, height, radius);
@@ -719,7 +732,7 @@ Printer::generateScreen(int startCol, int startRow)
         for (int brk = first_break; brk <= last_break; brk += m_page_length) {
             const int x_off = left_edge;
             const int y_off = m_charcell_h * (brk - startRow);
-            const int x_end = left_edge + page_w;
+            const int x_end = left_edge + page_w_pix;
             img_dc.DrawLine(x_off, y_off,   // from (x,y)
                             x_end, y_off);  // to   (x,y)
         }
@@ -732,7 +745,6 @@ Printer::generateScreen(int startCol, int startRow)
         img_dc.SetBackgroundMode(wxTRANSPARENT); // in case of greenbar mode
         img_dc.SetTextBackground(*wxWHITE);      // moot if greenbar mode
         img_dc.SetTextForeground(*wxBLACK);      // always
-        img_dc.SetFont(m_font);
 
         const int num_rows = m_printstream.size();
         std::string line;
