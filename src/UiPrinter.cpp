@@ -754,8 +754,11 @@ Printer::generateScreen(int startCol, int startRow)
             if (startRow + row < num_rows) {
                 // the line exists
                 line = m_printstream[startRow + row];
+                const int line_len = line.length();
                 const size_t nchars = (m_line_length+hmargin) - skip_chars;
-                if ((skip_chars > 0) || (nchars < line.length())) {
+                if (skip_chars > line_len) {
+                    line = "";
+                } else if ((skip_chars > 0) || (nchars < line.length())) {
                     // chop off any chars to the left of the display or
                     // to the right of the right edge of the virtual paper
                     line = line.substr(skip_chars, nchars);
