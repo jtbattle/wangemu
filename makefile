@@ -32,9 +32,16 @@ ifeq (0, $(words $(findstring $(MAKECMDGOALS), $(NODEPS))))
     -include $(DEPFILES)
 endif
 
+# -g -O0: vp is 2.5x, 15MB
+# -g -O1: vp is 13x, 14.5MB
+# -g -O2: vp is 16x, 14.4MB
+#    -O2: vp is 16x, 14.1MB
+#    -O3: vp is 16x, 14.2MB
 CXX         := `wx-config --cxx`
 CXXFLAGS    := -g -O0 -fno-common `wx-config --cxxflags`
-CXXWARNINGS := -Wall -Wundef -Wunused-parameter -Wno-ctor-dtor-privacy -Woverloaded-virtual -Wno-deprecated-declarations
+CXXWARNINGS := -Wall -Wextra -Wshadow -Wformat -Wundef -Wstrict-aliasing=1 \
+               -Wno-deprecated-declarations \
+               -Wno-ctor-dtor-privacy -Woverloaded-virtual 
 LDFLAGS     := `wx-config --libs`
 
 # This is the rule for creating the dependency files
@@ -47,7 +54,7 @@ src/%.d: src/%.c
 # This rule does the compilation
 obj/%.o: src/%.cpp src/%.d
 	@mkdir -p $(dir $@)
-	$(CXX) $(CXXFLAGS) -o $@ -c $<
+	$(CXX) $(CXXFLAGS) $(CXXWARNINGS) -o $@ -c $<
 
 obj/%.o: src/%.c src/%.d
 	@mkdir -p $(dir $@)

@@ -622,7 +622,7 @@ CrtFrame::initToolBar(wxToolBar *tb)
         assert(gap >= 0);  // always 0 on msw; >0 on osx
 
         // this is the lower text on the label (SF%d, or "EDIT")
-#if __WXMAC__
+#ifdef __WXMAC__
         mem_dc.DrawText(label, label_x_offset, lower_text_y);
 #else
         mem_dc.DrawText(label, label_x_offset, lower_text_y);
@@ -693,7 +693,7 @@ CrtFrame::initToolBar(wxToolBar *tb)
             const wxDash dashes[] = { 4, 2 };
             int shaft_len = buttonW/5;
             if (shaft_ticks > 1) {
-#if __WXMSW__
+#ifdef __WXMSW__
                 // the USER_DASH style doesn't seem to work as I'd expect
                 // (as of wxWidgets 2.6.0)
                 dash_pen.SetStyle(wxPENSTYLE_USER_DASH);

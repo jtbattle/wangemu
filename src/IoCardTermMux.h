@@ -41,7 +41,7 @@ public:
 
 private:
 
-    static const unsigned int MAX_TERMINALS = 4;
+    static const int MAX_TERMINALS = 4;
 
     // ---- card properties ----
     const std::string getDescription() const override;

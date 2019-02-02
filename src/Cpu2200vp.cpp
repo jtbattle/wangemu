@@ -23,7 +23,9 @@
 #define INLINE_STORE_C 1
 #define INLINE_DD_OP   1
 
+#if defined(_DEBUG)
 static bool g_dbg_trace = false;
+#endif
 
 // give a one-time warning about a misconfigured system
 static bool g_30ms_warning = false;
@@ -755,8 +757,8 @@ Cpu2200vp::Cpu2200vp(std::shared_ptr<Scheduler> scheduler,
                      int ramsize, int cpu_subtype) :
     Cpu2200(),
     m_cpu_subtype(cpu_subtype),
-    m_scheduler(scheduler),
-    m_mem_size(ramsize)
+    m_mem_size(ramsize),
+    m_scheduler(scheduler)
 {
     // find which configuration options are available/legal for this CPU
     auto cpu_cfg = system2200::getCpuConfig(cpu_subtype);

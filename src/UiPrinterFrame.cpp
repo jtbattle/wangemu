@@ -64,6 +64,8 @@
 #include <iomanip>
 #include <sstream>
 
+#define USE_MY_PAPER 0
+
 // ----------------------------------------------------------------------------
 // constants
 // ----------------------------------------------------------------------------
@@ -91,7 +93,7 @@ enum
     Configure_Dialog,
 };
 
-#if USEMYPAPER
+#if USE_MY_PAPER
 // Map of enums for some of the paper sizes (wxPaperSize). Used for load/save
 // to config file not all are implemented. See exPaperSize in defs.h for a
 // complete list.
@@ -435,7 +437,7 @@ wxPaperSize
 PrinterFrame::paperSize(const std::string &papersize_name)
 {
     // translate char to wxPaperSize
-#if USEMYPAPER
+#if USE_MY_PAPER
     for (int i=0; i < PSMAX; i++) {
         if (papersizemap[i].papersize_name == papersize_name) {
             return papersizemap[i].papersize_val;
@@ -453,7 +455,7 @@ std::string
 PrinterFrame::paperSize(wxPaperSize papersize_val) const
 {
     // translate char to wxPaperSize
-#if USEMYPAPER
+#if USE_MY_PAPER
     for (int i=0; i < PSMAX; i++) {
         if (papersizemap[i].papersize_val == papersize_val) {
             return papersizemap[i].papersize_name;

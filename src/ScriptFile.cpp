@@ -447,7 +447,7 @@ ScriptFile::getNextByte(int *byte)
                 } else {
                     // determine the path to the current script
                     std::string tmp_fname;
-#if __WXMSW__
+#ifdef __WXMSW__
                     const size_t last_sep = m_filename.find_last_of("/\\");
                     tmp_fname = m_filename.substr(0, last_sep+1) + inc_fname;
 #else

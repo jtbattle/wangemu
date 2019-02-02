@@ -31,7 +31,12 @@
 // better on one one platform and poorly on the other.
 #ifdef __WXMAC__
     // construct the m_scrbits image via the rawbmp.h interface.
+    // the performance is glacial on OSX platform if this is not set.
+    // (eg, running KALEIDOS, lots of non-blank characters), emulated
+    // speed is 0.8 realtime, but with it on it is 12x realtime.
     #define DRAW_WITH_RAWBMP 1
+    // this really isn't a choice. wxSound on OSX doesn't support an
+    // internally generated wav file.
     #define USE_FILE_BEEPS 1
 #else
     // blit each character from the fontmap to the bitmap.

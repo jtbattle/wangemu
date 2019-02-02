@@ -68,7 +68,7 @@ CrtConfigDlg::CrtConfigDlg(wxFrame *parent, const wxString &title,
                                 0, 80);         // min, max
 
     // the grid on the left contains CPU related configuration
-#if __WXMAC__
+#ifdef __WXMAC__
     // it seems like the only distinction wxMAC makes is zero vs. non-zero
     // making it 1 or 20 produces the same results.
     const int vgap = 4;

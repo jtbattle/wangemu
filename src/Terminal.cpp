@@ -619,7 +619,7 @@ Terminal::processCrtChar1(uint8 byte)
     }
 
     // keep accumulating command bytes
-    assert((0 <= m_raw_cnt) && (m_raw_cnt < sizeof(m_raw_buf)));
+    assert((0 <= m_raw_cnt) && (static_cast<unsigned long>(m_raw_cnt) < sizeof(m_raw_buf)));
     m_raw_buf[m_raw_cnt++] = byte;
 
     // it is a character run sequence: FB nn cc
@@ -726,7 +726,7 @@ Terminal::processCrtChar2(uint8 byte)
     assert(m_disp.screen_type == UI_SCREEN_2236DE);
     //wxLogMessage("processCrtChar2(0x%02x), m_input_cnt=%d", byte, m_input_cnt);
 
-    assert(m_input_cnt < sizeof(m_input_buf));
+    assert(static_cast<unsigned long>(m_input_cnt) < sizeof(m_input_buf));
 
     // it isn't documented, but from experimentation, non-control characters
     // following an 02... sequence will abort the sequence and that character

@@ -441,6 +441,7 @@ Crt::OnTimer(wxTimerEvent &event)
     }
 }
 
+#ifdef __WXMSW__
 // ----------------------------------------------------------------------------
 // RIFF WAV file format
 // ----------------------------------------------------------------------------
@@ -487,6 +488,7 @@ struct DataChunk_t {
     int32       chunkSize;      // not including first 8 bytes of header
 //  unsigned char data[];       // everything that follows
 };
+#endif // __WXMSW__
 
 
 // most of the data fields are stored little endian, but the ID tags

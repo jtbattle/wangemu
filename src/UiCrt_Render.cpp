@@ -561,15 +561,14 @@ Crt::generateScreen()
         recalcBorders();  // the bitmap store might have changed size
     }
 
-    wxColor fg(intensityToColor(1.0f)),  // color of text
-            bg(intensityToColor(0.0f));  // color of background
-
 #if DRAW_WITH_RAWBMP
     // TODO: is this still needed for OSX?
-    const bool success = generateScreenByRawBmp(fg, bg);
+    const bool success = generateScreenByRawBmp();
 #else
     const bool success = false;
 #endif
+    wxColor bg(intensityToColor(0.0f));  // color of background
+
     wxMemoryDC memDC(m_scrbits);
     if (!success) {
         memDC.SetBackground(wxBrush(bg, wxBRUSHSTYLE_SOLID));
@@ -781,12 +780,12 @@ Crt::generateScreenOverlay(wxMemoryDC &memDC)
 // update the bitmap of the screen image, using rawbmp interface
 // returns false if it fails.
 bool
-Crt::generateScreenByRawBmp(wxColor fg, wxColor bg)
+Crt::generateScreenByRawBmp()
 {
 // this is very hacky, and for windows it works only if the m_scrbits and
 // m_font_map bitmaps are declared with depth 24, instead of 32 or -1.
 // enabling it for windows is mostly useful for debugging
-#if __WXMAC__
+#ifdef __WXMAC__
   #define TT_t wxAlphaPixelData
   #define TW 32
 #else
@@ -855,7 +854,7 @@ Crt::generateScreenByRawBmp(wxColor fg, wxColor bg)
                 TT_t::Iterator sRowp = sp;
                 TT_t::Iterator cRowp = cp;
                 for (int cc=0; cc < m_charcell_w; ++cc) {
-#if __WXMAC__
+#ifdef __WXMAC__
                     // fails for 24bpp; but 32b was asserted earlier
                     sp.Data() = cp.Data();
 #else

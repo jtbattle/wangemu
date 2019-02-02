@@ -91,7 +91,7 @@ private:
 
     // update the bitmap of the screen image
     void generateScreen();
-    bool generateScreenByRawBmp(wxColor fg, wxColor bg);
+    bool generateScreenByRawBmp();
     void generateScreenByBlits(wxMemoryDC &memDC);
     void generateScreenOverlay(wxMemoryDC &memDC);
     void generateScreenCursor(wxMemoryDC &memDC);

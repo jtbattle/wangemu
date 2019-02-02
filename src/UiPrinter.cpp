@@ -848,7 +848,7 @@ Printer::updateView()
 void
 Printer::updateStatusbar()
 {
-#if __WXMAC__
+#ifdef __WXMAC__
     // on the mac, the code in here causes a paint refresh, which calls this again and we get in an infinite loop
     return;
 #endif
