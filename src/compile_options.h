@@ -27,8 +27,12 @@
 // ========================================================================
 
 // the bitmap that holds the screen image is refreshed at 30 Hz.
-// there are two different approaches to drawing it, as each performs
-// better on one one platform and poorly on the other.
+// there are two different approaches to drawing it:
+//     0=blit each character from the fontmap to the bitmap
+//     1=construct the m_scrbits image via the rawbmp.h interface
+// !DRAW_WITH_BITMAP performs horribly on OSX.  Historically the WXWIN
+// situation was the opposite, but on my win7 machine, both approaches
+// are about the same performance.
 #ifdef __WXMAC__
     // construct the m_scrbits image via the rawbmp.h interface.
     // the performance is glacial on OSX platform if this is not set.
@@ -39,11 +43,7 @@
     // internally generated wav file.
     #define USE_FILE_BEEPS 1
 #else
-    // blit each character from the fontmap to the bitmap.
-    // rawbmp is very slow on win32 because rawbmp scribbles on DIBs, but the
-    // conversion of DIB to DDB under win32 is really slow when it comes time
-    // to blast it to the screen.
-    #define DRAW_WITH_RAWBMP 0
+    #define DRAW_WITH_RAWBMP 1
     #define USE_FILE_BEEPS 0
 #endif
 
