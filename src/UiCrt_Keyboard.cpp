@@ -86,9 +86,13 @@ static constexpr kd_keymap_t keydown_keymap_table[] = {
     { WXK_F3,           KC_SHIFT,                       IoCardKeyboard::KEYCODE_SF | 0x13 },
 
     // edit mode: end of line
-    { WXK_RIGHT,        KC_CTRL,                        IoCardKeyboard::KEYCODE_SF | 0x04 },
     { WXK_F4,           KC_NOSHIFT,                     IoCardKeyboard::KEYCODE_SF | 0x04 },
     { WXK_F4,           KC_SHIFT,                       IoCardKeyboard::KEYCODE_SF | 0x14 },
+#ifdef __WXMAC__
+    { WXK_DOWN,         KC_SHIFT,                       IoCardKeyboard::KEYCODE_SF | 0x04 },
+#else
+    { WXK_RIGHT,        KC_CTRL,                        IoCardKeyboard::KEYCODE_SF | 0x04 },
+#endif
 
     // edit mode: down a line
     { WXK_DOWN,         KC_NOSHIFT,                     IoCardKeyboard::KEYCODE_SF | 0x05 },
@@ -101,9 +105,13 @@ static constexpr kd_keymap_t keydown_keymap_table[] = {
     { WXK_F6,           KC_SHIFT,                       IoCardKeyboard::KEYCODE_SF | 0x16 },
 
     // edit mode: beginning of line
-    { WXK_LEFT,         KC_CTRL,                        IoCardKeyboard::KEYCODE_SF | 0x07 },
     { WXK_F7,           KC_NOSHIFT,                     IoCardKeyboard::KEYCODE_SF | 0x07 },
     { WXK_F7,           KC_SHIFT,                       IoCardKeyboard::KEYCODE_SF | 0x17 },
+#ifdef __WXMAC__
+    { WXK_UP,           KC_SHIFT,                       IoCardKeyboard::KEYCODE_SF | 0x07 },
+#else
+    { WXK_LEFT,         KC_CTRL,                        IoCardKeyboard::KEYCODE_SF | 0x07 },
+#endif
 
     // edit mode: erase to end of line
     { 'K',              KC_CTRL,                        IoCardKeyboard::KEYCODE_SF | 0x08 },
