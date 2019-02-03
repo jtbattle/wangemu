@@ -505,8 +505,8 @@ Crt::createBeep()
 #if USE_FILE_BEEPS
     m_beep = std::make_unique<wxSound>();
     wxString sound_file =
-        (m_crt_state->screen_type == UI_SCREEN_2236DE) ? "beep_1940.wav"
-                                                       : "beep_1100.wav";
+        (m_crt_state->screen_type == UI_SCREEN_2236DE) ? "sounds/beep_1940.wav"
+                                                       : "sounds/beep_1100.wav";
     const bool success = m_beep->Create(sound_file);
     if (!success) {
         m_beep = nullptr;
