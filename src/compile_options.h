@@ -43,7 +43,7 @@
     // internally generated wav file.
     #define USE_FILE_BEEPS 1
 #else
-    #define DRAW_WITH_RAWBMP 1
+    #define DRAW_WITH_RAWBMP 0
     #define USE_FILE_BEEPS 0
 #endif
 
