@@ -1,0 +1,61 @@
+#!/bin/csh -f
+# script to build application bundle and prepare a release directory
+# useful resources:
+#    https://developer.apple.com/documentation/bundleresources
+#    https://developer.apple.com/library/archive/documentation/CoreFoundation/Conceptual/CFBundles/BundleTypes/BundleTypes.html
+
+set release   = "release"                    ; # destination directory name
+set bundle    = "$release/wangemu.app"       ; # name of application bundle
+set contents  = "$bundle/Contents"           ; # app Contents subdir
+set MacOS     = "$bundle/Contents/MacOS"     ; # where the binary lives
+set resources = "$bundle/Contents/Resources" ; # where external resources live
+
+if (-e $release) then
+    echo "Stopping: $release already exists"
+    exit 99
+endif
+
+# name of directory to build the .app bundle in
+mkdir -p $contents
+
+cat > $contents/Info.plist <<END
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CFBundleDevelopmentRegion</key>
+	<string>English</string>
+	<key>CFBundleExecutable</key>
+	<string>wangemu</string>
+	<key>CFBundleIconFile</key>
+	<string>wang</string>
+	<key>CFBundleIdentifier</key>
+	<string>www.wang2200.org</string>
+	<key>CFBundleInfoDictionaryVersion</key>
+	<string>6.0</string>
+	<key>CFBundlePackageType</key>
+	<string>APPL</string>
+	<key>CFBundleVersion</key>
+	<string>3.0</string>
+</dict>
+</plist>
+END
+
+# the executable
+mkdir -p $MacOS
+cp wangemu $MacOS/wangemu
+strip $MacOS/wangemu
+
+# resources external to the executable
+mkdir -p $resources
+
+cp -r html_osx       $resources/html
+cp -r sounds         $resources/sounds
+cp -r relnotes.txt   $resources/relnotes.txt
+cp -r src/wang.icns  $resources/wang.icns
+
+# copy all the stuff that lives in parallel to the app
+cp LICENSE README.md build.txt code.txt makefile make_release relnotes.txt $release
+cp -r disks scripts sounds src wvdutil $release
+ln -s "wangemu.app/Contents/MacOS/wangemu" $release/wangemu
+
