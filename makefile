@@ -1,3 +1,5 @@
+# This is a makefile for building the emulator on OSX.
+#
 # make targets:
 #
 # make         -- shorthand for "make debug"

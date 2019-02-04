@@ -1,5 +1,5 @@
 #!/bin/csh -f
-# script to build application bundle and prepare a release directory
+# script to build OSX application bundle and prepare a release directory
 # useful resources:
 #    https://developer.apple.com/documentation/bundleresources
 #    https://developer.apple.com/library/archive/documentation/CoreFoundation/Conceptual/CFBundles/BundleTypes/BundleTypes.html
