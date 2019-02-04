@@ -81,36 +81,6 @@ src/tags: $(CPP_SOURCES) $(C_SOURCES) $(H_SOURCES)
 	(cd src; ctags *.h *.cpp *.c >& /dev/null)
 
 # ===== build a release directory =====
-RELEASE_DIR  := release
-APP_NAME     := wangemu.app
-CONTENTS_DIR := $(RELEASE_DIR)/$(APP_NAME)/Contents
-MACOS_DIR    := $(CONTENTS_DIR)/MacOS
-RESOURCE_DIR := $(CONTENTS_DIR)/Resources
-
-define plist_var
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<plist version="1.0">
-<dict>
-	<key>CFBundleDevelopmentRegion</key>
-	<string>English</string>
-	<key>CFBundleExecutable</key>
-	<string>wangemu</string>
-	<key>CFBundleIconFile</key>
-	<string>wang</string>
-	<key>CFBundleIdentifier</key>
-	<string>www.wang2200.org</string>
-	<key>CFBundleInfoDictionaryVersion</key>
-	<string>6.0</string>
-	<key>CFBundlePackageType</key>
-	<string>APPL</string>
-	<key>CFBundleSignature</key>
-	<string>????</string>
-	<key>CFBundleVersion</key>
-	<string>3.0</string>
-</dict>
-</plist>
-endef
 
 release:
 	@./make_release
