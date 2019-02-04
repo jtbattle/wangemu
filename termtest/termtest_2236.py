@@ -107,6 +107,17 @@ if 0:
     term.at(10,10).send("(10,10)")
     term.sendline()
 
+if 1:
+    # test undocumented escape sequence which appears in more_games.wvd,
+    # program "SKETCH". it is possible that this sequence was legal when
+    # the game was written in 1979, but the sequence encoding changed later,
+    # making the program invalid.
+    term.clear()
+    for r in range(5,15):
+        term.at(r,5).sendhex('020b000f')
+    for r in range(5,15):
+        term.at(r,15).sendhex('020b040f')
+
 if 0:
     # box drawing
     term.clear()
@@ -375,7 +386,7 @@ if 0:
 
 # what happens with illegal escape sequences?  are they swallowed?
 # sent through?  partially sent through?
-if 1:
+if 0:
     term.clear()
     term.sendline("Illegal escape sequence testing")
     term.send("OK  020400000E:").sendhex("020400000E").sendline(":done")  # --> OK  020400000E::
