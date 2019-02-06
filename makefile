@@ -13,7 +13,7 @@
 .PHONY: debug opt tags clean release
 
 # Add .d to Make's recognized suffixes.
-SUFFIXES += .d
+.SUFFIXES: .c .cpp .d .o
 
 # don't create dependency files for these targets
 NODEPS := clean tags
@@ -32,15 +32,15 @@ OBJFILES := $(patsubst src/%.cpp,obj/%.o,$(CPP_SOURCES)) \
 	    $(patsubst src/%.c,obj/%.o,$(C_SOURCES))
 
 # debug build
-debug: OPTFLAGS := -g -O0 -fno-common 
+debug: OPTFLAGS := -g -O0
 debug: wangemu tags
 
 # optimized build
-opt: OPTFLAGS := -O2 -fno-common 
+opt: OPTFLAGS := -O2
 opt: wangemu tags
 
 CXX         := `wx-config --cxx`
-CXXFLAGS    := `wx-config --cxxflags`
+CXXFLAGS    := `wx-config --cxxflags` -fno-common
 CXXWARNINGS := -Wall -Wextra -Wshadow -Wformat -Wundef -Wstrict-aliasing=1 \
                -Wno-deprecated-declarations \
                -Wno-ctor-dtor-privacy -Woverloaded-virtual 

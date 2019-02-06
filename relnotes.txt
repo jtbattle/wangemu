@@ -1,6 +1,6 @@
 ============================================================================
 		   Wang 2200 emulator release notes, v3.0-pre
-                               Februrary 1, 2019
+                               Februrary 5, 2019
 ============================================================================
 
 ---- What is It? ----
@@ -148,6 +148,26 @@ The emulator very well might run on Linux via Wine, but it hasn't been tested.
    analyzer, cppcheck, and clang-tidy) and followed up many many suggestions,
    though not all. Those that were painful, overly pedantic, or I didn't
    agree with have been ignored for now.
+
+---- Tips ----
+
+*) if you are using the OS X version of wangemu and you find that some
+   keys repeat when you hold them down (eg, "a") and others don't (eg "b"),
+   it is tied to an OS X feature where holding down a key will cause the
+   OS to present a pop-up menu with various character accent options.
+   Under wangemu, that popup menu does not appear, but it does interfere
+   with key autorepeat.
+
+   To get normal repeating function, unfortunately, requires changing a
+   global system preference.  Open the Terminal application to get a
+   command line prompt, and enter this:
+
+       defaults write -g ApplePressAndHoldEnabled -bool false
+
+   After that, all keys should autorepeat as normal. To get the accented
+   character menu back, go back to Terminal and enter
+
+       defaults write -g ApplePressAndHoldEnabled -bool true
 
 ---- Known Bugs ----
 

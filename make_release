@@ -41,6 +41,8 @@ cat > $contents/Info.plist <<END
 </plist>
 END
 
+echo -n 'APPL????' > $contents/PkgInfo
+
 # the executable
 mkdir -p $MacOS
 cp wangemu $MacOS/wangemu
