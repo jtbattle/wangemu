@@ -8,9 +8,9 @@
 # make tags    -- make ctags index from files in src/
 # make clean   -- remove all build products
 # make release -- create a "release" directory containing the app bundle and support files
-#                 ideally, do "make clean opt release"
+# make dmg     -- package the release files into a .dmg disk image
 
-.PHONY: debug opt tags clean release
+.PHONY: debug opt tags clean release dmg
 
 # Add .d to Make's recognized suffixes.
 .SUFFIXES: .c .cpp .d .o
@@ -85,8 +85,13 @@ src/tags: $(CPP_SOURCES) $(C_SOURCES) $(H_SOURCES)
 release:
 	@./make_release
 
+# ===== build the dmg disk image =====
+
+dmg:
+	@./make_dmg
+
 # ===== clean build products =====
 
 clean:
-	rm -f src/*.d src/tags obj/*.o 
+	rm -f src/*.d src/tags obj/*.o *.dmg
 	rm -rf release

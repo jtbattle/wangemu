@@ -1,0 +1,27 @@
+#!/bin/csh -f
+# script to build an OSX .dmg file from a release area
+# useful resources:
+#    https://developer.apple.com/library/archive/documentation/Porting/Conceptual/PortingUnix/distributing/distibuting.html
+
+set release = "release"           ; # set of files to include in dmg directory name
+set dmgtmp  = "tmp.dmg"           ; # temporary file; it is deleted at the end
+set dmgname = "WangEmu_3.0.dmg"   ; # name of .dmg file to produce
+set volname = "WangEmu3.0"        ; # name of the volume when the dmg is mounted
+
+echo "creating initial disk image (40 MB)"
+hdiutil create -size 40m -fs HFS+ -volname "$volname" "$dmgtmp"
+
+echo "attaching tmp disk image"
+hdiutil attach "$dmgtmp"
+
+echo "copying files to disk image"
+cp -r release "/Volumes/$volname/$volname"
+
+set dev = `hdiutil attach "$dmgtmp" | cut -f 1 | head -1`
+echo "unmmounting $dev"
+hdiutil detach $dev
+
+echo "converting image to read-only"
+hdiutil convert "$dmgtmp" -format UDZO -o "$dmgname"
+
+rm "$dmgtmp"

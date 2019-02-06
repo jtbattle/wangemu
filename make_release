@@ -57,7 +57,7 @@ cp -r relnotes.txt   $resources/relnotes.txt
 cp -r src/wang.icns  $resources/wang.icns
 
 # copy all the stuff that lives in parallel to the app
-cp LICENSE README.md build.txt code.txt makefile make_release relnotes.txt $release
+cp LICENSE README.md build.txt code.txt relnotes.txt $release
+cp makefile make_release make_dmg $release
 cp -r disks scripts sounds src wvdutil $release
 ln -s "wangemu.app/Contents/MacOS/wangemu" $release/wangemu
-
