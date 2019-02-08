@@ -30,13 +30,15 @@ cat > $contents/Info.plist <<END
 	<key>CFBundleIconFile</key>
 	<string>wang</string>
 	<key>CFBundleIdentifier</key>
-	<string>www.wang2200.org</string>
+	<string>org.wang2200.www</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleVersion</key>
 	<string>3.0</string>
+        <key>ApplePressAndHoldEnabled</key>
+        <false/>
 </dict>
 </plist>
 END
@@ -46,7 +48,13 @@ echo -n 'APPL????' > $contents/PkgInfo
 # the executable
 mkdir -p $MacOS
 cp wangemu $MacOS/wangemu
-strip $MacOS/wangemu
+
+# I'm going to leave the binary unstripped.  if there is a crash, perhaps the
+# presense of the symbol table will report information useful to diagnosing the
+# problem.
+#     unstripped: 6536928
+#       stripped: 5415168
+#strip $MacOS/wangemu
 
 # resources external to the executable
 mkdir -p $resources

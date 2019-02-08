@@ -151,23 +151,54 @@ The emulator very well might run on Linux via Wine, but it hasn't been tested.
 
 ---- Tips ----
 
-*) if you are using the OS X version of wangemu and you find that some
-   keys repeat when you hold them down (eg, "a") and others don't (eg "b"),
-   it is tied to an OS X feature where holding down a key will cause the
-   OS to present a pop-up menu with various character accent options.
-   Under wangemu, that popup menu does not appear, but it does interfere
-   with key autorepeat.
+*) if you are using the OS X version of wangemu and you find that some keys
+   repeat when you hold them down (eg, "a") and others don't (eg "b"), it
+   is tied to an OS X feature where holding down a key will cause the OS
+   to present a pop-up menu with various character accent options. Under
+   wangemu, that popup menu does not appear, but it does interfere with key
+   autorepeat.
 
-   To get normal repeating function, unfortunately, requires changing a
-   global system preference.  Open the Terminal application to get a
-   command line prompt, and enter this:
+   Method 1: (not recommended)
 
-       defaults write -g ApplePressAndHoldEnabled -bool false
+     Disable this feature globally.  Open the Terminal application to get a
+     command line prompt, and enter this:
 
-   After that, all keys should autorepeat as normal. To get the accented
-   character menu back, go back to Terminal and enter
+         defaults write -g ApplePressAndHoldEnabled -bool false
 
-       defaults write -g ApplePressAndHoldEnabled -bool true
+     After that, all keys should autorepeat as normal. To get the accented
+     character menu back, go back to Terminal and enter
+
+         defaults delete -g ApplePressAndHoldEnabled
+
+     One could also write it to -bool true, but that would take priority over
+     the preference of any other app to disable it.  It is better to remove
+     the key, as any individual app can disable the feature, and those that
+     don't specify a preference get the default behavior, which is to enable
+     the key accept menu on long keypresses.
+
+   Method 2: (recommended for application use)
+
+     If you only ever launch the emulator as an application, the accent menu
+     can be disabled for just the emulator by typing this at the command line:
+
+         defaults write -app org.wang2200.www ApplePressAndHoldEnabled -bool false
+
+     It will not have any effect, though if the feature is globally enabled.
+     To reset the global default, type this at a command line:
+
+         defaults delete -g ApplePressAndHoldEnabled
+
+   Method 3: (recommended for command line use)
+
+     The emulator can also be run from the command line.  To disable the accent
+     menu for the emulator in this situation, enter this at the command line:
+
+         defaults write wangemu ApplePressAndHoldEnabled -bool false
+
+     Again, it will not have any effect if the feature is globally enabled.
+     To reset the global default, type this at a command line:
+
+         defaults delete -g ApplePressAndHoldEnabled
 
 ---- Known Bugs ----
 
