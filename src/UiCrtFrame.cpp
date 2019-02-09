@@ -1243,7 +1243,7 @@ CrtFrame::OnConfigureScreenDialog(wxCommandEvent& WXUNUSED(event))
     if (m_smart_term) {
         title.Printf("MXD/%02X, Term#%d Configuration", m_crt_addr, m_term_num+1);
     } else {
-        title.Printf("Display /%3X Configuration", m_crt_addr);
+        title.Printf("Display /%03X Configuration", m_crt_addr);
     }
 
     std::string subgroup = makeCrtIniGroup(m_smart_term, m_crt_addr, m_term_num);
