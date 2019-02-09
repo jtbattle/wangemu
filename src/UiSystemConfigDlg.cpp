@@ -72,9 +72,16 @@ SystemConfigDlg::SystemConfigDlg(wxFrame *parent) :
 {
     const int v_text_margin = 4;
     const int h_text_margin = 8;
+#ifdef __WXMAC__
+    const int fgs_vgap = 1;
+    const int fgs_hgap = 4;
+#else
+    const int fgs_vgap = 0;
+    const int fgs_hgap = 0;
+#endif
 
     // the grid on the left contains CPU related configuration
-    wxFlexGridSizer *left_grid = new wxFlexGridSizer(5, 2, 0, 0);
+    wxFlexGridSizer *left_grid = new wxFlexGridSizer(5, 2, fgs_vgap, fgs_hgap);
 
     // leaf controls for left_grid
     m_cpu_type = new wxChoice(this, ID_CPU_CHOICE);
@@ -110,7 +117,7 @@ SystemConfigDlg::SystemConfigDlg(wxFrame *parent) :
     leftgroup->Add(m_warn_io, 0, wxTOP, 15);
 
     // the grid on the right contains Slot related configuration
-    wxFlexGridSizer *right_grid = new wxFlexGridSizer(1+NUM_IOSLOTS, 4, 0, 0);
+    wxFlexGridSizer *right_grid = new wxFlexGridSizer(1+NUM_IOSLOTS, 4, fgs_vgap, fgs_hgap);
     right_grid->AddGrowableCol(1, 3); // col #1: description
     right_grid->AddGrowableCol(2, 1); // col #2: address
 
