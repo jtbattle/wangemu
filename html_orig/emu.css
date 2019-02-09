@@ -1,0 +1,142 @@
+
+/* this is just placeholder CSS to make developing the html more readable
+ * until real styling is applied
+ */
+
+body
+{
+    padding-left:2em;
+    padding-right:2em;
+    margin:2em auto;
+    color:black;
+    background-color:#f6f6f6;
+    font-family:Ariel,Helvetica,sans-serif;
+    max-width:900px;
+}
+
+h1
+{
+    text-align:center;
+    font-family:Tahoma,Charcoal,sans-serif;
+    background-color:#80c0f0;
+    padding-left:4px;
+    padding-top:4px;
+    padding-bottom:4px;
+    border-top:2px solid black;
+    border-bottom:2px solid black;
+}
+
+h2
+{
+    font-family:Tahoma,Charcoal,sans-serif;
+    background-color:#c8e0ff;
+    padding-left:4px;
+    padding-top:4px;
+    padding-bottom:4px;
+    border-top:1px solid #707070;
+    border-bottom:1px solid #707070;
+    margin-left:0.5em;
+    margin-right:0.5em;
+}
+
+h2 > a
+{
+    vertical-align:top;
+    margin-right:1em;
+}
+
+h3
+{
+    font-family:Tahoma,Charcoal,sans-serif;
+    background-color:#e8e8e8;
+    padding-left:4px;
+    padding-top:2px;
+    padding-bottom:2px;
+    border-top:1px solid #c0c0c0;
+    border-bottom:1px solid #c0c0c0;
+    margin-left:1em;
+    margin-right:1em;
+}
+
+div#content > p,
+div#content > table,
+div#content > dl
+{
+    margin-left:1em;
+}
+
+div#content > ul
+{
+    margin-left:2.5em;
+}
+
+/* style menu descriptions */
+td > a > img
+{
+    border-style:none;
+}
+
+td
+{
+    vertical-align:top;
+}
+
+/* center standalone images */
+p > img
+{
+    display:block;
+    margin-left:auto;
+    margin-right:auto;
+}
+
+/* center tables */
+table
+{
+    margin-left:auto;
+    margin-right:auto;
+}
+
+/* center tables */
+thead
+{
+    font-weight:bold;
+    background-color:#d0d0d0;
+}
+
+/* some of the menu items are described in tables */
+table.menu_table {
+    border-collapse:separate;
+    border-spacing:0 10px;
+}
+table.menu_table td {
+    padding-left:1em;
+    padding-right:1em;
+}
+table.menu_table td:first-child {
+    border-right:2px solid #505050;
+    white-space:nowrap;
+}
+
+/* used for short code example */
+p.code
+{
+    font-family:courier,serif;
+    margin-left:3em;
+    background-color:#ffffff;
+    border:dotted 1px;
+    padding:2px;
+}
+
+pre
+{
+    margin-left:3em;
+}
+
+/* footer containing "last update" info */
+div#footer p
+{
+    padding:5px;
+    background-color:#8292bc;
+    color:#ffffff;
+    text-align:right;
+}

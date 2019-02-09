@@ -1,4 +1,3 @@
-
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
@@ -49,7 +48,7 @@ The first time the program is run, or if it can't locate wangemu.ini,
 or if the file exists but has errors, a warning message is produced.
 </p>
 
-<p><img src="img/ini_warning.png"  height="126" width="326" alt="placeholder" /></p>
+<p><img src="img/ini_warning.png"  height="129" width="364" alt="placeholder" /></p>
 
 <p>
 In this case the emulator is given a default configuration, consisting of:
@@ -101,7 +100,9 @@ of the VP microarchitecture but were largely the same.  Select this
 for 2200 VP emulation running Wang BASIC-2.  Note that the VP series
 didn't have BASIC in ROM and instead required a boot disk containing the
 BASIC microcode.  For VP emulation the system must have at least on
-disk controller in order to load microcode.
+disk controller in order to load microcode.  For MVP emulation, the CPU must
+be either the MVP-C or the MicroVP, and a 2236 MXD terminal mux must be
+chosen (see later).
 </p>
 
 <p>
@@ -110,14 +111,14 @@ To configure how much RAM the machine has, from the top level menu pick
 a window that looks something like this one:
 </p>
 
-<p><img src="img/config.png"  height="242" width="582" alt="placeholder" /></p>
+<p><img src="img/config.png"  height="268" width="628" alt="placeholder" /></p>
 
 <p>
 Click on the pull-down list item labeled "RAM" and pick how much RAM
 you'd like your system to have:
 </p>
 
-<p><img src="img/config_ram.png"  height="242" width="582" alt="placeholder" /></p>
+<p><img src="img/config_ram.png"  height="265" width="628" alt="placeholder" /></p>
 
 <p>
 The RAM size options shown above are all the ones valid for a real 2200T
@@ -158,14 +159,14 @@ Select "Configure/Configure System..." from the top-level menu and you'll
 get this dialog:
 </p>
 
-<p><img src="img/config.png"  height="242" width="582" alt="placeholder" /></p>
+<p><img src="img/config.png"  height="268" width="628" alt="placeholder" /></p>
 
 <p>
 For each of the slots, you can pick one of the available card types.
 For example, here's how to add an 80x24 display controller:
 </p>
 
-<p><img src="img/config_iotype.png"  height="242" width="582" alt="placeholder" /></p>
+<p><img src="img/config_iotype.png"  height="265" width="628" alt="placeholder" /></p>
 
 <p>
 A card can be removed from a slot by selecting the "(vacant)" device
@@ -178,7 +179,7 @@ need to be assigned.  Click on the pull-down list for the I/O address
 for the slot just modified; in this example,
 </p>
 
-<p><img src="img/config_ioaddr.png"  height="242" width="582" alt="placeholder" /></p>
+<p><img src="img/config_ioaddr.png"  height="265" width="628" alt="placeholder" /></p>
 
 <p>
 After making changes, either accept them by pressing the <b><tt>OK</tt></b>
@@ -193,21 +194,22 @@ configuration you've set up, you'll get one of the following warning messages
 explaining what is wrong.  The first two are self explanatory:
 </p>
 
-<p><img src="img/config_warn_01.png"  height="126" width="441" alt="placeholder" /></p>
-<p><img src="img/config_warn_05.png"  height="126" width="416" alt="placeholder" /></p>
+<p><img src="img/config_warn_01.png"  height="131" width="476" alt="placeholder" /></p>
+<p><img src="img/config_warn_05.png"  height="131" width="449" alt="placeholder" /></p>
 
 <p>
 If you add a card to a slot but forget to assign an I/O address, you'll
-see the following error message.
+see an error similar to the following message:
 </p>
 
-<p><img src="img/config_warn_ioaddr.png"  height="126" width="258" alt="placeholder" /></p>
+<p><img src="img/config_warn_ioaddr.png"  height="131" width="366" alt="placeholder" /></p>
 
 <p>
-If you assign the same address to two devices, you'll see this error message.
+If you assign the same address to two devices, you'll see a message
+like this one:
 </p>
 
-<p><img src="img/config_warn_conflict.png"  height="126" width="446" alt="placeholder" /></p>
+<p><img src="img/config_warn_conflict.png"  height="131" width="484" alt="placeholder" /></p>
 
 <p>
 As the configuration is edited, the dialog constantly checks if the
@@ -220,7 +222,7 @@ disk timing is emulated as realtime), or "OK, Reboot" if the change is more
 significant (e.g., adding or removing a card).
 </p>
 
-<p><img src="img/config_ok_reboot.png"  height="242" width="582" alt="placeholder" /></p>
+<p><img src="img/config_ok_reboot.png"  height="265" width="628" alt="placeholder" /></p>
 
 <h2><a name="disk">Disk Configuration</a></h2>
 
@@ -231,7 +233,7 @@ controller.  Clicking that button will bring up another dialog to set the
 details of that disk controller.
 </p>
 
-<p><img src="img/config_disk.png"  height="218" width="398" alt="placeholder" /></p>
+<p><img src="img/config_disk.png"  height="239" width="458" alt="placeholder" /></p>
 
 <h3>Number of drives</h3>
 
@@ -300,7 +302,7 @@ The appearance of the CRT portion of the emulation is controlled via the
 "Configure/Configure Screen..." menu.  The dialog is shown here.
 </p>
 
-<p><img src="img/config_screen.png"  height="154" width="207" alt="placeholder" /></p>
+<p><img src="img/config_screen.png"  height="162" width="225" alt="placeholder" /></p>
 
 <p>
 When selections are made on this dialog, the change is immediately reflected
@@ -393,24 +395,24 @@ and where printer output was saved.
 <h3>Keyword Mode</h3>
 
 <p>
-The Wang 2222 keyboard had two modes of operation, controlled by a toggle
+The Wang 2226 keyboard had two modes of operation, controlled by a toggle
 lever on the left side of the keyboard.  In "A/a" mode, the keyboard
 acted much like a typewriter.  Shifted keys produced capital letters
-and unshifted keys produce lower case letters.  If the mode switch
-was set to "Keyword/A" mode, shifted keys produced keywords (e.g., "PRINT
-" and "FOR "), while unshifted keys produced capital letters.
+and unshifted keys produce lower case letters.  If the mode switch was set
+to "Keyword/A" mode, shifted keys produced keywords (e.g., "PRINT " and
+"FOR "), while unshifted keys produced capital letters.
 </p>
 
 <p>
-WangEmu supports 2222 keyboard emulation via a checkbox in the lower
+WangEmu supports 2226 keyboard emulation via a checkbox in the lower
 left corner of the CRT display. The two modes are shown here:
 </p>
 
 <table>
 <tr>
-    <td><img src="img/keyword1.png"  height="33" width="143" alt="placeholder" /></td>
+    <td><img src="img/keyword1.png"  height="30" width="150" alt="placeholder" /></td>
     <td></td>
-    <td><img src="img/keyword2.png"  height="33" width="143" alt="placeholder" /></td>
+    <td><img src="img/keyword2.png"  height="30" width="150" alt="placeholder" /></td>
 </tr>
 </table>
 
@@ -418,10 +420,10 @@ left corner of the CRT display. The two modes are shown here:
 Checking the box causes shifted letters to produce keywords and unshifted
 letters to produce their capital letter.  Another way to toggle the
 state is to select the "Configure/Keyword mode" menu item, or to use the
-keyboard sequence Alt+K.
+keyboard sequence Alt-K.
 </p>
 
-<p><img src="img/menu_config.png"  height="108" width="194" alt="placeholder" /></p>
+<p><img src="img/menu_config.png"  height="138" width="240" alt="placeholder" /></p>
 
 <h3>SF key toolbar</h3>
 
@@ -437,13 +439,13 @@ nor do they work in concert with the shift key.
 Here is what the top of the CRT window looks like without a toolbar:
 </p>
 
-<p><img src="img/no_toolbar.png"  height="67" width="692" alt="placeholder" /></p>
+<p><img src="img/no_toolbar.png"  height="65" width="696" alt="placeholder" /></p>
 
 <p>
 and here is what it looks like with the toolbar enabled:
 </p>
 
-<p><img src="img/with_toolbar.png"  height="96" width="692" alt="placeholder" /></p>
+<p><img src="img/with_toolbar.png"  height="97" width="696" alt="placeholder" /></p>
 
 <p>
 There are 16 special function keys; holding down the shift key while
@@ -452,6 +454,14 @@ clicking on one of the buttons produces the Wang special function keys
 key number, just like a real Wang keyboard.  These show the effect
 that the keys have in EDIT mode.
 </p>
+
+<p>
+If the window is emulating a serial terminal (that is, it is connected to
+a 2236 MXD terminal mux), the toolbar will look slightly different, as
+a few more special function keys have had EDIT actions assigned to them.
+</p>
+
+<p><img src="img/2336_toolbar.png"  height="97" width="856" alt="placeholder" /></p>
 
 <h3>Fullscreen Mode</h3>
 
@@ -465,7 +475,7 @@ margins.
 
 <p>
 By selecting the "Configure/Fullscreen" menu item, or by using the keyboard
-shortcut Alt+Enter, WangEmu will toggle into and
+shortcut Alt-Enter, WangEmu will toggle into and
 out of fullscreen mode.  Fullscreen mode is where the program will
 take over the whole computer screen.  It is different than a maximized
 window in that there is no title bar, no status bar, and no left and right
@@ -488,32 +498,12 @@ This dialog allows user control of whether or not emulation performance
 statistics appear in the status bar of the CRT frame.
 </p>
 
-<p><img src="img/statistics.png"  height="37" width="251" alt="placeholder" /></p>
+<p><img src="img/statistics.png"  height="52" width="291" alt="placeholder" /></p>
 
 <p>
-For example, the statusbar above indicates that 415
-emulated seconds of CPU time had elapsed since the beginning of the
-simulation and that the emulation was running at 35
-times the speed of an actual Wang 2200.
-</p>
-
-<h3>Realtime Disk Emulation</h3>
-
-<p>
-When the emulator accesses a virtual Wang disk image, the user has the
-choice of letting the access complete as quickly as possible or to emulate
-the timing of the original Wang disk system.  This choice is controlled
-by a checkbox on the System Configuration dialog.  That box is highlighted
-below:
-</p>
-
-<p><img src="img/config_disk_realtime.png"  height="242" width="582" alt="placeholder" /></p>
-
-<p>
-Note that the exact timing behavior of the disk is affected by three
-things, including this setting.  Even if the realtime emulation option
-is chosen, if the emulation speed is set to "unregulated," then the actual
-time things take is proportional the emulated CPU speed.
+For example, the statusbar above indicates that 752 emulated seconds of CPU
+time had elapsed since the beginning of the simulation and that the emulation
+was running at 43 times the speed of an actual Wang 2200.
 </p>
 
 <h3>Enable/Disable Warnings About Accesses to Unpopulated I/O Addresses</h3>
@@ -533,7 +523,7 @@ Whether to warn or not is controlled globally by the flag on the System
 Configuration menu, shown highlighted below.
 </p>
 
-<p><img src="img/config_warn_io.png"  height="242" width="582" alt="placeholder" /></p>
+<p><img src="img/config_warn_io.png"  height="268" width="628" alt="placeholder" /></p>
 
 <p>
 The first time a given non-existent device is addressed, the following
@@ -542,16 +532,20 @@ complaints about that address, or to continue receiving them.  This
 suppression exists until the next time the emulator is started.
 </p>
 
-<p><img src="img/warn_bad_io.png"  height="257" width="380" alt="placeholder" /></p>
+<p><img src="img/warn_bad_io.png"  height="252" width="444" alt="placeholder" /></p>
 
 <h3>Keyboard Tieing</h3>
+
+<p>
+This topic is an obscure corner case, so feel free to skip it unless you
+have an unusual configuration with multiple 6367 keyboard controllers.
+</p>
 
 <p>
 Although probably 99.9% of the Wang 2200's were used with a single keyboard
 (that is, until the MVP came out), there was nothing to prevent a person
 from plugging multiple keyboard controllers into one CPU.  WangEmu
-also allows it.  However, that presents a problem, as a
-PC is even
+also allows it.  However, that presents a problem, as a PC is even
 more likely than an old 2200 to have a single keyboard.  WangEmu solves
 this by allowing the user to specify where keystrokes directed to a given
 CRT screen should map to in the range of keyboard addresses.
@@ -564,14 +558,14 @@ must, be necessity, be at address 01), and the top level Configure menu
 list looks like this:
 </p>
 
-<p><img src="img/menu_config.png"  height="108" width="194" alt="placeholder" /></p>
+<p><img src="img/menu_config.png"  height="138" width="240" alt="placeholder" /></p>
 
 <p>
 However, say two keyboards are configured for the system, at I/O addresses
 01 and 02.  The top level Configure menu changes to look like this:
 </p>
 
-<p><img src="img/menu_config2.png"  height="151" width="197" alt="placeholder" /></p>
+<p><img src="img/menu_config2.png"  height="190" width="245" alt="placeholder" /></p>
 
 <p>
 By selecting "Tie to /0nn", any keys typed while the window has focus
@@ -584,7 +578,7 @@ to a single keyboard controller, or anything in between.
 </div>
 
 <div id="footer">
-    <p>Last update:December 11, 2008</p>
+    <p>Last update: February 8, 2019</p>
 </div>
 
 </div>

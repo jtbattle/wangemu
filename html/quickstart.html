@@ -95,7 +95,7 @@ unpacked.
 The first time WangEmu is run, an warning message will appear:
 </p>
 
-<p><img src="img/ini_warning.png"  height="126" width="326" alt="placeholder" /></p>
+<p><img src="img/ini_warning.png"  height="129" width="364" alt="placeholder" /></p>
 
 <p>
 This is normal and can be ignored.  It is simply indicating that
@@ -122,7 +122,7 @@ Every time WangEmu exits, all the users preferences are saved in a file
 called wangemu.ini.  It is an ASCII text file, but it should not be
 directly edited otherwise the configuration might get corrupted; if so,
 delete the file and reconfigure the emulator as if it was the first time
-the emulator was run.  This file is located in 
+the emulator was run.  This file is located in
 the same directory as the executable.
 </p>
 
@@ -141,7 +141,16 @@ few more steps are required.
 <p>
 From the <b>Configure</b> menu item, select <b>Configure System...</b>.
 There is a choice box in the upper left corner that reads "CPU: 2200T".
-Change that to read "CPU: 2200VP".  Click the OK button.
+Change that to read "CPU: 2200VP". You can also adjust how much RAM
+the system is configured for in the pulldown box just below the CPU
+choice. Click the OK button.
+
+<p>
+Also, you have the option of picking other CPU types: MVP-C, or MicroVP.
+One of these is required if you want to run an MVP operating system.
+If this is the case, you will also need to unmap the 6367 keyboard
+controller and the 6312A CRT controller. Instead, pick a 2236 MXD terminal
+controller, at address /000.
 </p>
 
 <p>
@@ -154,10 +163,10 @@ The same is true for the emulator.
 <li>From the Disk menu, select <b>Drive F/310: Insert</b>.  A standard
     dialog box for selecting a file should appear.</li>
 <li>Navigate into the "disks" subdirectory of wherever the emulator was installed.</li>
-<li>Select the disk <b>vp-boot-2.3.wvd</b>.</li>
+<li>Select the disk <b>vp-boot-2.3.wvd</b>, for example.</li>
 <li>Perform a warm reset of the machine, just like a real machine.
     One way to do it is to open the <b>CPU</b> menu and select the
-    <b>Warm Reset CPU</b> item.
+    <b>Reset CPU</b> item.  Alternately, you can type Shift-Alt-R.
     <br />You should now see a prompt that reads
     <br /><tt>&nbsp;&nbsp;&nbsp; KEY SF'?</tt>
     <br />This prompt allows triggering a load of one of a handful of microcode
@@ -198,8 +207,8 @@ emulator pretend the user is a really fast typist), follow these steps.
 <li>When the program is done being read in, type <b>RUN</b> and hit <b>ENTER</b>
     to start running the chosen program.</li>
 <li>To halt the program you can reset the machine (from the CPU menu) or you
-    can hit the emulated HALT/STEP key.  On the PC this is the Break key;
-    on the Mac this is Ctrl+ESC.</li>
+    can hit the emulated HALT/STEP key.  This is done by pressing the BREAK
+    key, or equivalently, typing Ctrl-S.</li>
 </ol>
 
 <p>
@@ -211,7 +220,7 @@ feature.
 </div>
 
 <div id="footer">
-    <p>Last update:December 12, 2008</p>
+    <p>Last update: February 8, 2019</p>
 </div>
 
 </div>
