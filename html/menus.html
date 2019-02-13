@@ -161,6 +161,21 @@ Ctrl
 key and clicking on the drive with the left mouse button.
 </p>
 
+<p>
+The last two items on the menu allow choosing between "Realtime Disk Speed"
+and "Unregulated Speed".  When the former is selected, the emulator attempts
+to model the motor start up, head stepping, and rotational delays of the real
+machine. Floppy disks are pretty slow, and the hard disks are of course faster.
+When "Unregulated Speed" is chosen, the emulator dispenses with the delays and
+performs the disk reads and writes as fast as it can.
+</p>
+
+<p>
+Note that if the CPU speed is set to unregulated, the entire emulator will be
+running some multiple of realtime, so even if the disk speed is chosen to be
+authentic, it will be sped up by that same multiple.
+</p>
+
 <h2><a name="Printer">Printer menu:</a><img src="img/menu_printer.png"  height="50" width="185" alt="placeholder" /></h2>
 
 <p>

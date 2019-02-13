@@ -66,18 +66,17 @@ enum
 SystemConfigDlg::SystemConfigDlg(wxFrame *parent) :
         wxDialog(parent, -1, "System Configuration",
                  wxDefaultPosition, wxDefaultSize,
-                 wxDEFAULT_DIALOG_STYLE | wxRESIZE_BORDER) ,
+                 wxDEFAULT_DIALOG_STYLE | wxRESIZE_BORDER),
         m_cfg    (system2200::config()),  // the one we will be editing
         m_old_cfg(system2200::config())   // the existing configuration
 {
     const int v_text_margin = 4;
     const int h_text_margin = 8;
-#ifdef __WXMAC__
     const int fgs_vgap = 1;
+#ifdef __WXMAC__
     const int fgs_hgap = 4;
 #else
-    const int fgs_vgap = 0;
-    const int fgs_hgap = 0;
+    const int fgs_hgap = 2;
 #endif
 
     // the grid on the left contains CPU related configuration
