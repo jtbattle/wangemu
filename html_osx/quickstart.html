@@ -1,4 +1,3 @@
-
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
@@ -32,18 +31,14 @@ is being run from WangEmu's help file itself of course.
 
 <h2>Unpacking the .dmg file</h2>
 
-
-
 <p>
 The application and its associated files are distributed in a standard
-<tt>.dmg</tt> file called "WangEmu_2.1.dmg".  Place this file anywhere,
+<tt>.dmg</tt> file called "WangEmu_3.0.dmg".  Place this file anywhere,
 for example right on the desktop.  Wherever the file is located, double
 click the icon and a virtual disk drive image will appear mounted on the
 desktop.  Double click on that image and inside is a folder called
-"WangEmu2.1".  Double click on the folder to see the contents.
+"WangEmu3.0".  Double click on the folder to see the contents.
 </p>
-
-
 
 <p>
 The folders called <tt>disks</tt> and <tt>scripts</tt> contain programs
@@ -109,7 +104,17 @@ few more steps are required.
 <p>
 From the <b>Configure</b> menu item, select <b>Configure System...</b>.
 There is a choice box in the upper left corner that reads "CPU: 2200T".
-Change that to read "CPU: 2200VP".  Click the OK button.
+Change that to read "CPU: 2200VP". You can also adjust how much RAM
+the system is configured for in the pulldown box just below the CPU
+choice. Click the OK button.
+</p>
+
+<p>
+Also, you have the option of picking other CPU types: MVP-C, or MicroVP.
+One of these is required if you want to run an MVP operating system.
+If this is the case, you will also need to unmap the 6367 keyboard
+controller and the 6312A CRT controller. Instead, pick a 2236 MXD terminal
+controller, at address /000.
 </p>
 
 <p>
@@ -122,21 +127,21 @@ The same is true for the emulator.
 <li>From the Disk menu, select <b>Drive F/310: Insert</b>.  A standard
     dialog box for selecting a file should appear.</li>
 <li>Navigate into the "disks" subdirectory of wherever the emulator was installed.</li>
-<li>Select the disk <b>vp-boot-2.3.wvd</b>.</li>
+<li>Select the disk <b>vp-boot-2.3.wvd</b>, for example.</li>
 <li>Perform a warm reset of the machine, just like a real machine.
     One way to do it is to open the <b>CPU</b> menu and select the
-    <b>Warm Reset CPU</b> item.
-    <br />You should now see a prompt that reads
-    <br /><tt>&nbsp;&nbsp;&nbsp; KEY SF'?</tt>
-    <br />This prompt allows triggering a load of one of a handful of microcode
-          images from one of a number of disk drives.
+    <b>Reset CPU</b> item.  Alternately, you can type Shift-Cmd-R.
+    <br/>You should now see a prompt that reads
+    <br/><tt>&nbsp;&nbsp;&nbsp; KEY SF'?</tt>
+    <br/>This prompt allows triggering a load of one of a handful of microcode
+         images from one of a number of disk drives.
     </li>
 <li>For our purpose, we want Special Function key 0, which can be triggered
     by hitting the ESC key.  After a few seconds you should see
-    <br /><tt>&nbsp;&nbsp;&nbsp; Loading:&nbsp; VP BASIC-2  Release 2.3</tt>
-    <br />then a few seconds later,
-    <br /><tt>&nbsp;&nbsp;&nbsp; READY&nbsp; (BASIC-2)</tt>
-    <br /><tt>&nbsp;&nbsp;&nbsp; :_</tt>
+    <br/><tt>&nbsp;&nbsp;&nbsp; Loading:&nbsp; VP BASIC-2  Release 2.3</tt>
+    <br/>then a few seconds later,
+    <br/><tt>&nbsp;&nbsp;&nbsp; READY&nbsp; (BASIC-2)</tt>
+    <br/><tt>&nbsp;&nbsp;&nbsp; :_</tt>
     </li>
 </ol>
 
@@ -166,8 +171,8 @@ emulator pretend the user is a really fast typist), follow these steps.
 <li>When the program is done being read in, type <b>RUN</b> and hit <b>ENTER</b>
     to start running the chosen program.</li>
 <li>To halt the program you can reset the machine (from the CPU menu) or you
-    can hit the emulated HALT/STEP key.  On the PC this is the Break key;
-    on the Mac this is Ctrl+ESC.</li>
+    can hit the emulated HALT/STEP key. As there is no HALT/STEP key on a
+    Mac keyboard, it has been mapped to Ctrl-S.</li>
 </ol>
 
 <p>
@@ -179,7 +184,7 @@ feature.
 </div>
 
 <div id="footer">
-    <p>Last update:December 12, 2008</p>
+    <p>Last update: February 10, 2019</p>
 </div>
 
 </div>

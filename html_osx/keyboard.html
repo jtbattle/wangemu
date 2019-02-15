@@ -1,4 +1,3 @@
-
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
@@ -10,10 +9,20 @@
 @import url("./emu.css");
 -->
 
+hr {
+    border: 0;
+    height: 1px;
+    background-color: #b0b0b0;
+}
+
+table thead td {
+    background: #aaffaa;
+}
 table td {
     padding-left:4px;
     padding-right:4px;
 }
+
 table.underlined {
     border-collapse:collapse;
 }
@@ -24,11 +33,31 @@ table.underlined tfoot td {
     border-bottom-style:none;
     font-size:small;
 }
-table.keywords td:first-child + td {
+table.underlined tbody td {
+    border: 1px solid #aaaaaa;
+}
+table.underlined tbody tr:nth-child(even) {
+    background: #dddddd;
+}
+table.underlined thead td {
+    border: 1px solid #bbbbbb;
+}
+
+table.keywords tbody td:nth-child(2),
+table.keywords tbody td:nth-child(4) {
     font-family:courier;
 }
+
+li {
+    margin-bottom: 0.4em;
+}
+
 .arrow {
-    font-size:150%
+    font-size:120%
+}
+
+div.diagram {
+    background: 0xff0000;
 }
 </style>
 </head>
@@ -72,8 +101,7 @@ have necessitated moving the "&lt;" symbol to some other obscure location).
 
 <p>
 Another matter is that there isn't complete standardization on keyboard
-layouts.
-This is especially true on the Mac platform.
+layouts.  This is especially true on the Mac platform.
 Perhaps a future version of the emulator will allow for a user-configurable
 key map, but for now, changing it requires editing the source code and
 recompiling.
@@ -83,30 +111,30 @@ recompiling.
 
 <p>
 Unfortunately, the Wang has 16 special function keys, while not all Mac
-keyboards do.  OS X also steals F9, F10, F11, and F12 for various Expos&eacute;
-functions, and at least on the authors keyboard, F13-F16 don't seem to
-act predictably like the other function keys.
+keyboards do.  OS X also steals some keys for various Expos&eacute;
+functions; holding down the FN-key while pressing the indicated function
+key will allow the emulator to see the function key press without the
+side effects.
 </p>
 
 <p>
-There are two workarounds available for the lack of a complete set of
-F0-F15 keys.
+There are two other methods for getting function key presses to the emulator.
 First, WangEmu can be configured to display a toolbar with all the special
 function keys.
 </p>
 
 <p>
-Second, special function keys used in the EDIT mode
-are also mapped to control key combinations.
+Second, special function keys used in the EDIT mode are also mapped to control
+key combinations. For example, to enter the SF 13 key, which in edit mode
+causes the cursor to move left one position, it is much more mnemonic to
+press LEFT-ARROW (<span class="arrow">&larr;</span>).
 </p>
 
 <p>
 Below is a complete table of the mappings.  In some cases, there
 are two Mac keys or key combinations that are used to emulate a given
-2226 keystroke.  On the 2200, some of
-the special function keys get a dedicated purpose when in edit mode, shown
-as the last column of the table. Note that not all Wang keys have an equivalent
-Mac mapping, including "PRINT" and "CONTINUE".
+keystroke.  On the 2200, some of the special function keys get a dedicated
+purpose when in edit mode, shown as the last column of the table.
 </p>
 
 <table class="underlined">
@@ -119,6 +147,23 @@ Mac mapping, including "PRINT" and "CONTINUE".
 </tr>
 </thead>
 
+<tfoot>
+<tr>
+    <td colspan="4">
+    <sup>&dagger;</sup>This edit behavior is for (M)VP OS only
+    </td>
+</tr>
+<tr>
+    <td colspan="4">
+    <sup>&Dagger;</sup>This behavior is for 2200A/B/C/S/T Wang BASIC
+    </td>
+</tr>
+<tr>
+    <td colspan="4">
+    <sup>&sect;</sup>This behavior is for 2236 serial terminals w/(M)VP
+    </td>
+</tr>
+</tfoot>
 
 <tbody>
 <tr>
@@ -136,80 +181,108 @@ Mac mapping, including "PRINT" and "CONTINUE".
 </tr>
 
 <tr>
-    <td><b>&hellip;</b></td>
-    <td><b>&hellip;</b></td>
-    <td><b>&hellip;</b></td>
-    <td><b>&hellip;</b></td>
+    <td>SF2</td>
+    <td>special function 2</td>
+    <td>n/a</td>
+    <td>F2</td>
+</tr>
+
+<tr>
+    <td>SF3</td>
+    <td>special function 3</td>
+    <td>n/a</td>
+    <td>F3</td>
+</tr>
+
+<tr>
+    <td>SF4</td>
+    <td>special function 4</td>
+    <td><sup>&dagger;</sup>cursor to end of line</td>
+    <td>F4<br/>Shift-<span class="arrow">&darr;</span></td>
+</tr>
+
+<tr>
+    <td>SF5</td>
+    <td>special function 5</td>
+    <td><sup>&dagger;</sup>cursor down a line</td>
+    <td>F5<br/><span class="arrow">&darr;</span></td>
+</tr>
+
+<tr>
+    <td>SF6</td>
+    <td>special function 6</td>
+    <td><sup>&dagger;</sup>cursor up a line</td>
+    <td>F6<br/><span class="arrow">&uarr;</span></td>
 </tr>
 
 <tr>
     <td>SF7</td>
     <td>special function 7</td>
-    <td>n/a</td>
-    <td>F7</td>
+    <td><sup>&dagger;</sup>cursor to start of line</td>
+    <td>F7<br/>Shift-<span class="arrow">&uarr;</span></td>
 </tr>
 
 <tr>
     <td>SF8</td>
     <td>special function 8</td>
     <td>delete to end of line</td>
-    <td>F8<br />End</td>
+    <td>F8<br/>End<br/>Ctrl-K(ill)</td>
 </tr>
 
 <tr>
     <td>SF9</td>
     <td>special function 9</td>
     <td>delete char under cursor</td>
-    <td>Delete<br />Ctrl+D</td>
+    <td>F9<br/>Delete<br/>Ctrl-D</td>
 </tr>
 
 <tr>
     <td>SF10</td>
     <td>special function 10</td>
     <td>insert char at cursor</td>
-    <td>Ctrl+I</td>
+    <td>F10<br/>Ctrl-I</td>
 </tr>
 
 <tr>
     <td>SF11</td>
     <td>special function 11</td>
     <td>cursor right 5 places</td>
-    <td>Shift + <span class="arrow">&rarr;</span></td>
+    <td>F11<br/>Shift + <span class="arrow">&rarr;</span></td>
 </tr>
 
 <tr>
     <td>SF12</td>
     <td>special function 12</td>
     <td>cursor right 1 place</td>
-    <td><span class="arrow">&rarr;</span></td>
+    <td>F12<br/><span class="arrow">&rarr;</span></td>
 </tr>
 
 <tr>
     <td>SF13</td>
     <td>special function 13</td>
     <td>cursor left 1 place</td>
-    <td><span class="arrow">&larr;</span></td>
+    <td>F13<br/><span class="arrow">&larr;</span></td>
 </tr>
 
 <tr>
     <td>SF14</td>
     <td>special function 14</td>
     <td>cursor left 5 places</td>
-    <td>Shift + <span class="arrow">&larr;</span></td>
+    <td>F14<br/>Shift + <span class="arrow">&larr;</span></td>
 </tr>
 
 <tr>
     <td>SF15</td>
     <td>special function 15</td>
     <td>recall line</td>
-    <td>Ctrl+F</td>
+    <td>F15<br/>Ctrl-F</td>
 </tr>
 
 <tr>
     <td>EDIT</td>
     <td>enter edit mode</td>
     <td>n/a</td>
-    <td>Ctrl+E</td>
+    <td>F16<br/>Ctrl-E</td>
 </tr>
 
 <tr>
@@ -220,9 +293,16 @@ Mac mapping, including "PRINT" and "CONTINUE".
 </tr>
 
 <tr>
-    <td>NEXT STATEMENT</td>
-    <td>next highest line number</td>
-    <td>next highest line number</td>
+    <td><sup>&Dagger;</sup>STMT NUMBER</td>
+    <td>next line number</td>
+    <td> </td>
+    <td>Tab</td>
+</tr>
+
+<tr>
+    <td><sup>&sect;</sup>FN</td>
+    <td>function key</td>
+    <td></td>
     <td>Tab</td>
 </tr>
 
@@ -230,7 +310,7 @@ Mac mapping, including "PRINT" and "CONTINUE".
     <td>HALT/STEP</td>
     <td>break/single step</td>
     <td>n/a</td>
-    <td>Ctrl+C</td>
+    <td>Ctrl-S</td>
 </tr>
 </tbody>
 
@@ -243,17 +323,16 @@ SHIFT key will generate the codes for the 2200's special function 16 through
 31 keys (the 2226 also had only 16 special function keys, SF0-SF15, and
 SF16-SF31 were obtained by pressing SHIFT to add 16 to the special function
 key number).
-This doesn't work for F8-F15 because of OS X's allocation of these keys.
-Instead, you must use the toolbar by clicking the appropriate function key
-image while holding down shift.
 </p>
 
 <p>
-To recall and edit, say, line 500
-this quick keyboard sequence
-can be used:
+To recall and edit, say, line 500,
+either of the following sequences can be used:
 </p>
 
+<p class="code">
+500&lt;F16&gt;&lt;F15&gt;
+</p>
 
 <p class="code">
 500&lt;press ctrl&gt;&lt;E&gt;&lt;F&gt;&lt;release ctrl&gt;
@@ -267,16 +346,16 @@ Which mode the keyboard was in was controlled by a toggle switch on the
 left side of the keyboard.  This is controlled in the emulator in any of
 three ways: the checkbox in the lower left corner of the emulated CRT window,
 via the Configure/Keyword mode menu item, or with the
-Cmd+K shortcut.
+Cmd-K shortcut.
 </p>
 
 <table>
 <tr>
-    <td><img src="img/keyword1.png"  height="24" width="80" alt="placeholder" /></td>
+    <td><img src="img/keyword1.png"  height="34" width="100" alt="placeholder" /></td>
     <td></td>
-    <td><img src="img/keyword2.png"  height="24" width="80" alt="placeholder" /></td>
+    <td><img src="img/keyword2.png"  height="34" width="100" alt="placeholder" /></td>
     <td></td>
-    <td><img src="img/menu_config.png"  height="122" width="187" alt="placeholder" /></td>
+    <td><img src="img/menu_config.png"  height="123" width="185" alt="placeholder" /></td>
 </tr>
 </table>
 
@@ -290,224 +369,115 @@ keywords.  Most of them have been preserved.
 
 <table class="keywords">
 <thead>
-<tr>
-    <td>Mac key</td>
-    <td>Keyword</td>
-</tr>
+<tr> <td>Mac key</td>  <td>Keyword</td>  <td>Mac key</td>  <td>Keyword</td> </tr>
 </thead>
 
 <tbody>
-<tr>
-    <td>A</td>
-    <td>HEX(</td>
-</tr>
-
-<tr>
-    <td>B</td>
-    <td>SKIP</td>
-</tr>
-
-<tr>
-    <td>C</td>
-    <td>REWIND</td>
-</tr>
-
-<tr>
-    <td>D</td>
-    <td>DATA</td>
-</tr>
-
-<tr>
-    <td>E</td>
-    <td>DEFFN</td>
-</tr>
-
-<tr>
-    <td>F</td>
-    <td>RESTORE</td>
-</tr>
-
-<tr>
-    <td>G</td>
-    <td>READ</td>
-</tr>
-
-<tr>
-    <td>H</td>
-    <td>IF</td>
-</tr>
-
-<tr>
-    <td>I</td>
-    <td>FOR</td>
-</tr>
-
-<tr>
-    <td>J</td>
-    <td>THEN</td>
-</tr>
-
-<tr>
-    <td>K</td>
-    <td>STOP</td>
-</tr>
-
-<tr>
-    <td>L</td>
-    <td>END</td>
-</tr>
-
-<tr>
-    <td>M</td>
-    <td>GOTO</td>
-</tr>
-
-<tr>
-    <td>N</td>
-    <td>TRACE</td>
-</tr>
-
-<tr>
-    <td>O</td>
-    <td>STEP</td>
-</tr>
-
-<tr>
-    <td>P</td>
-    <td>NEXT</td>
-</tr>
-
-<tr>
-    <td>Q</td>
-    <td>COM</td>
-</tr>
-
-<tr>
-    <td>R</td>
-    <td>GOSUB</td>
-</tr>
-
-<tr>
-    <td>S</td>
-    <td>STR(</td>
-</tr>
-
-<tr>
-    <td>T</td>
-    <td>RETURN</td>
-</tr>
-
-<tr>
-    <td>U</td>
-    <td>INPUT</td>
-</tr>
-
-<tr>
-    <td>V</td>
-    <td>SAVE</td>
-</tr>
-
-<tr>
-    <td>W</td>
-    <td>DIM</td>
-</tr>
-
-<tr>
-    <td>X</td>
-    <td>BACKSPACE</td>
-</tr>
-
-<tr>
-    <td>Y</td>
-    <td>REM</td>
-</tr>
-
-<tr>
-    <td>Z</td>
-    <td>SELECT</td>
-</tr>
+<tr> <td>A</td>  <td>HEX(</td>     <td>N</td>  <td>TRACE</td> </tr>
+<tr> <td>B</td>  <td>SKIP</td>     <td>O</td>  <td>STEP</td> </tr>
+<tr> <td>C</td>  <td>REWIND</td>   <td>P</td>  <td>NEXT</td> </tr>
+<tr> <td>D</td>  <td>DATA</td>     <td>Q</td>  <td>COM</td> </tr>
+<tr> <td>E</td>  <td>DEFFN</td>    <td>R</td>  <td>GOSUB</td> </tr>
+<tr> <td>F</td>  <td>RESTORE</td>  <td>S</td>  <td>STR(</td> </tr>
+<tr> <td>G</td>  <td>READ</td>     <td>T</td>  <td>RETURN</td> </tr>
+<tr> <td>H</td>  <td>IF</td>       <td>U</td>  <td>INPUT</td> </tr>
+<tr> <td>I</td>  <td>FOR</td>      <td>V</td>  <td>SAVE</td> </tr>
+<tr> <td>J</td>  <td>THEN</td>     <td>W</td>  <td>DIM</td> </tr>
+<tr> <td>K</td>  <td>STOP</td>     <td>X</td>  <td>BACKSPACE</td> </tr>
+<tr> <td>L</td>  <td>END</td>      <td>Y</td>  <td>REM</td> </tr>
+<tr> <td>M</td>  <td>GOTO</td>     <td>Z</td>  <td>SELECT</td> </tr>
 </tbody>
 
 </table>
 
+<hr/>
+
 <p>
-A few keys that couldn't be conveniently mapped to their Wang-like positions,
-but which are exceedingly useful, have been mapped to control keys:
+In 2236 mode (serial terminal), the Wang keyboard did not have a keyword mode.
+Instead, the same switch just toggled between normal mode and caps-lock mode.
+</p>
+
+<table>
+<tr>
+    <td><img src="img/keyword1b.png"  height="34" width="100" alt="placeholder" /></td>
+    <td></td>
+    <td><img src="img/keyword2b.png"  height="34" width="100" alt="placeholder" /></td>
+    <td></td>
+    <td><img src="img/menu_config_b.png"  height="123" width="184" alt="placeholder" /></td>
+</tr>
+</table>
+
+<hr/>
+
+<p>
+For both 2226 (dumb terminal) and 2236 (serial terminal) modes of operation,
+a few keys couldn't be conveniently mapped to their Wang-like positions and
+have been mapped to control keys.  Each (except CONTINUE) uses the first
+letter of the word it maps as a convenient mnemonic.
 </p>
 
 <table class="keywords">
 <thead>
-<tr>
-    <td>Mac key</td>
-    <td>Keyword</td>
-</tr>
+<tr> <td>Mac key</td> <td>Keyword</td> </tr>
 </thead>
 
 <tbody>
-<tr>
-    <td>Ctrl+Z</td>
-    <td>CONTINUE</td>
-</tr>
-
-<tr>
-    <td>Ctrl+L</td>
-    <td>LIST</td>
-</tr>
-
-<tr>
-    <td>Ctrl+P</td>
-    <td>PRINT</td>
-</tr>
-
-<tr>
-    <td>Ctrl+R</td>
-    <td>RUN</td>
-</tr>
+<tr>  <td>Ctrl-C</td>  <td>CLEAR</td> </tr>
+<tr>  <td>Ctrl-L</td>  <td>LOAD</td> </tr>
+<tr>  <td>Ctrl-P</td>  <td>PRINT</td> </tr>
+<tr>  <td>Ctrl-R</td>  <td>RUN</td> </tr>
+<tr>  <td>Ctrl-Z</td>  <td>CONTINUE</td> </tr>
 </tbody>
 </table>
 
 <p>
-It should be noted that the GUI itself has these keyboard accelerators:
+A number of other keyboard shortcuts have been added to map keys that
+don't appear on a Mac keyboard, or which are convenient 2nd choices
+vs using the special function key toolbar.  The control key names try
+to use a mnemonic letter, except for Ctrl-F (SF15/recall). This was chosen
+because the [edit][recall] sequence is a frequent pair, and so Ctrl-[E][F]
+is a quick action.
+</p>
+
+<p>
+The odd man out is the RESET key, which was mapped to Shift-Cmd-R to make
+it difficult to accidentally trigger.
+</p>
+
+<table class="keywords">
+<thead>
+<tr> <td>Mac key</td> <td>key</td> </tr>
+</thead>
+
+<tbody>
+<tr>  <td>Ctrl-E</td>       <td>edit mode toggle</td> </tr>
+<tr>  <td>Ctrl-F</td>       <td>edit mode recall</td> </tr>
+<tr>  <td>Ctrl-D</td>       <td>edit mode delete</td> </tr>
+<tr>  <td>Ctrl-I</td>       <td>edit mode insert</td> </tr>
+<tr>  <td>Ctrl-K</td>       <td>edit mode kill to end of line</td> </tr>
+<tr>  <td>Ctrl-S</td>       <td>halt/step</td> </tr>
+<tr>  <td>END</td>          <td>ERASE key</td> </tr>
+<tr>  <td>Tab</td>          <td>STMT NUMBER key (2226)</td> </tr>
+<tr>  <td>Tab</td>          <td>FN key (2236)</td> </tr>
+<tr>  <td>Shift-Cmd-R</td>  <td>RESET</td> </tr>
+</tbody>
+</table>
+
+<p>
+There are a few keyboard shortcuts that don't map to a real keyboard behavior;
+rather, these are used to manage the emulation, not the emulated computer.
 </p>
 
 <table>
 <thead>
-<tr>
-    <td>Mac key</td>
-    <td>Function</td>
-</tr>
+<tr> <td>Mac key</td>    <td>Function</td> </tr>
 </thead>
 
 <tbody>
-<tr>
-    <td>Cmd+G</td>
-    <td>screen grab</td>
-</tr>
-
-<tr>
-    <td>Cmd+Q</td>
-    <td>exit application</td>
-</tr>
-
-<tr>
-    <td>Cmd+R</td>
-    <td>cold reset</td>
-</tr>
-
-<tr>
-    <td>Cmd+W</td>
-    <td>warm reset</td>
-</tr>
-
-<tr>
-    <td>Cmd+K</td>
-    <td>toggle keyword mode</td>
-</tr>
-
-<tr>
-    <td>Cmd+Enter</td>
-    <td>toggle fullscreen mode</td>
-</tr>
+<tr> <td>Cmd-G</td>      <td>screen grab</td> </tr>
+<tr> <td>Cmd-X</td>      <td>exit application</td> </tr>
+<tr> <td>Cmd-K</td>      <td>toggle keyword mode</td> </tr>
+<tr> <td>Cmd-Enter</td>  <td>toggle full-screen mode</td> </tr>
 </tbody>
 
 </table>
@@ -523,7 +493,7 @@ on different keyboards, especially European keyboards.
 </div>
 
 <div id="footer">
-    <p>Last update:December 11, 2008</p>
+    <p>Last update: February 10, 2019</p>
 </div>
 
 </div>
