@@ -174,8 +174,7 @@ static constexpr kd_keymap_t keydown_keymap_table[] = {
     { WXK_F12,          KC_CTRL,                        IoCardKeyboard::KEYCODE_SF | IoCardKeyboard::KEYCODE_EDIT },
 #endif
 #ifdef __WXMAC__
-    { WXK_F16,          KC_NOSHIFT | KC_CTRL,           IoCardKeyboard::KEYCODE_SF | IoCardKeyboard::KEYCODE_EDIT },
-    { WXK_F16,          KC_SHIFT   | KC_CTRL,           IoCardKeyboard::KEYCODE_SF | IoCardKeyboard::KEYCODE_EDIT },
+    { WXK_F16,          KC_NOSHIFT,                     IoCardKeyboard::KEYCODE_SF | IoCardKeyboard::KEYCODE_EDIT },
 #endif
 
 /*
