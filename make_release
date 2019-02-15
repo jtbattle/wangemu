@@ -28,7 +28,7 @@ cat > $contents/Info.plist <<END
 	<key>CFBundleExecutable</key>
 	<string>wangemu</string>
 	<key>CFBundleIconFile</key>
-	<string>wang</string>
+	<string>wang.icns</string>
 	<key>CFBundleIdentifier</key>
 	<string>org.wang2200.www</string>
 	<key>CFBundleInfoDictionaryVersion</key>
