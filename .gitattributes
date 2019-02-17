@@ -1,24 +1,24 @@
 # these should be treated as text files
 .gitattributes  text
 .gitignore      text
-.txt            text
-.c              text
-.cpp            text
-.h              text
-.rc             text
-.xpm            text
-.bat            text
-.sln            text
-.vcxproj        text
+*.txt           text
+*.c             text
+*.cpp           text
+*.h             text
+*.rc            text
+*.xpm           text
+*.bat           text
+*.sln           text
+*.vcxproj       text
 LICENSE         text
 
 # these should be treated as binary
-.png    binary
-.jpg    binary
-.gif    binary
-.svg    binary
-.pdf    binary
-.wvd    binary
+*.png    binary
+*.jpg    binary
+*.gif    binary
+*.svg    binary
+*.pdf    binary
+*.wvd    binary
 
 # Standard to msysgit
 *.doc   diff=astextplain
