@@ -8,6 +8,12 @@
 .rc     text
 .xpm    text
 
+# these should be treated as binary
+.png    binary
+.wvd    binary
+.svg    binary
+.pdf    binary
+
 # Custom for Visual Studio
 *.cs     diff=csharp
 
