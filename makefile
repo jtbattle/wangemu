@@ -13,7 +13,7 @@
 .PHONY: debug opt tags clean release dmg
 
 # Add .d to Make's recognized suffixes.
-.SUFFIXES: .c .cpp .d .o
+.SUFFIXES: .c .cpp .mm .d .o
 
 # don't create dependency files for these targets
 NODEPS := clean tags
@@ -21,15 +21,17 @@ NODEPS := clean tags
 # Find all the source files in the src/ directory
 CPP_SOURCES := $(shell find src -name "*.cpp")
 C_SOURCES   := $(shell find src -name "*.c")
+MM_SOURCES  := $(shell find src -name "*.mm")
 H_SOURCES   := $(shell find src -name "*.h")
-SOURCES     := $(CPP_SOURCES) $(C_SOURCES)
 
 # These are the dependency files, which make will clean up after it creates them
 DEPFILES := $(patsubst %.cpp,%.d,$(CPP_SOURCES)) \
-	    $(patsubst %.c,%.d,$(C_SOURCES))
+	    $(patsubst %.c,%.d,$(C_SOURCES))     \
+            $(patsubst %.mm,%.d,$(MM_SOURCES))
 
 OBJFILES := $(patsubst src/%.cpp,obj/%.o,$(CPP_SOURCES)) \
-	    $(patsubst src/%.c,obj/%.o,$(C_SOURCES))
+	    $(patsubst src/%.c,obj/%.o,$(C_SOURCES))     \
+	    $(patsubst src/%.mm,obj/%.o,$(MM_SOURCES))
 
 # debug build
 debug: OPTFLAGS := -g -O0
@@ -59,6 +61,9 @@ src/%.d: src/%.cpp
 src/%.d: src/%.c
 	$(CXX) $(CXXFLAGS) -MM -MT '$(patsubst src/%.c,obj/%.o,$<)' $< -MF $@
 
+src/%.d: src/%.mm
+	$(CXX) $(CXXFLAGS) -MM -MT '$(patsubst src/%.mm,obj/%.o,$<)' $< -MF $@
+
 # ===== build the .o files =====
 
 obj/%.o: src/%.cpp src/%.d
@@ -68,6 +73,10 @@ obj/%.o: src/%.cpp src/%.d
 obj/%.o: src/%.c src/%.d
 	@mkdir -p $(dir $@)
 	$(CXX) $(OPTFLAGS) $(CXXFLAGS) -o $@ -c $<
+
+obj/%.o: src/%.mm src/%.d
+	@mkdir -p $(dir $@)
+	$(CXX) $(OPTFLAGS) $(CXXFLAGS) $(CXXWARNINGS) -o $@ -c $<
 
 # ==== link step ====
 

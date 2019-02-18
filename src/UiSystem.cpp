@@ -26,6 +26,7 @@ struct crt_state_t;
 #include "UiSystemConfigDlg.h"
 #include "UiTermMuxCfgDlg.h"
 #include "host.h"
+#include "osx_utils.h"
 #include "system2200.h"
 
 #include "wx/cmdline.h"         // req'd by wxCmdLineParser
@@ -55,6 +56,12 @@ TheApp::OnInit()
     if (wxTheApp->GetComCtl32Version() >= 600 && ::wxDisplayDepth() >= 32) {
         wxSystemOptions::SetOption("msw.remap", 2);
     }
+#endif
+
+#ifdef __WXMAC__
+    // try to disable accent menu popup in preference to auto-repeat
+    // on long keypresses
+    osxSetAccentMenuPrefs();
 #endif
 
     // event routing table
