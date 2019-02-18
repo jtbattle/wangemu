@@ -1,0 +1,488 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="390mm" height="145mm" viewBox="0 0 390 145">
+  <g transform="translate(0 -152)">
+    <rect width="390" height="144.371" y="152.629" ry="0" rx="0" fill="#fafafa" stroke="#000" stroke-width=".4"/>
+    <rect width="19.835" height="19.835" x="49.874" y="179.017" ry="5.308" fill="none" stroke="#000" stroke-width=".165"/>
+    <text style="line-height:1.25" x="56.98" y="186.158" font-size="10.583" font-family="sans-serif" letter-spacing="0" word-spacing="0" stroke-width=".265">
+      <tspan x="56.98" y="186.158" font-size="5.644">@</tspan>
+    </text>
+    <text style="line-height:1.25" x="58.071" y="194.067" font-size="10.583" font-family="sans-serif" letter-spacing="0" word-spacing="0" stroke-width=".265">
+      <tspan x="58.071" y="194.067" font-size="5.644">2</tspan>
+    </text>
+    <rect width="19.835" height="19.835" x="70.71" y="179.017" ry="5.308" fill="none" stroke="#000" stroke-width=".165"/>
+    <text style="line-height:1.25" x="78.261" y="186.158" font-size="10.583" font-family="sans-serif" letter-spacing="0" word-spacing="0" stroke-width=".265">
+      <tspan x="78.261" y="186.158" font-size="5.644">#</tspan>
+    </text>
+    <text style="line-height:1.25" x="78.843" y="194.067" font-size="10.583" font-family="sans-serif" letter-spacing="0" word-spacing="0" stroke-width=".265">
+      <tspan x="78.843" y="194.067" font-size="5.644">3</tspan>
+    </text>
+    <rect width="19.835" height="19.835" x="91.708" y="179.019" ry="5.308" fill="none" stroke="#000" stroke-width=".165"/>
+    <text style="line-height:1.25" x="99.83" y="186.159" font-size="10.583" font-family="sans-serif" letter-spacing="0" word-spacing="0" stroke-width=".265">
+      <tspan x="99.83" y="186.159" font-size="5.644">$</tspan>
+    </text>
+    <text style="line-height:1.25" x="99.851" y="194.068" font-size="10.583" font-family="sans-serif" letter-spacing="0" word-spacing="0" stroke-width=".265">
+      <tspan x="99.851" y="194.068" font-size="5.644">4</tspan>
+    </text>
+    <rect width="19.835" height="19.835" x="112.874" y="178.854" ry="5.308" fill="none" stroke="#000" stroke-width=".165"/>
+    <text style="line-height:1.25" x="120.109" y="185.994" font-size="10.583" font-family="sans-serif" letter-spacing="0" word-spacing="0" stroke-width=".265">
+      <tspan x="120.109" y="185.994" font-size="5.644">%</tspan>
+    </text>
+    <text style="line-height:1.25" x="121.024" y="193.903" font-size="10.583" font-family="sans-serif" letter-spacing="0" word-spacing="0" stroke-width=".265">
+      <tspan x="121.024" y="193.903" font-size="5.644">5</tspan>
+    </text>
+    <rect width="19.835" height="19.835" x="28.708" y="178.854" ry="5.308" fill="none" stroke="#000" stroke-width=".165"/>
+    <text style="line-height:1.25" x="37.494" y="185.994" font-size="10.583" font-family="sans-serif" letter-spacing="0" word-spacing="0" stroke-width=".265">
+      <tspan x="37.494" y="185.994" font-size="5.644">!</tspan>
+    </text>
+    <text style="line-height:1.25" x="36.78" y="193.903" font-size="10.583" font-family="sans-serif" letter-spacing="0" word-spacing="0" stroke-width=".265">
+      <tspan x="36.78" y="193.903" font-size="5.644">1</tspan>
+    </text>
+    <rect width="19.835" height="19.835" x="133.874" y="178.854" ry="5.308" fill="none" stroke="#000" stroke-width=".165"/>
+    <text style="line-height:1.25" x="141.426" y="185.994" font-size="10.583" font-family="sans-serif" letter-spacing="0" word-spacing="0" stroke-width=".265">
+      <tspan x="141.426" y="185.994" font-size="5.644">^</tspan>
+    </text>
+    <text style="line-height:1.25" x="141.976" y="193.903" font-size="10.583" font-family="sans-serif" letter-spacing="0" word-spacing="0" stroke-width=".265">
+      <tspan x="141.976" y="193.903" font-size="5.644">6</tspan>
+    </text>
+    <rect width="19.835" height="19.835" x="7.874" y="178.854" ry="5.308" fill="none" stroke="#000" stroke-width=".165"/>
+    <text style="line-height:1.25" x="16.017" y="185.994" font-size="10.583" font-family="sans-serif" letter-spacing="0" word-spacing="0" stroke-width=".265">
+      <tspan x="16.017" y="185.994" font-size="4.233">~</tspan>
+    </text>
+    <text style="line-height:1.25" x="16.945" y="193.903" font-size="10.583" font-family="sans-serif" letter-spacing="0" word-spacing="0" stroke-width=".265">
+      <tspan x="16.945" y="193.903" font-size="4.233">`</tspan>
+    </text>
+    <rect width="19.835" height="19.835" x="154.708" y="178.854" ry="5.308" fill="none" stroke="#000" stroke-width=".165"/>
+    <text style="line-height:1.25" x="162.334" y="185.994" font-size="10.583" font-family="sans-serif" letter-spacing="0" word-spacing="0" stroke-width=".265">
+      <tspan x="162.334" y="185.994" font-size="5.644">&amp;</tspan>
+    </text>
+    <text style="line-height:1.25" x="162.84" y="193.903" font-size="10.583" font-family="sans-serif" letter-spacing="0" word-spacing="0" stroke-width=".265">
+      <tspan x="162.84" y="193.903" font-size="5.644">7</tspan>
+    </text>
+    <rect width="19.835" height="19.835" x="196.708" y="178.854" ry="5.308" fill="none" stroke="#000" stroke-width=".165"/>
+    <text style="line-height:1.25" x="205.508" y="185.994" font-size="10.583" font-family="sans-serif" letter-spacing="0" word-spacing="0" stroke-width=".265">
+      <tspan x="205.508" y="185.994" font-size="5.644">(</tspan>
+    </text>
+    <text style="line-height:1.25" x="204.851" y="193.903" font-size="10.583" font-family="sans-serif" letter-spacing="0" word-spacing="0" stroke-width=".265">
+      <tspan x="204.851" y="193.903" font-size="5.644">9</tspan>
+    </text>
+    <rect width="19.835" height="19.835" x="175.708" y="178.854" ry="5.308" fill="none" stroke="#000" stroke-width=".165"/>
+    <text style="line-height:1.25" x="184.215" y="185.994" font-size="10.583" font-family="sans-serif" letter-spacing="0" word-spacing="0" stroke-width=".265">
+      <tspan x="184.215" y="185.994" font-size="5.644">*</tspan>
+    </text>
+    <text style="line-height:1.25" x="183.832" y="193.903" font-size="10.583" font-family="sans-serif" letter-spacing="0" word-spacing="0" stroke-width=".265">
+      <tspan x="183.832" y="193.903" font-size="5.644">8</tspan>
+    </text>
+    <rect width="19.835" height="19.835" x="217.874" y="178.854" ry="5.308" fill="none" stroke="#000" stroke-width=".165"/>
+    <text style="line-height:1.25" x="226.707" y="185.994" font-size="10.583" font-family="sans-serif" letter-spacing="0" word-spacing="0" stroke-width=".265">
+      <tspan x="226.707" y="185.994" font-size="5.644">)</tspan>
+    </text>
+    <text style="line-height:1.25" x="225.997" y="193.903" font-size="10.583" font-family="sans-serif" letter-spacing="0" word-spacing="0" stroke-width=".265">
+      <tspan x="225.997" y="193.903" font-size="5.644">0</tspan>
+    </text>
+    <rect width="19.835" height="19.835" x="238.708" y="178.854" ry="5.308" fill="none" stroke="#000" stroke-width=".165"/>
+    <text style="line-height:1.25" x="247.215" y="185.994" font-size="10.583" font-family="sans-serif" letter-spacing="0" word-spacing="0" stroke-width=".265">
+      <tspan x="247.215" y="185.994" font-size="5.644">_</tspan>
+    </text>
+    <text style="line-height:1.25" x="247.607" y="193.903" font-size="10.583" font-family="sans-serif" letter-spacing="0" word-spacing="0" stroke-width=".265">
+      <tspan x="247.607" y="193.903" font-size="5.644">-</tspan>
+    </text>
+    <rect width="19.835" height="19.835" x="259.708" y="178.854" ry="5.308" fill="none" stroke="#000" stroke-width=".165"/>
+    <text style="line-height:1.25" x="267.261" y="185.994" font-size="10.583" font-family="sans-serif" letter-spacing="0" word-spacing="0" stroke-width=".265">
+      <tspan x="267.261" y="185.994" font-size="5.644">+</tspan>
+    </text>
+    <text style="line-height:1.25" x="267.261" y="193.903" font-size="10.583" font-family="sans-serif" letter-spacing="0" word-spacing="0" stroke-width=".265">
+      <tspan x="267.261" y="193.903" font-size="5.644">=</tspan>
+    </text>
+    <rect width="29.857" height="19.833" x="280.743" y="178.82" ry="3.034" fill="none" stroke="#000" stroke-width=".165"/>
+    <text style="line-height:1.25" x="281.974" y="190.133" font-size="10.583" font-family="sans-serif" letter-spacing="0" word-spacing="0" stroke-width=".265">
+      <tspan x="281.974" y="190.133" font-size="4.939">Backspace</tspan>
+    </text>
+    <rect width="19.835" height="19.835" x="227.708" y="200.853" ry="5.308" fill="none" stroke="#000" stroke-width=".165"/>
+    <text style="line-height:1.25" x="231.782" y="207.994" font-size="10.583" font-family="sans-serif" letter-spacing="0" word-spacing="0" stroke-width=".265">
+      <tspan x="231.782" y="207.994" font-size="4.233">NEXT</tspan>
+    </text>
+    <text style="line-height:1.25" x="235.743" y="215.903" font-size="10.583" font-family="sans-serif" letter-spacing="0" word-spacing="0" stroke-width=".265">
+      <tspan x="235.743" y="215.903" font-size="5.644">P</tspan>
+    </text>
+    <rect width="19.835" height="19.835" x="206.708" y="200.853" ry="5.308" fill="none" stroke="#000" stroke-width=".165"/>
+    <text style="line-height:1.25" x="211.305" y="207.994" font-size="10.583" font-family="sans-serif" letter-spacing="0" word-spacing="0" stroke-width=".265">
+      <tspan x="211.305" y="207.994" font-size="4.233">STEP</tspan>
+    </text>
+    <text style="line-height:1.25" x="214.404" y="215.903" font-size="10.583" font-family="sans-serif" letter-spacing="0" word-spacing="0" stroke-width=".265">
+      <tspan x="214.404" y="215.903" font-size="5.644">O</tspan>
+    </text>
+    <rect width="19.835" height="19.835" x="185.708" y="200.853" ry="5.308" fill="none" stroke="#000" stroke-width=".165"/>
+    <text style="line-height:1.25" x="191.123" y="207.994" font-size="10.583" font-family="sans-serif" letter-spacing="0" word-spacing="0" stroke-width=".265">
+      <tspan x="191.123" y="207.994" font-size="4.233">FOR</tspan>
+    </text>
+    <text style="line-height:1.25" x="194.793" y="215.903" font-size="10.583" font-family="sans-serif" letter-spacing="0" word-spacing="0" stroke-width=".265">
+      <tspan x="194.793" y="215.903" font-size="5.644">I</tspan>
+    </text>
+    <rect width="19.835" height="19.835" x="164.708" y="200.853" ry="5.308" fill="none" stroke="#000" stroke-width=".165"/>
+    <text style="line-height:1.25" x="168.083" y="207.994" font-size="10.583" font-family="sans-serif" letter-spacing="0" word-spacing="0" stroke-width=".265">
+      <tspan x="168.083" y="207.994" font-size="4.233">INPUT</tspan>
+    </text>
+    <text style="line-height:1.25" x="172.56" y="215.903" font-size="10.583" font-family="sans-serif" letter-spacing="0" word-spacing="0" stroke-width=".265">
+      <tspan x="172.56" y="215.903" font-size="5.644">U</tspan>
+    </text>
+    <rect width="19.835" height="19.835" x="143.874" y="200.853" ry="5.308" fill="none" stroke="#000" stroke-width=".165"/>
+    <text style="line-height:1.25" x="149.153" y="207.994" font-size="10.583" font-family="sans-serif" letter-spacing="0" word-spacing="0" stroke-width=".265">
+      <tspan x="149.153" y="207.994" font-size="4.233">REM</tspan>
+    </text>
+    <text style="line-height:1.25" x="152.067" y="215.903" font-size="10.583" font-family="sans-serif" letter-spacing="0" word-spacing="0" stroke-width=".265">
+      <tspan x="152.067" y="215.903" font-size="5.644">Y</tspan>
+    </text>
+    <rect width="19.835" height="19.835" x="122.708" y="200.853" ry="5.308" fill="none" stroke="#000" stroke-width=".165"/>
+    <text style="line-height:1.25" x="123.915" y="207.994" font-size="10.583" font-family="sans-serif" letter-spacing="0" word-spacing="0" stroke-width=".265">
+      <tspan x="123.915" y="207.994" font-size="4.233">RETURN</tspan>
+    </text>
+    <text style="line-height:1.25" x="130.902" y="215.903" font-size="10.583" font-family="sans-serif" letter-spacing="0" word-spacing="0" stroke-width=".265">
+      <tspan x="130.902" y="215.903" font-size="5.644">T</tspan>
+    </text>
+    <rect width="19.835" height="19.835" x="101.874" y="200.853" ry="5.308" fill="none" stroke="#000" stroke-width=".165"/>
+    <text style="line-height:1.25" x="104.169" y="208.127" font-size="10.583" font-family="sans-serif" letter-spacing="0" word-spacing="0" stroke-width=".265">
+      <tspan x="104.169" y="208.127" font-size="4.233">GOSUB</tspan>
+    </text>
+    <text style="line-height:1.25" x="109.634" y="215.903" font-size="10.583" font-family="sans-serif" letter-spacing="0" word-spacing="0" stroke-width=".265">
+      <tspan x="109.634" y="215.903" font-size="5.644">R</tspan>
+    </text>
+    <rect width="19.835" height="19.835" x="80.874" y="200.853" ry="5.308" fill="none" stroke="#000" stroke-width=".165"/>
+    <text style="line-height:1.25" x="83.8" y="207.994" font-size="10.583" font-family="sans-serif" letter-spacing="0" word-spacing="0" stroke-width=".265">
+      <tspan x="83.8" y="207.994" font-size="4.233">DEFFN</tspan>
+    </text>
+    <text style="line-height:1.25" x="88.911" y="215.903" font-size="10.583" font-family="sans-serif" letter-spacing="0" word-spacing="0" stroke-width=".265">
+      <tspan x="88.911" y="215.903" font-size="5.644">E</tspan>
+    </text>
+    <rect width="19.835" height="19.835" x="59.708" y="200.853" ry="5.308" fill="none" stroke="#000" stroke-width=".165"/>
+    <text style="line-height:1.25" x="65.545" y="207.994" font-size="10.583" font-family="sans-serif" letter-spacing="0" word-spacing="0" stroke-width=".265">
+      <tspan x="65.545" y="207.994" font-size="4.233">DIM</tspan>
+    </text>
+    <text style="line-height:1.25" x="66.834" y="215.903" font-size="10.583" font-family="sans-serif" letter-spacing="0" word-spacing="0" stroke-width=".265">
+      <tspan x="66.834" y="215.903" font-size="5.644">W</tspan>
+    </text>
+    <rect width="19.835" height="19.835" x="38.708" y="200.853" ry="5.308" fill="none" stroke="#000" stroke-width=".165"/>
+    <text style="line-height:1.25" x="43.741" y="207.994" font-size="10.583" font-family="sans-serif" letter-spacing="0" word-spacing="0" stroke-width=".265">
+      <tspan x="43.741" y="207.994" font-size="4.233">COM</tspan>
+    </text>
+    <text style="line-height:1.25" x="46.404" y="215.903" font-size="10.583" font-family="sans-serif" letter-spacing="0" word-spacing="0" stroke-width=".265">
+      <tspan x="46.404" y="215.903" font-size="5.644">Q</tspan>
+    </text>
+    <rect width="29.835" height="19.835" x="7.708" y="200.853" ry="3" fill="none" stroke="#000" stroke-width=".165"/>
+    <text style="line-height:1.25" x="16.722" y="209.306" font-size="10.583" font-family="sans-serif" letter-spacing="0" word-spacing="0" stroke-width=".265">
+      <tspan x="16.722" y="209.306" font-size="4.233">STMT</tspan>
+    </text>
+    <rect width="19.835" height="19.835" x="248.708" y="200.853" ry="5.308" fill="none" stroke="#000" stroke-width=".165"/>
+    <text style="line-height:1.25" x="257.556" y="215.903" font-size="10.583" font-family="sans-serif" letter-spacing="0" word-spacing="0" stroke-width=".265">
+      <tspan x="257.556" y="215.903" font-size="5.644">[</tspan>
+    </text>
+    <rect width="19.835" height="19.835" x="269.708" y="200.853" ry="5.308" fill="none" stroke="#000" stroke-width=".165"/>
+    <text style="line-height:1.25" x="278.493" y="215.903" font-size="10.583" font-family="sans-serif" letter-spacing="0" word-spacing="0" stroke-width=".265">
+      <tspan x="278.493" y="215.903" font-size="5.644">]</tspan>
+    </text>
+    <text style="line-height:1.25" x="299.621" y="207.669" font-size="10.583" font-family="sans-serif" letter-spacing="0" word-spacing="0" stroke-width=".265">
+      <tspan x="299.621" y="207.669" font-size="4.233">|</tspan>
+    </text>
+    <text style="line-height:1.25" x="299.383" y="215.512" font-size="10.583" font-family="sans-serif" letter-spacing="0" word-spacing="0" stroke-width=".265">
+      <tspan x="299.383" y="215.512" font-size="5.644">\</tspan>
+    </text>
+    <rect width="19.835" height="19.835" x="45.533" y="222.853" ry="5.308" fill="none" stroke="#000" stroke-width=".165"/>
+    <text style="line-height:1.25" x="50.204" y="229.994" font-size="10.583" font-family="sans-serif" letter-spacing="0" word-spacing="0" stroke-width=".265">
+      <tspan x="50.204" y="229.994" font-size="4.233">HEX(</tspan>
+    </text>
+    <text style="line-height:1.25" x="53.521" y="237.903" font-size="10.583" font-family="sans-serif" letter-spacing="0" word-spacing="0" stroke-width=".265">
+      <tspan x="53.521" y="237.903" font-size="5.644">A</tspan>
+    </text>
+    <rect width="19.835" height="19.835" x="66.533" y="222.853" ry="5.308" fill="none" stroke="#000" stroke-width=".165"/>
+    <text style="line-height:1.25" x="71.546" y="229.994" font-size="10.583" font-family="sans-serif" letter-spacing="0" word-spacing="0" stroke-width=".265">
+      <tspan x="71.546" y="229.994" font-size="4.233">STR(</tspan>
+    </text>
+    <text style="line-height:1.25" x="74.63" y="237.903" font-size="10.583" font-family="sans-serif" letter-spacing="0" word-spacing="0" stroke-width=".265">
+      <tspan x="74.63" y="237.903" font-size="5.644">S</tspan>
+    </text>
+    <rect width="19.835" height="19.835" x="87.533" y="222.853" ry="5.308" fill="none" stroke="#000" stroke-width=".165"/>
+    <text style="line-height:1.25" x="91.811" y="229.994" font-size="10.583" font-family="sans-serif" letter-spacing="0" word-spacing="0" stroke-width=".265">
+      <tspan x="91.811" y="229.994" font-size="4.233">DATA</tspan>
+    </text>
+    <text style="line-height:1.25" x="95.167" y="237.903" font-size="10.583" font-family="sans-serif" letter-spacing="0" word-spacing="0" stroke-width=".265">
+      <tspan x="95.167" y="237.903" font-size="5.644">D</tspan>
+    </text>
+    <rect width="19.835" height="19.835" x="108.533" y="222.853" ry="5.308" fill="none" stroke="#000" stroke-width=".165"/>
+    <text style="line-height:1.25" x="108.454" y="229.994" font-size="10.583" font-family="sans-serif" letter-spacing="0" word-spacing="0" stroke-width=".265">
+      <tspan x="108.454" y="229.994" font-size="4.233">RESTORE</tspan>
+    </text>
+    <text style="line-height:1.25" x="116.714" y="237.903" font-size="10.583" font-family="sans-serif" letter-spacing="0" word-spacing="0" stroke-width=".265">
+      <tspan x="116.714" y="237.903" font-size="5.644">F</tspan>
+    </text>
+    <rect width="19.835" height="19.835" x="129.533" y="222.853" ry="5.308" fill="none" stroke="#000" stroke-width=".165"/>
+    <text style="line-height:1.25" x="133.48" y="229.994" font-size="10.583" font-family="sans-serif" letter-spacing="0" word-spacing="0" stroke-width=".265">
+      <tspan x="133.48" y="229.994" font-size="4.233">READ</tspan>
+    </text>
+    <text style="line-height:1.25" x="137.337" y="237.903" font-size="10.583" font-family="sans-serif" letter-spacing="0" word-spacing="0" stroke-width=".265">
+      <tspan x="137.337" y="237.903" font-size="5.644">G</tspan>
+    </text>
+    <rect width="19.835" height="19.835" x="150.533" y="222.853" ry="5.308" fill="none" stroke="#000" stroke-width=".165"/>
+    <text style="line-height:1.25" x="158.524" y="229.994" font-size="10.583" font-family="sans-serif" letter-spacing="0" word-spacing="0" stroke-width=".265">
+      <tspan x="158.524" y="229.994" font-size="4.233">IF</tspan>
+    </text>
+    <text style="line-height:1.25" x="158.329" y="237.903" font-size="10.583" font-family="sans-serif" letter-spacing="0" word-spacing="0" stroke-width=".265">
+      <tspan x="158.329" y="237.903" font-size="5.644">H</tspan>
+    </text>
+    <rect width="19.835" height="19.835" x="171.533" y="222.853" ry="5.308" fill="none" stroke="#000" stroke-width=".165"/>
+    <text style="line-height:1.25" x="175.856" y="229.994" font-size="10.583" font-family="sans-serif" letter-spacing="0" word-spacing="0" stroke-width=".265">
+      <tspan x="175.856" y="229.994" font-size="4.233">THEN</tspan>
+    </text>
+    <text style="line-height:1.25" x="181.041" y="237.903" font-size="10.583" font-family="sans-serif" letter-spacing="0" word-spacing="0" stroke-width=".265">
+      <tspan x="181.041" y="237.903" font-size="5.644">J</tspan>
+    </text>
+    <rect width="19.835" height="19.835" x="192.533" y="222.853" ry="5.308" fill="none" stroke="#000" stroke-width=".165"/>
+    <text style="line-height:1.25" x="197.13" y="229.994" font-size="10.583" font-family="sans-serif" letter-spacing="0" word-spacing="0" stroke-width=".265">
+      <tspan x="197.13" y="229.994" font-size="4.233">STEP</tspan>
+    </text>
+    <text style="line-height:1.25" x="200.264" y="237.903" font-size="10.583" font-family="sans-serif" letter-spacing="0" word-spacing="0" stroke-width=".265">
+      <tspan x="200.264" y="237.903" font-size="5.644">K</tspan>
+    </text>
+    <rect width="19.835" height="19.835" x="213.533" y="222.853" ry="5.308" fill="none" stroke="#000" stroke-width=".165"/>
+    <text style="line-height:1.25" x="218.815" y="229.994" font-size="10.583" font-family="sans-serif" letter-spacing="0" word-spacing="0" stroke-width=".265">
+      <tspan x="218.815" y="229.994" font-size="4.233">END</tspan>
+    </text>
+    <text style="line-height:1.25" x="221.617" y="237.903" font-size="10.583" font-family="sans-serif" letter-spacing="0" word-spacing="0" stroke-width=".265">
+      <tspan x="221.617" y="237.903" font-size="5.644">L</tspan>
+    </text>
+    <rect width="19.835" height="19.835" x="234.699" y="222.853" ry="5.308" fill="none" stroke="#000" stroke-width=".165"/>
+    <text style="line-height:1.25" x="243.664" y="229.994" font-size="10.583" font-family="sans-serif" letter-spacing="0" word-spacing="0" stroke-width=".265">
+      <tspan x="243.664" y="229.994" font-size="5.644">:</tspan>
+    </text>
+    <text style="line-height:1.25" x="243.777" y="237.903" font-size="10.583" font-family="sans-serif" letter-spacing="0" word-spacing="0" stroke-width=".265">
+      <tspan x="243.777" y="237.903" font-size="5.644">;</tspan>
+    </text>
+    <rect width="19.835" height="19.835" x="255.699" y="222.853" ry="5.308" fill="none" stroke="#000" stroke-width=".165"/>
+    <text style="line-height:1.25" x="264.318" y="229.994" font-size="10.583" font-family="sans-serif" letter-spacing="0" word-spacing="0" stroke-width=".265">
+      <tspan x="264.318" y="229.994" font-size="5.644">&quot;</tspan>
+    </text>
+    <text style="line-height:1.25" x="264.839" y="237.903" font-size="10.583" font-family="sans-serif" letter-spacing="0" word-spacing="0" stroke-width=".265">
+      <tspan x="264.839" y="237.903" font-size="5.644">&apos;</tspan>
+    </text>
+    <rect width="33.854" height="19.854" x="276.763" y="222.77" ry="3.077" fill="none" stroke="#000" stroke-width=".165"/>
+    <text style="line-height:1.25" x="291.774" y="238.206" font-size="10.583" font-family="sans-serif" letter-spacing="0" word-spacing="0" stroke-width=".265">
+      <tspan x="291.774" y="238.206" font-size="4.939">return</tspan>
+    </text>
+    <rect width="36.775" height="19.835" x="8" y="223" ry="3" fill="none" stroke="#000" stroke-width=".165"/>
+    <text style="line-height:1.25" x="10.17" y="239.367" font-size="10.583" font-family="sans-serif" letter-spacing="0" word-spacing="0" stroke-width=".265">
+      <tspan x="10.17" y="239.367" font-size="4.939">caps lock</tspan>
+    </text>
+    <rect width="19.835" height="19.835" x="55.932" y="244.853" ry="5.308" fill="none" stroke="#000" stroke-width=".165"/>
+    <text style="line-height:1.25" x="57.73" y="251.934" font-size="10.583" font-family="sans-serif" letter-spacing="0" word-spacing="0" stroke-width=".265">
+      <tspan x="57.73" y="251.934" font-size="4.233">SELECT</tspan>
+    </text>
+    <text style="line-height:1.25" x="63.916" y="259.903" font-size="10.583" font-family="sans-serif" letter-spacing="0" word-spacing="0" stroke-width=".265">
+      <tspan x="63.916" y="259.903" font-size="5.644">Z</tspan>
+    </text>
+    <rect width="19.835" height="19.835" x="76.99" y="244.912" ry="5.308" fill="none" stroke="#000" stroke-width=".165"/>
+    <text style="line-height:1.25" x="80.533" y="248.877" font-size="10.583" font-family="sans-serif" letter-spacing="0" word-spacing="0" stroke-width=".265">
+      <tspan x="80.533" y="248.877" font-size="4.233">BACK-</tspan>
+    </text>
+    <text style="line-height:1.25" x="84.978" y="259.962" font-size="10.583" font-family="sans-serif" letter-spacing="0" word-spacing="0" stroke-width=".265">
+      <tspan x="84.978" y="259.962" font-size="5.644">X</tspan>
+    </text>
+    <rect width="19.835" height="19.835" x="97.932" y="244.853" ry="5.308" fill="none" stroke="#000" stroke-width=".165"/>
+    <text style="line-height:1.25" x="99.026" y="251.994" font-size="10.583" font-family="sans-serif" letter-spacing="0" word-spacing="0" stroke-width=".265">
+      <tspan x="99.026" y="251.994" font-size="4.233">REWIND</tspan>
+    </text>
+    <text style="line-height:1.25" x="105.873" y="259.903" font-size="10.583" font-family="sans-serif" letter-spacing="0" word-spacing="0" stroke-width=".265">
+      <tspan x="105.873" y="259.903" font-size="5.644">C</tspan>
+    </text>
+    <rect width="19.835" height="19.835" x="118.874" y="244.795" ry="5.308" fill="none" stroke="#000" stroke-width=".165"/>
+    <text style="line-height:1.25" x="123.307" y="251.935" font-size="10.583" font-family="sans-serif" letter-spacing="0" word-spacing="0" stroke-width=".265">
+      <tspan x="123.307" y="251.935" font-size="4.233">SAVE</tspan>
+    </text>
+    <text style="line-height:1.25" x="126.862" y="259.845" font-size="10.583" font-family="sans-serif" letter-spacing="0" word-spacing="0" stroke-width=".265">
+      <tspan x="126.862" y="259.845" font-size="5.644">V</tspan>
+    </text>
+    <rect width="19.835" height="19.835" x="139.815" y="244.97" ry="5.308" fill="none" stroke="#000" stroke-width=".165"/>
+    <text style="line-height:1.25" x="145.032" y="252.11" font-size="10.583" font-family="sans-serif" letter-spacing="0" word-spacing="0" stroke-width=".265">
+      <tspan x="145.032" y="252.11" font-size="4.233">SKIP</tspan>
+    </text>
+    <text style="line-height:1.25" x="147.719" y="260.02" font-size="10.583" font-family="sans-serif" letter-spacing="0" word-spacing="0" stroke-width=".265">
+      <tspan x="147.719" y="260.02" font-size="5.644">B</tspan>
+    </text>
+    <rect width="19.835" height="19.835" x="160.815" y="244.853" ry="5.308" fill="none" stroke="#000" stroke-width=".165"/>
+    <text style="line-height:1.25" x="163.968" y="251.994" font-size="10.583" font-family="sans-serif" letter-spacing="0" word-spacing="0" stroke-width=".265">
+      <tspan x="163.968" y="251.994" font-size="4.233">TRACE</tspan>
+    </text>
+    <text style="line-height:1.25" x="168.622" y="259.903" font-size="10.583" font-family="sans-serif" letter-spacing="0" word-spacing="0" stroke-width=".265">
+      <tspan x="168.622" y="259.903" font-size="5.644">N</tspan>
+    </text>
+    <rect width="19.835" height="19.835" x="182.049" y="244.912" ry="5.308" fill="none" stroke="#000" stroke-width=".165"/>
+    <text style="line-height:1.25" x="185.699" y="252.052" font-size="10.583" font-family="sans-serif" letter-spacing="0" word-spacing="0" stroke-width=".265">
+      <tspan x="185.699" y="252.052" font-size="4.233">GOTO</tspan>
+    </text>
+    <text style="line-height:1.25" x="189.53" y="259.962" font-size="10.583" font-family="sans-serif" letter-spacing="0" word-spacing="0" stroke-width=".265">
+      <tspan x="189.53" y="259.962" font-size="5.644">M</tspan>
+    </text>
+    <rect width="19.835" height="19.835" x="202.99" y="244.97" ry="5.308" fill="none" stroke="#000" stroke-width=".165"/>
+    <text style="line-height:1.25" x="210.839" y="252.11" font-size="10.583" font-family="sans-serif" letter-spacing="0" word-spacing="0" stroke-width=".265">
+      <tspan x="210.839" y="252.11" font-size="4.939">&lt;</tspan>
+    </text>
+    <text style="line-height:1.25" x="212.069" y="260.02" font-size="10.583" font-family="sans-serif" letter-spacing="0" word-spacing="0" stroke-width=".265">
+      <tspan x="212.069" y="260.02" font-size="5.644">,</tspan>
+    </text>
+    <rect width="19.835" height="19.835" x="224.049" y="244.97" ry="5.308" fill="none" stroke="#000" stroke-width=".165"/>
+    <text style="line-height:1.25" x="231.897" y="252.11" font-size="10.583" font-family="sans-serif" letter-spacing="0" word-spacing="0" stroke-width=".265">
+      <tspan x="231.897" y="252.11" font-size="4.939">&gt;</tspan>
+    </text>
+    <text style="line-height:1.25" x="233.072" y="260.02" font-size="10.583" font-family="sans-serif" letter-spacing="0" word-spacing="0" stroke-width=".265">
+      <tspan x="233.072" y="260.02" font-size="5.644">.</tspan>
+    </text>
+    <rect width="19.835" height="19.835" x="245.224" y="244.737" ry="5.308" fill="none" stroke="#000" stroke-width=".165"/>
+    <text style="line-height:1.25" x="253.825" y="251.877" font-size="10.583" font-family="sans-serif" letter-spacing="0" word-spacing="0" stroke-width=".265">
+      <tspan x="253.825" y="251.877" font-size="4.939">?</tspan>
+    </text>
+    <text style="line-height:1.25" x="254.19" y="259.787" font-size="10.583" font-family="sans-serif" letter-spacing="0" word-spacing="0" stroke-width=".265">
+      <tspan x="254.19" y="259.787" font-size="5.644">/</tspan>
+    </text>
+    <rect width="43.505" height="19.835" x="266.495" y="244.737" ry="3.116" fill="none" stroke="#000" stroke-width=".165"/>
+    <text style="line-height:1.25" x="294.243" y="260.355" font-size="10.583" font-family="sans-serif" letter-spacing="0" word-spacing="0" stroke-width=".265">
+      <tspan x="294.243" y="260.355" font-size="4.939">shift</tspan>
+    </text>
+    <rect width="46.814" height="19.835" x="7.613" y="244.853" ry="3" fill="none" stroke="#000" stroke-width=".165"/>
+    <text style="line-height:1.25" x="11.971" y="261.374" font-size="10.583" font-family="sans-serif" letter-spacing="0" word-spacing="0" stroke-width=".265">
+      <tspan x="11.971" y="261.374" font-size="4.939">shift</tspan>
+    </text>
+    <text style="line-height:1.25" x="80.192" y="253.29" font-size="10.583" font-family="sans-serif" letter-spacing="0" word-spacing="0" stroke-width=".265">
+      <tspan x="80.192" y="253.29" font-size="4.233">SPACE</tspan>
+    </text>
+    <text style="line-height:1.25" x="11.675" y="282.846" font-size="10.583" font-family="sans-serif" letter-spacing="0" word-spacing="0" stroke-width=".265">
+      <tspan x="11.675" y="282.846" font-size="4.939">control</tspan>
+    </text>
+    <text style="line-height:1.25" x="67.81" y="283.579" font-size="10.583" font-family="sans-serif" letter-spacing="0" word-spacing="0" stroke-width=".265">
+      <tspan x="67.81" y="283.579" font-size="4.939">command</tspan>
+    </text>
+    <rect width="29.843" height="19.847" x="280.173" y="266.93" ry="2.919" fill="none" stroke="#000" stroke-width=".165"/>
+    <text style="line-height:1.25" x="289.674" y="283.812" font-size="10.583" font-family="sans-serif" letter-spacing="0" word-spacing="0" stroke-width=".265">
+      <tspan x="289.674" y="283.812" font-size="4.939">control</tspan>
+    </text>
+    <rect width="124.83" height="19.6" x="97.829" y="267.054" ry="2.8" fill="none" stroke="#000" stroke-width=".165"/>
+    <text style="line-height:1.25" x="13.257" y="215.174" font-size="10.583" font-family="sans-serif" letter-spacing="0" word-spacing="0" stroke-width=".265">
+      <tspan x="13.257" y="215.174" font-size="4.233">NUMBER</tspan>
+    </text>
+    <rect width="19.835" height="19.835" x="320.425" y="178.82" ry="5.308" fill="none" stroke="#000" stroke-width=".165"/>
+    <rect width="19.835" height="19.835" x="341.6" y="178.82" ry="5.308" fill="none" stroke="#000" stroke-width=".165"/>
+    <text style="line-height:1.25" x="344.918" y="187.143" font-size="10.583" font-family="sans-serif" letter-spacing="0" word-spacing="0" stroke-width=".265">
+      <tspan x="344.918" y="187.143" font-size="4.939">Clear</tspan>
+    </text>
+    <rect width="19.835" height="19.835" x="362.483" y="178.82" ry="5.308" fill="none" stroke="#000" stroke-width=".165"/>
+    <text style="line-height:1.25" x="371.957" y="189.847" font-size="10.583" font-family="sans-serif" letter-spacing="0" word-spacing="0" stroke-width=".265"/>
+    <text style="line-height:1.25" x="346.26" y="192.408" font-size="10.583" font-family="sans-serif" letter-spacing="0" word-spacing="0" stroke-width=".265">
+      <tspan x="346.26" y="192.408" font-size="4.939">Line</tspan>
+    </text>
+    <rect width="19.835" height="19.835" x="320.541" y="200.854" ry="5.308" fill="none" stroke="#000" stroke-width=".165"/>
+    <text style="line-height:1.25" x="325.908" y="209.4" font-size="10.583" font-family="sans-serif" letter-spacing="0" word-spacing="0" stroke-width=".265">
+      <tspan x="325.908" y="209.4" font-size="4.939">SF9</tspan>
+    </text>
+    <rect width="19.835" height="19.835" x="341.716" y="200.854" ry="5.308" fill="none" stroke="#000" stroke-width=".165"/>
+    <text style="line-height:1.25" x="347.083" y="209.143" font-size="10.583" font-family="sans-serif" letter-spacing="0" word-spacing="0" stroke-width=".265">
+      <tspan x="347.083" y="209.143" font-size="4.939">SF9</tspan>
+    </text>
+    <rect width="19.835" height="19.835" x="362.6" y="200.854" ry="5.308" fill="none" stroke="#000" stroke-width=".165"/>
+    <text style="line-height:1.25" x="322.138" y="215.4" font-size="10.583" font-family="sans-serif" letter-spacing="0" word-spacing="0" stroke-width=".265">
+      <tspan x="322.138" y="215.4" font-size="4.233">(delete)</tspan>
+    </text>
+    <text style="line-height:1.25" x="344.859" y="214.408" font-size="10.583" font-family="sans-serif" letter-spacing="0" word-spacing="0" stroke-width=".265">
+      <tspan x="344.859" y="214.408" font-size="4.233">(erase</tspan>
+    </text>
+    <text style="line-height:1.25" x="349.277" y="218.384" font-size="10.583" font-family="sans-serif" letter-spacing="0" word-spacing="0" stroke-width=".265">
+      <tspan x="349.277" y="218.384" font-size="4.233">eol)</tspan>
+    </text>
+    <rect width="19.835" height="19.835" x="320.362" y="266.937" ry="5.308" fill="none" stroke="#000" stroke-width=".165"/>
+    <text style="line-height:1.25" x="333.137" y="275.633" font-size="10.583" font-family="sans-serif" letter-spacing="0" word-spacing="0" stroke-width=".265"/>
+    <rect width="19.835" height="19.835" x="341.537" y="266.937" ry="5.308" fill="none" stroke="#000" stroke-width=".165"/>
+    <rect width="19.835" height="19.835" x="362.421" y="266.937" ry="5.308" fill="none" stroke="#000" stroke-width=".165"/>
+    <rect width="19.835" height="19.835" x="341.712" y="244.737" ry="5.308" fill="none" stroke="#000" stroke-width=".165"/>
+    <path d="M351.63 253.195l-1.732 3h3.464zM328.821 276.854l3-1.732v3.464zM351.455 278.313l-1.732-3h3.464zM373.255 276.854l-3-1.732v3.464z" stroke="#000" stroke-width=".165"/>
+    <rect width="19.872" height="11.872" x="8.064" y="160.093" ry="3.177" fill="none" stroke="#000" stroke-width=".165"/>
+    <text style="line-height:1.25" x="12.788" y="168.084" font-size="10.583" font-family="sans-serif" letter-spacing="0" word-spacing="0" stroke-width=".265">
+      <tspan x="12.788" y="168.084" font-size="5.644">SF0</tspan>
+    </text>
+    <rect width="19.872" height="11.872" x="29.068" y="160.093" ry="3.177" fill="none" stroke="#000" stroke-width=".165"/>
+    <text style="line-height:1.25" x="33.336" y="168.084" font-size="10.583" font-family="sans-serif" letter-spacing="0" word-spacing="0" stroke-width=".265">
+      <tspan x="33.336" y="168.084" font-size="5.644">SF1</tspan>
+    </text>
+    <rect width="19.872" height="11.872" x="50.597" y="160.093" ry="3.177" fill="none" stroke="#000" stroke-width=".165"/>
+    <text style="line-height:1.25" x="55.417" y="168.084" font-size="10.583" font-family="sans-serif" letter-spacing="0" word-spacing="0" stroke-width=".265">
+      <tspan x="55.417" y="168.084" font-size="5.644">SF2</tspan>
+    </text>
+    <rect width="19.872" height="11.872" x="71.597" y="160.093" ry="3.177" fill="none" stroke="#000" stroke-width=".165"/>
+    <text style="line-height:1.25" x="76.36" y="168.084" font-size="10.583" font-family="sans-serif" letter-spacing="0" word-spacing="0" stroke-width=".265">
+      <tspan x="76.36" y="168.084" font-size="5.644">SF3</tspan>
+    </text>
+    <rect width="19.872" height="11.872" x="93.127" y="160.093" ry="3.177" fill="none" stroke="#000" stroke-width=".165"/>
+    <text style="line-height:1.25" x="97.822" y="168.084" font-size="10.583" font-family="sans-serif" letter-spacing="0" word-spacing="0" stroke-width=".265">
+      <tspan x="97.822" y="168.084" font-size="5.644">SF4</tspan>
+    </text>
+    <rect width="19.872" height="11.872" x="114.781" y="160.093" ry="3.177" fill="none" stroke="#000" stroke-width=".165"/>
+    <text style="line-height:1.25" x="119.564" y="168.084" font-size="10.583" font-family="sans-serif" letter-spacing="0" word-spacing="0" stroke-width=".265">
+      <tspan x="119.564" y="168.084" font-size="5.644">SF5</tspan>
+    </text>
+    <rect width="19.872" height="11.872" x="136.839" y="160.093" ry="3.177" fill="none" stroke="#000" stroke-width=".165"/>
+    <text style="line-height:1.25" x="141.554" y="168.084" font-size="10.583" font-family="sans-serif" letter-spacing="0" word-spacing="0" stroke-width=".265">
+      <tspan x="141.554" y="168.084" font-size="5.644">SF6</tspan>
+    </text>
+    <rect width="19.872" height="11.872" x="158.898" y="160.093" ry="3.177" fill="none" stroke="#000" stroke-width=".165"/>
+    <text style="line-height:1.25" x="163.676" y="168.084" font-size="10.583" font-family="sans-serif" letter-spacing="0" word-spacing="0" stroke-width=".265">
+      <tspan x="163.676" y="168.084" font-size="5.644">SF7</tspan>
+    </text>
+    <rect width="19.872" height="11.872" x="180.956" y="160.093" ry="3.177" fill="none" stroke="#000" stroke-width=".165"/>
+    <text style="line-height:1.25" x="185.686" y="168.084" font-size="10.583" font-family="sans-serif" letter-spacing="0" word-spacing="0" stroke-width=".265">
+      <tspan x="185.686" y="168.084" font-size="5.644">SF8</tspan>
+    </text>
+    <rect width="19.872" height="11.872" x="202.727" y="160.093" ry="3.177" fill="none" stroke="#000" stroke-width=".165"/>
+    <text style="line-height:1.25" x="207.462" y="168.084" font-size="10.583" font-family="sans-serif" letter-spacing="0" word-spacing="0" stroke-width=".265">
+      <tspan x="207.462" y="168.084" font-size="5.644">SF9</tspan>
+    </text>
+    <rect width="19.872" height="11.872" x="224.785" y="160.093" ry="3.177" fill="none" stroke="#000" stroke-width=".165"/>
+    <text style="line-height:1.25" x="227.712" y="168.084" font-size="10.583" font-family="sans-serif" letter-spacing="0" word-spacing="0" stroke-width=".265">
+      <tspan x="227.712" y="168.084" font-size="5.644">SF10</tspan>
+    </text>
+    <rect width="19.872" height="11.872" x="246.843" y="160.093" ry="3.177" fill="none" stroke="#000" stroke-width=".165"/>
+    <text style="line-height:1.25" x="249.843" y="168.084" font-size="10.583" font-family="sans-serif" letter-spacing="0" word-spacing="0" stroke-width=".265">
+      <tspan x="249.843" y="168.084" font-size="5.644">SF11</tspan>
+    </text>
+    <rect width="19.872" height="11.872" x="268.901" y="160.093" ry="3.177" fill="none" stroke="#000" stroke-width=".165"/>
+    <text style="line-height:1.25" x="271.923" y="168.084" font-size="10.583" font-family="sans-serif" letter-spacing="0" word-spacing="0" stroke-width=".265">
+      <tspan x="271.923" y="168.084" font-size="5.644">SF12</tspan>
+    </text>
+    <rect width="19.872" height="11.872" x="320.714" y="160.093" ry="3.177" fill="none" stroke="#000" stroke-width=".165"/>
+    <rect width="19.872" height="11.872" x="341.714" y="160.093" ry="3.177" fill="none" stroke="#000" stroke-width=".165"/>
+    <rect width="19.872" height="11.872" x="362.714" y="160.093" ry="3.177" fill="none" stroke="#000" stroke-width=".165"/>
+    <text style="line-height:1.25" x="42.703" y="273.323" font-size="10.583" font-family="sans-serif" letter-spacing="0" word-spacing="0" stroke-width=".265">
+      <tspan x="42.703" y="273.323" font-size="4.939">alt</tspan>
+    </text>
+    <text style="line-height:1.25" x="42.29" y="283.206" font-size="10.583" font-family="sans-serif" letter-spacing="0" word-spacing="0" stroke-width=".265">
+      <tspan x="42.29" y="283.206" font-size="4.939">option</tspan>
+    </text>
+    <rect width="23.843" height="19.864" x="254.981" y="267.038" ry="2.922" fill="none" stroke="#000" stroke-width=".165"/>
+    <rect width="29.843" height="19.847" x="224.281" y="267.047" ry="2.919" fill="none" stroke="#000" stroke-width=".165"/>
+    <rect width="19.872" height="11.872" x="290.784" y="160.093" ry="3.177" fill="none" stroke="#000" stroke-width=".165"/>
+    <text style="line-height:1.25" x="323.752" y="168.084" font-size="10.583" font-family="sans-serif" letter-spacing="0" word-spacing="0" stroke-width=".265">
+      <tspan x="323.752" y="168.084" font-size="5.644">SF13</tspan>
+    </text>
+    <text style="line-height:1.25" x="345.223" y="168.084" font-size="10.583" font-family="sans-serif" letter-spacing="0" word-spacing="0" stroke-width=".265">
+      <tspan x="345.223" y="168.084" font-size="5.644">SF14</tspan>
+    </text>
+    <text style="line-height:1.25" x="365.223" y="168.084" font-size="10.583" font-family="sans-serif" letter-spacing="0" word-spacing="0" stroke-width=".265">
+      <tspan x="365.223" y="168.084" font-size="5.644">SF15</tspan>
+    </text>
+    <rect width="19.835" height="19.835" x="290.883" y="200.791" ry="5.308" fill="none" stroke="#000" stroke-width=".165"/>
+    <rect width="29.843" height="19.847" x="65.994" y="266.93" ry="2.919" fill="none" stroke="#000" stroke-width=".165"/>
+    <rect width="23.843" height="19.864" x="39.743" y="267.038" ry="2.922" fill="none" stroke="#000" stroke-width=".165"/>
+    <rect width="29.843" height="19.847" x="7.985" y="267.047" ry="2.919" fill="none" stroke="#000" stroke-width=".165"/>
+    <text style="line-height:1.25" x="269.224" y="274.381" font-size="10.583" font-family="sans-serif" letter-spacing="0" word-spacing="0" stroke-width=".265">
+      <tspan x="269.224" y="274.381" font-size="4.939">alt</tspan>
+    </text>
+    <text style="line-height:1.25" x="260.873" y="284.265" font-size="10.583" font-family="sans-serif" letter-spacing="0" word-spacing="0" stroke-width=".265">
+      <tspan x="260.873" y="284.265" font-size="4.939">option</tspan>
+    </text>
+    <text style="line-height:1.25" x="226.849" y="283.812" font-size="10.583" font-family="sans-serif" letter-spacing="0" word-spacing="0" stroke-width=".265">
+      <tspan x="226.849" y="283.812" font-size="4.939">command</tspan>
+    </text>
+  </g>
+</svg>
