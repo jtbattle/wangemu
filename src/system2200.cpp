@@ -840,7 +840,7 @@ system2200::dispatchAbsStrobe(uint8 byte)
         return;
     }
 
-    // warn the user that a non-existant device has been selected
+    // warn the user that a non-existent device has been selected
     if (!ioMap[curIoAddr].ignore && current_cfg->getWarnIo()
         && (curIoAddr != 0x00)  // intentionally select nothing
         && (curIoAddr != 0x46)  // testing for mxd at 0x4n

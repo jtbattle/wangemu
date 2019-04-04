@@ -17,10 +17,10 @@ class PrinterFrame : public wxFrame
 public:
     CANT_ASSIGN_OR_COPY_CLASS(PrinterFrame);
     // constructor
-    PrinterFrame(const wxString &title, const int io_addr);
+    PrinterFrame(const wxString &title, int io_addr);
 
     // destructor
-    ~PrinterFrame();
+    ~PrinterFrame() override;
 
     // save/restore class-global options to/from config file
     static void saveGlobalDefaults();

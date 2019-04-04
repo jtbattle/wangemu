@@ -26,8 +26,7 @@ enum ui_screen_t : int {
     UI_SCREEN_2236DE
 };
 std::shared_ptr<CrtFrame>
-    UI_displayInit(const int screen_type,
-                   const int io_addr, const int term_num,
+    UI_displayInit(int screen_type, int io_addr, int term_num,
                    crt_state_t *crt_state);
 
 // called before the display gets shut down
@@ -45,7 +44,7 @@ void UI_diskEvent(int slot, int drive);
 // ---- printer interface ----
 
 // printer view
-std::shared_ptr<PrinterFrame> UI_printerInit(const int io_addr);
+std::shared_ptr<PrinterFrame> UI_printerInit(int io_addr);
 
 // called before the printer view gets shut down
 void UI_printerDestroy(PrinterFrame *wnd);

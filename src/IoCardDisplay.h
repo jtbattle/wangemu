@@ -22,7 +22,7 @@ public:
     IoCardDisplay(std::shared_ptr<Scheduler> scheduler,
                   std::shared_ptr<Cpu2200>   cpu,
                   int base_addr, int card_slot, ui_screen_t screen_type);
-    ~IoCardDisplay();
+    ~IoCardDisplay() override;
 
     std::vector<int> getAddresses() const override;
 

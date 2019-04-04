@@ -15,7 +15,7 @@ public:
     CANT_ASSIGN_OR_COPY_CLASS(CrtErrorDlg);
     CrtErrorDlg(wxWindow *parent,
                 const wxString &errcode,
-                const wxPoint origin);
+                wxPoint origin);
 
 private:
     // ---- event handlers ----

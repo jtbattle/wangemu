@@ -1568,64 +1568,64 @@ Cpu2200vp::execOneOp()
     case OP_BT:         // branch if true
         PREAMBLE4;
         if ((b_op & imm) == imm) { m_cpu.ic = puop->p16; }
-                            else { ++m_cpu.ic; }
+        else                     { ++m_cpu.ic; }
         break;
 
     case OP_BF:         // branch if false
         PREAMBLE4;
         if ((b_op & imm) == 0) { m_cpu.ic = puop->p16; }
-                          else { ++m_cpu.ic; }
+        else                   { ++m_cpu.ic; }
         break;
 
     case OP_BEQ:        // branch if = to mask
         PREAMBLE4;
         if (b_op == imm) { m_cpu.ic = puop->p16; }
-                    else { ++m_cpu.ic; }
+        else             { ++m_cpu.ic; }
         break;
 
     case OP_BNE:        // branch if != to mask
         PREAMBLE4;
         if (b_op != imm) { m_cpu.ic = puop->p16; }
-                    else { ++m_cpu.ic; }
+        else             { ++m_cpu.ic; }
         break;
 
     case OP_BLR:        // BLR: branch if R[AAAA] < R[BBBB]
         m_cpu.pc = static_cast<uint16>(m_cpu.pc + static_cast<int8>(puop->p8));
         if (a_op < b_op) { m_cpu.ic = puop->p16; }
-                    else { ++m_cpu.ic; }
+        else             { ++m_cpu.ic; }
         break;
 
     case OP_BLRX:       // BLRX: branch if R[AAAA] < R[BBBB]
         a_op = (a_op2 << 8) | a_op;
         b_op = (b_op2 << 8) | b_op;
         if (a_op < b_op) { m_cpu.ic = puop->p16; }
-                    else { ++m_cpu.ic; }
+        else             { ++m_cpu.ic; }
         ns = 800;
         break;
 
     case OP_BLER:       // BLER: branch if R[AAAA] <= R[BBBB]
         m_cpu.pc = static_cast<uint16>(m_cpu.pc + static_cast<int8>(puop->p8));
         if (a_op <= b_op) { m_cpu.ic = puop->p16; }
-                     else { ++m_cpu.ic; }
+        else              { ++m_cpu.ic; }
         break;
 
     case OP_BLERX:      // BLERX: branch if R[AAAA] <= R[BBBB]
         a_op = (a_op2 << 8) | a_op;
         b_op = (b_op2 << 8) | b_op;
         if (a_op <= b_op) { m_cpu.ic = puop->p16; }
-                     else { ++m_cpu.ic; }
+        else              { ++m_cpu.ic; }
         ns = 800;
         break;
 
     case OP_BER:        // BEQ: branch if R[AAAA] == R[BBBB]
         if (a_op == b_op) { m_cpu.ic = puop->p16; }
-                     else { ++m_cpu.ic; }
+        else              { ++m_cpu.ic; }
         m_cpu.pc = static_cast<uint16>(m_cpu.pc + static_cast<int8>(puop->p8));
         break;
 
     case OP_BNR:        // BNE: branch if R[AAAA] != R[BBBB]
         if (a_op != b_op) { m_cpu.ic = puop->p16; }
-                     else { ++m_cpu.ic; }
+        else              { ++m_cpu.ic; }
         m_cpu.pc = static_cast<uint16>(m_cpu.pc + static_cast<int8>(puop->p8));
         break;
 

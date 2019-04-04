@@ -39,7 +39,7 @@ public:
                      PrinterDialogDataTransfer *data,
                      const wxPoint& pos = wxDefaultPosition,
                      const wxSize& size = wxDefaultSize,
-                     const long style = wxDEFAULT_DIALOG_STYLE
+                     long style = wxDEFAULT_DIALOG_STYLE
                     );
 
     bool TransferDataToWindow() override;

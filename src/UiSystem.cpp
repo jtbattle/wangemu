@@ -26,7 +26,9 @@ struct crt_state_t;
 #include "UiSystemConfigDlg.h"
 #include "UiTermMuxCfgDlg.h"
 #include "host.h"
-#include "osx_utils.h"
+#ifdef __WXMAC__
+  #include "osx_utils.h"
+#endif
 #include "system2200.h"
 
 #include "wx/cmdline.h"         // req'd by wxCmdLineParser

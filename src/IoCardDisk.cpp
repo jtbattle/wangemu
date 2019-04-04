@@ -1058,7 +1058,7 @@ IoCardDisk::iwvdInsertDisk(int drive,
     m_d[drive].ns_per_track  = TIMER_MS(track_seek_ms);
     m_d[drive].ns_per_sector =
                 TIMER_MS(  60000.0 // ms per minute
-                         / (double)((int64)disk_rpm * m_d[drive].sectors_per_track));
+                         / (static_cast<double>(disk_rpm) * m_d[drive].sectors_per_track));
 
     return true;
 }

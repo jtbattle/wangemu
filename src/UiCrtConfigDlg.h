@@ -12,7 +12,7 @@ public:
     CANT_ASSIGN_OR_COPY_CLASS(CrtConfigDlg);
     CrtConfigDlg(wxFrame *parent, const wxString &title, const wxString &subgroup);
 
-    ~CrtConfigDlg();
+    ~CrtConfigDlg() override;
 
 private:
     // ---- event handlers ----

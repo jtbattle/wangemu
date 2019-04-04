@@ -15,7 +15,7 @@ public:
     // ----- common IoCard functions -----
     IoCardPrinter(std::shared_ptr<Cpu2200> cpu,
                   int base_addr, int card_slot);
-    ~IoCardPrinter();
+    ~IoCardPrinter() override;
 
     std::vector<int> getAddresses() const override;
 

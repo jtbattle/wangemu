@@ -141,7 +141,8 @@ static constexpr struct paperbinmap_t {
 
 // constructor
 PrinterFrame::PrinterFrame(const wxString& title, const int io_addr) :
-        wxFrame((wxFrame *)nullptr, -1, title, wxDefaultPosition, wxDefaultSize,
+        wxFrame(static_cast<wxFrame *>(nullptr), -1, title,
+                wxDefaultPosition, wxDefaultSize,
                 wxDEFAULT_FRAME_STYLE | wxNO_FULL_REPAINT_ON_RESIZE),
     m_printer_addr(io_addr)   // used later during configuration
 {

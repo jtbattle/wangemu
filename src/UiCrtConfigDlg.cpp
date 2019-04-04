@@ -13,7 +13,7 @@
 class myClientData : public wxClientData
 {
 public:
-    myClientData(int data) : m_data(data) { }
+    explicit myClientData(int data) : m_data(data) { }
     int m_data;
 };
 

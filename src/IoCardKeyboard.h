@@ -17,7 +17,7 @@ public:
     IoCardKeyboard(std::shared_ptr<Scheduler> scheduler,
                    std::shared_ptr<Cpu2200>   cpu,
                    int base_addr, int card_slot);
-    ~IoCardKeyboard();
+    ~IoCardKeyboard() override;
 
     std::vector<int> getAddresses() const override;
 

@@ -122,7 +122,7 @@ public:
 
     // format the given platter of the virtual disk image.
     // returns true if successful.
-    bool format(const int platter);
+    bool format(int platter);
 
 private:
     // make sure metadata is up to date
@@ -130,10 +130,10 @@ private:
     void reopen();
 
     // write 256 bytes to an absolute sector address
-    bool rawWriteSector(const int sector, const uint8 *data);
+    bool rawWriteSector(int sector, const uint8 *data);
 
     // read 256 bytes from an absolute sector address
-    bool rawReadSector(const int sector, const uint8 *data);
+    bool rawReadSector(int sector, const uint8 *data);
 
     // write header block for wang virtual disk
     // return true on success

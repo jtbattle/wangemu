@@ -155,7 +155,8 @@ CrtFrame::CrtFrame(const wxString& title,
                    const int io_addr,
                    const int term_num,
                    crt_state_t *crt_state) :
-       wxFrame((wxFrame *)nullptr, -1, title, wxDefaultPosition, wxDefaultSize,
+       wxFrame(static_cast<wxFrame *>(nullptr), -1, title,
+               wxDefaultPosition, wxDefaultSize,
                wxDEFAULT_FRAME_STYLE | wxNO_FULL_REPAINT_ON_RESIZE),
     m_crt_addr(io_addr),
     m_term_num(term_num),
@@ -429,7 +430,7 @@ CrtFrame::setMenuChecks(const wxMenu *menu)
             assert(ok);
             for (int d=0; d < 4; d++) {
                 const int stat = IoCardDisk::wvdDriveStatus(slot, d);
-                if (!(stat & IoCardDisk::WVD_STAT_DRIVE_EXISTENT)) {
+                if ((stat & IoCardDisk::WVD_STAT_DRIVE_EXISTENT) == 0) {
                     break;
                 }
                 const char drive_ch = ((d & 1) == 0) ? 'F' : 'R';

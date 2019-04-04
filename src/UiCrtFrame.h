@@ -19,8 +19,8 @@ public:
     CANT_ASSIGN_OR_COPY_CLASS(CrtFrame);
     // constructor
     CrtFrame(const wxString &title,
-             const int io_addr,
-             const int term_num,     // 0 if dumb, 1-4 if term mux
+             int io_addr,
+             int term_num,     // 0 if dumb, 1-4 if term mux
              crt_state_t *crt_state);
 
     // make CRT the focus of further keyboard events

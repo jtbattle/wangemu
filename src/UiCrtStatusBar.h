@@ -18,7 +18,7 @@ class CrtStatusBar : public wxStatusBar
 public:
     CANT_ASSIGN_OR_COPY_CLASS(CrtStatusBar);
     CrtStatusBar(CrtFrame *parent, bool smart_term, bool primary_crt);
-    ~CrtStatusBar() = default;
+    ~CrtStatusBar() override = default;
 
     void SetStatusMessage(const std::string &text);
 
@@ -41,7 +41,7 @@ private:
     void OnDiskPopup(wxCommandEvent &event);
     void OnMouseBtnDown(wxMouseEvent &event);
 
-    void SetDiskIcon(const int slot, const int drive);
+    void SetDiskIcon(int slot, int drive);
 
     CrtFrame * const m_parent;
     wxCheckBox     *m_keyword_ctl                             = nullptr;    // set = "Keyword/A", unset = "A/a"

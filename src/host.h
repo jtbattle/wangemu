@@ -61,20 +61,20 @@ namespace host
     bool configReadInt(const std::string &subgroup,
                        const std::string &key,
                        int *val,
-                       const int defaultval = 0);
+                       int defaultval = 0);
 
     void configWriteInt(const std::string &subgroup,
                         const std::string &key,
-                        const int val);
+                        int val);
 
     void configReadBool(const std::string &subgroup,
                         const std::string &key,
                         bool *val,
-                        const bool defaultval = false);
+                        bool defaultval = false);
 
     void configWriteBool(const std::string &subgroup,
                          const std::string &key,
-                         const bool val);
+                         bool val);
 
     // these are specialized for saving/recalling the location and size
     // of windows of various kinds: emulated terminals, dialog boxes.
@@ -82,7 +82,7 @@ namespace host
     // with is of the window or the client.
     void configReadWinGeom(wxWindow          *wxwin,
                            const std::string &subgroup,
-                           wxRect * const     default_geom = nullptr,
+                           wxRect            *default_geom = nullptr,
                            bool               client_size = true);
 
     void configWriteWinGeom(wxWindow          *wxwin,

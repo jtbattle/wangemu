@@ -125,7 +125,7 @@ namespace system2200
 
     // find slot number of disk controller #n (starting with 0).
     // returns true if successful.
-    bool findDiskController(const int n, int *slot) noexcept;
+    bool findDiskController(int n, int *slot) noexcept;
 
     // find slot,drive of any disk controller with disk matching name.
     // returns true if successful.

@@ -70,7 +70,7 @@ public:
     // ---- see base class for description of these members: ----
     Cpu2200t(std::shared_ptr<Scheduler> scheduler,
              int ramsize, int subtype);
-    ~Cpu2200t();
+    ~Cpu2200t() override;
     int   getCpuType() const noexcept override;
     void  reset(bool hard_reset) noexcept override;
     uint8 getAB() const noexcept override;
@@ -177,7 +177,7 @@ public:
     // ---- see base class for description of these members: ----
     Cpu2200vp(std::shared_ptr<Scheduler> scheduler,
               int ramsize, int subtype);
-    ~Cpu2200vp();
+    ~Cpu2200vp() override;
     int   getCpuType() const noexcept override;
     void  reset(bool hard_reset) noexcept override;
     uint8 getAB() const noexcept override;

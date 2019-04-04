@@ -22,7 +22,7 @@ public:
                   std::shared_ptr<Cpu2200> cpu,
                   int base_addr, int card_slot,
                   const CardCfgState *cfg);
-    ~IoCardTermMux();
+    ~IoCardTermMux() override;
 
     std::vector<int> getAddresses() const override;
 

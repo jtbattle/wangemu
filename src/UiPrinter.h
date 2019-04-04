@@ -15,10 +15,10 @@ class Printer: public wxScrolledWindow
 public:
     CANT_ASSIGN_OR_COPY_CLASS(Printer);
     explicit Printer(PrinterFrame *parent);
-    ~Printer();
+    ~Printer() override;
 
     // ---- setters/getters ----
-    void setFontSize(const int size);
+    void setFontSize(int size);
 
     void setGreenbar(bool greenbar=true);
     bool getGreenbar() const noexcept;

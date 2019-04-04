@@ -927,7 +927,7 @@ const std::vector<error_table_t> error_table = {
     /*action*/      "Use the proper form of the statement.",
     /*example*/     "SAVE DC F \"SAM 1\"\n"
                     "                 ^ERR 73",
-    /*correction*/  "SAVE DCF (\"SAM1\") \"SAM1\"",
+    /*correction*/  R"(SAVE DCF ("SAM1") "SAM1")",
     },
 
 // -------------------------------------------------------------------------

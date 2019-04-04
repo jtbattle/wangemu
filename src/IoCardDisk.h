@@ -25,7 +25,7 @@ public:
                int base_addr,        // eg 0x310, 0x320, 0x330
                int card_slot,        // which backplane slot this card is in
                const CardCfgState *cfg);
-    ~IoCardDisk();
+    ~IoCardDisk() override;
 
     std::vector<int> getAddresses() const override;
 
@@ -56,12 +56,12 @@ public:
 
     // returns true and type of disk in given (slot,drive) if occupied,
     // otherwise it returns false.
-    static bool wvdGetDiskType(const int slot, const int drive, int *disktype);
+    static bool wvdGetDiskType(int slot, int drive, int *disktype);
 
     // returns true and name of disk in given (slot,drive) if occupied,
     // otherwise it returns false.
-    static bool wvdGetFilename(const int slot,
-                               const int drive,
+    static bool wvdGetFilename(int slot,
+                               int drive,
                                std::string *filename);
 
     // given a slot and a drive number, return drive status
@@ -323,8 +323,8 @@ private:
     std::string stateName(int state) const;
 
     // centralized function to handle updating sequencing state
-    bool advanceState(disk_event_t event, const int val=0);
-    bool advanceStateInt(disk_event_t event, const int val);
+    bool advanceState(disk_event_t event, int val=0);
+    bool advanceStateInt(disk_event_t event, int val);
 
     int        m_host_type;          // 00=2200 T or PROM mode, 01=2200 VP, 02=2200 MVP
     int        m_command;            // command byte

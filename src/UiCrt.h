@@ -31,7 +31,7 @@ public:
         FONT_NATIVE18 = 18,     // system native font, 18 point
         FONT_NATIVE24 = 24,     // system native font, 24 point
     };
-    void setFontSize(const int size);
+    void setFontSize(int size);
 
     void setColor(const wxColor &FG, const wxColor &BG);
 
