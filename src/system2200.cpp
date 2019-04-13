@@ -840,6 +840,11 @@ system2200::dispatchAbsStrobe(uint8 byte)
         return;
     }
 
+    // MVP allows extra RAM to be used as a RAM disk at /340
+    if (vp_mode && (curIoAddr == 0x40)) {
+        return;
+    }
+
     // warn the user that a non-existent device has been selected
     if (!ioMap[curIoAddr].ignore && current_cfg->getWarnIo()
         && (curIoAddr != 0x00)  // intentionally select nothing
