@@ -939,7 +939,7 @@ dasmVpOp(char *buf, uint16 ic, uint32 uop) noexcept
         }
     }
 
-    if (parity != 0) {
+    if (parity == 0) {
         len += padSpaces(buf, len, COMMENT_COL);
         strcpy(&buf[len], "; (bad parity)");
     }
