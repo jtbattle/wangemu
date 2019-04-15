@@ -804,7 +804,7 @@ dasmVpOp(char *buf, uint16 ic, uint32 uop) noexcept
                 illegal = ((uop & 0x010000) != 0x000000);
                 if (DASM_PSEUDO_OPS && ((uop & 0x0200F0) == 0x0200E0)) {
                     // special case: ORX DD,FwFx,FyFz == MVX FwFx,FyFz
-                    len = dasmType1a(buf, "MVX", illegal, uop);
+                    len = dasmType1a(buf, "MV", illegal, uop);  // note: bit 17 cause this to become "MVX"
                 } else {
                     len = dasmType1(buf, "OR", illegal, uop);
                 }
