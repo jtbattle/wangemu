@@ -589,7 +589,11 @@ IoCardTermMux::i8080_out_func(int addr, int byte, void *user_data)
         break;
 
     case OUT_PRIME:
-        // issue (warm) reset
+        // Issue (warm) reset.
+        // The real hardware triggers a one shot which drives PRIME active for
+        //     R=330K & C=470pf = (0.34ns)*Rx*Cx*(1+1/Rx) = 
+        //                      = 0.34*33*470*(1+1/33) = 5000ns = 5ms
+        // but it shouldn't matter for this emulation.
         system2200::reset(false);
         break;
 

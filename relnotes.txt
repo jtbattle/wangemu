@@ -1,6 +1,6 @@
 ============================================================================
 		   Wang 2200 emulator release notes, v3.0-pre
-                               Februrary 18, 2019
+                                 April 14, 2019
 ============================================================================
 
 ---- What is It? ----
@@ -130,11 +130,23 @@ The emulator very well might run on Linux via Wine, but it hasn't been tested.
    what was historically accurate. It used to be configuring a VP in the
    emulator with 16 KB or 48 KB of RAM would trigger an assertion.
 
+*) When using ramdisk (/340), the emulator no longer warns about accesses
+   to an unmapped device address.
+
+*) When the cpu switched between addressed devices (via ABS), it wasn't
+   updating the selected card with the current CBP status. most of the time it
+   did't matter, but it did when a reboot happened with a 2236MXD terminal in
+   the system.
+
 *) A typo was fixed in error_table.cpp for error 73; it should read "SAVE DCF"
    instead of "SAVE SCF".
 
    A few missing error codes which were added for MVP operation were also
    added to the table.
+
+*) The VP CPU disassembler (used only during emulation debug) had an error
+   decoding the "MVX" pseudo-opcode. It was being decoded as "MVXX"
+   (two places were marking the eXtended trait).
 
 ---- Minor Tweaks and Implementation Changes ----
 
