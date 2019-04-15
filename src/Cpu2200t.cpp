@@ -1319,6 +1319,8 @@ Cpu2200t::execOneOp()
                 }
                 //UI_info("CPU:ABS when AB=%02X", m_cpu.ab);
                 system2200::dispatchAbsStrobe(m_cpu.ab_sel);  // address bus strobe
+                // we might have changed card selection; tell it cpb status
+                system2200::dispatchCpuBusy((m_cpu.st1 & ST1_MASK_CPB) != 0);
                 break;
 
             default:
