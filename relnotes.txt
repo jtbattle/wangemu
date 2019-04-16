@@ -75,6 +75,13 @@ The emulator very well might run on Linux via Wine, but it hasn't been tested.
    Consult the Keyboard Help entry from the top level Help menu to review
    all the mappings.
 
+*) Before release 3.0, the emulator had the option of using a fixed-width
+   system font to display characters instead of using the dot matrix font.
+   This has been removed because the original font had a number of characters
+   which don't have a good representation in a standard font.  The long-term
+   goal is to rewrite the display generating code and the native font idea
+   doesn't map into that well at all.
+
 *) The option to control whether disk accesses are performed at the same
    speed as a real 2200 ("realtime") or quickly ("unregulated") used to be
    a checkbox item on the system configuration dialog. Now it appears in
@@ -138,16 +145,6 @@ The emulator very well might run on Linux via Wine, but it hasn't been tested.
    did't matter, but it did when a reboot happened with a 2236MXD terminal in
    the system.
 
-*) A typo was fixed in error_table.cpp for error 73; it should read "SAVE DCF"
-   instead of "SAVE SCF".
-
-   A few missing error codes which were added for MVP operation were also
-   added to the table.
-
-*) The VP CPU disassembler (used only during emulation debug) had an error
-   decoding the "MVX" pseudo-opcode. It was being decoded as "MVXX"
-   (two places were marking the eXtended trait).
-
 ---- Minor Tweaks and Implementation Changes ----
 
 *) compiled with the latest wxWidgets library release, 3.1.2,
@@ -160,6 +157,16 @@ The emulator very well might run on Linux via Wine, but it hasn't been tested.
    analyzer, cppcheck, and clang-tidy) and followed up many many suggestions,
    though not all. Those that were painful, overly pedantic, or I didn't
    agree with have been ignored for now.
+
+*) A typo was fixed in error_table.cpp for error 73; it now reads "SAVE DCF"
+   instead of "SAVE SCF".
+
+   A few missing error codes which were added for MVP operation were also
+   added to the table.
+
+*) The VP CPU disassembler (used only during emulation debug) had an error
+   decoding the "MVX" pseudo-opcode. It was being decoded as "MVXX"
+   (two places were marking the eXtended trait).
 
 ---- Tips ----
 
@@ -204,29 +211,9 @@ The emulator very well might run on Linux via Wine, but it hasn't been tested.
      applications, such as wangemu, to set an application-specific override to
      disable it.
 
----- Known Bugs ----
-
-*) A real MVP allowed up to three MXD terminal mux cards to be installed
-   supporting up to 12 terminals. The emulator allows only one MXD terminal
-   because (a) managing four windows is already unwieldy, and (b) for some
-   reason the OS would hang if more than one emulated MXD was active and I
-   didn't feel like investing the effort to debug it because of issue (a).
-
-*) Because of limitations in the wxSound implementation on OSX, a program
-   such as this emits a choppy alert tone instead of continuous one:
-      10 PRINT HEX(07):GOTO 10
-
-*) In 2336 terminal mode, the boundary between character cells when displaying
-   graphic characters is noticeable. The fix would require a complete rewrite
-   of the display generation code. Maybe this will be fixed the next release.
-
-*) The real 2200 CPUs occasionally insert dummy microinstruction cycles
-   to performs memory refresh. This isn't modeled in the emulator,
-   so the emulator is about 3% faster than real-time.
-
 *) The emulator allows redirecting the printer output to a real, physically
    attached printer. The dialog offers two choices: LPT1 and LPT2.
-   Just about now PCs these days support parallel ports. The following
+   Just about no PCs these days support parallel ports. The following
    instructions are now to map a USB port to one of those logical printer
    ports. However, these directions worked on one PC in particular, and
    may need tweaking to get it to work for other systems (or maybe doesn't
@@ -263,4 +250,27 @@ The emulator very well might run on Linux via Wine, but it hasn't been tested.
       with a CR and no LF.
     + If the program ends without filling the last page, you may need to send a
       HEX(0C) (page feed) to the printer to flush out the partial page.
+
+---- Known Bugs ----
+
+*) A real MVP allowed up to three MXD terminal mux cards to be installed
+   supporting up to 12 terminals. The emulator allows only one MXD terminal
+   because (a) managing four windows is already unwieldy, and (b) for some
+   reason the OS hangs if more than one emulated MXD was active and I didn't
+   feel like investing the effort to debug it because of issue (a).
+
+*) Because of limitations in the wxSound implementation on OSX, a program
+   such as this emits a choppy alert tone instead of continuous one:
+      10 PRINT HEX(07):GOTO 10
+
+*) The emulator currently does not model attaching a printer to a serial
+   terminal.
+
+*) In 2336 terminal mode, the boundary between character cells when displaying
+   graphic characters is noticeable. The fix would require a complete rewrite
+   of the display generation code. Maybe this will be fixed the next release.
+
+*) The real 2200 CPUs occasionally insert dummy microinstruction cycles
+   to performs memory refresh. This isn't modeled in the emulator,
+   so the emulator is about 3% faster than a real 2200.
 

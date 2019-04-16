@@ -10,12 +10,6 @@
 extern uint8 chargen[];          // font character generator
 extern uint8 chargen_2236_alt[]; // 2236 alternate character set
 
-extern uint8 xlat_char[128];     // mapping to closest LATIN-1 equivalent
-extern uint8 xlat_char_alt[64];  // mapping to closest LATIN-1 equivalent
-
-extern wxString unicode_xlat_char[128];
-extern wxString unicode_xlat_char_alt[64];
-
 #endif // _INCLUDE_UI_CRT_CHARSET_H_
 
 // vim: ts=8:et:sw=4:smarttab

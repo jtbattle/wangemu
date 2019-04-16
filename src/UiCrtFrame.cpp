@@ -94,15 +94,9 @@ static constexpr struct font_table_t {
     int         size;   // encoding for font as it appears in .ini file
     const char *name;   // descriptive string
 } font_table[] = {
-    {  1, "Dot-matrix Font 1:1" },
-    {  2, "Dot-matrix Font 1:2" },
-    {  3, "Dot-matrix Font 2:4" },
-    {  8, "Font Size  8" },
-    { 10, "Font Size 10" },
-    { 12, "Font Size 12" },
-    { 14, "Font Size 14" },
-    { 18, "Font Size 18" },
-    { 24, "Font Size 24" },
+    {  Crt::FONT_MATRIX11, "Dot-matrix Font 1:1" },
+    {  Crt::FONT_MATRIX12, "Dot-matrix Font 1:2" },
+    {  Crt::FONT_MATRIX24, "Dot-matrix Font 2:4" },
 };
 const int num_fonts = (sizeof(font_table) / sizeof(font_table_t));
 
@@ -879,13 +873,13 @@ CrtFrame::getDefaults()
     }
 
     // pick up screen font size
-    m_font_size[0] = m_font_size[1] = 2; // default
+    m_font_size[0] = m_font_size[1] = Crt::FONT_MATRIX12; // default
     b = host::configReadInt(subgroup, "fontsize", &v);
-    if (b && ((v >=1 && v <= 3) || (v >= 8 && v <= 28))) {
+    if (b && (v == Crt::FONT_MATRIX11 || v == Crt::FONT_MATRIX12 || v == Crt::FONT_MATRIX24)) {
         m_font_size[0] = v;
     }
     host::configReadInt(subgroup, "fontsize2", &v);
-    if (b && ((v >=1 && v <= 3) || (v >= 8 && v <= 28))) {
+    if (b && (v == Crt::FONT_MATRIX11 || v == Crt::FONT_MATRIX12 || v == Crt::FONT_MATRIX24)) {
         m_font_size[1] = v;
     }
 

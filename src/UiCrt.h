@@ -24,12 +24,6 @@ public:
         FONT_MATRIX11 =  1,     // wang dot matrix, scale x*1, y*1
         FONT_MATRIX12 =  2,     // wang dot matrix, scale x*1, y*2
         FONT_MATRIX24 =  3,     // wang dot matrix, scale x*2, y*4
-        FONT_NATIVE8  =  8,     // system native font,  8 point
-        FONT_NATIVE10 = 10,     // system native font, 10 point
-        FONT_NATIVE12 = 12,     // system native font, 12 point
-        FONT_NATIVE14 = 14,     // system native font, 14 point
-        FONT_NATIVE18 = 18,     // system native font, 18 point
-        FONT_NATIVE24 = 24,     // system native font, 24 point
     };
     void setFontSize(int size);
 
@@ -79,7 +73,6 @@ private:
 
     // ---- utility functions ----
 
-    wxFont pickFont(int pointsize, bool bold, const std::string &facename="");
     int getFontSize() const noexcept;
 
     // rebuild m_font_map
