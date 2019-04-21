@@ -7,9 +7,6 @@
 *.ignore/
 mydisks/
 myscripts/
-dr_memory_logs
-wangemu-cppcheck-build-dir/
-src/*.d
 
 # Build results
 [Dd]ebug/
@@ -17,6 +14,9 @@ src/*.d
 build/
 [Bb]in/
 [Oo]bj/
+dr_memory_logs
+src/*.d
+wangemu-cppcheck-build-dir/
 
 *_i.c
 *_p.c
@@ -98,19 +98,18 @@ $RECYCLE.BIN/
 *.exe
 *.pyc
 *.db
-*.opendb
 *.json
 
 # project specific
 dr_memory.bat
-todo.txt
+html/
+html_osx/
 src/make_tags.bat
 src/tags
 termtest/poll.py
 termtest/catch_kb.py
+todo.txt
 wvdutil/lint.bat
 wvdutil/unscramble.py
 .vs/slnx.sqlite
 wangemu
-html
-html_osx
