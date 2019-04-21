@@ -1,14 +1,7 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
- "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
-<head>
-<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
-<title>WangEmu Keyboard Map</title>
-<style type="text/css">
-<!--
-@import url("./emu.css");
--->
-
+[% title = "WangEmu Keyboard Map" -%]
+[% updated = "April 17, 2019" -%]
+[% pc="PC"; SET pc="Mac" IF (os == "mac") -%]
+[% page_style= BLOCK %]
 hr {
     border: 0;
     height: 1px;
@@ -59,49 +52,43 @@ li {
 div.diagram {
     background: 0xff0000;
 }
-</style>
-</head>
+[% END -%]
 
-<body>
-<div id="container">
-
-<div id="content">
-	
 <h1>WangEmu Keyboard Map</h1>
 
 <p>
 The Wang 2200 had a number of different keyboard options during
-its life.  The earliest ones are best described as being more like
+its life. The earliest ones are best described as being more like
 a calculator keyboard that had the letters retrofitted to it than a keyboard
-meant for typing.  Later ones did have a more or less normal typewriter
+meant for typing. Later ones did have a more or less normal typewriter
 layout augmented with some dedicated keys for performing common tasks.
 </p>
 
 <p>
 One problem most emulators have is deciding how to map the emulated
-keys onto the keys available on the host computer's keyboard.  Many
+keys onto the keys available on the host computer's keyboard. Many
 emulator writers attempt to map the emulated keys to the same positions
 of the keyboard even if the key legend is very different (such that a
-blindfolded user of the emulated computer would feel at home).  WangEmu takes
-the other tack.  As much as possible, if a key with the right legend
+blindfolded user of the emulated computer would feel at home). WangEmu takes
+the other tack. As much as possible, if a key with the right legend
 is available on the host keyboard, that is the one used to represent the
 equivalent 2200 key.
 </p>
 
 <p>
-That still leaves some problems.  The Mac keyboard has many keys
+That still leaves some problems. The [% pc %] keyboard has many keys
 that the 2200 (more correctly, the 2226 keyboard) didn't have, and the
-2226 had some keys that the Mac keyboard doesn't have.  In these cases,
-WangEmu tries to pick keys that are somewhat mnemonic.  Also, not
+2226 had some keys that the [% pc %] keyboard doesn't have. In these cases,
+WangEmu tries to pick keys that are somewhat mnemonic. Also, not
 all keys were directly mapped since such a mapping was rarely used and
 adding it to the emulator would cause more confusion than it was worth
-(e.g., mapping "RENUMBER" to the shifted comma key, while accuate, would
+(e.g., mapping "RENUMBER" to the shifted comma key, while accurate, would
 have necessitated moving the "&lt;" symbol to some other obscure location).
 </p>
 
 <p>
 Another matter is that there isn't complete standardization on keyboard
-layouts.  This is especially true on the Mac platform.
+layouts.
 Perhaps a future version of the emulator will allow for a user-configurable
 key map, but for now, changing it requires editing the source code and
 recompiling.
@@ -109,31 +96,57 @@ recompiling.
 
 <h2>Special function keys and dedicated keyword keys</h2>
 
+[% IF (os == "pc") -%]
+<p>
+Unfortunately, the Wang has 16 special function keys, while most PC keyboards
+have only 12. Since F13-F15 don't typically exist, WangEmu offers three
+workarounds.
+</p>
+
+<ul>
+    <li>
+    A toolbar can be displayed with all the special function keys.
+    </li>
+
+    <li>
+    Holding down the control key when pressing F9 to F12 will produce
+    the otherwise missing function keys. Ctrl-F9 through F11 map to special
+    function keys 13 through 15, while Ctrl-F12 maps to the EDIT key.
+    </li>
+
+    <li>
+    Special function keys used in the EDIT mode are also mapped to control
+    key combinations. For example, to enter the SF 13 key, which in edit mode
+    causes the cursor to move left one position, it is much more mnemonic to
+    press LEFT-ARROW (<span class="arrow">&larr;</span>) than the normal
+    mapping, Ctrl-F9.
+    </li>
+</ul>
+[% ELSE -%]
 <p>
 Unfortunately, the Wang has 16 special function keys, while not all Mac
-keyboards do.  OS X also steals some keys for various Expos&eacute;
+keyboards do. OS X also steals some keys for various Expos&eacute;
 functions; holding down the FN-key while pressing the indicated function
 key will allow the emulator to see the function key press without the
 side effects.
 </p>
-
 <p>
 There are two other methods for getting function key presses to the emulator.
 First, WangEmu can be configured to display a toolbar with all the special
 function keys.
 </p>
-
 <p>
 Second, special function keys used in the EDIT mode are also mapped to control
 key combinations. For example, to enter the SF 13 key, which in edit mode
 causes the cursor to move left one position, it is much more mnemonic to
 press LEFT-ARROW (<span class="arrow">&larr;</span>).
 </p>
+[% END -%]
 
 <p>
-Below is a complete table of the mappings.  In some cases, there
-are two Mac keys or key combinations that are used to emulate a given
-keystroke.  On the 2200, some of the special function keys get a dedicated
+Below is a complete table of the mappings. In some cases, there
+are two [% pc %] keys or key combinations that are used to emulate a given
+keystroke. On the 2200, some of the special function keys get a dedicated
 purpose when in edit mode, shown as the last column of the table.
 </p>
 
@@ -143,7 +156,7 @@ purpose when in edit mode, shown as the last column of the table.
     <td>Wang key</td>
     <td>2200 use</td>
     <td>2200 use in edit mode</td>
-    <td>Mac keys</td>
+    <td>[% pc %] keys</td>
 </tr>
 </thead>
 
@@ -198,7 +211,11 @@ purpose when in edit mode, shown as the last column of the table.
     <td>SF4</td>
     <td>special function 4</td>
     <td><sup>&dagger;</sup>cursor to end of line</td>
+[% IF (os == "pc") -%]
+    <td>F4<br/>Ctrl-<span class="arrow">&rarr;</span></td>
+[% ELSE -%]
     <td>F4<br/>Shift-<span class="arrow">&darr;</span></td>
+[% END -%]
 </tr>
 
 <tr>
@@ -219,7 +236,11 @@ purpose when in edit mode, shown as the last column of the table.
     <td>SF7</td>
     <td>special function 7</td>
     <td><sup>&dagger;</sup>cursor to start of line</td>
+[% IF (os == "pc") -%]
+    <td>F7<br/>Ctrl-<span class="arrow">&larr;</span></td>
+[% ELSE -%]
     <td>F7<br/>Shift-<span class="arrow">&uarr;</span></td>
+[% END -%]
 </tr>
 
 <tr>
@@ -240,7 +261,11 @@ purpose when in edit mode, shown as the last column of the table.
     <td>SF10</td>
     <td>special function 10</td>
     <td>insert char at cursor</td>
+[% IF (os == "pc") -%]
+    <td>F10<br/>Insert<br/>Ctrl-I</td>
+[% ELSE -%]
     <td>F10<br/>Ctrl-I</td>
+[% END -%]
 </tr>
 
 <tr>
@@ -261,28 +286,44 @@ purpose when in edit mode, shown as the last column of the table.
     <td>SF13</td>
     <td>special function 13</td>
     <td>cursor left 1 place</td>
+[% IF (os == "pc") -%]
+    <td>Ctrl-F9<br/><span class="arrow">&larr;</span></td>
+[% ELSE -%]
     <td>F13<br/><span class="arrow">&larr;</span></td>
+[% END -%]
 </tr>
 
 <tr>
     <td>SF14</td>
     <td>special function 14</td>
     <td>cursor left 5 places</td>
+[% IF (os == "pc") -%]
+    <td>Ctrl-F10<br/>Shift + <span class="arrow">&larr;</span></td>
+[% ELSE -%]
     <td>F14<br/>Shift + <span class="arrow">&larr;</span></td>
+[% END -%]
 </tr>
 
 <tr>
     <td>SF15</td>
     <td>special function 15</td>
     <td>recall line</td>
+[% IF (os == "pc") -%]
+    <td>Ctrl-F11<br/>Ctrl-F</td>
+[% ELSE -%]
     <td>F15<br/>Ctrl-F</td>
+[% END -%]
 </tr>
 
 <tr>
     <td>EDIT</td>
     <td>enter edit mode</td>
     <td>n/a</td>
+[% IF (os == "pc") -%]
+    <td>Ctrl-F12<br/>Ctrl-E</td>
+[% ELSE -%]
     <td>F16<br/>Ctrl-E</td>
+[% END -%]
 </tr>
 
 <tr>
@@ -310,7 +351,11 @@ purpose when in edit mode, shown as the last column of the table.
     <td>HALT/STEP</td>
     <td>break/single step</td>
     <td>n/a</td>
+[% IF (os == "pc") -%]
+    <td>Break<br/>Ctrl-S</td>
+[% ELSE -%]
     <td>Ctrl-S</td>
+[% END -%]
 </tr>
 </tbody>
 
@@ -326,12 +371,16 @@ key number).
 </p>
 
 <p>
-To recall and edit, say, line 500,
-either of the following sequences can be used:
+To recall and edit, say, line 500, either of the following sequences can be
+used:
 </p>
 
 <p class="code">
+[% IF (os == "pc") -%]
+500&lt;press ctrl&gt;&lt;F12&gt;&lt;F11&gt;&lt;release ctrl&gt;
+[% ELSE -%]
 500&lt;F16&gt;&lt;F15&gt;
+[% END -%]
 </p>
 
 <p class="code">
@@ -343,33 +392,33 @@ either of the following sequences can be used:
 <p>
 The 2226 keyboard had two modes of operation: "Keyword/A" and "A/a".
 Which mode the keyboard was in was controlled by a toggle switch on the
-left side of the keyboard.  This is controlled in the emulator in any of
+left side of the keyboard. This is controlled in the emulator in any of
 three ways: the checkbox in the lower left corner of the emulated CRT window,
 via the Configure/Keyword mode menu item, or with the
-Cmd-K shortcut.
+[% os_pick("Alt-K", "Cmd-K") %] shortcut.
 </p>
 
 <table>
 <tr>
-    <td><img src="img/keyword1.png"  height="34" width="100" alt="placeholder" /></td>
+    <td>[% img("keyword1.png") %]</td>
     <td></td>
-    <td><img src="img/keyword2.png"  height="34" width="100" alt="placeholder" /></td>
+    <td>[% img("keyword2.png") %]</td>
     <td></td>
-    <td><img src="img/menu_config.png"  height="123" width="185" alt="placeholder" /></td>
+    <td>[% img("menu_config.png") %]</td>
 </tr>
 </table>
 
 <p>
-In "A/a" mode, the keyboard works pretty
-much like a typewriter, with unshifted keys producing lower case letters
-and shifted keys producing capital letters.  In "Keyword/A" mode,
-unshifted keys produced capital letters while shifted keys produced BASIC
-keywords.  Most of them have been preserved.
+In "A/a" mode, the keyboard works pretty much like a typewriter,
+with unshifted keys producing lower case letters and shifted keys producing
+capital letters. In "Keyword/A" mode, unshifted keys produced capital
+letters while shifted keys produced BASIC keywords.
+Most of them have been preserved.
 </p>
 
 <table class="keywords">
 <thead>
-<tr> <td>Mac key</td>  <td>Keyword</td>  <td>Mac key</td>  <td>Keyword</td> </tr>
+<tr> <td>[% pc %] key</td>  <td>Keyword</td>  <td>[% pc %] key</td>  <td>Keyword</td> </tr>
 </thead>
 
 <tbody>
@@ -399,11 +448,11 @@ Instead, the same switch just toggled between normal mode and caps-lock mode.
 
 <table>
 <tr>
-    <td><img src="img/keyword1b.png"  height="34" width="100" alt="placeholder" /></td>
+    <td>[% img("keyword1b.png") %]</td>
     <td></td>
-    <td><img src="img/keyword2b.png"  height="34" width="100" alt="placeholder" /></td>
+    <td>[% img("keyword2b.png") %]</td>
     <td></td>
-    <td><img src="img/menu_config_b.png"  height="123" width="184" alt="placeholder" /></td>
+    <td>[% img("menu_config_b.png") %]</td>
 </tr>
 </table>
 
@@ -412,13 +461,13 @@ Instead, the same switch just toggled between normal mode and caps-lock mode.
 <p>
 For both 2226 (dumb terminal) and 2236 (serial terminal) modes of operation,
 a few keys couldn't be conveniently mapped to their Wang-like positions and
-have been mapped to control keys.  Each (except CONTINUE) uses the first
+have been mapped to control keys. Each (except CONTINUE) uses the first
 letter of the word it maps as a convenient mnemonic.
 </p>
 
 <table class="keywords">
 <thead>
-<tr> <td>Mac key</td> <td>Keyword</td> </tr>
+<tr> <td>[% pc %] key</td> <td>Keyword</td> </tr>
 </thead>
 
 <tbody>
@@ -432,21 +481,22 @@ letter of the word it maps as a convenient mnemonic.
 
 <p>
 A number of other keyboard shortcuts have been added to map keys that
-don't appear on a Mac keyboard, or which are convenient 2nd choices
-vs using the special function key toolbar.  The control key names try
+don't appear on a [% pc %] keyboard, or which are convenient 2nd choices
+vs using the special function key toolbar. The control key names try
 to use a mnemonic letter, except for Ctrl-F (SF15/recall). This was chosen
 because the [edit][recall] sequence is a frequent pair, and so Ctrl-[E][F]
 is a quick action.
 </p>
 
 <p>
-The odd man out is the RESET key, which was mapped to Shift-Cmd-R to make
-it difficult to accidentally trigger.
+The odd man out is the RESET key, which was mapped to
+Shift-[% os_pick("Alt-R","Cmd-R") %]
+to make it difficult to accidentally trigger.
 </p>
 
 <table class="keywords">
 <thead>
-<tr> <td>Mac key</td> <td>key</td> </tr>
+<tr> <td>[% pc %] key</td> <td>key</td> </tr>
 </thead>
 
 <tbody>
@@ -456,10 +506,13 @@ it difficult to accidentally trigger.
 <tr>  <td>Ctrl-I</td>       <td>edit mode insert</td> </tr>
 <tr>  <td>Ctrl-K</td>       <td>edit mode kill to end of line</td> </tr>
 <tr>  <td>Ctrl-S</td>       <td>halt/step</td> </tr>
+[% IF (os == "pc") -%]
+<tr>  <td>Break</td>        <td>halt/step</td> </tr>
+[% END -%]
 <tr>  <td>END</td>          <td>ERASE key</td> </tr>
 <tr>  <td>Tab</td>          <td>STMT NUMBER key (2226)</td> </tr>
 <tr>  <td>Tab</td>          <td>FN key (2236)</td> </tr>
-<tr>  <td>Shift-Cmd-R</td>  <td>RESET</td> </tr>
+<tr>  <td>Shift-[% os_pick("Alt-R","Cmd-R") %]</td>  <td>RESET</td> </tr>
 </tbody>
 </table>
 
@@ -470,34 +523,27 @@ rather, these are used to manage the emulation, not the emulated computer.
 
 <table>
 <thead>
-<tr> <td>Mac key</td>    <td>Function</td> </tr>
+<tr> <td>[% pc %] key</td> <td>Function</td> </tr>
 </thead>
 
 <tbody>
-<tr> <td>Cmd-G</td>      <td>screen grab</td> </tr>
-<tr> <td>Cmd-X</td>      <td>exit application</td> </tr>
-<tr> <td>Cmd-K</td>      <td>toggle keyword mode</td> </tr>
-<tr> <td>Cmd-Enter</td>  <td>toggle full-screen mode</td> </tr>
+<tr> <td>[% os_pick("Alt-G","Cmd-G") %]</td>           <td>screen grab</td> </tr>
+<tr> <td>[% os_pick("Alt-X","Cmd-X") %]</td>           <td>exit application</td> </tr>
+<tr> <td>[% os_pick("Alt-K","Cmd-K") %]</td>           <td>toggle keyword mode</td> </tr>
+<tr> <td>[% os_pick("Alt-Enter","Cmd-Enter") %]</td>   <td>toggle full-screen mode</td> </tr>
 </tbody>
 
 </table>
-
 <p>
 Finally, here is a diagram showing where all the keys are mapped,
-at least on my keyboard.  Certain keys may appear in different locations
+at least on my keyboard. Certain keys may appear in different locations
 on different keyboards, especially European keyboards.
 </p>
 
 <div class="diagram">
+[% IF (os == "pc") -%]
+<img src="img/kb_diagram.svg" height="390" width="868" alt="placeholder" />
+[%- ELSE -%]
 <img src="img/kb_diagram.svg" height="322" width="868" alt="placeholder" />
+[% END -%]
 </div>
-
-</div>
-
-<div id="footer">
-    <p>Last update: February 17, 2019</p>
-</div>
-
-</div>
-</body>
-</html>

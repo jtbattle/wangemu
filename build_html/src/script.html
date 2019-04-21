@@ -1,28 +1,13 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
- "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
-<head>
-<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
-<title>WangEmu Script Input</title>
-<style type="text/css">
-<!--
-@import url("./emu.css");
--->
-</style>
-</head>
+[% title = "WangEmu Script Input" -%]
+[% updated = "April 17, 2019" -%]
 
-<body>
-<div id="container">
-
-<div id="content">
-	
 <h1>WangEmu Script Input</h1>
 
 <p>
-A "script" is simply an ASCII text file.  The WangEmu
+A "script" is simply an ASCII text file. The WangEmu
 script mechanism allows entering text to the emulated computer state by
 redirecting the text file to the specified keyboard device, as if the user
-had prodigious typing ability.  This can be useful for loading programs
+had prodigious typing ability. This can be useful for loading programs
 off of the native file system, or for running some test sequence.
 </p>
 
@@ -30,28 +15,28 @@ off of the native file system, or for running some test sequence.
 The top level "File" menu normally looks like this:
 </p>
 
-<p><img src="img/menu_file.png"  height="47" width="168" alt="placeholder" /></p>
+<p>[% img("menu_file.png") %]</p>
 
 <p>
 While the script is running, any input from the keyboard is ignored
-until all of the script input has been consumed.  While the script
+until all of the script input has been consumed. While the script
 is being processed, the user can't request another script since the "Script..."
 menu item will be grayed out:
 </p>
 
-<p><img src="img/menu_file2.png"  height="47" width="168" alt="placeholder" /></p>
+<p>[% img("menu_file2.png") %]</p>
 
 <p>
 The script can be a straight ASCII file and each character is processed
-as a separate keystroke.  After the end of each line a carriage return
-is sent.  After the entire contents of the file have been sent, the
+as a separate keystroke. After the end of each line a carriage return
+is sent. After the entire contents of the file have been sent, the
 emulator once again looks to the PC keyboard to supply input.
 </p>
 
 <p>
 While most of the time characters will be entered verbatim, there are
 a few different "escape" sequences to allow non-literal processing.
-The escapes always begin with a backslash.  If the sequence you want
+The escapes always begin with a backslash. If the sequence you want
 to enter happens to exactly match an escape sequence but you want to send
 the characters individually and not the escape, just double the backslash.
 </p>
@@ -96,7 +81,7 @@ Example sequences
 
 <p>
 Wang BASIC stores keywords as a single byte, all of which are between hex
-80 and hex FF.  Keywords can be entered at the keyboard one character
+80 and hex FF. Keywords can be entered at the keyboard one character
 at a time, or with the appropriate keyboard, keywords can be entered directly
 via keycaps assigned the appropriate keyword token value.
 </p>
@@ -104,8 +89,8 @@ via keycaps assigned the appropriate keyword token value.
 <p>
 The WangEmu script allows entering these keywords directly too.
 There probably isn't any great need to do it, but it was easy to implement,
-and so here it is.  Actually, there is one good use.  Any line
-can't be more than about 250 characters long.  If a long statement
+and so here it is. Actually, there is one good use. Any line
+can't be more than about 250 characters long. If a long statement
 is entered via key-at-a-time ASCII, much less can be fit on one line than
 if keywords are used whenever possible.
 </p>
@@ -272,7 +257,7 @@ Some of the keywords are specific to BASIC-2.
 
 <p>
 Probably more a useful feature than keyword entry is special function key
-entry via a script.  Special function keys 0 through 31 can be entered
+entry via a script. Special function keys 0 through 31 can be entered
 by following this example to enter special function key 13:
 </p>
 
@@ -284,7 +269,7 @@ by following this example to enter special function key 13:
 In a severe case of overkill, script files can include other script files.
 I can't imagine any great use for this, but I had written the script code
 for another purpose and adopted it to WangEmu so this feature comes along
-for free.  The best explanation is this example, which will include
+for free. The best explanation is this example, which will include
 the contents of the file foo.txt before continuing with the current script:
 </p>
 
@@ -293,13 +278,3 @@ the contents of the file foo.txt before continuing with the current script:
 <p>
 Scripts can be nested up to three deep.
 </p>
-
-</div>
-
-<div id="footer">
-    <p>Last update: February 14, 2019</p>
-</div>
-
-</div>
-</body>
-</html>

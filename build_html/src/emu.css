@@ -1,4 +1,3 @@
-
 /* this is just placeholder CSS to make developing the html more readable
  * until real styling is applied
  */
@@ -133,7 +132,7 @@ pre
 }
 
 /* footer containing "last update" info */
-div#footer p
+footer p
 {
     padding:5px;
     background-color:#8292bc;

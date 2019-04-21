@@ -1,0 +1,6 @@
+[% IF (template.name.search("\.html$"));
+        content WRAPPER html_wrapper.tt;
+   ELSE;
+        content;
+   END;
+-%]

@@ -1,31 +1,16 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
- "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
-<head>
-<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
-<title>WangEmu Disk Factory</title>
-<style type="text/css">
-<!--
-@import url("./emu.css");
--->
-</style>
-</head>
+[% title = "WangEmu Disk Factory" -%]
+[% updated = "April 21, 2019" -%]
 
-<body>
-<div id="container">
-
-<div id="content">
-	
 <h1>WangEmu Disk Factory</h1>
 
 <p>
 The disk factory is used to create new disks, or to inspect
-and optionally modify existing disks.  The disk factory operates in
+and optionally modify existing disks. The disk factory operates in
 one of two modes, depending on which way it is invoked, both of which are
 located in the main menu bar Disk item:
 </p>
 
-<p><img src="img/menu_disk.png"  height="166" width="175" alt="placeholder" /></p>
+<p>[% img("menu_disk.png") %]</p>
 
 <ul>
     <li><a href="#new">New Disk...</a></li>
@@ -35,22 +20,23 @@ located in the main menu bar Disk item:
 
 <p>
 These functions are also accessible from the disk drive icons shown on the
-lower left hand corner of the window.  While holding down the Cmd key,
+lower left hand corner of the window.
+While holding down the [% os_pick("Ctrl","Cmd") %] key,
 left click on an occupied drive to invoke the disk inspector dialog.
 </p>
 
-<p><img src="img/status_disks.png"  height="34" width="217" alt="placeholder" /></p>
+<p>[% img("status_disks.png") %]</p>
 
 <p>
 Another way to invoke the disk factory is by invoking a context menu
-on the disk drive icon.  An empty drive has a different context menu
+on the disk drive icon. An empty drive has a different context menu
 than an occupied drive.
-While holding down the Cmd key, right click on a
+While holding down the [% os_pick("Ctrl","Cmd") %] key, right click on a
 drive icon.
 </p>
 
-<p><img src="img/disk_popup1.png"  height="85" width="213" alt="placeholder" /></p>
-<p><img src="img/disk_popup2.png"  height="46" width="206" alt="placeholder" /></p>
+<p>[% img("disk_popup1.png") %]</p>
+<p>[% img("disk_popup2.png") %]</p>
 
 <p>
 This is not specific to the disk factory, but while discussing this bit
@@ -60,7 +46,7 @@ a disk (if the drive is empty), or describing which disk is currently in
 the drive, if occupied.
 </p>
 
-<p><img src="img/disk_popup3.png"  height="80" width="278" alt="placeholder" /></p>
+<p>[% img("disk_popup3.png") %]</p>
 
 <h2><a name="new">New Disk</a></h2>
 
@@ -68,7 +54,7 @@ the drive, if occupied.
 When invoked in this mode, the dialog looks like this:
 </p>
 
-<p><img src="img/factory_new.png"  height="433" width="410" alt="placeholder" /></p>
+<p>[% img("factory_new.png") %]</p>
 
 <p>
 Although the emulator can accept many formats of disks with differing
@@ -80,22 +66,22 @@ is about the largest possible disk in Wang BASIC-2).
 
 <p>
 The top left "Disk Type" buttons select which of the disk configurations
-to make.  The physical size (5.25" or 8") is irrelevant to the emulator,
+to make. The physical size (5.25" or 8") is irrelevant to the emulator,
 but it is represents how the actual 5.25" and 8" Wang
 floppy disks were configured.
 </p>
 
 <p>
-To the right are the "Disk Properties".  For a chosen disk type,
+To the right are the "Disk Properties". For a chosen disk type,
 this area shows exactly what that means in terms of the number of sectors
 on the disk, the number of sectors per track, the track to track stepping
-time, and the disk speed.  The emulator can be configured to ignore
+time, and the disk speed. The emulator can be configured to ignore
 the timing related parameters and to just run as if the disk drive was
 infinitely fast, but the number of sectors per disk is always important.
 </p>
 
 <p>
-Beneath these areas exists a write protect checkbox.  By checking
+Beneath these areas exists a write protect checkbox. By checking
 the box, it won't be possible for the emulator to modify the disk state,
 akin to the write protect tab on a floppy disk.
 </p>
@@ -114,30 +100,30 @@ put the disk and what name it should have.
 
 <p>
 The disk inspection mode can be used to view properties of the disk, such
-as size, its label, and its write protection status.  It looks like
+as size, its label, and its write protection status. It looks like
 this:
 </p>
 
-<p><img src="img/factory_inspect.png"  height="433" width="418" alt="placeholder" /></p>
+<p>[% img("factory_inspect.png") %]</p>
 
 <p>
 It looks very much like the New Disk mode, with a few changes.
 </p>
 
 <p>
-First, there is now a "path" description.  It says where the virtual
+First, there is now a "path" description. It says where the virtual
 disk image is located.
 </p>
 
 <p>
-Second, there is no "Disk Type" region.  Instead, the Disk Properties
-region is sufficient to describe the disk's attributes.  These attributes
+Second, there is no "Disk Type" region. Instead, the Disk Properties
+region is sufficient to describe the disk's attributes. These attributes
 can't be changed after the disk has been made.
 </p>
 
 <p>
 What can be changed are the disks write protection status and the disk
-label.  The changes can only be saved back to the same disk image;
+label. The changes can only be saved back to the same disk image;
 there is no way to save it to a different filename.
 </p>
 
@@ -148,7 +134,7 @@ To view or modify the disk label from either "New Disk" or "Inspect Disk"
 modes, select the second tab, and you will see something like this:
 </p>
 
-<p><img src="img/factory_label.png"  height="433" width="410" alt="placeholder" /></p>
+<p>[% img("factory_label.png") %]</p>
 
 <p>
 This tab lets you view the label, but you are also free to modify it,
@@ -159,15 +145,5 @@ or to copy a selection from it to the system clipboard.
 
 <p>
 An existing virtual disk image can be formatted quickly by using this menu
-option.  It simply writes all sectors of the disk to 00 bytes.
+option. It simply writes all sectors of the disk to 00 bytes.
 </p>
-
-</div>
-
-<div id="footer">
-    <p>Last update: February 14, 2019</p>
-</div>
-
-</div>
-</body>
-</html>

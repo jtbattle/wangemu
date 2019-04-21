@@ -1,0 +1,42 @@
+[%  # establish various site-wide variables
+
+    # -------- various vars --------
+
+    IF (os == "pc");
+        image_dir = "./img-pc";
+    ELSE;
+        image_dir = "./img-mac";
+    END;
+
+    contact_author = "Jim Battle";
+    contact_email  = "jim@thebattles.net";
+
+    # -------- key style elements --------
+
+    # this is the color of the area outside the page border
+    edge_color = "white";
+
+    # this is the bg color of 99% of the page
+    page_bg_color = "#f6f6f6";
+
+    # color of the bg of the current page on the navbar
+    nav_curpage_bg_color = "#ddb";
+
+    # navbar width
+    nav_width = "11.5em";
+
+    # background color of h2 blocks
+    h2_color = "#5b5";  # green of some kind
+
+    # blockquote bg color
+    blockquote_bg_color = "#edb";
+    blockquote2_bg_color = "#fec";
+
+    table_head_bg_color      = "#ccc";    # bg color of table header row
+    table_subhead_bg_color   = "#c4d0e2"; # bg color of table subheading rows
+    table_border_color       = "#ccc";    # color of table borders
+    table_bg_color           = "#e0f0ff"; # table bg color
+    table_bg_highlight_color = "#e8ffff"; # highlighed table rows
+    table_link_color         = "#00c";    # the color of link text in a table
+
+-%]

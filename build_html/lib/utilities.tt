@@ -1,0 +1,32 @@
+[%###################################################################-%]
+[%##   A set of utility BLOCKs and MACROs                          ##-%]
+[%###################################################################-%]
+
+[%  # generate an <img... /> tag, with the height and width attributes
+    # being read in from the image itself.  if alt text isn't supplied,
+    # "placeholder" is assumed instead.  the class can also be supplied.
+    #
+    # the image we are measure comes from $image_dir, but the html indicates
+    # that the image comes from "img/".
+    #
+    # Example usage:
+    #   img('some_img.png')
+    #   img('some_img.png', alt='some text')
+    #   img('some_img.png', class='centered')
+    #
+    MACRO img(name)
+    BLOCK;
+        USE image "${image_dir}/${name}";
+        SET alt="placeholder" IF (NOT alt.defined);
+        SET c = "";
+        SET c = "class=\"${class}\"" IF (class.defined);
+        "<img src=\"img/${name}\" ${c} height=\"${image.height}\" width=\"${image.width}\" alt=\"${alt}\" />";
+    END;
+
+    # emit one of two text strings based on the os version
+    MACRO os_pick(pc_ver,mac_ver)
+    BLOCK;
+       "$pc_ver"  IF (os == "pc");
+       "$mac_ver" IF (os == "mac");
+    END;
+-%]

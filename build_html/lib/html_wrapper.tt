@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>[% title %]</title>
+<style type="text/css">
+<!--
+@import url("./emu.css");
+-->
+[% page_style IF page_style -%]
+</style>
+</head>
+
+<body>
+<div id="container">
+
+<div id="content">
+    [% content %]
+</div>
+
+<footer>
+    <p>Last update:[% updated %]</p>
+</footer>
+
+</div>
+</body>
+</html>

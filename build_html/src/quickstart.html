@@ -1,26 +1,11 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
- "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
-<head>
-<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
-<title>WangEmu Quickstart Guide</title>
-<style type="text/css">
-<!--
-@import url("./emu.css");
--->
-</style>
-</head>
+[% title = "WangEmu Quickstart Guide" -%]
+[% updated = "April 16, 2019" -%]
 
-<body>
-<div id="container">
-
-<div id="content">
-	
 <h1>WangEmu Quick Start Guide</h1>
 
 <p>
 This is a brief how-to guide in getting up and running quickly
-with WangEmu.  There are many configuration options and two major
+with WangEmu. There are many configuration options and two major
 operating modes; besides, being a faithful emulator, WangEmu is bounded
 by the complexity that was inherent in the Wang 2200 system itself.
 </p>
@@ -29,13 +14,13 @@ by the complexity that was inherent in the Wang 2200 system itself.
 is being run from WangEmu's help file itself of course.
 </p>
 
-<h2>Unpacking the .zip file</h2>
+<h2>Unpacking the [% os_pick(".zip",".dmg") %] file</h2>
 
-
+[% IF (os == "pc"); %]
 <p>
 The WangEmu program and an associated files are distributed as a zip file
-called something like wangemu_3.0.zip.  The files contained in the
-zip file are all tucked into a directory called WangEmu3.0.  Thus when
+called something like wangemu_3.0.zip. The files contained in the
+zip file are all tucked into a directory called WangEmu3.0. Thus when
 you unpack, the location you specify for saving the zip file contents
 will receive that folder, not the myriad files contained within.
 This file can be unzipped to any location as WangEmu doesn't care where
@@ -71,11 +56,22 @@ WangEmu3.0/
 
 <p>
 You don't need to know anything about the source code or the build
-files.  They are there in case you are curious and want to have a look,
+files. They are there in case you are curious and want to have a look,
 or if you are ambitious and want to make changes to the emulator.
 </p>
 
+[% ELSE; %]
 
+<p>
+The application and its associated files are distributed in a standard
+<tt>.dmg</tt> file called "WangEmu_3.0.dmg". Place this file anywhere,
+for example right on the desktop. Wherever the file is located, double
+click the icon and a virtual disk drive image will appear mounted on the
+desktop. Double click on that image and inside is a folder called
+"WangEmu3.0". Double click on the folder to see the contents.
+</p>
+
+[% END; %]
 
 <p>
 The folders called <tt>disks</tt> and <tt>scripts</tt> contain programs
@@ -95,11 +91,11 @@ unpacked.
 The first time WangEmu is run, an warning message will appear:
 </p>
 
-<p><img src="img/ini_warning.png"  height="129" width="364" alt="placeholder" /></p>
+<p>[% img("ini_warning.png") %]</p>
 
 <p>
-This is normal and can be ignored.  It is simply indicating that
-the file containing the user's preferences couldn't be found.  If
+This is normal and can be ignored. It is simply indicating that
+the file containing the user's preferences couldn't be found. If
 this message appears after the emulator is configured, it is an indication
 that something is amiss, such as the file couldn't be saved after the first
 run because the user doesn't have write permission.
@@ -119,18 +115,19 @@ The default configuration is to have
 
 <p>
 Every time WangEmu exits, all the users preferences are saved in a file
-called wangemu.ini.  It is an ASCII text file, but it should not be
+called wangemu.ini. It is an ASCII text file, but it should not be
 directly edited otherwise the configuration might get corrupted; if so,
 delete the file and reconfigure the emulator as if it was the first time
-the emulator was run.  This file is located in
-the same directory as the executable.
+the emulator was run. This file is located in
+[% os_pick("the same directory as the executable",
+           "<tt>~/Library/Preferences</tt>") %].
 </p>
 
 <h2>Configuring for 2200 VP Mode</h2>
 
 <p>
 The default configuration comes up in 2200T mode, which has Wang BASIC
-in ROM.  The emulator is ready to run programs.
+in ROM. The emulator is ready to run programs.
 </p>
 
 <p>
@@ -156,25 +153,25 @@ controller, at address /000.
 
 <p>
 Unlike the first generation machines, the VP series didn't have BASIC
-in ROM.  Instead, the BASIC-2 microcode had to be loaded from disk.
+in ROM. Instead, the BASIC-2 microcode had to be loaded from disk.
 The same is true for the emulator.
 </p>
 
 <ol>
-<li>From the Disk menu, select <b>Drive F/310: Insert</b>.  A standard
+<li>From the Disk menu, select <b>Drive F/310: Insert</b>. A standard
     dialog box for selecting a file should appear.</li>
 <li>Navigate into the "disks" subdirectory of wherever the emulator was installed.</li>
 <li>Select the disk <b>vp-boot-2.3.wvd</b>, for example.</li>
 <li>Perform a warm reset of the machine, just like a real machine.
     One way to do it is to open the <b>CPU</b> menu and select the
-    <b>Reset CPU</b> item.  Alternately, you can type Shift-Alt-R.
+    <b>Reset CPU</b> item. Alternately, you can type Shift-[% os_pick("Alt","Cmd") %]-R.
     <br/>You should now see a prompt that reads
     <br/><tt>&nbsp;&nbsp;&nbsp; KEY SF'?</tt>
     <br/>This prompt allows triggering a load of one of a handful of microcode
-          images from one of a number of disk drives.
+         images from one of a number of disk drives.
     </li>
 <li>For our purpose, we want Special Function key 0, which can be triggered
-    by hitting the ESC key.  After a few seconds you should see
+    by hitting the ESC key. After a few seconds you should see
     <br/><tt>&nbsp;&nbsp;&nbsp; Loading:&nbsp; VP BASIC-2  Release 2.3</tt>
     <br/>then a few seconds later,
     <br/><tt>&nbsp;&nbsp;&nbsp; READY&nbsp; (BASIC-2)</tt>
@@ -200,30 +197,26 @@ emulator pretend the user is a really fast typist), follow these steps.
 </p>
 
 <ol>
-<li>Open the <b>File</b> menu and select the <b>Script...</b> item.  A
+<li>Open the <b>File</b> menu and select the <b>Script...</b> item. A
     standard file dialog box will appear.</li>
 <li>Navigate to the "scripts" subdirectory of wherever the emulator was installed.</li>
-<li>Select a program; for example, chose <b>primes.w22</b>.  Very rapidly
+<li>Select a program; for example, chose <b>primes.w22</b>. Very rapidly
     the screen should fill with the text of the program that was just selected.</li>
 <li>When the program is done being read in, type <b>RUN</b> and hit <b>ENTER</b>
     to start running the chosen program.</li>
 <li>To halt the program you can reset the machine (from the CPU menu) or you
-    can hit the emulated HALT/STEP key.  This is done by pressing the BREAK
-    key, or equivalently, typing Ctrl-S.</li>
+    can hit the emulated HALT/STEP key.
+[% IF (os == "pc") -%]
+    This is done by pressing the BREAK key, or equivalently, typing Ctrl-S.
+[% ELSE -%]
+    As there is no HALT/STEP key on a Mac keyboard, it has been mapped to
+    Ctrl-S.
+[% END -%]
+    </li>
 </ol>
 
 <p>
 You can create your own script files with any text editor that can produce
-an ASCII file.  Simply type in the program and use the File/Script...
+an ASCII file. Simply type in the program and use the File/Script...
 feature.
 </p>
-
-</div>
-
-<div id="footer">
-    <p>Last update: February 8, 2019</p>
-</div>
-
-</div>
-</body>
-</html>

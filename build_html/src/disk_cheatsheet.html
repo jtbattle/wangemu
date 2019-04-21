@@ -1,21 +1,6 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
- "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
-<head>
-<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
-<title>Wang Disk Basic Cheat Sheet</title>
-<style type="text/css">
-<!--
-@import url("./emu.css");
--->
-</style>
-</head>
+[% title = "Wang Disk Basic Cheat Sheet" -%]
+[% updated = "April 17, 2019" -%]
 
-<body>
-<div id="container">
-
-<div id="content">
-	
 <h1>Wang Disk Basic Cheat Sheet</h1>
 
 <p>
@@ -33,7 +18,7 @@ or to figure it out by reading a large manual.
 
 <p>
 The purpose of this page is to describe a few key Wang Disk BASIC concepts
-and the most important commands.  If you really want to understand
+and the most important commands. If you really want to understand
 Wang Disk BASIC, then you'll just have to read the manual.
 </p>
 
@@ -76,23 +61,23 @@ and even as compared to Microsoft Disk BASIC circa 1976.
 
 <p>
 All disks, from the smallest floppy to the largest hard disk uses a
-256 byte sector as the atomic unit of transfer.  Disks start with sector 0
-and increase up to the limit of the number of sectors on the disk.  A disk
+256 byte sector as the atomic unit of transfer. Disks start with sector 0
+and increase up to the limit of the number of sectors on the disk. A disk
 can have at most 32768 sectors (65536 in BASIC-2), or about 8 MB (16 MB).
 Although programs can build whatever file access mechanisms they want via
 reading and writing arbitrary sectors, all the intrinsically supported file
 mechanisms assume a file is allocated in a contiguous range of sector
-addresses.  That is, a file begins at sector N, the next sector is at N+1,
+addresses. That is, a file begins at sector N, the next sector is at N+1,
 the next at sector N+2, etc., up to N+k-1, where k is the number of sectors
 in the file.
 </p>
 
 <p>
 Perhaps the Wang file allocated policy should be viewed more like a
-random access tape.  Once a file occupies a section of the disk, it
+random access tape. Once a file occupies a section of the disk, it
 can only be expanded by moving the file to a larger open range of sectors
 on the disk, or by overwriting whatever is on the sectors immediately following
-the file.  The programmer must spend a lot more time managing the
+the file. The programmer must spend a lot more time managing the
 details of the file policy on the disk.
 </p>
 
@@ -102,37 +87,37 @@ The three access modes are
 
 <ul>
 <li>
-<b>BA</b> -- block access mode.  This mode allows an arbitrary raw 256 byte
+<b>BA</b> -- block access mode. This mode allows an arbitrary raw 256 byte
 sector to be read or written.</li>
 
 <li>
-<b>DA</b> -- data access mode.  This mode is
+<b>DA</b> -- data access mode. This mode is
 used to read or write streams of data to contiguous sectors forming a file.
 Three bytes of each sector contain file meta information, such as whether
 the block marks the start of the file, is the middle of a file, or is the
-end of a file.  Also, the remaining 253 bytes consist of a continuous
+end of a file. Also, the remaining 253 bytes consist of a continuous
 stream of &lt;TAG&gt;&lt;DATA&gt; pairs, where the TAG byte (such as "number"
 or "string") specify how to interpret the following DATA bytes.</li>
 
 <li>
-<b>DC</b> -- Catalog file access (DC).  The focus
-of this page is on the third mode, the catalog file commands.  This
+<b>DC</b> -- Catalog file access (DC). The focus
+of this page is on the third mode, the catalog file commands. This
 provide the most convenient mechanism for using disks for all but the power
-user.  The rest of this document discusses only DC mode.  Please
+user. The rest of this document discusses only DC mode. Please
 read the Wang Disk BASIC reference manual to learn more about the other
 modes.</li>
 </ul>
 
 <p>
 DC mode reserves a fixed number of sectors at the start of the disk to
-contain a catalog of files on the disk.  The catalog is flat, i.e.,
+contain a catalog of files on the disk. The catalog is flat, i.e.,
 there are no nested directories -- just a list of filenames and locations.
 </p>
 
 <p>
 In DC mode, the first 16 bytes of the first sector of a disk contains
 a small amount of data describing a few key parameters of that disk's structure
-for use by the DC commands.  If a disk won't be operated on by the
+for use by the DC commands. If a disk won't be operated on by the
 DC commands, then this information doesn't have to be present and all sectors
 of the disk can be used by the program.
 </p>
@@ -161,10 +146,10 @@ attached to a given controller.
 
 <p>
 The first of each pair was called the fixed disk, and the second was the
-removable disk, referenced as F and R respectively.  Although this naming was
+removable disk, referenced as F and R respectively. Although this naming was
 appropriate for the first disk drives produced by Wang, it didn't have any
 bearing on reality for other models of disk controllers and disk drives
-(e.g., a dual floppy system).  Perhaps it is best to think of disk F as
+(e.g., a dual floppy system). Perhaps it is best to think of disk F as
 "drive 0" and disk R as "drive 1".
 </p>
 
@@ -196,9 +181,9 @@ represents something that should be replaced with a number or string.
 
 <p>
 Most commands allow an optional controller I/O address to be specified,
-in hex. This parameter is shown as "[/dev]" below.  If the address
+in hex. This parameter is shown as "[/dev]" below. If the address
 isn't specified, it was whatever the most recent "SELECT DISK" command
-specified.  If that command hasn't been performed, then it defaults
+specified. If that command hasn't been performed, then it defaults
 to /310.
 </p>
 
@@ -208,9 +193,9 @@ to /310.
 
 <p>
 After a new disk has been created or reformatted, all the sectors will
-be set to 00 bytes.  This command initializes sector zero of the disk
+be set to 00 bytes. This command initializes sector zero of the disk
 with a small record of how the disk is structured for use by the DC (catalog)
-commands.  If a disk will not be operated upon by a DC command, then
+commands. If a disk will not be operated upon by a DC command, then
 the SCRATCH DISK command doesn't need to be performed on a disk.
 </p>
 
@@ -225,8 +210,8 @@ Optionally, a disk controller address can be specified, in hex.
 
 <p>
 Optionally, the LS parameter specifies how many sectors should be set
-aside to hold the catalog of filenames.  Each sector set aside contains
-the name and parameters for 16 files.  However, the first sector contains
+aside to hold the catalog of filenames. Each sector set aside contains
+the name and parameters for 16 files. However, the first sector contains
 room for only 15 names since the first slot is reserved to hold the disk
 structure bytes.
 </p>
@@ -236,7 +221,7 @@ structure bytes.
 <p class="code">SCRATCH DISK F END=300</p>
 <p>
 Initialize the disk in the first drive, using the first 300 sectors to hold
-the file catalog and all the cataloged files.  The default number (24) of
+the file catalog and all the cataloged files. The default number (24) of
 sectors are set aside for holding the file catalog, and the rest, 300-24,
 are for holding files.
 </p>
@@ -244,9 +229,9 @@ are for holding files.
 <p class="code">SCRATCH DISK F LS=4, END=300</p>
 <p>
 Initialize the disk in the first drive, using the first 300 sectors to hold
-the file catalog and all the cataloged files.  Four 4 sectors are set aside
+the file catalog and all the cataloged files. Four 4 sectors are set aside
 for holding the file catalog, and the rest, 300-4, are for holding files.
-These four catalog sectors can hold up to 16*4-1, or 63, files.  In practice,
+These four catalog sectors can hold up to 16*4-1, or 63, files. In practice,
 it is like that fewer files can be held, as there is a hash that maps which
 sector a given filename will be stored.
 </p>
@@ -261,7 +246,7 @@ at address /320.
 <p>
 This initializes the second drive of the pair of the controller at the
 default address (/310 by default, unless the SELECT DISK command has
-changed it).  64 sectors are set aside for the catalog, and 15000 sectors
+changed it). 64 sectors are set aside for the catalog, and 15000 sectors
 total are assigned for the catalog plus the files themselves.
 </p>
 
@@ -270,7 +255,7 @@ total are assigned for the catalog plus the files themselves.
 <p class="code">LIST DC {F|R} [/<i>dev</i>]</p>
 
 <p>
-This command is used to print the contents of the disk catalog.  An
+This command is used to print the contents of the disk catalog. An
 example catalog might be
 </p>
 
@@ -287,13 +272,13 @@ MSTRMIND  SP   00040  00068  00029
 </pre>
 
 <p>
-In this example, there are four programs.  The first part of the output
+In this example, there are four programs. The first part of the output
 lists the information established by the SCRATCH DISK command, namely that
 the first four sectors have been reserved for holding the disk catalog,
 and that anything after sector 300 is reserved for use by the programs.
 The first three entries have type "P" meaning they are executable programs,
 and the fourth entry, MSTRMIND, has type "SP" indicating that the program
-has been SCRATCH'd (erased), and thus can't be executed.  Although
+has been SCRATCH'd (erased), and thus can't be executed. Although
 this disk doesn't have any data files, they are indicated with a "D" in
 the TYPE column.
 </p>
@@ -301,7 +286,7 @@ the TYPE column.
 <p>
 The START column indicates which sector the file begins on; END indicates
 which sector is the last of the file, and USED is how many of the sectors
-are in use by that file.  It is possible to pre-allocate space for
+are in use by that file. It is possible to pre-allocate space for
 a file on the disk and not use all of it, in which case USED is less than
 (END-START+1).
 </p>
@@ -361,7 +346,7 @@ You can't save a program using a name that is already on the disk.
 <p>
 This command actually doesn't erase the program or release the area for
 further use. Instead, it simply marks the file for later removal.
-In the meantime, the program can't be loaded.  When a "LIST DC" command
+In the meantime, the program can't be loaded. When a "LIST DC" command
 is performed, scratched files show up with an "S" as part of the TYPE field.
 </p>
 
@@ -388,17 +373,17 @@ and the second letter is the destination drive.
 <p>
 MOVE operates on cataloged disks and copies all non-scratched programs
 from one drive to the other drive,
-skipping any that are marked as being SCRATCH'd.  A common operation
+skipping any that are marked as being SCRATCH'd. A common operation
 is to MOVE from the F drive to a scratch disk in the R drive, and then
 to immediately MOVE or COPY it back to the F drive.
 </p>
 
 <p>
 COPY just does a blind sector by sector cloning from one drive to the
-other drive.  As such, it works for both cataloged and non-cataloged disks.
+other drive. As such, it works for both cataloged and non-cataloged disks.
 The command requires specifying the range of sectors to copy.
 For the common case of cloning a disk, <i>first sector</i> will invariably be 0.
-The <i>second sector</i> is determined by the size of the disk.  Use the disk
+The <i>second sector</i> is determined by the size of the disk. Use the disk
 inspector to find how many sectors the disk has, then use one less for the
 <i>second sector</i>.
 </p>
@@ -422,19 +407,19 @@ to another disk in the second drive, issue the command
 <p>
 When Wang BASIC was created in the early 70s, disk drive capacity was low.
 Floppy disks had about 1000 sectors, and hard disks had about 10,000 (2.5MB)
-or 20,000 (5MB).  Wang was smart and had a high level protocol between the
+or 20,000 (5MB). Wang was smart and had a high level protocol between the
 CPU and the disk drive, which meant they could make a wide range of disk
 drives that could plug and play with the same CPU without requiring custom
-drivers and whatnot.  This was important because Wang BASIC was burned into
+drivers and whatnot. This was important because Wang BASIC was burned into
 custom ROMs and were not easily field upgradable.
 </p>
 
 <p>
 A given disk controller could support up to four disk drives, and system
-could support up to three disk controllers.  Because the first generation
+could support up to three disk controllers. Because the first generation
 of disk drives had one non-removable disk platter (the fixed disk) and one
 removable platter, DCF (fixed) and DCR (removable) were used to distinguish
-between a pair of drives.  These names, however, quickly became anachronistic.
+between a pair of drives. These names, however, quickly became anachronistic.
 The 0x40 bit of the device address was used to distinguish between the primary
 and secondary pair of drives connected to a given controller.
 </p>
@@ -475,14 +460,14 @@ and secondary pair of drives connected to a given controller.
 </table>
 
 <p>
-Note the device address is specified as /xyz.  The actual device address of
+Note the device address is specified as /xyz. The actual device address of
 a disk controller is limited to be hex 10, 20, or 30; this is the "yz" part
-above (modulo the 0x40 bit, which distinguishes between drive pairs).  What
+above (modulo the 0x40 bit, which distinguishes between drive pairs). What
 is the "x" part?  Conceptually it is a device type (eg, "3" means disk
-device, "2" means printer, etc).  But in practice, Wang BASIC wasn't too
-picky.  That is, although "DCF/310" was the canonical way of addressing the
+device, "2" means printer, etc). But in practice, Wang BASIC wasn't too
+picky. That is, although "DCF/310" was the canonical way of addressing the
 first drive of the first controller, DCF/... and DCR/... ignored the first
-digit.  "DCF/010", "DCF/110", "DCF/210", ..., "DCF/F10" all mean the same thing.
+digit. "DCF/010", "DCF/110", "DCF/210", ..., "DCF/F10" all mean the same thing.
 However, there is also no advantage to using something else, and everybody
 simply used /3xy.
 </p>
@@ -498,7 +483,7 @@ in the short term, solved two problems.
 </p>
 
 <p>
-Another designator, "DCT", was added.  With this parameter, the specified
+Another designator, "DCT", was added. With this parameter, the specified
 address supplied all the information not only to address a given drive
 uniquely, but to address multiple platters on a given drive.
 Whereas the device type digit (the "3" in /310) didn't mean anything when
@@ -510,13 +495,13 @@ with DCT.
 DCT/3xy means access the "fixed" disk at device address xy,
 and DCT/Bxy means access the "removable" disk at device address xy.
 That is DCT/3xy is identical to DCF/3xy, and DCT/Bxy is synonymous with
-DCR/3xy.  That means any drive could be selected by changing only the
+DCR/3xy. That means any drive could be selected by changing only the
 device address, and not having to also twiddle the "F" vs "R" parameter.
 </p>
 
 <p>
 But even more importantly, the form DCT/Dxy was used to address the
-controller at device address x0, platter "y".  For example, "DCT/D13" means
+controller at device address x0, platter "y". For example, "DCT/D13" means
 address the controller at address 10, platter 3. That meant drives of up to
 16 platters could be supported, allowing one drive to have up to 128 MB.
 </p>
@@ -593,11 +578,3 @@ describes the use of the DCT parameter in detail.
 </table>
 
 </div>
-
-<div id="footer">
-    <p>Last update: February 8, 2019</p>
-</div>
-
-</div>
-</body>
-</html>

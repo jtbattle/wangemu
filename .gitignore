@@ -71,7 +71,7 @@ FakesAssemblies/
 .LSOverride
 
 # Icon must end with two \r
-Icon
+Icon
 
 # Thumbnails
 ._*
@@ -112,3 +112,5 @@ wvdutil/lint.bat
 wvdutil/unscramble.py
 .vs/slnx.sqlite
 wangemu
+html
+html_osx

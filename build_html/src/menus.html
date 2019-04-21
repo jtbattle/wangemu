@@ -1,21 +1,6 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
- "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
-<head>
-<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
-<title>WangEmu Menus</title>
-<style type="text/css">
-<!--
-@import url("./emu.css");
--->
-</style>
-</head>
+[% title = "WangEmu Menus" -%]
+[% updated = "April 21, 2019" -%]
 
-<body>
-<div id="container">
-
-<div id="content">
-	
 <h1>WangEmu Menus</h1>
 
 <p>
@@ -26,35 +11,35 @@ Click on a menu to read some description of what the various items do.
 <table>
 <tr>
 <td colspan="6">Top level menu:
-    <br/><img src="img/menu_top.png"  height="33" width="465" alt="placeholder" /></td>
+    <br/>[% img("menu_top.png") %]</td>
 </tr>
 
 <tr>
-    <td>File menu:<a href="#File"><br/><img src="img/menu_file.png"  height="47" width="168" alt="placeholder" /></a> </td>
-    <td>CPU menu:<a href="#CPU"><br/><img src="img/menu_cpu.png"  height="97" width="182" alt="placeholder" /></a></td>
-    <td>Disk menu:<a href="#Disk"><br/><img src="img/menu_disk.png"  height="166" width="175" alt="placeholder" /></a></td>
+    <td>File menu:<a href="#File"><br/>[% img("menu_file.png") %]</a> </td>
+    <td>CPU menu:<a href="#CPU"><br/>[% img("menu_cpu.png") %]</a></td>
+    <td>Disk menu:<a href="#Disk"><br/>[% img("menu_disk.png") %]</a></td>
 </tr>
 <tr>
-    <td>Printer menu:<a href="#Printer"><br/><img src="img/menu_printer.png"  height="47" width="158" alt="placeholder" /></a></td>
-    <td>Configuration menu:<a href="#Configure"><br/><img src="img/menu_config.png"  height="123" width="185" alt="placeholder" /></a></td>
-    <td>Help menu:<a href="#Help"><br/><img src="img/menu_help.png"  height="211" width="159" alt="placeholder" /></a></td>
+    <td>Printer menu:<a href="#Printer"><br/>[% img("menu_printer.png") %]</a></td>
+    <td>Configuration menu:<a href="#Configure"><br/>[% img("menu_config.png") %]</a></td>
+    <td>Help menu:<a href="#Help"><br/>[% img("menu_help.png") %]</a></td>
 </tr>
 
 </table>
 
-<h2><a name="File">File menu:</a><img src="img/menu_file.png"  height="47" width="168" alt="placeholder" /></h2>
+<h2><a name="File">File menu:</a>[% img("menu_file.png") %]</h2>
 
 <p>
-The File menu is kind of a catch-all.  The three menu items are:
+The File menu is kind of a catch-all. The three menu items are:
 </p>
 
 <table class="menu_table">
 <tr>
     <td>Script...</td>
     <td>This menu item is used to feed the contents of a text file to the emulator,
-    as if it had been typed at the emulated keyboard.  Script files can
+    as if it had been typed at the emulated keyboard. Script files can
     include other script files, and there are a few escape mechanisms for entering
-    special key values and such.  Please jump to
+    special key values and such. Please jump to
     <a href="script.html">the help page dedicated to script file use</a>.
     </td>
 </tr>
@@ -62,17 +47,29 @@ The File menu is kind of a catch-all.  The three menu items are:
 <tr>
     <td>Screen Grab...</td>
     <td>This menu item will send the current contents of the emulated CRT display
-    to a file in .BMP format.  When selected, a file picker dialog will
-    pop up to let you say where the file should be saved.  You can also
-    type Cmd-G to invoke this function.</td>
+    to a file in .BMP format. When selected, a file picker dialog will
+    pop up to let you say where the file should be saved. You can also
+    type [% os_pick("Alt-G","Cmd-G") %] to invoke this function.</td>
 </tr>
+
+[% IF os=="pc" -%]
+<tr>
+    <td>Exit</td>
+    <td>This function causes the emulator to shut down. Upon shutdown,
+    the various emulator configuration options are saved to the configuration
+    file, wangemu.ini. The emulator can also be shut down with the
+    [% os_pick("Alt-X","Cmd-Q") %]
+    shortcut, or by clicking the "close window" button in the
+    upper right corner of any emulated CRT display.</td>
+</tr>
+[% END -%]
 </table>
 
-<h2><a name="CPU">CPU menu:</a><img src="img/menu_cpu.png"  height="97" width="182" alt="placeholder" /></h2>
+<h2><a name="CPU">CPU menu:</a>[% img("menu_cpu.png") %]</h2>
 
 <p>
 The CPU sub-menu allows the user to control some of the features of the
-emulated CPU.  Still other options are accessible from the configuration
+emulated CPU. Still other options are accessible from the configuration
 menu.
 </p>
 
@@ -87,72 +84,75 @@ menu.
 
 <tr>
     <td>Reset CPU</td>
-    <td>Selecting this item, or pressing Shift-Cmd-R, will cause the emulator to
-    emulate a soft (warm) reset of the system.  On the first generation machines,
-    they keyboard had a small reset button, and on the MVP-class of machines,
-    pressing Shift RESET at the terminal would cause a soft reset.
-    The program image and the variable state will be preserved, but the program
-    can not be CONTINUE'd if it was running at the time of the RESET.
+    <td>Selecting this item, or pressing [% os_pick("Shift-Alt-W","Shift-Cmd-W") %],
+    will cause the emulator to emulate a soft (warm) reset of the system.
+    The first generation machines had a small reset button on the keyboard,
+    and on the MVP-class of machines pressing Shift-RESET at the terminal
+    would cause a soft reset.
+    The program image and the variable state will be preserved, but the
+    program cannot be CONTINUE'd if it was running at the time of the RESET.
     The I/O addresses for the CI, CO, LIST, INPUT, PRINT, TAPE, DISK, and PLOT
     logical units will be set back to their defaults.</td>
 </tr>
 
 <tr>
     <td>Actual Speed</td>
-    <td>This is the default setting.  WangEmu will try to match the actual
-    speed of a 2200.</td>
+    <td>This is the default setting. WangEmu will try to match the speed
+    of a real 2200.</td>
 </tr>
 
 <tr>
     <td>Unregulated Speed</td>
     <td>Selecting this item will make the emulator attempt to run the 2200
-    microcode as fast as possible.  The actual speed of the emulated 2200
-    depends on the amount of screen activity.</td>
+    microcode as fast as possible. The actual speed of the emulated 2200
+    depends, of course, on the speed of the host CPU running the emulator, but
+    also somewhat on the amount of screen activity, as it takes cycles to
+    redraw the contents of the CRT every frame.</td>
 </tr>
 </table>
 
-<h2><a name="Disk">Disk menu:</a><img src="img/menu_disk.png"  height="166" width="175" alt="placeholder" /></h2>
+<h2><a name="Disk">Disk menu:</a>[% img("menu_disk.png") %]</h2>
 
 <p>
-This submenu allows inserting and removing virtual disks into the emulated
-disk drives.  It allows allows creating new virtual disks, reformatting
+This sub-menu allows inserting and removing virtual disks into the emulated
+disk drives. It allows allows creating new virtual disks, reformatting
 existing virtual disks, and inspecting the contents of existing disks.
 </p>
 
 <p>
 If there is more than one disk controller present in the emulated system,
-then new menu items will appear on the Disk menu.  Here is what it
+then new menu items will appear on the Disk menu. Here is what it
 looks like with the system configured with two virtual disk controllers,
-one at /310 and one at /320.  There are disks in each of the drives
+one at /310 and one at /320. There are disks in each of the drives
 at /310 and nothing in either drive of the controller at /320:
 </p>
 
-<p><img src="img/menu_disk2.png"  height="216" width="176" alt="placeholder" /></p>
+<p>[% img("menu_disk2.png") %]</p>
 
 <p>
 You can also insert and remove virtual disks by clicking on the disk icons
-on the status bar.  In the example below, the system has two disk
-controllers.  The left two are the drives associated with the first
+on the status bar. In the example below, the system has two disk
+controllers. The left two are the drives associated with the first
 disk controller (/310 above) and the second two disks are the drives associated
-with the second disk controller (/320 above).  In this case, the first
+with the second disk controller (/320 above). In this case, the first
 two disks have floppies inserted in them (note that the "door" is closed),
 the fixed disk of the second controller is a hard disk (indicated by the
 disk pack), and the second drive of the second controller is empty (note
-that the door is open).  A red dot will indicate which drive is being
+that the door is open). A red dot will indicate which drive is being
 accessed while disk activity is occurring.
 </p>
 
-<p><img src="img/status_disks.png"  height="34" width="217" alt="placeholder" /></p>
+<p>[% img("status_disks.png") %]</p>
 
 <p>
 You can inspect the contents of a drive by holding down the
-Cmd
+[% os_pick("Ctrl","Cmd") %]
 key and clicking on the drive with the left mouse button.
 </p>
 
 <p>
 The last two items on the menu allow choosing between "Realtime Disk Speed"
-and "Unregulated Speed".  When the former is selected, the emulator attempts
+and "Unregulated Speed". When the former is selected, the emulator attempts
 to model the motor start up, head stepping, and rotational delays of the real
 machine. Floppy disks are pretty slow, and the hard disks are of course faster.
 When "Unregulated Speed" is chosen, the emulator dispenses with the delays and
@@ -165,12 +165,12 @@ running some multiple of realtime, so even if the disk speed is chosen to be
 authentic, it will be sped up by that same multiple.
 </p>
 
-<h2><a name="Printer">Printer menu:</a><img src="img/menu_printer.png"  height="47" width="158" alt="placeholder" /></h2>
+<h2><a name="Printer">Printer menu:</a>[% img("menu_printer.png") %]</h2>
 
 <p>
 This sub-menu appears only if the system is configured with one or more
-printer controllers.  The menu above is for a system with a single
-printer controller configured for I/O address 0x15.  If the system
+printer controllers. The menu above is for a system with a single
+printer controller configured for I/O address 0x15. If the system
 has more than one printer, all the printers are listed in the menu.
 Most of the printer functionality and configuration is performed via the
 menu attached to the printer window, <a href="printer.html">described elsewhere</a>.
@@ -193,13 +193,13 @@ This menu item causes any printer devices to print out the contents of
 their log windows on the real system printer and then clear the print log.
 </p>
 
-<h2><a name="Configure">Configure menu:</a><img src="img/menu_config.png"  height="123" width="185" alt="placeholder" /></h2>
+<h2><a name="Configure">Configure menu:</a>[% img("menu_config.png") %]</h2>
 
 <p>
 This is covered in the <a href="configure.html">configuration help page</a>.
 </p>
 
-<h2><a name="Help">Help menu:</a><img src="img/menu_help.png"  height="211" width="159" alt="placeholder" /></h2>
+<h2><a name="Help">Help menu:</a>[% img("menu_help.png") %]</h2>
 
 <p>
 The "Website" item launches a browser pointed at the Wang 2200 homepage.
@@ -209,17 +209,12 @@ some help on the named subject.
 
 <p>
 The "Release Notes..." item brings up the list of features and changes
-for the current version of the emulator.  To view the file, it uses whatever
+for the current version of the emulator. To view the file, it uses whatever
 your system preferences are for reading <tt>.txt</tt> files.
 </p>
 
-
-</div>
-
-<div id="footer">
-    <p>Last update: February 10, 2019</p>
-</div>
-
-</div>
-</body>
-</html>
+[% IF (os == "pc") -%]
+<p>
+The "About" item simply displays some credits and version information.
+</p>
+[% END -%]
