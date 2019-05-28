@@ -6,7 +6,6 @@
 
 #include "w2200.h"
 #include "wx/wx.h"
-#include "wx/generic/statbmpg.h"  // because wxStaticBitmap doesn't catch mouse events on osx
 
 // ----------------------------------------------------------------------------
 // CrtStatusBar
@@ -46,7 +45,7 @@ private:
     CrtFrame * const m_parent;
     wxCheckBox     *m_keyword_ctl                             = nullptr;    // set = "Keyword/A", unset = "A/a"
     wxStaticText   *m_disk_label[2*MAX_DISK_CONTROLLERS]      = {nullptr};  // eg "310:"
-    wxGenericStaticBitmap *m_disk_icon[MAX_DISK_DRIVES]       = {nullptr};  // icon for disk state
+    wxStaticBitmap *m_disk_icon[MAX_DISK_DRIVES]              = {nullptr};  // icon for disk state
     int             m_disk_label_xoff[2*MAX_DISK_CONTROLLERS] = {0};        // positioning
     int             m_disk_icon_xoff[MAX_DISK_DRIVES]         = {0};        // positioning
     int             m_disk_state[MAX_DISK_DRIVES]             = {-1};       // which icon we are showing
