@@ -289,10 +289,6 @@ Crt::generateFontmap()
         color_map[n].Set(c.Red(), c.Green(), c.Blue());
     }
 
-    // boundaries for drawing graphics chars
-    const int boxx[3] = { 0, m_charcell_w / 2, m_charcell_w };
-    const int boxy[4] = { 0, m_charcell_h / 3, 2*m_charcell_h/3, m_charcell_h };
-
     // build a glyph map of the entire character set
     for (int bright=0; bright < 2; ++bright) {
     for (int inv=0; inv < 2; ++inv) {
