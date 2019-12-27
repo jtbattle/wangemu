@@ -105,6 +105,20 @@
 //      average sequential read  time, per sector:   4.6  ms
 //      average sequential write time, per sector:   3.6  ms
 //      average random read/write time, per sector: 42.0  ms
+//
+// PCS-II 5.25" floppy drive
+// ------------------------------------------
+// single sided
+// 10 sectors per track
+// 35 tracks
+// 300 RPM
+// The interleave was determined by reverse engineering the microcode listing
+// of the PCS-II floppy disk controller, as it appears in mgr-no-2.pdf.
+// The disks are formatted with a header which records track and physical
+// sector bytes; the sector counts increment from 0 through 9 sequentially.
+// The logical to physical mapping has a 3:1 interleave:
+//      logical:  0, 1, 2, 3, 4, 5, 6, 7, 8, 9
+//      physical: 0, 3, 6, 9, 2, 5, 8, 1, 4, 7
 
 #include "Cpu2200.h"
 #include "DiskCtrlCfgState.h"
@@ -115,7 +129,6 @@
 #include "Wvd.h"
 #include "host.h"              // for dbglog()
 #include "system2200.h"
-
 
 #ifdef _DEBUG
     int iodisk_noisy = 1;
@@ -173,14 +186,14 @@ IoCardDisk::~IoCardDisk()
 }
 
 
-const std::string
+std::string
 IoCardDisk::getDescription() const
 {
     return "Disk Controller";
 }
 
 
-const std::string
+std::string
 IoCardDisk::getName() const
 {
     return "6541";
@@ -643,19 +656,25 @@ IoCardDisk::wvdSeekSector() noexcept
     const int track       = m_secaddr / sec_per_trk;
     const int logical_sec = m_secaddr % sec_per_trk;
 
+    // make sure this was already taken care of before we got called
+    assert(track == m_d[m_drive].track);
+
     // how many "groups" of sectors per track.  for instance, if a track has
     // has 24 sectors and an interleave of 4, there are six groups of four.
     const int groups = sec_per_trk / interleave;
-    // if the interleave isn't an integral factor of the number of sectors
-    // per track, that is, the sector count and interleave factor are
-    // relatively prime, then a different logical->physical equation applies.
-    assert(groups * interleave == sec_per_trk);
 
-    const int phys_sec = (logical_sec / groups)
-                       + (logical_sec % groups) * interleave;
-
-    // make sure this was already taken care of before we got called
-    assert(track == m_d[m_drive].track);
+    int phys_sec = 0;
+    if (groups * interleave == sec_per_trk) {
+        phys_sec = (logical_sec / groups)
+                 + (logical_sec % groups) * interleave;
+    } else if ((sec_per_trk == 10) && (interleave == 3)) {
+        // the below equation may hold for other disk formats, but currently
+        // only the 5.25" floppy uses this code, so I've asserted for other
+        // cases to ensure it is double checked.
+        phys_sec = (interleave * logical_sec) % sec_per_trk;
+    } else {
+        assert(0);
+    }
 
     m_d[m_drive].secwait = phys_sec;
 }
@@ -1145,13 +1164,10 @@ IoCardDisk::getDiskGeometry(int disktype,
             // fall through in release mode ...
         case Wvd::DISKTYPE_FD5:
             sectors_per_track = 10;
-            // this interleave factor is a guess; only 2 and 5 make sense.
-            // booting BASIC-2 ver 2.3 off an emulated 5.25" floppy takes
-            // 16 seconds with interleave=2, and 30 seconds with interleave=5.
-            // the difference is much less dramatic with more random accesses,
-            // but sequential accesses are very common: booting, loading, and
-            // saving programs.
-            inter             = 2;
+            // the PCS-II microcode (in mgr-no-2.pdf) was reverse engineered
+            // by me in 2005 and found it has a 3:1 interleave. that is the
+            // physical sector N is logical sector ((3*N) % 10).
+            inter             = 3;
             track_seek_ms     = 40;
             disk_rpm          = 300;
             break;
