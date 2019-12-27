@@ -147,7 +147,7 @@ IoCardDisplay::getName() const
 std::vector<int>
 IoCardDisplay::getBaseAddresses() const
 {
-    std::vector<int> v {0x005, 0x006, 0x007 };
+    std::vector<int> v { 0x005, 0x006, 0x007 };
     return v;
 }
 
@@ -163,12 +163,17 @@ IoCardDisplay::getAddresses() const
 
 
 void
-IoCardDisplay::reset(bool /*hard_reset*/)
+IoCardDisplay::reset(bool hard_reset)
 {
     // reset card state
     m_busy_state = busy_state::IDLE;
     m_selected   = false;
     m_card_busy  = false;
+
+    if (m_terminal) {
+        // it might not exist if this was just a temporary card
+        m_terminal->reset(hard_reset);
+    }
 
     // get the horizontal sync timer going
     m_tmr_hsync = nullptr;

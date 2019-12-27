@@ -145,6 +145,10 @@ The emulator very well might run on Linux via Wine, but it hasn't been tested.
    did't matter, but it did when a reboot happened with a 2236MXD terminal in
    the system.
 
+*) The CRT controller had a long-standing bug where a hard reset was failing
+   to restore the cursor enable flag. Say a program had done PRINT HEX(06)
+   to disable the cursor, after a hard reset the cursor was still disabled.
+
 *) There is no functional change, but the timing modeling for 5.25" floppies
    had been assuming a 2:1 sector interleave, but it turns out the actual
    interleave is 3:1.  I had figured this out 15 years prior, but that
