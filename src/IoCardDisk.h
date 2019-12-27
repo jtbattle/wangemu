@@ -96,8 +96,8 @@ public:
 
 private:
     // ---- card properties ----
-    const std::string  getDescription() const override;
-    const std::string  getName() const override;
+    std::string        getDescription() const override;
+    std::string        getName() const override;
     std::vector<int>   getBaseAddresses() const override;
     bool               isConfigurable() const noexcept override { return true; }
     std::shared_ptr<CardCfgState> getCfgState() override;

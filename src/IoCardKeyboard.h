@@ -42,8 +42,8 @@ public:
 
 private:
     // ---- card properties ----
-    const std::string getDescription() const override;
-    const std::string getName() const override;
+    std::string      getDescription() const override;
+    std::string      getName() const override;
     std::vector<int> getBaseAddresses() const override;
 
     // timer callback function to put some required delay in script processing

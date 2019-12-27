@@ -147,14 +147,14 @@ IoCardTermMux::~IoCardTermMux()
 }
 
 
-const std::string
+std::string
 IoCardTermMux::getDescription() const
 {
     return "Terminal Mux";
 }
 
 
-const std::string
+std::string
 IoCardTermMux::getName() const
 {
     return "2236 MXD";

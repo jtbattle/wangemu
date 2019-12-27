@@ -126,7 +126,7 @@ IoCardDisplay::~IoCardDisplay()
 }
 
 
-const std::string
+std::string
 IoCardDisplay::getDescription() const
 {
     return (m_screen_type == UI_SCREEN_64x16) ? "64x16 CRT Controller"
@@ -134,7 +134,7 @@ IoCardDisplay::getDescription() const
 }
 
 
-const std::string
+std::string
 IoCardDisplay::getName() const
 {
     return (m_screen_type == UI_SCREEN_64x16) ? "6312A" : "7011";

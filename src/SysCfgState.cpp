@@ -440,7 +440,7 @@ SysCfgState::getSlotCardAddr(int slot) const noexcept
 
 
 // retrieve the pointer to the per-card configuration state
-const std::shared_ptr<CardCfgState>
+std::shared_ptr<CardCfgState>
 SysCfgState::getCardConfig(int slot) const noexcept
 {
     assert(isSlotOccupied(slot));

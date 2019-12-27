@@ -143,10 +143,10 @@ public:
 protected:  // these are used by the CardInfo class
 
     // return a string describing the card type
-    virtual const std::string getDescription() const = 0;
+    virtual std::string getDescription() const = 0;
 
     // return a string of Wang card number for the device
-    virtual const std::string getName() const = 0;
+    virtual std::string getName() const = 0;
 
     // return a list of the various base addresses a card can map to
     virtual std::vector<int> getBaseAddresses() const = 0;

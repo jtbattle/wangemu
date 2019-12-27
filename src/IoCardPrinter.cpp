@@ -38,14 +38,14 @@ IoCardPrinter::~IoCardPrinter()
 }
 
 
-const std::string
+std::string
 IoCardPrinter::getDescription() const
 {
     return "Printer Controller";
 }
 
 
-const std::string
+std::string
 IoCardPrinter::getName() const
 {
     return "7079";

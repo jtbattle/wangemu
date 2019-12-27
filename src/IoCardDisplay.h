@@ -36,8 +36,8 @@ public:
 
 private:
     // ---- card properties ----
-    const std::string getDescription() const override;
-    const std::string getName() const override;
+    std::string       getDescription() const override;
+    std::string       getName() const override;
     std::vector<int>  getBaseAddresses() const override;
 
     std::shared_ptr<Scheduler> m_scheduler; // shared system event scheduler

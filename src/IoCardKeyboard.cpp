@@ -41,14 +41,14 @@ IoCardKeyboard::~IoCardKeyboard()
 }
 
 
-const std::string
+std::string
 IoCardKeyboard::getDescription() const
 {
     return "Keyboard Controller";
 }
 
 
-const std::string
+std::string
 IoCardKeyboard::getName() const
 {
     return "6367";

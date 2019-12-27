@@ -1,0 +1,6 @@
+---
+Checks:            ''
+WarningsAsErrors:  ''
+HeaderFilterRegex: 'C:\libs\.*'
+FormatStyle:       'file'
+User:              jim
