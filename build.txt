@@ -1,6 +1,6 @@
 ============================================================================
 		      Wang 2200 emulator build notes, v3.0
-                                January 4, 2018
+                               November 29, 2019
 ============================================================================
 
 The typical user of wangmu has no need to know any of this. However, if you
@@ -38,7 +38,7 @@ comes from Herb Sutter:
 
 2) Get the wxWidgets library source code
 
-   Version 3.0 of WangEmu was built using wx version 3.1.2. If you download
+   Version 3.0 of WangEmu was built using wx version 3.1.3. If you download
    a later version of wxWidgets, there may be issues, as the wx developers
    do tend to make a few backward-incompatible changes each release.
 
@@ -47,9 +47,9 @@ comes from Herb Sutter:
 3) Unpack the wxWidgets source code
 
    Personally, I override the default install location and instead unpack
-   it into C:\libs\wx-3.1.2 (for release 3.1.2). This isn't strictly
+   it into C:\libs\wx-3.1.3 (for release 3.1.3). This isn't strictly
    necessary, but future examples in this document assumes things were
-   installed into C:\libs\wx-3.1.2. Adjust future comments if you install
+   installed into C:\libs\wx-3.1.3. Adjust future comments if you install
    somewhere else.
 
 4) Tweak setup.h (strictly optional)
@@ -58,7 +58,7 @@ comes from Herb Sutter:
    the wx build features, like additional malloc debugging, now is the time
    to do it.
 
-   cd C:\libs\wx-3.1.2\include\wx\msw
+   cd C:\libs\wx-3.1.3\include\wx\msw
 
    Edit the file "setup.h" to tweak whatever options you need. Only do
    this if you know your way around wxWidgets. The stock setup.h will
@@ -69,8 +69,14 @@ comes from Herb Sutter:
    The wxWidgets library may be built many different ways. I'll describe
    only the way I do it. This worked for MSVC 2017 Community Edition:
 
-   5a) Launch a command line shell from MSVC compiler
-   5b) type "set WXWIN=c:\libs\wx-3.1.2"  (change to your appropriate path)
+   5a) Launch a command line shell from MSVC compiler; make sure you launch
+       the x86 shell, not the x64 shell, as the emulator is configured to
+       be a 32b app, and so the libraries must be 32b as well.  It would
+       certainly be possible to build x64 mode and change the emulator to
+       compile and link in x64 mode as well, but it doesn't benefit from
+       64-bit features, so I targeted 32b so it can run on old 32b versions
+       of windows as well (I hope).
+   5b) type "set WXWIN=c:\libs\wx-3.1.3"  (change to your appropriate path)
    5c) type "cd %WXWIN\build\msw"
    5d) type "nmake -f makefile.vc"
        and wait 10 minutes
@@ -89,7 +95,7 @@ comes from Herb Sutter:
    5g) Quit the shell.
 
    If you have difficulties doing this, try visiting the wxWidgets wiki.
-   As of November 2018, the right URL to start is this one:
+   As of November 2019, the right URL to start is this one:
 
         https://wiki.wxwidgets.org/Install
 
@@ -120,7 +126,7 @@ comes from Herb Sutter:
    7a) set the shell environment variable WXWIN to point to wherever you
        installed the wxWidgets library. This should be the path up to the
        root of that tree. In my case, it is
-            set WXWIN="C:\libs\wx-3.1.2"
+            set WXWIN="C:\libs\wx-3.1.3"
    7b) Fire up the compiler
    7c) Select File -> Open -> Project/Solution ...
    7d) You are facing a file dialog box. Navigate over to wangemu.sln,
@@ -192,11 +198,57 @@ comes from Herb Sutter:
 
    Select Debug -> Start Debugging (or hit F5) to run the emulator.
 
+---- Bonus Tools ----
+
+MSVC comes with some C++ validation tools, but it helps to run other
+code linting tools; each applies different code quality heuristics and
+find things none of the other find ... while at the same time all produce
+many false positives that need code changes to shut them up or can simply
+be ignored.
+
+10a) optionally install clang power tools
+
+   This allows running clang code linting tools; in fact is is even possible
+   to compile the app using clang++, but I haven't done so. I use this only
+   for linting the code. It is a commercial product, but is free for personal,
+   non-commercial hobby activity. An account must be created there to use it.
+
+   https://marketplace.visualstudio.com/items?itemName=caphyon.ClangPowerTools
+
+   I configured the clang power tools command line to include "--std=c++14",
+   as that is my intended level of C++ modernization, and don't want to be
+   told about things to do to take advantage of C++17 (or later) features.
+
+10b) optionally install cppcheck
+
+   This is the source of cppcheck:
+
+   http://cppcheck.sourceforge.net/
+
+   This site has a plugin to integrate cppcheck with MSVS, although it isn't
+   strictly necessary. cppcheck can run standalone too:
+
+   https://github.com/VioletGiraffe/cppcheck-vs-addin
+
+10c) optionally install Dr. Memory
+
+   Dr. Memory is a bounds checking tool. The application to be debugged is
+   instrumented and various memory access errors (eg, accessing an array
+   out of bounds, or using a malloc'd block of memory after it has been
+   free'd). The application runs at a fraction of its normal rate, so be
+   patient.
+
+   http://www.drmemory.org/
+
+   There is a file named "dr_memory.bat" in the wangemu directory.
+   Run it to run the emulator under the watchful eye of Dr. Memory.
+   Note that it is expected that there are some warnings associated
+   with starting/closing the application, as the wxwidgets library
+   does some unholy things behind the scenes.
 
 --------------------------------------------------------------
 -------------------------- OSX Port --------------------------
 --------------------------------------------------------------
-(This section is out of date; the OSX version was last built 8 years ago)
 
 I'm not a Mac person. I bought a Mac Mini for the sole purpose of porting
 the emulator to OSX. 98% of all development on is is done on a Windows 7
@@ -230,7 +282,7 @@ and specifically, this page:
 
 2) Get the wxWidgets library source code
 
-   Version 3.0 of WangEmu was build using wx version 3.1.2. If you download
+   Version 3.0 of WangEmu was build using wx version 3.1.3. If you download
    a later version of wxWidgets, there may be issues, as the wx developers
    do tend to make a few backward-incompatible changes each release.
 
@@ -240,12 +292,12 @@ and specifically, this page:
 3) Unpack the wxWidgets source code
 
    The file you downloaded is located in your downloads directory and is
-   called something like ~/Downloads/wxWidgets-3.1.2.tar.bz2.
+   called something like ~/Downloads/wxWidgets-3.1.3.tar.bz2.
 
-   Double click to unpack it into ~/Downloads/wxWidgets-3.1.2 (or whichever
+   Double click to unpack it into ~/Downloads/wxWidgets-3.1.3 (or whichever
    directory you downloaded it to). You can move this directory anywhere
    you please, but I put it in ~/src and rename it such that the full path is
-   ~/src/wx-3.1.2/.
+   ~/src/wx-3.1.3/.
 
 4) Build the wxWidgets library
 
@@ -260,7 +312,7 @@ and specifically, this page:
 
    Here are two scripts to build the library (adjust for your own situation):
 
-        [14] cd ~/src/wx-3.1.2
+        [14] cd ~/src/wx-3.1.3
         [15] cat > build-debug-script
         #!/usr/bin/env tcsh
         if (-e debug) then
@@ -342,7 +394,7 @@ and specifically, this page:
         LICENSE
         makefile
         README.md
-   
+
 6) Build the emulator
 
    cd into ~/wangemu/src.  Then type "make" and, with a bit of luck,
