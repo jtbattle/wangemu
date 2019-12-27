@@ -1,6 +1,6 @@
 ============================================================================
 		   Wang 2200 emulator release notes, v3.0-pre
-                                 April 14, 2019
+                                 December 26, 2019
 ============================================================================
 
 ---- What is It? ----
@@ -145,9 +145,15 @@ The emulator very well might run on Linux via Wine, but it hasn't been tested.
    did't matter, but it did when a reboot happened with a 2236MXD terminal in
    the system.
 
+*) There is no functional change, but the timing modeling for 5.25" floppies
+   had been assuming a 2:1 sector interleave, but it turns out the actual
+   interleave is 3:1.  I had figured this out 15 years prior, but that
+   information never made it into the emulator and I had forgotten I had even
+   figured it out.
+
 ---- Minor Tweaks and Implementation Changes ----
 
-*) compiled with the latest wxWidgets library release, 3.1.2,
+*) compiled with the latest wxWidgets library release, 3.1.3,
    and Microsoft Studio Community 2017 compiler.
 
 *) got rid of unnecessary wx-isms;
