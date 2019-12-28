@@ -178,6 +178,8 @@ private:
     bool            m_card_busy          = false; // the card isn't ready to accept a command or reply
     bool            m_compare_err        = false; // compare status (true=miscompare)
     bool            m_acting_intelligent = false; // what we told the host most recently
+    bool            m_abs_hog            = false; // ABS-based hog mode; unused
+    bool            m_cbs_hog            = false; // CBS-based hog mode; unused
 
     enum state_t { DRIVE_EMPTY, DRIVE_IDLE, DRIVE_SPINNING };
     struct drive_t {

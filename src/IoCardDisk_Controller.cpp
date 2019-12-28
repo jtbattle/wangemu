@@ -251,7 +251,6 @@ IoCardDisk::advanceStateInt(disk_event_t event, const int val)
     if (event == EVENT_RESET) {
         if (DBG > 2) { dbglog("Reset\n"); }
         m_state = CTRL_WAKEUP;
-        m_selected = false;
         setBusyState(false);
         return rv;
     }

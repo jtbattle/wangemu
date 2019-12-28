@@ -268,6 +268,8 @@ IoCardDisk::reset(bool /*hard_reset*/)
     m_cpb       = true;
     m_drive     = 0;
     m_card_busy = false;
+    m_abs_hog   = false;   // ABS-based hog mode
+    m_cbs_hog   = false;   // CBS-based hog mode
 
     m_acting_intelligent = false;
 
@@ -288,7 +290,8 @@ IoCardDisk::select()
 {
     // we save the exact address in case of partial decode
     const int abs_value = m_cpu->getAB();
-    m_primary = (abs_value & 0x40) != 0x40;  // primary drive
+    m_abs_hog = ((abs_value & 0x80) == 0x80);  // old hogging mechanism
+    m_primary = ((abs_value & 0x40) != 0x40);  // primary drive
     m_selected = true;
 
     if (DBG > 1) {
@@ -333,40 +336,42 @@ IoCardDisk::strobeOBS(int val)
 }
 
 
+// the only values the MVP OS appears to use are
+//     0x80 -- enable hog mode
+//     0x00 -- release hog mode
+//     0x01 -- reset disk drive
 void
-IoCardDisk::strobeCBS(int /*val*/) noexcept
+IoCardDisk::strobeCBS(int val) noexcept
 {
-//  int val8 = val & 0xFF;
+    int val8 = val & 0xFF;
 
     // unexpected -- the real hardware ignores this byte
-    if (NOISY > 0) {
-        // TODO: MVP spews these two a lot. what do they mean?
-        // UI_warn("unexpected disk CBS: Output of byte 0x%02x", val8);
+    if ((NOISY > 0) && (val8 != 0x00) && (val8 != 0x01) && (val8 != 0x80)) {
+        UI_warn("unexpected disk CBS: Output of byte 0x%02x", val8);
     }
 
-    // TODO:
-#if 0
-    // later disk controllers allowed controlling disk hog mode via
-    // sending a CBS with data bit OB8 set.  For example see the 6543
-    // schematic, which has logic for both the A8 addressing bit hog
-    // selection and the CBS hog selection method.  The controller is
-    // hogged if either mode is hogged (ie, they are OR'd together).
+    // When the disk interface card is addressed, it sends an !ENABLE signal
+    // to the disk mux. The disk mux does arbitration and allows one disk
+    // interface to win and signals it via !DRBY (disk ready/busy). Normally
+    // after a disk operation the card is de-addressed, and the request drops.
     //
-    // the emulator just ignores this mode as it has no effect as there
-    // is no other system competing for the disk.
-    hogged = !!(val8 & 0x80);
-#endif
+    // Hog mode works by setting a flop on the controller which makes the
+    // !ENABLE active persist even when the controller is not addressed. Early
+    // disk controllers used address bit AB8==1 to signal that the disk should
+    // be hogged. Later disk controllers allowed controlling disk hog mode via
+    // sending a CBS with data bit OB8 set.
+    //
+    // See the 6543 disk controller schematic for an example of how the
+    // various mechanisms get OR'd together to generate the !ENABLE signal.
+    //
+    // This emulation doesn't implement the AB8-based hog mode but does track 
+    // the CBS-based mechanism. However, it has no effect as there are no
+    // other systems competing for the disk.
+    m_cbs_hog = ((val8 & 0x80) == 0x80);  // enable/release hog mode
 
-    // FIXME:
-#if 0
-    // according to Paul Szudzik, CBS with the ls data bit high is
-    // hardwired to cause a hard reset of the disk controller.
-    // I don't see that hardware in the early floppy disk controller
-    // design, but they could have added it later.
-    if (val8 & 1) {
-        reset(true);
+    if ((val8 & 0x01) == 0x01) {
+        advanceState(EVENT_RESET);
     }
-#endif
 }
 
 
