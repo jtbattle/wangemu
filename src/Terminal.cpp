@@ -583,14 +583,13 @@ Terminal::crtCharFifo(uint8 byte)
 void
 Terminal::checkCrtFifo()
 {
-    int size = m_crt_buff.size();
-    while (size > 0) {
+    while (!m_crt_buff.empty()) {
         if (m_selectp_tmr) {
             return;  // waiting on SELECT Pn timeout
         }
         const uint8 byte = m_crt_buff.front();
         m_crt_buff.pop();
-        size--;
+		int size = m_crt_buff.size();
         if ((size == 30) && (m_crt_flow_state == flow_state_t::STOPPED)) {
             // send a GO if we drop below the threshold and we're stopped
             m_crt_flow_state = flow_state_t::GO_PEND;
