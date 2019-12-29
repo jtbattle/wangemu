@@ -230,7 +230,7 @@ dasmAI5Field(char *buf, uint32 uop) noexcept
 {
     assert(buf != nullptr);
     const int field = (uop >> 4) & 0x1F;
-    return sprintf(buf, "%02X", field);
+    return sprintf(buf, "%X", field);
 }
 
 
@@ -623,9 +623,11 @@ dasmType5(char *buf, const char *mnemonic, uint32 uop) noexcept
     len += dasmDdField(&buf[len], uop);               // ,R/,W1/,W2
     len += padSpaces(buf, len, PARAM_COL);
 
-    len += dasmAI5Field(&buf[len], uop);
-    buf[len++] = ','; buf[len] = '\0';
+    // unlike most instructions (op regA,regB,regC),
+    // TAP is (op regB,Ax_immediate)
     len += dasmBField(&buf[len], (uop & NO_X_BIT));
+    buf[len++] = ','; buf[len] = '\0';
+    len += dasmAI5Field(&buf[len], uop);
 
     return len;
 }
@@ -645,9 +647,11 @@ dasmType6(char *buf, const char *mnemonic, uint32 uop) noexcept
     len += dasmDdField(&buf[len], uop);               // ,R/,W1/,W2
     len += padSpaces(buf, len, PARAM_COL);
 
-    len += dasmAI5Field(&buf[len], uop);
-    buf[len++] = ','; buf[len] = '\0';
+    // unlike most instructions (op regA,regB,regC),
+    // TPA and XPA is (op regB,Ax_immediate)
     len += dasmBField(&buf[len], (uop & NO_X_BIT));
+    buf[len++] = ','; buf[len] = '\0';
+    len += dasmAI5Field(&buf[len], uop);
 
     return len;
 }
