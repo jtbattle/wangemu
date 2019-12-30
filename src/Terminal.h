@@ -76,7 +76,7 @@ private:
     // ---- functions ----
 
     // reset crt/prt part of state
-    void resetCrt();
+    void resetCrt(bool attr_only = false);
     void resetPrt();
 
     // send an init sequence from emulated terminal shortly after reset

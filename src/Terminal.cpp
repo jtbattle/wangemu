@@ -139,8 +139,9 @@ Terminal::reset(bool hard_reset)
 
 
 // reset just the crt part of the terminal state
+// if attr_only is true, a subset of the clearing happens.
 void
-Terminal::resetCrt()
+Terminal::resetCrt(bool attr_only)
 {
     // dumb/smart terminal state:
     m_disp.curs_x    = 0;
@@ -149,19 +150,27 @@ Terminal::resetCrt()
     m_disp.dirty     = true;  // must regenerate display
     clearScreen();
 
-    // smart terminal state:
-    m_raw_cnt    = 0;
-    m_input_cnt  = 0;
-    for (auto &byte : m_raw_buf)   { byte = 0x00; }  // not strictly necessary
-    for (auto &byte : m_input_buf) { byte = 0x00; }  // not strictly necessary
+    if (!attr_only) {
+        // smart terminal state:
+        m_raw_cnt    = 0;
+        m_input_cnt  = 0;
+        for (auto &byte : m_raw_buf)   { byte = 0x00; }  // not strictly necessary
+        for (auto &byte : m_input_buf) { byte = 0x00; }  // not strictly necessary
 
-    // we have to make an exception: if the script issues CLEAR,
-    // the terminal is sent a "reset crt" sequence, but actually wiping
-    // these out would break the script processing.
-    if (!m_script_active) {
-        m_tx_tmr = nullptr;
-        m_kb_buff = {};
-        m_kb_recent = {};
+        // we have to make an exception: if the script issues CLEAR,
+        // the terminal is sent a "reset crt" sequence, but actually wiping
+        // these out would break the script processing.
+        if (!m_script_active) {
+            m_tx_tmr = nullptr;
+            m_kb_buff = {};
+            m_kb_recent = {};
+        }
+
+        // crt buffer and associated flow control
+        m_crt_buff       = {};
+        m_crt_flow_state = flow_state_t::START;
+        m_crt_tmr        = nullptr;
+        m_selectp_tmr    = nullptr;
     }
 
     // on reset, the unit defaults to all attributes off, but the saved
@@ -172,11 +181,6 @@ Terminal::resetCrt()
     m_attr_under = false;
     m_box_bottom = false;
 
-    // crt buffer and associated flow control
-    m_crt_buff       = {};
-    m_crt_flow_state = flow_state_t::START;
-    m_crt_tmr        = nullptr;
-    m_selectp_tmr    = nullptr;
 }
 
 
@@ -516,8 +520,10 @@ Terminal::processChar(uint8 byte)
             break;
 
         case 0xF2: // restart terminal (FB F2)
+            // TODO: study LDMOD#AB UARTRX5 routine
             reset(false);  // soft reset
             // a real 2336 sends E4 (??) then F8 (crt go flow control)
+            // TODO: LDMOD#40 says of E4 "SET RSD FLAG IN MXD"
             // then F8 every three seconds while not throttled.
 #if 0
             // if I include this, the emulator thinks it got the INIT atom (E4)
@@ -528,6 +534,7 @@ Terminal::processChar(uint8 byte)
             break;
 
         case 0xF6: // reset crt (FB F6)
+            // TODO: study LDMOD#AB UARTRX5 routine
             resetCrt();
             // a real 2336 sends E9 (crt stop flow control),
             // then F8 (crt go flow control), then another F8, then E4 (??),
@@ -947,10 +954,15 @@ Terminal::processCrtChar2(uint8 byte)
                          && m_input_buf[2] == 0x0C
                          && m_input_buf[3] == 0x03
                          && m_input_buf[4] == 0x0F) {
-        // logging real 2336, it clears the CRT
-        // but doesn't spew out any return code
+        // the 2436 terminal source code (LDMOD#C0) does this:
+        //     send HEX(03) -- clear screen
+        //     send HEX(05) -- enable cursor
+        //     jp RESETATR  -- reset crt attribute to default
+        //                     it doesn't touch flow control state
+        // resetCrt() takes a bool indicating if just this subset of processing
+        // should be done.
         m_input_cnt = 0;
-        resetCrt();
+        resetCrt(true);
         return;
     }
 
