@@ -482,7 +482,8 @@ Terminal::processChar(uint8 byte)
 
     if (do_debug) {
         const char ch = (0x20 <= byte && byte <= 0x7E) ? byte : '.';
-        dbglog("Terminal::processChar(0x%02x/%c), m_raw_cnt=%d\n", byte, ch, m_raw_cnt);
+        dbglog("Terminal::processChar(0x%02x/%c), m_raw_cnt=%d, esc_seen=%d\n",
+               byte, ch, m_raw_cnt, m_escape_seen ? 1 : 0);
     }
 
     auto handler = (m_crt_sink) ? std::mem_fn(&Terminal::crtCharFifo)
@@ -522,10 +523,10 @@ Terminal::processChar(uint8 byte)
         case 0xF2: // restart terminal (FB F2)
             // TODO: study LDMOD#AB UARTRX5 routine
             reset(false);  // soft reset
-            // a real 2336 sends E4 (??) then F8 (crt go flow control)
+#if 0
+            // a real 2336 sends E4 then F8 (crt go flow control)
             // TODO: LDMOD#40 says of E4 "SET RSD FLAG IN MXD"
             // then F8 every three seconds while not throttled.
-#if 0
             // if I include this, the emulator thinks it got the INIT atom (E4)
             system2200::dispatchKeystroke(m_io_addr+0x01, m_term_num, 0xE4);
 #endif
@@ -537,7 +538,7 @@ Terminal::processChar(uint8 byte)
             // TODO: study LDMOD#AB UARTRX5 routine
             resetCrt();
             // a real 2336 sends E9 (crt stop flow control),
-            // then F8 (crt go flow control), then another F8, then E4 (??),
+            // then F8 (crt go flow control), then another F8, then E4,
             // then F8 every three seconds while not throttled.
             system2200::dispatchKeystroke(m_io_addr+0x01, m_term_num, 0xF9);
             system2200::dispatchKeystroke(m_io_addr+0x01, m_term_num, 0xF8);
@@ -596,7 +597,7 @@ Terminal::checkCrtFifo()
         }
         const uint8 byte = m_crt_buff.front();
         m_crt_buff.pop();
-		int size = m_crt_buff.size();
+        int size = m_crt_buff.size();
         if ((size == 30) && (m_crt_flow_state == flow_state_t::STOPPED)) {
             // send a GO if we drop below the threshold and we're stopped
             m_crt_flow_state = flow_state_t::GO_PEND;
@@ -607,7 +608,7 @@ Terminal::checkCrtFifo()
 }
 
 
-// decode escape sequences, decompress runs
+// decode FB ... escape sequences (eg, decompress runs)
 void
 Terminal::processCrtChar1(uint8 byte)
 {
@@ -645,8 +646,7 @@ Terminal::processCrtChar1(uint8 byte)
     // this must be the case we are considering at this point
     assert(m_raw_cnt == 2);
 
-    // FB nn, where 0x02 < count < 0x60, is a three byte sequence
-    // in practice, it can send a compression count of 1 (eg, SF12)
+    // start of FB nn cc, where 0x01 <= count < 0x60, is a three byte sequence
     if (m_raw_buf[1] < 0x60) {
         return;
     }
@@ -692,36 +692,32 @@ Terminal::processCrtChar1(uint8 byte)
         return;
     }
 
-    // disable cursor blink (FB F8)
-    // turning off blink does not re-enable the cursor
     if (m_raw_buf[1] == 0xF8) {
-        if (m_disp.curs_attr == cursor_attr_t::CURSOR_BLINK) {
-            m_disp.curs_attr = cursor_attr_t::CURSOR_ON;
-        }
         m_raw_cnt = 0;
         return;
     }
 
-    // enable cursor blink (FB FC)
-    // if the cursor was off to begin with, it remains off
-    // Fasstcom Terminal Spec v1.0.pdf, pdf page 22 says FBF4
-    // is a synonym for FBFC, so I've implemented it.
-    if ((m_raw_buf[1] == 0xF4) || (m_raw_buf[1] == 0xFC)) {
+    // the source code for the 2436 terminal, file LDMOD#40, picks off
+    // the various escape codes and if the value is > 0xD0, it simply
+    // checks the 0x04 bit to decide blink or no blink.
+    if ((m_raw_buf[1] & 0x04) == 0x04) {
+        // enable cursor blink (FB FC)
+        // if the cursor was off to begin with, it remains off
+//FIXME: rethink this conflation of cursor on/off/blinnk -- it seems weird
+//C is encoding as 3 states, but likely hardware has 4 states, with
+//two orthogonal control bits: cursor enabled/not, blink enabled/not.
         if (m_disp.curs_attr == cursor_attr_t::CURSOR_ON) {
             m_disp.curs_attr = cursor_attr_t::CURSOR_BLINK;
         }
-        m_raw_cnt = 0;
-        return;
+    } else {
+        // disable cursor blink (FB F8)
+        // turning off blink does not re-enable the cursor
+        if (m_disp.curs_attr == cursor_attr_t::CURSOR_BLINK) {
+            m_disp.curs_attr = cursor_attr_t::CURSOR_ON;
+        }
     }
-
-    // what should happen with illegal sequences?
-#ifdef _DEBUG
-    dbglog("Unexpected sequence: 0x%02x 0x%02x\n", m_raw_buf[0], m_raw_buf[1]);
-#endif
-    // for now, I'm dropping them
-    //processCrtChar2(m_raw_buf[0]);
-    //processCrtChar2(m_raw_buf[1]);
     m_raw_cnt = 0;
+    return;
 }
 
 
@@ -730,15 +726,32 @@ void
 Terminal::processCrtChar2(uint8 byte)
 {
     assert(m_disp.screen_type == UI_SCREEN_2236DE);
-    //wxLogMessage("processCrtChar2(0x%02x), m_input_cnt=%d", byte, m_input_cnt);
+    if (do_debug) {
+        dbglog("processCrtChar2(0x%02x), m_input_cnt=%d\n", byte, m_input_cnt);
+    }
 
     assert(static_cast<unsigned long>(m_input_cnt) < sizeof(m_input_buf));
 
-    // it isn't documented, but from experimentation, non-control characters
-    // following an 02... sequence will abort the sequence and that character
-    // gets sent through.
-    if (byte >= 0x10) {
+    // these values terminate FB 02 ... command sequences
+    bool terminator = (byte == 0x0E || byte == 0x0F);
+
+    // it isn't documented, but some sequences ignore any extra bytes after the
+    // main sequence up to the terminator:
+    //     0205...{0E|0F}
+    //     020809...{0E|0F}
+    //     020D0C03...{0E|0F}
+    // while others ignore extra so long as the bytes are less than 0x20. If a
+    // byte greater than 0x20 is seen, the current sequence is abandoned and
+    // the violating character is processed.
+    if (m_input_cnt == 0) {
+        m_ignore = ignore_t::NONE;
+    }
+    if ((m_ignore == ignore_t::SOME) && (m_input_buf[1] >= 0x20)) {
+        // break out of the escape sequence and process the new character
         m_input_cnt = 0;
+    }
+    if ((m_ignore == ignore_t::ALL) && !terminator) {
+        return;  // ignore chars after the defined part of the sequence
     }
 
     if (m_input_cnt == 0) {
@@ -773,116 +786,102 @@ Terminal::processCrtChar2(uint8 byte)
     // look for completed 02 ... command sequences
     assert(m_input_cnt > 0 && m_input_buf[0] == 0x02);
 
-    // cursor blink enable: 02 05 0F
-    if (m_input_cnt == 3 && m_input_buf[1] == 0x05
-                         && m_input_buf[2] == 0x0F) {
-        m_disp.curs_attr = cursor_attr_t::CURSOR_BLINK;
-        m_input_cnt = 0;
-        return;
-    }
-    // unrecognized 02 05 xx sequence
-    if (m_input_cnt == 3 && m_input_buf[1] == 0x05) {
-        // ignore it
-        m_input_cnt = 0;
-        return;
-    }
-
-    // normal character set: 02 02 00 0F
-    if (m_input_cnt == 4 && m_input_buf[1] == 0x02
-                         && m_input_buf[2] == 0x00
-                         && m_input_buf[3] == 0x0F) {
-        m_attrs &= ~(char_attr_t::CHAR_ATTR_ALT);
-        m_input_cnt = 0;
-        return;
-    }
-    // alternate character set: 02 02 02 0F
-    if (m_input_cnt == 4 && m_input_buf[1] == 0x02
-                         && m_input_buf[2] == 0x02
-                         && m_input_buf[3] == 0x0F) {
-        m_attrs |= (char_attr_t::CHAR_ATTR_ALT);
-        m_input_cnt = 0;
-        return;
-    }
-    // unrecognized 02 02 xx yy sequence
-    if (m_input_cnt == 4 && m_input_buf[1] == 0x02) {
-        // ignore it
-        m_input_cnt = 0;
+    // normal|alternate character set: 02 02 {00|02} ... {0E|0F}
+    // if the terminator is early, treat missing bytes as if 0x00 had been received.
+    if (m_input_cnt >= 3 && m_input_buf[1] == 0x02) {
+        m_ignore = ignore_t::SOME;
+        if (terminator) {
+            if (m_input_cnt < 4) {
+                m_input_buf[2] = 0x00;
+            }
+            if (m_input_buf[2] == 0x00) {
+                m_attrs &= ~(char_attr_t::CHAR_ATTR_ALT);
+            } else {
+                m_attrs |= (char_attr_t::CHAR_ATTR_ALT);
+            }
+            m_input_cnt = 0;
+        }
         return;
     }
 
     // defined attributes, possibly enabling them: 02 04 xx yy {0E|0F}
-    // experimenting with a 2336, the actual behavior is more complex.
-    // the command stream parser seems to keep accepting characters
-    // until an 0E or 0F
-    if (m_input_cnt == 3 && m_input_buf[1] == 0x04) {
-        if (m_input_buf[2] != 0x00 && m_input_buf[2] != 0x02 &&
-            m_input_buf[2] != 0x04 && m_input_buf[2] != 0x0B) {
-            m_input_cnt = 0;  // ignore it
+    // it is possible to get the terminator early, in which case treat the
+    // missing bytes as if 0x00 had been received.
+    if (m_input_cnt >= 4 && m_input_buf[1] == 0x04) {
+        m_ignore = ignore_t::SOME;
+        if (terminator) {
+            if (m_input_cnt < 4) {
+                m_input_buf[2] = 0x00;
+            }
+            if (m_input_cnt < 5) {
+                m_input_buf[3] = 0x00;
+            }
+            if (   (m_input_buf[2] == 0x00 || m_input_buf[2] == 0x02 ||
+                    m_input_buf[2] == 0x04 || m_input_buf[2] == 0x0B)
+                && (m_input_buf[3] == 0x00 || m_input_buf[3] == 0x02 ||
+                    m_input_buf[3] == 0x04 || m_input_buf[3] == 0x0B)) {
+                m_attrs &= ~(char_attr_t::CHAR_ATTR_BRIGHT |
+                             char_attr_t::CHAR_ATTR_BLINK  |
+                             char_attr_t::CHAR_ATTR_INV    );
+                m_attr_under = false;
+                if (m_input_buf[2] == 0x02 || m_input_buf[2] == 0x0B) {
+                    m_attrs |= (char_attr_t::CHAR_ATTR_BRIGHT);
+                }
+                if (m_input_buf[2] == 0x04 || m_input_buf[2] == 0x0B) {
+                    m_attrs |= (char_attr_t::CHAR_ATTR_BLINK);
+                }
+                if (m_input_buf[3] == 0x02 || m_input_buf[3] == 0x0B) {
+                    m_attrs |= (char_attr_t::CHAR_ATTR_INV);
+                }
+                if (m_input_buf[3] == 0x04 || m_input_buf[3] == 0x0B) {
+                    m_attr_under = true;
+                }
+                m_attr_on   = (m_input_buf[4] == 0x0E);
+                m_attr_temp = false;
+                // UI_info("attrs: 02 04 %02x %02x %02x --> %02x, %d", m_input_buf[2], m_input_buf[3], m_input_buf[4], m_attrs, m_attr_under);
+            }
+            m_input_cnt = 0;
         }
-        return;
-    }
-    if (m_input_cnt == 4 && m_input_buf[1] == 0x04) {
-        if (m_input_buf[3] != 0x00 && m_input_buf[3] != 0x02 &&
-            m_input_buf[3] != 0x04 && m_input_buf[3] != 0x0B) {
-            m_input_cnt = 0;  // ignore it
-        }
-        return;
-    }
-    if (m_input_cnt == 5 && m_input_buf[1] == 0x04) {
-        m_input_cnt = 0;
-        if (m_input_buf[4] != 0x0E && m_input_buf[4] != 0x0F) {
-            return;  // ignore it
-        }
-        m_attrs &= ~(char_attr_t::CHAR_ATTR_BRIGHT |
-                     char_attr_t::CHAR_ATTR_BLINK  |
-                     char_attr_t::CHAR_ATTR_INV    );
-        m_attr_under = false;
-        if (m_input_buf[2] == 0x02 || m_input_buf[2] == 0x0B) {
-            m_attrs |= (char_attr_t::CHAR_ATTR_BRIGHT);
-        }
-        if (m_input_buf[2] == 0x04 || m_input_buf[2] == 0x0B) {
-            m_attrs |= (char_attr_t::CHAR_ATTR_BLINK);
-        }
-        if (m_input_buf[3] == 0x02 || m_input_buf[3] == 0x0B) {
-            m_attrs |= (char_attr_t::CHAR_ATTR_INV);
-        }
-        if (m_input_buf[3] == 0x04 || m_input_buf[3] == 0x0B) {
-            m_attr_under = true;
-        }
-        m_attr_on   = (m_input_buf[4] == 0x0E);
-        m_attr_temp = false;
-//      UI_info("attrs: 02 04 %02x %02x %02x --> %02x, %d", m_input_buf[2], m_input_buf[3], m_input_buf[4], m_attrs, m_attr_under);
         return;
     }
 
-    // return self-ID string: 02 08 09 0F
-    if (m_input_cnt == 4 && m_input_buf[1] == 0x08
-                         && m_input_buf[2] == 0x09
-                         && m_input_buf[3] == 0x0F) {
-        m_input_cnt = 0;
-        char *idptr = &id_string[1];  // skip the leading asterisk
-        while (*idptr != '\0') {
-            system2200::dispatchKeystroke(m_io_addr+0x01, m_term_num, *idptr);
-            idptr++;
+    // cursor blink enable: 02 05 ... {0E|0F}
+    if (m_input_cnt >= 2 && m_input_buf[1] == 0x05) {
+        m_ignore = ignore_t::ALL;
+        if (terminator) {
+            assert(m_input_cnt == 3);
+            m_disp.curs_attr = cursor_attr_t::CURSOR_BLINK;
+            m_input_cnt = 0;
         }
-        system2200::dispatchKeystroke(m_io_addr+0x01, m_term_num, 0x0D);
         return;
     }
-    // 02 08 xx yy is otherwise undefined
-    if (m_input_cnt == 4 && m_input_buf[1] == 0x08) {
-        m_input_cnt = 0;
-        return;  // ignore it
+
+    // return self-ID string: 02 08 09 ... 0F
+    if (m_input_cnt >= 3 && m_input_buf[1] == 0x08) {
+        m_ignore = ignore_t::ALL;
+        if (terminator && (m_input_cnt == 4)) {
+            if  (m_input_buf[2] == 0x09 && m_input_buf[3] == 0x0F) {
+                char *idptr = &id_string[1];  // skip the leading asterisk
+                while (*idptr != '\0') {
+                    system2200::dispatchKeystroke(m_io_addr+0x01, m_term_num, *idptr);
+                    idptr++;
+                }
+                system2200::dispatchKeystroke(m_io_addr+0x01, m_term_num, 0x0D);
+            }
+            m_input_cnt = 0;
+        }
+        return;
     }
 
-    // draw/erase box mode
-    // the implementation is hinky: keep the box mode prefix then erase the
-    // most recent box mode "verb" after performing it, since the total box
-    // command string can be very long, and there is no need to keep all of it.
+    // draw/erase box mode: 02 0B {02|0B} ... {0E|0F}
+    // keep the box mode prefix then erase the most recent box mode "verb"
+    // after performing it, since the total box command string can be very
+    // long, and there is no need to keep all of it.
     if (m_input_cnt == 3 && m_input_buf[1] == 0x0B) {
         if (m_input_buf[2] != 0x02 && m_input_buf[2] != 0x0B) {
             // must start either 02 0B 02, or 02 0B 0B
-            m_input_cnt = 0;
-            return;  // ignore it
+            m_ignore = ignore_t::SOME;
+            return;
         }
         // this flag is used during 08 sub-commands
         // we draw the bottom only if we've seen a previous 0B command
@@ -923,53 +922,65 @@ Terminal::processCrtChar2(uint8 byte)
                 adjustCursorY(-1);
                 setBoxAttr(box_draw, char_attr_t::CHAR_ATTR_VERT);
                 return;
+            case 0x0E: // end of box mode
             case 0x0F: // end of box mode
                 m_input_cnt = 0;
                 return;
             default:
                 // just ignore error and drop out of box mode
-                m_input_cnt = 0;
+                m_ignore = ignore_t::SOME;
                 return;
         }
     }
 
-    // reinitialize terminal: 02 0D 0C 03 0F
+    // reinitialize terminal: 02 0D 0C 03 ... {0E|0F}
     // 2336DW_InteractiveTerminalUserManual.700-7636.11-82.pdf says this:
     //   1. Clears the screen, homes the cursor and turns the cursor on
     //   2. Selects normal intensity characters
     //   3. Selects bright as attribute to be activated by HEX(0E)
     //   4. Select the default character set for that version of terminal
-    if (m_input_cnt == 3 && m_input_buf[1] == 0x0D
-                         && m_input_buf[2] != 0x0C) {
-        m_input_cnt = 0;
-        return; // ignore it
-    }
-    if (m_input_cnt == 4 && m_input_buf[1] == 0x0D
-                         && m_input_buf[2] == 0x0C
-                         && m_input_buf[3] != 0x03) {
-        m_input_cnt = 0;
-        return; // ignore it
-    }
-    if (m_input_cnt == 5 && m_input_buf[1] == 0x0D
-                         && m_input_buf[2] == 0x0C
-                         && m_input_buf[3] == 0x03
-                         && m_input_buf[4] == 0x0F) {
-        // the 2436 terminal source code (LDMOD#C0) does this:
-        //     send HEX(03) -- clear screen
-        //     send HEX(05) -- enable cursor
-        //     jp RESETATR  -- reset crt attribute to default
-        //                     it doesn't touch flow control state
-        // resetCrt() takes a bool indicating if just this subset of processing
-        // should be done.
-        m_input_cnt = 0;
-        resetCrt(true);
+    if (m_input_cnt >= 4) {
+        m_ignore = ignore_t::ALL;
+        if (terminator && (m_input_cnt == 5)) {
+            if (   (m_input_buf[1] == 0x0D)
+                && (m_input_buf[2] == 0x0C)
+                && (m_input_buf[3] == 0x03)) {
+                // the 2436 terminal source code (LDMOD#C0) does this:
+                //     send HEX(03) -- clear screen
+                //     send HEX(05) -- enable cursor
+                //     jp RESETATR  -- reset crt attribute to default
+                //                     it doesn't touch flow control state
+                // resetCrt() takes a bool indicating if just this subset of processing
+                // should be done.
+                resetCrt(true);
+            }
+            m_input_cnt = 0;
+        }
         return;
     }
 
-    if (m_input_cnt >= 5) {
-        m_input_cnt = 0;
-        return; // ignore it
+    // check for illegal sequence prefixes
+    if (    (m_input_cnt == 2)
+         && (m_input_buf[1] != 0x02)
+         && (m_input_buf[1] != 0x04)
+         && (m_input_buf[1] != 0x05)
+         && (m_input_buf[1] != 0x08)
+         && (m_input_buf[1] != 0x0B)
+         && (m_input_buf[1] != 0x0D)) {
+        // treat it as a noop
+        m_ignore = ignore_t::SOME;
+        if (terminator) {
+            m_input_cnt = 0;
+        }
+        return;
     }
+
+    if (terminator) {
+        // if we are here, a sequence terminated early, eg 02 0D 0F
+        m_input_cnt = 0;
+    }
+
+    assert(m_input_cnt < 5);
 }
 
 

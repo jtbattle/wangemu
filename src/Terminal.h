@@ -142,6 +142,11 @@ private:
     uint8         m_raw_buf[5];     // ... a complete runlength sequence
     int           m_input_cnt;      // buffered input stream while decoding
     uint8         m_input_buf[10];  // ... character sequence escapes
+    enum class ignore_t {      // ignore some bytes during FB 02 ... processing
+        NONE,                  // don't ignore
+        SOME,                  // ignore if < 0x20
+        ALL,                   // ignore all
+    } m_ignore;
 
     // the terminal keyboard buffer is modeled in the card
     // instead of cluttering up the Ui code
