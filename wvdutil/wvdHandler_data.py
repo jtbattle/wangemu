@@ -67,7 +67,7 @@ class WvdHandler_data(WvdHandler_base):
                 if (blk[0] & 0xa0) == 0xa0:
                     state = 2
                     break
-                elif (blk[0] == 0x81) and (blk[1] == 0x01):
+                if (blk[0] == 0x81) and (blk[1] == 0x01):
                     # this is a single sector record
                     state = 0
                 elif (blk[0] == 0x82) and (blk[1] == 0x01):

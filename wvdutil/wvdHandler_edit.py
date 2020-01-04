@@ -43,8 +43,9 @@ class WvdHandler_edit(WvdHandler_base):
     # it returns a tuple (str, str), with the first str being the filename
     # if found, otherwise empty. if the filename was found, the second string
     # classifies it as 'type1' or 'type2'.
-    def getFilename(self, blk):
-        # type: bytearray -> bytearray
+    @staticmethod
+    def getFilename(blk):
+        # type: (bytearray) -> Tuple[str, str]
         # the first string contains magic bytes, the filename, and date
         line0 = blk[3+0*63:2+1*63]
         type1 = (line0[0] == 0x02) and (line0[1] == 0x01) and \
@@ -118,10 +119,10 @@ class WvdHandler_edit(WvdHandler_base):
                 break
 
             # first block should contain the filename
-            if (offset == 0):
-                if (blk[3:11] == '*FILE = '):
+            if offset == 0:
+                if blk[3:11] == '*FILE = ':
                     ftype = 'type2'
-                elif (blk[6:13] == 'FILE = '):
+                elif blk[6:13] == 'FILE = ':
                     ftype = 'type1'
                 else:
                     ftype = ''
@@ -136,8 +137,8 @@ class WvdHandler_edit(WvdHandler_base):
 
             if offset == 0:
                 # the first string contains magic bytes, the filename, and date
-                (filename, ftype) = self.getFilename(blk)
-                if (ftype == 'none'):
+                (_, ftype) = self.getFilename(blk)
+                if ftype == 'none':
                     self.error(sec, "sector %d: first line didn't contain the filename" % sec)
                     break
                 # TODO: check the date format?
@@ -187,7 +188,7 @@ class WvdHandler_edit(WvdHandler_base):
                 #    that is what the EDIT program does.
                 (filename, ftype) = self.getFilename(secData)
                 if ftype == 'none':
-                    self.error(sec, "sector %d: first line didn't contain the filename" % sec)
+                    print("sector 0: first line didn't contain the filename")
                     break
                 if ftype == 'type1' and (line0[2] not in range(0x16,0x1b)):
                     print("relative sector 0: ",
@@ -236,7 +237,7 @@ class WvdHandler_edit(WvdHandler_base):
                         curline += chr(byt)
                     else:
                         curline += "\\x%02x" % byt
-                if (ftype == 'type2'):
+                if ftype == 'type2':
                     listing.append(curline.rstrip())
                     curline = ''
 

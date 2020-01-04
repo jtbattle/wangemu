@@ -106,7 +106,7 @@ class WangVirtualDisk(object):
         if self.head_dat[0:5] != b'WANG\x00':
             print('File is not a .wvd type')
             raise IOError
-        self.sector = []  # type: List[bytearray]
+        self.sector = []
         for i in range(self.numPlatters() * self.numSectors()):
             self.sector.append(fdata[256*(i+1) : 256*(i+2)])
             i = i+1

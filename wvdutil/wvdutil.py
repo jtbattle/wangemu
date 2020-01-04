@@ -22,6 +22,8 @@
 #     fixed a number of crash scenarios, including using "| more" with py3
 #     significant code restructuring
 #     pylint cleanups
+# Version: 1.7, 2020/01/04, JTB
+#     enhance 'edit' file handler to recognize a second format for such files
 
 ########################################################################
 # there are any number of operations that could be provided by this
@@ -2134,7 +2136,7 @@ def mainloop():
         command(wvd, commandStr)
         return
 
-    print(basename + ', version 1.6, 2018/09/15')
+    print(basename + ', version 1.7, 2020/01/04')
     print('Type "help" to see all commands')
 
     # accept command lines from user interactively

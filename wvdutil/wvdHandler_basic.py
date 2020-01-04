@@ -368,12 +368,11 @@ def prettyprint(origline, width=80, basic2=True):
             if len(newline) <= width:
                 listing.append(newline)
                 break
+            listing.append(newline[0:width])
+            if width > 6:
+                newline = "     " + newline[width:]
             else:
-                listing.append(newline[0:width])
-                if width > 6:
-                    newline = "     " + newline[width:]
-                else:
-                    newline = newline[width:]
+                newline = newline[width:]
 
         line = line[stmt_end:]       # remainder of line
         if line != '':
@@ -594,7 +593,7 @@ class WvdHandler_basic(WvdHandler_base):
                 state = seek_cr
                 continue
 
-            elif state == seek_cr:
+            if state == seek_cr:
                 # looking for the end of line
                 if blk[cp] != 0x0D:
                     cp = cp+1
