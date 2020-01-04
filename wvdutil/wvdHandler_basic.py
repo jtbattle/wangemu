@@ -5,6 +5,10 @@
 #     massive restructuring of the old wvdutil code base
 # Version: 1.1, 2019/01/26, JTB
 #     the "VER(" token was mapped to "VER" (missing paren)
+# Version: 1.2, 2019/01/03, JTB
+#     fixed an illegal array index when 0xFF (line number token)
+#     appears at the end of the block such that the two necessary
+#     bytes holding the line number don't exist.
 
 from __future__ import print_function
 import re
@@ -203,7 +207,7 @@ def listProgramRecord(blk, secnum):
 
         if c < 128:
             line += chr(c)
-        elif c == 0xFF:
+        elif (c == 0xFF) and (cp < 254):
             # line number
             linenum = 1000*(blk[cp+1] // 16) + \
                        100*(blk[cp+1]  % 16) + \
