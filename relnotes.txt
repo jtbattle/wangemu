@@ -1,7 +1,12 @@
 ============================================================================
-		   Wang 2200 emulator release notes, v3.0-pre
-                                 December 26, 2019
+                     Wang 2200 emulator release notes, v3.0
+                                January 4, 2020
 ============================================================================
+
+This is a snapshot of the emulator at the point of its 3.0 release.
+Please visit the project's github page to find all the latest changes.
+
+    https://github.com/jtbattle/wangemu
 
 ---- What is It? ----
 
@@ -26,12 +31,12 @@ The emulator is primarily written under Windows 7, but it should also run
 under Windows Vista, Windows 8, and Windows 10 as well. This emulator
 is untested under Windows XP and probably does not run.
 
-Due to the contribution of Paul Heller, the emulator runs natively on Mac
-OS X (10.4.2 at least) as well.
-[ this is surely broken in the pre-release; it will be rectified when the
-  emulator makes it to release status ]
+It has also been ported to OSX, though due to compatibility churn on that
+platform, it doesn't run on older versions of the OS.
 
-The emulator very well might run on Linux via Wine, but it hasn't been tested.
+The emulator very well might run on Linux via Wine, as that worked with
+older versions of the emulator, but it hasn't been tested for 3.0 at the
+time of its release.
 
 ---- User-visible Changes ----
 
@@ -176,7 +181,10 @@ The emulator very well might run on Linux via Wine, but it hasn't been tested.
 
 *) The VP CPU disassembler (used only during emulation debug) had an error
    decoding the "MVX" pseudo-opcode. It was being decoded as "MVXX"
-   (two places were marking the eXtended trait).
+   (two places were marking the eXtended trait).  The disassembly of the
+   stack transfer instructions (eg, TSP, TPS, XPS) were changed to match
+   the Wang assembler, which unexpectedly swaps the order of operands for
+   this set of instructions.
 
 ---- Tips ----
 

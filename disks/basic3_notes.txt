@@ -1,0 +1,499 @@
+----------------------------- BASBOL -----------------------------
+
+Roger Droz, a former Wang 2200 engineer, worked on the "BASBOL" project, but
+left Wang before the project completed. In fact, the beta versions were sent
+to a handful of test sites, but the project was canceled, reportedly because
+the VS group felt it was encroaching on their customer base.
+
+What was BASBOL? It was a punny, informal name for a much more capable
+OS that could simultanously run BASIC and COBOL partitions. In addition,
+it wasn't BASIC-2, but a massive rewrite called BASIC-3. I have no documentation
+about it, but by looking at keywords found in the disk image, and via trial
+and error (see below), I've teased out a few bits of syntax and functionality.
+
+Be warned that these were buggy, pre-beta versions of the product. The disk
+images are not complete boot disks, just enough to get BASIC-3 running.
+I have not figured out how to get a COBOL partition going ... the partition
+editor program which no doubt existed to configure which terminals would run
+BASIC-3 and which would run COBOL is not on these disks.
+
+----------------------------- Booting -----------------------------
+
+After inserting the disk in the primary drive (F/310), hit Alt-Shift-R to
+reset the CPU. You will see the usual
+
+     KEY SF'? _
+
+prompt. Instead of hitting SF0 (mapped to <esc>), you must tell the boot
+ROM to load a non-standard microcode file. In this case, it is named @BBL.
+So at the prompt, type @BBL and *then* hit SF0 (<esc>).
+
+You'll get a warning from Roger himself that the interpreter is a work in
+progress and it is buggy.  After a few seconds of loading, BASIC-3 attempts
+to execute a bit of code, but there is an error of some kind:
+
+    READY (BASIC-3) PARTITION 01
+
+     MOUNT "/310",V$: VOLUME=V$: LOAD RUN "@.GENPRT"
+                               ^
+    ERROR 118: Invalid File Specification
+
+I'm sure that is because the disk image was just an engineer's scratch copy,
+and not a complete boot disk image.
+
+From there you can type in and run BASIC-3 programs.  Below is a log of
+my attempt to figure out what is and isn't allowed. If you figure out more,
+please let me know.
+
+Signficant features:
+
+   - long variable names
+   - lines can start with label, and GOTO and GOSUB can reference the label
+     intead of the line number.
+   - subroutines which take parameters and have local variable scope
+   - intrinsic database support, vs using a BASIC library
+   - the ability to call foreign code (eg, BASIC to COBOL)
+
+See this web page for more information about what I know about the project,
+including links to other documents.
+
+    http://wang2200.org/wang_basic.html#WangBASIC3
+
+----------------------------- Explorations -----------------------------
+
+10 Abc=1/3
+    (OK -- long names must be Upper/lower..)
+
+10 GOTO Foofer
+...
+100 Foofer:PRINT 1/3
+
+sectors 32-35 have keywords
+:DELETE "A"
+        ^ ERROR 115: Missing File Number
+:DELETE #1
+          ^ ERROR 010: Missing ','
+:DELETE #1,
+           ^ ERROR 019: Missing Word
+:DELETE #1,FOO
+           ^ ERROR 019: Missing Word
+
+:VOLUME
+       ^ ERORR 010: Missing '='
+:VOLUME=A$
+      (accepted)
+:VERIFY
+       ^ ERROR 016: Missing Letter
+:VERIFY A
+        ^ ERROR 016: Missing letter
+:VERIFY F
+        (OK)
+:VERIFY R
+         ^ ERROR 100: Volume Not Mounted
+
+:REPLACE
+         ^ ERROR 183: Invalid Name
+:REPLACE "FOO"
+               ^ ERROR 014: Missing 'BY '
+:REPLACE "FOO" BY "BAR"
+       (OK)
+
+:AUTO
+000010 (waits for input)
+
+:PRINT #TERM
+  1
+
+:PRINT KEYLEN(#1)
+                ^ ERROR 080: File Not Open
+
+:HEXPACK A$
+           ^ ERROR 019: Missing Word
+
+:IF NOT A<B THEN PRINT "YES"
+        ^ ERROR 018: Missing 'FOUND ' or 'END'
+:IF NOT FOUND THEN PRINT "YES"
+   (OK)
+
+:TIME=
+      ^ ERROR 029: Missing Alpha Variable
+:TIME=A$
+        ^ ERROR 014: Missing 'PASSWORD '
+
+:10 SELECT PAUSE 3   (works in VS basic, accepted here too)
+    OK
+
+:WRITE
+       ^ ERROR 115: Missing File Number
+:WRITE #1
+          ^ ERROR 010: Missing ','
+:WRITE #1,
+          ^ ERROR 024: Illegal Expression or Missing Variable
+:WRITE #1,A
+         ^ ERROR 080: File Not Open
+
+OPEN #1,"FOOF"
+              ^ ERROR 118: Invalid File Specification
+OPEN NEW #1,"FOOF"
+                  ^ ERROR 118: Invalid File Specification
+OPEN #1,"FOO",GUESS
+             ^ ERROR 013: Missing 'EXCLUSIVE' 'SHARED' 'INQUIRY' "READ ' or 'EXQUIRY'
+OPEN #1,"FOO",EXCLUSIVE
+             ^ ERROR 118: Invalid File Specification (detected at runtime, not parse time)
+
+:MOUNT "/310"
+      OK
+:DISMOUNT "/310"
+      OK
+:MOUNT "/310",A$
+      OK
+:PRINT A$
+@.ALLBS2
+
+MOUNT "/D10"  --> same as DCR(/310)
+MOUNT "/D11"  --> same as DCF(/310)
+
+---
+CALL/SUB
+
+    :10 CALL "FOO"
+    :20 END
+    :30 SUB "FOO"
+    :40 PRINT "Hi"
+    :50 SUBEND
+        (works)
+
+    :10 X=10
+    :20 CALL "FOO"(14)
+    :30 PRINT X
+    :40 END
+    :50 SUB "FOO"(X)
+    :60 PRINT "Hi";X
+    :70 SUBEND
+        (works)
+
+CALL "Tonga" also works (doesn't have to be all caps)
+CALL "foo3bar" also works.
+The name must be any mix of letters and numbers. It doesn't even need
+to start with a letter. It can just be "3" if you want.
+
+VS BASIC calls these "external subroutines".
+
+    :10 CALL "FOO"
+    :20 GOTO 100
+    :30 SUB "FOO"
+    :40 PRINT "HI"
+    :50 SUBEND
+    :100 PRINT "DONE"
+
+Is illegal. Apparently the program can't jump over the SUB/SUBEND.
+Flow control can't exectute "SUB", eg,
+
+    :10 SUB "FOO"
+    :20 PRINT "inside"
+    :30 SUBEND
+    :40 PRINT 1/3
+    :RUN
+
+will fail when it hits line 10.  Thus, all SUB/SUBEND statements must come
+after the main program.
+
+Experiments show that vars inside SUB/SUBEND are localized, eg
+
+    :10 DIM A$5
+    :20 A$=ALL("+")
+    :30 PRINT A$
+    :40 CALL "foo"
+    :50 PRINT A$
+    :60 END
+    :100 SUB "foo"
+    :110 DIM A$24
+    :120 A$=ALL(".")
+    :130 PRINT LEN(A$)
+    :140 SUBEND
+    :RUN
+    +++++
+     24
+    +++++
+
+But can they share vars other than argument passing?
+
+    (as before but)
+    :5 COM B$
+    :105 COM B$
+    :RUN
+
+    000105 COM B$
+                 ^
+    ERROR 008: Statement Illegal Here
+
+It appears that values are passed by reference (no out params, unless there is
+a syntax I haven't discovered)
+
+    :10 A=1:B=0
+    :20 CALL "foo"(A,B)
+    :30 PRINT A;B
+    :40 END
+    :100 SUB "foo"(X,Y)
+    :110 Y=2*X
+    :120 SUBEND
+    :RUN
+     1  2
+
+So how does a subroutine return a value?  After guessing different ways to
+specify it, I made an error which prompted this tantalizing error:
+     :100 SUB "foo"(:A)
+                    ^
+     ERROR 010: Missing '>'
+However, I haven't found something which accepts ">", eg
+     :100 SUB "foo"(>A)
+just gives the same error as before.  Maybe it isn't a clue and is
+just a bug.
+
+    :10 DIM A(3)
+    :20 MAT A=CON
+    :30 MAT PRINT A
+    :40 CALL "foo"(A())
+    :50 END
+    :100 SUB "foo"(A())
+    :110 MAT PRINT A
+    :120 SUBEND
+
+This is accepted at parse time, but at runtime,
+
+    000020 CALL "foo"(A())
+                        ^ ERROR 074: Wrong Variable Type
+
+    :10 FOR I=1 TO 5
+    :20 CALL "foo"
+    :30 NEXT I
+    :40 END
+    :100 SUB "foo"
+    :110 X=X+1
+    :120 PRINT X
+    :130 SUBEND
+    :RUN
+     1
+     1
+     1
+     1
+     1
+
+So the vars inside the sub is initialized on each call.
+
+    :10 A=1
+    :20 CALL "foo"(A)
+    :30 PRINT A
+    :40 END
+    :100 SUB "foo"(X)
+    :110 X=5
+    :120 SUBEND
+    :RUN
+      5
+
+so arguments can return a value.
+
+###############################################################################
+I dumped part of droz05.wvd with this command
+   listd 1 787 > x
+I scanned and noticed that sectors 32-35 contained keywords, though there
+were in a weird format.  Here are bits I've manually extracted.  Oddly,
+some bytes have the msb set but there is no obvious pattern to it.  Also,
+keywords are arranged to overlap (eg, "RETURN" and "RND(" merge into "RETURND(".
+Presumably there is a table indicating where each keyword starts/stops.
+
+Why is this at all interesting? Because there is no documentation on BASIC-3,
+so this gives some hints about supported features.  For example, the presence
+of the keywords "INQUIRY" and "EXQUIRY" and "EXCLUSIVE" and "WHILE" and
+"SHARED" and "DIRECT" and "WRITE"
+
+DE\xC6FN\A0'             < "DEFFN '"
+READ                     < "READ"
+\xC4IRECT                < "DIRECT"
+RN(                      < "(T)RN(" tail
+RETURN                   < "RETURN"
+D(                       < "(RN)D(" tail
+WRITE                    < "WRITE"
+MP                       < "(TE)MP" tail?
+\xC1USE                  < "(P)AUSE" tail?
+XQ\xD5IR\xD9             < "(E)XQUIRY" tail
+CR
+============== sector 33 ==============
+\x00\x03
+\x05\x10
+P\xC5AT        PEAT
+EXCLUS\xC9VE             < "EXCLUSIVE"
+XP(                      < "(E)XP(" tail
+%CO\xCD                  < "%COM"
+DA\xD4ALOAD              < "DATALOAD"
+\xC3OBOLOG(              < "COBOL" + "LOG("
+CONVERT                  < "CONVERT"
+\xC1B(                   < "(T)AB" tail
+\xC3OP\xD9               < "COPY"
+DATASAVE                 < "DATASAVE"
+R(                       < "(VE)R(" tail
+DBAC\xCBSP\xC1CE         < "DBACKSPACE"
+KEY                      < "KEY"
+\xD3OR\xD4               < "SORT"  (MAT SORT keyword? or combined w/above to make KEYSORT?)
+HE\xCE                   < "(T)HEN" tail
+DSKIP                    < "DSKIP"
+\xA8LI\xCDIT\xD3         < "LIMITS"
+HA\xD2ED                 < "(S)HARED" tail
+\xC9M                    < "(D)IM" tail
+OD(                      < "(M)OD(" tail
+LINPUT                   < "LINPUT"
+A\xD0                    AP
+ELSE                     < "ELSE"
+A\xD2CH                  < "(SE)ARCH" tail
+\xCFL                    < "OLD"
+D\xC1C                   < "(D)AC" tail   (eg, A$=B$ DAC C$)
+INDE\xD8                 < "INDEX"
+E
+DISK                     < "DISK"
+\xC5YIN                  < "(K)EYIN" tail
+QU\xC9RY                 < "(IN)QUERY" tail
+MOVE                     < "MOVE"
+RIFY                     < "(VE)ERIFY" tail
+PLOT                     < "PLOT"
+\xD2ACE                  < "(T)RACE" tail
+RE\xD3TO\xD2E            < "RESTORE"
+M                        < "(RE)M" tail
+\xC4T                    < "DT"           (as in LIST DT)
+I\xCDE                   < "(T)IME" tail
+R\xCFTA\xD4E             < "ROTATE"
+S\xD4OP                  < "STOP"
+\xC1SSWORD               < "(P)ASSWORD" tail
+ISMOU\xCET               < "(D)ISMOUNT" tail
+I
+\xCCINE                  < "LINE"
+XT                       < "(NE)XT" tail
+\xD3TR(                  < "STR("
+VOLUM\xC5                < "VOLUME"
+RG\xC5                   < "(ME)RGE" tail
+DELET\xC5                < "DELETE"
+CA\xCCL(                 < "CALL("
+!
+HE\xD8PR\xC9NTUSING      < "HEXPRINTUSING"
+O                  perhaps "(G)O[TO]" where [TO] is in the next sector
+============== sector 34 ==============
+\x00\x03
+\x05`P
+TO                      < "TO"   (perhaps end of GOTO)
+F\xC6OU\xCED            < "FOUND"
+A\xD4E                  < "(D)ATE" tail
+H\xC5XPACKEY(           < "HEXPACK" + "KEY"
+\xC8EX\xD5NPACK         < "HEXUNPACK"
+\xC5YLEN(               < "KEYLEN("
+\xD3CR                  < "SCR("
+\xC1TC                  < "ATC"           (eg ??)
+\xC8EX\xCFF(            < "HEXOF("
+\xD2ENAME               < "RENAME"
+\xA4FORMAT              < "$FORMAT"
+N(                      < "(AT)N(" tail
+\xA4PACK                < "$PACK"
+$\xD4RAN                < "$TRAN"
+DE\xC6FN\xA0            < "DEFFN "
+@P\xC1RT                < "@PART"
+\xA4UNPACK              < "$UNPACK"
+$IF                     < "$IF"
+IL\xC5                  < "(F)ILE" tail
+SI\xDAE                   "SIZE"
+R                       < "(ZE)R" tail    (eg, MAT ZER)
+ECORD                   < "(R)ECORD" tail
+SCRE\xC5N               < "SCREEN"        (eg, INPUT SCREEN A$)
+OT                      < "(N)OT"         (eg, IF NOT END THEN ...)
+$G\xC9O                 < "$GIO
+$\xC2RE\xC1K            < "$BREAK"
+$CLO\xD3E               < "$CLOSE"
+LECT                    < "(SE)LECT" tail
+$IN\xC9T                < "$INIT"
+$\xCDSG\xCE(            < "$MSG"
+\xCE(                   < "(SG)N( tail
+$\xCFPE\xCE             < "$OPEN"
+EW                      < "(N)EW" tail
+\xC8IL\xC5              < "(W)HILE" tail
+$RELEASE                < "$RELEASE"
+$ALERT                  < "$ALERT"
+$DI\xD3CONNE\xC3T       < "$DISCONNECT"
+A\xD5TO                 < "AUTO"
+\xCCIS\xD4              < "LIST"
+EP                      < "(ST)EP" tail
+AGE                     < "(P)AGE" tail?
+\xD2EN\xD5MBER          < "RENUMBER"
+ROR                     < "(ER)ROR" tail
+ECLE
+\xCEUM\xA8              < "NUM("
+REPLACE                 < "REPLACE"
+RUN                     < "RUN"
+L\xCFCK                 < "LOCK"
+\xC2OO\xCC              < "BOOL"
+S=
+XOR                     < "XOR"
+\xC5CN                     ECN  ?
+============== sector 35 ==============
+\x00\x03
+\x05\xB0P
+\xCF(                      O(    ?
+F\xC9X(                 < "FIX("
+BEG                     < "BEG"
+GOSUB                   < "(G)OSUB" tail
+END                     < "END"
+DO                      < "DO"
+N                       < "(O)N" tail
+LY                      < "(ON)LY" tail?
+\xC1BS(                 < "ABS("
+IN\xD4(                 < "INT("
+#PI                     < "#PI"
+N\xD6(                  < "(I)NV(" tail  (eg, MAT A=INV(B))
+H\xC5X(                 < "HEX("
+BT
+VAL(                    < "VAL("
+BIN(                    < "BIN("
+PO\xD3(                 < "POS("
+MAX(                    < "MAX("
+\xD2OU\xCED(            < "ROUND("
+FROM                    < "FROM"
+IN\xA8                  < "(M)IN(" tail
+[
+\xA4PS\xD4AT(           < "$PSTAT("
+~&\xA9*+,-.\xAF01\xB23456789:\xBBBE\xCC
+LGT(                    < "LGT("
+B\xCFX(                 < "BOX("
+#PART                   < "#PART"
+^
+#TE\xD2MINAL            < "#TERMINAL"  (syntactically, "#TERM" is legal, not #TERMINAL)
+\xD3IT<=<\xBE=
+B\xD9TE                 < "BYTE"
+\xD3QR\xA8              < "SQR("
+#I\xC4                  < "#ID"
+NV 
+\xC1RC\xC3OS(           < "ARCCOS("
+BA\xD3IC                < "BASIC"
+\xCFNTINU\xC5           < "CONTINUE"
+AR\xC3SI\xCE(           < "ARCSIN("
+V
+CLE\xC1R                < "CLEAR"
+C                       < "(AR)C" tail
+TAN(                    < "TAN("
+<S\xD2><S>.
+
+-- mapping table --
+
+xA4 0x24 $
+xA8 0x28 (
+xC1 0x41 A
+xC3 0x43 C
+xC5 0x45 E
+xC8 0x48 H
+xC9 0x49 I
+xCB 0x4B K
+xCC 0x4C L
+xCD 0x4D M
+xCE 0x4E N
+xD0 0x50 P
+xD2 0x53 R
+xD3 0x53 S
+xD4 0x53 T
+xD6 0x56 V
+xD8 0x58 X
+xDA 0x5A Z

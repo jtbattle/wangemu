@@ -35,7 +35,7 @@ that directory for more details.
 History
 ----------
 Wangemu has been developed on and off since 2002, advancing from
-a barely functioning revision 0.5 to the current revision 2.1.
+a barely functioning revision 0.5 to the current revision 3.0.
 Jim Battle is the primary author of the emulator, but Paul Heller
 was responsible for initially getting the emulator to work under
 MacOS and adding printer support.

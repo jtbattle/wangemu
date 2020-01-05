@@ -47,8 +47,16 @@ base was heavily restructured to take better advantage of the power of C++,
 and to make the class, function, and variable naming convention more
 consistent.
 
+Wangemu 3.0 came out in January, 2020 -- yes, 11 years later. The big new
+feature was support for the 2236MXD terminal mux and the matching 2336
+intelligent terminal. This allowed running MVP operating systems, and even a
+beta of the never-released BASIC-3 interpreter. The code base also had been
+modernized to use features of C++11 and C++14, making the code a bit cleaner.
+A number of small bugs were quashed as well.
+
 In summary, here are the file and line counts for the various emulator
-releases. These don't count the C files which contain the microcode dumps.
+releases. These don't count the C files which contain the microcode and
+character set ROM images.
 
     version   released  .h files               .c/cpp files
     -------   --------  ---------------------  ---------------------
@@ -58,16 +66,10 @@ releases. These don't count the C files which contain the microcode dumps.
     1.1       Sep 2003  12 files, 1378 lines   18 files, 11136 lines
     2.0       Jun 2005  18 files, 2310 lines   26 files, 20312 lines
     2.1       Dec 2008  37 files, 3728 lines   36 files, 23656 lines
+    3.0       Jan 2020  44 files, 4063 lines   42 files, 26520 lines
 
-One reason why there are many more files in 2.1 vs 2.0, while at the same
-time the line count hasn't increased that much is that the 2.0 code often
-had many classes declared in a single .h file, and sometimes a few classes
-defined in a single .cpp file. With 2.1, there is mostly one .h and one .cpp
-file for each class.
-
-One last statistic. Of the 2.1 code base, 33% of the .h and 40% of the .cpp
-lines of code are in the GUI code.
-
+One last statistic. In the 3.0 code base, 33% of the lines are related to
+the GUI, and 67% the core functionality.
 
 ----------------------------------------------------------------------------
 Coding Style Conventions
@@ -75,10 +77,8 @@ Coding Style Conventions
 
 As noted earlier, the code base was an ad-hoc evolution, not a design, which
 was worked on over a number of years, and the code through version 2.0
-reflected that. Version 2.1 attempted to rectify that, or at least
-significantly improve the situation. If the code base for version 2.0 would
-receive a 2 on a scale of 10, version 2.1 would receive a 5, I hope. There
-is still plenty of room for improvement.
+reflected that. Version 2.1 attempted to improve the situation, and 3.0 went
+a bit further. There is still plenty of room for improvement.
 
 Here then are some rules that I attempted to follow when reworking the code.
 There are certainly cases where it wasn't followed, but most code adheres
@@ -88,6 +88,7 @@ to these rules.
 
 Ordinary variables use "snake case", that is, all letters are lower case with
 an underscore between each word (if there is more than one).  For example,
+
      int num_tries = 1;   << yes
      int numTries = 1;    << no
 
@@ -99,6 +100,7 @@ filename should also be lowercase to match.
 Class names begin with Capital letters, and each word in the name starts
 with a cap. No underscores. In the case of acronyms that are normally all
 caps, only the first letter gets a cap. For instance,
+
     class CrtFrame     << yes
     class CRTFrame     << no
 
@@ -106,12 +108,14 @@ Class member functions are camel case, starting with a lower case letter.
 That is they start with a lower case letter, and use caps on each successive
 word and no underscores. This is counter to the wxWidgets convention,
 which has member functions starting with caps, just like class names.
+
     int getFontSize()    << yes
     int GetFontSize()    << no
     int get_font_size()  << no
 
 Member data names are snake case, like ordinary variables, but they start
 with the prefix "m_".
+
     int m_beep_duration;  << yes
     int m_beepDuration;   << no
 
@@ -119,6 +123,7 @@ Preprocessor #define constants and enum constants are in all upper case,
 with underscores between words. For example "#define SOME_CONST 1234".
 Other things which are acting in the same capacity should also use
 all caps with underscores too, eg,
+
      const int MAX_SLOTS = 6;
      slot_t m_slots[MAX_SLOTS];
 
@@ -153,7 +158,7 @@ One or two blank lines between functions.
 
 Use comment lines to break code up into functional sections, perhaps with
 lightweight dividers that are just a single long line of dashes, and
-heaveyweight dividers which are like this:
+heavyweight dividers which are like this:
 
    // ==================================================================
    // virtual file routines
@@ -166,6 +171,7 @@ consider splitting it up.
 Parallel constructs can use spacing to align similar behavior across
 different lines of code even if in isolation any one line might be
 oddly formatted. For example.
+
     int file_size_KB = (foo->total_bytes + 1023) / 1024;
     int words        =  foo->word_count;
 
@@ -173,10 +179,12 @@ Functions don't have a space between the function name and following '('.
 
 One space between the keywords 'if', 'for', 'while', and 'switch' and the
 following '('. Don't make them look like function calls.
+
     for(int i=1; i<=10; i++) { ... }   <-- bad
     for (int i=1; i<=10; i++) { ... }  <-- good
 
 Use the original K&R brace style unless there is some exceptional reason, eg
+
     if (condition) {      <-- opening brace on same line as the condition
        some code
     } else {              <-- braces hug the else
@@ -185,6 +193,7 @@ Use the original K&R brace style unless there is some exceptional reason, eg
 
 Put a space after each comma in an argument list, and no padding spaces before
 the first or after the last argument, eg
+
     result = function(one,two,three);      <-- bad
     result = function(one, two, three);    <-- good
     result = function( one, two, three );  <-- bad
@@ -243,7 +252,6 @@ There is one bit of ugly pointer casting, I must admit. UI_gui_handle_t
 is a void pointer to a GUI window. Perhaps the next revision of the
 emulator will clean up this bit of expediency with a more respectable
 mechanism.
-
 
 ----------------------------------------------------------------------------
 Major Core Classes
@@ -417,7 +425,6 @@ SysCfgState. This allows a user to add or remove devices, or in the case of
 a IoCardDisk device, bring up a dialog to edit the state specific to the
 particular card.
 
-
 ----------------------------------------------------------------------------
 Other Resources
 ----------------------------------------------------------------------------
@@ -507,7 +514,6 @@ which uses a DiskCtrlCfgState object, derived from the abstract CardCfgState
 type, to perform the same kind of copy state/modify state/compare state/
 accept or reject state change paradigm that is used at the system level.
 
-
 ----------------------------------------------------------------------------
 Start Up
 ----------------------------------------------------------------------------
@@ -524,7 +530,6 @@ SysCfgState object from the .ini file, described earlier.
 At some point OnInitCmdLine() is called. This gives the code a chance to
 parse the command line. Currently the only thing that is checked is if
 the user has asked to read in a script file.
-
 
 ----------------------------------------------------------------------------
 Speed Regulation

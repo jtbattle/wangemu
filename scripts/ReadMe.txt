@@ -18,8 +18,8 @@ is my rewrite of battle_orig.w22.  In my version, which three of the ten
 ships are the targets is completely random.  I've made a few other changes
 to make the game more playable, such as not having to press the HALT key
 then SF15 to fire -- just press any key to shoot.  This version takes
-advtantage of some of the extra features in 2200T BASIC, making the code
-smaller.  Note how the DEFFN'nn() feature is used exetensively to save
+advantage of some of the extra features in 2200T BASIC, making the code
+smaller.  Note how the DEFFN'nn() feature is used extensively to save
 code; also note that these are located at the start of the program since
 the program runs faster that way.
 
@@ -28,6 +28,11 @@ charset.w22 --
 
 this simply prints out all the printable characters available.
 
+demoscript.w22 --
+
+is a script demonstrating how it is possible to not only enter program
+listings, but to enter input to a running program, including special
+function keys and keywords.
 
 factor.w22 --
 
@@ -132,6 +137,11 @@ This is another Creative Computing game ported to Wang BASIC by Jim
 Battle.  It doesn't really use any advanced features of Wang BASIC.
 
 
+width.w22 --
+
+is a short program that can determine, via a $GIO statement, if the
+attached CRT is 64 or 80 characters wide.
+
 wumpus.w22 --
 
 One of many variations of Hunt The Wumpus, ported to Wang BASIC by
@@ -145,7 +155,7 @@ Germany.  Here are some details about his programs, with some editing by me.
 
 raketen.w22 (by ATS 6/27/75) --
 
-It has some instructions written in german.
+It has some instructions written in German.
 
 How to play: Rockets are trying to bomb your bunker(lower right). You can
 launch missiles (with unknown reach) from three launching platforms and

@@ -28,6 +28,15 @@ A few are gems; many are rehashes of Creative Computing games. Some run too
 fast on a BASIC-2 machine; some depend on the graphics characters from the
 22x6 terminals to be playable.
 
+---- mvpgames.wvd ----
+
+This is a collection of games taken of of a VP machine. Not all games require
+VP/MVP, but some do.  The easiest way to launch games is to do this:
+
+   LOAD RUN "@GAMES"
+
+(assuming the disk is in F/310, otherwise specify the disk device)
+
 ---- stuff.wvd ----
 
 The stuff.wvd virtual disk contains a number of game programs, three
@@ -87,11 +96,23 @@ the usage:
     Key '13 clears the maze and you may define another one.
     Code at line 780 prints the maze on paper.
 
----- vp-boot-1.8.wvd ----
+---- vp-boot-2.4.wvd ----
 
-Boot disk for VP OS version 1.8
+Boot disk for VP OS version 2.4
 
----- vp-boot-2.3.wvd ----
+---- mvp-boot-3.4.wvd ---
+---- mvp-boot-3.5.wvd ---
 
-Boot disk for VP OS version 2.3
+Boot disk for MVP OS version 3.4
+Boot disk for MVP OS version 3.5
 
+---- basbol-boot-droz05.wvd ---
+---- basbol-boot-droz08.wvd ---
+
+These are two disks from former Wang engineer Roger Droz. They contain a
+pre-beta version of the never released "BASBOL" OS. Rather than running
+BASIC-2, it was the next generation called BASIC-3. Not only that, but it
+was possible to have BASIC-3 running in some partitions and COBOL in other
+partitions!
+
+See basic3_notes.txt for more details.
