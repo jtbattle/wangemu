@@ -9,12 +9,19 @@
 #     fixed an illegal array index when 0xFF (line number token)
 #     appears at the end of the block such that the two necessary
 #     bytes holding the line number don't exist.
+# Version: 1.3, 2020/01/20, JTB
+#     failed to run with python 2 because str.find() needs char, not int.
+#     handle the case where the program header block does not say protected,
+#     yet the program blocks (perhaps just some) are scrambled.
 
 from __future__ import print_function
 import re
 from typing import List, Dict, Any, Tuple  # pylint: disable=unused-import
 from wvdlib import (WvdFilename, valid_bcd_byte, headerName, unscramble_one_sector)
 from wvdHandler_base import WvdHandler_base
+
+import sys
+python2 = (sys.version_info.major == 2)
 
 ########################################################################
 # table of BASIC atoms
@@ -216,7 +223,7 @@ def listProgramRecord(blk, secnum):
             cp += 2
             line += "%d" % linenum
         elif (state != ST_ATOMIC) or token[c] == '':
-            line += "\\x%02x" % c
+            line += "\\%02X" % c
         else:
             line += token[c]
 
@@ -456,13 +463,11 @@ class WvdHandler_basic(WvdHandler_base):
         for offset, blk in enumerate(blocks):
             sec = start + offset
 
-            if (offset > 0) and protected:
-                # if it is scrambled and not just SAVE"P",
-                # unscramble it so we can verify the contents
-                if (blk[1] & 0x80) == 0x00:
-                    newblk = bytearray(blk)
-                    blk = unscramble_one_sector(newblk)
-                    # TODO: if we unscramble, but the PROT bit isn't set, warn?
+            # if it looks scrambled, unscramble it
+            if ((blk[0] & 0xD0) == 0x10) and ((blk[1] & 0x80) == 0x00):
+                newblk = bytearray(blk)
+                protected = 0x10
+                blk = unscramble_one_sector(newblk)
 
             data_record    = (blk[0] & 0x80) == 0x80
             header_record  = (blk[0] & 0x40) == 0x40
@@ -548,7 +553,14 @@ class WvdHandler_basic(WvdHandler_base):
         #cat_str_fname = cat_fname.asStr()
 
         # each record must have a terminator byte (0xFD or 0xFE)
-        pos = blk.find(terminator_byte)
+        assert type(terminator_byte) == int
+        assert type(blk) == bytearray
+        assert len(blk) == 256
+        if python2:
+            term_byte = chr(terminator_byte) # bytearray is alias of str
+        else:
+            term_byte = terminator_byte
+        pos = blk.find(term_byte)
         if pos < 0:
             self.error(sec, "(sector %d) does not contain a 0x%02X terminator byte" \
                             % (sec, terminator_byte))

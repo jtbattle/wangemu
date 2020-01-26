@@ -97,7 +97,7 @@ class WvdHandler_edit(WvdHandler_base):
                 break
 
             if end_byte_seen:
-                self.error(sec, "sector %d: end byte \\x03 byte seen; expected trailer record next" % sec)
+                self.error(sec, "sector %d: end byte \\03 byte seen; expected trailer record next" % sec)
                 break
 
             # start of block control byte
@@ -236,7 +236,7 @@ class WvdHandler_edit(WvdHandler_base):
                     elif 32 <= byt <= 128:
                         curline += chr(byt)
                     else:
-                        curline += "\\x%02x" % byt
+                        curline += "\\%02X" % byt
                 if ftype == 'type2':
                     listing.append(curline.rstrip())
                     curline = ''

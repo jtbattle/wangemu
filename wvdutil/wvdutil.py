@@ -24,6 +24,14 @@
 #     pylint cleanups
 # Version: 1.7, 2020/01/04, JTB
 #     enhance 'edit' file handler to recognize a second format for such files
+# Version: 1.8, 2020/01/20, JTB
+#     fix a bug that caused a crash when run under python 2.
+#     handle scrambled files where the header block doesn't indicate protected.
+#     when a byte needs to be escaped in a listing, wvdutil used to emit it as
+#         \x<hex><hex>
+#     however, the emulator script language uses this format to read escapes:
+#         \<hex><hex>
+#     wvdutil has been changed to do the latter.
 
 ########################################################################
 # there are any number of operations that could be provided by this
@@ -248,8 +256,7 @@ def setProtection(wvd, p, protect, wcList=None):
             newBlocks = []
             for blk in fileBlocks:
                 # make doubly sure that each sector is a scrambled body block
-                if (blk[0] & 0xC0) == 0x00 and \
-                   (blk[0] & 0x10) == 0x10 and \
+                if (blk[0] & 0xD0) == 0x10 and \
                    (blk[1] & 0x80) == 0x00:
                     newBlocks.append(unscramble_one_sector(blk))
                 else:
@@ -2136,7 +2143,7 @@ def mainloop():
         command(wvd, commandStr)
         return
 
-    print(basename + ', version 1.7, 2020/01/04')
+    print(basename + ', version 1.8, 2020/01/20')
     print('Type "help" to see all commands')
 
     # accept command lines from user interactively

@@ -1,12 +1,19 @@
 Jim Battle
-September 15, 2018
+January 4, 2020
 
-Version 1.6 of wvdutil was developed under Windows 7, and should be compatible
+Version 1.7 of wvdutil was developed under Windows 7, and should be compatible
 with both Python 2.7 and Python 3.7.  It should run on other platforms, but it
 hasn't been tested.
 
-wvdutil_1.6.zip contains the main program, wvdutil.py, and its supporting
+wvdutil_1.7.zip contains the main program, wvdutil.py, and its supporting
 modules.
+
+If you are on a Windows machine and don't have a python interpreter installed,
+the win32 executable "wvdutil.exe" can be used instead. How it works is it
+creates a temporary directory and installs a self-contained python interpreter
+and all the modules used by wvdutil, then executes it. On exit the temporary
+directory is removed. As a result of all this trickery, there is a multi-second
+delay on start up.
 
 Running linting tools:
 
@@ -18,6 +25,12 @@ Running linting tools:
     (1) pep8 wvdutil.py
     (2) pylint wvdutil.py
     (3) mypy wvdutil.py     (type checker)
+
+New features in version 1.7:
+
+    - wvdutil now recognizes two styles of "EDIT" file formats
+
+    - fixed a rare crash condition
 
 New features in version 1.6:
 

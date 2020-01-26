@@ -210,7 +210,7 @@ class WvdHandler_data(WvdHandler_base):
                     return (False, listing)
                 dataobj = blk[cp+1 : cp+1+strlen]
                 # expand non-ascii characters
-                tmp = [chr(byt) if (32 <= byt < 128) else ("\\x%02X" % byt) for byt in dataobj]
+                tmp = [chr(byt) if (32 <= byt < 128) else ("\\%02X" % byt) for byt in dataobj]
                 strng = ''.join(tmp)
                 listing.append('"' + strng + '"')
                 cp += 1 + strlen

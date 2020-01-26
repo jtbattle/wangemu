@@ -346,27 +346,31 @@ class WvdIndex(object):
         if not self.fileExtentIsPlausible():
             return 'unknown'
 
-        start = self.getFileStart()
-        secData = self._wvd.getRawSector(self._platter, start + 0)
-        if (secData[0] & 0xF0) == 0x40:
-            return 'normal'
-        if (secData[0] & 0xF0) != 0x50:
-            return 'unknown'
+        mode = 'normal'  # until proven otherwise
 
-        # either it is protected or scrambled.  for non-scrambled programs, the
-        # first byte must be either 0x20 (space) or 0xFF (line number token).
-        # scrambled programs appear to always use control bytes of the form
-        # 3x 1y.  however, I'll use the logic which MVP OS 3.5 uses
-        # (see BPMVP42D).
-        secData = self._wvd.getRawSector(self._platter, start + 1)
-        if (secData[0] & 0xC0) != 0x00:
-            return 'unknown'  # header or data block flags
-        if (secData[0] & 0x10) != 0x10:
-            # this says unprotected, but the header block said the file was
-            return 'unknown'
-        if (secData[1] & 0x80) == 0x80:
-            return 'protected'
-        return 'scrambled'
+        start = self.getFileStart()
+        used  = self.getFileUsedSectors()
+        for sec in range(used):
+            secData = self._wvd.getRawSector(self._platter, start + sec)
+
+            # FIXME: in the wild there are files where the header block does
+            # not indicate protected, yet the sectors are scrambled. also, it
+            # is not required that all sectors be scrambled: MVP 3.5 checks
+            # each block separately and descrambles as necessary.
+            if sec == 0:  # header block
+                if (secData[0] & 0xF0) == 0x50:
+                    mode = 'protected'
+                elif (secData[0] & 0xF0) == 0x40:
+                    mode = 'normal'
+                else:
+                    return 'unknown'
+            else:
+                # test if scrambled (see MVP OS 3.5 file BPMVP42D)
+                if ((secData[0] & 0xD0) == 0x10) and \
+                   ((secData[1] & 0x80) == 0x00):
+                    return 'scrambled'
+
+        return mode
 
     # this combines the index state with the file type
     def getFileStatus(self):
@@ -976,7 +980,7 @@ def sanitize_filename(rawname):
         byts = bytearray(rawname)
     while byts and (byts[-1] in (0xff, ord(' '))):
         byts = byts[:-1]
-    name = [chr(byt) if (32 <= byt < 128) else ("\\x%02X" % byt) for byt in byts]
+    name = [chr(byt) if (32 <= byt < 128) else ("\\%02X" % byt) for byt in byts]
     return ''.join(name)
 
 ########################################################################
