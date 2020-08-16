@@ -13,6 +13,8 @@
 #     failed to run with python 2 because str.find() needs char, not int.
 #     handle the case where the program header block does not say protected,
 #     yet the program blocks (perhaps just some) are scrambled.
+# Version: 1.4, 2020/02/02, JTB
+#     added LIST tokens for DATE (0xFA) and TIME (0xFB) (used in later BASIC-2)
 
 from __future__ import print_function
 import re
@@ -157,6 +159,8 @@ token[0xF6] = 'HEXOF('     # BASIC-2 only
 token[0xF7] = 'MAX('       # BASIC-2 only
 token[0xF8] = 'MIN('       # BASIC-2 only
 token[0xF9] = 'MOD('       # BASIC-2 only
+token[0xFA] = 'DATE'       # BASIC-2 only
+token[0xFB] = 'TIME'       # BASIC-2 only
 
 ########################################################################
 # list the program from just one record, optionally prettyprinted

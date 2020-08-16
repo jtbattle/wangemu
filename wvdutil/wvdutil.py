@@ -32,6 +32,11 @@
 #     however, the emulator script language uses this format to read escapes:
 #         \<hex><hex>
 #     wvdutil has been changed to do the latter.
+# Version: 1.9, 2020/02/02, JTB
+#     added LIST tokens for DATE (0xFA) and TIME (0xFB) (used in later BASIC-2)
+# Version: 1.10, 2020/08/15, JTB
+#     fix a bounds check error which caused a crash if the user typed, e.g.,
+#     "dump 1280" on a 1280 sector disk, as they are numbered 0 to 1279.
 
 ########################################################################
 # there are any number of operations that could be provided by this
@@ -2058,7 +2063,7 @@ def filenameOrSectorRange(wvd, p, args):
         return badReturn
 
     if (start < 0) or (end < 0) or \
-        (start > wvd.numSectors()) or (end > wvd.numSectors()):
+        (start >= wvd.numSectors()) or (end >= wvd.numSectors()):
         print("sector start or end is not a valid sector number for this disk")
         print("Valid range: sector 0 to %d" % (wvd.numSectors()-1))
         return badReturn
