@@ -82,10 +82,12 @@ public:
     // this is the encoding which appears in the metadata disktype
     // byte of the virtual disk image.
     enum disktype_t {
-           DISKTYPE_FD5,        // 5.25" floppy
-           DISKTYPE_FD8,        // 8" floppy
+           DISKTYPE_FD5,        // 5.25" floppy (hard sectored, 10 sec/trk)
+           DISKTYPE_FD8,        // 8" floppy (hard sectored, 16 sec/trk)
            DISKTYPE_HD60,       // 2260-style hard disk
            DISKTYPE_HD80,       // 2280-style hard disk
+           DISKTYPE_FD5_DD,     // 5.25" floppy, double sided/double density
+           DISKTYPE_FD5_HD,     // 5.25" floppy, double sided/high density
            DISKTYPE_ILLEGAL     // first illegal value
     };
     int  getDiskType();

@@ -64,7 +64,7 @@ Wvd::open(const std::string &filename)
     }
 
     if (!m_file->good()) {
-        UI_error("Couldn't open file '%s'", m_path.c_str());
+        UI_error("Couldn't open file '%s'", filename.c_str());
         m_file = nullptr;
         return false;
     }
@@ -73,10 +73,6 @@ Wvd::open(const std::string &filename)
     m_path = filename;
 
     const bool ok = readHeader();
-// don't need to raise alarm, since readHeader() already did
-//  if (!ok) {
-//      UI_info("Error opening file", filename.c_str());
-//  }
     m_metadata_stale = !ok;
 
     return ok;
@@ -549,10 +545,10 @@ Wvd::readHeader()
         return false;
     }
 
-    const disktype_t tmp_disktype = static_cast<disktype_t>(data[10]);
+    disktype_t tmp_disktype = static_cast<disktype_t>(data[10]);
     if (tmp_disktype >= DISKTYPE_ILLEGAL) {
-        UI_error("The disktype field of the disk image isn't legal");
-        return false;
+        UI_error("The disktype field of the disk image isn't legal\nForcing it to 5.25\" floppy");
+        tmp_disktype = DISKTYPE_FD5;
     }
 
     const int tmp_platters = static_cast<int>(data[11] + 1);

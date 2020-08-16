@@ -36,17 +36,20 @@ static constexpr struct disk_choice_t {
     int         platters;
     int         sectors_per_platter;
 } disk_choices[] = {
-                                                         // tracks*sectors
-    { "PCS 5.25\" floppy disk (88 KB)", Wvd::DISKTYPE_FD5,   1,   35*10  },  // =   350
-    { "2270 8\" floppy disk (260 KB)",  Wvd::DISKTYPE_FD8,   1,   64*16  },  // =  1024
-    { "2270A 8\" floppy disk (308 KB)", Wvd::DISKTYPE_FD8,   1,   77*16  },  // =  1232
+                                                                            // tracks*sectors*sides
+    { "PCS 5.25\" floppy disk (88 KB)",        Wvd::DISKTYPE_FD5,      1,   35*10   },  // =   350
+    { "PCS 5.25\" DSDD floppy disk (320 KB)",  Wvd::DISKTYPE_FD5_DD,   1,   40*16*2 },  // =  1280
+    { "PCS 5.25\" DSHD floppy disk (1040 KB)", Wvd::DISKTYPE_FD5_HD,   1,   80*26*2 },  // =  4160
 
-    { "2260 5 MB disk",                 Wvd::DISKTYPE_HD60,  1,  816*24  },  // = 19584
-    { "2260 8 MB disk",                 Wvd::DISKTYPE_HD60,  1,   32767  },  // damn -- partial track.  32760 would have been best
+    { "2270 8\" floppy disk (260 KB)",         Wvd::DISKTYPE_FD8,      1,   64*16   },  // =  1024
+    { "2270A 8\" floppy disk (308 KB)",        Wvd::DISKTYPE_FD8,      1,   77*16   },  // =  1232
 
-    { "2280-1 13 MB * 1 platter disk",  Wvd::DISKTYPE_HD80,  1,  822*64  },  // = 52608
-    { "2280-3 13 MB * 3 platter disk",  Wvd::DISKTYPE_HD80,  3,  822*64  },  // = 52608
-    { "2280-5 13 MB * 5 platter disk",  Wvd::DISKTYPE_HD80,  5,  822*64  },  // = 52608
+    { "2260 5 MB disk",                        Wvd::DISKTYPE_HD60,     1,  816*24   },  // = 19584
+    { "2260 8 MB disk",                        Wvd::DISKTYPE_HD60,     1,   32767   },  // damn -- partial track.  32760 would have been best
+
+    { "2280-1 13 MB * 1 platter disk",         Wvd::DISKTYPE_HD80,     1,  822*64   },  // = 52608
+    { "2280-3 13 MB * 3 platter disk",         Wvd::DISKTYPE_HD80,     3,  822*64   },  // = 52608
+    { "2280-5 13 MB * 5 platter disk",         Wvd::DISKTYPE_HD80,     5,  822*64   },  // = 52608
 
 // these are real products described in the document "CS-2200 Ramblings.pdf", page 21:
 //  { "DS-20 10 MB * 2 platter disk",   Wvd::DISKTYPE_HD80,  2,  640*64  },  // = 40960
@@ -468,10 +471,12 @@ PropPanel::refresh()
 
     std::string type;
     switch (disk_type) {
-        case Wvd::DISKTYPE_FD5:  type = "PCS 5.25\" floppy";  break;
-        case Wvd::DISKTYPE_FD8:  type = "2270(A) 8\" floppy"; break;
-        case Wvd::DISKTYPE_HD60: type = "2260 hard disk";     break;
-        case Wvd::DISKTYPE_HD80: type = "2280 hard disk";     break;
+        case Wvd::DISKTYPE_FD5:    type = "PCS 5.25\" floppy";      break;
+        case Wvd::DISKTYPE_FD5_DD: type = "PCS 5.25\" DSDD floppy"; break;
+        case Wvd::DISKTYPE_FD5_HD: type = "PCS 5.25\" DSHD floppy"; break;
+        case Wvd::DISKTYPE_FD8:    type = "2270(A) 8\" floppy";     break;
+        case Wvd::DISKTYPE_HD60:   type = "2260 hard disk";         break;
+        case Wvd::DISKTYPE_HD80:   type = "2280 hard disk";         break;
         default: assert(false);
     }
     m_st_type->SetLabel(type);

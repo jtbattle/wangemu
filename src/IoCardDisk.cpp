@@ -494,7 +494,8 @@ IoCardDisk::wvdTickleMotorOffTimer()
     assert(m_drive >= 0 && m_drive < numDrives());
 
     const int disktype = m_d[m_drive].wvd->getDiskType();
-    if ((disktype == Wvd::DISKTYPE_FD5) || (disktype == Wvd::DISKTYPE_FD8)) {
+    if ((disktype == Wvd::DISKTYPE_FD5)    || (disktype == Wvd::DISKTYPE_FD5_DD) ||
+        (disktype == Wvd::DISKTYPE_FD5_HD) || (disktype == Wvd::DISKTYPE_FD8)) {
         m_tmr_motor_off = m_scheduler->createTimer(TEN_SECONDS,
                                                    [&](){ tcbMotorOff(m_drive); });
     }
@@ -515,6 +516,8 @@ IoCardDisk::wvdGetNsToTrack(int track)
 
         // assume a fixed stepping rate per track
         case Wvd::DISKTYPE_FD5:
+        case Wvd::DISKTYPE_FD5_DD:
+        case Wvd::DISKTYPE_FD5_HD:
         case Wvd::DISKTYPE_FD8:
             time_ns = m_d[m_drive].ns_per_track * track_diff;
             break;
@@ -599,6 +602,8 @@ IoCardDisk::wvdSeekTrack(int64 nominal_ns)
     if (other_drive < numDrives()) {
         const int disktype = m_d[other_drive].wvd->getDiskType();
         const bool floppy = (disktype == Wvd::DISKTYPE_FD5) ||
+                            (disktype == Wvd::DISKTYPE_FD5_DD) ||
+                            (disktype == Wvd::DISKTYPE_FD5_HD) ||
                             (disktype == Wvd::DISKTYPE_FD8);
         if ((m_d[other_drive].state == DRIVE_SPINNING) && floppy) {
             if (++m_d[other_drive].idle_cnt == 32) {
@@ -1175,6 +1180,20 @@ IoCardDisk::getDiskGeometry(int disktype,
             inter             = 3;
             track_seek_ms     = 40;
             disk_rpm          = 300;
+            break;
+
+        case Wvd::DISKTYPE_FD5_DD:
+            sectors_per_track = 32;  // really 16 sec/trk, but it is double sided
+            inter             = 3;
+            track_seek_ms     = 40;
+            disk_rpm          = 300;
+            break;
+
+        case Wvd::DISKTYPE_FD5_HD:
+            sectors_per_track = 52;  // really 26 sec/trk, but it is double sided
+            inter             = 3;
+            track_seek_ms     = 40;
+            disk_rpm          = 360;
             break;
 
         case Wvd::DISKTYPE_FD8:

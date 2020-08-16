@@ -58,7 +58,7 @@ MyAboutDlg::MyAboutDlg(wxWindow *parent) :
 
     MyStaticText *version = new MyStaticText(this, wxID_ANY,
         "Wang 2200 Emulator\n"
-        "Version 3.0; January 4, 2020");
+        "Version pre-3.1; August 15, 2020");
     wxFont bold_font(*wxNORMAL_FONT);
     bold_font.SetPointSize(bold_font.GetPointSize() + 2);
     bold_font.SetWeight(wxFONTWEIGHT_BOLD);
@@ -68,7 +68,7 @@ MyAboutDlg::MyAboutDlg(wxWindow *parent) :
     vsizer->AddSpacer(8);
 
     MyStaticText *copyright = new MyStaticText(this, wxID_ANY,
-        "(c) 2002-2019 Jim Battle, Slash && Burn Software\n"
+        "(c) 2002-2020 Jim Battle, Slash && Burn Software\n"
         "      wxMac port and printer support by Paul Heller");
     vsizer->Add(copyright, 0, wxRIGHT, side_margin);
 
@@ -120,11 +120,11 @@ MyAboutDlg::MyAboutDlg(wxWindow *parent) :
 
 #if USE_HYPERLINK
     wxHyperlinkCtrl *url = new wxHyperlinkCtrl(this, wxID_ANY,
-            "http://www.wang2200.org",          // label
-            "http://www.wang2200.org");         // url
+            "https://www.wang2200.org",          // label
+            "https://www.wang2200.org");         // url
 #else
     MyStaticText *url = new MyStaticText(this, wxID_ANY,
-            "http://www.wang2200.org");         // url
+            "https://www.wang2200.org");         // url
 #endif
     wxFont urlFont(url->GetFont());
     urlFont.SetPointSize(urlFont.GetPointSize() + 2);

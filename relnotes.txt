@@ -1,6 +1,6 @@
 ============================================================================
-                     Wang 2200 emulator release notes, v3.0
-                                January 4, 2020
+                   Wang 2200 emulator release notes, v3.1-pre
+                                August 16, 2020
 ============================================================================
 
 This is a snapshot of the emulator at the point of its 3.0 release.
@@ -28,8 +28,8 @@ and a number of peripherals:
     * configurable printer controller
 
 The emulator is primarily written under Windows 7, but it should also run
-under Windows Vista, Windows 8, and Windows 10 as well. This emulator
-is untested under Windows XP and probably does not run.
+under later version of Windows well. This emulator is untested under
+Windows XP and probably does not run.
 
 It has also been ported to OSX, though due to compatibility churn on that
 platform, it doesn't run on older versions of the OS.
@@ -40,151 +40,19 @@ time of its release.
 
 ---- User-visible Changes ----
 
-*) There is support for more system CPU configurations:
-       2200B, 2200T, 2200VP, 2200MVP-C (new), and MicroVP (new)
-   Correspondingly, there are appropriate system RAM size options available
-   for each CPU type.
-
-*) Added emulation of a 2236MXD terminal mux and 2236DE terminal.
-   Why MXD and not MXE? One good reason is that OS's before 2.4 would not
-   run with an MXE terminal mux.
-
-   When not emulating a smart terminal, the host computer's TAB key maps
-   to the Wang BASIC "NEXT STMT" key, which in Wang BASIC inserts the next
-   highest unused line number (rounded up to the next 10). For smart
-   terminals, TAB maps to the TAB or FN key (depending if DW or DE terminal).
-
-*) It is now possible to run MVP OS's, but of course the system configuration
-   must have one 2236MXD terminal mux installed.
-
-*) Because the addition of 2336 terminal emulation, the keyboard map has
-   had some new key mappings added, and some old ones have been changed.
-   Most significantly:
-
-   - Previously, Alt-R would do a hard reset of the emulator, akin to power
-     cycling. Because this operation should be infrequent, the lack of a
-     keyboard shortcut shouldn't be noticed. The hard reset operation is
-     still available from the CPU menu, and is called "Reboot CPU".
-
-   - Previously, Alt-W would do a warm reset of the emulator, analogous to
-     pressing the RESET button on a 2200T terminal or the SHIFT-RESET key on
-     a serial terminal. It is now mapped to Shift-Alt-R. Adding the shift
-     qualifier makes is harder to accidentally trigger, and moving it to "R"
-     is more mnemonic for "reset."
-
-   - Ctrl-S is now used for Halt/Step. Previously it was Ctlr-C, but that
-     is now used to map the CLEAR key.
-
-   - Ctrl-L is now used for LOAD. Previously it was used for LIST.
-
-   Consult the Keyboard Help entry from the top level Help menu to review
-   all the mappings.
-
-*) Before release 3.0, the emulator had the option of using a fixed-width
-   system font to display characters instead of using the dot matrix font.
-   This has been removed because the original font had a number of characters
-   which don't have a good representation in a standard font.  The long-term
-   goal is to rewrite the display generating code and the native font idea
-   doesn't map into that well at all.
-
-*) The option to control whether disk accesses are performed at the same
-   speed as a real 2200 ("realtime") or quickly ("unregulated") used to be
-   a checkbox item on the system configuration dialog. Now it appears in
-   a more logical place (and easier to access), the Disk menu.
-
-*) Previously, printing HEX(07) produced a default bell-like sound.
-   Now the emulator emits a sound very much like a real Wang terminal.
-   (see limitation of OSX port in the "Known Bugs" section)
-
-*) Previously, the emulator could be launched like this:
-      wangemu.exe -s somescript.w22
-   and the name script would be fed into the emulator. But that isn't
-   useful now (if it ever was) for (M)VP systems, which must be configured
-   before they can run a program. Now it ignores the command line arguments.
+*) Previously the wang virtual disk image (.wvd) format supported four
+   different disk types, which the emulator uses for modeling disk access
+   timing. Those were 5.25" hard sectored floppy, 8" hard sectored floppy,
+   2260 hard disk, or 2280 hard disk. Now there are also 5.25" DS/DD and
+   5.25" DS/HD types, which were used on some later 2200 models.
 
 ---- Bugs Fixed in this Release ----
 
-*) Wang disk controllers supported "hog mode", where a given CPU could
-   lock a disk drive for exclusive use, mostly to ensure atomic r/w
-   behavior. Wangemu doesn't emulate multiple systems, so there is no
-   need to emulate a disk mux, but there is one facet which was missing.
-   One method of triggering hog mode was to address the drive with the
-   high bit of the address set, eg /310 would become /390. So now the
-   emulator ignores the most significant I/O address bit when doing
-   address decode, but no other aspect of hog mode is emulated.
-
-*) Some disk controllers supported more advanced commands than just the
-   basic read sector, write sector, verify sector. In fact, a few of
-   them were implemented for "intelligent" disk controller mode. Recently
-   unearthed internal Wang documentation showed that the VERIFY_SECTORS
-   command response contained a three byte sector address, not two bytes,
-   as was previously emulated. However, I've had a hard time triggering
-   BASIC to actually use this feature, so it is really not yet tested.
-
-*) If the disk controller receives a channel command which is either not
-   implemented or is unknown, a warning dialog will appear stating as much,
-   but a given bad command byte will only trigger the warning once, to
-   keep from becoming intrusive. Also, in accordance with the Wang internal
-   documentation, a bad command byte is echoed back with all bits inverted
-   so that the microcode can detect it and abort the command.
-
-*) The disk controller would assert if it received an unexpected value for
-   the first byte of the command sequence. Because $GIO programs can send
-   anything at all, the assert was removed and the other values get mapped
-   to assume a VP or MVP host if the first byte isn't 0x00.
-
-*) the "Disk/New Disk..." disk factory allowed specifying DS-112, DS-140,
-   or DS-224 disk drive types. These attempted to create disks with 65536
-   sectors/track, but this would cause an assertion, as 65535 is the maximum
-   sector address which can be specified with a 16b number.
-
-*) The legal sizes of data RAM for 2200VP CPUs was wrong, and is now matches
-   what was historically accurate. It used to be configuring a VP in the
-   emulator with 16 KB or 48 KB of RAM would trigger an assertion.
-
-*) When using ramdisk (/340), the emulator no longer warns about accesses
-   to an unmapped device address.
-
-*) When the cpu switched between addressed devices (via ABS), it wasn't
-   updating the selected card with the current CBP status. most of the time it
-   did't matter, but it did when a reboot happened with a 2236MXD terminal in
-   the system.
-
-*) The CRT controller had a long-standing bug where a hard reset was failing
-   to restore the cursor enable flag. Say a program had done PRINT HEX(06)
-   to disable the cursor, after a hard reset the cursor was still disabled.
-
-*) There is no functional change, but the timing modeling for 5.25" floppies
-   had been assuming a 2:1 sector interleave, but it turns out the actual
-   interleave is 3:1.  I had figured this out 15 years prior, but that
-   information never made it into the emulator and I had forgotten I had even
-   figured it out.
+*) placeholder
 
 ---- Minor Tweaks and Implementation Changes ----
 
-*) compiled with the latest wxWidgets library release, 3.1.3,
-   and Microsoft Studio Community 2017 compiler.
-
-*) got rid of unnecessary wx-isms;
-   now using modern c++11 features when it simplifies the code
-
-*) used three different static code analyzers (MSVS 2017's built-in static
-   analyzer, cppcheck, and clang-tidy) and followed up many many suggestions,
-   though not all. Those that were painful, overly pedantic, or I didn't
-   agree with have been ignored for now.
-
-*) A typo was fixed in error_table.cpp for error 73; it now reads "SAVE DCF"
-   instead of "SAVE SCF".
-
-   A few missing error codes which were added for MVP operation were also
-   added to the table.
-
-*) The VP CPU disassembler (used only during emulation debug) had an error
-   decoding the "MVX" pseudo-opcode. It was being decoded as "MVXX"
-   (two places were marking the eXtended trait).  The disassembly of the
-   stack transfer instructions (eg, TSP, TPS, XPS) were changed to match
-   the Wang assembler, which unexpectedly swaps the order of operands for
-   this set of instructions.
+*) the about dialog link to wang2200.org now uses the https prefix
 
 ---- Tips ----
 

@@ -38,6 +38,7 @@
 #     fix a bounds check error which caused a crash if the user typed, e.g.,
 #     "dump 1280" on a 1280 sector disk, as they are numbered 0 to 1279.
 #     added the "label" command to inspect or set the label
+#     added support for new WVD disk types: FD5_DD (DS/DD), FD5_HD (DS/HD)
 
 ########################################################################
 # there are any number of operations that could be provided by this
@@ -128,7 +129,14 @@ generate_html = False
 def reportMetadata(wvd):
     # type: (WangVirtualDisk) -> None
     wpList = ('no', 'yes')
-    mediaList = ('5.25" floppy', '8" floppy', '2260 hard disk', '2280 hard disk')
+    mediaList = ('5.25" floppy', '8" floppy',
+                 '2260 hard disk', '2280 hard disk',
+                 '5.25" DS/DD floppy', '5.25" DS/HD floppy',
+                 'invalid')
+
+    mediatype = wvd.mediaType()
+    if (mediatype >= len(mediaList)-1):
+        mediatype = len(mediaList)-1  # map to 'invalid'
 
     #print("write format:    ", wvd.getWriteFormat())
     #print("read format:     ", wvd.getReadFormat())
@@ -136,7 +144,7 @@ def reportMetadata(wvd):
     print("write protect:  ", wpList[wvd.getWriteProtect()])
     print("platters:       ", wvd.numPlatters())
     print("sectors/platter:", wvd.numSectors())
-    print("media type:     ", mediaList[wvd.mediaType()])
+    print("media type:     ", mediaList[mediatype])
     print("label:          ")
     for line in wvd.label().splitlines():
         print("    ", line.rstrip())
