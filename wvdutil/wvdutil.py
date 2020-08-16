@@ -2148,7 +2148,7 @@ def mainloop():
         command(wvd, commandStr)
         return
 
-    print(basename + ', version 1.8, 2020/01/20')
+    print(basename + ', version 1.10, 2020/08/15')
     print('Type "help" to see all commands')
 
     # accept command lines from user interactively
