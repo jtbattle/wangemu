@@ -37,6 +37,7 @@
 # Version: 1.10, 2020/08/15, JTB
 #     fix a bounds check error which caused a crash if the user typed, e.g.,
 #     "dump 1280" on a 1280 sector disk, as they are numbered 0 to 1279.
+#     added the "label" command to inspect or set the label
 
 ########################################################################
 # there are any number of operations that could be provided by this
@@ -138,7 +139,7 @@ def reportMetadata(wvd):
     print("media type:     ", mediaList[wvd.mediaType()])
     print("label:          ")
     for line in wvd.label().splitlines():
-        print("    ", line)
+        print("    ", line.rstrip())
 
 ################################# catalog #################################
 # report list of files on the given platter of the disk, with optional
@@ -1101,19 +1102,25 @@ def cmdUsage(cmdName=None):
         print('   ', basename, '<filename> [<command>[/<platter>] [<args>]] [<redirection>]')
         print()
         print('With no command, enter into command line mode, where each subsequent line')
-        print('contains one of the commands, as described below.  The output can be optionally')
+        print('contains one of the commands, as described below. The output can be optionally')
         print('redirected to the named logfile, either overwriting, ">" or appending, ">>".')
         print('The output can also be piped through a pager by ending with "| more".')
         print('Arguments containing spaces can be surrounded by double quote characters.')
         print()
         print('For multiplatter disks, the platter can be specified by following the command')
-        print('name with a slash and the decimal platter number.  For commands where it makes')
+        print('name with a slash and the decimal platter number. For commands where it makes')
         print('sense, "/all" can be specified to operate on all platters.')
         print()
         print('<redirection> is optional, and takes one of three forms:')
         print('   ... >   <logfile>  -- write command output to a logfile')
         print('   ... >>  <logfile>  -- append command output to a logfile')
         print('   ... | more         -- send command output through a pager')
+        print()
+        print('If there are arguments after the filename, it is interpreted as a single')
+        print('command, which is executed, and then the program immediately exits. E.g.')
+        print('    wvdutil.py listd BOWLING > bowling.bas')
+        print('If the command changes the disk state, it will not be saved unless the "-save"')
+        print('flag is passed after the filename.')
         print()
         print('Type "help <command>" to get more detailed help on a particular command.')
         print()
@@ -1798,6 +1805,33 @@ registerCmd(cmdMeta())
 
 # ----------------------------------------------------------------------
 
+class cmdLabel(cmdTemplate):
+
+    def name(self):
+        return "label"
+    def shortHelp(self):
+        return "report or set the disk label"
+    def longHelp(self):
+        return \
+"""label "string of words|second line"
+    Sets the .wvd label metadata, using "|" as a line separator.
+    Issuing "label" with no arguments reports the existing label."""
+
+    def doCommand(self, wvd, platters, args):
+        # type: (WangVirtualDisk, List[int], List[str]) -> None
+        if len(args) == 0:
+            for line in wvd.label().splitlines():
+                print("    ", line.rstrip())
+        elif len(args) == 1:
+            wvd.setLabel(args[0])
+        else:
+            print("This command takes zero or one argument (typically a quoted string)")
+        return
+
+registerCmd(cmdLabel())
+
+# ----------------------------------------------------------------------
+
 class cmdProtect(cmdTemplate):
 
     def name(self):
@@ -2110,6 +2144,13 @@ def mainloop():
     if generate_html:
         sys.argv.remove('-html')
 
+    # check for optional "-save" flag
+    # this is useful when running a command on the command line that also
+    # changes state, eg, wvdutil.py -save label "this is the new label"
+    save_changes = '-save' in sys.argv
+    if save_changes:
+        sys.argv.remove('-save')
+
     # first argument is always a .wvd filename
     wvd_filename = sys.argv[1]
     if generate_html:
@@ -2146,6 +2187,11 @@ def mainloop():
         for next_arg in sys.argv[2:]:
             commandStr = commandStr + '"' + next_arg + '"' + ' '
         command(wvd, commandStr)
+        if wvd.isDirty():
+            if save_changes:
+                wvd.write(wvd.getFilename())
+            else:
+                print("Warning: changes were not saved")
         return
 
     print(basename + ', version 1.10, 2020/08/15')

@@ -177,13 +177,14 @@ class WangVirtualDisk(object):
         self.head_dat[10] = kind
         self._dirty = True
 
-    # unused
-#   def setLabel(self, label):
-#       # type: (bytearray) -> None
-#       label = label[0:256-16]              # chop off excess
-#       label += bytearray([ord(' ')]) * (256-16 - len(label)) # pad if required
-#       self.head_dat[16:256] = bytearray(label)
-#       self._dirty = True
+    # accept a string, mapping "|" to line breaks so that multi-line labels can be set
+    def setLabel(self, label):
+        # type: (bytearray) -> None
+        label = re.sub("\|", "\n", label)
+        label = label[0:256-16]              # chop off excess
+        label += bytearray([ord(' ')]) * (256-16 - len(label)) # pad if required
+        self.head_dat[16:256] = bytearray(label)
+        self._dirty = True
 
     def checkSectorAddress(self, p, n):
         # type: (int, int) -> None
