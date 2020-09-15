@@ -193,7 +193,7 @@ def catalog(wvd, p, flags, wcList):
             # check file for extra information
             status = []
             fileType = curFile.getType()
-            if fileType == 'P':
+            if fileType == 'P ':
                 saveMode = curFile.programSaveMode()
                 if saveMode is not None and saveMode != 'normal':
                     status.append(saveMode)
@@ -226,10 +226,10 @@ def catalog(wvd, p, flags, wcList):
                          + "&filename=" \
                          + quote_plus(str_fname) \
                          + "&prettyprint=1"
-                print("<a href=\"%s\">%-8s</a>  %s   %05d  %05d  %05d  %05d%s" % \
+                print("<a href=\"%s\">%-8s</a>  %s  %05d  %05d  %05d  %05d%s" % \
                     (linkname, str_fname, fstatus, start, end, used, free, extra))
             else:
-                print("%-8s  %s   %05d  %05d  %05d  %05d%s" % \
+                print("%-8s  %s  %05d  %05d  %05d  %05d%s" % \
                     (str_fname, fstatus, start, end, used, free, extra))
 
 ############################ (un)protect files ############################
@@ -251,7 +251,7 @@ def setProtection(wvd, p, protect, wcList=None):
         if curFile is None:
             print('Unable to read file "%s"' % fname)
             continue
-        if curFile.getType() != 'P':
+        if curFile.getType() != 'P ':
             print('"%s" is not a program file' % fname)
             continue
         saveMode = curFile.programSaveMode()
@@ -418,8 +418,8 @@ def compareFiles(wvd, disk1_p, wvd2, disk2_p, verbose, args):
             matching = False
             if file1Data == file2Data:
                 matching = True
-            elif (file1.getType() == 'P' and \
-                  file2.getType() == 'P' and \
+            elif (file1.getType() == 'P ' and \
+                  file2.getType() == 'P ' and \
                   file1.programSaveMode() in ['normal', 'protected'] and \
                   file1.programSaveMode() == file2.programSaveMode()):
                 # there are bytes which don't matter after the EOB/EOD byte
@@ -530,9 +530,9 @@ def listFile(wvd, p, args, listd):
     options = { 'sector' : start, 'prettyprint' : listd }
 
     fileType = theFile.getType()
-    if fileType == "P":
+    if fileType == "P ":
         return handlers[0].listBlocks(blocks, options)
-    if fileType == "D":
+    if fileType == "D ":
         # TODO: iterate over all (data) handlers, instead of this hard-coded approach
         rv = handlers[1].checkBlocks(blocks, options)
         if not rv['errors']:
@@ -797,7 +797,7 @@ def checkFile(wvd, p, cat_fname, report):
 
     fmt = ''
     fileType = indexEntry.getFileType()
-    if fileType not in ['P','D']:
+    if fileType not in ["P ","D ", "P'"]:
         if report: print("%s has unknown file type" % str_fname)
         return (True, '')
     for h in handlers:
@@ -809,7 +809,7 @@ def checkFile(wvd, p, cat_fname, report):
                 break
     else:
         # no handler recognized it as valid
-        fmt = 'unknown'
+        return (1, 'unknown')
 
     # report errors and warnings if requested
     if report and file_status['failed']:

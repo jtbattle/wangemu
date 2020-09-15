@@ -318,9 +318,11 @@ class WvdIndex(object):
     def getFileType(self):
         # type: () -> str
         if self._record[1] == 0x80:
-            return 'P'
+            return "P "
+        if self._record[1] == 0x40:
+            return "P'"  # 386 program save format
         if self._record[1] == 0x00:
-            return 'D'
+            return "D "
         return '?'
 
     def getFileTypeNumber(self):
@@ -330,8 +332,8 @@ class WvdIndex(object):
     # unused
 #   def setFileType(self, kind):
 #       # type: (str) -> None
-#       assert kind in ('P', 'D'), "Bad type in setFileType"
-#       val = { 'P': 0x80, 'D': 0x00 }[kind]
+#       assert kind in ('P ', 'D '), "Bad type in setFileType"
+#       val = { 'P ': 0x80, "P'": 0x40, 'D ': 0x00 }[kind]
 #       self._record = bytearray([self._record[0], val]) + self._record[2:16]
 #       self._dirty = True
 
@@ -342,7 +344,7 @@ class WvdIndex(object):
     # pylint: disable=too-many-return-statements
     def programSaveMode(self):
         # type: () -> str
-        if self.getFileType() != 'P':
+        if self.getFileType() != 'P ':
             return 'unknown'
         if not self.fileExtentIsPlausible():
             return 'unknown'
@@ -382,9 +384,9 @@ class WvdIndex(object):
         if idxState == 'invalid':
             return  'invalid' # this index was used, but is now invalid
         if idxState == 'valid':
-            return ' ' + self.getFileType()  # append P or D
+            return ' ' + self.getFileType()  # append P or D or P'
         if idxState == 'scratched':
-            return 'S' + self.getFileType()  # append P or D
+            return 'S' + self.getFileType()  # append P or D or P'
         return idxState  # error message
 
     def getFileStart(self):
@@ -447,9 +449,9 @@ class WvdIndex(object):
         (start, end) = self.getFileExtent()
         used = self.getFileUsedSectors()
         filetype = self.getFileType()
-        if filetype == 'P':
+        if filetype == 'P ':
             valid_prefix = (0x20,)  # type: Tuple[int,...]
-        elif filetype == 'D':
+        elif filetype == 'D ':
             valid_prefix = (0xa0,)
         else:
             valid_prefix = (0x20, 0xa0)  # be generous and allow either
@@ -907,7 +909,7 @@ class CatalogFile(object):
     def setSectors(self, blocks):
         # type: (List[bytearray]) -> None
         assert self._index.getIndexState() == 'valid'
-        assert self.getType() == 'P'
+        assert self.getType() == 'P '
         start = self.getStart()
         end   = self.getEnd()
         if end < start:
