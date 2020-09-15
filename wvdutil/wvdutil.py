@@ -39,6 +39,9 @@
 #     "dump 1280" on a 1280 sector disk, as they are numbered 0 to 1279.
 #     added the "label" command to inspect or set the label
 #     added support for new WVD disk types: FD5_DD (DS/DD), FD5_HD (DS/HD)
+# Version: 1.11, 2020/09/07, JTB
+#     fixed the 'compare' command -- it was not properly diffing the contents
+#     of two files with the same name
 
 ########################################################################
 # there are any number of operations that could be provided by this
@@ -356,8 +359,8 @@ def compareFiles(wvd, disk1_p, wvd2, disk2_p, verbose, args):
     fileset1 = [f.asStr() for f in fileset1x]
     fileset2x = wvd2.catalog[disk2_p].expandWildcards(wildcardlist)
     fileset2 = [f.asStr() for f in fileset2x]
-    #print("fileset1: ", ["'%s', " % x for x in fileset1])
-    #print("fileset2: ", ["'%s', " % x for x in fileset2])
+    #print('fileset1:', ', '.join(["'%s'" % x for x in fileset1]))
+    #print('fileset2:', ', '.join(["'%s'" % x for x in fileset2]))
 
     # 3) report if a file appears on one disk or other only
     wvd1only = []
@@ -397,15 +400,19 @@ def compareFiles(wvd, disk1_p, wvd2, disk2_p, verbose, args):
     wvdMatching = []
     wvdMismatching = []
     for f in fileset1x: # pylint: disable=too-many-nested-blocks
+        f1name = f.asStr()
 
         file1 = wvd.catalog[disk1_p].getFile(f)
         assert file1 is not None
         file1Data = file1.getSectors()
 
-        if f in fileset2x:
+        if f1name in fileset2:
 
-            file2 = wvd2.catalog[disk2_p].getFile(f)
-            assert file2 is not None
+            file2list = wvd2.catalog[disk2_p].expandWildcards([f1name])
+            assert file2list is not None
+            assert len(file2list) == 1
+            file2 = file2list[0]
+            file2 = wvd2.catalog[disk2_p].getFile(file2)
             file2Data = file2.getSectors()
 
             matching = False
@@ -427,23 +434,25 @@ def compareFiles(wvd, disk1_p, wvd2, disk2_p, verbose, args):
                 #listing2 = listing1[2:]
                 matching = listing1 == listing2
                 if not matching and verbose:
+                    print('')
                     if len(listing1) != len(listing2):
                         print("%s mismatch: left has %d lines, right has %d lines" \
-                             % (f.asStr(), len(listing1), len(listing2)))
+                             % (f1name, len(listing1), len(listing2)))
                     for n in range(min(len(listing1), len(listing2))):
                         if listing1[n] != listing2[n]:
-                            print("%s has first mismatch at line %d" % (f.asStr(), n+1))
+                            print("%s has first mismatch at line %d" % (f1name, n+1))
                             print(" left>", listing1[n])
                             print("right>", listing2[n])
                             break
 
             if matching:
-                wvdMatching.append(f.asStr())  # exact binary match
+                wvdMatching.append(f1name)  # exact binary match
             else:
-                wvdMismatching.append(f.asStr())
+                wvdMismatching.append(f1name)
 
     if wvdMismatching:
         wvdMismatching.sort()
+        if verbose: print('')  # put a blank line after details and befure summary
         print("Mismatching files:")
         print([fname for fname in wvdMismatching])
 
@@ -634,7 +643,7 @@ def checkCatalogIndexes(wvd, p, report):
             fileType = indexEntry.getFileType()
             if fileType == '?':
                 if report: print("Sector %d, entry %d has unknown file type %s (should be 0x00 or 0x80)" \
-                                    % (secnum, slot, indexEntry.geFileTypeNumber()))
+                                    % (secnum, slot, indexEntry.getFileTypeNumber()))
                 found_problems = True
                 continue
 

@@ -26,6 +26,24 @@ Running linting tools:
     (2) pylint wvdutil.py
     (3) mypy wvdutil.py     (type checker)
 
+New features in version 1.10:
+
+    - fix a bounds check error when a sector range is one past the end of file
+    - added the "label" command to inspect or set the disk label text
+
+New features in version 1.9:
+
+    - added LIST tokens for DATE (0xFA) and TIME (0xFB) used in late versions
+      of BASIC-2
+
+New features in version 1.8:
+
+    - fix a crash bug under Python 2
+    - handle scrambled files even if the header block doesn't indicate scrambled
+    - change the way non-printable characters are escaped in listings to be
+      consistent with the way the wangemu escapes such characters in its
+      scripting language
+
 New features in version 1.7:
 
     - wvdutil now recognizes two styles of "EDIT" file formats

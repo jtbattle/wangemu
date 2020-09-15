@@ -620,13 +620,9 @@ class Catalog(object):
         # type: (Union[int,WvdFilename]) -> WvdIndex
         assert self.hasCatalog()
         if isinstance(n, WvdFilename):
-            rv = self.getIndexEntryByName(n)
-            if rv is not None:
-                return rv
+            return self.getIndexEntryByName(n)
         if isinstance(n, int):
-            rv = self.getIndexEntryByNumber(n)
-            if rv is not None:
-                return rv
+            return self.getIndexEntryByNumber(n)
         raise ProgramError
 
     # return an index object for the n-th catalog slot.
@@ -891,15 +887,16 @@ class CatalogFile(object):
         start = self.getStart()
         end   = self.getEnd()
         if end < start:
-            print("%s: bad file extent information" % self._name)
+            print("'%s': bad file extent information" % self._name.asStr())
             return None
         if end >= self._wvd.numSectors():
-            print("%s: bad file extent information" % self._name)
+            print("'%s': bad file extent information" % self._name.asStr())
             return None
         used = self.getUsed()
         sectors = []
-        # TODO: really, assert? rather than crashing, report an error
-        assert self.fileControlRecordIsPlausible()
+        if not self.fileControlRecordIsPlausible():
+            print("'%s': implausible file control record" % self._name.asStr())
+            return None
         # used-1 because one sector is used for holding the used sector count
         for sec in range(start, start+used-1):
             secData = self._wvd.getRawSector(self._platter, sec)
@@ -914,13 +911,14 @@ class CatalogFile(object):
         start = self.getStart()
         end   = self.getEnd()
         if end < start:
-            print("%s: bad file extent information" % self._name)
+            print("'%s': bad file extent information" % self._name.asStr())
             return
         if end >= self._wvd.numSectors():
-            print("%s: bad file extent information" % self._name)
+            print("'%s': bad file extent information" % self._name.asStr())
             return
-        # TODO: really, assert? rather than crashing, report an error
-        assert self.fileControlRecordIsPlausible()
+        if not self.fileControlRecordIsPlausible():
+            print("'%s': implausible file control record" % self._name.asStr())
+            return
         used = self.getUsed()
         # used-1 because one sector is used for holding the used sector count
         for sec in range(start, start+used-1):
