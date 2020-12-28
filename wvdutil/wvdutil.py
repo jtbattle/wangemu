@@ -46,7 +46,8 @@
 #     fixed a bug in 'compare' if two disks had the same file, but one of
 #     them produced an empty file (eg, the number of used sectors in the
 #     file control record was wrong).
-#     'compare' can now take a -c/-context argument to produce a context diff
+#     'compare' can now take a -c/-context argument to produce a context diff.
+#     filename wildcard should treat '.' as a literal period character.
 
 ########################################################################
 # there are any number of operations that could be provided by this
@@ -2233,7 +2234,7 @@ def mainloop():
                 print("Warning: changes were not saved")
         return
 
-    print(basename + ', version 1.10, 2020/08/15')
+    print(basename + ', version 1.12, 2020/12/27')
     print('Type "help" to see all commands')
 
     # accept command lines from user interactively
