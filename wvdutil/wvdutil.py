@@ -46,6 +46,7 @@
 #     fixed a bug in 'compare' if two disks had the same file, but one of
 #     them produced an empty file (eg, the number of used sectors in the
 #     file control record was wrong).
+#     'compare' can now take a -c/-context argument to produce a context diff
 
 ########################################################################
 # there are any number of operations that could be provided by this
@@ -90,6 +91,7 @@ from typing import List, Dict, Callable, Any, Union, Optional, Tuple  # pylint: 
 import sys
 import os.path
 import re
+import difflib
 
 try:
     # python 3
@@ -313,7 +315,7 @@ def setProtection(wvd, p, protect, wcList=None):
 #       data is different.
 
 def compareFiles(wvd, disk1_p, wvd2, disk2_p, verbose, args):
-    # type: (WangVirtualDisk, int, WangVirtualDisk, int, bool, List[str]) -> None
+    # type: (WangVirtualDisk, int, WangVirtualDisk, int, str, List[str]) -> None
     # pylint: disable=too-many-arguments, too-many-locals, too-many-statements, too-many-branches
     if args:
         wildcardlist = args
@@ -441,17 +443,21 @@ def compareFiles(wvd, disk1_p, wvd2, disk2_p, verbose, args):
                 #listing1 = listing1[1:]
                 #listing2 = listing1[2:]
                 matching = listing1 == listing2
-                if not matching and verbose:
-                    print('')
+                if (not matching) and (verbose != ''):
                     if len(listing1) != len(listing2):
                         print("%s mismatch: left has %d lines, right has %d lines" \
                              % (f1name, len(listing1), len(listing2)))
-                    for n in range(min(len(listing1), len(listing2))):
-                        if listing1[n] != listing2[n]:
-                            print("%s has first mismatch at line %d" % (f1name, n+1))
-                            print(" left>", listing1[n])
-                            print("right>", listing2[n])
-                            break
+                    if verbose == 'v':
+                        for n in range(min(len(listing1), len(listing2))):
+                            if listing1[n] != listing2[n]:
+                                print("%s has first mismatch at line %d" % (f1name, n+1))
+                                print(" left>", listing1[n])
+                                print("right>", listing2[n])
+                                break
+                    if verbose == 'c':
+                        diff = difflib.unified_diff(listing1, listing2, 'thiswvd', 'thatwvd', '', '', 3, '')
+                        for txt in diff:
+                            print(txt)
 
             if matching:
                 wvdMatching.append(f1name)  # exact binary match
@@ -460,7 +466,7 @@ def compareFiles(wvd, disk1_p, wvd2, disk2_p, verbose, args):
 
     if wvdMismatching:
         wvdMismatching.sort()
-        if verbose: print('')  # put a blank line after details and before summary
+        if verbose != '': print('')  # put a blank line after details and before summary
         print("Mismatching files:")
         print([fname for fname in wvdMismatching])
 
@@ -1547,8 +1553,8 @@ class cmdCompare(cmdTemplate):
         return "Compare two disks or selected files on two disks"
     def longHelp(self):
         return \
-"""compare[/<platter>] /<platter> [-v|-verbose] [<wildcard list>]
-compare[/<platter>] disk2.wvd[/<platter>] [-v|-verbose] [<wildcard list>]
+"""compare[/<platter>] /<platter> [-v|-verbose|-c|-context] [<wildcard list>]
+compare[/<platter>] disk2.wvd[/<platter>] [-v|-verbose|-c|-context] [<wildcard list>]
 
     In the first form, the files of two different platters of the same disk
     are compared.  For this to make any sense, the disk must be multiplatter.
@@ -1563,7 +1569,10 @@ compare[/<platter>] disk2.wvd[/<platter>] [-v|-verbose] [<wildcard list>]
     disk, the /<platter> specifier is not meaningful for single platter disks.
 
     The -v or -verbose flag will indicate the first line where files
-    mismatch, if they are program files and are not scrambled."""
+    mismatch, if they are program files.
+
+    The -c or -context flag will produce a context diff of the files,
+    if they are program files."""
 
     def needsCatalog(self):
         return True
@@ -1576,11 +1585,13 @@ compare[/<platter>] disk2.wvd[/<platter>] [-v|-verbose] [<wildcard list>]
             return
 
         # look for flags
-        verbose = False
+        verbose = ''
         argsout = []
         for arg in args:
             if arg in ('-v', '-verbose'):
-                verbose = True
+                verbose = 'v'
+            elif arg in ('-c', '-context'):
+                verbose = 'c'
             else:
                 argsout.append(arg)
         args = argsout
