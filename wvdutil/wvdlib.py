@@ -549,9 +549,10 @@ class Catalog(object):
                 nameList.append(fullname)
                 continue
             # if it is a wildcard, expand it to re form
-            if ('*' in pat) or ('?' in pat):
-                rePat = re.sub(r'\*', r'.*', pat)
-                rePat = re.sub(r'\?', r'.', rePat)
+            if ('*' in pat) or ('?' in pat) or ('.' in pat):
+                rePat = re.sub(r'\.', r'\.', pat)    # '.' -> literal char
+                rePat = re.sub(r'\*', r'.*', rePat)  # '*' -> any number of chars
+                rePat = re.sub(r'\?', r'.',  rePat)  # '?' -> any one char
                 rePat += r' *$' # allow trailing spaces
                 rePat_bytes = bytes(bytearray(rePat, 'ascii'))   # bytearray() is not hashable, and python2 barfs on 'ascii': apparently bytes() is an alias for str()
                 # loop over all filenames and find any that match
