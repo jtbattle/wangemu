@@ -828,7 +828,7 @@ def checkFile(wvd, p, cat_fname, report):
                 break
     else:
         # no handler recognized it as valid
-        return (1, 'unknown')
+        return (True, 'unknown')
 
     # report errors and warnings if requested
     if report and file_status['failed']:

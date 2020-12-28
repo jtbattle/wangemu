@@ -179,11 +179,11 @@ class WangVirtualDisk(object):
 
     # accept a string, mapping "|" to line breaks so that multi-line labels can be set
     def setLabel(self, label):
-        # type: (bytearray) -> None
+        # type: (str) -> None
         label = re.sub(r"\|", "\n", label)
         label = label[0:256-16]              # chop off excess
-        label += bytearray([ord(' ')]) * (256-16 - len(label)) # pad if required
-        self.head_dat[16:256] = bytearray(label)
+        label += ' ' * (256-16 - len(label)) # pad if required
+        self.head_dat[16:256] = bytearray(label.encode('latin-1'))
         self._dirty = True
 
     def checkSectorAddress(self, p, n):
@@ -623,7 +623,7 @@ class Catalog(object):
     # or the index object of the names file.
     # return None if the index is too large.
     def getIndexEntry(self, n):
-        # type: (Union[int,WvdFilename]) -> WvdIndex
+        # type: (Union[int,WvdFilename]) -> Optional[WvdIndex]
         assert self.hasCatalog()
         if isinstance(n, WvdFilename):
             return self.getIndexEntryByName(n)
@@ -668,12 +668,13 @@ class Catalog(object):
             for slot in range(16 - (secNum == 0)):
                 absSlot = 16*secNum + slot - (secNum != 0)
                 thisSlot = self.getIndexEntry(absSlot)
-                idxState = thisSlot.getIndexState()
-                if idxState == 'empty':
-                    return None  # not found
-                if (thisSlot.getFilename().get() == name.get()) and \
-                   (idxState in ['valid', 'scratched']):
-                    return thisSlot
+                if thisSlot:
+                    idxState = thisSlot.getIndexState()
+                    if idxState == 'empty':
+                        return None  # not found
+                    if (thisSlot.getFilename().get() == name.get()) and \
+                       (idxState in ['valid', 'scratched']):
+                        return thisSlot
         return None  # searched all entries, and not found
 
     # raise an error if the index is too large
@@ -754,10 +755,11 @@ class Catalog(object):
             for slot in range(16 - (secNum == 0)):
                 absSlot = 16*secNum + slot - (secNum != 0)
                 thisSlot = self.getIndexEntry(absSlot)
-                if thisSlot.getIndexState() == 'empty':
-                    # print("    fit into slot %d" % slot)
-                    self.setIndexEntry(absSlot, entry.asBytes())
-                    return
+                if thisSlot:
+                    if thisSlot.getIndexState() == 'empty':
+                        # print("    fit into slot %d" % slot)
+                        self.setIndexEntry(absSlot, entry.asBytes())
+                        return
 
         print("Error: couldn't find a slot to fit file %s" % entry.getFilename())
         sys.exit()
@@ -832,34 +834,64 @@ class CatalogFile(object):
         return self._name
     def getType(self):
         # type: () -> str
-        return self._index.getFileType()
+        if self._valid:
+            assert self._index is not None
+            return self._index.getFileType()
+        return '?'
     def programSaveMode(self):
         # type: () -> str
-        return self._index.programSaveMode()
+        if self._valid:
+            assert self._index is not None
+            return self._index.programSaveMode()
+        return 'unknown'
     def getStatus(self):
         # type: () -> str
-        return self._index.getFileStatus()
+        if self._valid:
+            assert self._index is not None
+            return self._index.getFileStatus()
+        return 'invalid'
     def getStart(self):
         # type: () -> int
-        return self._index.getFileStart()
+        if self._valid:
+            assert self._index is not None
+            return self._index.getFileStart()
+        return 0
     def getEnd(self):
         # type: () -> int
-        return self._index.getFileEnd()
+        if self._valid:
+            assert self._index is not None
+            return self._index.getFileEnd()
+        return 0
     def getExtent(self):
         # type: () -> Tuple[int,int]
-        return self._index.getFileExtent()
+        if self._valid:
+            assert self._index is not None
+            return self._index.getFileExtent()
+        return (0,0)
     def getUsed(self):
         # type: () -> int
-        return self._index.getFileUsedSectors()
+        if self._valid:
+            assert self._index is not None
+            return self._index.getFileUsedSectors()
+        return 0
     def getFree(self):
         # type: () -> int
-        return self._index.getFileFreeSectors()
+        if self._valid:
+            assert self._index is not None
+            return self._index.getFileFreeSectors()
+        return 0
     def fileExtentIsPlausible(self):
         # type: () -> bool
-        return self._index.fileExtentIsPlausible()
+        if self._valid:
+            assert self._index is not None
+            return self._index.fileExtentIsPlausible()
+        return False
     def fileControlRecordIsPlausible(self):
         # type: () -> bool
-        return self._index.fileControlRecordIsPlausible()
+        if self._valid:
+            assert self._index is not None
+            return self._index.fileControlRecordIsPlausible()
+        return False
 
     # set or clear the protection mode on the file.
     # the file must be a program file.
@@ -883,8 +915,11 @@ class CatalogFile(object):
     # data, but only of the used sectors, not all the allocated sectors.
     # return None if the filename isn't found, or if the file extent
     # information is bogus (in which case we report it)
+    # pylint: disable=too-many-return-statements
     def getSectors(self):
         # type: () -> Optional[List[bytearray]]
+        if self._index is None:
+            return None
         if self._index.getIndexState() != 'valid':
             return None
         typ = self.getType()
@@ -912,6 +947,7 @@ class CatalogFile(object):
     # rewrite sectors of a file
     def setSectors(self, blocks):
         # type: (List[bytearray]) -> None
+        assert self._index is not None
         assert self._index.getIndexState() == 'valid'
         assert self.getType() == 'P '
         start = self.getStart()
