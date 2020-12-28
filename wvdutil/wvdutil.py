@@ -42,6 +42,10 @@
 # Version: 1.11, 2020/09/07, JTB
 #     fixed the 'compare' command -- it was not properly diffing the contents
 #     of two files with the same name
+# Version: 1.12, 2020/12/27, JTB
+#     fixed a bug in 'compare' if two disks had the same file, but one of
+#     them produced an empty file (eg, the number of used sectors in the
+#     file control record was wrong).
 
 ########################################################################
 # there are any number of operations that could be provided by this
@@ -416,7 +420,11 @@ def compareFiles(wvd, disk1_p, wvd2, disk2_p, verbose, args):
             file2Data = file2.getSectors()
 
             matching = False
-            if file1Data == file2Data:
+            if (file1Data is None) and (file2Data is None):
+                matching = True
+            elif (file1Data is None) or (file2Data is None):
+                matching = False
+            elif file1Data == file2Data:
                 matching = True
             elif (file1.getType() == 'P ' and \
                   file2.getType() == 'P ' and \
@@ -424,11 +432,11 @@ def compareFiles(wvd, disk1_p, wvd2, disk2_p, verbose, args):
                   file1.programSaveMode() == file2.programSaveMode()):
                 # there are bytes which don't matter after the EOB/EOD byte
                 # of each sector which can create a false mismatch via an
-                # exact binary match. here we crete a listing if we can and
+                # exact binary match. here we create a listing if we can and
                 # compare those.
                 listing1 = listProgramFromBlocks(file1Data, False, 0)
                 listing2 = listProgramFromBlocks(file2Data, False, 0)
-                # the first line of the listing contains the secotr number,
+                # the first line of the listing contains the sector number,
                 # so we need to ignore that
                 #listing1 = listing1[1:]
                 #listing2 = listing1[2:]
@@ -452,7 +460,7 @@ def compareFiles(wvd, disk1_p, wvd2, disk2_p, verbose, args):
 
     if wvdMismatching:
         wvdMismatching.sort()
-        if verbose: print('')  # put a blank line after details and befure summary
+        if verbose: print('')  # put a blank line after details and before summary
         print("Mismatching files:")
         print([fname for fname in wvdMismatching])
 
@@ -652,7 +660,7 @@ def checkCatalogIndexes(wvd, p, report):
             for ch in fname.get():
                 suspect_name = suspect_name or ch < 0x20 or ch >= 0x80
             if suspect_name:
-                if report: print("(warning) suspect fileame '%s'" % str_fname)
+                if report: print("(warning) suspect filename '%s'" % str_fname)
 
             # -- (3d) check for duplicate file names in the list of
             #         valid and scratched files.
@@ -768,6 +776,9 @@ def checkFile(wvd, p, cat_fname, report):
 
     str_fname = cat_fname.asStr()
 
+    # FIXME: if the file control record is bad (eg, the last sector is all zeros)
+    # LIST DC will have goofy numbers, but the program can still be loaded OK.
+    # maybe this should be a warning, not a fatal error.
     if not indexEntry.fileControlRecordIsPlausible():
         if report: print("%s doesn't have a plausible file control record" % str_fname)
         return (True, '')
@@ -2196,7 +2207,7 @@ def mainloop():
 
     if len(sys.argv) > 2:
         # just perform command on command line and quit
-        # strings containing spaces were indistinguishible from two words,
+        # strings containing spaces were indistinguishable from two words,
         # eg: list "TBO DIAG" was showing up to command as "list TBO DIAG"
         # commandStr = " ".join(sys.argv[2:])
         # just quote everything
