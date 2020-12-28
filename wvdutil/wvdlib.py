@@ -349,10 +349,13 @@ class WvdIndex(object):
         if not self.fileExtentIsPlausible():
             return 'unknown'
 
-        mode = 'normal'  # until proven otherwise
-
         start = self.getFileStart()
+        end   = self.getFileEnd()
         used  = self.getFileUsedSectors()
+        if (used > end - start + 1):
+            return 'unknown'
+
+        mode = 'normal'  # until proven otherwise
         for sec in range(used):
             secData = self._wvd.getRawSector(self._platter, start + sec)
 
