@@ -546,7 +546,7 @@ class WvdHandler_basic(WvdHandler_base):
         # the next byte after the filename should be 0xFD
         if blk[9] != 0xFD:
             self.warning(sec, "%s's header record (sector %d) must have a 0xFD terminator in the 10th byte" \
-                            % (name, sec) )
+                            % (str_name, sec) )
 
     ########################################################################
     # check the body record of a program file.
