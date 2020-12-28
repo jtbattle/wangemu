@@ -418,7 +418,7 @@ class WvdHandler_basic(WvdHandler_base):
 
     @staticmethod
     def fileType():
-        return 'P'  # Program
+        return 'P '  # Program
 
     ########################################################################
     # inspect the sectors of a program file to make sure they are consistent

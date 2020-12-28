@@ -26,11 +26,11 @@ class WvdHandler_base(object):  # pylint: disable=useless-object-inheritance
         # optional: override with longer description if useful
         return WvdHandler_base.name()
 
-    # return either 'P'(rogram) or "D"(ata)
+    # return either "P "(rogram) or "D "(ata)
     @staticmethod
     def fileType():
         # type: () -> str
-        return 'D'
+        return 'D '
 
     # pylint: disable=unused-argument, no-self-use
     def checkBlocks(self, blocks, options):
