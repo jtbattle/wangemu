@@ -28,15 +28,6 @@ A few are gems; many are rehashes of Creative Computing games. Some run too
 fast on a BASIC-2 machine; some depend on the graphics characters from the
 22x6 terminals to be playable.
 
----- mvpgames.wvd ----
-
-This is a collection of games taken of of a VP machine. Not all games require
-VP/MVP, but some do.  The easiest way to launch games is to do this:
-
-   LOAD RUN "@GAMES"
-
-(assuming the disk is in F/310, otherwise specify the disk device)
-
 ---- stuff.wvd ----
 
 The stuff.wvd virtual disk contains a number of game programs, three
