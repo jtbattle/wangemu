@@ -2272,8 +2272,8 @@ def mainloop():
             break
         except KeyboardInterrupt:
             print("<<<command interrupted>>>")
-#       except:
-#           print("<<<internal error>>> sorry about that")
+        except:
+            print("<<<internal error>>> sorry about that")
 
 
 if __name__ == "__main__":
