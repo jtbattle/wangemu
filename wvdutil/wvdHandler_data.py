@@ -38,7 +38,9 @@ class WvdHandler_data(WvdHandler_base):
     #  etc.
     #  last sector of a logical record: 0x81 nn (where nn is the sector # of record)
     #
-    #  last sector of active file: 0xa0  (written by DATASAVE DC END)
+    #  last sector of active file: 0xa0 (followed by 255 0x00 bytes)
+    #  This is written via DATASAVE DC END, but not all programs do this,
+    #  so it might exist or not for a given file.
     #
     #  last sector of allocated file: 0xa0 nnnn (nnnn = # of sectors in use)
     #

@@ -83,7 +83,7 @@
 #    checking type annotations:
 #        py -m mypy wvdutil.py  (or just mypy wvdutil.py)
 #    pylint checker:
-#        py [-2] -m pylint -f msvs wvdutil.py
+#        py [-2] -m pylint -f msvs wvdutil.py wvdlib.py ...etc...
 
 from __future__ import print_function
 from builtins import input                                            # pylint: disable=redefined-builtin
@@ -92,6 +92,7 @@ from typing import List, Dict, Callable, Any, Union, Optional, Tuple  # pylint: 
 import sys
 import os.path
 import re
+import tempfile
 import difflib
 
 try:
@@ -145,7 +146,7 @@ def reportMetadata(wvd):
                  'invalid')
 
     mediatype = wvd.mediaType()
-    if (mediatype >= len(mediaList)-1):
+    if mediatype >= len(mediaList)-1:
         mediatype = len(mediaList)-1  # map to 'invalid'
 
     #print("write format:    ", wvd.getWriteFormat())
@@ -469,12 +470,12 @@ def compareFiles(wvd, disk1_p, wvd2, disk2_p, verbose, args):
         wvdMismatching.sort()
         if verbose != '': print('')  # put a blank line after details and before summary
         print("Mismatching files:")
-        print([fname for fname in wvdMismatching])
+        print(wvdMismatching)
 
     if wvdMatching:
         wvdMatching.sort()
         print("Matching files:")
-        print([fname for fname in wvdMatching])
+        print(wvdMatching)
 
 ###################### dump file or range of sectors ######################
 # dump all sectors of a file or a specified range of sectors in hex and ascii
@@ -1320,7 +1321,6 @@ def command(wvd, cmdString):
             return
         # os.popen and subprocess.Popen didn't want to work,
         # so dump the output to a temp file and page it later
-        import tempfile
         tmp_fd, pager_file = tempfile.mkstemp()
         sys.stdout = os.fdopen(tmp_fd, 'w+')
     elif redir in ['>', '>>']:
@@ -1859,14 +1859,13 @@ class cmdLabel(cmdTemplate):
 
     def doCommand(self, wvd, platters, args):
         # type: (WangVirtualDisk, List[int], List[str]) -> None
-        if len(args) == 0:
+        if not args:
             for line in wvd.label().splitlines():
                 print("    ", line.rstrip())
         elif len(args) == 1:
             wvd.setLabel(args[0])
         else:
             print("This command takes zero or one argument (typically a quoted string)")
-        return
 
 registerCmd(cmdLabel())
 
@@ -2104,7 +2103,7 @@ def listProgramFromBlocks(blocks, listd, abs_sector):
 # sector number.
 #
 # returns (fileobject, starting_sector_number, ending_sector_number)
-# each position may be None if it isn't valid.
+# the range is exclusive. each position may be None if it isn't valid.
 def filenameOrSectorRange(wvd, p, args):
     # type: (WangVirtualDisk, int, List[str]) -> Tuple[Optional[CatalogFile], Optional[int], Optional[int]]
 

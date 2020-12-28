@@ -47,6 +47,8 @@ from __future__ import print_function
 from typing import List, Dict, Tuple, Any, Union, Optional  # pylint: disable=unused-import
 import sys
 import re
+import zipfile
+import traceback
 
 ########################################################################
 # simple exception class
@@ -85,9 +87,7 @@ class WangVirtualDisk(object):
     def read(self, filename):
         # type: (str) -> None
         if filename[-4:] == '.zip':
-            import traceback
             try:
-                import zipfile
                 zipf = zipfile.ZipFile(filename, 'r')
                 firstname = zipf.namelist()[0]
                 # python 2.5 doesn't allow opening as file object,
@@ -180,7 +180,7 @@ class WangVirtualDisk(object):
     # accept a string, mapping "|" to line breaks so that multi-line labels can be set
     def setLabel(self, label):
         # type: (bytearray) -> None
-        label = re.sub("\|", "\n", label)
+        label = re.sub(r"\|", "\n", label)
         label = label[0:256-16]              # chop off excess
         label += bytearray([ord(' ')]) * (256-16 - len(label)) # pad if required
         self.head_dat[16:256] = bytearray(label)
@@ -352,7 +352,7 @@ class WvdIndex(object):
         start = self.getFileStart()
         end   = self.getFileEnd()
         used  = self.getFileUsedSectors()
-        if (used > end - start + 1):
+        if used > (end - start + 1):
             return 'unknown'
 
         mode = 'normal'  # until proven otherwise

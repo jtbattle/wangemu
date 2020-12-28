@@ -17,12 +17,12 @@
 #     added LIST tokens for DATE (0xFA) and TIME (0xFB) (used in later BASIC-2)
 
 from __future__ import print_function
+import sys
 import re
 from typing import List, Dict, Any, Tuple  # pylint: disable=unused-import
 from wvdlib import (WvdFilename, valid_bcd_byte, headerName, unscramble_one_sector)
 from wvdHandler_base import WvdHandler_base
 
-import sys
 python2 = (sys.version_info.major == 2)
 
 ########################################################################
@@ -354,11 +354,10 @@ def prettyprint(origline, width=80, basic2=True):
                     stmt_end += tmatch.end(1)
                     #print("remainder:%s" % line[stmt_end:])
                     continue
-                else:
-                    # didn't find matching closing quote
-                    #print("no")
-                    stmt_end = len(line)
-                    break
+                # didn't find matching closing quote
+                #print("no")
+                stmt_end = len(line)
+                break
 
             # end while (stmt_end < line_len)
             break
@@ -557,8 +556,8 @@ class WvdHandler_basic(WvdHandler_base):
         #cat_str_fname = cat_fname.asStr()
 
         # each record must have a terminator byte (0xFD or 0xFE)
-        assert type(terminator_byte) == int
-        assert type(blk) == bytearray
+        assert isinstance(terminator_byte, int)
+        assert isinstance(blk, bytearray)
         assert len(blk) == 256
         if python2:
             term_byte = chr(terminator_byte) # bytearray is alias of str
