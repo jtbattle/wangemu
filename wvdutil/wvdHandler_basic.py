@@ -15,15 +15,14 @@
 #     yet the program blocks (perhaps just some) are scrambled.
 # Version: 1.4, 2020/02/02, JTB
 #     added LIST tokens for DATE (0xFA) and TIME (0xFB) (used in later BASIC-2)
+# Version: 1.5, 2021/06/19, JTB
+#     get rid of bilingualism (aka python2 support);
+#     convert to inline type hints instead of type hint pragma comments
 
-from __future__ import print_function
-import sys
 import re
 from typing import List, Dict, Any, Tuple  # pylint: disable=unused-import
 from wvdlib import (WvdFilename, valid_bcd_byte, headerName, unscramble_one_sector)
 from wvdHandler_base import WvdHandler_base
-
-python2 = (sys.version_info.major == 2)
 
 ########################################################################
 # table of BASIC atoms
@@ -172,9 +171,7 @@ ST_IN_REM    = 2   # after REM but before ':' or eol
 ST_IN_IMAGE  = 3   # inside image (%) statement
 
 # pylint: disable=too-many-branches
-def listProgramRecord(blk, secnum):
-    # type: (bytearray, int) -> List[str]
-
+def listProgramRecord(blk: bytearray, secnum: int) -> List[str]:
     listing = []
 
     # 1. if (byte[0] & 0xC0) != 0x00, header or data block
@@ -268,9 +265,7 @@ def listProgramRecord(blk, secnum):
 # blank lines to be printed.  This function doesn't mimic that.
 
 # pylint: disable=too-many-branches, too-many-statements
-def prettyprint(origline, width=80, basic2=True):
-    # type: (str, int, bool) -> List[str]
-
+def prettyprint(origline: str, width: int=80, basic2: bool=True) -> List[str]:
     # make a copy
     line = origline
     listing = []
@@ -408,15 +403,15 @@ class WvdHandler_basic(WvdHandler_base):
         WvdHandler_base.__init__(self)
 
     @staticmethod
-    def name():
+    def name() -> str:
         return "program"
 
     @staticmethod
-    def nameLong():
+    def nameLong() -> str:
         return "Wang BASIC and BASIC-2 program files"
 
     @staticmethod
-    def fileType():
+    def fileType() -> str:
         return 'P '  # Program
 
     ########################################################################
@@ -451,8 +446,9 @@ class WvdHandler_basic(WvdHandler_base):
     # structure, i.e., don't insist a header block comes first.
 
     # pylint: disable=too-many-locals, too-many-branches
-    def checkBlocks(self, blocks, options):
-        # type: (List[bytearray], Dict[str, Any]) -> Dict[str, Any]
+    def checkBlocks(self, blocks: List[bytearray],
+                          options: Dict[str, Any]
+                   ) -> Dict[str, Any]:
         if 'warnlimit' not in options: options['warnlimit'] = 0
 
         one_block = len(blocks) == 1
@@ -532,9 +528,8 @@ class WvdHandler_basic(WvdHandler_base):
     ########################################################################
     # check the first record of a program file.
     # return True on error, False if no errors.
-    def checkHeaderRecord(self, sec, blk, cat_fname):
-        # type: (int, bytearray, str) -> None
-
+    def checkHeaderRecord(self, sec: int, blk: bytearray, cat_fname: str
+                         ) -> None:
         # the catalog and the header sector both contain the filename
         name = blk[1:9]
         str_name = WvdFilename(name).asStr()
@@ -551,18 +546,15 @@ class WvdHandler_basic(WvdHandler_base):
     # check the body record of a program file.
     # return True on error, False if no errors.
     # pylint: disable=too-many-return-statements, too-many-branches
-    def checkBodyRecord(self, sec, blk, terminator_byte):
-        # type: (int, bytearray, int) -> None
+    def checkBodyRecord(self, sec: int, blk: bytearray, terminator_byte: int
+                       ) -> None:
         #cat_str_fname = cat_fname.asStr()
 
         # each record must have a terminator byte (0xFD or 0xFE)
         assert isinstance(terminator_byte, int)
         assert isinstance(blk, bytearray)
         assert len(blk) == 256
-        if python2:
-            term_byte = chr(terminator_byte) # bytearray is alias of str
-        else:
-            term_byte = terminator_byte
+        term_byte = terminator_byte
         pos = blk.find(term_byte)
         if pos < 0:
             self.error(sec, "(sector %d) does not contain a 0x%02X terminator byte" \
@@ -632,8 +624,9 @@ class WvdHandler_basic(WvdHandler_base):
                             % (sec, cp))
 
     ########################################################################
-    def listOneBlock(self, blk, options):
-        # type: (bytearray, Dict[str, Any]) -> Tuple[bool, List[str]]
+    def listOneBlock(self, blk: bytearray,
+                           options: Dict[str, Any]
+                    ) -> Tuple[bool, List[str]]:
         if (blk[0]) == 0xa0:  # trailer record?
             return (True, [])
 
@@ -653,8 +646,7 @@ class WvdHandler_basic(WvdHandler_base):
 ########################################################################
 # testing
 
-def pp(line, width=80, basic2=True):
-    # type: (str, int, bool) -> None
+def pp(line: str, width: int=80, basic2: bool=True):
     listing = prettyprint(line, width, basic2)
     for txt in listing:
         print(txt)

@@ -48,6 +48,9 @@
 #     file control record was wrong).
 #     'compare' can now take a -c/-context argument to produce a context diff.
 #     filename wildcard should treat '.' as a literal period character.
+# Version: 1.13, 2021/06/19, JTB
+#     get rid of bilingualism (aka python2 support);
+#     convert to inline type hints instead of type hint pragma comments
 
 ########################################################################
 # there are any number of operations that could be provided by this
@@ -85,8 +88,6 @@
 #    pylint checker:
 #        py [-2] -m pylint -f msvs wvdutil.py wvdlib.py ...etc...
 
-from __future__ import print_function
-from builtins import input                                            # pylint: disable=redefined-builtin
 from typing import List, Dict, Callable, Any, Union, Optional, Tuple  # pylint: disable=unused-import
 
 import sys
@@ -95,12 +96,7 @@ import re
 import tempfile
 import difflib
 
-try:
-    # python 3
-    from urllib.parse import quote_plus, unquote_plus  # type: ignore
-except ImportError:
-    # python 2
-    from urllib import quote_plus, unquote_plus        # type: ignore
+from urllib.parse import quote_plus, unquote_plus  # type: ignore
 
 from wvdlib import (WangVirtualDisk,   # pylint: disable=unused-import
                     WvdFilename,
@@ -137,8 +133,7 @@ generate_html = False
 ############################ reportMetadata ############################
 # report information about the disk
 
-def reportMetadata(wvd):
-    # type: (WangVirtualDisk) -> None
+def reportMetadata(wvd: WangVirtualDisk) -> None:
     wpList = ('no', 'yes')
     mediaList = ('5.25" floppy', '8" floppy',
                  '2260 hard disk', '2280 hard disk',
@@ -166,8 +161,9 @@ def reportMetadata(wvd):
 #    "*" means any number of characters
 #    "?" means any one character
 
-def catalog(wvd, p, flags, wcList):
-    # type: (WangVirtualDisk, int, Dict[str,bool], List[str]) -> None
+def catalog(wvd: WangVirtualDisk, p: int,
+            flags: Dict[str,bool],
+            wcList: List[str]) -> None:
     # pylint: disable=too-many-branches, too-many-locals
 
     cat = wvd.catalog[p]
@@ -244,8 +240,9 @@ def catalog(wvd, p, flags, wcList):
 # given a program filename (or wildcard list), change the protection
 # flags to make the program protected or unprotected
 
-def setProtection(wvd, p, protect, wcList=None):
-    # type: (WangVirtualDisk, int, bool, List[str]) -> None
+def setProtection(wvd: WangVirtualDisk, p: int,
+                  protect: bool,
+                  wcList:List[str]=None) -> None:
     wcList = wcList or ['*']
 
     if wvd.getWriteProtect():
@@ -316,8 +313,9 @@ def setProtection(wvd, p, protect, wcList=None):
 #       all the file names and listsings match, but the sector
 #       data is different.
 
-def compareFiles(wvd, disk1_p, wvd2, disk2_p, verbose, args):
-    # type: (WangVirtualDisk, int, WangVirtualDisk, int, str, List[str]) -> None
+def compareFiles(wvd: WangVirtualDisk, disk1_p: int,
+                 wvd2: WangVirtualDisk, disk2_p: int,
+                 verbose: str, args: List[str]) -> None:
     # pylint: disable=too-many-arguments, too-many-locals, too-many-statements, too-many-branches
     if args:
         wildcardlist = args
@@ -364,42 +362,30 @@ def compareFiles(wvd, disk1_p, wvd2, disk2_p, verbose, args):
     # python 2.2 doesn't have sets module nor set built-in
     # so this will be a little verbose
     fileset1x = wvd.catalog[disk1_p].expandWildcards(wildcardlist)
-    fileset1 = [f.asStr() for f in fileset1x]
+    fileset1 = {f.asStr() for f in fileset1x}
     fileset2x = wvd2.catalog[disk2_p].expandWildcards(wildcardlist)
-    fileset2 = [f.asStr() for f in fileset2x]
-    #print('fileset1:', ', '.join(["'%s'" % x for x in fileset1]))
-    #print('fileset2:', ', '.join(["'%s'" % x for x in fileset2]))
+    fileset2 = {f.asStr() for f in fileset2x}
 
     # 3) report if a file appears on one disk or other only
-    wvd1only = []
-    for f in fileset1:
-        if f not in fileset2:
-            wvd1only.append(f)
-
-    wvd2only = []
-    for f in fileset2:
-        if f not in fileset1:
-            wvd2only.append(f)
-
-    if (wvd1only == fileset1) and (wvd2only == fileset2):
+    if fileset1.isdisjoint(fileset2):
         print("These disks have no files in common")
         return
+    wvd1only = fileset1.difference(fileset2)
+    wvd2only = fileset2.difference(fileset1)
 
     if wvd1only:
-        wvd1only.sort()
         if same_disk:
             print("Files on platter %d and not platter %d:" % (disk1_p+1, disk2_p+1))
         else:
             print("Files in %s and not in %s:" % (wvdname, wvd2name))
-        print(wvd1only)
+        print(sorted(wvd1only))
 
     if wvd2only:
-        wvd2only.sort()
         if same_disk:
             print("Files on platter %d and not platter %d:" % (disk2_p+1, disk1_p+1))
         else:
             print("Files in %s and not in %s:" % (wvd2name, wvdname))
-        print(wvd2only)
+        print(sorted(wvd2only))
 
     # 4) report if a files don't have the same type or status
     # 5) report if a files compare exactly (for now)
@@ -415,7 +401,6 @@ def compareFiles(wvd, disk1_p, wvd2, disk2_p, verbose, args):
         file1Data = file1.getSectors()
 
         if f1name in fileset2:
-
             file2list = wvd2.catalog[disk2_p].expandWildcards([f1name])
             assert file2list is not None
             assert len(file2list) == 1
@@ -480,8 +465,7 @@ def compareFiles(wvd, disk1_p, wvd2, disk2_p, verbose, args):
 ###################### dump file or range of sectors ######################
 # dump all sectors of a file or a specified range of sectors in hex and ascii
 
-def dumpFile(wvd, p, args):
-    # type: (WangVirtualDisk, int, List[str]) -> None
+def dumpFile(wvd: WangVirtualDisk, p: int, args: List[str]) -> None:
     (theFile, start, end) = filenameOrSectorRange(wvd, p, args)  # pylint: disable=unused-variable
     if start is None or end is None:
         return # invalid arguments
@@ -491,8 +475,7 @@ def dumpFile(wvd, p, args):
         dumpSector(wvd.getRawSector(p, s))
     return
 
-def dumpSector(data):
-    # type: (bytearray) -> None
+def dumpSector(data: bytearray) -> None:
     for line in range(16):
         print("%02x:" % (line*16), end=' ')
         for off in range(16):
@@ -515,8 +498,8 @@ def dumpSector(data):
 # LIST 100 200     (list sectors 100 to 200, inclusively)
 
 # pylint: disable=too-many-return-statements
-def listFile(wvd, p, args, listd):
-    # type: (WangVirtualDisk, int, List[str], bool) -> List[str]
+def listFile(wvd: WangVirtualDisk, p: int,
+             args: List[str], listd: bool) -> List[str]:
 
     (theFile, start, end) = filenameOrSectorRange(wvd, p, args)
     if start is None or end is None:
@@ -565,8 +548,7 @@ def listFile(wvd, p, args, listd):
 # if report = 1, report warnings on stdout
 # return False if things are OK; return True if errors
 
-def checkPlatter(wvd, p, report):
-    # type: (WangVirtualDisk, int, bool) -> bool
+def checkPlatter(wvd: WangVirtualDisk, p: int, report: bool) -> bool:
     x = checkCatalogIndexes(wvd, p, report)
     if x: return x
     if wvd.catalog[p].hasCatalog():
@@ -590,8 +572,7 @@ def checkPlatter(wvd, p, report):
 #
 # check that the catalog parameter block is sane
 # pylint: disable=too-many-statements, too-many-branches, too-many-locals
-def checkCatalogIndexes(wvd, p, report):
-    # type: (WangVirtualDisk, int, bool) -> bool
+def checkCatalogIndexes(wvd: WangVirtualDisk, p: int, report: bool) -> bool:
     if wvd.numPlatters() > 1:
         desc = 'Platter %d' % (p+1)
     else:
@@ -623,10 +604,10 @@ def checkCatalogIndexes(wvd, p, report):
     # each entry is a hash of ('name', 'start', 'end'), containing the
     # file name and its first and last sector extent.
     # Any because 'name' is str, others int
-    extent_list = []  # type: List[Dict[str, Any]]
+    extent_list: List[Dict[str, Any]] = []
 
     # keep track of the valid and scratched file names
-    live_names = {}  # type: Dict[str, bool]
+    live_names: Dict[str, bool] = {}
 
     # note if any problems have been noted on this platter
     any_problems = False
@@ -754,9 +735,7 @@ def checkCatalogIndexes(wvd, p, report):
 # returns True if there are errors.
 # this might return garbage if the catalog index isn't valid, so this
 # should be called only if checkCatalogIndexes() shows no problems.
-def checkCatalog(wvd, p, report):
-    # type: (WangVirtualDisk, int, bool) -> bool
-
+def checkCatalog(wvd: WangVirtualDisk, p: int, report: bool) -> bool:
     platter = wvd.catalog[p]
     failures = False
 
@@ -774,9 +753,9 @@ def checkCatalog(wvd, p, report):
 # returns True if there are errors.
 # This is used both by the "check" command, and it gets called by the "catalog"
 # command to indicate after each entry whether it appears to be valid.
-def checkFile(wvd, p, cat_fname, report):
-    # type: (WangVirtualDisk, int, WvdFilename, bool) -> Tuple[bool, str]
-
+def checkFile(wvd: WangVirtualDisk, p: int,
+              cat_fname: WvdFilename,
+              report: bool) -> Tuple[bool, str]:
     indexEntry = wvd.catalog[p].getIndexEntry(cat_fname)
     if indexEntry is None:
         print("Platter %d: %s: not found" % (p, cat_fname))
@@ -875,11 +854,9 @@ def checkFile(wvd, p, cat_fname, report):
 # return that information).
 #
 # FIXME: this fails to detect SAVEP and SAVE! files
-def guessFiles(blocks, abs_sector):
-    # type: (List[bytearray], int) -> List[Dict[str, Any]]
-
+def guessFiles(blocks: List[bytearray], abs_sector: int
+              ) -> List[Dict[str, Any]]:
     func_dbg = False
-
     files = [] # holds the list of file bits
 
     # encode what kind of fragment we are seeing
@@ -892,7 +869,7 @@ def guessFiles(blocks, abs_sector):
                           # and we have seen the start of another logical record
     ) = list(range(6))
     state = st_unknown
-    fileinfo = {}   # type: Dict[str, Any]
+    fileinfo: Dict[str, Any] = {}
 
     # logical records can span multiple physical records.  we track the sequence
     # number across records to make sure things are ocnsistent
@@ -1109,12 +1086,30 @@ def guessFiles(blocks, abs_sector):
 
 ############################# command parser #############################
 
-# cmdSet is a hash keyed on the command name, storing a command handler instance
-cmdSet = {}          # type: Dict[str,cmdTemplate]
-cmdSetAliases = {}   # type: Dict[str,cmdTemplate]
+# this is an abstract class that all command objects should override
+# pylint: disable=no-self-use, useless-object-inheritance
+class cmdTemplate(object):
+    def __init__(self):
+        return
+    def name(self):
+        return "Overload name() in command object subclass"
+    def shortHelp(self):
+        return ["Overload shortHelp() in command object subclass"]
+    def longHelp(self):
+        return ["Overload longHelp() in command object subclass"]
+    def needsCatalog(self):
+        return False  # class returns true if it requires a catalog structure
+    def doCommand(self, wvd: WangVirtualDisk, platters: List[int], args: List[str]) -> None:
+        # pylint: disable=unused-argument
+        return # Overload doCommand() in command object subclass
 
-def registerCmd(cmdInst):
-    # type: (cmdTemplate) -> None
+# ----------------------------------------------------------------------
+
+# cmdSet is a hash keyed on the command name, storing a command handler instance
+cmdSet:        Dict[str, cmdTemplate] = {}
+cmdSetAliases: Dict[str, cmdTemplate] = {}
+
+def registerCmd(cmdInst: cmdTemplate) -> None:
     global cmdSet  # pylint: disable=global-statement
     name = cmdInst.name()
     # names can contain aliases as a "|"-separated list
@@ -1130,8 +1125,7 @@ def registerCmd(cmdInst):
             cmdSetAliases[n] = cmdInst
         primary = 0
 
-def cmdUsage(cmdName=None):
-    # type: (Optional[str]) -> None
+def cmdUsage(cmdName: Optional[str]=None) -> None:
     if cmdName is None:
         print()
         print('Usage:')
@@ -1185,8 +1179,7 @@ def cmdUsage(cmdName=None):
     return
 
 # report all commands and optionally quit
-def usage(terminate=True):
-    # type: (bool) -> None
+def usage(terminate: bool=True) -> None:
     cmdUsage()
     if terminate:
         sys.exit()
@@ -1195,8 +1188,8 @@ def usage(terminate=True):
 # pass in a wvd and a list of platters that we want to inspect
 # returns None if no platters exist, and a list containing a subset
 # of the original platters which do have catalogs.
-def pickUsefulCatalog(wvd, platters):
-    # type: (WangVirtualDisk, List[int]) -> Optional[List[int]]
+def pickUsefulCatalog(wvd: WangVirtualDisk, platters: List[int]
+                     ) -> Optional[List[int]]:
     # if the command requires a platter to have a catalog, check that
     # our list of target platters obeys
     if len(platters) == 1:
@@ -1227,8 +1220,7 @@ def pickUsefulCatalog(wvd, platters):
 
 
 # this wrapper makes it easier to clean up redirection after all commands
-def cmdDispatch(wvd, cmd, args):
-    # type: (WangVirtualDisk, str, List[str]) -> None
+def cmdDispatch(wvd: WangVirtualDisk, cmd: str, args: List[str]) -> None:
     # check if a platter has been specified, eg: "cat/2" or "cat/all"
     mo = re.match(r'([a-z]+)/(.+)$', cmd)
     platters = [default_platter]
@@ -1269,9 +1261,7 @@ def cmdDispatch(wvd, cmd, args):
 # ----------------------------------------------------------------------
 
 # given a disk image and a command, perform the command (or bitch)
-def command(wvd, cmdString):
-    # type: (WangVirtualDisk, str) -> None
-
+def command(wvd: WangVirtualDisk, cmdString: str) -> None:
     # because filenames may contain a space, we need to handle quoting
     # only doublequote is supported since wang filenames may contain a single quote
     quotedWordRe = r'"[^"]*"'        # double quotes surrounding word (possibly 0 length)
@@ -1357,28 +1347,7 @@ def command(wvd, cmdString):
 
 # ----------------------------------------------------------------------
 
-# this is an abstract class that all command objects should override
-# pylint: disable=no-self-use, useless-object-inheritance
-class cmdTemplate(object):
-    def __init__(self):
-        return
-    def name(self):
-        return "Overload name() in command object subclass"
-    def shortHelp(self):
-        return ["Overload shortHelp() in command object subclass"]
-    def longHelp(self):
-        return ["Overload longHelp() in command object subclass"]
-    def needsCatalog(self):
-        return False  # class returns true if it requires a catalog structure
-    def doCommand(self, wvd, platters, args):
-        # pylint: disable=unused-argument
-        # type: (WangVirtualDisk, List[int], List[str]) -> None
-        return # Overload doCommand() in command object subclass
-
-# ----------------------------------------------------------------------
-
 class cmdCatalog(cmdTemplate):
-
     def name(self):
         return "cat|catalog|dir|ls"
     def shortHelp(self):
@@ -1394,8 +1363,7 @@ class cmdCatalog(cmdTemplate):
     def needsCatalog(self):
         return True
 
-    def doCommand(self, wvd, platters, args):
-        # type: (WangVirtualDisk, List[int], List[str]) -> None
+    def doCommand(self, wvd: WangVirtualDisk, platters: List[int], args: List[str]) -> None:
         flags = {'s': False, 'u' : False, 'r' : False}
         while args:
             if args[0] == '-s':
@@ -1440,8 +1408,7 @@ class cmdCheck(cmdTemplate):
     def needsCatalog(self):
         return True
 
-    def doCommand(self, wvd, platters, args):
-        # type: (WangVirtualDisk, List[int], List[str]) -> None
+    def doCommand(self, wvd: WangVirtualDisk, platters: List[int], args: List[str]) -> None:
         if args:
             # TODO: allow checking a specified file or wildcard
             #       e.g., "check FOOTBALL" or "CHECK DIAG*"
@@ -1482,8 +1449,7 @@ scan -bad
     def needsCatalog(self):
         return False
 
-    def doCommand(self, wvd, platters, args):
-        # type: (WangVirtualDisk, List[int], List[str]) -> None
+    def doCommand(self, wvd: WangVirtualDisk, platters: List[int], args: List[str]) -> None:
         flag_good = True
         flag_bad = False
         if args and (args[0] == '-all'):
@@ -1578,8 +1544,7 @@ compare[/<platter>] disk2.wvd[/<platter>] [-v|-verbose|-c|-context] [<wildcard l
     def needsCatalog(self):
         return True
 
-    def doCommand(self, wvd, platters, args):
-        # type: (WangVirtualDisk, List[int], List[str]) -> None
+    def doCommand(self, wvd: WangVirtualDisk, platters: List[int], args: List[str]) -> None:
         # FIXME: this needs an overhaul
         if (not args) or (len(platters) > 1):
             cmdUsage('compare')
@@ -1656,8 +1621,7 @@ class cmdDump(cmdTemplate):
     that sector will be dumped.  If there is a pair of numbers, then
     all sectors in that range, inclusive, will be dumped."""
 
-    def doCommand(self, wvd, platters, args):
-        # type: (WangVirtualDisk, List[int], List[str]) -> None
+    def doCommand(self, wvd: WangVirtualDisk, platters: List[int], args: List[str]) -> None:
         if len(platters) > 1:
             print("This command can only operate on a single platter")
             return
@@ -1679,8 +1643,7 @@ class cmdExit(cmdTemplate):
 """exit
     Quit the program"""
 
-    def doCommand(self, wvd, platters, args):
-        # type: (WangVirtualDisk, List[int], List[str]) -> None
+    def doCommand(self, wvd: WangVirtualDisk, platters: List[int], args: List[str]) -> None:
         if args:
             print("This command takes no arguments")
             return
@@ -1702,8 +1665,7 @@ class cmdHelp(cmdTemplate):
     Without any argument, prints a short summary of commands.
     With a command name, gives details about the command."""
 
-    def doCommand(self, wvd, platters, args):
-        # type: (WangVirtualDisk, List[int], List[str]) -> None
+    def doCommand(self, wvd: WangVirtualDisk, platters: List[int], args: List[str]) -> None:
         if len(args) >= 2:
             print("This command takes takes at most one argument")
             return
@@ -1733,8 +1695,7 @@ class cmdIndex(cmdTemplate):
     def needsCatalog(self):
         return True
 
-    def doCommand(self, wvd, platters, args):
-        # type: (WangVirtualDisk, List[int], List[str]) -> None
+    def doCommand(self, wvd: WangVirtualDisk, platters: List[int], args: List[str]) -> None:
         if len(args) > 1:
             cmdUsage('index')
             return
@@ -1780,8 +1741,7 @@ class cmdList(cmdTemplate):
     def prettyprinted(self):  # pylint: disable=no-self-use
         return False
 
-    def doCommand(self, wvd, platters, args):
-        # type: (WangVirtualDisk, List[int], List[str]) -> None
+    def doCommand(self, wvd: WangVirtualDisk, platters: List[int], args: List[str]) -> None:
         if len(platters) > 1:
             print("This command can only operate on a single platter")
             return
@@ -1833,8 +1793,7 @@ class cmdMeta(cmdTemplate):
 """meta
     Prints .wvd metadata"""
 
-    def doCommand(self, wvd, platters, args):
-        # type: (WangVirtualDisk, List[int], List[str]) -> None
+    def doCommand(self, wvd: WangVirtualDisk, platters: List[int], args: List[str]) -> None:
         if len(args) > 1:
             print("This command takes no arguments")
             return
@@ -1857,8 +1816,7 @@ class cmdLabel(cmdTemplate):
     Sets the .wvd label metadata, using "|" as a line separator.
     Issuing "label" with no arguments reports the existing label."""
 
-    def doCommand(self, wvd, platters, args):
-        # type: (WangVirtualDisk, List[int], List[str]) -> None
+    def doCommand(self, wvd: WangVirtualDisk, platters: List[int], args: List[str]) -> None:
         if not args:
             for line in wvd.label().splitlines():
                 print("    ", line.rstrip())
@@ -1884,8 +1842,7 @@ class cmdProtect(cmdTemplate):
     def needsCatalog(self):
         return True
 
-    def doCommand(self, wvd, platters, args):
-        # type: (WangVirtualDisk, List[int], List[str]) -> None
+    def doCommand(self, wvd: WangVirtualDisk, platters: List[int], args: List[str]) -> None:
         if not args:
             print("This command expects a list of filenames and/or wildcards")
             return
@@ -1914,8 +1871,7 @@ class cmdSave(cmdTemplate):
     file that was the source of the disk image.  Optionally, a filename can
     be specified, and the disk image will be written there instead."""
 
-    def doCommand(self, wvd, platters, args):
-        # type: (WangVirtualDisk, List[int], List[str]) -> None
+    def doCommand(self, wvd: WangVirtualDisk, platters: List[int], args: List[str]) -> None:
         if len(args) >= 2:
             print("This command takes takes at most one argument")
             cmdUsage()
@@ -1943,8 +1899,7 @@ class cmdUnprotect(cmdTemplate):
     def needsCatalog(self):
         return True
 
-    def doCommand(self, wvd, platters, args):
-        # type: (WangVirtualDisk, List[int], List[str]) -> None
+    def doCommand(self, wvd: WangVirtualDisk, platters: List[int], args: List[str]) -> None:
         if not args:
             print("This command expects a list of filenames and/or wildcards")
             return
@@ -1971,8 +1926,7 @@ class cmdWriteProtect(cmdTemplate):
     "off" sets write protect status
     if no argument is supplied, the current status is returned"""
 
-    def doCommand(self, wvd, platters, args):
-        # type: (WangVirtualDisk, List[int], List[str]) -> None
+    def doCommand(self, wvd: WangVirtualDisk, platters: List[int], args: List[str]) -> None:
         if len(args) > 1:
             cmdUsage('wp')
             return
@@ -2016,8 +1970,7 @@ class cmdPlatter(cmdTemplate):
     If no argument is supplied, the current status is returned.
     The initial default platter value is 1."""
 
-    def doCommand(self, wvd, platters, args):
-        # type: (WangVirtualDisk, List[int], List[str]) -> None
+    def doCommand(self, wvd: WangVirtualDisk, platters: List[int], args: List[str]) -> None:
         global default_platter  # pylint: disable=global-statement
         if len(args) > 1:
             cmdUsage('platter')
@@ -2041,9 +1994,7 @@ registerCmd(cmdPlatter())
 # coherent program and data listings, attempt to list its contents
 # sensibly. each block is listed independently.
 
-def listArbitraryBlocks(blocks, listd, abs_sector):
-    # type: (List[bytearray], bool, int) -> List[str]
-
+def listArbitraryBlocks(blocks: List[bytearray], listd: bool, abs_sector: int) -> List[str]:
     listing = []
 
     for offset, secData in enumerate(blocks):
@@ -2085,8 +2036,8 @@ def listArbitraryBlocks(blocks, listd, abs_sector):
 ########################################################################
 # given a list of file blocks, return a program file listing
 
-def listProgramFromBlocks(blocks, listd, abs_sector):
-    # type: (List[bytearray], bool, int) -> List[str]
+def listProgramFromBlocks(blocks: List[bytearray], listd: bool, abs_sector: int
+                         ) -> List[str]:
     options = { 'sector' : abs_sector, 'prettyprint' : listd }
     return handlers[0].listBlocks(blocks, options)
 
@@ -2104,9 +2055,8 @@ def listProgramFromBlocks(blocks, listd, abs_sector):
 #
 # returns (fileobject, starting_sector_number, ending_sector_number)
 # the range is exclusive. each position may be None if it isn't valid.
-def filenameOrSectorRange(wvd, p, args):
-    # type: (WangVirtualDisk, int, List[str]) -> Tuple[Optional[CatalogFile], Optional[int], Optional[int]]
-
+def filenameOrSectorRange(wvd: WangVirtualDisk, p: int, args: List[str]
+                         ) -> Tuple[Optional[CatalogFile], Optional[int], Optional[int]]:
     badReturn = (None, None, None)
 
     (start, end) = (-1, -1)
@@ -2167,9 +2117,7 @@ def getOneFilename(wvd, p, name):
 
 ############################ main program ############################
 
-def mainloop():
-    # type: () -> None
-
+def mainloop() -> None:
     if debug:
         pdb.set_trace()  # initiate debugging
 

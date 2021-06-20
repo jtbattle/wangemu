@@ -8,7 +8,6 @@
 #     termed 'type1' and 'type2' below. for all I know there are other types
 #     too, but these are the ones I've noticed.
 
-from __future__ import print_function
 from typing import List, Dict, Any, Tuple  # pylint: disable=unused-import
 from wvdHandler_base import WvdHandler_base
 
@@ -21,11 +20,11 @@ class WvdHandler_edit(WvdHandler_base):
         WvdHandler_base.__init__(self)
 
     @staticmethod
-    def name():
+    def name() -> str:
         return "edit"
 
     @staticmethod
-    def nameLong():
+    def nameLong() -> str:
         return "EDIT editor source code text file"
 
     # this accepts a block of 256 bytes, and it should be the putative first
@@ -44,8 +43,7 @@ class WvdHandler_edit(WvdHandler_base):
     # if found, otherwise empty. if the filename was found, the second string
     # classifies it as 'type1' or 'type2'.
     @staticmethod
-    def getFilename(blk):
-        # type: (bytearray) -> Tuple[str, str]
+    def getFilename(blk: bytearray) -> Tuple[str, str]:
         # the first string contains magic bytes, the filename, and date
         line0 = blk[3+0*63:2+1*63]
         type1 = (line0[0] == 0x02) and (line0[1] == 0x01) and \
@@ -69,8 +67,8 @@ class WvdHandler_edit(WvdHandler_base):
     # 3) the first string of the first sector contains a special format which
     #    holds the filename and date (see getFilename())
     # pylint: disable=too-many-branches
-    def checkBlocks(self, blocks, options):
-        # type: (List[bytearray], Dict[str, Any]) -> Dict[str, Any]
+    def checkBlocks(self, blocks: List[bytearray],
+                          options: Dict[str, Any]) -> Dict[str, Any]:
 
         if 'warnlimit' not in options: options['warnlimit'] = 0
 
@@ -151,16 +149,17 @@ class WvdHandler_edit(WvdHandler_base):
 
     # listing one block at a time probably doesn't make sense, as the lines of
     # the file are packed and run across sector boundaries
-    def listOneBlock(self, blk, options):
-        # type: (bytearray, Dict[str, Any]) -> Tuple[bool, List[str]]
+    def listOneBlock(self, blk: bytearray,
+                           options: Dict[str, Any]
+                    ) -> Tuple[bool, List[str]]:
         return (True, [])
 
     ########################################################################
     # given a list of file blocks, return a program file listing
     # pylint: disable=too-many-locals, too-many-branches
-    def listBlocks(self, blocks, options):
-        # type: (List[bytearray], Dict[str, Any]) -> List[str]
-
+    def listBlocks(self, blocks: List[bytearray],
+                         options: Dict[str, Any]
+                  ) -> List[str]:
         filename = '        '  # pylint: disable=unused-variable
         listing = []
         curline = ''

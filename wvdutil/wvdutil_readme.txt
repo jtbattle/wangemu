@@ -1,4 +1,12 @@
 Jim Battle
+June 19, 2021
+
+python2 is officially dead, so I've converted the code base to be strictly
+python3 instead of bilingual. There is no new functionality, but the
+typing information is now inline instead of being specified by pragma
+comments, and a couple python2-specific code paths have been eliminated.
+
+Jim Battle
 January 4, 2020
 
 Version 1.7 of wvdutil was developed under Windows 7, and should be compatible

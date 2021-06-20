@@ -1,3 +1,7 @@
+# always use unix line endings for text files
+# there is no technical reason for it, I just prefer it that way
+texteol=lf
+
 # these should be treated as text files
 .gitattributes  text
 .gitignore      text

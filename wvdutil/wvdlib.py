@@ -15,6 +15,9 @@
 # Version: 1.6, 2018/09/15, JTB
 #     added function to handle unscrambling a scrambled sector
 #     pylint cleanups
+# Version: 1.7, 2021/06/19, JTB
+#     get rid of bilingualism (aka python2 support);
+#     convert to inline type hints instead of type hint pragma comments
 
 ########################################################################
 # technical notes
@@ -43,7 +46,6 @@
 # all filenames that get compared are padded to eight places with spaces
 # before comparison.
 
-from __future__ import print_function
 from typing import List, Dict, Tuple, Any, Union, Optional  # pylint: disable=unused-import
 import sys
 import re
@@ -70,36 +72,32 @@ class WangVirtualDisk(object):
     # currently the only way to get a valid disk is from reading one;
     # one can't be constructed from scratch.
     def __init__(self):
-        self._valid = False   # the rest of self.members are meaningless
-        self._dirty = False   # contents modified from on-disk version
-        self._filename = None # type: str  # host filename of wvd file
-        self.sector = []      # type: List[bytearray]
+        self._valid: bool = False   # the rest of self.members are meaningless
+        self._dirty: bool = False   # contents modified from on-disk version
+        self._filename: str = None
+        self.sector: List[bytearray] = []
         self.head_dat = bytearray()
         self.catalog = []     # TODO: ttype: List[Catalog] -- enabling this causes tons of warnings
                               # one entry per platter
 
     # returns True if the in-memory disk image has been modified
-    def isDirty(self):
-        # type: () -> bool
+    def isDirty(self) -> bool:
         return self._dirty
 
     # read a virtual disk disk from a file into memory
-    def read(self, filename):
-        # type: (str) -> None
+    def read(self, filename: str) -> None:
         if filename[-4:] == '.zip':
             try:
                 zipf = zipfile.ZipFile(filename, 'r')
                 firstname = zipf.namelist()[0]
-                # python 2.5 doesn't allow opening as file object,
-                # and fatcow is using python 2.5.  deal with it.
-                # fh = zipf.open(firstname, 'r')
-                fdata = bytearray(zipf.read(firstname))  # in python2 read returns a string
+                fh = zipf.open(firstname, 'r')
+                fdata = bytearray(fh.read())
             except Exception as e:  # pylint: disable=unused-variable, broad-except
                 traceback.print_exc()
                 print('Something went wrong opening zip file')
         else:
             fh = open(filename, 'rb')
-            fdata = bytearray(fh.read())   # in python2 read() returns a string
+            fdata = bytearray(fh.read())
             fh.close()
         self._filename = filename
         self.head_dat = fdata[0:256]  # get wvd header
@@ -116,8 +114,7 @@ class WangVirtualDisk(object):
         self._dirty = False
 
     # dump the current disk image to the specified file
-    def write(self, filename):
-        # type: (str) -> None
+    def write(self, filename: str) -> None:
         fh = open(filename, 'wb')
         fh.write(self.head_dat)
         for i in range(self.numSectors()):
@@ -126,21 +123,21 @@ class WangVirtualDisk(object):
         self._dirty = False
 
     # get metadata about the virtual disk
-    def getFilename(self): # type: () -> str
+    def getFilename(self) -> str:
         return self._filename
-    def getWriteFormat(self): # type: () -> int
+    def getWriteFormat(self) -> int:
         return self.head_dat[5]
-    def getReadFormat(self): # type: () -> int
+    def getReadFormat(self) -> int:
         return self.head_dat[6]
-    def getWriteProtect(self): # type: () -> int
+    def getWriteProtect(self) -> int:
         return self.head_dat[7]
-    def numSectors(self): # type: () -> int
+    def numSectors(self) -> int:
         return self.head_dat[8] + 256*self.head_dat[9]
-    def mediaType(self): # type: () -> int
+    def mediaType(self) -> int:
         return self.head_dat[10]
-    def numPlatters(self): # type: () -> int
+    def numPlatters(self) -> int:
         return self.head_dat[11] + 1
-    def label(self): # type: () -> str
+    def label(self) -> str:
         return (self.head_dat[16:256].decode('latin-1').split('\0'))[0]
 
     # the first generation disk controller developed by Wang took a 16b
@@ -152,16 +149,14 @@ class WangVirtualDisk(object):
     # later drives had >32K sectors/platter, and could have multiple
     # addressible platters as well.  these "intelligent" disk controllers
     # used all 16 bits of the sector address.
-    def getSectorMask(self):
-        # type: () -> int
+    def getSectorMask(self) -> int:
         if (self.numPlatters() > 1) or (self.numSectors() > 32768):
             return 0xFFFF
         return 0x7FFF
 
     # set metadata
     # unused
-    def setWriteProtect(self, prot):
-        # type: (bool) -> None
+    def setWriteProtect(self, prot: bool) -> None:
         # self.head_dat[7] = (prot != 0)
         if prot:
             protbyte = 0x01
@@ -171,23 +166,20 @@ class WangVirtualDisk(object):
         self._dirty = True
 
     # unused
-    def setMediaType(self, kind):
-        # type: (int) -> None
+    def setMediaType(self, kind: int) -> None:
         assert kind in (0, 1, 2)
         self.head_dat[10] = kind
         self._dirty = True
 
     # accept a string, mapping "|" to line breaks so that multi-line labels can be set
-    def setLabel(self, label):
-        # type: (str) -> None
+    def setLabel(self, label: str) -> None:
         label = re.sub(r"\|", "\n", label)
         label = label[0:256-16]              # chop off excess
         label += ' ' * (256-16 - len(label)) # pad if required
         self.head_dat[16:256] = bytearray(label.encode('latin-1'))
         self._dirty = True
 
-    def checkSectorAddress(self, p, n):
-        # type: (int, int) -> None
+    def checkSectorAddress(self, p: int, n: int) -> None:
         if p >= self.numPlatters():
             print('Error: attempted to access invalid platter #', p)
             print(self.numPlatters())
@@ -197,15 +189,13 @@ class WangVirtualDisk(object):
             print(self.numSectors())
             raise ProgramError
 
-    def getRawSector(self, p, n):
-        # type: (int, int) -> bytearray
+    def getRawSector(self, p: int, n: int) -> bytearray:
         self.checkSectorAddress(p, n)
         nn = p*self.numSectors() + n
         return self.sector[nn]
 
     # replace a sector
-    def setRawSector(self, p, n, data):
-        # type: (int, int, bytearray) -> None
+    def setRawSector(self, p: int, n: int, data: bytearray) -> None:
         assert len(data) == 256
         self.checkSectorAddress(p, n)
         nn = p*self.numSectors() + n
@@ -220,13 +210,12 @@ class WangVirtualDisk(object):
 
 # pylint: disable=useless-object-inheritance
 class WvdFilename(object):
-    def __init__(self, filename):
-        # type: (bytearray) -> None
+    def __init__(self, filename: bytearray) -> None:
         assert len(filename) == 8
         self._filename = filename
-    def get(self): # type: () -> bytearray
+    def get(self) -> bytearray:
         return self._filename
-    def asStr(self): # type: () -> str
+    def asStr(self) -> str:
         '''Return the on-disk filename as a trimmed string.'''
         trimmed = self._filename.decode('latin-1').rstrip()
         return trimmed
@@ -266,8 +255,7 @@ class WvdFilename(object):
 
 # pylint: disable=useless-object-inheritance
 class WvdIndex(object):
-    def __init__(self, wvd, p, n, record):
-        # type: (WangVirtualDisk, int, int, bytearray) -> None
+    def __init__(self, wvd: WangVirtualDisk, p: int, n: int, record: bytearray) -> None:
         assert len(record) == 16
         assert p < wvd.numPlatters()
         self._wvd      = wvd     # disk the index belongs to
@@ -277,16 +265,13 @@ class WvdIndex(object):
         self._dirty    = False   # not modified
 
     # return the record as a 16 byte binary string
-    def asBytes(self):
-        # type: () -> bytearray
+    def asBytes(self) -> bytearray:
         return self._record
 
-    def getFilename(self):
-        # type: () -> WvdFilename
+    def getFilename(self) -> WvdFilename:
         return WvdFilename(self._record[8:16])
 
-    def getIndexState(self):
-        # type: () -> str
+    def getIndexState(self) -> str:
         val = self._record[0]
         if val == 0x00:
             return 'empty'
@@ -302,12 +287,10 @@ class WvdIndex(object):
             return 'invalid'
         return 'unknown'
 
-    def getIndexStateNumber(self):
-        # type: () -> str
+    def getIndexStateNumber(self) -> str:
         return '0x%02X' % self._record[0]
 
-    def setIndexState(self, kind):
-        # type: (str) -> None
+    def setIndexState(self, kind: str) -> None:
         val = { 'empty':     0x00,
                 'valid':     0x10,
                 'invalid':   0x21,
@@ -315,8 +298,7 @@ class WvdIndex(object):
         self._record = bytearray([val]) + self._record[1:16]
         self._dirty = True
 
-    def getFileType(self):
-        # type: () -> str
+    def getFileType(self) -> str:
         if self._record[1] == 0x80:
             return "P "
         if self._record[1] == 0x40:
@@ -325,13 +307,11 @@ class WvdIndex(object):
             return "D "
         return '?'
 
-    def getFileTypeNumber(self):
-        # type: () -> str
+    def getFileTypeNumber(self) -> str:
         return '0x%02X' % self._record[1]
 
     # unused
-#   def setFileType(self, kind):
-#       # type: (str) -> None
+#   def setFileType(self, kind: str) -> None:
 #       assert kind in ('P ', 'D '), "Bad type in setFileType"
 #       val = { 'P ': 0x80, "P'": 0x40, 'D ': 0x00 }[kind]
 #       self._record = bytearray([self._record[0], val]) + self._record[2:16]
@@ -342,8 +322,7 @@ class WvdIndex(object):
     # program file or the control bytes aren't consistent, "unknown" is
     # returned.
     # pylint: disable=too-many-return-statements
-    def programSaveMode(self):
-        # type: () -> str
+    def programSaveMode(self) -> str:
         if self.getFileType() != 'P ':
             return 'unknown'
         if not self.fileExtentIsPlausible():
@@ -379,8 +358,7 @@ class WvdIndex(object):
         return mode
 
     # this combines the index state with the file type
-    def getFileStatus(self):
-        # type: () -> str
+    def getFileStatus(self) -> str:
         idxState = self.getIndexState()
         if idxState == 'invalid':
             return  'error' # this index is unused
@@ -392,25 +370,21 @@ class WvdIndex(object):
             return 'S' + self.getFileType()  # append P or D or P'
         return idxState  # error message
 
-    def getFileStart(self):
-        # type: () -> int
+    def getFileStart(self) -> int:
         if self._wvd.catalog[self._platter].getIndexType() < 2:
             return bytes2toInt(self._record[2:4]) & self._wvd.getSectorMask()
         return bytes3toInt(self._record[2:5])
 
-    def getFileEnd(self):
-        # type: () -> int
+    def getFileEnd(self) -> int:
         if self._wvd.catalog[self._platter].getIndexType() < 2:
             return bytes2toInt(self._record[4:6]) & self._wvd.getSectorMask()
         return bytes3toInt(self._record[5:8])
 
-    def getFileExtent(self):
-        # type: () -> Tuple[int,int]
+    def getFileExtent(self) -> Tuple[int, int]:
         return (self.getFileStart(), self.getFileEnd())
 
     # returns True if the file extent passes basic sanity checks
-    def fileExtentIsPlausible(self):
-        # type: () -> bool
+    def fileExtentIsPlausible(self) -> bool:
         start = self.getFileStart()
         end   = self.getFileEnd()
         # pylint: disable=chained-comparison
@@ -418,8 +392,7 @@ class WvdIndex(object):
                (start >= self._wvd.catalog[self._platter].numIndexSectors())
 
     # unused
-#   def setFileExtent(self, start, end):
-#       # type: (int, int) -> None
+#   def setFileExtent(self, start: int, end: int) -> None:
 #       assert start >= 0
 #       assert start < end
 #       if self._wvd.catalog[self._platter].getIndexType() < 2:
@@ -433,8 +406,7 @@ class WvdIndex(object):
 #       self._dirty = True
 
     # the last record of a file indicates how many sectors are in use
-    def getFileUsedSectors(self):
-        # type: () -> int
+    def getFileUsedSectors(self) -> int:
         assert self.fileExtentIsPlausible()
         end = self.getFileEnd()
         secData = self._wvd.getRawSector(self._platter, end)
@@ -445,15 +417,15 @@ class WvdIndex(object):
         return used
 
     # returns True if the file control record passes basic sanity checks
-    def fileControlRecordIsPlausible(self):
-        # type: () -> bool
+    def fileControlRecordIsPlausible(self) -> bool:
         if not self.fileExtentIsPlausible():
             return False
-        (start, end) = self.getFileExtent()
+        start, end = self.getFileExtent()
         used = self.getFileUsedSectors()
         filetype = self.getFileType()
+        valid_prefix: Tuple[int,...]
         if filetype == 'P ':
-            valid_prefix = (0x20,)  # type: Tuple[int,...]
+            valid_prefix = (0x20,)
         elif filetype == 'D ':
             valid_prefix = (0xa0,)
         else:
@@ -464,22 +436,19 @@ class WvdIndex(object):
 
     # return how many sectors the file uses, including header, trailer,
     # and control records
-    def getFileFreeSectors(self):
-        # type: () -> int
+    def getFileFreeSectors(self) -> int:
         assert self.fileExtentIsPlausible()
-        (start, end) = self.getFileExtent()
+        start, end = self.getFileExtent()
         used = self.getFileUsedSectors()
         free = ((end - start+1) - used) % 65536
         return free
 
-    def isDirty(self):
-        # type: () -> bool
+    def isDirty(self) -> bool:
         return self._dirty
 
     # write the index back to the disk image it came from
     # unused
-    def update(self):
-        # type: () -> None
+    def update(self) -> None:
         if self.isDirty():
             self._wvd.catalog[self._platter].setIndexEntry(self._platter, self._indexNum, self._record)
             self._dirty = False
@@ -493,15 +462,13 @@ class WvdIndex(object):
 # pylint: disable=useless-object-inheritance
 class Catalog(object):
     # associate the disk and catalog
-    def __init__(self, wvd, p):
-        # type: (WangVirtualDisk, int) -> None
+    def __init__(self, wvd: WangVirtualDisk, p: int) -> None:
         assert p < wvd.numPlatters()
         self._wvd = wvd
         self._platter = p
 
     # return True if the given platter of the disk appears to have a catalog
-    def hasCatalog(self):
-        # type: () -> bool
+    def hasCatalog(self) -> bool:
         idxType = self.getIndexType()
         # TODO: should we perform some kind of catalog sanity check?
         #       that would be heavyweight and this function might be
@@ -509,16 +476,14 @@ class Catalog(object):
         return idxType <= 2
 
     # return a list of all the catalog indices
-    def catalogIndices(self):
-        # type: () -> List[int]
+    def catalogIndices(self) -> List[int]:
         # -1 because the first catalog sector contains only 15 entries
         # as the first slot contains the disk paramter block
         return list(range(16*self.numIndexSectors()-1))
 
     # given a list of (str) filenames or wildcards and a disk, return
     # a list of all filenames on disk matching the wildcards
-    def expandWildcards(self, wcList):
-        # type: (List[str]) -> List[WvdFilename]
+    def expandWildcards(self, wcList: List[str]) -> List[WvdFilename]:
         assert self.hasCatalog()
 
         # get a list of all files on the disk
@@ -538,7 +503,7 @@ class Catalog(object):
         # check each entry in the wildcard list for an exact match,
         # then if that fails, see if it is a wildcard and then
         # perform a pattern match
-        nameList = []   # type: List[bytearray]
+        nameList: List[bytearray] = []
         for pat in wcList:
             if len(pat) > 8:
                 print('Filename "%s" is more than 8 characters; ignoring' % pat)
@@ -554,7 +519,7 @@ class Catalog(object):
                 rePat = re.sub(r'\*', r'.*', rePat)  # '*' -> any number of chars
                 rePat = re.sub(r'\?', r'.',  rePat)  # '?' -> any one char
                 rePat += r' *$' # allow trailing spaces
-                rePat_bytes = bytes(bytearray(rePat, 'ascii'))   # bytearray() is not hashable, and python2 barfs on 'ascii': apparently bytes() is an alias for str()
+                rePat_bytes = bytes(rePat, 'ascii')
                 # loop over all filenames and find any that match
                 #matched = False
                 for f in allFiles:
@@ -570,22 +535,19 @@ class Catalog(object):
         return [WvdFilename(f) for f in nameList]
 
     # return a list containing all filenames on disk
-    def allFilenames(self):
-        # type: () -> List[WvdFilename]
+    def allFilenames(self) -> List[WvdFilename]:
         assert self.hasCatalog()
         return self.expandWildcards(['*'])
 
     # there are three types of indices
-    def getIndexType(self):
-        # type: () -> int
+    def getIndexType(self) -> int:
         secData = self._wvd.getRawSector(self._platter, 0)
         idxType = secData[0] & 0x7F  # sometimes MSB is set -- what is this about?
         #if idxType > 2:
         #    print("Unknown disk index type type 0x%02X; perhaps it is raw sectors?" % idxType)
         return idxType
 
-    def setIndexType(self, newType):
-        # type: (int) -> None
+    def setIndexType(self, newType: int) -> None:
         if newType < 0 or newType > 2:
             print("Attempting to set unknown disk index type", newType)
             raise ProgramError
@@ -594,16 +556,14 @@ class Catalog(object):
         self._wvd.setRawSector(self._platter, 0, secData)
 
     # the first N sectors hold index information.  return N.
-    def numIndexSectors(self):
-        # type: () -> int
+    def numIndexSectors(self) -> int:
         secData = self._wvd.getRawSector(self._platter, 0)
         if self.getIndexType() == 2:
             return bytes2toInt(secData[1:3])
         return secData[1]
 
     # return which sector is the last in use by the cataloged files
-    def currentEnd(self):
-        # type: () -> int
+    def currentEnd(self) -> int:
         secData = self._wvd.getRawSector(self._platter, 0)
         if self.getIndexType() == 2:
             return bytes3toInt(secData[3:6]) - 1
@@ -611,8 +571,7 @@ class Catalog(object):
         return (bytes2toInt(secData[2:4]) & self._wvd.getSectorMask()) - 1
 
     # return which sector is the last for holding cataloged files
-    def endCatalogArea(self):
-        # type: () -> int
+    def endCatalogArea(self) -> int:
         secData = self._wvd.getRawSector(self._platter, 0)
         if self.getIndexType() == 2:
             return bytes3toInt(secData[6:9]) - 1
@@ -622,8 +581,7 @@ class Catalog(object):
     # return an index object for the n-th catalog slot,
     # or the index object of the names file.
     # return None if the index is too large.
-    def getIndexEntry(self, n):
-        # type: (Union[int,WvdFilename]) -> Optional[WvdIndex]
+    def getIndexEntry(self, n: Union[int, WvdFilename]) -> Optional[WvdIndex]:
         assert self.hasCatalog()
         if isinstance(n, WvdFilename):
             return self.getIndexEntryByName(n)
@@ -635,8 +593,7 @@ class Catalog(object):
     # numbering starts at 0
     # return None if the index is too large.
     # the first slot of sector 0 is disk metadata, which is why (n+1) is used.
-    def getIndexEntryByNumber(self, n):
-        # type: (int) -> Optional[WvdIndex]
+    def getIndexEntryByNumber(self, n: int) -> Optional[WvdIndex]:
         sec  = (n+1) // 16  # which index sector
         slot = (n+1) %  16  # which slot of that sector
         if sec > self.numIndexSectors():
@@ -647,8 +604,7 @@ class Catalog(object):
 
     # given a filename, return the corresponding slot struct,
     # or return None, if not found
-    def getIndexEntryByName(self, name):
-        # type: (WvdFilename) -> Optional[WvdIndex]
+    def getIndexEntryByName(self, name: WvdFilename) -> Optional[WvdIndex]:
         if False:  # pylint: disable=using-constant-test
             # brute force: don't bother with hash approach
             for n in self.catalogIndices():
@@ -678,8 +634,7 @@ class Catalog(object):
         return None  # searched all entries, and not found
 
     # raise an error if the index is too large
-    def setIndexEntry(self, n, record):
-        # type: (int, bytearray) -> None
+    def setIndexEntry(self, n: int, record: bytearray) -> None:
         assert len(record) == 16
         sec  = (n+1) // 16  # which index sector
         slot = (n+1) % 16   # which slot of that sector
@@ -689,8 +644,7 @@ class Catalog(object):
         secData = secData[0:16*slot] + record + secData[16*(slot+1):256]
         self._wvd.setRawSector(self._platter, sec, secData)
 
-    def getFile(self, name):
-        # type: (WvdFilename) -> Optional[CatalogFile]
+    def getFile(self, name: WvdFilename) -> Optional['CatalogFile']:
         assert self.hasCatalog()
         if self.getIndexEntry(name) is None:
             return None
@@ -699,8 +653,7 @@ class Catalog(object):
     # this converts the catalog index between new and old formats.
     # the data files aren't touched; the entries are simply moved around
     # to their new hash locations.
-    def convertIndex(self, newStyle):
-        # type: (bool) -> None
+    def convertIndex(self, newStyle: bool) -> None:
         assert self.hasCatalog()
 
         oldIndexType = self.getIndexType()
@@ -735,8 +688,7 @@ class Catalog(object):
 
     # given an indexInfo struct (name, start, end, etc), add it to the catalog.
     # only the index is added, not the file it is pointing to.
-    def addIndexEntry(self, entry):
-        # type: (WvdIndex) -> None
+    def addIndexEntry(self, entry: WvdIndex) -> None:
         assert self.hasCatalog()
 
         if self.getIndexType() == 0:
@@ -767,16 +719,14 @@ class Catalog(object):
     # return which sector the filename hashes to for the given disk
     # this is where to start looking; if the bucket is full, the
     # adjacent sectors may need to be searched too
-    def getFilenameHash(self, filename):
-        # type: (WvdFilename) -> int
+    def getFilenameHash(self, filename: WvdFilename) -> int:
         if self.getIndexType() == 0:
             return self.oldIndexHash(filename)
         return self.newIndexHash(filename)
 
     # this code is based on code from ISS release 5.1, program "ISS.229S"
     @staticmethod
-    def oldIndexHash(filename):
-        # type: (WvdFilename) -> int
+    def oldIndexHash(filename: WvdFilename) -> int:
         hash_val = 0x00
         for c in filename.get():
             hash_val ^= c
@@ -786,8 +736,7 @@ class Catalog(object):
 
     # this code is based on information from the OS 2.5 release notes
     @staticmethod
-    def newIndexHash(filename):
-        # type: (WvdFilename) -> int
+    def newIndexHash(filename: WvdFilename) -> int:
         rawbytes = filename.get()
         hash_val = 0x00
         for i in range(8):
@@ -800,8 +749,7 @@ class Catalog(object):
 
     # return True if the given catalog index bucket is full for sector 'secnum'
     # it is a bit fiddly because sector 0 has indexes 0..14, sec 1 has 15..30
-    def isIndexBucketFull(self, secnum):
-        # type: (int) -> bool
+    def isIndexBucketFull(self, secnum: int) -> bool:
         if secnum == 0:
             first, last = 0, 14
         else:
@@ -820,8 +768,7 @@ class Catalog(object):
 # pylint: disable=useless-object-inheritance
 class CatalogFile(object):
     # given a filename, return a CatalogFile object
-    def __init__(self, cat, filename):
-        # type: (Catalog, WvdFilename) -> None
+    def __init__(self, cat: Catalog, filename: WvdFilename) -> None:
         self._name    = filename
         self._cat     = cat
         self._wvd     = cat._wvd      # pylint: disable=protected-access; # this grubbing is pretty ugly
@@ -829,65 +776,54 @@ class CatalogFile(object):
         self._index   = cat.getIndexEntry(filename)
         self._valid   = (self._index is not None)
 
-    def getFilename(self):
-        # type: () -> WvdFilename
+    def getFilename(self) -> WvdFilename:
         return self._name
-    def getType(self):
-        # type: () -> str
+    def getType(self) -> str:
         if self._valid:
             assert self._index is not None
             return self._index.getFileType()
         return '?'
-    def programSaveMode(self):
-        # type: () -> str
+    def programSaveMode(self) -> str:
         if self._valid:
             assert self._index is not None
             return self._index.programSaveMode()
         return 'unknown'
-    def getStatus(self):
-        # type: () -> str
+    def getStatus(self) -> str:
         if self._valid:
             assert self._index is not None
             return self._index.getFileStatus()
         return 'invalid'
-    def getStart(self):
-        # type: () -> int
+    def getStart(self) -> int:
         if self._valid:
             assert self._index is not None
             return self._index.getFileStart()
         return 0
-    def getEnd(self):
-        # type: () -> int
+    def getEnd(self) -> int:
         if self._valid:
             assert self._index is not None
             return self._index.getFileEnd()
         return 0
-    def getExtent(self):
-        # type: () -> Tuple[int,int]
+    def getExtent(self) -> Tuple[int, int]:
         if self._valid:
             assert self._index is not None
             return self._index.getFileExtent()
         return (0,0)
-    def getUsed(self):
-        # type: () -> int
+    def getUsed(self) -> int:
         if self._valid:
             assert self._index is not None
             return self._index.getFileUsedSectors()
         return 0
-    def getFree(self):
-        # type: () -> int
+    def getFree(self) -> int:
         if self._valid:
             assert self._index is not None
             return self._index.getFileFreeSectors()
         return 0
-    def fileExtentIsPlausible(self):
-        # type: () -> bool
+    def fileExtentIsPlausible(self) -> bool:
         if self._valid:
             assert self._index is not None
             return self._index.fileExtentIsPlausible()
         return False
-    def fileControlRecordIsPlausible(self):
-        # type: () -> bool
+    def fileControlRecordIsPlausible(self) -> bool:
         if self._valid:
             assert self._index is not None
             return self._index.fileControlRecordIsPlausible()
@@ -895,9 +831,8 @@ class CatalogFile(object):
 
     # set or clear the protection mode on the file.
     # the file must be a program file.
-    def setProtection(self, protect):
-        # type: (bool) -> None
-        (start, end) = self.getExtent()
+    def setProtection(self, protect: bool) -> None:
+        start, end = self.getExtent()
         # we don't touch the final allocated block
         # we only have to touch the used blocks, not all the allocated blocks
         for s in range(start, end):
@@ -916,8 +851,7 @@ class CatalogFile(object):
     # return None if the filename isn't found, or if the file extent
     # information is bogus (in which case we report it)
     # pylint: disable=too-many-return-statements
-    def getSectors(self):
-        # type: () -> Optional[List[bytearray]]
+    def getSectors(self) -> Optional[List[bytearray]]:
         if self._index is None:
             return None
         if self._index.getIndexState() != 'valid':
@@ -945,8 +879,7 @@ class CatalogFile(object):
         return sectors
 
     # rewrite sectors of a file
-    def setSectors(self, blocks):
-        # type: (List[bytearray]) -> None
+    def setSectors(self, blocks: List[bytearray]) -> None:
         assert self._index is not None
         assert self._index.getIndexState() == 'valid'
         assert self.getType() == 'P '
@@ -970,33 +903,27 @@ class CatalogFile(object):
 
 ############################## helpers ##############################
 
-def bytes3toInt(data):
-    # type: (bytearray) -> int
+def bytes3toInt(data: bytearray) -> int:
     assert len(data) == 3
     return 65536*data[0] + 256*data[1] + data[2]
 
-def bytes2toInt(data):
-    # type: (bytearray) -> int
+def bytes2toInt(data: bytearray) -> int:
     assert len(data) == 2
     return 256*data[0] + data[1]
 
-def intToBytes2(val):
-    # type: (int) -> bytearray
+def intToBytes2(val: int) -> bytearray:
     return bytearray([val // 256, val % 256])
 
-def intToBytes3(val):
-    # type: (int) -> bytearray
+def intToBytes3(val: int) -> bytearray:
     return bytearray([val // 65536, (val // 256) % 256, val % 256])
 
 # return True if the two nibbles are bcd
-def valid_bcd_byte(ch):
-    # type: (int) -> bool
+def valid_bcd_byte(ch: int) -> bool:
     low  = ch & 0x0F
     high = ch & 0xF0
     return (low <= 0x09) and (high <= 0x90)
 
-def padName(name):
-    # type: (bytearray) -> bytearray
+def padName(name: bytearray) -> bytearray:
     '''Takes a bytearray filename string and pads it to 8 spaces.'''
     assert len(name) < 9
     name += bytearray([ord(' ')]) * (8 - len(name))
@@ -1006,15 +933,13 @@ def padName(name):
 # given a header record, return the filename it contains.
 # NB: disk headers pad names shorter than 8 characters with 0x20
 #     tape headers pad names shorter than 8 characters with 0xFF
-def headerName(sector):
-    # type: (bytearray) -> str
+def headerName(sector: bytearray) -> str:
     rawname = sector[1:9]
     return sanitize_filename(rawname)
 
 # NB: disk headers pad names shorter than 8 characters with 0x20
 #     tape headers pad names shorter than 8 characters with 0xFF
-def sanitize_filename(rawname):
-    # type: (Any) -> str
+def sanitize_filename(rawname: Any) -> str:
     if isinstance(rawname, str):
         byts = bytearray(rawname.encode('latin-1'))
     else:
@@ -1032,9 +957,7 @@ def sanitize_filename(rawname):
 # the algorithm is extracted from the DCRYPT routine of Wang MVP OS 3.5.
 # this function doesn't implement the tweak for "wrap mode" files.
 
-def unscramble_one_sector(block):
-    # type: (bytearray) -> bytearray
-
+def unscramble_one_sector(block: bytearray) -> bytearray:
     assert len(block) == 256
     sector = bytearray(block)  # make a copy
 

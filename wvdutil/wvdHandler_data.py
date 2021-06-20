@@ -3,8 +3,10 @@
 #
 # Version: 1.0, 2018/09/15, JTB
 #     massive restructuring of the old wvdutil code base
+# Version: 1.1, 2021/06/19, JTB
+#     get rid of bilingualism (aka python2 support);
+#     convert to inline type hints instead of type hint pragma comments
 
-from __future__ import print_function
 from typing import List, Dict, Any, Tuple  # pylint: disable=unused-import
 from wvdHandler_base import WvdHandler_base
 from wvdlib import valid_bcd_byte
@@ -18,11 +20,11 @@ class WvdHandler_data(WvdHandler_base):
         WvdHandler_base.__init__(self)
 
     @staticmethod
-    def name():
+    def name() -> str:
         return "data"
 
     @staticmethod
-    def nameLong():
+    def nameLong() -> str:
         return "Wang BASIC and BASIC-2 data files"
 
     ########################################################################
@@ -38,15 +40,16 @@ class WvdHandler_data(WvdHandler_base):
     #  etc.
     #  last sector of a logical record: 0x81 nn (where nn is the sector # of record)
     #
-    #  last sector of active file: 0xa0 (followed by 255 0x00 bytes)
+    #  last sector of active file: 0xa0 (the other 255 bytes are ignored)
     #  This is written via DATASAVE DC END, but not all programs do this,
     #  so it might exist or not for a given file.
     #
     #  last sector of allocated file: 0xa0 nnnn (nnnn = # of sectors in use)
     #
     # pylint: disable=too-many-return-statements, too-many-branches
-    def checkBlocks(self, blocks, options):
-        # type: (List[bytearray], Dict[str, Any]) -> Dict[str, Any]
+    def checkBlocks(self, blocks: List[bytearray],
+                          options: Dict[str, Any]
+                   ) -> Dict[str, Any]:
 
         if 'warnlimit' not in options: options['warnlimit'] = 0
 
@@ -122,9 +125,7 @@ class WvdHandler_data(WvdHandler_base):
     #    3) there is a terminator byte immediately after some value
     # returns True on error, False if it is OK
     # pylint: disable=too-many-branches
-    def checkDataRecord(self, sec, blk):
-        # type: (int, bytearray) -> None
-
+    def checkDataRecord(self, sec: int, blk: bytearray) -> None:
         cp = 2  # skip control bytes
         while (cp < 255) and (blk[cp] <= 0xFC):
             c = blk[cp]
@@ -173,8 +174,9 @@ class WvdHandler_data(WvdHandler_base):
     # DATASAVE), produce a human readable listing.  The return bool is True
     # if the block terminates the file, and is otherwise False.
     # pylint: disable=too-many-locals
-    def listOneBlock(self, blk, options):
-        # type: (bytearray, Dict[str, Any]) -> Tuple[bool, List[str]]
+    def listOneBlock(self, blk: bytearray,
+                           options: Dict[str, Any]
+                    ) -> Tuple[bool, List[str]]:
         listing = []
 
         if (blk[0] & 0xa0) == 0xa0:
@@ -221,8 +223,9 @@ class WvdHandler_data(WvdHandler_base):
 
 
     ########################################################################
-    def listBlocks(self, blocks, options):
-        # type: (List[bytearray], Dict[str, Any]) -> List[str]
+    def listBlocks(self, blocks: List[bytearray],
+                         options: Dict[str, Any]
+                  ) -> List[str]:
         # same options as listOneBlock
 
         logicalRecNum = 0

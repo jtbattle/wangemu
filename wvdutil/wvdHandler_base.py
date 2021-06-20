@@ -3,38 +3,38 @@
 #
 # Version: 1.0, 2018/09/15, JTB
 #     massive restructuring of the old wvdutil code base
+# Version: 1.1, 2021/06/19, JTB
+#     get rid of bilingualism (aka python2 support);
+#     convert to inline type hints instead of type hint pragma comments
 
-from __future__ import print_function
 from typing import List, Dict, Any, Tuple  # pylint: disable=unused-import
 
 class WvdHandler_base(object):  # pylint: disable=useless-object-inheritance
 
     def __init__(self):
-        self._errors    = []  # type: List[str]
-        self._warnings  = []  # type: List[str]
-        self._firsterr  = 0   # which was the first sector with an error
-        self._firstwarn = 0   # which was the first sector with a warning
+        self._errors: List[str]   = []
+        self._warnings: List[str] = []
+        self._firsterr: int       = 0   # which was the first sector with an error
+        self._firstwarn: int      = 0   # which was the first sector with a warning
 
     @staticmethod
-    def name():
-        # type: () -> str
+    def name() -> str:
         return 'short description'
 
     @staticmethod
-    def nameLong():
-        # type: () -> str
+    def nameLong() -> str:
         # optional: override with longer description if useful
         return WvdHandler_base.name()
 
     # return either "P "(rogram) or "D "(ata)
     @staticmethod
-    def fileType():
-        # type: () -> str
+    def fileType() -> str:
         return 'D '
 
     # pylint: disable=unused-argument, no-self-use
-    def checkBlocks(self, blocks, options):
-        # type: (List[bytearray], Dict[str, Any]) -> Dict[str, Any]
+    def checkBlocks(self, blocks: List[bytearray],
+                          options: Dict[str, Any]
+                   ) -> Dict[str, Any]:
         # the options dictionary can contain these keys:
         #   'sector'    = <number> -- the absolute address of the first sector
         #   'used'      = <number> -- the "used" field from the catalog, if it is known
@@ -48,8 +48,9 @@ class WvdHandler_base(object):  # pylint: disable=useless-object-inheritance
 
     # the bool is True if this is a terminating block
     # pylint: disable=unused-argument, no-self-use
-    def listOneBlock(self, blk, options):
-        # type: (bytearray, Dict[str, Any]) -> Tuple[bool, List[str]]
+    def listOneBlock(self, blk: bytearray,
+                           options: Dict[str, Any]
+                    ) -> Tuple[bool, List[str]]:
         # the options dictionary can contain these keys:
         #   'sector'    = <number> -- the absolute address of the first sector
         #   'used'      = <number> -- the "used" field from the catalog, if it is known
@@ -58,8 +59,9 @@ class WvdHandler_base(object):  # pylint: disable=useless-object-inheritance
 
     # if the file type doesn't have context which crosses sectors, then
     # the default method will just repeated use listOneBlock
-    def listBlocks(self, blocks, options):
-        # type: (List[bytearray], Dict[str, Any]) -> List[str]
+    def listBlocks(self, blocks: List[bytearray],
+                         options: Dict[str, Any]
+                  ) -> List[str]:
         # same options as listOneBlock
         listing = []
         opt = dict(options)
@@ -73,27 +75,23 @@ class WvdHandler_base(object):  # pylint: disable=useless-object-inheritance
         return listing
 
     # utilities to be used by derived classes
-    def clearErrors(self):
-        # type: () -> None
+    def clearErrors(self) -> None:
         self._errors    = []
         self._warnings  = []
         self._firsterr  = 0
         self._firstwarn = 0
 
-    def error(self, secnum, text):
-        # type: (int, str) -> None
+    def error(self, secnum: int, text: str) -> None:
         if (not self._errors) or (secnum < self._firsterr):
             self._firsterr = secnum
         self._errors.append(text)
 
-    def warning(self, secnum, text):
-        # type: (int, str) -> None
+    def warning(self, secnum: int, text: str) -> None:
         if (not self._warnings) or (secnum < self._firstwarn):
             self._firstwarn = secnum
         self._warnings.append(text)
 
-    def status(self, sec, options):
-        # type: (int, Dict[str,Any]) -> Dict[str,Any]
+    def status(self, sec: int, options: Dict[str, Any]) -> Dict[str, Any]:
         failed = (len(self._errors) > 0) or (len(self._warnings) > options['warnlimit'])
 
         if self._errors:
