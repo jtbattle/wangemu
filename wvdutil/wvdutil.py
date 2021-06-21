@@ -51,6 +51,8 @@
 # Version: 1.13, 2021/06/19, JTB
 #     get rid of bilingualism (aka python2 support);
 #     convert to inline type hints instead of type hint pragma comments
+# Version: 1.14, 2021/06/20, JTB
+#     declare and use type aliases Sector and SectorList for clarity
 
 ########################################################################
 # there are any number of operations that could be provided by this
@@ -88,8 +90,6 @@
 #    pylint checker:
 #        py [-2] -m pylint -f msvs wvdutil.py wvdlib.py ...etc...
 
-from typing import List, Dict, Callable, Any, Union, Optional, Tuple  # pylint: disable=unused-import
-
 import sys
 import os.path
 import re
@@ -98,7 +98,11 @@ import difflib
 
 from urllib.parse import quote_plus, unquote_plus  # type: ignore
 
-from wvdlib import (WangVirtualDisk,   # pylint: disable=unused-import
+from typing import List, Dict, Callable, Any, Union, Optional, Tuple  # pylint: disable=unused-import
+from wvdTypes import Sector, SectorList
+
+from wvdlib import (   # pylint: disable=unused-import
+                    WangVirtualDisk,
                     WvdFilename,
                     CatalogFile,
                     unscramble_one_sector, sanitize_filename)
@@ -475,7 +479,7 @@ def dumpFile(wvd: WangVirtualDisk, p: int, args: List[str]) -> None:
         dumpSector(wvd.getRawSector(p, s))
     return
 
-def dumpSector(data: bytearray) -> None:
+def dumpSector(data: Sector) -> None:
     for line in range(16):
         print("%02x:" % (line*16), end=' ')
         for off in range(16):
@@ -603,7 +607,10 @@ def checkCatalogIndexes(wvd: WangVirtualDisk, p: int, report: bool) -> bool:
     # but that is wasteful for large disks.
     # each entry is a hash of ('name', 'start', 'end'), containing the
     # file name and its first and last sector extent.
-    # Any because 'name' is str, others int
+    # type annotation is failing me here because current & old
+    # are Dict[str, Union[str,int]] because the dict has both int and str,
+    # but really 'name' is always str and the others are always int.
+    # extent_list: List[Dict[str, Union[int,str]]] = []
     extent_list: List[Dict[str, Any]] = []
 
     # keep track of the valid and scratched file names
@@ -712,9 +719,6 @@ def checkCatalogIndexes(wvd: WangVirtualDisk, p: int, report: bool) -> bool:
                 #print("old:     %s (%d,%d)" % (old['name'], old['start'], old['end']))
                 if (old['start'] <= current['start'] <= old['end']) or \
                    (old['start'] <= current['end']   <= old['end']):
-                    # TODO: type annotation is failing me here because current & old
-                    #       are Dict[str, Union[str,int]] because the dict has both int and str,
-                    #       but the really 'name' is always str and the others are always int.
                     if report: print("file extent of %s (%d,%d) overlaps that of %s (%d,%d)" \
                             % (current['name'], current['start'], current['end'], old['name'], old['start'], old['end']))
                     overlap = True
@@ -800,6 +804,10 @@ def checkFile(wvd: WangVirtualDisk, p: int,
         return (True, '')
     for h in handlers:
         if fileType == h.fileType():
+            if fileType in ("P ", "P'"):
+                # check that the file name in the catalog matches the
+                # file name embedded in the program header sector
+                options['cat_fname'] = str_fname
             file_status = h.checkBlocks(blocks, options)
             if not file_status['errors']:
                 if h.name() == 'edit':
@@ -854,7 +862,7 @@ def checkFile(wvd: WangVirtualDisk, p: int,
 # return that information).
 #
 # FIXME: this fails to detect SAVEP and SAVE! files
-def guessFiles(blocks: List[bytearray], abs_sector: int
+def guessFiles(blocks: SectorList, abs_sector: int
               ) -> List[Dict[str, Any]]:
     func_dbg = False
     files = [] # holds the list of file bits
@@ -1994,7 +2002,7 @@ registerCmd(cmdPlatter())
 # coherent program and data listings, attempt to list its contents
 # sensibly. each block is listed independently.
 
-def listArbitraryBlocks(blocks: List[bytearray], listd: bool, abs_sector: int) -> List[str]:
+def listArbitraryBlocks(blocks: SectorList, listd: bool, abs_sector: int) -> List[str]:
     listing = []
 
     for offset, secData in enumerate(blocks):
@@ -2036,7 +2044,7 @@ def listArbitraryBlocks(blocks: List[bytearray], listd: bool, abs_sector: int) -
 ########################################################################
 # given a list of file blocks, return a program file listing
 
-def listProgramFromBlocks(blocks: List[bytearray], listd: bool, abs_sector: int
+def listProgramFromBlocks(blocks: SectorList, listd: bool, abs_sector: int
                          ) -> List[str]:
     options = { 'sector' : abs_sector, 'prettyprint' : listd }
     return handlers[0].listBlocks(blocks, options)
@@ -2181,7 +2189,7 @@ def mainloop() -> None:
                 print("Warning: changes were not saved")
         return
 
-    print(basename + ', version 1.12, 2020/12/27')
+    print(basename + ', version 1.14, 2021/06/20')
     print('Type "help" to see all commands')
 
     # accept command lines from user interactively

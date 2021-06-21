@@ -18,9 +18,12 @@
 # Version: 1.5, 2021/06/19, JTB
 #     get rid of bilingualism (aka python2 support);
 #     convert to inline type hints instead of type hint pragma comments
+# Version: 1.6, 2021/06/20, JTB
+#     declare and use type aliases Sector and SectorList for clarity
 
 import re
 from typing import List, Dict, Any, Tuple  # pylint: disable=unused-import
+from wvdTypes import Sector, SectorList, Options
 from wvdlib import (WvdFilename, valid_bcd_byte, headerName, unscramble_one_sector)
 from wvdHandler_base import WvdHandler_base
 
@@ -171,7 +174,7 @@ ST_IN_REM    = 2   # after REM but before ':' or eol
 ST_IN_IMAGE  = 3   # inside image (%) statement
 
 # pylint: disable=too-many-branches
-def listProgramRecord(blk: bytearray, secnum: int) -> List[str]:
+def listProgramRecord(blk: Sector, secnum: int) -> List[str]:
     listing = []
 
     # 1. if (byte[0] & 0xC0) != 0x00, header or data block
@@ -446,14 +449,12 @@ class WvdHandler_basic(WvdHandler_base):
     # structure, i.e., don't insist a header block comes first.
 
     # pylint: disable=too-many-locals, too-many-branches
-    def checkBlocks(self, blocks: List[bytearray],
-                          options: Dict[str, Any]
-                   ) -> Dict[str, Any]:
-        if 'warnlimit' not in options: options['warnlimit'] = 0
+    def checkBlocks(self, blocks: SectorList, opts: Options) -> Dict[str, Any]:
+        if 'warnlimit' not in opts: opts['warnlimit'] = 0
 
         one_block = len(blocks) == 1
 
-        start = options['sector']  # sector offset of first sector of file
+        start = opts['sector']  # sector offset of first sector of file
 
         protected = 0x00  # until proven otherwise
         trailer_record_num = -1
@@ -464,7 +465,7 @@ class WvdHandler_basic(WvdHandler_base):
 
             # if it looks scrambled, unscramble it
             if ((blk[0] & 0xD0) == 0x10) and ((blk[1] & 0x80) == 0x00):
-                newblk = bytearray(blk)
+                newblk = Sector(blk)
                 protected = 0x10
                 blk = unscramble_one_sector(newblk)
 
@@ -474,7 +475,7 @@ class WvdHandler_basic(WvdHandler_base):
 
             if data_record:
                 self.error(sec, "sector %d indicates it is a data record" % sec)
-                return self.status(sec, options)
+                return self.status(sec, opts)
 
             if header_record:
                 # first sector
@@ -499,7 +500,7 @@ class WvdHandler_basic(WvdHandler_base):
                     #       return an error, just cut off the file there I guess
                     self.error(sec, "sector %d indicates it is a header record" % sec)
                 else:
-                    cat_fname = options.get('cat_fname', '')
+                    cat_fname = opts.get('cat_fname', '')
                     self.checkHeaderRecord(sec, blk, cat_fname)
             else:
                 if offset == 0 and not one_block:
@@ -513,27 +514,28 @@ class WvdHandler_basic(WvdHandler_base):
             if trailer_record:
                 trailer_record_num = sec
                 break
-            if self._errors or (len(self._warnings) > options['warnlimit']):
+            if self._errors or (len(self._warnings) > opts['warnlimit']):
                 break
 
-        if 'used' in options and (trailer_record_num > 0):
-            used = options['used']    # number of sectors used according to catalog
+        if 'used' in opts and (trailer_record_num > 0):
+            used = opts['used']    # number of sectors used according to catalog
             used_computed = (trailer_record_num - start + 1) + 1  # +1 for the control record
             if used != used_computed:
                 self.warning(sec, "catalog claims %d used sectors, but file uses %d sectors" \
                                   % (used, used_computed))
 
-        return self.status(sec, options)
+        return self.status(sec, opts)
 
     ########################################################################
     # check the first record of a program file.
+    # if cat_fname isn't empty, check the header name matches the catalog name.
     # return True on error, False if no errors.
-    def checkHeaderRecord(self, sec: int, blk: bytearray, cat_fname: str
+    def checkHeaderRecord(self, sec: int, blk: Sector, cat_fname: str
                          ) -> None:
         # the catalog and the header sector both contain the filename
         name = blk[1:9]
         str_name = WvdFilename(name).asStr()
-        if cat_fname not in ('', cat_fname):
+        if cat_fname not in ('', str_name):
             self.warning(sec, "file %s's header block indicates file name '%s'" \
                               % (cat_fname, str_name))
 
@@ -546,13 +548,13 @@ class WvdHandler_basic(WvdHandler_base):
     # check the body record of a program file.
     # return True on error, False if no errors.
     # pylint: disable=too-many-return-statements, too-many-branches
-    def checkBodyRecord(self, sec: int, blk: bytearray, terminator_byte: int
+    def checkBodyRecord(self, sec: int, blk: Sector, terminator_byte: int
                        ) -> None:
         #cat_str_fname = cat_fname.asStr()
 
         # each record must have a terminator byte (0xFD or 0xFE)
         assert isinstance(terminator_byte, int)
-        assert isinstance(blk, bytearray)
+        assert isinstance(blk, Sector)
         assert len(blk) == 256
         term_byte = terminator_byte
         pos = blk.find(term_byte)
@@ -624,16 +626,14 @@ class WvdHandler_basic(WvdHandler_base):
                             % (sec, cp))
 
     ########################################################################
-    def listOneBlock(self, blk: bytearray,
-                           options: Dict[str, Any]
-                    ) -> Tuple[bool, List[str]]:
+    def listOneBlock(self, blk: Sector, opts: Options) -> Tuple[bool, List[str]]:
         if (blk[0]) == 0xa0:  # trailer record?
             return (True, [])
 
-        secnum = options['sector']
+        secnum = opts['sector']
         listing = listProgramRecord(blk, secnum)
 
-        if options.get('prettyprint', False):
+        if opts.get('prettyprint', False):
             width = 78
             basic2 = True   # Wang BASIC and BASIC-2 have a few differences
             newlisting = []

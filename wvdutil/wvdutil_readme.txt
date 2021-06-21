@@ -1,38 +1,46 @@
 Jim Battle
-June 19, 2021
+June 20, 2021
 
-python2 is officially dead, so I've converted the code base to be strictly
-python3 instead of bilingual. There is no new functionality, but the
-typing information is now inline instead of being specified by pragma
-comments, and a couple python2-specific code paths have been eliminated.
+Version 1.14 of wvdutil was developed under Windows 10. It should run on other
+platforms, but it hasn't been tested. The previous version was "bilingual"
+(ran under both python 2 and 3), but now that python 2 is officially dead,
+this program now requires a python 3 environment, specifically something
+like Python 3.6 or newer (due to type hinting).
 
-Jim Battle
-January 4, 2020
-
-Version 1.7 of wvdutil was developed under Windows 7, and should be compatible
-with both Python 2.7 and Python 3.7.  It should run on other platforms, but it
-hasn't been tested.
-
-wvdutil_1.7.zip contains the main program, wvdutil.py, and its supporting
+wvdutil_1.14.zip contains the main program, wvdutil.py, and its supporting
 modules.
 
 If you are on a Windows machine and don't have a python interpreter installed,
 the win32 executable "wvdutil.exe" can be used instead. How it works is it
 creates a temporary directory and installs a self-contained python interpreter
 and all the modules used by wvdutil, then executes it. On exit the temporary
-directory is removed. As a result of all this trickery, there is a multi-second
+directory is removed. As a result of all this trickery, there is a short
 delay on start up.
 
 Running linting tools:
 
     There are a few tools you can run to get feedback on code quality.
-    Not all warnings have been quashed for various reasons, a big one
-    being py2/3 compatibility, and another being I'm OK with having
-    a larger number of lines per function than the linter does.
+    Not all warnings have been quashed for various reasons, including
+    personal preference. For instance, I'm OK with having a larger
+    number of lines per function than the linter does.
 
     (1) pep8 wvdutil.py
     (2) pylint wvdutil.py
     (3) mypy wvdutil.py     (type checker)
+
+New features in version 1.14:
+
+    - the version number has jumped a lot because I've been making more
+      frequent, fine-grained fixes to github and I don't always do the
+      full roll-out to this readme and releasing a new .zip file, etc.
+    - support for python 2 is dropped
+    - the code takes advantage of that and changes type hinting to be
+      inline instead of using pragma comments
+    - the code takes advantage of type aliases to make parameter intent
+      clearer, eg, "Sector" instead of the generic "bytearray".
+    - the code intended to have a check that the name of a program file
+      in the catalog should match the name specified in the program header
+      sector. there was a bug which prevented that check from working.
 
 New features in version 1.10:
 
@@ -157,6 +165,7 @@ Type "help <command>" to get more detailed help on a particular command.
    exit      - quit program
    help      - print list of commands more details of one command
    index     - display or change the catalog index type
+   label     - report or set the disk label
    list      - show program or data file as text
    listd     - show pretty-printed program or data file as text
    meta      - report virtual disk metadata
@@ -166,4 +175,3 @@ Type "help <command>" to get more detailed help on a particular command.
    scan      - scan the disk and identify whole or partial program files
    unprotect - set program file to be saved in normal mode
    wp        - set or clear the write protect status of the virtual disk
-

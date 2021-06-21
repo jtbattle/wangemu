@@ -6,8 +6,11 @@
 # Version: 1.1, 2021/06/19, JTB
 #     get rid of bilingualism (aka python2 support);
 #     convert to inline type hints instead of type hint pragma comments
+# Version: 1.2, 2021/06/20, JTB
+#     declare and use type aliases Sector and SectorList for clarity
 
 from typing import List, Dict, Any, Tuple  # pylint: disable=unused-import
+from wvdTypes import Sector, SectorList, Options
 
 class WvdHandler_base(object):  # pylint: disable=useless-object-inheritance
 
@@ -32,10 +35,8 @@ class WvdHandler_base(object):  # pylint: disable=useless-object-inheritance
         return 'D '
 
     # pylint: disable=unused-argument, no-self-use
-    def checkBlocks(self, blocks: List[bytearray],
-                          options: Dict[str, Any]
-                   ) -> Dict[str, Any]:
-        # the options dictionary can contain these keys:
+    def checkBlocks(self, blocks: SectorList, opts: Options) -> Dict[str, Any]:
+        # the opts dictionary can contain these keys:
         #   'sector'    = <number> -- the absolute address of the first sector
         #   'used'      = <number> -- the "used" field from the catalog, if it is known
         #   'warnlimit' = <number> -- stop when the number of warnings is exceeded
@@ -48,10 +49,8 @@ class WvdHandler_base(object):  # pylint: disable=useless-object-inheritance
 
     # the bool is True if this is a terminating block
     # pylint: disable=unused-argument, no-self-use
-    def listOneBlock(self, blk: bytearray,
-                           options: Dict[str, Any]
-                    ) -> Tuple[bool, List[str]]:
-        # the options dictionary can contain these keys:
+    def listOneBlock(self, blk: Sector, opts: Options) -> Tuple[bool, List[str]]:
+        # the opts dictionary can contain these keys:
         #   'sector'    = <number> -- the absolute address of the first sector
         #   'used'      = <number> -- the "used" field from the catalog, if it is known
         #   'warnlimit' = <number> -- stop when the number of warnings is exceeded
@@ -59,15 +58,13 @@ class WvdHandler_base(object):  # pylint: disable=useless-object-inheritance
 
     # if the file type doesn't have context which crosses sectors, then
     # the default method will just repeated use listOneBlock
-    def listBlocks(self, blocks: List[bytearray],
-                         options: Dict[str, Any]
-                  ) -> List[str]:
-        # same options as listOneBlock
+    def listBlocks(self, blocks: SectorList, opts: Options) -> List[str]:
+        # same opts as listOneBlock
         listing = []
-        opt = dict(options)
+        opt = dict(opts)
 
         for offset, blk in enumerate(blocks):
-            opt['secnum'] = options['sector'] + offset
+            opt['secnum'] = opts['sector'] + offset
             done, morelines = self.listOneBlock(blk, opt)
             listing.extend(morelines)
             if done: break
@@ -91,8 +88,8 @@ class WvdHandler_base(object):  # pylint: disable=useless-object-inheritance
             self._firstwarn = secnum
         self._warnings.append(text)
 
-    def status(self, sec: int, options: Dict[str, Any]) -> Dict[str, Any]:
-        failed = (len(self._errors) > 0) or (len(self._warnings) > options['warnlimit'])
+    def status(self, sec: int, opts: Options) -> Dict[str, Any]:
+        failed = (len(self._errors) > 0) or (len(self._warnings) > opts['warnlimit'])
 
         if self._errors:
             last_good_sector = self._firsterr-1

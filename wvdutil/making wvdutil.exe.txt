@@ -1,16 +1,16 @@
 These are notes on how to turn the wvdutil python scripts into a windows
 executable.
 
-On my "work" windows xp virtual machine image, I installed python2.7
-so that the resulting .exe was a 32-bit executable. This way it works
-for win32 and win64 machines.
+My machine is a 64b windows 10 system, so I strongly suspect the resulting
+binary will not work on 32b windows installations.
 
 Step 1: establish python environment
-    * installed python 2.7 from python.org website
-    * manually added c:\Python27;c:\Python27\Scripts to my %PATH%
-    * pip install future
+    * installed python 3.9 from python.org website
+    * manually added c:\Python39;c:\Python39\Scripts to my %PATH%
     * pip install typing
-    * pip install pyinstaller  (http://www.pyinstaller.org/)
+    * pip install pyinstaller --user  (http://www.pyinstaller.org/)
+    * It says to add this to %PATH%
+        C:\Users\jb\AppData\Roaming\Python\Python39\Scripts
 
 Step 2: build it
     * mkdir jim\wvdutil
@@ -19,3 +19,13 @@ Step 2: build it
     * pyinstaller.exe -F wvdutil.py  (the -F says make single file bundle)
     * executable appears as jim\wvdutil\dist\wvdutil.exe
 
+-----------
+
+I also tried nuitka
+    * py -3 -m pip install nuitka
+    * py -3 -m nuikta wvdutil.py
+
+This built a .exe, but it requires a python39.dll to be in the same directory.
+There is a --onefile option, but under windows at least it isn't that simple,
+and I didn't spend the time to figure out the details since pyinstaller worked
+fine.

@@ -18,6 +18,8 @@
 # Version: 1.7, 2021/06/19, JTB
 #     get rid of bilingualism (aka python2 support);
 #     convert to inline type hints instead of type hint pragma comments
+# Version: 1.8, 2021/06/20, JTB
+#     declare and use type aliases Sector and SectorList for clarity
 
 ########################################################################
 # technical notes
@@ -46,11 +48,13 @@
 # all filenames that get compared are padded to eight places with spaces
 # before comparison.
 
-from typing import List, Dict, Tuple, Any, Union, Optional  # pylint: disable=unused-import
 import sys
 import re
 import zipfile
 import traceback
+
+from typing import List, Dict, Tuple, Any, Union, Optional  # pylint: disable=unused-import
+from wvdTypes import Sector, SectorList
 
 ########################################################################
 # simple exception class
@@ -75,7 +79,7 @@ class WangVirtualDisk(object):
         self._valid: bool = False   # the rest of self.members are meaningless
         self._dirty: bool = False   # contents modified from on-disk version
         self._filename: str = None
-        self.sector: List[bytearray] = []
+        self.sector: SectorList = []
         self.head_dat = bytearray()
         self.catalog = []     # TODO: ttype: List[Catalog] -- enabling this causes tons of warnings
                               # one entry per platter
@@ -189,13 +193,13 @@ class WangVirtualDisk(object):
             print(self.numSectors())
             raise ProgramError
 
-    def getRawSector(self, p: int, n: int) -> bytearray:
+    def getRawSector(self, p: int, n: int) -> Sector:
         self.checkSectorAddress(p, n)
         nn = p*self.numSectors() + n
         return self.sector[nn]
 
     # replace a sector
-    def setRawSector(self, p: int, n: int, data: bytearray) -> None:
+    def setRawSector(self, p: int, n: int, data: Sector) -> None:
         assert len(data) == 256
         self.checkSectorAddress(p, n)
         nn = p*self.numSectors() + n
@@ -851,7 +855,7 @@ class CatalogFile(object):
     # return None if the filename isn't found, or if the file extent
     # information is bogus (in which case we report it)
     # pylint: disable=too-many-return-statements
-    def getSectors(self) -> Optional[List[bytearray]]:
+    def getSectors(self) -> Optional[SectorList]:
         if self._index is None:
             return None
         if self._index.getIndexState() != 'valid':
@@ -868,7 +872,7 @@ class CatalogFile(object):
             print("'%s': bad file extent information" % self._name.asStr())
             return None
         used = self.getUsed()
-        sectors = []
+        sectors: SectorList = []
         if not self.fileControlRecordIsPlausible():
             print("'%s': implausible file control record" % self._name.asStr())
             return None
@@ -879,7 +883,7 @@ class CatalogFile(object):
         return sectors
 
     # rewrite sectors of a file
-    def setSectors(self, blocks: List[bytearray]) -> None:
+    def setSectors(self, blocks: SectorList) -> None:
         assert self._index is not None
         assert self._index.getIndexState() == 'valid'
         assert self.getType() == 'P '
@@ -957,7 +961,7 @@ def sanitize_filename(rawname: Any) -> str:
 # the algorithm is extracted from the DCRYPT routine of Wang MVP OS 3.5.
 # this function doesn't implement the tweak for "wrap mode" files.
 
-def unscramble_one_sector(block: bytearray) -> bytearray:
+def unscramble_one_sector(block: Sector) -> Sector:
     assert len(block) == 256
     sector = bytearray(block)  # make a copy
 

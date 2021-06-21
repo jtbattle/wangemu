@@ -7,8 +7,11 @@
 #     it turns out there are two different "edit" file formats, which are
 #     termed 'type1' and 'type2' below. for all I know there are other types
 #     too, but these are the ones I've noticed.
+# Version: 1.2, 2021/06/20, JTB
+#     declare and use type aliases Sector and SectorList for clarity
 
 from typing import List, Dict, Any, Tuple  # pylint: disable=unused-import
+from wvdTypes import Sector, SectorList, Options
 from wvdHandler_base import WvdHandler_base
 
 ########################################################################
@@ -43,7 +46,7 @@ class WvdHandler_edit(WvdHandler_base):
     # if found, otherwise empty. if the filename was found, the second string
     # classifies it as 'type1' or 'type2'.
     @staticmethod
-    def getFilename(blk: bytearray) -> Tuple[str, str]:
+    def getFilename(blk: Sector) -> Tuple[str, str]:
         # the first string contains magic bytes, the filename, and date
         line0 = blk[3+0*63:2+1*63]
         type1 = (line0[0] == 0x02) and (line0[1] == 0x01) and \
@@ -67,19 +70,17 @@ class WvdHandler_edit(WvdHandler_base):
     # 3) the first string of the first sector contains a special format which
     #    holds the filename and date (see getFilename())
     # pylint: disable=too-many-branches
-    def checkBlocks(self, blocks: List[bytearray],
-                          options: Dict[str, Any]) -> Dict[str, Any]:
+    def checkBlocks(self, blocks: SectorList, opts: Options) -> Dict[str, Any]:
+        if 'warnlimit' not in opts: opts['warnlimit'] = 0
 
-        if 'warnlimit' not in options: options['warnlimit'] = 0
-
-        start = options['sector']  # sector offset of first sector of file
+        start = opts['sector']  # sector offset of first sector of file
 
         self.clearErrors()
         end_byte_seen = False
 
         if not blocks:
             self.error(start, "this is a null file")
-            return self.status(start, options)
+            return self.status(start, opts)
 
         ftype = ''
         sec = start
@@ -142,24 +143,20 @@ class WvdHandler_edit(WvdHandler_base):
                 # TODO: check the date format?
 
             # if (error or warning count exceeds limit)
-            if self._errors or (len(self._warnings) > options['warnlimit']):
+            if self._errors or (len(self._warnings) > opts['warnlimit']):
                 break
 
-        return self.status(sec, options)
+        return self.status(sec, opts)
 
     # listing one block at a time probably doesn't make sense, as the lines of
     # the file are packed and run across sector boundaries
-    def listOneBlock(self, blk: bytearray,
-                           options: Dict[str, Any]
-                    ) -> Tuple[bool, List[str]]:
+    def listOneBlock(self, blk: Sector, opts: Options) -> Tuple[bool, List[str]]:
         return (True, [])
 
     ########################################################################
     # given a list of file blocks, return a program file listing
     # pylint: disable=too-many-locals, too-many-branches
-    def listBlocks(self, blocks: List[bytearray],
-                         options: Dict[str, Any]
-                  ) -> List[str]:
+    def listBlocks(self, blocks: SectorList, opts: Options) -> List[str]:
         filename = '        '  # pylint: disable=unused-variable
         listing = []
         curline = ''
